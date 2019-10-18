@@ -1,0 +1,47 @@
+/**
+@mainpage  Overview
+@section first Introduction
+SmartThings Device SDK aims to make it easier to develop IoT devices that can be securely connected to the SmartThings cloud server by providing the IoT Core Library. It can also be adopted to the existing original chipset vendor’s SDK easily.
+
+For this, the IoT Core library and the example was separated into two git repositories as shown.
+
+- [IoT Core Library](https://github.com/SmartThingsCommunity/st-device-sdk-c)
+- [Examples](https://github.com/SmartThingsCommunity/st-device-sdk-c-ref)
+
+You can choose to only download the `examples` repository from git, if you have already ported your project. The IoT core library is downloaded as a submodule in the `examples` repository.
+
+
+
+@image html st_device_sdk_arch.jpg "Architecture of SmartThings Device SDK"
+
+
+
+@section second IoT Core Library
+This library provides APIs to be used on the device application.
+
+These APIs can be classified as follows to facilitate the basic behavior scenario of IoT devices and these have been implemented to make a device application as simple as possible.
+
+For more detail, please click the link of each API.
+
+- connection management
+
+  - st_conn_init()
+  - st_conn_set_noti_cb()
+  - st_conn_start()
+  - st_conn_cleanup()
+  - st_conn_ownership_confirm()
+
+- capability management
+  - st_cap_handle_init()
+  - st_cap_cmd_set_cb()
+  - st_cap_attr_create_int()
+  - st_cap_attr_create_number()
+  - st_cap_attr_create_string()
+  - st_cap_attr_create_string_array()
+  - st_cap_attr_free()
+  - st_cap_attr_send()
+
+
+@section third Device Application
+A device application is developed using the APIs provided by the IoT Core Library. We recommend reuse of the pre-supplied example applications, like st_switch. This allows for rapid development as you begin to develop your new device. Please refer to the API references related to the IoT core library as shown before
+*/

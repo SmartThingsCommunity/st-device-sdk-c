@@ -1,0 +1,14 @@
+SmartThings Device SDK is for IoT devices to communicate with SmartThings Cloud Server.
+
+Copyright (c) 2019 Samsung Electronics All Rights Reserved.
+This product includes software under Apache License 2.0 developed by Samsung Electronics Inc.
+
+************************
+3rd Party Components
+************************
+This software includes third party software subject to the following licensing:
+ - Embedded C MQTT Client - From the Paho project - [ Dual License : EPL 1.0 or EDL 1.0 ]
+   : st-device-sdk-c/mqtt/, st-device-sdk-c/include/mqtt/
+ - http daemon - From LWIP - [ BSD 3-clause License ]
+   : st-device-sdk-c/easysetup/http/lwip_httpd/
+
