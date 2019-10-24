@@ -17,6 +17,9 @@ else ifeq ($(CONFIG_STDK_IOT_CORE_BSP_SUPPORT_ESP32),y)
 else ifeq ($(CONFIG_STDK_IOT_CORE_BSP_SUPPORT_RTL8195),y)
 	COMPONENT_SRCDIRS += port/bsp/rtl8195
 	COMPONENT_ADD_INCLUDEDIRS += include/bsp/rtl8195
+else ifeq ($(CONFIG_STDK_IOT_CORE_BSP_SUPPORT_RTL8720C),y)
+        COMPONENT_SRCDIRS += port/bsp/rtl8720c
+        COMPONENT_ADD_INCLUDEDIRS += include/bsp/rtl8720c
 else
 	COMPONENT_SRCDIRS += port/bsp/posix
 	COMPONENT_ADD_INCLUDEDIRS += include/bsp/posix
