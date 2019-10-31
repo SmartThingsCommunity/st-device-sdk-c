@@ -62,7 +62,7 @@ int iot_os_net_select(iot_net_socket *n, unsigned int timeout_ms)
 	if ((n->ssl && SSL_pending(n->ssl) > 0) || select(n->socket + 1, &fdset, NULL, NULL, &timeout) > 0)
 		ret = 1;
 #else
-	ret = select(n->my_socket + 1, &fdset, NULL, NULL, &timeout);
+	ret = select(n->socket + 1, &fdset, NULL, NULL, &timeout);
 #endif
 
 	return ret;
