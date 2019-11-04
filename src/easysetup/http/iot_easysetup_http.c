@@ -486,16 +486,16 @@ iot_error_t iot_easysetup_init(struct iot_context *ctx)
 
 	context = ctx;
 
-	ctx->es_httpd_handle = httpd_init();
+	ctx->es_httpd_handle = es_httpd_init();
 
 	if (ctx->es_httpd_handle == NULL) {
-		IOT_ERROR("httpd_init failed");
+		IOT_ERROR("es_httpd_init failed");
 		return IOT_ERROR_UNINITIALIZED;
 	} else {
 		if (!http_post_payload) {
 			http_post_payload = malloc(LWIP_HTTPD_POST_MAX_PAYLOAD_LEN);
 			if (!http_post_payload) {
-				httpd_deinit(ctx->es_httpd_handle);
+				es_httpd_deinit(ctx->es_httpd_handle);
 				return IOT_ERROR_MEM_ALLOC;
 			}
 			http_post_payload_len = 0;
@@ -512,7 +512,7 @@ iot_error_t iot_easysetup_init(struct iot_context *ctx)
 	log_len = 0;
 	dump_enable= true;
 #endif
-	IOT_INFO("httpd_init done");
+	IOT_INFO("es_httpd_init done");
 
 	return IOT_ERROR_NONE;
 }
@@ -522,7 +522,7 @@ void iot_easysetup_deinit(struct iot_context *ctx)
 	ENTER();
 	if (!ctx || !ctx->es_httpd_handle)
 		return;
-	httpd_deinit(ctx->es_httpd_handle);
+	es_httpd_deinit(ctx->es_httpd_handle);
 	ctx->es_httpd_handle = NULL;
 #if defined(CONFIG_STDK_IOT_CORE_EASYSETUP_HTTP_LOG_SUPPORT)
 	dump_enable = false;
@@ -530,5 +530,5 @@ void iot_easysetup_deinit(struct iot_context *ctx)
 #endif
 	free(http_post_payload);
 	http_post_payload = NULL;
-	IOT_INFO("httpd_deinit done");
+	IOT_INFO("es_httpd_deinit done");
 }
