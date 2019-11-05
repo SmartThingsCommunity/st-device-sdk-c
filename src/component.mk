@@ -76,7 +76,7 @@ $(shell rm $(ROOT_CA_BACKUP_FILE))
 CFLAGS += -std=c99
 
 else
-# Disable SmartThing Device Kit support
+# Disable SmartThing Device SDK support
 COMPONENT_ADD_INCLUDEDIRS :=
 COMPONENT_SRCDIRS :=
 endif
