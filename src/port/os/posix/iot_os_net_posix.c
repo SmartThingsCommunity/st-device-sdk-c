@@ -26,7 +26,7 @@
 #include "iot_os_net.h"
 #include "iot_debug.h"
 
-void iot_os_net_print_status(iot_net_socket *n)
+void iot_os_net_print_status(iot_net_interface_t *n)
 {
 	struct timeval tv, timeout = {0,};
 	int sock_err = 0;
@@ -46,7 +46,7 @@ void iot_os_net_print_status(iot_net_socket *n)
 			FD_ISSET(n->socket, &rfdset), FD_ISSET(n->socket, &wfdset), sock_err, errno);
 }
 
-int iot_os_net_select(iot_net_socket *n, unsigned int timeout_ms)
+int iot_os_net_select(iot_net_interface_t *n, unsigned int timeout_ms)
 {
 	int ret = 0;
 	struct timeval timeout;
@@ -68,7 +68,7 @@ int iot_os_net_select(iot_net_socket *n, unsigned int timeout_ms)
 	return ret;
 }
 
-static int _os_net_read(iot_net_socket *n, unsigned char *buffer, unsigned int len, iot_os_timer timer)
+static int _os_net_read(iot_net_interface_t *n, unsigned char *buffer, int len, iot_os_timer timer)
 {
 	int recvLen = 0, rc = 0, ret = 0;
 
@@ -111,7 +111,7 @@ static int _os_net_read(iot_net_socket *n, unsigned char *buffer, unsigned int l
 	return recvLen;
 }
 
-static int _os_net_write(iot_net_socket *n, unsigned char *buffer, unsigned int len, iot_os_timer timer)
+static int _os_net_write(iot_net_interface_t *n, unsigned char *buffer, int len, iot_os_timer timer)
 {
 	int sentLen = 0, rc = 0, ret = 0;
 
@@ -154,12 +154,12 @@ static int _os_net_write(iot_net_socket *n, unsigned char *buffer, unsigned int 
 	return sentLen;
 }
 
-void iot_os_net_disconnect(iot_net_socket *n)
+void iot_os_net_disconnect(iot_net_interface_t *n)
 {
 	close(n->socket);
 }
 
-int iot_os_net_connet(iot_net_socket *n, char *addr, int port)
+int iot_os_net_connet(iot_net_interface_t *n, char *addr, int port)
 {
 	struct sockaddr_in sAddr;
 	int retVal = -1;
@@ -186,7 +186,7 @@ exit:
 	return retVal;
 }
 
-void iot_os_net_init(iot_net_socket *n)
+void iot_os_net_init(iot_net_interface_t *n)
 {
 	n->socket = 0;
 	n->read = _os_net_read;
@@ -199,7 +199,7 @@ void iot_os_net_init(iot_net_socket *n)
 
 #ifdef CONFIG_STDK_MQTT_USE_SSL
 
-static int _os_net_ssl_read(iot_net_socket *n, unsigned char *buffer, unsigned int len, iot_os_timer timer)
+static int _os_net_ssl_read(iot_net_interface_t *n, unsigned char *buffer, int len, iot_os_timer timer)
 {
 	int recvLen = 0, rc = 0;
 
@@ -242,7 +242,7 @@ exit:
 	return recvLen;
 }
 
-static int _os_net_ssl_write(iot_net_socket *n, unsigned char *buffer, unsigned int len, iot_os_timer timer)
+static int _os_net_ssl_write(iot_net_interface_t *n, unsigned char *buffer, int len, iot_os_timer timer)
 {
 	int sentLen = 0, rc = 0, ret = 0;
 
@@ -289,7 +289,7 @@ static int _os_net_ssl_write(iot_net_socket *n, unsigned char *buffer, unsigned 
 	return sentLen;
 }
 
-void iot_os_net_ssl_disconnect(iot_net_socket *n)
+void iot_os_net_ssl_disconnect(iot_net_interface_t *n)
 {
 	close(n->socket);
 	SSL_free(n->ssl);
@@ -297,7 +297,7 @@ void iot_os_net_ssl_disconnect(iot_net_socket *n)
 	n->read_count = 0;
 }
 
-int iot_os_net_ssl_connet(iot_net_socket *n, char *addr, int port, ssl_ca_crt_key_t *ssl_cck, const SSL_METHOD *method, int verify_mode, unsigned int frag_len)
+int iot_os_net_ssl_connet(iot_net_interface_t *n, char *addr, int port, ssl_ca_crt_key_t *ssl_cck, const SSL_METHOD *method, int verify_mode, unsigned int frag_len)
 {
 	struct sockaddr_in sAddr;
 	int retVal = -1;
@@ -380,7 +380,7 @@ exit:
 	return retVal;
 }
 
-void iot_os_net_ssl_init(iot_net_socket *n)
+void iot_os_net_ssl_init(iot_net_interface_t *n)
 {
 	n->socket = 0;
 	n->read = _os_net_ssl_read;

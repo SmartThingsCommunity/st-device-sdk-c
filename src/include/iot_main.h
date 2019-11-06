@@ -192,7 +192,7 @@ struct iot_registered_data {
  * @brief Contains "mqtt handling context" data
  */
 struct iot_mqtt_ctx {
-	iot_net_socket net;		/**< @brief network management handle for mqtt */
+	iot_net_interface_t net;		/**< @brief network management handle for mqtt */
 	MQTTClient cli;			/**< @brief mqtt client handle for iot_core */
 	bool mqtt_connected;	/**< @brief mqtt connected status */
 
