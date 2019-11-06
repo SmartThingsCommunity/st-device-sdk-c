@@ -196,11 +196,11 @@ These APIs are related to operating system.
 
 | APIs                                                         | Description                       |
 | ------------------------------------------------------------ | --------------------------------- |
-| int iot_os_net_connet  ( iot_net_socket *  n,  <br/>  char *  addr,  <br/>  int  port ) | connect with server               |
-| void iot_os_net_disconnect  ( iot_net_socket *  n )          | disconnect with server            |
-| void iot_os_net_init  ( iot_net_socket *   )                 | Initialize the network structure. |
-| void iot_os_net_print_status  ( iot_net_socket *  n )        | print network status              |
-| int iot_os_net_select  ( iot_net_socket *  n,  <br/>  unsigned int  timeout_ms ) | check network socket status       |
+| int iot_os_net_connet  ( iot_net_interface_t *  n,  <br/>  char *  addr,  <br/>  int  port ) | connect with server               |
+| void iot_os_net_disconnect  ( iot_net_interface_t *  n )          | disconnect with server            |
+| void iot_os_net_init  ( iot_net_interface_t *   )                 | Initialize the network structure. |
+| void iot_os_net_print_status  ( iot_net_interface_t *  n )        | print network status              |
+| int iot_os_net_select  ( iot_net_interface_t *  n,  <br/>  unsigned int  timeout_ms ) | check network socket status       |
 
 #### Utils
 

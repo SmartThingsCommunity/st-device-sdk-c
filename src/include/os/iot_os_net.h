@@ -27,30 +27,30 @@
 /**
  * @brief Contains "network management structure" data
  */
-typedef struct iot_net_socket{
+typedef struct iot_net_interface {
 	int socket;				/**< @brief socket handle */
-	int (*read)(struct iot_net_socket *, unsigned char *, unsigned int, iot_os_timer);	/**< @brief read handle for socket */
-	int (*write)(struct iot_net_socket *, unsigned char *, unsigned int, iot_os_timer);	/**< @brief write handle for socket */
+	int (*read)(struct iot_net_interface *, unsigned char *, int, iot_os_timer);	/**< @brief read handle for socket */
+	int (*write)(struct iot_net_interface *, unsigned char *, int, iot_os_timer);	/**< @brief write handle for socket */
 	int read_count;			/**< @brief number of read data */
 #ifdef CONFIG_STDK_MQTT_USE_SSL
 	SSL_CTX *ctx;			/**< @brief set SSL context */
 	SSL *ssl;			/**< @brief SSL Handle */
 #endif
-} iot_net_socket;
+} iot_net_interface_t;
 
 /**
  * @brief print network status
  *
- * @param n           - iot_net_socket struct
+ * @param n           - iot_net_interface struct
  *
  * @return void
  */
-void iot_os_net_print_status(iot_net_socket *n);
+void iot_os_net_print_status(iot_net_interface_t *n);
 
 /**
  * @brief check network socket  status
  *
- * @param n           - iot_net_socket struct
+ * @param n           - iot_net_interface struct
  * @param timeout_ms  - timeout in miliseconds
  *
  * @return
@@ -59,36 +59,36 @@ void iot_os_net_print_status(iot_net_socket *n);
  *              < 0 : there is error in network
  */
 
-int iot_os_net_select(iot_net_socket *n, unsigned int timeout_ms);
+int iot_os_net_select(iot_net_interface_t *n, unsigned int timeout_ms);
 
 /**
  * @brief Initialize the network structure
  *
- * @param n - iot_net_socket struct
+ * @param n - iot_net_interface struct
  *
  * @return void
  */
-void iot_os_net_init(iot_net_socket *);
+void iot_os_net_init(iot_net_interface_t *);
 
 /**
  * @brief connect with server
  *
- * @param n           - iot_net_socket struct
+ * @param n           - iot_net_interface struct
  * @param addr        - server address
  * @param port        -  server port
  *
  * @return connect status
  */
-int iot_os_net_connet(iot_net_socket *n, char *addr, int port);
+int iot_os_net_connet(iot_net_interface_t *n, char *addr, int port);
 
 /**
  * @brief disconnect with server
  *
- * @param n           - iot_net_socket struct
+ * @param n           - iot_net_interface struct
  *
  * @return void
  */
-void iot_os_net_disconnect(iot_net_socket *n);
+void iot_os_net_disconnect(iot_net_interface_t *n);
 
 #ifdef CONFIG_STDK_MQTT_USE_SSL
 /**
@@ -106,16 +106,16 @@ typedef struct ssl_ca_crt_key {
 /**
  * @brief Initialize the network structure for SSL connection
  *
- * @param n - iot_net_socket structure
+ * @param n - iot_net_interface structure
  *
  * @return void
  */
-void iot_os_net_ssl_init(iot_net_socket *n);
+void iot_os_net_ssl_init(iot_net_interface_t *n);
 
 /**
  * @brief Use SSL to connect with server
  *
- * @param n           - iot_net_socket struct
+ * @param n           - iot_net_interface struct
  * @param addr        - server address
  * @param port        - server port
  * @param ssl_cck     - client CA, certificate and private key
@@ -125,16 +125,16 @@ void iot_os_net_ssl_init(iot_net_socket *n);
  *
  * @return connect status
  */
-int iot_os_net_ssl_connet(iot_net_socket *n, char *addr, int port, ssl_ca_crt_key_t *ssl_cck, const SSL_METHOD *method, int verify_mode, unsigned int frag_len);
+int iot_os_net_ssl_connet(iot_net_interface_t *n, char *addr, int port, ssl_ca_crt_key_t *ssl_cck, const SSL_METHOD *method, int verify_mode, unsigned int frag_len);
 
  /**
  * @brief disconnect with server SSL connection
  *
- * @param n           - iot_net_socket struct
+ * @param n           - iot_net_interface struct
  *
  * @return void
  */
-void iot_os_net_ssl_disconnect(iot_net_socket *n);
+void iot_os_net_ssl_disconnect(iot_net_interface_t *n);
 
 #endif //CONFIG_STDK_MQTT_USE_SSL
 
