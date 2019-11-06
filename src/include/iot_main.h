@@ -20,12 +20,12 @@
 #define _IOT_MAIN_H_
 
 #include "st_dev.h"
-#include "iot_mqtt_client.h"
 #include "iot_error.h"
 #include "iot_bsp_wifi.h"
 #include "iot_os_util.h"
 #include "iot_crypto.h"
-#include "iot_os_net.h"
+#include "iot_net.h"
+#include "iot_mqtt_client.h"
 
 #define IOT_WIFI_PROV_SSID_LEN		(31 + 1)
 #define IOT_WIFI_PROV_PASSWORD_LEN 	(63 + 1)

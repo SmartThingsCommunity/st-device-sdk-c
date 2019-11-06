@@ -209,8 +209,8 @@ static int _os_net_ssl_read(iot_net_interface_t *n, unsigned char *buffer, int l
 	FD_ZERO(&fdset);
 	FD_SET(n->socket, &fdset);
 
-	timeout.tv_sec = 0;
-	timeout.tv_usec = iot_os_timer_left_ms(timer) * 1000;
+	timeout.tv_sec =  iot_os_timer_left_ms(timer) / 1000;
+	timeout.tv_usec = (iot_os_timer_left_ms(timer) % 1000) * 1000;
 
 	if (SSL_pending(n->ssl) > 0 || select(n->socket + 1, &fdset, NULL, NULL, &timeout) > 0) {
 		do {
@@ -252,8 +252,8 @@ static int _os_net_ssl_write(iot_net_interface_t *n, unsigned char *buffer, int 
 	FD_ZERO(&fdset);
 	FD_SET(n->socket, &fdset);
 
-	timeout.tv_sec = 0;
-	timeout.tv_usec = iot_os_timer_left_ms(timer) * 1000;
+	timeout.tv_sec =  iot_os_timer_left_ms(timer) / 1000;
+	timeout.tv_usec = (iot_os_timer_left_ms(timer) % 1000) * 1000;
 
 	errno = 0;
 	ret = select(n->socket + 1, NULL, &fdset, NULL, &timeout);
@@ -261,11 +261,13 @@ static int _os_net_ssl_write(iot_net_interface_t *n, unsigned char *buffer, int 
 	if (ret <= 0) {
 		struct timeval tv;
 		int error = 0;
+		long expired = 0;
 		socklen_t err_len = sizeof(error);
+		expired = iot_os_timer_left_ms(timer);
 		getsockopt(n->socket, SOL_SOCKET, SO_ERROR, &error, &err_len);
 		gettimeofday(&tv, NULL);
-		IOT_ERROR("[%ld] Socket Network Error write_sel_rc %d sock_err %d errno %d select timeout=%ld",
-			tv.tv_sec, ret, error, errno, timeout.tv_usec);
+		IOT_ERROR("[%ld] Socket Network Error write_sel_rc %d sock_err %d errno %d select expired=%ld",
+			tv.tv_sec, ret, error, errno, expired);
 		return ret;
 	}
 
@@ -309,7 +311,6 @@ int iot_os_net_ssl_connet(iot_net_interface_t *n, char *addr, int port, ssl_ca_c
 	#endif
 
 	SSL_library_init();
-	SSL_load_error_strings();
 
 	if ((ipAddress = gethostbyname(addr)) == 0) {
 		goto exit;
@@ -320,7 +321,15 @@ int iot_os_net_ssl_connet(iot_net_interface_t *n, char *addr, int port, ssl_ca_c
 	if (!n->ctx) {
 		goto exit;
 	}
+#if defined(CONFIG_STDK_IOT_CORE_OS_SUPPORT_FREERTOS)
+	if (ssl_cck->cacrt) {
+		retVal = SSL_CTX_load_verify_buffer(n->ctx, ssl_cck->cacrt, ssl_cck->cacrt_len);
 
+		if (retVal != 1) {
+			goto exit1;
+		}
+	}
+#endif
 	if (ssl_cck->cert && ssl_cck->key) {
 		retVal = SSL_CTX_use_certificate_ASN1(n->ctx, ssl_cck->cert_len, ssl_cck->cert);
 
