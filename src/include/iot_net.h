@@ -16,8 +16,8 @@
  *
  ****************************************************************************/
 
- #ifndef _IOT_OS_NET_H_
-#define _IOT_OS_NET_H_
+#ifndef _IOT_NET_H_
+#define _IOT_NET_H_
 
 #include "iot_os_util.h"
 #ifdef CONFIG_STDK_MQTT_USE_SSL
@@ -138,4 +138,4 @@ void iot_os_net_ssl_disconnect(iot_net_interface_t *n);
 
 #endif //CONFIG_STDK_MQTT_USE_SSL
 
-#endif //_IOT_OS_NET_H_
+#endif /* _IOT_NET_H_ */

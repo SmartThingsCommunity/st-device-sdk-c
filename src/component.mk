@@ -32,6 +32,9 @@ else
 	COMPONENT_SRCDIRS += port/os/posix
 endif
 
+COMPONENT_SRCDIRS += port/net/openssl
+COMPONENT_ADD_INCLUDEDIRS += port/net/openssl
+
 COMPONENT_SRCDIRS += crypto
 ifdef CONFIG_STDK_IOT_CORE_USE_MBEDTLS
 COMPONENT_SRCDIRS += crypto/mbedtls
