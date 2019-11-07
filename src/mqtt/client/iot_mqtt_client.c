@@ -20,8 +20,9 @@
 #include <string.h>
 #include <stdlib.h>
 #include <stdbool.h>
+
+#include "iot_main.h"
 #include "iot_debug.h"
-#include "iot_mqtt_client.h"
 
 static void NewMessageData(MessageData *md, MQTTString *aTopicName, MQTTMessage *aMessage)
 {

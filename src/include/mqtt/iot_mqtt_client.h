@@ -37,7 +37,6 @@ extern "C" {
 
 #include <stdbool.h>
 #include "iot_mqtt_packet.h"
-#include "iot_os_net.h"
 #include "iot_os_util.h"
 
 #define MAX_PACKET_ID 65535 /* according to the MQTT specification - do not change! */
