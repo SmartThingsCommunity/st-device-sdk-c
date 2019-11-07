@@ -19,23 +19,41 @@
 #ifndef _IOT_NET_H_
 #define _IOT_NET_H_
 
-#include "iot_os_util.h"
-#ifdef CONFIG_STDK_MQTT_USE_SSL
-#include "openssl/ssl.h"
+#include "iot_net_platform.h"
+
+#ifdef __cplusplus
+extern "C" {
 #endif
+
+/**
+ * @brief Contains server related information
+ *
+ * This structure has address, port and certificate of server.
+ */
+typedef struct iot_net_connection {
+	char *url;			/**< @brief server address */
+	int port;			/**< @brief server port */
+	const unsigned char *ca_cert;	/**< @brief a pointer to a CA certificate */
+	unsigned int ca_cert_len;	/**< @brief a size of CA certificate */
+	const unsigned char *cert;	/**< @brief a pointer to a device certificate */
+	unsigned int cert_len;		/**< @brief a size of device certificate */
+	const unsigned char *key;	/**< @brief a pointer to a private key */
+	unsigned int key_len;		/**< @brief a size of private key */
+} iot_net_connection_t;
 
 /**
  * @brief Contains "network management structure" data
  */
 typedef struct iot_net_interface {
-	int socket;				/**< @brief socket handle */
-	int (*read)(struct iot_net_interface *, unsigned char *, int, iot_os_timer);	/**< @brief read handle for socket */
-	int (*write)(struct iot_net_interface *, unsigned char *, int, iot_os_timer);	/**< @brief write handle for socket */
-	int read_count;			/**< @brief number of read data */
-#ifdef CONFIG_STDK_MQTT_USE_SSL
-	SSL_CTX *ctx;			/**< @brief set SSL context */
-	SSL *ssl;			/**< @brief SSL Handle */
-#endif
+	/**< @brief server connection informations */
+	iot_net_connection_t connection;
+	/**< @brief contains connection context that depend to net library */
+	iot_net_platform_context_t context;
+
+	/**< @brief read from network */
+	int (*read)(struct iot_net_interface *, unsigned char *, int, iot_os_timer);
+	/**< @brief write to network */
+	int (*write)(struct iot_net_interface *, unsigned char *, int, iot_os_timer);
 } iot_net_interface_t;
 
 /**
@@ -91,26 +109,17 @@ int iot_os_net_connet(iot_net_interface_t *n, char *addr, int port);
 void iot_os_net_disconnect(iot_net_interface_t *n);
 
 #ifdef CONFIG_STDK_MQTT_USE_SSL
-/**
- * @brief Contains a "SSL handle" data
- */
-typedef struct ssl_ca_crt_key {
-	unsigned char *cacrt;		/**< @brief CA client certification */
-	unsigned int cacrt_len;		/**< @brief length - certification bytes */
-	unsigned char *cert;		/**< @brief certification context*/
-	unsigned int cert_len;		/**< @brief length - certification bytes */
-	unsigned char *key;		/**< @brief private key context */
-	unsigned int key_len;		/**< @brief length - private key bytes */
-} ssl_ca_crt_key_t;
 
 /**
  * @brief Initialize the network structure for SSL connection
  *
  * @param n - iot_net_interface structure
  *
- * @return void
+ * @return iot_error_t
+ * @retval IOT_ERROR_NONE		success
+ * @retval IOT_ERROR_NET_INVALID_INTERFACE	error
  */
-void iot_os_net_ssl_init(iot_net_interface_t *n);
+iot_error_t iot_net_init(iot_net_interface_t *n);
 
 /**
  * @brief Use SSL to connect with server
@@ -125,7 +134,7 @@ void iot_os_net_ssl_init(iot_net_interface_t *n);
  *
  * @return connect status
  */
-int iot_os_net_ssl_connet(iot_net_interface_t *n, char *addr, int port, ssl_ca_crt_key_t *ssl_cck, const SSL_METHOD *method, int verify_mode, unsigned int frag_len);
+int iot_os_net_ssl_connect(iot_net_interface_t *n);
 
  /**
  * @brief disconnect with server SSL connection
@@ -137,5 +146,9 @@ int iot_os_net_ssl_connet(iot_net_interface_t *n, char *addr, int port, ssl_ca_c
 void iot_os_net_ssl_disconnect(iot_net_interface_t *n);
 
 #endif //CONFIG_STDK_MQTT_USE_SSL
+
+#ifdef __cplusplus
+}
+#endif
 
 #endif /* _IOT_NET_H_ */
