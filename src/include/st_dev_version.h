@@ -29,7 +29,7 @@
 #define VER_PATCH	(0)
 
 /* extra: for extra information */
-#define VER_EXTRA_STR	("devel-2")
+#define VER_EXTRA_STR	("devel-3")
 
 /* External Macro for Apps, refer to linux's version.h */
 #define STDK_VERSION(a,b,c)	(((a) << 16) + ((b) << 8) + (c))
