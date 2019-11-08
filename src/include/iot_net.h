@@ -25,6 +25,8 @@
 extern "C" {
 #endif
 
+typedef struct iot_net_interface iot_net_interface_t;
+
 /**
  * @brief Contains server related information
  *
@@ -50,10 +52,18 @@ typedef struct iot_net_interface {
 	/**< @brief contains connection context that depend to net library */
 	iot_net_platform_context_t context;
 
+	/**< @brief connect to server */
+	iot_error_t (*connect)(iot_net_interface_t *);
+	/**< @brief disconnect the server connection */
+	void (*disconnect)(iot_net_interface_t *);
+	/**< @brief check network socket status */
+	int (*select)(iot_net_interface_t *, unsigned int);
 	/**< @brief read from network */
-	int (*read)(struct iot_net_interface *, unsigned char *, int, iot_os_timer);
+	int (*read)(iot_net_interface_t *, unsigned char *, int, iot_os_timer);
 	/**< @brief write to network */
-	int (*write)(struct iot_net_interface *, unsigned char *, int, iot_os_timer);
+	int (*write)(iot_net_interface_t *, unsigned char *, int, iot_os_timer);
+	/**< @brief show socket status on console */
+	void (*show_status)(iot_net_interface_t *);
 } iot_net_interface_t;
 
 /**
@@ -64,20 +74,6 @@ typedef struct iot_net_interface {
  * @return void
  */
 void iot_os_net_print_status(iot_net_interface_t *n);
-
-/**
- * @brief check network socket  status
- *
- * @param n           - iot_net_interface struct
- * @param timeout_ms  - timeout in miliseconds
- *
- * @return
- *              > 0 : there is some data to read
- *              == 0 : there is no data
- *              < 0 : there is error in network
- */
-
-int iot_os_net_select(iot_net_interface_t *n, unsigned int timeout_ms);
 
 /**
  * @brief Initialize the network structure
@@ -120,30 +116,6 @@ void iot_os_net_disconnect(iot_net_interface_t *n);
  * @retval IOT_ERROR_NET_INVALID_INTERFACE	error
  */
 iot_error_t iot_net_init(iot_net_interface_t *n);
-
-/**
- * @brief Use SSL to connect with server
- *
- * @param n           - iot_net_interface struct
- * @param addr        - server address
- * @param port        - server port
- * @param ssl_cck     - client CA, certificate and private key
- * @param method      - SSL context client method
- * @param verify_mode - SSL verifying mode
- * @param frag_len    - SSL read buffer length
- *
- * @return connect status
- */
-int iot_os_net_ssl_connect(iot_net_interface_t *n);
-
- /**
- * @brief disconnect with server SSL connection
- *
- * @param n           - iot_net_interface struct
- *
- * @return void
- */
-void iot_os_net_ssl_disconnect(iot_net_interface_t *n);
 
 #endif //CONFIG_STDK_MQTT_USE_SSL
 

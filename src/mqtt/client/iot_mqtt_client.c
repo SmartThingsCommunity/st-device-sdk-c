@@ -353,7 +353,8 @@ void MQTTCleanSession(MQTTClient *c)
 void MQTTCloseSession(MQTTClient *c)
 {
 	IOT_WARN("mqtt close session");
-	iot_os_net_print_status(c->net);
+	if (c->net && c->net->show_status)
+		c->net->show_status(c->net);
 	c->ping_outstanding = 0;
 	c->ping_retry_count = 0;
 	c->isconnected = 0;
@@ -508,6 +509,7 @@ int MQTTYield(MQTTClient *c, int timeout_ms)
 {
 	int rc = MQTT_SUCCESS;
 	iot_os_timer timer;
+	int ret;
 
 	if (!c->isconnected)
 		return rc;
@@ -516,7 +518,13 @@ int MQTTYield(MQTTClient *c, int timeout_ms)
 	iot_os_timer_count_ms(timer, timeout_ms);
 
 	do {
-		int ret = iot_os_net_select(c->net, iot_os_timer_left_ms(timer));
+		if ((c->net == NULL) || (c->net->select == NULL)) {
+			IOT_ERROR("net->select is null");
+			rc = -1;
+			break;
+		}
+
+		ret = c->net->select(c->net, iot_os_timer_left_ms(timer));
 		if (ret > 0) {
 			iot_os_timer command_timer;
 			iot_os_timer_init(&command_timer);
@@ -540,6 +548,11 @@ void MQTTRun(void *parm)
 	iot_os_timer timer;
 	MQTTClient *c = (MQTTClient *)parm;
 
+	if ((c->net == NULL) || (c->net->select == NULL)) {
+		IOT_ERROR("net->select is null");
+		return;
+	}
+
 	iot_os_timer_init(&timer);
 
 	while (1) {
@@ -554,7 +567,7 @@ void MQTTRun(void *parm)
 			iot_os_thread_delete(NULL);
 		}
 		int rc = MQTT_SUCCESS;
-		int ret = iot_os_net_select(c->net, iot_os_timer_left_ms(timer));
+		int ret = c->net->select(c->net, iot_os_timer_left_ms(timer));
 		if (ret > 0) {
 			iot_os_timer_count_ms(timer, c->command_timeout_ms);
 			rc = cycle(c, timer);
