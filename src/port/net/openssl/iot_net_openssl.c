@@ -26,7 +26,7 @@
 #include "iot_main.h"
 #include "iot_debug.h"
 
-void iot_os_net_print_status(iot_net_interface_t *n)
+static void _iot_net_show_status(iot_net_interface_t *n)
 {
 	struct timeval tv, timeout = {0,};
 	int sock_err = 0;
@@ -46,7 +46,7 @@ void iot_os_net_print_status(iot_net_interface_t *n)
 			FD_ISSET(n->context.socket, &rfdset), FD_ISSET(n->context.socket, &wfdset), sock_err, errno);
 }
 
-int iot_os_net_select(iot_net_interface_t *n, unsigned int timeout_ms)
+static int _iot_net_select(iot_net_interface_t *n, unsigned int timeout_ms)
 {
 	int ret = 0;
 	struct timeval timeout;
@@ -199,7 +199,7 @@ void iot_os_net_init(iot_net_interface_t *n)
 
 #ifdef CONFIG_STDK_MQTT_USE_SSL
 
-static int _os_net_ssl_read(iot_net_interface_t *n, unsigned char *buffer, int len, iot_os_timer timer)
+static int _iot_net_ssl_read(iot_net_interface_t *n, unsigned char *buffer, int len, iot_os_timer timer)
 {
 	int recvLen = 0, rc = 0;
 
@@ -242,7 +242,7 @@ exit:
 	return recvLen;
 }
 
-static int _os_net_ssl_write(iot_net_interface_t *n, unsigned char *buffer, int len, iot_os_timer timer)
+static int _iot_net_ssl_write(iot_net_interface_t *n, unsigned char *buffer, int len, iot_os_timer timer)
 {
 	int sentLen = 0, rc = 0, ret = 0;
 
@@ -291,7 +291,7 @@ static int _os_net_ssl_write(iot_net_interface_t *n, unsigned char *buffer, int 
 	return sentLen;
 }
 
-void iot_os_net_ssl_disconnect(iot_net_interface_t *n)
+static void _iot_net_ssl_disconnect(iot_net_interface_t *n)
 {
 	close(n->context.socket);
 	SSL_free(n->context.ssl);
@@ -299,7 +299,7 @@ void iot_os_net_ssl_disconnect(iot_net_interface_t *n)
 	n->context.read_count = 0;
 }
 
-int iot_os_net_ssl_connect(iot_net_interface_t *n)
+static iot_error_t _iot_net_ssl_connect(iot_net_interface_t *n)
 {
 	struct sockaddr_in sAddr;
 	int retVal = -1;
@@ -374,7 +374,7 @@ int iot_os_net_ssl_connect(iot_net_interface_t *n)
 	if ((retVal = SSL_connect(n->context.ssl)) <= 0) {
 		goto exit3;
 	} else {
-		retVal = 0;
+		retVal = IOT_ERROR_NONE;
 		goto exit;
 	}
 
@@ -384,7 +384,7 @@ exit2:
 	close(n->context.socket);
 exit1:
 	SSL_CTX_free(n->context.ctx);
-	retVal = -1;
+	retVal = IOT_ERROR_NET_CONNECT;
 exit:
 	return retVal;
 }
@@ -398,8 +398,12 @@ iot_error_t iot_net_init(iot_net_interface_t *n)
 
 	memset(n, 0, sizeof(iot_net_interface_t));
 
-	n->read = _os_net_ssl_read;
-	n->write = _os_net_ssl_write;
+	n->connect = _iot_net_ssl_connect;
+	n->disconnect = _iot_net_ssl_disconnect;
+	n->select = _iot_net_select;
+	n->read = _iot_net_ssl_read;
+	n->write = _iot_net_ssl_write;
+	n->show_status = _iot_net_show_status;
 
 	return IOT_ERROR_NONE;
 }

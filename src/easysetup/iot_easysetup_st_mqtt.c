@@ -120,13 +120,18 @@ static iot_error_t _iot_es_st_mqtt_connect(struct iot_mqtt_ctx *target_cli,
 
 	connect_retry = 3;
 	do {
-		if (iot_os_net_ssl_connect(net) != 0) {
-			IOT_ERROR("iot_os_net_ssl_connet failed, retry (%d)", connect_retry);
+		if (net->connect == NULL) {
+			IOT_ERROR("net->connect is null");
+			iot_ret = IOT_ERROR_MQTT_NETCONN_FAIL;
+			break;
+		}
+
+		iot_ret = net->connect(net);
+		if (iot_ret) {
+			IOT_ERROR("net->connect = %d, retry (%d)", iot_ret, connect_retry);
 			iot_ret = IOT_ERROR_MQTT_NETCONN_FAIL;
 			connect_retry--;
 			iot_os_delay(2000);
-		} else {
-			iot_ret = IOT_ERROR_NONE;
 		}
 	} while ((iot_ret != IOT_ERROR_NONE) && connect_retry);
 
@@ -195,7 +200,8 @@ static void _iot_es_st_mqtt_disconnect(struct iot_mqtt_ctx *mqtt_ctx)
 #endif
 	iot_mqtt_disconnect(mqtt_ctx);
 #ifdef CONFIG_STDK_MQTT_USE_SSL
-	iot_os_net_ssl_disconnect(&mqtt_ctx->net);
+	if (mqtt_ctx->net.disconnect != NULL)
+		mqtt_ctx->net.disconnect(&mqtt_ctx->net);
 #else
 	iot_os_net_disconnect(&mqtt_ctx->net);
 #endif
