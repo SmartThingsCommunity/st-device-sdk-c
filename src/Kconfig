@@ -154,4 +154,22 @@ endchoice
 
 endmenu # Crypto
 
+menu "Network"
+    depends on STDK_IOT_CORE
+
+choice STDK_IOT_CORE_NET_INTERFACE
+    prompt "Choose Network interface"
+    default STDK_IOT_CORE_NET_MBEDTLS
+    depends on STDK_IOT_CORE
+    help
+       Choose the network interface library which mqtt want to use
+
+config STDK_IOT_CORE_NET_MBEDTLS
+    bool "mbedTLS"
+config STDK_IOT_CORE_NET_OPENSSL
+    bool "OpenSSL"
+endchoice
+
+endmenu # Network
+
 endmenu # SmartThings IoT Core
