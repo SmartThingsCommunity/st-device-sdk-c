@@ -106,11 +106,15 @@ Like other SDKs, the STDK have platform-dependent and platform-independent direc
 - **iot-core** : IoT core device library will be copied here
   - src
     - include : there are declarations of functions to be ported
-    - **port** : add a new directory of chipset that you want to port
+    - **port** : add a new directory that you want to port
       - **bsp**
         - **esp8266**
         - **posix**
         - **{new chipset}**
+      - **net**
+        - **mbedtls**
+        - **openssl**
+        - **{new library}**
       - **os**
         - **freertos**
         - **posix**
@@ -125,7 +129,7 @@ If you port a new chipset or OS, please submit or inform your porting results to
 
 ## Porting
 
-The IoT core device library has a porting layer to support the use of the same APIs in the device application, even if the platform changes. In the current STDK version, the platform-dependent directories that must be ported are present in the `src/port/bsp` and `src/port/os` of [IoT core device library git repo](https://github.com/SmartThingsCommunity/st-device-sdk-c).
+The IoT core device library has a porting layer to support the use of the same APIs in the device application, even if the platform changes. In the current STDK version, the platform-dependent directories that must be ported are present in the `src/port/bsp`, `src/port/net` and `src/port/os` of [IoT core device library git repo](https://github.com/SmartThingsCommunity/st-device-sdk-c).
 
 <img src="res/st_device_sdk_arch.jpg" style="zoom:80%;" align="left"/>
 
@@ -188,19 +192,21 @@ For additional information about API parameters, please refer to the [API docume
 | void iot_bsp_debug  ( iot_debug_level_t  level,  <br/>  const char *  tag,  <br/>  const char *  fmt,  <br/>    ...  <br/> ) | Write message into the log. <br/>This function is not intended to be used directly. Instead, use one of IOT_ERROR, IOT_WARN, IOT_INFO, IOT_DEBUG macros. |
 | void iot_bsp_debug_check_heap  ( const char *  tag,  <br/>  const char *  func,  <br/>  const int  line,  <br/>  const char *  fmt,  <br/>    ...  <br/> ) | Check memory(heap) status.                                   |
 
+### Network
+
+A Network layer provides the STDK with TLS communication using various TLS/SSL libraries.
+The SmartThings does not support non-TLS communication.
+
+A network interface instance is created via the [`iot_net_init`](https://github.com/SmartThingsCommunity/st-device-sdk-c/blob/master/src/include/iot_easysetup.h#L78) function.
+And the library specific parameter must be implemented in [`iot_net_platform_context_t context`](https://github.com/SmartThingsCommunity/st-device-sdk-c/blob/master/src/include/iot_easysetup.h#L53).
+
+#### Existing implementations
+- [`iot_net_mbedtls.c`](https://github.com/SmartThingsCommunity/st-device-sdk-c/blob/master/src/port/net/mbedtls/iot_net_mbedtls.c)
+- [`iot_net_openssl.c`](https://github.com/SmartThingsCommunity/st-device-sdk-c/blob/master/src/port/net/openssl/iot_net_openssl.c)
+
 ### OS
 
 These APIs are related to operating system.
-
-#### network
-
-| APIs                                                         | Description                       |
-| ------------------------------------------------------------ | --------------------------------- |
-| int iot_os_net_connet  ( iot_net_interface_t *  n,  <br/>  char *  addr,  <br/>  int  port ) | connect with server               |
-| void iot_os_net_disconnect  ( iot_net_interface_t *  n )          | disconnect with server            |
-| void iot_os_net_init  ( iot_net_interface_t *   )                 | Initialize the network structure. |
-| void iot_os_net_print_status  ( iot_net_interface_t *  n )        | print network status              |
-| int iot_os_net_select  ( iot_net_interface_t *  n,  <br/>  unsigned int  timeout_ms ) | check network socket status       |
 
 #### Utils
 
