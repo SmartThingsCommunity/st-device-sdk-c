@@ -5,7 +5,11 @@ include $(TOPDIR)/make/common.mk
 
 BSP_DIR = src/port/bsp/posix
 OS_DIR = src/port/os/posix
+ifneq ($(findstring CONFIG_STDK_IOT_CORE_NET_MBEDTLS, $(CFLAGS_CONFIG)),)
+NET_DIR = src/port/net/mbedtls
+else
 NET_DIR = src/port/net/openssl
+endif
 CRYPTO_DIR = src/crypto
 EASYSETUP_DIR = src/easysetup
 MQTT_DIR = src/mqtt
