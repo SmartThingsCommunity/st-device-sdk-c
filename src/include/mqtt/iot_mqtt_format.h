@@ -18,7 +18,6 @@
 #define MQTTFORMAT_H
 
 #include "iot_mqtt_stacktrace.h"
-#include "iot_mqtt_packet.h"
 
 const char* MQTTPacket_getName(unsigned short packetid);
 int MQTTStringFormat_connect(char* strbuf, int strbuflen, MQTTPacket_connectData* data);
