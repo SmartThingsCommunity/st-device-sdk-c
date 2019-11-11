@@ -112,7 +112,6 @@ static iot_error_t _iot_es_st_mqtt_connect(struct iot_mqtt_ctx *target_cli,
 		goto out;
 	}
 
-	net->context.method = TLSv1_2_client_method();
 	net->connection.url = cloud_prov->broker_url;
 	net->connection.port = cloud_prov->broker_port;
 	net->connection.ca_cert = (const unsigned char *)root_cert;
