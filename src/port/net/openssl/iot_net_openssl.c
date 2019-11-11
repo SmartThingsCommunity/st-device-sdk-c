@@ -398,6 +398,8 @@ iot_error_t iot_net_init(iot_net_interface_t *n)
 
 	memset(n, 0, sizeof(iot_net_interface_t));
 
+	n->context.method = TLSv1_2_client_method();
+
 	n->connect = _iot_net_ssl_connect;
 	n->disconnect = _iot_net_ssl_disconnect;
 	n->select = _iot_net_select;
