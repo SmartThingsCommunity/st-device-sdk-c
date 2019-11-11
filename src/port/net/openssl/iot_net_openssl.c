@@ -58,146 +58,11 @@ static int _iot_net_select(iot_net_interface_t *n, unsigned int timeout_ms)
 	timeout.tv_sec = timeout_ms / 1000;
 	timeout.tv_usec = (timeout_ms % 1000) * 1000;
 
-#ifdef CONFIG_STDK_MQTT_USE_SSL
 	if ((n->context.ssl && SSL_pending(n->context.ssl) > 0) || select(n->context.socket + 1, &fdset, NULL, NULL, &timeout) > 0)
 		ret = 1;
-#else
-	ret = select(n->context.socket + 1, &fdset, NULL, NULL, &timeout);
-#endif
 
 	return ret;
 }
-
-static int _os_net_read(iot_net_interface_t *n, unsigned char *buffer, int len, iot_os_timer timer)
-{
-	int recvLen = 0, rc = 0, ret = 0;
-
-	struct timeval timeout;
-	fd_set fdset;
-
-	FD_ZERO(&fdset);
-	FD_SET(n->context.socket, &fdset);
-
-	timeout.tv_sec = 0;
-	timeout.tv_usec = iot_os_timer_left_ms(timer) * 1000;
-
-	ret = select(n->context.socket + 1, &fdset, NULL, NULL, &timeout);
-
-	if (ret <= 0) {
-		IOT_WARN("iot_os_net_read:select return %d\n", ret);
-		return ret;
-	}
-
-	if (FD_ISSET(n->context.socket, &fdset)) {
-		do {
-			rc = recv(n->context.socket, buffer + recvLen, len - recvLen, MSG_DONTWAIT);
-
-			if (rc > 0) {
-				recvLen += rc;
-			}
-			else if (rc <= 0) {
-				int error = 0;
-				socklen_t err_len = sizeof(error);
-				getsockopt(n->context.socket, SOL_SOCKET, SO_ERROR, &error, &err_len);
-				if (error != 0) {
-					recvLen = -1;
-					IOT_WARN("recv error %d\n", error);
-					break;
-				}
-			}
-		} while (recvLen < len && !iot_os_timer_isexpired(timer));
-	}
-
-	return recvLen;
-}
-
-static int _os_net_write(iot_net_interface_t *n, unsigned char *buffer, int len, iot_os_timer timer)
-{
-	int sentLen = 0, rc = 0, ret = 0;
-
-	struct timeval timeout;
-	fd_set fdset;
-
-	FD_ZERO(&fdset);
-	FD_SET(n->context.socket, &fdset);
-
-	timeout.tv_sec = 0;
-	timeout.tv_usec = iot_os_timer_left_ms(timer) * 1000;
-
-	ret = select(n->context.socket + 1, NULL, &fdset, NULL, &timeout);
-
-	if (ret <= 0) {
-		IOT_WARN("iot_os_net_write:select return %d\n", ret);
-		return ret;
-	}
-
-	if (FD_ISSET(n->context.socket, &fdset)) {
-		do {
-			rc = send(n->context.socket, buffer + sentLen, len - sentLen, 0);
-
-			if (rc > 0) {
-				sentLen += rc;
-			}
-			else if (rc <= 0){
-				int error = 0;
-				socklen_t err_len = sizeof(error);
-				getsockopt(n->context.socket, SOL_SOCKET, SO_ERROR, &error, &err_len);
-				if (error != 0) {
-					sentLen = -1;
-					IOT_WARN("send error %d\n", error);
-					break;
-				}
-			}
-		} while (sentLen < len && !iot_os_timer_isexpired(timer));
-	}
-
-	return sentLen;
-}
-
-void iot_os_net_disconnect(iot_net_interface_t *n)
-{
-	close(n->context.socket);
-}
-
-int iot_os_net_connet(iot_net_interface_t *n, char *addr, int port)
-{
-	struct sockaddr_in sAddr;
-	int retVal = -1;
-	struct hostent *ipAddress;
-
-	if ((ipAddress = gethostbyname(addr)) == 0) {
-		goto exit;
-	}
-
-	sAddr.sin_family = AF_INET;
-	sAddr.sin_addr.s_addr = ((struct in_addr *)(ipAddress->h_addr))->s_addr;
-	sAddr.sin_port = htons(port);
-
-	if ((n->context.socket = socket(AF_INET, SOCK_STREAM, 0)) < 0) {
-		goto exit;
-	}
-
-	if ((retVal = connect(n->context.socket, (struct sockaddr *)&sAddr, sizeof(sAddr))) < 0) {
-		close(n->context.socket);
-		goto exit;
-	}
-
-exit:
-	return retVal;
-}
-
-void iot_os_net_init(iot_net_interface_t *n)
-{
-	n->context.socket = 0;
-	n->read = _os_net_read;
-	n->write = _os_net_write;
-#ifdef CONFIG_STDK_MQTT_USE_SSL
-	n->context.ctx = NULL;
-	n->context.ssl = NULL;
-#endif
-}
-
-#ifdef CONFIG_STDK_MQTT_USE_SSL
 
 static int _iot_net_ssl_read(iot_net_interface_t *n, unsigned char *buffer, int len, iot_os_timer timer)
 {
@@ -304,11 +169,11 @@ static iot_error_t _iot_net_ssl_connect(iot_net_interface_t *n)
 	struct sockaddr_in sAddr;
 	int retVal = -1;
 	struct hostent *ipAddress;
-	#if defined(LWIP_SO_SNDRCVTIMEO_NONSTANDARD) && (LWIP_SO_SNDRCVTIMEO_NONSTANDARD == 0)
+#if defined(LWIP_SO_SNDRCVTIMEO_NONSTANDARD) && (LWIP_SO_SNDRCVTIMEO_NONSTANDARD == 0)
 	struct timeval sock_timeout = {30, 0};
-	#else
+#else
 	unsigned int sock_timeout = 30* 1000;
-	#endif
+#endif
 
 	SSL_library_init();
 
@@ -409,5 +274,3 @@ iot_error_t iot_net_init(iot_net_interface_t *n)
 
 	return IOT_ERROR_NONE;
 }
-
-#endif //CONFIG_STDK_MQTT_USE_SSL

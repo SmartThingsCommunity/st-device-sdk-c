@@ -67,46 +67,6 @@ typedef struct iot_net_interface {
 } iot_net_interface_t;
 
 /**
- * @brief print network status
- *
- * @param n           - iot_net_interface struct
- *
- * @return void
- */
-void iot_os_net_print_status(iot_net_interface_t *n);
-
-/**
- * @brief Initialize the network structure
- *
- * @param n - iot_net_interface struct
- *
- * @return void
- */
-void iot_os_net_init(iot_net_interface_t *);
-
-/**
- * @brief connect with server
- *
- * @param n           - iot_net_interface struct
- * @param addr        - server address
- * @param port        -  server port
- *
- * @return connect status
- */
-int iot_os_net_connet(iot_net_interface_t *n, char *addr, int port);
-
-/**
- * @brief disconnect with server
- *
- * @param n           - iot_net_interface struct
- *
- * @return void
- */
-void iot_os_net_disconnect(iot_net_interface_t *n);
-
-#ifdef CONFIG_STDK_MQTT_USE_SSL
-
-/**
  * @brief Initialize the network structure for SSL connection
  *
  * @param n - iot_net_interface structure
@@ -115,9 +75,7 @@ void iot_os_net_disconnect(iot_net_interface_t *n);
  * @retval IOT_ERROR_NONE		success
  * @retval IOT_ERROR_NET_INVALID_INTERFACE	error
  */
-iot_error_t iot_net_init(iot_net_interface_t *n);
-
-#endif //CONFIG_STDK_MQTT_USE_SSL
+iot_error_t iot_net_init(iot_net_interface_t *net);
 
 #ifdef __cplusplus
 }

@@ -95,13 +95,6 @@ config STDK_IOT_CORE_OS_SUPPORT_FREERTOS
     bool "FreeRTOS"
 endchoice
 
-config STDK_MQTT_USE_SSL
-    bool "Enable MQTT SSL Connection"
-    default y
-    depends on STDK_IOT_CORE
-    help
-        Connecting MQTT broker through SSL
-
 config STDK_DEBUG_MEMORY_CHECK
     bool "Enable debug option to check memory utilization"
     default n

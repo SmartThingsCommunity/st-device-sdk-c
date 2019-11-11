@@ -20,9 +20,7 @@
 #define _IOT_NET_PLATFORM_H_
 
 #include "iot_os_util.h"
-#ifdef CONFIG_STDK_MQTT_USE_SSL
 #include "openssl/ssl.h"
-#endif
 
 #ifdef __cplusplus
 extern "C" {
@@ -34,11 +32,9 @@ extern "C" {
 typedef struct iot_net_platform_context {
 	int socket;			/**< @brief socket handle */
 	int read_count;			/**< @brief number of read data */
-#ifdef CONFIG_STDK_MQTT_USE_SSL
 	SSL *ssl;			/**< @brief SSL Handle */
 	SSL_CTX *ctx;			/**< @brief set SSL context */
 	const SSL_METHOD *method;	/**< @brief set SSL method */
-#endif
 } iot_net_platform_context_t;
 
 #ifdef __cplusplus
