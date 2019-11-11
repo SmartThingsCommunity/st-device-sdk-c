@@ -198,12 +198,8 @@ static void _iot_es_st_mqtt_disconnect(struct iot_mqtt_ctx *mqtt_ctx)
 	MQTTEndTask(&mqtt_ctx->cli);
 #endif
 	iot_mqtt_disconnect(mqtt_ctx);
-#ifdef CONFIG_STDK_MQTT_USE_SSL
 	if (mqtt_ctx->net.disconnect != NULL)
 		mqtt_ctx->net.disconnect(&mqtt_ctx->net);
-#else
-	iot_os_net_disconnect(&mqtt_ctx->net);
-#endif
 }
 
 iot_error_t iot_es_connect(struct iot_context *ctx, int conn_type)
