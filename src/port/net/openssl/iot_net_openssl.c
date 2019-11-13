@@ -26,6 +26,13 @@
 #include "iot_main.h"
 #include "iot_debug.h"
 
+void __SSL_library_init(void)
+{
+	return;
+}
+
+void SSL_library_init(void) __attribute__((weak, alias("__SSL_library_init")));
+
 static void _iot_net_show_status(iot_net_interface_t *n)
 {
 	struct timeval tv, timeout = {0,};
