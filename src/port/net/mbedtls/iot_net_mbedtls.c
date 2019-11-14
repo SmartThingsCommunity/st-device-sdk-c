@@ -134,13 +134,6 @@ static iot_error_t _iot_net_tls_connect(iot_net_interface_t *net)
 		goto exit;
 	}
 
-	/* iot-core passed the certificate without NULL character */
-	net->connection.ca_cert_len += 1;
-
-	IOT_DEBUG("Loading the CA root certificate",
-				net->connection.ca_cert_len,
-				net->connection.ca_cert);
-
 	if ((net->connection.ca_cert == NULL) ||
 	    (net->connection.ca_cert_len == 0)) {
 		IOT_ERROR("ca cert is invalid");
@@ -148,9 +141,14 @@ static iot_error_t _iot_net_tls_connect(iot_net_interface_t *net)
 		goto exit;
 	}
 
+	IOT_INFO("Loading the CA root certificate %d@%p",
+				net->connection.ca_cert_len + 1,
+				net->connection.ca_cert);
+
+	/* iot-core passed the certificate without NULL character */
 	ret = mbedtls_x509_crt_parse(&net->context.cacert,
 				(const unsigned char *)net->connection.ca_cert,
-				net->connection.ca_cert_len);
+				net->connection.ca_cert_len + 1);
 	if (ret) {
 		IOT_ERROR("mbedtls_x509_crt_parse = -0x%04X", -ret);
 		goto exit;
