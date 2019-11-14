@@ -181,7 +181,7 @@ static iot_error_t _iot_net_tls_connect(iot_net_interface_t *net)
 		goto exit;
 	}
 
-	mbedtls_ssl_conf_authmode(&net->context.conf, MBEDTLS_SSL_VERIFY_OPTIONAL);
+	mbedtls_ssl_conf_authmode(&net->context.conf, MBEDTLS_SSL_VERIFY_REQUIRED);
 	mbedtls_ssl_conf_ca_chain(&net->context.conf, &net->context.cacert, NULL);
 	mbedtls_ssl_conf_rng(&net->context.conf, mbedtls_ctr_drbg_random,
 				&net->context.ctr_drbg);
