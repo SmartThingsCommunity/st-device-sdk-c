@@ -444,7 +444,7 @@ static iot_error_t _es_keyinfo_handler(struct iot_context *ctx, char *in_payload
 		goto exit;
 	}
 
-	for (i = 0, j = 0; i < sizeof(rand_asc); i += 2, j++) {
+	for (i = 0, j = 0; i < sizeof(rand_asc) - 1; i += 2, j++) {
 		memcpy(tmp, rand_asc + i, 2);
 		val = (unsigned char)strtol((const char *)tmp, NULL, 16);
 		key_rand[j] = val;
@@ -593,7 +593,7 @@ void st_conn_ownership_confirm(IOT_CTX *iot_ctx, bool confirm)
 	}
 }
 
-static iot_state_t _es_confirm_check_manager(struct iot_context *ctx, enum ownership_validation_feature confirm_feature, char *sn)
+static iot_error_t _es_confirm_check_manager(struct iot_context *ctx, enum ownership_validation_feature confirm_feature, char *sn)
 {
 	char *dev_sn = NULL;
 	unsigned int curr_event = 0;
