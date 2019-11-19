@@ -813,6 +813,14 @@ IOT_CTX* st_conn_init(unsigned char *onboarding_config, unsigned int onboarding_
 
 	IOT_MEM_CHECK("MAIN_INIT_ALL_DONE >>PT<<");
 
+#ifdef VER_EXTRA_STR
+	IOT_INFO("stdk_version : %d.%d.%d-%s",
+		VER_MAJOR, VER_MINOR, VER_PATCH, VER_EXTRA_STR);
+#else
+	IOT_INFO("stdk_version : %d.%d.%d",
+		VER_MAJOR, VER_MINOR, VER_PATCH);
+#endif
+
 	return (IOT_CTX*)ctx;
 
 error_main_task_init:

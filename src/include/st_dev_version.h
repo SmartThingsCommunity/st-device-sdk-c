@@ -28,6 +28,9 @@
 /* patch: bug fix */
 #define VER_PATCH	(0)
 
+/* extra: for extra information */
+#define VER_EXTRA_STR	("devel-2")
+
 /* External Macro for Apps, refer to linux's version.h */
 #define STDK_VERSION(a,b,c)	(((a) << 16) + ((b) << 8) + (c))
 #define STDK_VERSION_CODE	(STDK_VERSION(VER_MAJOR,VER_MINOR,VER_PATCH))
