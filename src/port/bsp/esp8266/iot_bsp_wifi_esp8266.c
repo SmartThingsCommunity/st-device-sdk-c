@@ -83,6 +83,9 @@ static void _obtain_time(void)
 
 static esp_err_t event_handler(void *ctx, system_event_t *event)
 {
+	wifi_ap_record_t ap_info;
+	memset(&ap_info, 0x0, sizeof(wifi_ap_record_t));
+
 	switch(event->event_id) {
 	case SYSTEM_EVENT_STA_START:
 		xEventGroupSetBits(wifi_event_group, WIFI_STA_START_BIT);
@@ -95,15 +98,16 @@ static esp_err_t event_handler(void *ctx, system_event_t *event)
 		break;
 
 	case SYSTEM_EVENT_STA_DISCONNECTED:
-		IOT_WARN("Disconnect reason : %d", event->event_info.disconnected.reason);
+		IOT_INFO("Disconnect reason : %d", event->event_info.disconnected.reason);
 		xEventGroupSetBits(wifi_event_group, WIFI_STA_DISCONNECT_BIT);
 		esp_wifi_connect();
 		xEventGroupClearBits(wifi_event_group, WIFI_STA_CONNECT_BIT);
 		break;
 
 	case SYSTEM_EVENT_STA_GOT_IP:
-		IOT_INFO("got ip:%s",
-				ip4addr_ntoa(&event->event_info.got_ip.ip_info.ip));
+		esp_wifi_sta_get_ap_info(&ap_info);
+		IOT_INFO("got ip:%s rssi:%ddBm",
+			ip4addr_ntoa(&event->event_info.got_ip.ip_info.ip), ap_info.rssi);
 		xEventGroupSetBits(wifi_event_group, WIFI_STA_CONNECT_BIT);
 		xEventGroupClearBits(wifi_event_group, WIFI_STA_DISCONNECT_BIT);
 		break;
