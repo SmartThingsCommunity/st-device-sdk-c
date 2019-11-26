@@ -441,7 +441,7 @@ static iot_error_t _do_iot_main_command(struct iot_context *ctx,
 		case IOT_COMMAND_CLOUD_REGISTERING:
 			/* if there is previous connection, disconnect it first. */
 			if (ctx->client_ctx != NULL) {
-				IOT_INFO("There is active client connection, disconnect it first.\n");
+				IOT_INFO("There is active registering, disconnect it first.\n");
 				iot_es_disconnect(ctx, IOT_CONNECT_TYPE_REGISTRATION);
 			}
 
@@ -491,13 +491,13 @@ static iot_error_t _do_iot_main_command(struct iot_context *ctx,
 		case IOT_COMMAND_CLOUD_CONNECTING:
 			/* if there is previous connection, disconnect it first. */
 			if (ctx->reged_cli != NULL) {
-				IOT_INFO("There is previous client connection, disconnect it first.\n");
+				IOT_INFO("There is previous connecting, disconnect it first.\n");
 				iot_es_disconnect(ctx, IOT_CONNECT_TYPE_COMMUNICATION);
 			}
 
 			err = iot_es_connect(ctx, IOT_CONNECT_TYPE_COMMUNICATION);
 			if (err != IOT_ERROR_NONE) {
-				IOT_ERROR("failed to iot_es_connect for registration\n");
+				IOT_ERROR("failed to iot_es_connect for communication\n");
 				ctx->cmd_err |= (1 << cmd->cmd_type);
 				next_state = IOT_STATE_CHANGE_FAILED;
 				state_opt = ctx->req_state;
