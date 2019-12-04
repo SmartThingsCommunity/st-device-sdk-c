@@ -459,10 +459,6 @@ static iot_error_t _do_iot_main_command(struct iot_context *ctx,
 			break;
 
 		case IOT_COMMAND_CLOUD_REGISTERED:
-			/* we don't need this lookup_id anymore */
-			free(ctx->lookup_id);
-			ctx->lookup_id = NULL;
-
 			if (iot_es_disconnect(ctx, IOT_CONNECT_TYPE_REGISTRATION) != IOT_ERROR_NONE)
 				IOT_ERROR("failed to _iot_es_disconnect for registration\n");
 
@@ -489,6 +485,12 @@ static iot_error_t _do_iot_main_command(struct iot_context *ctx,
 			break;
 
 		case IOT_COMMAND_CLOUD_CONNECTING:
+			/* we don't need this lookup_id anymore */
+			if (ctx->lookup_id) {
+				free(ctx->lookup_id);
+				ctx->lookup_id = NULL;
+			}
+
 			/* if there is previous connection, disconnect it first. */
 			if (ctx->reged_cli != NULL) {
 				IOT_INFO("There is previous connecting, disconnect it first.\n");
