@@ -218,6 +218,7 @@ iot_error_t iot_bsp_wifi_set_mode(iot_wifi_conf *conf)
 
 			if(uxBits & WIFI_AP_STOP_BIT) {
 				IOT_INFO("AP Mode stopped");
+				IOT_DELAY(500);
 			}
 			else {
 				IOT_ERROR("WIFI_AP_STOP_BIT event Timeout");
@@ -227,16 +228,12 @@ iot_error_t iot_bsp_wifi_set_mode(iot_wifi_conf *conf)
 
 		str_len = strlen(conf->ssid);
 		if(str_len) {
-			memcpy(wifi_config.sta.ssid, conf->ssid, str_len);
-			if (str_len < IOT_WIFI_MAX_SSID_LEN)
-				wifi_config.sta.ssid[str_len] = '\0';
+			memcpy(wifi_config.sta.ssid, conf->ssid, (str_len > IOT_WIFI_MAX_SSID_LEN) ? IOT_WIFI_MAX_SSID_LEN : str_len);
 		}
 
 		str_len = strlen(conf->pass);
 		if(str_len) {
-			memcpy(wifi_config.sta.password, conf->pass, str_len);
-			if (str_len < IOT_WIFI_MAX_PASS_LEN)
-				wifi_config.sta.password[str_len] = '\0';
+			memcpy(wifi_config.sta.password, conf->pass, (str_len > IOT_WIFI_MAX_PASS_LEN) ? IOT_WIFI_MAX_PASS_LEN : str_len);
 		}
 
 		str_len = strlen((char *)conf->bssid);
@@ -279,18 +276,14 @@ iot_error_t iot_bsp_wifi_set_mode(iot_wifi_conf *conf)
 	case IOT_WIFI_MODE_SOFTAP:
 
 		str_len = strlen(conf->ssid);
-		memcpy(wifi_config.ap.ssid, conf->ssid, str_len);
-		if (str_len < IOT_WIFI_MAX_SSID_LEN)
-			wifi_config.sta.ssid[str_len] = '\0';
+		memcpy(wifi_config.ap.ssid, conf->ssid, (str_len > IOT_WIFI_MAX_SSID_LEN) ? IOT_WIFI_MAX_SSID_LEN : str_len);
 
 		str_len =  strlen(conf->pass);
-		memcpy(wifi_config.ap.password, conf->pass, str_len);
-		if (str_len < IOT_WIFI_MAX_PASS_LEN)
-			wifi_config.sta.password[str_len] = '\0';
+		memcpy(wifi_config.ap.password, conf->pass, (str_len > IOT_WIFI_MAX_PASS_LEN) ? IOT_WIFI_MAX_PASS_LEN : str_len);
 
 		wifi_config.ap.ssid_len = strlen(conf->ssid);
 		wifi_config.ap.max_connection = 1;
-		wifi_config.ap.channel = 1;
+		wifi_config.ap.channel = IOT_SOFT_AP_CHANNEL;
 		wifi_config.ap.beacon_interval = 100;
 		wifi_config.ap.ssid_hidden = false;
 
