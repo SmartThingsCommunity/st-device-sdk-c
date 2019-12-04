@@ -64,8 +64,8 @@ typedef enum {
  */
 typedef struct {
 	iot_wifi_mode_t mode;					/**< @brief wifi operation mode */
-	char ssid[IOT_WIFI_MAX_SSID_LEN];		/**< @brief wifi SSID string */
-	char pass[IOT_WIFI_MAX_PASS_LEN];		/**< @brief wifi password string */
+	char ssid[IOT_WIFI_MAX_SSID_LEN+1];		/**< @brief wifi SSID string */
+	char pass[IOT_WIFI_MAX_PASS_LEN+1];		/**< @brief wifi password string */
 	uint8_t bssid[IOT_WIFI_MAX_BSSID_LEN];	/**< @brief wifi mac address */
 } iot_wifi_conf;
 

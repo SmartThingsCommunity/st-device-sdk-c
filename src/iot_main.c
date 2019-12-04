@@ -1034,7 +1034,7 @@ static iot_error_t _do_state_updating(struct iot_context *ctx,
  		}
 
 		/*wifi soft-ap mode w/ ssid E4 format*/
-		iot_err = iot_easysetup_create_ssid(&(ctx->devconf), wifi_conf.ssid, sizeof(wifi_conf.ssid));
+		iot_err = iot_easysetup_create_ssid(&(ctx->devconf), wifi_conf.ssid, IOT_WIFI_MAX_SSID_LEN);
 		if (iot_err != IOT_ERROR_NONE) {
 			IOT_ERROR("Can't create ssid for easysetup.(%d)", iot_err);
  			break;
