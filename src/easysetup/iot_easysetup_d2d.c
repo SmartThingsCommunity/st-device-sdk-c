@@ -1028,6 +1028,8 @@ static iot_error_t _es_wifi_prov_parse(struct iot_context *ctx, char *in_payload
 		goto wifi_parse_out;
 	}
 
+	memset(wifi_prov, 0, sizeof(struct iot_wifi_prov_data));
+
 	if ((item = cJSON_GetObjectItem(wifi_credential, "ssid")) == NULL) {
 		IOT_ERROR("failed to find ssid");
 		err = IOT_ERROR_EASYSETUP_INVALID_REQUEST;
@@ -1109,6 +1111,8 @@ static iot_error_t _es_cloud_prov_parse(char *in_payload)
 		err = IOT_ERROR_MEM_ALLOC;
 		goto cloud_parse_out;
 	}
+
+	memset(cloud_prov, 0, sizeof(struct iot_cloud_prov_data));
 
 	if ((full_url = _es_json_parse_string(root, "brokerUrl")) == NULL) {
 		IOT_ERROR("failed to find brokerUrl");
