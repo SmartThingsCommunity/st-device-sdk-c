@@ -2606,7 +2606,7 @@ http_accept(void *arg, struct tcp_pcb *pcb, err_t err)
  * @ingroup httpd
  * Initialize the httpd: set up a listening PCB and bind it to the defined port
  */
-void* httpd_init(void)
+void* es_httpd_init(void)
 {
   struct tcp_pcb *pcb;
   err_t err;
@@ -2639,7 +2639,7 @@ void* httpd_init(void)
   return (void*) pcb;
 }
 
-void httpd_deinit(void *handle)
+void es_httpd_deinit(void *handle)
 {
   struct tcp_pcb *pcb = (struct tcp_pcb*) handle;
   if (pcb) {

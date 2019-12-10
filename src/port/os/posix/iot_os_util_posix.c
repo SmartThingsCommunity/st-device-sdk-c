@@ -25,6 +25,7 @@
 #include <time.h>
 #include <string.h>
 #include <unistd.h>
+#include <signal.h>
 #include "iot_error.h"
 #include "iot_os_util.h"
 #include "iot_bsp_random.h"

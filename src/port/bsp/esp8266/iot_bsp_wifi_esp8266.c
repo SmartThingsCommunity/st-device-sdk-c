@@ -83,6 +83,9 @@ static void _obtain_time(void)
 
 static esp_err_t event_handler(void *ctx, system_event_t *event)
 {
+	wifi_ap_record_t ap_info;
+	memset(&ap_info, 0x0, sizeof(wifi_ap_record_t));
+
 	switch(event->event_id) {
 	case SYSTEM_EVENT_STA_START:
 		xEventGroupSetBits(wifi_event_group, WIFI_STA_START_BIT);
@@ -95,15 +98,16 @@ static esp_err_t event_handler(void *ctx, system_event_t *event)
 		break;
 
 	case SYSTEM_EVENT_STA_DISCONNECTED:
-		IOT_WARN("Disconnect reason : %d", event->event_info.disconnected.reason);
+		IOT_INFO("Disconnect reason : %d", event->event_info.disconnected.reason);
 		xEventGroupSetBits(wifi_event_group, WIFI_STA_DISCONNECT_BIT);
 		esp_wifi_connect();
 		xEventGroupClearBits(wifi_event_group, WIFI_STA_CONNECT_BIT);
 		break;
 
 	case SYSTEM_EVENT_STA_GOT_IP:
-		IOT_INFO("got ip:%s",
-				ip4addr_ntoa(&event->event_info.got_ip.ip_info.ip));
+		esp_wifi_sta_get_ap_info(&ap_info);
+		IOT_INFO("got ip:%s rssi:%ddBm",
+			ip4addr_ntoa(&event->event_info.got_ip.ip_info.ip), ap_info.rssi);
 		xEventGroupSetBits(wifi_event_group, WIFI_STA_CONNECT_BIT);
 		xEventGroupClearBits(wifi_event_group, WIFI_STA_DISCONNECT_BIT);
 		break;
@@ -224,16 +228,12 @@ iot_error_t iot_bsp_wifi_set_mode(iot_wifi_conf *conf)
 
 		str_len = strlen(conf->ssid);
 		if(str_len) {
-			memcpy(wifi_config.sta.ssid, conf->ssid, str_len);
-			if (str_len < IOT_WIFI_MAX_SSID_LEN)
-				wifi_config.sta.ssid[str_len] = '\0';
+			memcpy(wifi_config.sta.ssid, conf->ssid, (str_len > IOT_WIFI_MAX_SSID_LEN) ? IOT_WIFI_MAX_SSID_LEN : str_len);
 		}
 
 		str_len = strlen(conf->pass);
 		if(str_len) {
-			memcpy(wifi_config.sta.password, conf->pass, str_len);
-			if (str_len < IOT_WIFI_MAX_PASS_LEN)
-				wifi_config.sta.password[str_len] = '\0';
+			memcpy(wifi_config.sta.password, conf->pass, (str_len > IOT_WIFI_MAX_PASS_LEN) ? IOT_WIFI_MAX_PASS_LEN : str_len);
 		}
 
 		str_len = strlen((char *)conf->bssid);
@@ -276,18 +276,14 @@ iot_error_t iot_bsp_wifi_set_mode(iot_wifi_conf *conf)
 	case IOT_WIFI_MODE_SOFTAP:
 
 		str_len = strlen(conf->ssid);
-		memcpy(wifi_config.ap.ssid, conf->ssid, str_len);
-		if (str_len < IOT_WIFI_MAX_SSID_LEN)
-			wifi_config.sta.ssid[str_len] = '\0';
+		memcpy(wifi_config.ap.ssid, conf->ssid, (str_len > IOT_WIFI_MAX_SSID_LEN) ? IOT_WIFI_MAX_SSID_LEN : str_len);
 
 		str_len =  strlen(conf->pass);
-		memcpy(wifi_config.ap.password, conf->pass, str_len);
-		if (str_len < IOT_WIFI_MAX_PASS_LEN)
-			wifi_config.sta.password[str_len] = '\0';
+		memcpy(wifi_config.ap.password, conf->pass, (str_len > IOT_WIFI_MAX_PASS_LEN) ? IOT_WIFI_MAX_PASS_LEN : str_len);
 
 		wifi_config.ap.ssid_len = strlen(conf->ssid);
 		wifi_config.ap.max_connection = 1;
-		wifi_config.ap.channel = 1;
+		wifi_config.ap.channel = IOT_SOFT_AP_CHANNEL;
 		wifi_config.ap.beacon_interval = 100;
 		wifi_config.ap.ssid_hidden = false;
 

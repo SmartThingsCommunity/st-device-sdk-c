@@ -20,8 +20,9 @@
 #include <string.h>
 #include <stdlib.h>
 #include <stdbool.h>
+
+#include "iot_main.h"
 #include "iot_debug.h"
-#include "iot_mqtt_client.h"
 
 static void NewMessageData(MessageData *md, MQTTString *aTopicName, MQTTMessage *aMessage)
 {
@@ -40,7 +41,7 @@ static int sendPacket(MQTTClient *c, int length, iot_os_timer timer)
 		sent = 0;
 
 	while (sent < length && !iot_os_timer_isexpired(timer)) {
-		rc = c->ipstack->write(c->ipstack, &c->buf[sent], length, timer);
+		rc = c->net->write(c->net, &c->buf[sent], length, timer);
 
 		if (rc < 0) { // there was an error writing the data
 			break;
@@ -59,11 +60,11 @@ static int sendPacket(MQTTClient *c, int length, iot_os_timer timer)
 	return rc;
 }
 
-bool MQTTClientInit(MQTTClient *c, iot_net_socket *network, unsigned int command_timeout_ms,
+bool MQTTClientInit(MQTTClient *c, iot_net_interface_t *network, unsigned int command_timeout_ms,
 		unsigned char *sendbuf, size_t sendbuf_size, unsigned char *readbuf, size_t readbuf_size)
 {
 	int i;
-	c->ipstack = network;
+	c->net = network;
 
 	for (i = 0; i < MAX_MESSAGE_HANDLERS; ++i) {
 		c->messageHandlers[i].topicFilter = 0;
@@ -142,7 +143,7 @@ static int decodePacket(MQTTClient *c, int *value, iot_os_timer timer)
 			goto exit;
 		}
 
-		rc = c->ipstack->read(c->ipstack, &i, 1, timer);
+		rc = c->net->read(c->net, &i, 1, timer);
 
 		if (rc != 1) {
 			goto exit;
@@ -166,10 +167,10 @@ static int readPacket(MQTTClient *c, iot_os_timer timer)
 #if defined(CONFIG_STDK_MQTT_DYNAMIC_BUFFER)
 	unsigned char i;
 	/* 1. read the header byte.  This has the packet type in it */
-	int rc = c->ipstack->read(c->ipstack, &i, 1, timer);
+	int rc = c->net->read(c->net, &i, 1, timer);
 #else
 	/* 1. read the header byte.  This has the packet type in it */
-	int rc = c->ipstack->read(c->ipstack, c->readbuf, 1, timer);
+	int rc = c->net->read(c->net, c->readbuf, 1, timer);
 #endif
 
 	if (rc != 1) {
@@ -205,7 +206,7 @@ static int readPacket(MQTTClient *c, iot_os_timer timer)
 #endif
 
 	/* 3. read the rest of the buffer using a callback to supply the rest of the data */
-	if (rem_len > 0 && (rc = c->ipstack->read(c->ipstack, c->readbuf + len, rem_len, timer) != rem_len)) {
+	if (rem_len > 0 && (rc = c->net->read(c->net, c->readbuf + len, rem_len, timer) != rem_len)) {
 		rc = 0;
 		goto exit;
 	}
@@ -352,7 +353,8 @@ void MQTTCleanSession(MQTTClient *c)
 void MQTTCloseSession(MQTTClient *c)
 {
 	IOT_WARN("mqtt close session");
-	iot_os_net_print_status(c->ipstack);
+	if (c->net && c->net->show_status)
+		c->net->show_status(c->net);
 	c->ping_outstanding = 0;
 	c->ping_retry_count = 0;
 	c->isconnected = 0;
@@ -507,6 +509,7 @@ int MQTTYield(MQTTClient *c, int timeout_ms)
 {
 	int rc = MQTT_SUCCESS;
 	iot_os_timer timer;
+	int ret;
 
 	if (!c->isconnected)
 		return rc;
@@ -515,7 +518,13 @@ int MQTTYield(MQTTClient *c, int timeout_ms)
 	iot_os_timer_count_ms(timer, timeout_ms);
 
 	do {
-		int ret = iot_os_net_select(c->ipstack, iot_os_timer_left_ms(timer));
+		if ((c->net == NULL) || (c->net->select == NULL)) {
+			IOT_ERROR("net->select is null");
+			rc = -1;
+			break;
+		}
+
+		ret = c->net->select(c->net, iot_os_timer_left_ms(timer));
 		if (ret > 0) {
 			iot_os_timer command_timer;
 			iot_os_timer_init(&command_timer);
@@ -539,6 +548,11 @@ void MQTTRun(void *parm)
 	iot_os_timer timer;
 	MQTTClient *c = (MQTTClient *)parm;
 
+	if ((c->net == NULL) || (c->net->select == NULL)) {
+		IOT_ERROR("net->select is null");
+		return;
+	}
+
 	iot_os_timer_init(&timer);
 
 	while (1) {
@@ -553,7 +567,7 @@ void MQTTRun(void *parm)
 			iot_os_thread_delete(NULL);
 		}
 		int rc = MQTT_SUCCESS;
-		int ret = iot_os_net_select(c->ipstack, iot_os_timer_left_ms(timer));
+		int ret = c->net->select(c->net, iot_os_timer_left_ms(timer));
 		if (ret > 0) {
 			iot_os_timer_count_ms(timer, c->command_timeout_ms);
 			rc = cycle(c, timer);

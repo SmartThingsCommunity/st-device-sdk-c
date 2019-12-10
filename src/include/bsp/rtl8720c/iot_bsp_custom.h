@@ -16,20 +16,9 @@
  *
  ****************************************************************************/
 
-#ifndef _ST_DEV_VERSION_H_
-#define _ST_DEV_VERSION_H_
+#ifndef _IOT_BSP_CUSTOM_H_
+#define _IOT_BSP_CUSTOM_H_
 
-/* major: api incompatible */
-#define VER_MAJOR	(1)
+#include "sdkconfig.h"
 
-/* minor: feature added. keep api backward compatibility */
-#define VER_MINOR	(0)
-
-/* patch: bug fix */
-#define VER_PATCH	(9)
-
-/* External Macro for Apps, refer to linux's version.h */
-#define STDK_VERSION(a,b,c)	(((a) << 16) + ((b) << 8) + (c))
-#define STDK_VERSION_CODE	(STDK_VERSION(VER_MAJOR,VER_MINOR,VER_PATCH))
-
-#endif /* _ST_DEV_VERSION_H_ */
+#endif /* _IOT_BSP_CUSTOM_H_ */

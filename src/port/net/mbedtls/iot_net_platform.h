@@ -16,20 +16,31 @@
  *
  ****************************************************************************/
 
-#ifndef _ST_DEV_VERSION_H_
-#define _ST_DEV_VERSION_H_
+#ifndef _IOT_NET_PLATFORM_H_
+#define _IOT_NET_PLATFORM_H_
 
-/* major: api incompatible */
-#define VER_MAJOR	(1)
+#include "mbedtls/platform.h"
+#include "mbedtls/net.h"
+#include "mbedtls/ssl.h"
+#include "mbedtls/entropy.h"
+#include "mbedtls/ctr_drbg.h"
+#include "mbedtls/certs.h"
+#include "mbedtls/x509.h"
 
-/* minor: feature added. keep api backward compatibility */
-#define VER_MINOR	(0)
+#ifdef __cplusplus
+extern "C" {
+#endif
 
-/* patch: bug fix */
-#define VER_PATCH	(9)
+typedef struct iot_net_platform_context {
+	mbedtls_net_context server_fd;
 
-/* External Macro for Apps, refer to linux's version.h */
-#define STDK_VERSION(a,b,c)	(((a) << 16) + ((b) << 8) + (c))
-#define STDK_VERSION_CODE	(STDK_VERSION(VER_MAJOR,VER_MINOR,VER_PATCH))
+	mbedtls_ssl_context ssl;
+	mbedtls_ssl_config conf;
 
-#endif /* _ST_DEV_VERSION_H_ */
+	mbedtls_entropy_context entropy;
+	mbedtls_ctr_drbg_context ctr_drbg;
+
+	mbedtls_x509_crt cacert;
+} iot_net_platform_context_t;
+
+#endif /* _IOT_NET_PLATFORM_H_ */

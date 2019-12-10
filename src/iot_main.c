@@ -441,7 +441,7 @@ static iot_error_t _do_iot_main_command(struct iot_context *ctx,
 		case IOT_COMMAND_CLOUD_REGISTERING:
 			/* if there is previous connection, disconnect it first. */
 			if (ctx->client_ctx != NULL) {
-				IOT_INFO("There is active client connection, disconnect it first.\n");
+				IOT_INFO("There is active registering, disconnect it first.\n");
 				iot_es_disconnect(ctx, IOT_CONNECT_TYPE_REGISTRATION);
 			}
 
@@ -459,10 +459,6 @@ static iot_error_t _do_iot_main_command(struct iot_context *ctx,
 			break;
 
 		case IOT_COMMAND_CLOUD_REGISTERED:
-			/* we don't need this lookup_id anymore */
-			free(ctx->lookup_id);
-			ctx->lookup_id = NULL;
-
 			if (iot_es_disconnect(ctx, IOT_CONNECT_TYPE_REGISTRATION) != IOT_ERROR_NONE)
 				IOT_ERROR("failed to _iot_es_disconnect for registration\n");
 
@@ -489,15 +485,21 @@ static iot_error_t _do_iot_main_command(struct iot_context *ctx,
 			break;
 
 		case IOT_COMMAND_CLOUD_CONNECTING:
+			/* we don't need this lookup_id anymore */
+			if (ctx->lookup_id) {
+				free(ctx->lookup_id);
+				ctx->lookup_id = NULL;
+			}
+
 			/* if there is previous connection, disconnect it first. */
 			if (ctx->reged_cli != NULL) {
-				IOT_INFO("There is previous client connection, disconnect it first.\n");
+				IOT_INFO("There is previous connecting, disconnect it first.\n");
 				iot_es_disconnect(ctx, IOT_CONNECT_TYPE_COMMUNICATION);
 			}
 
 			err = iot_es_connect(ctx, IOT_CONNECT_TYPE_COMMUNICATION);
 			if (err != IOT_ERROR_NONE) {
-				IOT_ERROR("failed to iot_es_connect for registration\n");
+				IOT_ERROR("failed to iot_es_connect for communication\n");
 				ctx->cmd_err |= (1 << cmd->cmd_type);
 				next_state = IOT_STATE_CHANGE_FAILED;
 				state_opt = ctx->req_state;
@@ -813,6 +815,14 @@ IOT_CTX* st_conn_init(unsigned char *onboarding_config, unsigned int onboarding_
 
 	IOT_MEM_CHECK("MAIN_INIT_ALL_DONE >>PT<<");
 
+#ifdef VER_EXTRA_STR
+	IOT_INFO("stdk_version : %d.%d.%d-%s",
+		VER_MAJOR, VER_MINOR, VER_PATCH, VER_EXTRA_STR);
+#else
+	IOT_INFO("stdk_version : %d.%d.%d",
+		VER_MAJOR, VER_MINOR, VER_PATCH);
+#endif
+
 	return (IOT_CTX*)ctx;
 
 error_main_task_init:
@@ -1026,7 +1036,7 @@ static iot_error_t _do_state_updating(struct iot_context *ctx,
  		}
 
 		/*wifi soft-ap mode w/ ssid E4 format*/
-		iot_err = iot_easysetup_create_ssid(&(ctx->devconf), wifi_conf.ssid, sizeof(wifi_conf.ssid));
+		iot_err = iot_easysetup_create_ssid(&(ctx->devconf), wifi_conf.ssid, IOT_WIFI_MAX_SSID_LEN);
 		if (iot_err != IOT_ERROR_NONE) {
 			IOT_ERROR("Can't create ssid for easysetup.(%d)", iot_err);
  			break;

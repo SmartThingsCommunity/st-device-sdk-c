@@ -29,7 +29,7 @@ extern "C" {
 #define IOT_WIFI_MAX_SSID_LEN	(32)
 #define IOT_WIFI_MAX_PASS_LEN	(64)
 #define IOT_WIFI_MAX_BSSID_LEN (6)
-#define IOT_WIFI_MAX_SCAN_RESULT (10)
+#define IOT_WIFI_MAX_SCAN_RESULT (20)
 #define IOT_SOFT_AP_CHANNEL (1)
 #define IOT_WIFI_CMD_TIMEOUT	5000
 
@@ -64,8 +64,8 @@ typedef enum {
  */
 typedef struct {
 	iot_wifi_mode_t mode;					/**< @brief wifi operation mode */
-	char ssid[IOT_WIFI_MAX_SSID_LEN];		/**< @brief wifi SSID string */
-	char pass[IOT_WIFI_MAX_PASS_LEN];		/**< @brief wifi password string */
+	char ssid[IOT_WIFI_MAX_SSID_LEN+1];		/**< @brief wifi SSID string */
+	char pass[IOT_WIFI_MAX_PASS_LEN+1];		/**< @brief wifi password string */
 	uint8_t bssid[IOT_WIFI_MAX_BSSID_LEN];	/**< @brief wifi mac address */
 } iot_wifi_conf;
 

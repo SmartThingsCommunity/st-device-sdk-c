@@ -37,7 +37,6 @@ extern "C" {
 
 #include <stdbool.h>
 #include "iot_mqtt_packet.h"
-#include "iot_os_net.h"
 #include "iot_os_util.h"
 
 #define MAX_PACKET_ID 65535 /* according to the MQTT specification - do not change! */
@@ -124,7 +123,7 @@ struct MQTTClient {
 	void (*defaultMessageHandler)(MessageData *, void *);
 	void *defaultUserData;
 
-	iot_net_socket *ipstack;
+	iot_net_interface_t *net;
 	iot_os_timer last_sent, last_received, ping_wait;
 #if defined(STDK_MQTT_TASK)
 	iot_os_mutex mutex;
@@ -142,7 +141,7 @@ struct MQTTClient {
  * @param command_timeout_ms
  * @param
  */
-DLLExport bool MQTTClientInit(MQTTClient *client, iot_net_socket *network, unsigned int command_timeout_ms,
+DLLExport bool MQTTClientInit(MQTTClient *client, iot_net_interface_t *network, unsigned int command_timeout_ms,
 							  unsigned char *sendbuf, size_t sendbuf_size, unsigned char *readbuf, size_t readbuf_size);
 
 /** MQTT Connect - send an MQTT connect packet down the network and wait for a Connack

@@ -20,12 +20,12 @@
 #define _IOT_MAIN_H_
 
 #include "st_dev.h"
-#include "iot_mqtt_client.h"
 #include "iot_error.h"
 #include "iot_bsp_wifi.h"
 #include "iot_os_util.h"
 #include "iot_crypto.h"
-#include "iot_os_net.h"
+#include "iot_net.h"
+#include "iot_mqtt_client.h"
 
 #define IOT_WIFI_PROV_SSID_LEN		(31 + 1)
 #define IOT_WIFI_PROV_PASSWORD_LEN 	(63 + 1)
@@ -192,7 +192,7 @@ struct iot_registered_data {
  * @brief Contains "mqtt handling context" data
  */
 struct iot_mqtt_ctx {
-	iot_net_socket net;		/**< @brief network management handle for mqtt */
+	iot_net_interface_t net;		/**< @brief network management handle for mqtt */
 	MQTTClient cli;			/**< @brief mqtt client handle for iot_core */
 	bool mqtt_connected;	/**< @brief mqtt connected status */
 

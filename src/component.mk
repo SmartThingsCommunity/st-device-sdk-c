@@ -17,6 +17,12 @@ else ifeq ($(CONFIG_STDK_IOT_CORE_BSP_SUPPORT_ESP32),y)
 else ifeq ($(CONFIG_STDK_IOT_CORE_BSP_SUPPORT_RTL8195),y)
 	COMPONENT_SRCDIRS += port/bsp/rtl8195
 	COMPONENT_ADD_INCLUDEDIRS += include/bsp/rtl8195
+else ifeq ($(CONFIG_STDK_IOT_CORE_BSP_SUPPORT_RTL8720C),y)
+        COMPONENT_SRCDIRS += port/bsp/rtl8720c
+        COMPONENT_ADD_INCLUDEDIRS += include/bsp/rtl8720c
+else ifeq ($(CONFIG_STDK_IOT_CORE_BSP_SUPPORT_RTL8721C),y)
+	COMPONENT_SRCDIRS += port/bsp/rtl8721c
+	COMPONENT_ADD_INCLUDEDIRS += include/bsp/rtl8721c
 else
 	COMPONENT_SRCDIRS += port/bsp/posix
 	COMPONENT_ADD_INCLUDEDIRS += include/bsp/posix
@@ -27,6 +33,14 @@ ifeq ($(CONFIG_STDK_IOT_CORE_OS_SUPPORT_FREERTOS),y)
 	COMPONENT_SRCDIRS += port/os/freertos
 else
 	COMPONENT_SRCDIRS += port/os/posix
+endif
+
+ifeq ($(CONFIG_STDK_IOT_CORE_NET_MBEDTLS),y)
+	COMPONENT_SRCDIRS += port/net/mbedtls
+	COMPONENT_ADD_INCLUDEDIRS += port/net/mbedtls
+else
+	COMPONENT_SRCDIRS += port/net/openssl
+	COMPONENT_ADD_INCLUDEDIRS += port/net/openssl
 endif
 
 COMPONENT_SRCDIRS += crypto
@@ -73,7 +87,7 @@ $(shell rm $(ROOT_CA_BACKUP_FILE))
 CFLAGS += -std=c99
 
 else
-# Disable SmartThing Device Kit support
+# Disable SmartThing Device SDK support
 COMPONENT_ADD_INCLUDEDIRS :=
 COMPONENT_SRCDIRS :=
 endif

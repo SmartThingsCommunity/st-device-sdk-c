@@ -16,20 +16,29 @@
  *
  ****************************************************************************/
 
-#ifndef _ST_DEV_VERSION_H_
-#define _ST_DEV_VERSION_H_
+#ifndef _IOT_NET_PLATFORM_H_
+#define _IOT_NET_PLATFORM_H_
 
-/* major: api incompatible */
-#define VER_MAJOR	(1)
+#include "iot_os_util.h"
+#include "openssl/ssl.h"
 
-/* minor: feature added. keep api backward compatibility */
-#define VER_MINOR	(0)
+#ifdef __cplusplus
+extern "C" {
+#endif
 
-/* patch: bug fix */
-#define VER_PATCH	(9)
+/**
+ * @brief Contains connection context
+ */
+typedef struct iot_net_platform_context {
+	int socket;			/**< @brief socket handle */
+	int read_count;			/**< @brief number of read data */
+	SSL *ssl;			/**< @brief SSL Handle */
+	SSL_CTX *ctx;			/**< @brief set SSL context */
+	const SSL_METHOD *method;	/**< @brief set SSL method */
+} iot_net_platform_context_t;
 
-/* External Macro for Apps, refer to linux's version.h */
-#define STDK_VERSION(a,b,c)	(((a) << 16) + ((b) << 8) + (c))
-#define STDK_VERSION_CODE	(STDK_VERSION(VER_MAJOR,VER_MINOR,VER_PATCH))
+#ifdef __cplusplus
+}
+#endif
 
-#endif /* _ST_DEV_VERSION_H_ */
+#endif /* _IOT_NET_PLATFORM_H_ */
