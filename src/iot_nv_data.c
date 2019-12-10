@@ -588,6 +588,7 @@ iot_error_t iot_nv_set_cloud_prov_data(struct iot_cloud_prov_data* cloud_prov)
 	unsigned int size;
 	int state;
 	char* data = NULL;
+	char valid_id;
 
 	data = malloc(sizeof(char) * DATA_SIZE);
 	IOT_WARN_CHECK(data == NULL, IOT_ERROR_NV_DATA_ERROR, "memory alloc fail");
@@ -637,9 +638,12 @@ iot_error_t iot_nv_set_cloud_prov_data(struct iot_cloud_prov_data* cloud_prov)
 	}
 
 	/* IOT_NVD_LOCATION_ID */
-	if (&cloud_prov->location_id == NULL) {
-		iot_nv_erase(IOT_NVD_LOCATION_ID);
-	} else {
+	valid_id = 0;
+	for (int i = 0; i < sizeof(cloud_prov->location_id.id); i++) {
+		valid_id |= cloud_prov->location_id.id[i];
+	}
+
+	if (valid_id) {
 		size = DATA_SIZE;
 		ret = iot_util_convert_uuid_str(&cloud_prov->location_id, data, size);
 		if (ret != IOT_ERROR_NONE) {
@@ -655,13 +659,17 @@ iot_error_t iot_nv_set_cloud_prov_data(struct iot_cloud_prov_data* cloud_prov)
 			ret = IOT_ERROR_NV_DATA_ERROR;
 			goto exit;
 		}
+	} else {
+		iot_nv_erase(IOT_NVD_LOCATION_ID);
 	}
 
 	/* IOT_NVD_ROOM_ID */
-	if (&cloud_prov->room_id == NULL) {
-		IOT_ERROR("yaho~");
-		iot_nv_erase(IOT_NVD_ROOM_ID);
-	} else {
+	valid_id = 0;
+	for (int i = 0; i < sizeof(cloud_prov->room_id.id); i++) {
+		valid_id |= cloud_prov->room_id.id[i];
+	}
+
+	if (valid_id) {
 		size = DATA_SIZE;
 		ret = iot_util_convert_uuid_str(&cloud_prov->room_id, data, size);
 		if (ret != IOT_ERROR_NONE) {
@@ -677,6 +685,8 @@ iot_error_t iot_nv_set_cloud_prov_data(struct iot_cloud_prov_data* cloud_prov)
 			ret = IOT_ERROR_NV_DATA_ERROR;
 			goto exit;
 		}
+	} else {
+		iot_nv_erase(IOT_NVD_ROOM_ID);
 	}
 
 	/* IOT_NVD_LABEL */
