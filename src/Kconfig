@@ -2,6 +2,7 @@ menu "SmartThings IoT Core"
 
 config STDK_IOT_CORE
     bool "Enable SmartThings IoT Core"
+    select STDK_IOT_CORE_EASYSETUP_HTTP
     help
        Select this option to enable support for the Samsung SmartThings
        IoT Core via the esp-idf component for the Samsung SmartThings IoT Device C SDK.
