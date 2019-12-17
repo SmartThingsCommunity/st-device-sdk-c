@@ -173,10 +173,6 @@ iot_error_t iot_bsp_wifi_set_mode(iot_wifi_conf *conf)
 		}
 
 		iot_bsp_wifi_on(IOT_WIFI_MODE_SCAN);
-		wifi_set_autoreconnect(1);
-		if(wifi_connect(wifi_config.ssid.val, wifi_config.security_type, wifi_config.password, strlen(wifi_config.ssid.val), strlen(wifi_config.password), -1, NULL) == RTW_SUCCESS)
-                        LwIP_DHCP(0, DHCP_START);
-
 	break;
 	case IOT_WIFI_MODE_STATION:
 

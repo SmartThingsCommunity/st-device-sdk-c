@@ -420,7 +420,7 @@ iot_error_t iot_mqtt_registration(struct iot_mqtt_ctx *mqtt_ctx)
 	iot_error_t iot_err = IOT_ERROR_NONE;
 	cJSON *root = NULL;
 	MQTTMessage msg;
-	char str_dump[40];
+	char str_dump[40], valid_id = 0;
 	struct iot_devconf_prov_data *devconf;
 	struct iot_context *ctx;
 
@@ -506,6 +506,22 @@ iot_error_t iot_mqtt_registration(struct iot_mqtt_ctx *mqtt_ctx)
 
 	cJSON_AddItemToObject(root, "lookupId",
 		cJSON_CreateString(ctx->lookup_id));
+
+	/* room id is optional value */
+	for (int i = 0; i < sizeof(ctx->prov_data.cloud.room_id); i++)
+		valid_id |= ctx->prov_data.cloud.room_id.id[i];
+
+	if (valid_id) {
+		iot_err = iot_util_convert_uuid_str(&ctx->prov_data.cloud.room_id,
+				str_dump, sizeof(str_dump));
+		if (iot_err != IOT_ERROR_NONE) {
+			IOT_WARN("fail room_id convt (%d)", iot_err);
+			iot_err = IOT_ERROR_NONE;
+		} else {
+			cJSON_AddItemToObject(root, "roomId",
+				cJSON_CreateString(str_dump));
+		}
+	}
 
 	msg.payload = cJSON_PrintUnformatted(root);
 	if (!msg.payload) {
