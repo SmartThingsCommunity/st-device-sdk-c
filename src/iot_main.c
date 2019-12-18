@@ -276,13 +276,16 @@ static iot_error_t _do_iot_main_command(struct iot_context *ctx,
 			if (err != IOT_ERROR_NONE) {
 				IOT_ERROR("failed to handle new state : %d", state_data->iot_state);
 			} else {
-				ctx->cmd_err = 0;
-				ctx->req_state = state_data->iot_state;
-				_do_update_timeout(ctx, needed_tout);
+				if (needed_tout) {
+					/* Internal state will be updated with timeout */
+					ctx->cmd_err = 0;
+					ctx->req_state = state_data->iot_state;
+					_do_update_timeout(ctx, needed_tout);
+				}
 
 				/* Call user sdie state update callback */
 				if (ctx->status_cb)
-					_do_status_report(ctx, ctx->req_state, false);
+					_do_status_report(ctx, state_data->iot_state, false);
 			}
 
 			break;
@@ -1055,6 +1058,12 @@ static iot_error_t _do_state_updating(struct iot_context *ctx,
 		/* Update next state waiting time for Easy-setup process */
 		*timeout_ms = EASYSETUP_TIMEOUT_MS;
 		IOT_MEM_CHECK("ES_PROV_ENTER DONE >>PT<<");
+		break;
+
+	case IOT_STATE_PROV_CONN_MOBILE:
+		IOT_INFO("Notification only with IOT_STATE_PROV_CONN_MOBILE");
+		*timeout_ms = 0;
+		iot_err = IOT_ERROR_NONE;
 		break;
 
 	case IOT_STATE_PROV_CONFIRMING:
