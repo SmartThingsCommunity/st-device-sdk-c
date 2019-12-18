@@ -30,9 +30,6 @@
 #define IOT_WIFI_PROV_SSID_LEN		(31 + 1)
 #define IOT_WIFI_PROV_PASSWORD_LEN 	(63 + 1)
 
-#define IOT_BUF_TX_SIZE 3500
-#define IOT_BUF_RX_SIZE 512
-
 #define IOT_EVENT_BIT_COMMAND		(1 << 0)
 #define IOT_EVENT_BIT_CAPABILITY	(1 << 1)
 #define IOT_EVENT_BIT_EASYSETUP_REQ	(1 << 2)
@@ -195,11 +192,6 @@ struct iot_mqtt_ctx {
 	iot_net_interface_t net;		/**< @brief network management handle for mqtt */
 	MQTTClient cli;			/**< @brief mqtt client handle for iot_core */
 	bool mqtt_connected;	/**< @brief mqtt connected status */
-
-#if !defined(CONFIG_STDK_MQTT_DYNAMIC_BUFFER)
-	unsigned char buf[IOT_BUF_TX_SIZE];			/**< @brief mqtt buffer for sending */
-	unsigned char readbuf[IOT_BUF_RX_SIZE];		/**< @brief mqtt buffer for receiving */
-#endif
 
 	const char *cmd_filter;		/**< @brief mqtt command topic filter string */
 	const char *noti_filter;	/**< @brief mqtt notification topic filter string */

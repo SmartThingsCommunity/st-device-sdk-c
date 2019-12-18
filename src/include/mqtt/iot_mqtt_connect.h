@@ -145,7 +145,5 @@ DLLExport int MQTTDeserialize_connack(unsigned char* sessionPresent, unsigned ch
 
 DLLExport int MQTTSerialize_disconnect(unsigned char* buf, int buflen);
 DLLExport int MQTTSerialize_pingreq(unsigned char* buf, int buflen);
-DLLExport int MQTTSerialize_disconnect_size();
-DLLExport int MQTTSerialize_pingreq_size();
 
 #endif /* MQTTCONNECT_H_ */

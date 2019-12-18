@@ -49,7 +49,11 @@ extern "C" {
 #define CONFIG_STDK_MQTT_PUBLISH_RETRY 3
 #define CONFIG_STDK_MQTT_PING_RETRY 3
 #define CONFIG_STDK_MQTT_RECV_CYCLE 100
-#define CONFIG_STDK_MQTT_DYNAMIC_BUFFER 1
+#define CONFIG_STDK_MQTT_PUB_NOCOPY		1
+
+#define MQTT_DISCONNECT_MAX_SIZE		5
+#define MQTT_PUBACK_MAX_SIZE			5
+#define MQTT_PINGREQ_MAX_SIZE			5
 
 #if !defined(MAX_MESSAGE_HANDLERS)
 #define MAX_MESSAGE_HANDLERS 5 /* redefinable - how many subscriptions do you want? */
@@ -104,10 +108,8 @@ typedef void (*messageHandler)(MessageData *, void *);
 struct MQTTClient {
 	unsigned int next_packetid,
 			command_timeout_ms;
-	size_t buf_size,
-		 	readbuf_size;
-	unsigned char *buf,
-			*readbuf;
+	size_t readbuf_size;
+	unsigned char *readbuf;
 	unsigned int keepAliveInterval;
 	char ping_outstanding;
 	int ping_retry_count;
@@ -139,10 +141,8 @@ struct MQTTClient {
  * @param client
  * @param network
  * @param command_timeout_ms
- * @param
  */
-DLLExport bool MQTTClientInit(MQTTClient *client, iot_net_interface_t *network, unsigned int command_timeout_ms,
-							  unsigned char *sendbuf, size_t sendbuf_size, unsigned char *readbuf, size_t readbuf_size);
+DLLExport bool MQTTClientInit(MQTTClient *client, iot_net_interface_t *network, unsigned int command_timeout_ms);
 
 /** MQTT Connect - send an MQTT connect packet down the network and wait for a Connack
  *  The nework object must be connected to the network endpoint before calling this

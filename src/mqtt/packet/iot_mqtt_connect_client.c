@@ -162,7 +162,6 @@ exit:
 	return rc;
 }
 
-
 /**
   * Serializes a 0-length packet into the supplied buffer, ready for writing to a socket
   * @param buf the buffer into which the packet will be serialized
@@ -193,7 +192,6 @@ exit:
 	return rc;
 }
 
-
 /**
   * Serializes a disconnect packet into the supplied buffer, ready for writing to a socket
   * @param buf the buffer into which the packet will be serialized
@@ -205,11 +203,6 @@ int MQTTSerialize_disconnect(unsigned char* buf, int buflen)
 	return MQTTSerialize_zero(buf, buflen, DISCONNECT);
 }
 
-int MQTTSerialize_disconnect_size()
-{
-	return 2; /* In MQTT 3.1.1, DISCONNECT Packet size is 2 bytex fixed */
-}
-
 /**
   * Serializes a disconnect packet into the supplied buffer, ready for writing to a socket
   * @param buf the buffer into which the packet will be serialized
@@ -219,9 +212,4 @@ int MQTTSerialize_disconnect_size()
 int MQTTSerialize_pingreq(unsigned char* buf, int buflen)
 {
 	return MQTTSerialize_zero(buf, buflen, PINGREQ);
-}
-
-int MQTTSerialize_pingreq_size()
-{
-	return 2; /* In MQTT 3.1.1, PINGREQ Packet size is 2 bytex fixed */
 }

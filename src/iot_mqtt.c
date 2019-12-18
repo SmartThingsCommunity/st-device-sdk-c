@@ -59,12 +59,7 @@ iot_error_t iot_mqtt_connect(struct iot_mqtt_ctx *target_cli,
 		goto done_mqtt_connect;
 	}
 
-#if defined(CONFIG_STDK_MQTT_DYNAMIC_BUFFER)
-	MQTTClientInit(&target_cli->cli, &target_cli->net, IOT_DEFAULT_TIMEOUT, NULL, 0, NULL, 0);
-#else
-	MQTTClientInit(&target_cli->cli, &target_cli->net, IOT_DEFAULT_TIMEOUT,
-		target_cli->buf, IOT_BUF_TX_SIZE, target_cli->readbuf, IOT_BUF_RX_SIZE);
-#endif
+	MQTTClientInit(&target_cli->cli, &target_cli->net, IOT_DEFAULT_TIMEOUT);
 
 	connData.willFlag     = 0;
 	connData.MQTTVersion  = 4;
