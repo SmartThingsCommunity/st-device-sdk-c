@@ -101,6 +101,12 @@ iot_error_t _iot_easysetup_gen_get_payload(struct iot_context *ctx, const char *
 
 	if (!strcmp(cmd, IOT_ES_URI_GET_DEVICEINFO)) {
 		cur_step = IOT_EASYSETUP_STEP_DEVICEINFO;
+		err = iot_state_update(ctx, IOT_STATE_PROV_CONN_MOBILE, 0);
+		if (err != IOT_ERROR_NONE) {
+			IOT_ERROR("failed handle cmd (%d): %d", IOT_STATE_PROV_CONN_MOBILE, err);
+			err = IOT_ERROR_EASYSETUP_INVALID_REQUEST;
+			goto fail_status_update;
+		}
 	} else if (!strcmp(cmd, IOT_ES_URI_GET_WIFISCANINFO)) {
 		cur_step = IOT_EASYSETUP_STEP_WIFISCANINFO;
 	} else if (!strcmp(cmd, IOT_ES_URI_GET_LOGS_SYSTEMINFO)) {
@@ -148,6 +154,7 @@ iot_error_t _iot_easysetup_gen_get_payload(struct iot_context *ctx, const char *
 		err = response.err;
 	}
 
+fail_status_update:
 	if (err) {
 		iot_error_t err1;
 		ref_step = 0;
