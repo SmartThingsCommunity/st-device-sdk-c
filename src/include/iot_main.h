@@ -225,6 +225,7 @@ struct iot_context {
 	iot_os_queue *pub_queue;			/**< @brief iot core's event publish queue */
 	iot_os_queue *easysetup_req_queue;	/**< @brief request queue for easy-setup process */
 	iot_os_queue *easysetup_resp_queue;	/**< @brief response queue for easy-setup process */
+	bool es_res_created;				/**< @brief to check easy-setup resources are created or not */
 
 	iot_state_t curr_state;			/**< @brief reflect current iot_state */
 	iot_state_t req_state;			/**< @brief reflect requested iot_state */

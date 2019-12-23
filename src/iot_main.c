@@ -130,11 +130,14 @@ static iot_error_t _create_easysetup_resources(struct iot_context *ctx, iot_pin_
 		}
 	}
 
+	ctx->es_res_created = true;
 	return IOT_ERROR_NONE;
 }
 
 static void _delete_easysetup_resources_all(struct iot_context *ctx)
 {
+	ctx->es_res_created = false;
+
 	if (ctx->pin) {
 		// if device connected to cloud successfully. We don't need pin anymore
 		free(ctx->pin);
@@ -406,6 +409,9 @@ static iot_error_t _do_iot_main_command(struct iot_context *ctx,
 						 * So, we forcely remove all data & reboot the device
 						 */
 						IOT_WARN("Some thing went wrong, got provisioning but no deviceId");
+						if (ctx->es_res_created)
+							_delete_easysetup_resources_all(ctx);
+
 						iot_device_cleanup(ctx);
 
 						ctx->cmd_err |= (1 << cmd->cmd_type);
@@ -547,6 +553,9 @@ static iot_error_t _do_iot_main_command(struct iot_context *ctx,
 		case IOT_COMMAND_SELF_CLEANUP:
 			IOT_WARN("self device cleanup");
 			bool *reboot = cmd->param;
+
+			if (ctx->es_res_created)
+				_delete_easysetup_resources_all(ctx);
 
 			iot_device_cleanup(ctx);
 
@@ -1096,11 +1105,17 @@ static iot_error_t _do_state_updating(struct iot_context *ctx,
 		break;
 
 	case IOT_STATE_CLOUD_REGISTERING:
+		if (ctx->es_res_created)
+			_delete_easysetup_resources_all(ctx);
+
 		iot_cmd = IOT_COMMAND_CLOUD_REGISTERING;
 		iot_err = iot_command_send(ctx, iot_cmd, NULL, 0);
 		break;
 
 	case IOT_STATE_CLOUD_CONNECTING:
+		if (ctx->es_res_created)
+			_delete_easysetup_resources_all(ctx);
+
 		iot_cmd = IOT_COMMAND_CLOUD_CONNECTING;
 		iot_err = iot_command_send(ctx, iot_cmd, NULL, 0);
 		break;
@@ -1108,10 +1123,6 @@ static iot_error_t _do_state_updating(struct iot_context *ctx,
 	case IOT_STATE_CLOUD_CONNECTED:
 		iot_cmd = IOT_COMMAND_READY_TO_CTL;
 		iot_err = iot_command_send(ctx, iot_cmd, NULL, 0);
-
-		if (iot_err == IOT_ERROR_NONE)
-			_delete_easysetup_resources_all(ctx);
-
 		break;
 
 	case IOT_STATE_CLOUD_DISCONNECTED:
@@ -1143,10 +1154,14 @@ int st_conn_start(IOT_CTX *iot_ctx, st_status_cb status_cb,
 	if (!ctx)
 		return IOT_ERROR_BAD_REQ;
 
-	iot_err = _create_easysetup_resources(ctx, pin_num);
-	if (iot_err != IOT_ERROR_NONE) {
-		IOT_ERROR("failed to create easysetup resources(%d)", iot_err);
-		return iot_err;
+	if (ctx->es_res_created) {
+		IOT_WARN("Already easysetup resources are created!!");
+	} else {
+		iot_err = _create_easysetup_resources(ctx, pin_num);
+		if (iot_err != IOT_ERROR_NONE) {
+			IOT_ERROR("failed to create easysetup resources(%d)", iot_err);
+			return iot_err;
+		}
 	}
 
 	if (status_cb) {
