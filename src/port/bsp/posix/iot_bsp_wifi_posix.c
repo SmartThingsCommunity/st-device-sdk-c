@@ -17,7 +17,46 @@
  ****************************************************************************/
 
 #include <stdio.h>
+#include <stdlib.h>
+#include <stdbool.h>
+#include <unistd.h>
+#include <string.h>
+#include <errno.h>
+
+#include <netdb.h>
+#include <sys/types.h>
+#include <sys/socket.h>
+#include <netinet/in.h>
+#include <netinet/ip.h>
+#include <arpa/inet.h>
+#include <sys/ioctl.h>
+#include <bits/ioctls.h>
+#include <net/if.h>
+#include <linux/if_ether.h>
+#include <linux/if_packet.h>
+#include <net/ethernet.h>
+
+#include <netinet/in.h>
+#include <net/route.h>
+#include <sys/types.h>
+#include <pwd.h>
+
+#include "iot_debug.h"
 #include "iot_bsp_wifi.h"
+
+#define IFACE_NAME	"wlan0"
+
+static int _create_socket()
+{
+    int sockfd = 0;
+
+    sockfd = socket(AF_INET, SOCK_DGRAM, 0);
+    if (sockfd == -1) {
+        IOT_ERROR("Can't get socket (%d, %s)", errno, strerror(errno));
+        return -errno;
+    }
+    return sockfd;
+}
 
 iot_error_t iot_bsp_wifi_init()
 {
@@ -36,15 +75,25 @@ uint16_t iot_bsp_wifi_get_scan_result(iot_wifi_scan_result_t *scan_result)
 
 iot_error_t iot_bsp_wifi_get_mac(struct iot_mac *wifi_mac)
 {
-	char my_mac[] = "11:22:33:44:55:66";
-	unsigned int mac[6];
+	struct ifreq ifr;
+	int sockfd = 0;
+	iot_error_t err = IOT_ERROR_NONE;
 
-	sscanf(my_mac, "%x:%x:%x:%x:%x:%x", &mac[0], &mac[1], &mac[2], &mac[3], &mac[4], &mac[5]);
+	sockfd = _create_socket();
+	if (sockfd < 0)
+		return IOT_ERROR_READ_FAIL;
 
-	for(int i = 0; i < 6; i++) {
-		wifi_mac->addr[i] = (unsigned char)mac[i];
+	strncpy(ifr.ifr_name, IFACE_NAME, IF_NAMESIZE);
+	if (ioctl(sockfd, SIOCGIFHWADDR, &ifr) < 0) {
+		IOT_ERROR("ioctl(%d, %s): 0x%x", errno, strerror(errno), SIOCGIFHWADDR);
+		err = IOT_ERROR_READ_FAIL;
+		goto mac_out;
 	}
+	memcpy(wifi_mac->addr, ifr.ifr_hwaddr.sa_data, sizeof(wifi_mac->addr));
 
+mac_out:
+	close(sockfd);
+	return err;
 	return IOT_ERROR_NONE;
 }
 
