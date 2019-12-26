@@ -10,10 +10,7 @@ SRCS = example.c
 JSONS = device_info.json onboarding_config.json
 OBJS = $(JSONS:%.json=%.o)
 TARGET = example
-OBJCOPY_CMD = objcopy
-OBJCOPY_INPUT = binary
-OBJCOPY_OUTPUT = elf64-x86-64
-OBJCOPY_ARCH = i386
+LD_CMD = ld
 
 .PHONY: all clean
 all: $(TARGET)
@@ -23,7 +20,7 @@ clean:
 
 %.o : %.json
 	@echo $@
-	$(OBJCOPY_CMD) -I $(OBJCOPY_INPUT) -O $(OBJCOPY_OUTPUT) -B $(OBJCOPY_ARCH) $< $@
+	$(LD_CMD) -r -b binary -o $@ $<
 
 $(TARGET): $(OBJS)
 	$(CC) -o $(TARGET) $(SRCS) $(OBJS) $(LIB_DIR) $(INC) $(LIBS)

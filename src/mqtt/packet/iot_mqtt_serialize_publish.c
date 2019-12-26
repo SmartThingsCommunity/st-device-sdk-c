@@ -157,11 +157,6 @@ exit:
 	return rc;
 }
 
-int MQTTSerialize_ack_size()
-{
-	return 4; /* In MQTT 3.1.1, ACK Packet size 4 bytes fixed */
-}
-
 /**
   * Serializes a puback packet into the supplied buffer.
   * @param buf the buffer into which the packet will be serialized
