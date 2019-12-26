@@ -200,6 +200,22 @@ static void _do_status_report(struct iot_context *ctx,
 		}
 		break;
 
+	case IOT_STATE_PROV_CONN_MOBILE:
+		if (!is_final) {
+			fn_stat = IOT_STATUS_PROVISIONING;
+			fn_stat_lv = IOT_STAT_LV_CONN;
+			is_report = true;
+		}
+		break;
+
+	case IOT_STATE_PROV_CONFIRMING:
+		if (ctx->curr_otm_feature == OVF_BIT_BUTTON) {
+			fn_stat = IOT_STATUS_NEED_INTERACT;
+			fn_stat_lv = IOT_STAT_LV_STAY;
+			is_report = true;
+		}
+		break;
+
 	case IOT_STATE_PROV_DONE:
 		if (!is_final) {
 			fn_stat = IOT_STATUS_PROVISIONING;
@@ -208,6 +224,8 @@ static void _do_status_report(struct iot_context *ctx,
 		}
 		break;
 
+	case IOT_STATE_CLOUD_REGISTERING:
+		/* fall through */
 	case IOT_STATE_CLOUD_CONNECTING:
 		if (!is_final) {
 			fn_stat = IOT_STATUS_CONNECTING;
@@ -1198,9 +1216,7 @@ int st_conn_start(IOT_CTX *iot_ctx, st_status_cb status_cb,
 		iot_os_eventgroup_wait_bits(ctx->usr_events,
 			(1 << IOT_STATE_PROV_CONFIRMING), true, false, IOT_OS_MAX_DELAY);
 
-		 if (ctx->curr_otm_feature == OVF_BIT_BUTTON)
-			ctx->status_cb(IOT_STATUS_NEED_INTERACT, IOT_STAT_LV_STAY,
-					ctx->status_usr_data);
+		_do_status_report(ctx, IOT_STATE_PROV_CONFIRMING, false);
 	}
 
 	IOT_INFO("%s done", __func__);

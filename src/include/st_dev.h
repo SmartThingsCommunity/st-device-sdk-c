@@ -32,10 +32,10 @@ extern "C" {
  * @brief Contains a enumeration values for types of iot_status.
  */
 typedef enum iot_status {
-	IOT_STATUS_IDLE = (1 << 0),				/**< @brief For idle status, not connected. */
-	IOT_STATUS_PROVISIONING = (1 << 1),		/**< @brief For provisioning status. do onboarding process */
-	IOT_STATUS_NEED_INTERACT = (1 << 2),	/**< @brief For user interation status. need to interact with user */
-	IOT_STATUS_CONNECTING = (1 << 3),		/**< @brief For server connecting status. do connecting server */
+	IOT_STATUS_IDLE = (1 << 0),				/**< @brief For idle status, not connected. supports IOT_STAT_LV_STAY */
+	IOT_STATUS_PROVISIONING = (1 << 1),		/**< @brief For provisioning status. do onboarding process. supports IOT_STAT_LV_START/CONN/DONE/FAIL */
+	IOT_STATUS_NEED_INTERACT = (1 << 2),	/**< @brief For user interation status. need to interact with user. only supports IOT_STAT_LV_STAY/FAIL */
+	IOT_STATUS_CONNECTING = (1 << 3),		/**< @brief For server connecting status. do connecting server. supports IOT_STAT_LV_START/DONE/FAIL */
 
 	IOT_STATUS_ALL = (IOT_STATUS_IDLE | IOT_STATUS_PROVISIONING
 				| IOT_STATUS_NEED_INTERACT | IOT_STATUS_CONNECTING),
@@ -49,6 +49,7 @@ typedef enum iot_stat_lv {
 	IOT_STAT_LV_START,		/**< @brief meanings for start level with each status  */
 	IOT_STAT_LV_DONE,		/**< @brief meanings for done level with each status */
 	IOT_STAT_LV_FAIL,		/**< @brief meanings for fail level with each status */
+	IOT_STAT_LV_CONN,		/**< @brief meanings for connection with mobile */
 } iot_stat_lv_t;
 
 
