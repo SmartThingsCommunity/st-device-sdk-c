@@ -39,6 +39,11 @@ iot_error_t iot_mqtt_connect(struct iot_mqtt_ctx *target_cli,
 	bool reboot;
 	struct iot_uuid iot_uuid;
 	char *client_id = NULL;
+	struct iot_context *ctx = target_cli->iot_ctx;
+	struct iot_cloud_prov_data *cloud_prov;
+	char *root_cert = NULL;
+	unsigned int root_cert_len;
+	st_mqtt_broker_info_t broker_info;
 
 	/* Use mac based random client_id for GreatGate */
 	iot_ret = iot_random_uuid_from_mac(&iot_uuid);
@@ -59,7 +64,28 @@ iot_error_t iot_mqtt_connect(struct iot_mqtt_ctx *target_cli,
 		goto done_mqtt_connect;
 	}
 
-	MQTTClientInit(&target_cli->cli, &target_cli->net, IOT_DEFAULT_TIMEOUT);
+	MQTTClientInit(&target_cli->cli, IOT_DEFAULT_TIMEOUT);
+
+	cloud_prov = &ctx->prov_data.cloud;
+	if (!cloud_prov->broker_url) {
+		IOT_ERROR("cloud_prov_data url does not exist!");
+		iot_ret = IOT_ERROR_INVALID_ARGS;
+		goto done_mqtt_connect;
+	}
+
+	iot_ret = iot_nv_get_root_certificate(&root_cert, &root_cert_len);
+	if (iot_ret != IOT_ERROR_NONE) {
+		IOT_ERROR("failed to get root cert");
+		goto done_mqtt_connect;
+	}
+
+	broker_info.url = cloud_prov->broker_url;
+	broker_info.port = cloud_prov->broker_port;
+	broker_info.ca_cert = (const unsigned char *)root_cert;
+	broker_info.ca_cert_len = root_cert_len;
+	broker_info.ssl = 1;
+
+	IOT_INFO("url: %s, port: %d", cloud_prov->broker_url, cloud_prov->broker_port);
 
 	connData.willFlag     = 0;
 	connData.MQTTVersion  = 4;
@@ -74,7 +100,7 @@ iot_error_t iot_mqtt_connect(struct iot_mqtt_ctx *target_cli,
 		 connData.username.cstring,
 		 connData.password.cstring);
 
-	if ((ret = MQTTConnect(&(target_cli->cli), &connData)) != MQTT_SUCCESS) {
+	if ((ret = MQTTConnect(&(target_cli->cli), &broker_info, &connData)) != MQTT_SUCCESS) {
 		IOT_ERROR("%s error(%d)", __func__, ret);
 		switch (ret) {
 		case MQTT_UNNACCEPTABLE_PROTOCOL:
@@ -123,6 +149,8 @@ iot_error_t iot_mqtt_connect(struct iot_mqtt_ctx *target_cli,
 #endif
 
 done_mqtt_connect:
+	if (root_cert)
+		free((void *)root_cert);
 
 	free(client_id);
 	return iot_ret;

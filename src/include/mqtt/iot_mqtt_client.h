@@ -133,6 +133,15 @@ struct MQTTClient {
 #endif
 };
 
+typedef struct st_mqtt_broker_info {
+	char *url;			/**< @brief server address */
+	int port;			/**< @brief server port */
+	const unsigned char *ca_cert;	/**< @brief a pointer to a CA certificate */
+	unsigned int ca_cert_len;	/**< @brief a size of CA certificate */
+
+	char ssl;			/**< @brief ssl support */
+} st_mqtt_broker_info_t;
+
 #define DefaultClient {0, 0, 0, 0, NULL, NULL, 0, 0, 0}
 
 
@@ -142,14 +151,14 @@ struct MQTTClient {
  * @param network
  * @param command_timeout_ms
  */
-DLLExport bool MQTTClientInit(MQTTClient *client, iot_net_interface_t *network, unsigned int command_timeout_ms);
+DLLExport bool MQTTClientInit(MQTTClient *client, unsigned int command_timeout_ms);
 
 /** MQTT Connect - send an MQTT connect packet down the network and wait for a Connack
  *  The nework object must be connected to the network endpoint before calling this
  *  @param options - connect options
  *  @return success code
  */
-DLLExport int MQTTConnectWithResults(MQTTClient *client, MQTTPacket_connectData *options,
+DLLExport int MQTTConnectWithResults(MQTTClient *client, st_mqtt_broker_info_t *broker, MQTTPacket_connectData *options,
 									 MQTTConnackData *data);
 
 /** MQTT Connect - send an MQTT connect packet down the network and wait for a Connack
@@ -157,7 +166,7 @@ DLLExport int MQTTConnectWithResults(MQTTClient *client, MQTTPacket_connectData 
  *  @param options - connect options
  *  @return success code
  */
-DLLExport int MQTTConnect(MQTTClient *client, MQTTPacket_connectData *options);
+DLLExport int MQTTConnect(MQTTClient *client, st_mqtt_broker_info_t *broker, MQTTPacket_connectData *options);
 
 /** MQTT Publish - send an MQTT publish packet and wait for all acks to complete for all QoSs
  *  @param client - the client object to use

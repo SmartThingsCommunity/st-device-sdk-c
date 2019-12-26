@@ -59,10 +59,9 @@ static int sendPacket(MQTTClient *c, unsigned char *buf, int length, iot_os_time
 	return rc;
 }
 
-bool MQTTClientInit(MQTTClient *c, iot_net_interface_t *network, unsigned int command_timeout_ms)
+bool MQTTClientInit(MQTTClient *c, unsigned int command_timeout_ms)
 {
 	int i;
-	c->net = network;
 
 	for (i = 0; i < MAX_MESSAGE_HANDLERS; ++i) {
 		c->messageHandlers[i].topicFilter = 0;
@@ -74,6 +73,8 @@ bool MQTTClientInit(MQTTClient *c, iot_net_interface_t *network, unsigned int co
 		c->command_timeout_ms = CONFIG_STDK_MQTT_SEND_CYCLE;
 	}
 
+	c->net = malloc(sizeof(iot_net_interface_t));
+	memset(c->net, '\0', sizeof(iot_net_interface_t));
 	c->readbuf = NULL;
 	c->readbuf_size = 0;
 	c->isconnected = 0;
@@ -521,12 +522,13 @@ int waitfor(MQTTClient *c, int packet_type, iot_os_timer timer)
 	return rc;
 }
 
-int MQTTConnectWithResults(MQTTClient *c, MQTTPacket_connectData *options, MQTTConnackData *data)
+int MQTTConnectWithResults(MQTTClient *c, st_mqtt_broker_info_t *broker, MQTTPacket_connectData *options, MQTTConnackData *data)
 {
 	iot_os_timer connect_timer = NULL;
 	int rc = MQTT_FAILURE;
+	iot_error_t iot_err;
 	MQTTPacket_connectData default_options = MQTTPacket_connectData_initializer;
-	int len = 0, pbuf_size;
+	int len = 0, pbuf_size, connect_retry;
 	unsigned char *pbuf = NULL;
 
 #if defined(STDK_MQTT_TASK)
@@ -534,6 +536,39 @@ int MQTTConnectWithResults(MQTTClient *c, MQTTPacket_connectData *options, MQTTC
 #endif
 
 	if (c->isconnected) { /* don't send connect packet again if we are already connected */
+		goto exit;
+	}
+
+	iot_err = iot_net_init(c->net);
+	if (iot_err) {
+		IOT_ERROR("failed to init network");
+		goto exit;
+	}
+
+	c->net->connection.url = broker->url;
+	c->net->connection.port = broker->port;
+	c->net->connection.ca_cert = broker->ca_cert;
+	c->net->connection.ca_cert_len = broker->ca_cert_len;
+
+	connect_retry = 3;
+	do {
+		if (c->net->connect == NULL) {
+			IOT_ERROR("net->connect is null");
+			iot_err = IOT_ERROR_MQTT_NETCONN_FAIL;
+			break;
+		}
+
+		iot_err = c->net->connect(c->net);
+		if (iot_err) {
+			IOT_ERROR("net->connect = %d, retry (%d)", iot_err, connect_retry);
+			iot_err = IOT_ERROR_MQTT_NETCONN_FAIL;
+			connect_retry--;
+			iot_os_delay(2000);
+		}
+	} while ((iot_err != IOT_ERROR_NONE) && connect_retry);
+
+	if (iot_err != IOT_ERROR_NONE) {
+		IOT_ERROR("MQTT net connection failed");
 		goto exit;
 	}
 
@@ -601,10 +636,10 @@ exit:
 }
 
 
-int MQTTConnect(MQTTClient *c, MQTTPacket_connectData *options)
+int MQTTConnect(MQTTClient *c, st_mqtt_broker_info_t *broker, MQTTPacket_connectData *options)
 {
 	MQTTConnackData data;
-	return MQTTConnectWithResults(c, options, &data);
+	return MQTTConnectWithResults(c, broker, options, &data);
 }
 
 
@@ -948,6 +983,8 @@ int MQTTDisconnect(MQTTClient *c)
 	IOT_INFO("mqtt send disconnect");
 	MQTTCloseSession(c);
 
+	if (c->net->disconnect != NULL)
+		c->net->disconnect(c->net);
 exit:
 	if (timer != NULL)
 		iot_os_timer_destroy(&timer);
