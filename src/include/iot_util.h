@@ -27,6 +27,14 @@ extern "C" {
 #endif
 
 /**
+ * @brief	Dump a memory on console
+ * @param[in]	tag	a string to know the memory attribute
+ * @param[in]	buf	a pointer to a buffer to dump
+ * @param[in]	len	the size of buffer pointed by buf in bytes
+ */
+void iot_util_dump_mem(char *tag, uint8_t *buf, size_t len);
+
+/**
  * @brief Contains a "url parse" data
  */
 typedef struct {

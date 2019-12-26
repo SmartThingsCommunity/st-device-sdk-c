@@ -35,6 +35,53 @@ static int _isalpha(char c)
 	return 0;
 }
 
+static int _isprint(char c)
+{
+	if (c >= '!' && c <= '~')
+		return 1;
+	return 0;
+}
+
+void iot_util_dump_mem(char *tag, uint8_t *buf, size_t len)
+{
+	const char *newline = "";
+	const char *space = " ";
+	int i, j;
+	int w = 16;
+
+	if (!strcmp(tag, "raw")) {
+		space = "";
+	}
+
+	for (i = 0; i < len; i += w) {
+		if (!strcmp(tag, "dump") && !(i % 0x10)) {
+			printf("%s[%p] ", newline, buf);
+			newline = "\n";
+		}
+
+		for (j = i; j < (i + w); j++) {
+			if (j < len)
+				printf("%02x%s", buf[j], space);
+			else
+				printf("   ");
+		}
+
+		if (strcmp(tag, "dump"))
+			continue;
+
+		for (j = i; j < (i + w); j++) {
+			if (_isprint(buf[j])) {
+				printf("%c", buf[j]);
+			} else {
+				printf("%c", '.');
+			}
+			if (j >= len)
+				break;
+		}
+	}
+	printf("\n");
+}
+
 iot_error_t iot_util_convert_str_uuid(const char* str, struct iot_uuid* uuid)
 {
 	const char *ref_str = "42365732-c6db-4bc9-8945-2a7ca10d6f23";
