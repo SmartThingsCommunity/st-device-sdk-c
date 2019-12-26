@@ -19,6 +19,9 @@
 #include <stdlib.h>
 #include <string.h>
 #include <cJSON.h>
+#if defined(STDK_IOT_CORE_SERIALIZE_CBOR)
+#include <cbor.h>
+#endif
 
 #include "iot_internal.h"
 #include "iot_util.h"
@@ -394,7 +397,25 @@ static iot_error_t _iot_parse_noti_data(void *data, iot_noti_data_t *noti_data)
 	char *payload = NULL;
 	char time_str[11] = {0,};
 
+#if defined(STDK_IOT_CORE_SERIALIZE_CBOR)
+	char *payload_json = NULL;
+	size_t payload_json_len = 0;
+
+	if (iot_serialize_cbor2json((uint8_t *)data, strlen(data), &payload_json, &payload_json_len)) {
+		IOT_ERROR("cbor2json failed");
+		return IOT_ERROR_BAD_REQ;
+	}
+
+	if ((payload_json == NULL) || (payload_json_len == 0)) {
+		IOT_ERROR("json buffer is null");
+		return IOT_ERROR_BAD_REQ;
+	}
+
+	json = cJSON_Parse(payload_json);
+	free(payload_json);
+#else
 	json = cJSON_Parse(data);
+#endif
 	if (json == NULL) {
 		IOT_ERROR("Cannot parse by json");
 		return IOT_ERROR_BAD_REQ;
@@ -571,7 +592,25 @@ void iot_cap_sub_cb(iot_cap_handle_list_t *cap_handle_list, char *payload)
 	}
 	cmd_data.num_args = 0;
 
+#if defined(STDK_IOT_CORE_SERIALIZE_CBOR)
+	char *payload_json = NULL;
+	size_t payload_json_len = 0;
+
+	if (iot_serialize_cbor2json((uint8_t *)payload, strlen(payload), &payload_json, &payload_json_len)) {
+		IOT_ERROR("cbor2json failed");
+		return;
+	}
+
+	if ((payload_json == NULL) || (payload_json_len == 0)) {
+		IOT_ERROR("json buffer is null");
+		return;
+	}
+
+	json = cJSON_Parse(payload_json);
+	free(payload_json);
+#else
 	json = cJSON_Parse(payload);
+#endif
 	if (json == NULL) {
 		IOT_ERROR("Cannot parse by json");
 		goto out;
@@ -760,7 +799,137 @@ static iot_error_t _iot_parse_cmd_data(cJSON* cmditem, char** component,
 }
 
 
-static iot_error_t _iot_make_evt_data(const char* component, const char* capability,
+#if defined(STDK_IOT_CORE_SERIALIZE_CBOR)
+static iot_error_t _iot_make_evt_data_cbor(const char* component, const char* capability,
+			uint8_t arr_size, iot_cap_evt_data_t** evt_data_arr, iot_cap_msg_t *msg)
+{
+	CborEncoder root = {0};
+	CborEncoder root_map = {0};
+	CborEncoder event_array = {0};
+	CborEncoder event_map = {0};
+	CborEncoder sub_array = {0};
+	CborEncoder provider_map = {0};
+	char time_in_ms[16] = {0}; /* 155934720000 is '2019-06-01 00:00:00.00 UTC' */
+	uint8_t *buf;
+	size_t buflen = 128;
+	size_t olen;
+	char **str_array_ptr;
+	int i;
+	int j;
+
+	if (!msg) {
+		IOT_ERROR("msg is NULL");
+		return IOT_ERROR_INVALID_ARGS;
+	}
+retry:
+	buflen += 128;
+
+	buf = (uint8_t *)malloc(buflen);
+	if (buf == NULL) {
+		IOT_ERROR("failed to malloc for cbor");
+		return IOT_ERROR_MEM_ALLOC;
+	}
+	memset(buf, 0, buflen);
+
+	cbor_encoder_init(&root, buf, buflen, 0);
+
+	cbor_encoder_create_map(&root, &root_map, CborIndefiniteLength);
+
+	cbor_encode_text_stringz(&root_map, "deviceEvents");
+	cbor_encoder_create_array(&root_map, &event_array, CborIndefiniteLength);
+
+	cbor_encoder_create_map(&event_array, &event_map, CborIndefiniteLength);
+
+	for (i = 0; i < arr_size; i++) {
+		/* component */
+		cbor_encode_text_stringz(&event_map, "component");
+		cbor_encode_text_stringz(&event_map, component);
+
+		/* capability */
+		cbor_encode_text_stringz(&event_map, "capability");
+		cbor_encode_text_stringz(&event_map, capability);
+
+		/* attribute */
+		cbor_encode_text_stringz(&event_map, "attribute");
+		cbor_encode_text_stringz(&event_map, evt_data_arr[i]->evt_type);
+
+		/* value */
+		cbor_encode_text_stringz(&event_map, "value");
+		switch (evt_data_arr[i]->evt_value.type) {
+		case IOT_CAP_VAL_TYPE_INTEGER:
+			cbor_encode_int(&event_map, evt_data_arr[i]->evt_value.integer);
+			break;
+		case IOT_CAP_VAL_TYPE_NUMBER:
+			cbor_encode_double(&event_map, evt_data_arr[i]->evt_value.number);
+			break;
+		case IOT_CAP_VAL_TYPE_STRING:
+			cbor_encode_text_stringz(&event_map, evt_data_arr[i]->evt_value.string);
+			break;
+		case IOT_CAP_VAL_TYPE_STR_ARRAY:
+			cbor_encoder_create_array(&event_map, &sub_array, CborIndefiniteLength);
+			str_array_ptr = (char **)evt_data_arr[i]->evt_value.strings;
+			for (j = 0; j < evt_data_arr[i]->evt_value.str_num; j++) {
+				cbor_encode_text_stringz(&sub_array, str_array_ptr[j]);
+			}
+			cbor_encoder_close_container_checked(&event_map, &sub_array);
+			break;
+		default:
+			IOT_ERROR("'%s' is not supported event type",
+					evt_data_arr[i]->evt_value.type);
+			goto exit_failed;
+		}
+
+		/* unit */
+		if (evt_data_arr[i]->evt_unit.type == IOT_CAP_UNIT_TYPE_STRING) {
+			cbor_encode_text_stringz(&event_map, "unit");
+			cbor_encode_text_stringz(&event_map, evt_data_arr[i]->evt_unit.string);
+		}
+
+		/* providerData */
+		cbor_encode_text_stringz(&event_map, "providerData");
+		cbor_encoder_create_map(&event_map, &provider_map, CborIndefiniteLength);
+		cbor_encode_text_stringz(&provider_map, "sequenceNumber");
+		cbor_encode_int(&provider_map, sqnum);
+		if (iot_get_time_in_ms(time_in_ms, sizeof(time_in_ms))) {
+			IOT_WARN("cannot add timestamp");
+		} else {
+			cbor_encode_text_stringz(&provider_map, "timestamp");
+			cbor_encode_text_stringz(&provider_map, time_in_ms);
+		}
+		cbor_encoder_close_container_checked(&event_map, &provider_map);
+	}
+
+	cbor_encoder_close_container_checked(&event_array, &event_map);
+	cbor_encoder_close_container_checked(&root_map, &event_array);
+	cbor_encoder_close_container_checked(&root, &root_map);
+
+	olen = cbor_encoder_get_buffer_size(&root, buf);
+	if (olen < buflen) {
+		buf = (uint8_t *)realloc(buf, olen + 1);
+	} else {
+		IOT_ERROR("allocated size is not enough (%d < %d)",
+				(int)buflen, (int)olen);
+		if (buflen < IOT_CBOR_MAX_BUF_LEN) {
+			free(buf);
+			goto retry;
+		} else {
+			goto exit_failed;
+		}
+	}
+
+	msg->msg = (char *)buf;
+	msg->msglen = olen;
+
+	return IOT_ERROR_NONE;
+
+exit_failed:
+	free(buf);
+
+	return IOT_ERROR_INVALID_ARGS;
+}
+
+#else /* !STDK_IOT_CORE_SERIALIZE_CBOR */
+static iot_error_t _iot_make_evt_data_json(const char* component, const char* capability,
 			uint8_t arr_size, iot_cap_evt_data_t** evt_data_arr, iot_cap_msg_t *msg)
 {
 	char *data = NULL;
@@ -843,6 +1012,17 @@ out:
 		cJSON_Delete(evt_root);
 
 	return err;
+}
+#endif /* STDK_IOT_CORE_SERIALIZE_CBOR */
+
+static iot_error_t _iot_make_evt_data(const char* component, const char* capability,
+			uint8_t arr_size, iot_cap_evt_data_t** evt_data_arr, iot_cap_msg_t *msg)
+{
+#if defined(STDK_IOT_CORE_SERIALIZE_CBOR)
+	return _iot_make_evt_data_cbor(component, capability, arr_size, evt_data_arr, msg);
+#else
+	return _iot_make_evt_data_json(component, capability, arr_size, evt_data_arr, msg);
+#endif
 }
 
 void iot_cap_call_init_cb(iot_cap_handle_list_t *cap_handle_list)

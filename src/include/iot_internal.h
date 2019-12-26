@@ -21,6 +21,7 @@
 
 #include "iot_capability.h"
 #include "iot_crypto.h"
+#include "iot_serialize.h"
 
 #define IOT_TASK_NAME "iot-task"
 #define IOT_TASK_STACK_SIZE (1024*5)
@@ -31,12 +32,21 @@
 #define IOT_TOPIC_SIZE (100)
 #define IOT_PAYLOAD_SIZE (1024)
 
+#if defined(STDK_IOT_CORE_SERIALIZE_CBOR)
+#define IOT_PUB_TOPIC_REGISTRATION	"/v1/registrations/cbor"
+#define IOT_SUB_TOPIC_REGISTRATION	"/v1/registrations/notification/%s/cbor"
+
+#define IOT_PUB_TOPIC_EVENT		"/v1/deviceEvents/%s/cbor"
+#define IOT_SUB_TOPIC_COMMAND		"/v1/commands/%s/cbor"
+#define IOT_SUB_TOPIC_NOTIFICATION	"/v1/notifications/%s/cbor"
+#else
 #define IOT_PUB_TOPIC_REGISTRATION	"/v1/registrations"
 #define IOT_SUB_TOPIC_REGISTRATION	"/v1/registrations/notification/%s"
 
-#define IOT_PUB_TOPIC_EVENT			"/v1/deviceEvents/%s"
+#define IOT_PUB_TOPIC_EVENT		"/v1/deviceEvents/%s"
 #define IOT_SUB_TOPIC_COMMAND		"/v1/commands/%s"
 #define IOT_SUB_TOPIC_NOTIFICATION	"/v1/notifications/%s"
+#endif
 
 /* MQTT Pre-defined constant */
 #define IOT_DEFAULT_TIMEOUT 		12000	/* milli-seconds */
