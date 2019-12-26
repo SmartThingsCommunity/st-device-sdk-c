@@ -15,13 +15,16 @@ EASYSETUP_DIR = src/easysetup
 MQTT_DIR = src/mqtt
 BUILD_DIR = $(TOPDIR)/build
 OUTPUT_DIR = $(TOPDIR)/output
+CBOR_DIR = src/deps/cbor/tinycbor/src
 
 CFLAGS	:= -std=c99 -D_GNU_SOURCE
 CFLAGS	+= $(CFLAGS_CONFIG)
 
 INCS	:= -I/usr/include -Isrc/include -Isrc/include/mqtt -Isrc/include/os -Isrc/include/bsp -I$(NET_DIR)
+INCS	+= -I$(CBOR_DIR)
 
 SRCS	:= $(wildcard src/*.c)
+SRCS	+= $(wildcard $(CBOR_DIR)/*.c)
 SRCS	+= $(wildcard $(BSP_DIR)/*.c)
 SRCS	+= $(wildcard $(OS_DIR)/*.c)
 SRCS	+= $(wildcard $(NET_DIR)/*.c)

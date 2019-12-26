@@ -43,6 +43,9 @@ else
 	COMPONENT_ADD_INCLUDEDIRS += port/net/openssl
 endif
 
+COMPONENT_SRCDIRS += deps/cbor/tinycbor/src
+COMPONENT_ADD_INCLUDEDIRS += deps/cbor/tinycbor/src
+
 COMPONENT_SRCDIRS += crypto
 ifdef CONFIG_STDK_IOT_CORE_USE_MBEDTLS
 COMPONENT_SRCDIRS += crypto/mbedtls
