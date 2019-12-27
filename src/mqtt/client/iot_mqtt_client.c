@@ -254,7 +254,7 @@ int keepalive(MQTTClient *c)
 		rc = MQTT_FAILURE; /* PINGRESP not received in keepalive interval */
 	/* Send ping request when there is no ping response up to 3 times or ping period expired */
 	} else if ((c->ping_outstanding && iot_os_timer_isexpired(c->ping_wait) && c->ping_retry_count < CONFIG_STDK_MQTT_PING_RETRY) ||
-			(iot_os_timer_isexpired(c->last_sent) || iot_os_timer_isexpired(c->last_received))) {
+			(!c->ping_outstanding && (iot_os_timer_isexpired(c->last_sent) || iot_os_timer_isexpired(c->last_received)))) {
 		iot_os_timer timer;
 		iot_os_timer_init(&timer);
 		iot_os_timer_count_ms(timer, c->command_timeout_ms);
