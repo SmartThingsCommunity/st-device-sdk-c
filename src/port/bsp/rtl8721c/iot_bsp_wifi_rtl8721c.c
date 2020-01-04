@@ -125,6 +125,73 @@ iot_error_t iot_bsp_wifi_init()
 	return IOT_ERROR_NONE;
 }
 
+/*These code copy from at comand sample**/
+static int _find_ap_from_scan_buf(char*buf, int buflen, char *target_ssid, void *user_data)
+{
+	rtw_wifi_setting_t *pwifi = (rtw_wifi_setting_t *)user_data;
+	int plen = 0;
+
+	IOT_DEBUG("ssid %s buflen %d target_ssid %s", target_ssid, buflen, target_ssid);
+	while(plen < buflen){
+		u8 len, ssid_len, security_mode;
+		char *ssid;
+
+		// len offset = 0
+		len = (int)*(buf + plen);
+		// check end
+		if(len == 0) break;
+		// ssid offset = 14
+		ssid_len = len - 14;
+		ssid = buf + plen + 14;
+		IOT_DEBUG("ssid_len %d target_ssidlen %d len %d ssid %s, :%c-%c-%c", ssid_len, strlen(target_ssid), len, ssid, ssid[0], ssid[13], ssid[14]);
+		IOT_DEBUG("ssid_len %d target_ssidlen %d len %d ssid %s, :%c-%c-%c", ssid_len, strlen(target_ssid), len, target_ssid, target_ssid[0], target_ssid[13], target_ssid[14]);
+		if((ssid_len == strlen(target_ssid))
+			&& (!memcmp(ssid, target_ssid, ssid_len)))
+		{
+			strcpy((char*)pwifi->ssid, target_ssid);
+			// channel offset = 13
+			pwifi->channel = *(buf + plen + 13);
+			// security_mode offset = 11
+			security_mode = (u8)*(buf + plen + 11);
+			if(security_mode == IW_ENCODE_ALG_NONE)
+				pwifi->security_type = RTW_SECURITY_OPEN;
+			else if(security_mode == IW_ENCODE_ALG_WEP)
+				pwifi->security_type = RTW_SECURITY_WEP_PSK;
+			else if(security_mode == IW_ENCODE_ALG_CCMP)
+				pwifi->security_type = RTW_SECURITY_WPA2_AES_PSK;
+			IOT_DEBUG("ssid %s security_mode %0x", security_mode, pwifi->security_type);
+			strcpy((char*)pwifi->ssid, target_ssid);
+			break;
+		}
+		plen += len;
+	}
+	return 0;
+}
+
+static int _get_ap_security_mode(IN char * ssid, OUT rtw_security_t *security_mode, OUT u8 * channel)
+{
+	rtw_wifi_setting_t wifi;
+	u32 scan_buflen = 1000;
+
+	memset(&wifi, 0, sizeof(wifi));
+
+	IOT_INFO("_get_ap_security_mode" );
+	if(wifi_scan_networks_with_ssid(_find_ap_from_scan_buf, (void*)&wifi, scan_buflen, ssid, strlen(ssid)) != RTW_SUCCESS){
+		IOT_ERROR("Wifi scan failed!\n");
+		return 0;
+	}
+
+	if(strcmp(wifi.ssid, ssid) == 0){
+		*security_mode = wifi.security_type;
+		*channel = wifi.channel;
+		IOT_INFO("Wifi scan secruity mode %d channel %d\n", wifi.security_type, wifi.channel);
+		return 1;
+	}
+	IOT_ERROR("Wifi scan could not search the ap with ssid %s, target ssid is: wifi.ssid %s!\n", ssid, wifi.ssid);
+
+	return 0;
+}
+
 iot_error_t iot_bsp_wifi_set_mode(iot_wifi_conf *conf)
 {
 	int str_len = 0;
@@ -186,9 +253,37 @@ iot_error_t iot_bsp_wifi_set_mode(iot_wifi_conf *conf)
 		}
 
 		iot_bsp_wifi_on(IOT_WIFI_MODE_STATION);
+		u8 ap_channel = 0;
+		_get_ap_security_mode(wifi_config.ssid.val, &(wifi_config.security_type), &ap_channel);
+
 		wifi_set_autoreconnect(1);
-		if(wifi_connect(wifi_config.ssid.val, wifi_config.security_type, wifi_config.password, strlen(wifi_config.ssid.val), strlen(wifi_config.password), -1, NULL) == RTW_SUCCESS)
-			LwIP_DHCP(0, DHCP_START);
+
+		int keyindex = 0;
+		/*NOTE: keyindex is for web auth mode, in other mode keyindex will not take effect*/
+		/*Known issue: We checked in our AP, if keyindex >0,
+				DHCP will failed, and we check with android phone and our pc, they are
+				are same issue.*/
+		for (keyindex = 0; keyindex < 4; keyindex++) {
+			wifi_config.key_id = keyindex;
+			if(wifi_connect(wifi_config.ssid.val, wifi_config.security_type,
+					wifi_config.password, strlen(wifi_config.ssid.val),
+					strlen(wifi_config.password), wifi_config.key_id, NULL) == RTW_SUCCESS) {
+				LwIP_DHCP(0, DHCP_START);
+				break;
+			} else {
+				if (RTW_SECURITY_WEP_PSK == wifi_config.security_type
+					|| RTW_SECURITY_WEP_SHARED == wifi_config.security_type) {
+					IOT_INFO("keyindex %d wifi connect to ap %s failed, ap secruity mode: %d",
+						keyindex,
+						wifi_config.ssid.val, wifi_config.security_type);
+				} else {
+					IOT_ERROR("keyindex %d wifi connect to ap %s failed, ap secruity mode: %d",
+						keyindex,
+						wifi_config.ssid.val, wifi_config.security_type);
+					break;
+				}
+			}
+		}
 
                 time(&now);
                 localtime_r(&now, &timeinfo);
