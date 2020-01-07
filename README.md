@@ -15,7 +15,7 @@ It is distributed in source form and written in C99 for the purpose of portabili
 This core device library provides the following features :
 
 - Customized MQTT  in order to reduce memory consumption and enhance stability
-- More easy and efficient APIs
+- Easy and efficient APIs
   - Connection APIs : You can do onboarding & MQTT connection by just calling only a few these APIs.
   - [Capability](https://smartthings.developer.samsung.com/docs/api-ref/capabilities.html) APIs : More than hundred different capabilities can be implemented as only a few APIs.
 
@@ -23,21 +23,23 @@ This core device library provides the following features :
 
 This core device library includes platform-dependent parts that should be built in a specific toolchain or SDK. That is, if you do NOT use the pre-porting environment, you must first port them to the appropriate environment.
 
-After porting, you can use this library completely under the specific environment. Therefore, it is better to refer to one of the pre-supplied example device applications in the [Reference repository](https://github.com/SmartThingsCommunity/st-device-sdk-c-ref). Maybe, we think it's more helpful to you.
+After porting, you can use this library completely under the specific environment. Therefore, it is better to refer to one of the pre-supplied example device applications in the [Reference repository](https://github.com/SmartThingsCommunity/st-device-sdk-c-ref). For more information on detailed workflow below, please refer to the [Getting Started](https://github.com/SmartThingsCommunity/st-device-sdk-c-ref/blob/master/doc/getting_started.md). Maybe, we think it's more helpful to you
 
-And, to know how a device information is registered to the SmartThings Cloud via [Developer Workspace](https://smartthings.developer.samsung.com/workspace/), please visit also the [Getting Started](https://github.com/SmartThingsCommunity/st-device-sdk-c-ref/blob/master/doc/getting_started.md).
+- Setup Environment
+- Register a Device
+- Develop a Device Application
 
 ## Porting STDK
 
-This core device library has platform-dependent directories. In current SDK version, those that must be ported are present in `src/port/bsp`, `src/port/net` and `src/port/os`. By default, we provide several implementations such as POSIX, ESPRESSIF, REALTEK.
+This core device library has platform-dependent directories. In current SDK version, those that must be ported are present in `src/port/bsp`, `src/port/net` and `src/port/os`. By default, we have already provided several implementations based on some operating systems(e.g. FreeRTOS) and chipsets(e.g. ESPRESSIF, REALTEK). These porting examples in those directories make it easier for you to port to additional chipsets and operating systems. As of now, this release can also be cross-compiled directly through several chipset SDK environments that have already been ported in the [Reference repository](https://github.com/SmartThingsCommunity/st-device-sdk-c-ref).
 
-These porting examples in those directories make it easier for you to port to different chipsets and operating systems. Please refer to the [Porting Guide](https://github.com/SmartThingsCommunity/st-device-sdk-c/blob/master/doc/porting_guide.md) for instructions on porting this SDK.
-
-As of now, this release can be cross-compiled via several ported chipset SDK's environments. More information can be found [here](https://github.com/SmartThingsCommunity/st-device-sdk-c-ref).
+For instructions on how to port this SDK, please see the [Porting Guide](https://github.com/SmartThingsCommunity/st-device-sdk-c/blob/master/doc/porting_guide.md).
 
 ## Building STDK
 
-This core device library should be built according to the chipset development environment to be applied. If this environment is not ready yet, you can build it in the POSIX environment as shown below. But, unlike the resource limited MCU devices, you can NOT check the onboarding process in the POSIX environment because it does not support a SoftAP function by default. Therefore, as a starting point, we strongly recommend that you build one of the MCU device examples provided in the [Reference repository](https://github.com/SmartThingsCommunity/st-device-sdk-c-ref) to use all features without limitations.
+This core device library should be built according to the chipset development environment to be applied. If this environment is not ready yet, you can build it in the POSIX environment based on Ubuntu as shown below.
+
+But, unlike the resource limited MCU devices, you can NOT check the onboarding process in the POSIX environment because it does not support a SoftAP function by default. Therefore, as a starting point of this SDK, we strongly recommend that you build one of the MCU device examples provided in the [Reference repository](https://github.com/SmartThingsCommunity/st-device-sdk-c-ref) to use all features without limitations.
 
 ### Prerequisites
 
