@@ -92,6 +92,7 @@ typedef enum iot_state_type {
 	IOT_STATE_INITIALIZED = 0,
 
 	IOT_STATE_PROV_ENTER,
+	IOT_STATE_PROV_CONN_MOBILE,
 	IOT_STATE_PROV_CONFIRMING,
 	IOT_STATE_PROV_DONE,
 
@@ -224,6 +225,7 @@ struct iot_context {
 	iot_os_queue *pub_queue;			/**< @brief iot core's event publish queue */
 	iot_os_queue *easysetup_req_queue;	/**< @brief request queue for easy-setup process */
 	iot_os_queue *easysetup_resp_queue;	/**< @brief response queue for easy-setup process */
+	bool es_res_created;				/**< @brief to check easy-setup resources are created or not */
 
 	iot_state_t curr_state;			/**< @brief reflect current iot_state */
 	iot_state_t req_state;			/**< @brief reflect requested iot_state */

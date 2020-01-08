@@ -130,11 +130,14 @@ static iot_error_t _create_easysetup_resources(struct iot_context *ctx, iot_pin_
 		}
 	}
 
+	ctx->es_res_created = true;
 	return IOT_ERROR_NONE;
 }
 
 static void _delete_easysetup_resources_all(struct iot_context *ctx)
 {
+	ctx->es_res_created = false;
+
 	if (ctx->pin) {
 		// if device connected to cloud successfully. We don't need pin anymore
 		free(ctx->pin);
@@ -197,6 +200,22 @@ static void _do_status_report(struct iot_context *ctx,
 		}
 		break;
 
+	case IOT_STATE_PROV_CONN_MOBILE:
+		if (!is_final) {
+			fn_stat = IOT_STATUS_PROVISIONING;
+			fn_stat_lv = IOT_STAT_LV_CONN;
+			is_report = true;
+		}
+		break;
+
+	case IOT_STATE_PROV_CONFIRMING:
+		if (ctx->curr_otm_feature == OVF_BIT_BUTTON) {
+			fn_stat = IOT_STATUS_NEED_INTERACT;
+			fn_stat_lv = IOT_STAT_LV_STAY;
+			is_report = true;
+		}
+		break;
+
 	case IOT_STATE_PROV_DONE:
 		if (!is_final) {
 			fn_stat = IOT_STATUS_PROVISIONING;
@@ -205,6 +224,8 @@ static void _do_status_report(struct iot_context *ctx,
 		}
 		break;
 
+	case IOT_STATE_CLOUD_REGISTERING:
+		/* fall through */
 	case IOT_STATE_CLOUD_CONNECTING:
 		if (!is_final) {
 			fn_stat = IOT_STATUS_CONNECTING;
@@ -276,13 +297,16 @@ static iot_error_t _do_iot_main_command(struct iot_context *ctx,
 			if (err != IOT_ERROR_NONE) {
 				IOT_ERROR("failed to handle new state : %d", state_data->iot_state);
 			} else {
-				ctx->cmd_err = 0;
-				ctx->req_state = state_data->iot_state;
-				_do_update_timeout(ctx, needed_tout);
+				if (needed_tout) {
+					/* Internal state will be updated with timeout */
+					ctx->cmd_err = 0;
+					ctx->req_state = state_data->iot_state;
+					_do_update_timeout(ctx, needed_tout);
+				}
 
 				/* Call user sdie state update callback */
 				if (ctx->status_cb)
-					_do_status_report(ctx, ctx->req_state, false);
+					_do_status_report(ctx, state_data->iot_state, false);
 			}
 
 			break;
@@ -403,6 +427,9 @@ static iot_error_t _do_iot_main_command(struct iot_context *ctx,
 						 * So, we forcely remove all data & reboot the device
 						 */
 						IOT_WARN("Some thing went wrong, got provisioning but no deviceId");
+						if (ctx->es_res_created)
+							_delete_easysetup_resources_all(ctx);
+
 						iot_device_cleanup(ctx);
 
 						ctx->cmd_err |= (1 << cmd->cmd_type);
@@ -544,6 +571,9 @@ static iot_error_t _do_iot_main_command(struct iot_context *ctx,
 		case IOT_COMMAND_SELF_CLEANUP:
 			IOT_WARN("self device cleanup");
 			bool *reboot = cmd->param;
+
+			if (ctx->es_res_created)
+				_delete_easysetup_resources_all(ctx);
 
 			iot_device_cleanup(ctx);
 
@@ -1057,6 +1087,12 @@ static iot_error_t _do_state_updating(struct iot_context *ctx,
 		IOT_MEM_CHECK("ES_PROV_ENTER DONE >>PT<<");
 		break;
 
+	case IOT_STATE_PROV_CONN_MOBILE:
+		IOT_INFO("Notification only with IOT_STATE_PROV_CONN_MOBILE");
+		*timeout_ms = 0;
+		iot_err = IOT_ERROR_NONE;
+		break;
+
 	case IOT_STATE_PROV_CONFIRMING:
 		IOT_INFO("the state changes to IOT_STATE_PROV_CONFIRMING");
 		iot_err = IOT_ERROR_NONE;
@@ -1087,11 +1123,17 @@ static iot_error_t _do_state_updating(struct iot_context *ctx,
 		break;
 
 	case IOT_STATE_CLOUD_REGISTERING:
+		if (ctx->es_res_created)
+			_delete_easysetup_resources_all(ctx);
+
 		iot_cmd = IOT_COMMAND_CLOUD_REGISTERING;
 		iot_err = iot_command_send(ctx, iot_cmd, NULL, 0);
 		break;
 
 	case IOT_STATE_CLOUD_CONNECTING:
+		if (ctx->es_res_created)
+			_delete_easysetup_resources_all(ctx);
+
 		iot_cmd = IOT_COMMAND_CLOUD_CONNECTING;
 		iot_err = iot_command_send(ctx, iot_cmd, NULL, 0);
 		break;
@@ -1099,10 +1141,6 @@ static iot_error_t _do_state_updating(struct iot_context *ctx,
 	case IOT_STATE_CLOUD_CONNECTED:
 		iot_cmd = IOT_COMMAND_READY_TO_CTL;
 		iot_err = iot_command_send(ctx, iot_cmd, NULL, 0);
-
-		if (iot_err == IOT_ERROR_NONE)
-			_delete_easysetup_resources_all(ctx);
-
 		break;
 
 	case IOT_STATE_CLOUD_DISCONNECTED:
@@ -1134,10 +1172,14 @@ int st_conn_start(IOT_CTX *iot_ctx, st_status_cb status_cb,
 	if (!ctx)
 		return IOT_ERROR_BAD_REQ;
 
-	iot_err = _create_easysetup_resources(ctx, pin_num);
-	if (iot_err != IOT_ERROR_NONE) {
-		IOT_ERROR("failed to create easysetup resources(%d)", iot_err);
-		return iot_err;
+	if (ctx->es_res_created) {
+		IOT_WARN("Already easysetup resources are created!!");
+	} else {
+		iot_err = _create_easysetup_resources(ctx, pin_num);
+		if (iot_err != IOT_ERROR_NONE) {
+			IOT_ERROR("failed to create easysetup resources(%d)", iot_err);
+			return iot_err;
+		}
 	}
 
 	if (status_cb) {
@@ -1174,9 +1216,7 @@ int st_conn_start(IOT_CTX *iot_ctx, st_status_cb status_cb,
 		iot_os_eventgroup_wait_bits(ctx->usr_events,
 			(1 << IOT_STATE_PROV_CONFIRMING), true, false, IOT_OS_MAX_DELAY);
 
-		 if (ctx->curr_otm_feature == OVF_BIT_BUTTON)
-			ctx->status_cb(IOT_STATUS_NEED_INTERACT, IOT_STAT_LV_STAY,
-					ctx->status_usr_data);
+		_do_status_report(ctx, IOT_STATE_PROV_CONFIRMING, false);
 	}
 
 	IOT_INFO("%s done", __func__);
