@@ -113,8 +113,14 @@ static iot_error_t _iot_es_st_mqtt_connect(struct iot_mqtt_ctx *target_cli,
 	/* No need default case, conn_type was already checked */
 	}
 
-	if (iot_ret != IOT_ERROR_NONE)
+	if (iot_ret != IOT_ERROR_NONE) {
+#if defined(STDK_MQTT_TASK)
+		st_mqtt_endtask(target_cli->cli);
+#endif
 		iot_mqtt_disconnect(target_cli);
+		st_mqtt_destroy(target_cli->cli);
+		target_cli->cli = NULL;
+	}
 
 out:
 	iot_es_crypto_free_pk(&pk_info);
@@ -138,9 +144,11 @@ static void _iot_es_st_mqtt_disconnect(struct iot_mqtt_ctx *mqtt_ctx)
 			IOT_ERROR("Failed to unsubscribe(%d)", iot_ret);
 	}
 #if defined(STDK_MQTT_TASK)
-	MQTTEndTask(&mqtt_ctx->cli);
+	st_mqtt_endtask(mqtt_ctx->cli);
 #endif
 	iot_mqtt_disconnect(mqtt_ctx);
+	st_mqtt_destroy(mqtt_ctx->cli);
+	mqtt_ctx->cli = NULL;
 }
 
 iot_error_t iot_es_connect(struct iot_context *ctx, int conn_type)
@@ -165,6 +173,8 @@ iot_error_t iot_es_connect(struct iot_context *ctx, int conn_type)
 	/* For mqtt-lib. notification & command filter */
 	client_ctx->cmd_filter = NULL;
 	client_ctx->noti_filter = NULL;
+
+	client_ctx->cli = NULL;
 
 	if (conn_type == IOT_CONNECT_TYPE_COMMUNICATION)
 		ctx->reged_cli = client_ctx;

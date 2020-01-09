@@ -648,7 +648,7 @@ static void _iot_main_task(struct iot_context *ctx)
 			IOT_EVENT_BIT_ALL, true, false, 500);
 #else
 		curr_events = iot_os_eventgroup_wait_bits(ctx->iot_events,
-			IOT_EVENT_BIT_ALL, true, false, CONFIG_STDK_MQTT_RECV_CYCLE);
+			IOT_EVENT_BIT_ALL, true, false, IOT_MAIN_TASK_CYCLE);
 #endif
 		if (curr_events & IOT_EVENT_BIT_COMMAND) {
 			cmd.param = NULL;
@@ -726,7 +726,7 @@ static void _iot_main_task(struct iot_context *ctx)
 
 #if !defined(STDK_MQTT_TASK)
 		/* check if there is MQTT packet from GG */
-		if (ctx->client_ctx && MQTTYield(&ctx->client_ctx->cli, 0) < 0) {
+		if (ctx->client_ctx && st_mqtt_yield(ctx->client_ctx->cli, 0) < 0) {
 			IOT_WARN("Report Disconnected..");
 			next_state = IOT_STATE_CLOUD_DISCONNECTED;
 			err = iot_state_update(ctx, next_state, 0);
@@ -736,7 +736,7 @@ static void _iot_main_task(struct iot_context *ctx)
 			err = iot_state_update(ctx, next_state, 0);
 			iot_os_queue_reset(ctx->pub_queue);
 
-		} else if (ctx->reged_cli && MQTTYield(&ctx->reged_cli->cli, 0) < 0) {
+		} else if (ctx->reged_cli && st_mqtt_yield(ctx->reged_cli->cli, 0) < 0) {
 			IOT_WARN("Report Disconnected..");
 			next_state = IOT_STATE_CLOUD_DISCONNECTED;
 			err = iot_state_update(ctx, next_state, 0);

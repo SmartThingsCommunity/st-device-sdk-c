@@ -33,7 +33,7 @@
 iot_error_t iot_mqtt_connect(struct iot_mqtt_ctx *target_cli,
 		char *username, char *sign_data)
 {
-	MQTTPacket_connectData connData = MQTTPacket_connectData_initializer;
+	st_mqtt_connect_data conn_data = st_mqtt_connect_data_initializer;
 	int ret;
 	iot_error_t iot_ret = IOT_ERROR_NONE;
 	bool reboot;
@@ -64,7 +64,7 @@ iot_error_t iot_mqtt_connect(struct iot_mqtt_ctx *target_cli,
 		goto done_mqtt_connect;
 	}
 
-	MQTTClientInit(&target_cli->cli, IOT_DEFAULT_TIMEOUT);
+	st_mqtt_create(&target_cli->cli, IOT_DEFAULT_TIMEOUT);
 
 	cloud_prov = &ctx->prov_data.cloud;
 	if (!cloud_prov->broker_url) {
@@ -87,36 +87,33 @@ iot_error_t iot_mqtt_connect(struct iot_mqtt_ctx *target_cli,
 
 	IOT_INFO("url: %s, port: %d", cloud_prov->broker_url, cloud_prov->broker_port);
 
-	connData.willFlag     = 0;
-	connData.MQTTVersion  = 4;
-	connData.clientID.cstring  = client_id;
-	connData.username.cstring  = username;
-	connData.password.cstring  = sign_data;
-	connData.keepAliveInterval = IOT_MQTT_KEEPALIVE_INTERVAL;
-	connData.cleansession = 1;
+	conn_data.clientid  = client_id;
+	conn_data.username  = username;
+	conn_data.password  = sign_data;
 
 	IOT_INFO("mqtt connect,\nid : %s\nusername : %s\npassword : %s",
-		 connData.clientID.cstring,
-		 connData.username.cstring,
-		 connData.password.cstring);
+		 conn_data.clientid,
+		 conn_data.username,
+		 conn_data.password);
 
-	if ((ret = MQTTConnect(&(target_cli->cli), &broker_info, &connData)) != MQTT_SUCCESS) {
+	ret = st_mqtt_connect(target_cli->cli, &broker_info, &conn_data);
+	if (ret) {
 		IOT_ERROR("%s error(%d)", __func__, ret);
 		switch (ret) {
-		case MQTT_UNNACCEPTABLE_PROTOCOL:
+		case E_ST_MQTT_UNNACCEPTABLE_PROTOCOL:
 			/* fall through */
-		case MQTT_SERVER_UNAVAILABLE:
+		case E_ST_MQTT_SERVER_UNAVAILABLE:
 			/* This case means Server can't start service for MQTT Things
 			 * This case is totally server-side issue, so we just report it to Apps
 			 */
 			iot_ret = IOT_ERROR_MQTT_SERVER_UNAVAIL;
 			break;
 
-		case MQTT_CLIENTID_REJECTED:
+		case E_ST_MQTT_CLIENTID_REJECTED:
 			/* fall through */
-		case MQTT_BAD_USERNAME_OR_PASSWORD:
+		case E_ST_MQTT_BAD_USERNAME_OR_PASSWORD:
 			/* fall through */
-		case MQTT_NOT_AUTHORIZED:
+		case E_ST_MQTT_NOT_AUTHORIZED:
 			/* These cases are related to device's clientID, serialNumber, deviceId & JWT
 			 * So we try to cleanup all data & reboot
 			 */
@@ -139,9 +136,9 @@ iot_error_t iot_mqtt_connect(struct iot_mqtt_ctx *target_cli,
 	}
 
 #if defined(STDK_MQTT_TASK)
-        if ((ret = MQTTStartTask(&target_cli->cli)) < 0) {
+        if ((ret = st_mqtt_starttask(target_cli->cli)) < 0) {
             IOT_ERROR("Returned code from start tasks is %d", ret);
-			MQTTDisconnect(&target_cli->cli);
+			st_mqtt_disconnect(target_cli->cli);
 			iot_ret = IOT_ERROR_MQTT_CONNECT_FAIL;
 			goto done_mqtt_connect;
 		} else
@@ -149,6 +146,10 @@ iot_error_t iot_mqtt_connect(struct iot_mqtt_ctx *target_cli,
 #endif
 
 done_mqtt_connect:
+	if (iot_ret != IOT_ERROR_NONE && target_cli->cli) {
+		st_mqtt_destroy(target_cli->cli);
+		target_cli->cli = NULL;
+	}
 	if (root_cert)
 		free((void *)root_cert);
 
@@ -158,10 +159,10 @@ done_mqtt_connect:
 
 iot_error_t iot_mqtt_publish(struct iot_context *ctx, void *payload)
 {
-	enum returnCode ret;
+	int ret;
 	iot_error_t result = IOT_ERROR_NONE;
 	struct iot_mqtt_ctx *mqtt_ctx;
-	MQTTMessage msg;
+	st_mqtt_msg msg;
 	char *topic;
 	struct iot_registered_data *iot_reg_data;
 
@@ -182,17 +183,17 @@ iot_error_t iot_mqtt_publish(struct iot_context *ctx, void *payload)
 	topic = malloc(IOT_TOPIC_SIZE);
 	snprintf(topic, IOT_TOPIC_SIZE, IOT_PUB_TOPIC_EVENT, iot_reg_data->deviceId);
 
-	msg.qos = QOS1;
+	msg.qos = st_mqtt_qos1;
 	msg.retained = false;
-	msg.dup = false;
 
 	msg.payload = payload;
 	msg.payloadlen = strlen(msg.payload);
+	msg.topic = topic;
 
 	IOT_INFO("publish event, topic : %s, payload :\n%s", topic, msg.payload);
 
-	ret = MQTTPublish(&mqtt_ctx->cli, topic, &msg);
-	if (ret != MQTT_SUCCESS) {
+	ret = st_mqtt_publish(mqtt_ctx->cli, &msg);
+	if (ret) {
 		IOT_WARN("MQTT pub error(%d)", ret);
 		result = IOT_ERROR_MQTT_PUBLISH_FAIL;
 	}
@@ -201,29 +202,27 @@ iot_error_t iot_mqtt_publish(struct iot_context *ctx, void *payload)
 	return result;
 }
 
-void _iot_mqtt_noti_sub_callback(MessageData *md, void *userData)
+void _iot_mqtt_noti_sub_callback(st_mqtt_msg *md, void *userData)
 {
 	struct iot_context *ctx = (struct iot_context *)userData;
-	MQTTMessage *message = md->message;
-	char *mqtt_payload = message->payload;
+	char *mqtt_payload = md->payload;
 
 	iot_noti_sub_cb(ctx, mqtt_payload);
-	IOT_DEBUG("raw msg (len:%d) : %s", message->payloadlen, mqtt_payload);
+	IOT_DEBUG("raw msg (len:%d) : %s", md->payloadlen, mqtt_payload);
 }
 
-void _iot_mqtt_cmd_sub_callback(MessageData *md, void *userData)
+void _iot_mqtt_cmd_sub_callback(st_mqtt_msg *md, void *userData)
 {
 	struct iot_context *ctx = (struct iot_context *)userData;
-	MQTTMessage *message = md->message;
-	char *mqtt_payload = message->payload;
+	char *mqtt_payload = md->payload;
 
 	iot_cap_sub_cb(ctx->cap_handle_list, mqtt_payload);
-	IOT_DEBUG("raw msg (len:%d) : %s", message->payloadlen, mqtt_payload);
+	IOT_DEBUG("raw msg (len:%d) : %s", md->payloadlen, mqtt_payload);
 }
 
 iot_error_t iot_mqtt_subscribe(struct iot_mqtt_ctx *mqtt_ctx)
 {
-	enum returnCode ret;
+	int ret;
 	iot_error_t result = IOT_ERROR_NONE;
 	struct iot_context *ctx = (struct iot_context *)mqtt_ctx->iot_ctx;
 	char *topicfilter;
@@ -256,9 +255,9 @@ iot_error_t iot_mqtt_subscribe(struct iot_mqtt_ctx *mqtt_ctx)
 
 	IOT_DEBUG("noti subscribe topic : %s", mqtt_ctx->noti_filter);
 
-	ret = MQTTSubscribe(&mqtt_ctx->cli, mqtt_ctx->noti_filter, QOS1,
+	ret = st_mqtt_subscribe(mqtt_ctx->cli, mqtt_ctx->noti_filter, st_mqtt_qos1,
 			_iot_mqtt_noti_sub_callback, ctx);
-	if (ret != MQTT_SUCCESS) {
+	if (ret) {
 		IOT_WARN("subscribe error(%d)", ret);
 		result = IOT_ERROR_BAD_REQ;
 		goto error_mqtt_sub_noti;
@@ -279,9 +278,9 @@ iot_error_t iot_mqtt_subscribe(struct iot_mqtt_ctx *mqtt_ctx)
 
 	IOT_DEBUG("cmd subscribe topic : %s", mqtt_ctx->cmd_filter);
 
-	ret = MQTTSubscribe(&mqtt_ctx->cli, mqtt_ctx->cmd_filter, QOS1,
+	ret = st_mqtt_subscribe(mqtt_ctx->cli, mqtt_ctx->cmd_filter, st_mqtt_qos1,
 			_iot_mqtt_cmd_sub_callback, ctx);
-	if (ret != MQTT_SUCCESS) {
+	if (ret) {
 		IOT_WARN("failed cmd sub registration(%d)", ret);
 		result = IOT_ERROR_BAD_REQ;
 		goto error_mqtt_sub_cmd;
@@ -290,7 +289,7 @@ iot_error_t iot_mqtt_subscribe(struct iot_mqtt_ctx *mqtt_ctx)
 	return IOT_ERROR_NONE;
 
 error_mqtt_sub_cmd:
-	if (MQTTUnsubscribe(&mqtt_ctx->cli, mqtt_ctx->cmd_filter) != MQTT_SUCCESS)
+	if (st_mqtt_unsubscribe(mqtt_ctx->cli, mqtt_ctx->cmd_filter))
 		IOT_WARN("error for MQTTUnsub : %s", mqtt_ctx->cmd_filter);
 
 	free((void *)mqtt_ctx->cmd_filter);
@@ -303,12 +302,12 @@ error_mqtt_sub_noti:
 
 iot_error_t iot_mqtt_unsubscribe(struct iot_mqtt_ctx *mqtt_ctx)
 {
-	enum returnCode ret;
+	int ret;
 
 	/* Unregister command subscribe */
 	if (mqtt_ctx->cmd_filter) {
-		ret = MQTTUnsubscribe(&mqtt_ctx->cli, mqtt_ctx->cmd_filter);
-		if (ret != MQTT_SUCCESS)
+		ret = st_mqtt_unsubscribe(mqtt_ctx->cli, mqtt_ctx->cmd_filter);
+		if (ret)
 			IOT_WARN("error for MQTTUnsub cmd (%d)", ret);
 
 		free((void *)mqtt_ctx->cmd_filter);
@@ -320,8 +319,8 @@ iot_error_t iot_mqtt_unsubscribe(struct iot_mqtt_ctx *mqtt_ctx)
 
 	/* Unregister notification subscribe */
 	if (mqtt_ctx->noti_filter) {
-		ret = MQTTUnsubscribe(&mqtt_ctx->cli, mqtt_ctx->noti_filter);
-		if (ret != MQTT_SUCCESS)
+		ret = st_mqtt_unsubscribe(mqtt_ctx->cli, mqtt_ctx->noti_filter);
+		if (ret)
 			IOT_WARN("error for MQTTUnsub noti (%d)", ret);
 
 		free((void *)mqtt_ctx->noti_filter);
@@ -336,22 +335,21 @@ iot_error_t iot_mqtt_unsubscribe(struct iot_mqtt_ctx *mqtt_ctx)
 
 void iot_mqtt_disconnect(struct iot_mqtt_ctx *target_cli)
 {
-	enum returnCode ret;
+	int ret;
 
 	/* Internal MQTT connection was disconnected,
 	 * even if it returns errors
 	 */
-	ret = MQTTDisconnect(&target_cli->cli);
-	if (ret != MQTT_SUCCESS)
+	ret = st_mqtt_disconnect(target_cli->cli);
+	if (ret)
 		IOT_WARN("Disconnect error(%d)", ret);
 }
 
-static void mqtt_reg_sub_cb(MessageData *md, void *userData)
+static void mqtt_reg_sub_cb(st_mqtt_msg *md, void *userData)
 {
 	struct iot_context *ctx = (struct iot_context *)userData;
 	struct iot_registered_data *reged_data = &ctx->iot_reg_data;
-	MQTTMessage *message = md->message;
-	char * mqtt_payload = message->payload;
+	char * mqtt_payload = md->payload;
 	char * registed_msg = NULL;
 	cJSON *json = NULL;
 	cJSON *svr_did = NULL;
@@ -436,13 +434,13 @@ reg_sub_out:
 
 iot_error_t iot_mqtt_registration(struct iot_mqtt_ctx *mqtt_ctx)
 {
-	enum returnCode ret;
+	int ret;
 	char *reg_topic = NULL;
 	char *dev_sn = NULL;
 	unsigned int devsn_len;
 	iot_error_t iot_err = IOT_ERROR_NONE;
 	cJSON *root = NULL;
-	MQTTMessage msg;
+	st_mqtt_msg msg;
 	char str_dump[40], valid_id = 0;
 	struct iot_devconf_prov_data *devconf;
 	struct iot_context *ctx;
@@ -479,9 +477,9 @@ iot_error_t iot_mqtt_registration(struct iot_mqtt_ctx *mqtt_ctx)
 	IOT_DEBUG("noti subscribe topic : %s", mqtt_ctx->noti_filter);
 
 	/* register notification subscribe for registration */
-	ret = MQTTSubscribe(&mqtt_ctx->cli, mqtt_ctx->noti_filter,
-			QOS1, mqtt_reg_sub_cb, mqtt_ctx->iot_ctx);
-	if (ret != MQTT_SUCCESS) {
+	ret = st_mqtt_subscribe(mqtt_ctx->cli, mqtt_ctx->noti_filter,
+			st_mqtt_qos1, mqtt_reg_sub_cb, mqtt_ctx->iot_ctx);
+	if (ret) {
 		IOT_ERROR("%s error MQTTsub(%d)", __func__, ret);
 		iot_err = IOT_ERROR_BAD_REQ;
 		goto failed_regist;
@@ -553,13 +551,13 @@ iot_error_t iot_mqtt_registration(struct iot_mqtt_ctx *mqtt_ctx)
 	} else {
 		IOT_DEBUG("publish resource payload : \n%s", msg.payload);
 
-		msg.qos = QOS1;
+		msg.qos = st_mqtt_qos1;
 		msg.retained = false;
-		msg.dup = false;
 		msg.payloadlen = strlen(msg.payload);
+		msg.topic = IOT_PUB_TOPIC_REGISTRATION;
 
-		ret = MQTTPublish(&mqtt_ctx->cli, IOT_PUB_TOPIC_REGISTRATION, &msg);
-		if (ret != MQTT_SUCCESS) {
+		ret = st_mqtt_publish(mqtt_ctx->cli, &msg);
+		if (ret) {
 			IOT_ERROR("error MQTTpub(%d)", ret);
 			iot_err = IOT_ERROR_BAD_REQ;
 		}
