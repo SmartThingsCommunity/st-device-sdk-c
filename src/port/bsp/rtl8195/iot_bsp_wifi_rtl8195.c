@@ -150,7 +150,7 @@ static int _find_ap_from_scan_buf(char*buf, int buflen, char *target_ssid, void 
 				pwifi->security_type = RTW_SECURITY_WEP_PSK;
 			else if(security_mode == IW_ENCODE_ALG_CCMP)
 				pwifi->security_type = RTW_SECURITY_WPA2_AES_PSK;
-			IOT_DEBUG("ssid %s security_mode %0x", security_mode, pwifi->security_type);
+			IOT_DEBUG("ssid %s security_mode %0x", target_ssid, pwifi->security_type);
 			strcpy((char*)pwifi->ssid, target_ssid);
 			break;
 		}
@@ -240,10 +240,14 @@ iot_error_t iot_bsp_wifi_set_mode(iot_wifi_conf *conf)
 		}
 
 		iot_bsp_wifi_on(IOT_WIFI_MODE_STATION);
+		wifi_set_autoreconnect(0);
 		u8 ap_channel = 0;
-		_get_ap_security_mode(wifi_config.ssid.val, &(wifi_config.security_type), &ap_channel);
+		for(int i=0;i<5;i++){
+			if(0 !=	_get_ap_security_mode(wifi_config.ssid.val, &(wifi_config.security_type), &ap_channel))
+				break;
+			IOT_INFO("Connect failed, No. %d try!\n",i);
+		}
 
-		wifi_set_autoreconnect(1);
 
 		int keyindex = 0;
 		/*NOTE: keyindex is for web auth mode, in other mode keyindex will not take effect*/
@@ -256,6 +260,9 @@ iot_error_t iot_bsp_wifi_set_mode(iot_wifi_conf *conf)
 					wifi_config.password, strlen(wifi_config.ssid.val),
 					strlen(wifi_config.password), wifi_config.key_id, NULL) == RTW_SUCCESS) {
 				LwIP_DHCP(0, DHCP_START);
+				int rssi=0;
+				wifi_get_rssi(&rssi);
+				IOT_INFO("\n\rThe RSSI: %d\n",rssi);
 				break;
 			} else {
 				if (RTW_SECURITY_WEP_PSK == wifi_config.security_type
@@ -272,6 +279,7 @@ iot_error_t iot_bsp_wifi_set_mode(iot_wifi_conf *conf)
 			}
 		}
 
+		wifi_set_autoreconnect(1);
                 time(&now);
                 localtime_r(&now, &timeinfo);
 
