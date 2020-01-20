@@ -27,7 +27,7 @@
 #include "iot_util.h"
 #include "iot_nv_data.h"
 #include "iot_debug.h"
-#include "iot_jwt.h"
+#include "iot_wt.h"
 #include "iot_crypto.h"
 #include "iot_os_util.h"
 #include "iot_bsp_system.h"
@@ -504,7 +504,7 @@ iot_error_t _iot_es_mqtt_connect(struct iot_context *ctx, st_mqtt_client target_
 		case E_ST_MQTT_BAD_USERNAME_OR_PASSWORD:
 			/* fall through */
 		case E_ST_MQTT_NOT_AUTHORIZED:
-			/* These cases are related to device's clientID, serialNumber, deviceId & JWT
+			/* These cases are related to device's clientID, serialNumber, deviceId & web token
 			 * So we try to cleanup all data & reboot
 			 */
 			IOT_WARN("Rejected by Server!! cleanup all & reboot");
@@ -547,7 +547,7 @@ iot_error_t iot_es_connect(struct iot_context *ctx, int conn_type)
 	st_mqtt_client mqtt_cli = NULL;
 	char *dev_sn = NULL;
 	unsigned int devsn_len;
-	char *jwt_data = NULL;
+	char *wt_data = NULL;
 	struct iot_crypto_pk_info pk_info = { 0, };
 	char *topicfilter = NULL;
 	iot_error_t iot_ret;
@@ -577,9 +577,9 @@ iot_error_t iot_es_connect(struct iot_context *ctx, int conn_type)
 		goto out;
 	}
 
-	iot_ret = iot_jwt_create(&jwt_data, dev_sn, &pk_info);
+	iot_ret = iot_wt_create(&wt_data, dev_sn, &pk_info);
 	if (iot_ret != IOT_ERROR_NONE) {
-		IOT_ERROR("failed to make jwt-token");
+		IOT_ERROR("failed to make wt-token");
 		goto out;
 	}
 
@@ -597,7 +597,7 @@ iot_error_t iot_es_connect(struct iot_context *ctx, int conn_type)
 			goto out;
 		}
 
-		iot_ret = _iot_es_mqtt_connect(ctx, mqtt_cli, (char *)ctx->iot_reg_data.deviceId, jwt_data);
+		iot_ret = _iot_es_mqtt_connect(ctx, mqtt_cli, (char *)ctx->iot_reg_data.deviceId, wt_data);
 		if (iot_ret != IOT_ERROR_NONE) {
 			IOT_ERROR("failed to connect");
 			goto out;
@@ -637,7 +637,7 @@ iot_error_t iot_es_connect(struct iot_context *ctx, int conn_type)
 		ctx->evt_mqttcli = mqtt_cli;
 	} else {
 		IOT_INFO("connect_type: registration");
-		iot_ret = _iot_es_mqtt_connect(ctx, mqtt_cli, (char *)dev_sn, jwt_data);
+		iot_ret = _iot_es_mqtt_connect(ctx, mqtt_cli, (char *)dev_sn, wt_data);
 		if (iot_ret != IOT_ERROR_NONE) {
 			IOT_ERROR("failed to connect");
 			goto out;
@@ -671,8 +671,8 @@ out:
 	if (dev_sn)
 		free((void *)dev_sn);
 
-	if (jwt_data)
-		free(jwt_data);
+	if (wt_data)
+		free(wt_data);
 
 	if (topicfilter)
 		free(topicfilter);

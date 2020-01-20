@@ -16,33 +16,29 @@
  *
  ****************************************************************************/
 
-#ifndef _IOT_JWT_H_
-#define _IOT_JWT_H_
+#ifndef _IOT_WT_H_
+#define _IOT_WT_H_
 
 #ifdef __cplusplus
 extern "C" {
 #endif
 
-#define IOT_ERROR_JWT_INVALID_ARG	(IOT_ERROR_JWT_BASE - 0)
-#define IOT_ERROR_JWT_MALLOC		(IOT_ERROR_JWT_BASE - 1)
-#define IOT_ERROR_JWT_CJSON		(IOT_ERROR_JWT_BASE - 2)
-
 /**
- * @brief	Create a JWT as proof of the device's identity
- * @details	This function makes a JWT string to connect to ST Cloud.
- *		Pass the JWT as password.
+ * @brief	Create a Web Token as proof of the device's identity
+ * @details	This function makes a Web Token string to connect to ST Cloud.
+ *		Pass the Web Token as password.
  *		Supported key types are RS256 and ED25519.
  * @param[out]	token	a pointer of buffer to store a formatted and signed string
  * @param[in]	sn	device serial number as user name
  * @param[in]	pk_info	private key data
- * @retval	IOT_ERROR_NONE		JWT is sucessfully generated
- * @retval	IOT_ERROR_JWT_MALLOC	no more available heap memory
- * @retval	IOT_ERROR_JWT_CJSON	failed to make json
+ * @retval	IOT_ERROR_NONE		Web Token is sucessfully generated
+ * @retval	IOT_ERROR_MEM_ALLOC	no more available heap memory
+ * @retval	IOT_ERROR_WEBTOKEN_FAIL	failed to make json
  */
-iot_error_t iot_jwt_create(char **token, const char *sn, iot_crypto_pk_info_t *pk_info);
+iot_error_t iot_wt_create(char **token, const char *sn, iot_crypto_pk_info_t *pk_info);
 
 #ifdef __cplusplus
 }
 #endif
 
-#endif /* _IOT_JWT_H_ */
+#endif /* _IOT_WT_H_ */

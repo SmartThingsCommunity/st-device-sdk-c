@@ -25,7 +25,7 @@
 #include "iot_debug.h"
 #include "iot_error.h"
 #include "iot_crypto.h"
-#include "iot_jwt.h"
+#include "iot_wt.h"
 #include "iot_util.h"
 
 #include "cJSON.h"
@@ -141,7 +141,7 @@ static iot_error_t _iot_jwt_create_b64h(char **buf, size_t *out_len,
 	hdr = _iot_jwt_create_header(sn, pk_type);
 	if (!hdr) {
 		IOT_ERROR("_iot_jwt_create_header returned NULL");
-		err = IOT_ERROR_JWT_CJSON;
+		err = IOT_ERROR_WEBTOKEN_FAIL;
 		goto exit;
 	}
 
@@ -150,7 +150,7 @@ static iot_error_t _iot_jwt_create_b64h(char **buf, size_t *out_len,
 	b64_buf = _iot_jwt_alloc_b64_buffer(hdr_len, &b64_len);
 	if (!b64_buf) {
 		IOT_ERROR("_iot_jwt_alloc_b64_buffer returned NULL");
-		err = IOT_ERROR_JWT_MALLOC;
+		err = IOT_ERROR_MEM_ALLOC;
 		goto exit_hdr;
 	}
 
@@ -231,7 +231,7 @@ static iot_error_t _iot_jwt_create_b64p(char **buf, size_t *out_len)
 	payload = _iot_jwt_create_payload();
 	if (!payload) {
 		IOT_ERROR("_iot_jwt_create_payload returned NULL");
-		err = IOT_ERROR_JWT_CJSON;
+		err = IOT_ERROR_WEBTOKEN_FAIL;
 		goto exit;
 	}
 
@@ -240,7 +240,7 @@ static iot_error_t _iot_jwt_create_b64p(char **buf, size_t *out_len)
 	b64_buf = _iot_jwt_alloc_b64_buffer(payload_len, &b64_len);
 	if (!b64_buf) {
 		IOT_ERROR("_iot_jwt_alloc_b64_buffer returned NULL");
-		err = IOT_ERROR_JWT_MALLOC;
+		err = IOT_ERROR_MEM_ALLOC;
 		goto exit_payload;
 	}
 
@@ -275,7 +275,7 @@ static iot_error_t _iot_jwt_create_b64s(char **buf, size_t *out_len,
 	sig = (char *)malloc(IOT_CRYPTO_SIGNATURE_LEN);
 	if (!sig) {
 		IOT_ERROR("malloc returned NULL");
-		err = IOT_ERROR_JWT_MALLOC;
+		err = IOT_ERROR_MEM_ALLOC;
 		goto exit;
 	}
 
@@ -298,7 +298,7 @@ static iot_error_t _iot_jwt_create_b64s(char **buf, size_t *out_len,
 	b64_buf = _iot_jwt_alloc_b64_buffer(sig_len, &b64_len);
 	if (!b64_buf) {
 		IOT_ERROR("_iot_jwt_alloc_b64_buffer returned NULL");
-		err = IOT_ERROR_JWT_MALLOC;
+		err = IOT_ERROR_MEM_ALLOC;
 		goto exit_sig;
 	}
 
@@ -319,7 +319,7 @@ exit:
 	return err;
 }
 
-iot_error_t iot_jwt_create(char **token, const char *sn, iot_crypto_pk_info_t *pk_info)
+iot_error_t iot_wt_create(char **token, const char *sn, iot_crypto_pk_info_t *pk_info)
 {
 	iot_error_t err;
 	char *b64h;
@@ -355,7 +355,7 @@ iot_error_t iot_jwt_create(char **token, const char *sn, iot_crypto_pk_info_t *p
 	tmp = (char *)malloc(token_len);
 	if (tmp == NULL) {
 		IOT_ERROR("malloc returned NULL");
-		err = IOT_ERROR_JWT_MALLOC;
+		err = IOT_ERROR_MEM_ALLOC;
 		goto exit_payload;
 	}
 
