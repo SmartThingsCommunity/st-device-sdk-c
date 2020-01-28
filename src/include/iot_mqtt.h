@@ -35,8 +35,6 @@ extern "C" {
 #define DLLExport
 #endif
 
-#include "sdkconfig.h"
-
 typedef void* st_mqtt_client;
 
 typedef struct st_mqtt_broker_info {
