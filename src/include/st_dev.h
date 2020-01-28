@@ -188,7 +188,7 @@ typedef void (*st_cap_cmd_cb)(IOT_CAP_HANDLE *cap_handle,
  *
  * @see @ref st_cap_attr_send
  */
-IOT_EVENT* st_cap_attr_create_int(char *attribute, int integer, char *unit);
+IOT_EVENT* st_cap_attr_create_int(const char *attribute, int integer, const char *unit);
 
 /**
  * @brief Create IOT_EVENT data with real number(double) `value`.
@@ -208,7 +208,7 @@ IOT_EVENT* st_cap_attr_create_int(char *attribute, int integer, char *unit);
  *
  * @see @ref st_cap_attr_send
  */
-IOT_EVENT* st_cap_attr_create_number(char *attribute, double number, char *unit);
+IOT_EVENT* st_cap_attr_create_number(const char *attribute, double number, const char *unit);
 
 /**
  * @brief Create IOT_EVENT data with string `value`.
@@ -228,7 +228,7 @@ IOT_EVENT* st_cap_attr_create_number(char *attribute, double number, char *unit)
  *
  * @see @ref st_cap_attr_send
  */
-IOT_EVENT* st_cap_attr_create_string(char *attribute, char *string, char *unit);
+IOT_EVENT* st_cap_attr_create_string(const char *attribute, char *string, const char *unit);
 
 /**
  * @brief Create IOT_EVENT data with string array `value`.
@@ -249,8 +249,8 @@ IOT_EVENT* st_cap_attr_create_string(char *attribute, char *string, char *unit);
  *
  * @see @ref st_cap_attr_send
  */
-IOT_EVENT* st_cap_attr_create_string_array(char *attribute,
-		uint8_t str_num, char *string_array[], char *unit);
+IOT_EVENT* st_cap_attr_create_string_array(const char *attribute,
+		uint8_t str_num, char *string_array[], const char *unit);
 
 /**
  * @brief Free IOT_EVENT data.

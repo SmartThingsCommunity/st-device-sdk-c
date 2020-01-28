@@ -45,7 +45,7 @@ static void _iot_free_evt_data(iot_cap_evt_data_t* evt_data);
 *                       Synchronous Call                      *
 **************************************************************/
 /* External API */
-IOT_EVENT* st_cap_attr_create_int(char *attribute, int integer, char *unit)
+IOT_EVENT* st_cap_attr_create_int(const char *attribute, int integer, const char *unit)
 {
 	iot_cap_evt_data_t* evt_data;
 
@@ -75,7 +75,7 @@ IOT_EVENT* st_cap_attr_create_int(char *attribute, int integer, char *unit)
 	return (IOT_EVENT*)evt_data;
 }
 
-IOT_EVENT* st_cap_attr_create_number(char *attribute, double number, char *unit)
+IOT_EVENT* st_cap_attr_create_number(const char *attribute, double number, const char *unit)
 {
 	iot_cap_evt_data_t* evt_data;
 
@@ -105,7 +105,7 @@ IOT_EVENT* st_cap_attr_create_number(char *attribute, double number, char *unit)
 	return (IOT_EVENT*)evt_data;
 }
 
-IOT_EVENT* st_cap_attr_create_string(char *attribute, char *string, char *unit)
+IOT_EVENT* st_cap_attr_create_string(const char *attribute, char *string, const char *unit)
 {
 	iot_cap_evt_data_t* evt_data;
 
@@ -135,8 +135,8 @@ IOT_EVENT* st_cap_attr_create_string(char *attribute, char *string, char *unit)
 	return (IOT_EVENT*)evt_data;
 }
 
-IOT_EVENT* st_cap_attr_create_string_array(char *attribute,
-			uint8_t str_num, char *string_array[], char *unit)
+IOT_EVENT* st_cap_attr_create_string_array(const char *attribute,
+			uint8_t str_num, char *string_array[], const char *unit)
 {
 	iot_cap_evt_data_t* evt_data;
 
