@@ -1038,27 +1038,10 @@ static iot_error_t _es_wifi_prov_parse(struct iot_context *ctx, char *in_payload
 	strncpy(wifi_prov->ssid, cJSON_GetStringValue(item), sizeof(wifi_prov->ssid) - 1);
 
 	// password is optional.
-	if ((item = cJSON_GetObjectItem(wifi_credential, "password")) == NULL) {
+	if ((item = cJSON_GetObjectItem(wifi_credential, "password")) == NULL)
 		IOT_INFO("No wifi password");
-		wifi_prov->security_type = IOT_WIFI_AUTH_OPEN;
-	} else {
-		if (strlen(cJSON_GetStringValue(item)) > 0) {
-			strncpy(wifi_prov->password, cJSON_GetStringValue(item), sizeof(wifi_prov->password) - 1);
-			for (i = 0; i < ctx->scan_num; i++) {
-				if (!strcmp(wifi_prov->ssid, (char *)ctx->scan_result[i].ssid)) {
-					wifi_prov->security_type = ctx->scan_result[i].authmode;
-					IOT_DEBUG("%s is type %d", wifi_prov->ssid, wifi_prov->security_type);
-					break;
-				}
-			}
-			if (i == ctx->scan_num) {
-				IOT_DEBUG("%s doesn't exist in scan list. So assume it as WPA", wifi_prov->ssid);
-				wifi_prov->security_type = IOT_WIFI_AUTH_WPA_WPA2_PSK;
-			}
-		} else {
-			wifi_prov->security_type = IOT_WIFI_AUTH_OPEN;
-		}
-	}
+	else
+		strncpy(wifi_prov->password, cJSON_GetStringValue(item), sizeof(wifi_prov->password) - 1);
 
 	if ((item = cJSON_GetObjectItem(wifi_credential, "macAddress")) == NULL)
 		IOT_INFO("no macAddress");
@@ -1069,6 +1052,34 @@ static iot_error_t _es_wifi_prov_parse(struct iot_context *ctx, char *in_payload
 	if (err) {
 		IOT_ERROR("Failed to convert str to mac address (error : %d) : %s", err, bssid);
 		goto wifi_parse_out;
+	}
+
+	if ((item = cJSON_GetObjectItem(wifi_credential, "authType")) == NULL) {
+		IOT_INFO("no authType");
+		for (i = 0; i < ctx->scan_num; i++) {
+			if (!strcmp(wifi_prov->ssid, (char *)ctx->scan_result[i].ssid)) {
+				wifi_prov->security_type = ctx->scan_result[i].authmode;
+				IOT_DEBUG("%s is type %d", wifi_prov->ssid, wifi_prov->security_type);
+				break;
+			}
+		}
+		if (i == ctx->scan_num) {
+			IOT_DEBUG("%s doesn't exist in scan list. So assume it as WPA", wifi_prov->ssid);
+			wifi_prov->security_type = IOT_WIFI_AUTH_WPA_WPA2_PSK;
+		}
+	} else {
+		for (i = 0; i < ctx->scan_num; i++) {
+			if (!strcmp(wifi_prov->ssid, (char *)ctx->scan_result[i].ssid)) {
+				if (item->valueint == ctx->scan_result[i].authmode)
+					wifi_prov->security_type = item->valueint;
+				else
+					wifi_prov->security_type = ctx->scan_result[i].authmode;
+				break;
+			}
+		}
+		if (i == ctx->scan_num)
+			wifi_prov->security_type = item->valueint;
+		IOT_DEBUG("%s is type %d", wifi_prov->ssid, wifi_prov->security_type);
 	}
 
 	err = iot_nv_set_wifi_prov_data(wifi_prov);

@@ -19,16 +19,10 @@
 #include <stdio.h>
 #include <string.h>
 #include <stdlib.h>
-#include <stdbool.h>
-
+#include "iot_util.h"
 #include "iot_main.h"
 #include "iot_debug.h"
-
-static void NewMessageData(MessageData *md, MQTTString *aTopicName, MQTTMessage *aMessage)
-{
-	md->topicName = aTopicName;
-	md->message = aMessage;
-}
+#include "iot_mqtt_client.h"
 
 static int getNextPacketId(MQTTClient *c)
 {
@@ -37,7 +31,7 @@ static int getNextPacketId(MQTTClient *c)
 
 static int sendPacket(MQTTClient *c, unsigned char *buf, int length, iot_os_timer timer)
 {
-	int rc = MQTT_FAILURE, sent = 0;
+	int rc = E_ST_MQTT_FAILURE, sent = 0;
 
 	while (sent < length && !iot_os_timer_isexpired(timer)) {
 		rc = c->net->write(c->net, &buf[sent], length, timer);
@@ -51,18 +45,23 @@ static int sendPacket(MQTTClient *c, unsigned char *buf, int length, iot_os_time
 
 	if (sent == length) {
 		iot_os_timer_count_ms(c->last_sent, c->keepAliveInterval * 1000); // record the fact that we have successfully sent the packet
-		rc = MQTT_SUCCESS;
+		rc = 0;
 	} else {
-		rc = MQTT_FAILURE;
+		rc = E_ST_MQTT_FAILURE;
 	}
 
 	return rc;
 }
 
-bool MQTTClientInit(MQTTClient *c, iot_net_interface_t *network, unsigned int command_timeout_ms)
+int st_mqtt_create(st_mqtt_client *client, unsigned int command_timeout_ms)
 {
 	int i;
-	c->net = network;
+	MQTTClient *c;
+
+	*client = malloc(sizeof(MQTTClient));
+	memset(*client, '\0', sizeof(MQTTClient));
+
+	c = *client;
 
 	for (i = 0; i < MAX_MESSAGE_HANDLERS; ++i) {
 		c->messageHandlers[i].topicFilter = 0;
@@ -71,9 +70,11 @@ bool MQTTClientInit(MQTTClient *c, iot_net_interface_t *network, unsigned int co
 	if (command_timeout_ms != 0) {
 		c->command_timeout_ms = command_timeout_ms;
 	} else {
-		c->command_timeout_ms = CONFIG_STDK_MQTT_SEND_CYCLE;
+		c->command_timeout_ms = DEFAULT_COMMNAD_TIMEOUT;
 	}
 
+	c->net = malloc(sizeof(iot_net_interface_t));
+	memset(c->net, '\0', sizeof(iot_net_interface_t));
 	c->readbuf = NULL;
 	c->readbuf_size = 0;
 	c->isconnected = 0;
@@ -86,11 +87,22 @@ bool MQTTClientInit(MQTTClient *c, iot_net_interface_t *network, unsigned int co
 	iot_os_timer_init(&c->last_sent);
 	iot_os_timer_init(&c->last_received);
 	iot_os_timer_init(&c->ping_wait);
-#if defined(STDK_MQTT_TASK)
 	iot_os_mutex_init(&c->mutex);
 	c->thread = NULL;
-#endif
-	return true;
+
+	return 0;
+}
+
+void st_mqtt_destroy(st_mqtt_client client)
+{
+	MQTTClient *c = client;
+
+	iot_os_timer_destroy(&c->last_sent);
+	iot_os_timer_destroy(&c->last_received);
+	iot_os_timer_destroy(&c->ping_wait);
+
+	free(c->net);
+	free(c);
 }
 
 static int decodePacket(MQTTClient *c, int *value, iot_os_timer timer)
@@ -149,7 +161,7 @@ static int readPacket(MQTTClient *c, iot_os_timer timer)
 	c->readbuf = (unsigned char *)malloc(c->readbuf_size);
 	if (c->readbuf == NULL) {
 		IOT_ERROR("buf malloc failed");
-		rc = MQTT_BUFFER_OVERFLOW;
+		rc = E_ST_MQTT_BUFFER_OVERFLOW;
 		goto exit;
 	}
 
@@ -211,29 +223,29 @@ static char isTopicMatched(char *topicFilter, MQTTString *topicName)
 }
 
 
-int deliverMessage(MQTTClient *c, MQTTString *topicName, MQTTMessage *message)
+int deliverMessage(MQTTClient *c, st_mqtt_msg *message)
 {
 	int i;
-	int rc = MQTT_FAILURE;
+	int rc = E_ST_MQTT_FAILURE;
+	MQTTString topic;
+	topic.cstring = NULL;
+	topic.lenstring.data = message->topic;
+	topic.lenstring.len = message->topiclen;
 
 	// we have to find the right message handler - indexed by topic
 	for (i = 0; i < MAX_MESSAGE_HANDLERS; ++i) {
-		if (c->messageHandlers[i].topicFilter != 0 && (MQTTPacket_equals(topicName, (char *)c->messageHandlers[i].topicFilter) ||
-				isTopicMatched((char *)c->messageHandlers[i].topicFilter, topicName))) {
+		if (c->messageHandlers[i].topicFilter != 0 && (MQTTPacket_equals(&topic, (char *)c->messageHandlers[i].topicFilter) ||
+				isTopicMatched((char *)c->messageHandlers[i].topicFilter, &topic))) {
 			if (c->messageHandlers[i].fp != NULL) {
-				MessageData md;
-				NewMessageData(&md, topicName, message);
-				c->messageHandlers[i].fp(&md, c->messageHandlers[i].userData);
-				rc = MQTT_SUCCESS;
+				c->messageHandlers[i].fp(message, c->messageHandlers[i].userData);
+				rc = 0;
 			}
 		}
 	}
 
-	if (rc == MQTT_FAILURE && c->defaultMessageHandler != NULL) {
-		MessageData md;
-		NewMessageData(&md, topicName, message);
-		c->defaultMessageHandler(&md, c->defaultUserData);
-		rc = MQTT_SUCCESS;
+	if (rc == E_ST_MQTT_FAILURE && c->defaultMessageHandler != NULL) {
+		c->defaultMessageHandler(message, c->defaultUserData);
+		rc = 0;
 	}
 
 	return rc;
@@ -242,24 +254,25 @@ int deliverMessage(MQTTClient *c, MQTTString *topicName, MQTTMessage *message)
 
 int keepalive(MQTTClient *c)
 {
-	int rc = MQTT_SUCCESS;
+	int rc = 0;
 	unsigned char pbuf[MQTT_PINGREQ_MAX_SIZE];
 
 	if (c->keepAliveInterval == 0) {
 		goto exit;
 	}
 
-	if (c->ping_outstanding && iot_os_timer_isexpired(c->ping_wait) && c->ping_retry_count >= CONFIG_STDK_MQTT_PING_RETRY) {
+	if (c->ping_outstanding && iot_os_timer_isexpired(c->ping_wait) && c->ping_retry_count >= MQTT_PING_RETRY) {
 		IOT_WARN("mqtt didn't get PINGRESP");
-		rc = MQTT_FAILURE; /* PINGRESP not received in keepalive interval */
+		rc = E_ST_MQTT_FAILURE; /* PINGRESP not received in keepalive interval */
 	/* Send ping request when there is no ping response up to 3 times or ping period expired */
-	} else if ((c->ping_outstanding && iot_os_timer_isexpired(c->ping_wait) && c->ping_retry_count < CONFIG_STDK_MQTT_PING_RETRY) ||
-			(iot_os_timer_isexpired(c->last_sent) || iot_os_timer_isexpired(c->last_received))) {
+	} else if ((c->ping_outstanding && iot_os_timer_isexpired(c->ping_wait) && c->ping_retry_count < MQTT_PING_RETRY) ||
+			(!c->ping_outstanding && (iot_os_timer_isexpired(c->last_sent) || iot_os_timer_isexpired(c->last_received)))) {
 		iot_os_timer timer;
 		iot_os_timer_init(&timer);
 		iot_os_timer_count_ms(timer, c->command_timeout_ms);
 		int len = MQTTSerialize_pingreq(pbuf, MQTT_PINGREQ_MAX_SIZE);
-		if (len > 0 && (rc = sendPacket(c, pbuf, len, timer)) == MQTT_SUCCESS) { // send the ping packet
+
+		if (len > 0 && !(rc = sendPacket(c, pbuf, len, timer))) { // send the ping packet
 			c->ping_outstanding = 1;
 			c->ping_retry_count++;
 			iot_os_timer_count_ms(c->ping_wait, c->command_timeout_ms);
@@ -299,7 +312,7 @@ void MQTTCloseSession(MQTTClient *c)
 
 int cycle(MQTTClient *c, iot_os_timer timer)
 {
-	int len = 0, rc = MQTT_SUCCESS;
+	int len = 0, rc = 0;
 
 	int packet_type = readPacket(c, timer);		/* read the socket, see what work is due */
 
@@ -320,35 +333,39 @@ int cycle(MQTTClient *c, iot_os_timer timer)
 
 	case PUBLISH: {
 		MQTTString topicName;
-		MQTTMessage msg;
+		st_mqtt_msg msg;
 		int intQoS;
+		unsigned char dup;
+		unsigned short id;
 		msg.payloadlen = 0; /* this is a size_t, but deserialize publish sets this as int */
 
-		if (MQTTDeserialize_publish(&msg.dup, &intQoS, &msg.retained, &msg.id, &topicName,
+		if (MQTTDeserialize_publish(&dup, &intQoS, &msg.retained, &id, &topicName,
 									(unsigned char **)&msg.payload, (int *)&msg.payloadlen, c->readbuf, c->readbuf_size) != 1) {
 			goto exit;
 		}
 
-		msg.qos = (enum QoS)intQoS;
-		deliverMessage(c, &topicName, &msg);
+		msg.qos = intQoS;
+		msg.topic = topicName.lenstring.data;
+		msg.topiclen = topicName.lenstring.len;
+		deliverMessage(c, &msg);
 		if (c->readbuf != NULL) {
 			free(c->readbuf);
 			c->readbuf = NULL;
 		}
-		if (msg.qos != QOS0) {
+		if (msg.qos != st_mqtt_qos0) {
 			unsigned char pbuf[MQTT_PUBACK_MAX_SIZE];
-			if (msg.qos == QOS1) {
-				len = MQTTSerialize_ack(pbuf, MQTT_PUBACK_MAX_SIZE, PUBACK, 0, msg.id);
-			} else if (msg.qos == QOS2) {
-				len = MQTTSerialize_ack(pbuf, MQTT_PUBACK_MAX_SIZE, PUBREC, 0, msg.id);
+			if (msg.qos == st_mqtt_qos1) {
+				len = MQTTSerialize_ack(pbuf, MQTT_PUBACK_MAX_SIZE, PUBACK, 0, id);
+			} else if (msg.qos == st_mqtt_qos2) {
+				len = MQTTSerialize_ack(pbuf, MQTT_PUBACK_MAX_SIZE, PUBREC, 0, id);
 			}
 
 			if (len <= 0) {
-				rc = MQTT_FAILURE;
+				rc = E_ST_MQTT_FAILURE;
 			} else {
 				rc = sendPacket(c, pbuf, len, timer);
 			}
-			if (rc == MQTT_FAILURE) {
+			if (rc == E_ST_MQTT_FAILURE) {
 				goto exit;	  // there was a problem
 			}
 		}
@@ -363,16 +380,16 @@ int cycle(MQTTClient *c, iot_os_timer timer)
 		unsigned char pbuf[MQTT_PUBACK_MAX_SIZE];
 
 		if (MQTTDeserialize_ack(&type, &dup, &mypacketid, c->readbuf, c->readbuf_size) != 1) {
-			rc = MQTT_FAILURE;
+			rc = E_ST_MQTT_FAILURE;
 		} else if ((len = MQTTSerialize_ack(pbuf, MQTT_PUBACK_MAX_SIZE,
 											(packet_type == PUBREC) ? PUBREL : PUBCOMP, 0, mypacketid)) <= 0) {
-			rc = MQTT_FAILURE;
-		} else if ((rc = sendPacket(c, pbuf, len, timer)) != MQTT_SUCCESS) { // send the PUBREL packet
-			rc = MQTT_FAILURE;	 // there was a problem
+			rc = E_ST_MQTT_FAILURE;
+		} else if ((rc = sendPacket(c, pbuf, len, timer))) { // send the PUBREL packet
+			rc = E_ST_MQTT_FAILURE;	 // there was a problem
 		}
 		free(c->readbuf);
 		c->readbuf = NULL;
-		if (rc == MQTT_FAILURE) {
+		if (rc == E_ST_MQTT_FAILURE) {
 			goto exit;	  // there was a problem
 		}
 
@@ -388,13 +405,13 @@ int cycle(MQTTClient *c, iot_os_timer timer)
 		break;
 	}
 
-	if (keepalive(c) != MQTT_SUCCESS) {
+	if (keepalive(c)) {
 		//check only keepalive MQTT_FAILURE status so that previous FAILURE status can be considered as FAULT
-		rc = MQTT_FAILURE;
+		rc = E_ST_MQTT_FAILURE;
 	}
 
 exit:
-	if (rc == MQTT_SUCCESS) {
+	if (!rc) {
 		rc = packet_type;
 	} else if (c->isconnected) {
 		MQTTCloseSession(c);
@@ -403,10 +420,10 @@ exit:
 	return rc;
 }
 
-
-int MQTTYield(MQTTClient *c, int timeout_ms)
+int st_mqtt_yield(st_mqtt_client client, int time)
 {
-	int rc = MQTT_SUCCESS;
+	MQTTClient *c = client;
+	int rc = 0;
 	iot_os_timer timer;
 	int ret;
 
@@ -414,7 +431,7 @@ int MQTTYield(MQTTClient *c, int timeout_ms)
 		return rc;
 
 	iot_os_timer_init(&timer);
-	iot_os_timer_count_ms(timer, timeout_ms);
+	iot_os_timer_count_ms(timer, time);
 
 	do {
 		if ((c->net == NULL) || (c->net->select == NULL)) {
@@ -433,7 +450,7 @@ int MQTTYield(MQTTClient *c, int timeout_ms)
 		} else if (ret < 0) {
 			MQTTCloseSession(c);
 			rc = -1;
-		} else if ((rc = keepalive(c)) != MQTT_SUCCESS)
+		} else if ((rc = keepalive(c)))
 			MQTTCloseSession(c);
 	} while (!iot_os_timer_isexpired(timer));
 	iot_os_timer_destroy(&timer);
@@ -441,7 +458,6 @@ int MQTTYield(MQTTClient *c, int timeout_ms)
 	return rc;
 }
 
-#if defined(STDK_MQTT_TASK)
 void MQTTRun(void *parm)
 {
 	iot_os_timer timer;
@@ -455,7 +471,7 @@ void MQTTRun(void *parm)
 	iot_os_timer_init(&timer);
 
 	while (1) {
-		iot_os_timer_count_ms(timer, CONFIG_STDK_MQTT_RECV_CYCLE); /* Don't wait too long if no traffic is incoming */
+		iot_os_timer_count_ms(timer, MQTT_TASK_CYCLE); /* Don't wait too long if no traffic is incoming */
 
 		iot_os_mutex_lock(&c->mutex);
 		if (!c->isconnected) {
@@ -465,7 +481,7 @@ void MQTTRun(void *parm)
 			c->thread = NULL;
 			iot_os_thread_delete(NULL);
 		}
-		int rc = MQTT_SUCCESS;
+		int rc = 0;
 		int ret = c->net->select(c->net, iot_os_timer_left_ms(timer));
 		if (ret > 0) {
 			iot_os_timer_count_ms(timer, c->command_timeout_ms);
@@ -473,10 +489,10 @@ void MQTTRun(void *parm)
 		} else if (ret < 0) {
 			MQTTCloseSession(c);
 			rc = -1;
-		} else if ((rc = keepalive(c)) != MQTT_SUCCESS)
+		} else if ((rc = keepalive(c)))
 			MQTTCloseSession(c);
 
-		if (rc == MQTT_FAILURE) {
+		if (rc == E_ST_MQTT_FAILURE) {
 			IOT_WARN("MQTTRun task exit");
 			iot_os_mutex_unlock(&c->mutex);
 			iot_os_timer_destroy(&timer);
@@ -489,26 +505,26 @@ void MQTTRun(void *parm)
 	}
 }
 
-
-int MQTTStartTask(MQTTClient *client)
+int st_mqtt_starttask(st_mqtt_client client)
 {
+	MQTTClient *c = client;
 	return iot_os_thread_create(MQTTRun, "MQTTTask",
-			IOT_MQTT_STACK_SIZE, (void *)client, IOT_MQTT_PRIORITY,
-			&client->thread);
+			MQTT_TASK_STACK_SIZE, (void *)c, MQTT_TASK_PRIORITY,
+			&c->thread);
 }
 
-void MQTTEndTask(MQTTClient *client)
+void st_mqtt_endtask(st_mqtt_client client)
 {
-	if (client->thread != NULL) {
-		iot_os_thread_delete(client->thread);
-		client->thread = NULL;
+	MQTTClient *c = client;
+	if (c->thread != NULL) {
+		iot_os_thread_delete(c->thread);
+		c->thread = NULL;
 	}
 }
-#endif
 
 int waitfor(MQTTClient *c, int packet_type, iot_os_timer timer)
 {
-	int rc = MQTT_FAILURE;
+	int rc = E_ST_MQTT_FAILURE;
 
 	do {
 		if (iot_os_timer_isexpired(timer)) {
@@ -521,44 +537,91 @@ int waitfor(MQTTClient *c, int packet_type, iot_os_timer timer)
 	return rc;
 }
 
-int MQTTConnectWithResults(MQTTClient *c, MQTTPacket_connectData *options, MQTTConnackData *data)
+int MQTTConnectWithResults(st_mqtt_client client, st_mqtt_broker_info_t *broker, st_mqtt_connect_data *connect_data,
+									 MQTTConnackData *data)
 {
+	MQTTClient *c = client;
 	iot_os_timer connect_timer = NULL;
-	int rc = MQTT_FAILURE;
-	MQTTPacket_connectData default_options = MQTTPacket_connectData_initializer;
-	int len = 0, pbuf_size;
+	int rc = E_ST_MQTT_FAILURE;
+	iot_error_t iot_err;
+	MQTTPacket_connectData options = MQTTPacket_connectData_initializer;
+	int len = 0, pbuf_size, connect_retry;
 	unsigned char *pbuf = NULL;
 
-#if defined(STDK_MQTT_TASK)
 	iot_os_mutex_lock(&c->mutex);
-#endif
 
 	if (c->isconnected) { /* don't send connect packet again if we are already connected */
+		goto exit;
+	}
+
+	iot_err = iot_net_init(c->net);
+	if (iot_err) {
+		IOT_ERROR("failed to init network");
+		goto exit;
+	}
+
+	c->net->connection.url = broker->url;
+	c->net->connection.port = broker->port;
+	c->net->connection.ca_cert = broker->ca_cert;
+	c->net->connection.ca_cert_len = broker->ca_cert_len;
+
+	connect_retry = 3;
+	do {
+		if (c->net->connect == NULL) {
+			IOT_ERROR("net->connect is null");
+			iot_err = IOT_ERROR_MQTT_NETCONN_FAIL;
+			break;
+		}
+
+		iot_err = c->net->connect(c->net);
+		if (iot_err) {
+			IOT_ERROR("net->connect = %d, retry (%d)", iot_err, connect_retry);
+			iot_err = IOT_ERROR_MQTT_NETCONN_FAIL;
+			connect_retry--;
+			iot_os_delay(2000);
+		}
+	} while ((iot_err != IOT_ERROR_NONE) && connect_retry);
+
+	if (iot_err != IOT_ERROR_NONE) {
+		IOT_ERROR("MQTT net connection failed");
 		goto exit;
 	}
 
 	iot_os_timer_init(&connect_timer);
 	iot_os_timer_count_ms(connect_timer, c->command_timeout_ms);
 
-	if (options == 0) {
-		options = &default_options;    /* set default options if none were supplied */
-	}
+	if (connect_data->will_flag) {
+		options.willFlag = 1;
+		options.will.topicName.cstring = connect_data->will_topic;
+		options.will.message.cstring = connect_data->will_message;
+		options.will.retained = connect_data->will_retained;
+		options.will.qos = connect_data->will_qos;
+	} else
+		options.willFlag = 0;
 
-	c->keepAliveInterval = options->keepAliveInterval;
-	c->cleansession = options->cleansession;
+	options.MQTTVersion  = connect_data->mqtt_ver;
+	options.clientID.cstring  = connect_data->clientid;
+	options.username.cstring  = connect_data->username;
+	options.password.cstring  = connect_data->password;
+	options.keepAliveInterval = connect_data->alive_interval;
+	options.cleansession = connect_data->cleansession;
+
+	c->keepAliveInterval = options.keepAliveInterval;
+	c->cleansession = options.cleansession;
 	iot_os_timer_count_ms(c->last_received, c->keepAliveInterval * 1000);
 
-	pbuf_size = MQTTSerialize_connect_size(options);
+	pbuf_size = MQTTSerialize_connect_size(&options);
 	pbuf = (unsigned char *)malloc(pbuf_size);
 	if (pbuf == NULL) {
 		IOT_ERROR("buf malloc fail");
 		goto exit;
 	}
-	if ((len = MQTTSerialize_connect(pbuf, pbuf_size, options)) <= 0) {
+	if ((len = MQTTSerialize_connect(pbuf, pbuf_size, &options)) <= 0) {
 		goto exit;
 	}
 
-	if ((rc = sendPacket(c, pbuf, len, connect_timer)) != MQTT_SUCCESS) { // send the connect packet
+	rc = sendPacket(c, pbuf, len, connect_timer);
+	if (rc) { // send the connect packet
 		goto exit;	  // there was a problem
 	}
 	free(pbuf);
@@ -570,14 +633,20 @@ int MQTTConnectWithResults(MQTTClient *c, MQTTPacket_connectData *options, MQTTC
 		data->sessionPresent = 0;
 
 		if (MQTTDeserialize_connack(&data->sessionPresent, &data->rc, c->readbuf, c->readbuf_size) == 1) {
-			rc = data->rc;
+			switch (data->rc) {
+			case MQTT_UNNACCEPTABLE_PROTOCOL : rc = E_ST_MQTT_UNNACCEPTABLE_PROTOCOL; break;
+			case MQTT_SERVER_UNAVAILABLE : rc = E_ST_MQTT_SERVER_UNAVAILABLE; break;
+			case MQTT_CLIENTID_REJECTED : rc = E_ST_MQTT_CLIENTID_REJECTED; break;
+			case MQTT_BAD_USERNAME_OR_PASSWORD : rc = E_ST_MQTT_BAD_USERNAME_OR_PASSWORD; break;
+			case MQTT_NOT_AUTHORIZED : rc = E_ST_MQTT_NOT_AUTHORIZED; break;
+			}
 		} else {
-			rc = MQTT_FAILURE;
+			rc = E_ST_MQTT_FAILURE;
 		}
 		free(c->readbuf);
 		c->readbuf = NULL;
 	} else {
-		rc = MQTT_FAILURE;
+		rc = E_ST_MQTT_FAILURE;
 	}
 
 exit:
@@ -587,104 +656,100 @@ exit:
 	if (connect_timer != NULL)
 		iot_os_timer_destroy(&connect_timer);
 
-	if (rc == MQTT_SUCCESS) {
+	if (!rc) {
 		c->isconnected = 1;
 		c->ping_outstanding = 0;
 		c->ping_retry_count = 0;
 	}
 
-#if defined(STDK_MQTT_TASK)
 	iot_os_mutex_unlock(&c->mutex);
-#endif
 
 	return rc;
 }
 
-
-int MQTTConnect(MQTTClient *c, MQTTPacket_connectData *options)
+int st_mqtt_connect(st_mqtt_client client, st_mqtt_broker_info_t *broker, st_mqtt_connect_data *connect_data)
 {
 	MQTTConnackData data;
-	return MQTTConnectWithResults(c, options, &data);
+	return MQTTConnectWithResults(client, broker, connect_data, &data);
 }
 
-
-int MQTTSetMessageHandler(MQTTClient *c, const char *topicFilter, messageHandler messageHandler, void *userData)
+int MQTTSetMessageHandler(st_mqtt_client client, const char *topic, st_mqtt_msg_handler handler, void *user_data)
 {
-	int rc = MQTT_FAILURE;
+	MQTTClient *c = client;
+	int rc = E_ST_MQTT_FAILURE;
 	int i = -1;
 
 	/* first check for an existing matching slot */
 	for (i = 0; i < MAX_MESSAGE_HANDLERS; ++i) {
-		if (c->messageHandlers[i].topicFilter != NULL && strcmp(c->messageHandlers[i].topicFilter, topicFilter) == 0) {
-			if (messageHandler == NULL) { /* remove existing */
+		if (c->messageHandlers[i].topicFilter != NULL && strcmp(c->messageHandlers[i].topicFilter, topic) == 0) {
+			if (handler == NULL) { /* remove existing */
 				c->messageHandlers[i].topicFilter = NULL;
 				c->messageHandlers[i].fp = NULL;
-				c->messageHandlers[i].userData = userData;
+				c->messageHandlers[i].userData = user_data;
 			}
 
-			rc = MQTT_SUCCESS; /* return i when adding new subscription */
+			rc = 0; /* return i when adding new subscription */
 			break;
 		}
 	}
 
 	/* if no existing, look for empty slot (unless we are removing) */
-	if (messageHandler != NULL) {
-		if (rc == MQTT_FAILURE) {
+	if (handler != NULL) {
+		if (rc == E_ST_MQTT_FAILURE) {
 			for (i = 0; i < MAX_MESSAGE_HANDLERS; ++i) {
 				if (c->messageHandlers[i].topicFilter == NULL) {
-					rc = MQTT_SUCCESS;
+					rc = 0;
 					break;
 				}
 			}
 		}
 
 		if (i < MAX_MESSAGE_HANDLERS) {
-			c->messageHandlers[i].topicFilter = topicFilter;
-			c->messageHandlers[i].fp = messageHandler;
-			c->messageHandlers[i].userData = userData;
+			c->messageHandlers[i].topicFilter = topic;
+			c->messageHandlers[i].fp = handler;
+			c->messageHandlers[i].userData = user_data;
 		}
 	}
 
 	return rc;
 }
 
-
-int MQTTSubscribeWithResults(MQTTClient *c, const char *topicFilter, enum QoS qos,
-							 messageHandler messageHandler, MQTTSubackData *data, void *userData)
+int MQTTSubscribeWithResults(st_mqtt_client client, const char *topic, int qos, st_mqtt_msg_handler handler,
+							MQTTSubackData *data, void *user_data)
 {
-	int rc = MQTT_FAILURE;
+	MQTTClient *c = client;
+	int rc = E_ST_MQTT_FAILURE;
 	iot_os_timer timer = NULL;
 	int len = 0, pbuf_size;
 	unsigned char *pbuf = NULL;
-	MQTTString topic = MQTTString_initializer;
-	topic.cstring = (char *)topicFilter;
+	MQTTString Topic = MQTTString_initializer;
+	Topic.cstring = (char *)topic;
 
-#if defined(STDK_MQTT_TASK)
 	iot_os_mutex_lock(&c->mutex);
-#endif
 
 	if (!c->isconnected) {
-		rc = MQTT_DISCONNECTED;
+		rc = E_ST_MQTT_DISCONNECTED;
 		goto exit;
 	}
 
 	iot_os_timer_init(&timer);
 	iot_os_timer_count_ms(timer, c->command_timeout_ms);
 
-	pbuf_size = MQTTSerialize_subscribe_size(1, &topic);
+	pbuf_size = MQTTSerialize_subscribe_size(1, &Topic);
 	pbuf = (unsigned char *)malloc(pbuf_size);
 	if (pbuf == NULL) {
 		IOT_ERROR("buf malloc fail");
 		goto exit;
 	}
 
-	len = MQTTSerialize_subscribe(pbuf, pbuf_size, 0, getNextPacketId(c), 1, &topic, (int *)&qos);
+	len = MQTTSerialize_subscribe(pbuf, pbuf_size, 0, getNextPacketId(c), 1, &Topic, (int *)&qos);
 
 	if (len <= 0) {
 		goto exit;
 	}
 
-	if ((rc = sendPacket(c, pbuf, len, timer)) != MQTT_SUCCESS) { // send the subscribe packet
+	rc = sendPacket(c, pbuf, len, timer);
+	if (rc) { // send the subscribe packet
 		goto exit;	  // there was a problem
 	}
 	free(pbuf);
@@ -693,17 +758,17 @@ int MQTTSubscribeWithResults(MQTTClient *c, const char *topicFilter, enum QoS qo
 	if (waitfor(c, SUBACK, timer) == SUBACK) {	  // wait for suback
 		int count = 0;
 		unsigned short mypacketid;
-		data->grantedQoS = QOS0;
+		data->granted_qos = st_mqtt_qos0;
 
-		if (MQTTDeserialize_suback(&mypacketid, 1, &count, (int *)&data->grantedQoS, c->readbuf, c->readbuf_size) == 1) {
-			if (data->grantedQoS != 0x80) {
-				rc = MQTTSetMessageHandler(c, topicFilter, messageHandler, userData);
+		if (MQTTDeserialize_suback(&mypacketid, 1, &count, (int *)&data->granted_qos, c->readbuf, c->readbuf_size) == 1) {
+			if (data->granted_qos != 0x80) {
+				rc = MQTTSetMessageHandler(client, topic, handler, user_data);
 			}
 		}
 		free(c->readbuf);
 		c->readbuf = NULL;
 	} else {
-		rc = MQTT_FAILURE;
+		rc = E_ST_MQTT_FAILURE;
 	}
 
 exit:
@@ -713,59 +778,55 @@ exit:
 	if (timer != NULL)
 		iot_os_timer_destroy(&timer);
 
-	if (rc == MQTT_FAILURE) {
+	if (rc == E_ST_MQTT_FAILURE) {
 		IOT_WARN("mqtt subscribe fail");
 		MQTTCloseSession(c);
 	}
 
-#if defined(STDK_MQTT_TASK)
 	iot_os_mutex_unlock(&c->mutex);
-#endif
+
 	return rc;
 }
 
-
-int MQTTSubscribe(MQTTClient *c, const char *topicFilter, enum QoS qos,
-				  messageHandler messageHandler, void *userData)
+int st_mqtt_subscribe(st_mqtt_client client, const char *topic, int qos, st_mqtt_msg_handler handler, void *user_data)
 {
 	MQTTSubackData data;
-	return MQTTSubscribeWithResults(c, topicFilter, qos, messageHandler, &data, userData);
+	return MQTTSubscribeWithResults(client, topic, qos, handler, &data, user_data);
 }
 
-
-int MQTTUnsubscribe(MQTTClient *c, const char *topicFilter)
+int st_mqtt_unsubscribe(st_mqtt_client client, const char *topic)
 {
-	int rc = MQTT_FAILURE;
+	MQTTClient *c = client;
+	int rc = E_ST_MQTT_FAILURE;
 	iot_os_timer timer = NULL;
-	MQTTString topic = MQTTString_initializer;
-	topic.cstring = (char *)topicFilter;
+	MQTTString Topic = MQTTString_initializer;
+	Topic.cstring = (char *)topic;
 	int len = 0, pbuf_size;
 	unsigned char *pbuf = NULL;
 
-#if defined(STDK_MQTT_TASK)
 	iot_os_mutex_lock(&c->mutex);
-#endif
 
 	if (!c->isconnected) {
-		rc = MQTT_DISCONNECTED;
+		rc = E_ST_MQTT_DISCONNECTED;
 		goto exit;
 	}
 
 	iot_os_timer_init(&timer);
 	iot_os_timer_count_ms(timer, c->command_timeout_ms);
 
-	pbuf_size = MQTTSerialize_unsubscribe_size(1, &topic);
+	pbuf_size = MQTTSerialize_unsubscribe_size(1, &Topic);
 	pbuf = (unsigned char *)malloc(pbuf_size);
 	if (pbuf == NULL) {
 		IOT_ERROR("buf malloc fail");
 		goto exit;
 	}
 
-	if ((len = MQTTSerialize_unsubscribe(pbuf, pbuf_size, 0, getNextPacketId(c), 1, &topic)) <= 0) {
+	if ((len = MQTTSerialize_unsubscribe(pbuf, pbuf_size, 0, getNextPacketId(c), 1, &Topic)) <= 0) {
 		goto exit;
 	}
 
-	if ((rc = sendPacket(c, pbuf, len, timer)) != MQTT_SUCCESS) { // send the subscribe packet
+	rc = sendPacket(c, pbuf, len, timer);
+	if (rc) { // send the subscribe packet
 		goto exit;	  // there was a problem
 	}
 	free(pbuf);
@@ -776,12 +837,12 @@ int MQTTUnsubscribe(MQTTClient *c, const char *topicFilter)
 
 		if (MQTTDeserialize_unsuback(&mypacketid, c->readbuf, c->readbuf_size) == 1) {
 			/* remove the subscription message handler associated with this topic, if there is one */
-			MQTTSetMessageHandler(c, topicFilter, NULL, NULL);
+			MQTTSetMessageHandler(client, topic, NULL, NULL);
 		}
 		free(c->readbuf);
 		c->readbuf = NULL;
 	} else {
-		rc = MQTT_FAILURE;
+		rc = E_ST_MQTT_FAILURE;
 	}
 
 exit:
@@ -791,41 +852,39 @@ exit:
 	if (timer != NULL)
 		iot_os_timer_destroy(&timer);
 
-	if (rc == MQTT_FAILURE) {
+	if (rc == E_ST_MQTT_FAILURE) {
 		IOT_WARN("mqtt unsubscribe fail");
 		MQTTCloseSession(c);
 	}
 
-#if defined(STDK_MQTT_TASK)
 	iot_os_mutex_unlock(&c->mutex);
-#endif
+
 	return rc;
 }
 
-
-int MQTTPublish(MQTTClient *c, const char *topicName, MQTTMessage *message)
+int st_mqtt_publish(st_mqtt_client client, st_mqtt_msg *msg)
 {
-	int rc = MQTT_FAILURE;
+	MQTTClient *c = client;
+	int rc = E_ST_MQTT_FAILURE;
 	iot_os_timer timer = NULL;
 	MQTTString topic = MQTTString_initializer;
-	topic.cstring = (char *)topicName;
+	topic.cstring = (char *)msg->topic;
 	int len = 0, pbuf_size;
 	unsigned char *pbuf = NULL;
+	unsigned short msg_id = 0;
 
-#if defined(STDK_MQTT_TASK)
 	iot_os_mutex_lock(&c->mutex);
-#endif
 
 	if (!c->isconnected) {
-		rc = MQTT_DISCONNECTED;
+		rc = E_ST_MQTT_DISCONNECTED;
 		goto exit;
 	}
 
 	iot_os_timer_init(&timer);
 	iot_os_timer_count_ms(timer, c->command_timeout_ms);
 
-	if (message->qos == QOS1 || message->qos == QOS2) {
-		message->id = getNextPacketId(c);
+	if (msg->qos == st_mqtt_qos1 || msg->qos == st_mqtt_qos2) {
+		msg_id = getNextPacketId(c);
 	}
 
 	int retry = 0;
@@ -834,74 +893,74 @@ int MQTTPublish(MQTTClient *c, const char *topicName, MQTTMessage *message)
 		if (retry)
 			IOT_WARN("mqtt publish retry(%d)", retry);
 		retry++;
-#if defined(CONFIG_STDK_MQTT_PUB_NOCOPY)
+#if defined(MQTT_PUB_NOCOPY)
 		/* First, send MQTT Connect header */
-		pbuf_size = MQTTSerialize_publish_size(message->qos, topic, message->payloadlen) - message->payloadlen;
+		pbuf_size = MQTTSerialize_publish_size(msg->qos, topic, msg->payloadlen) - msg->payloadlen;
 		pbuf = (unsigned char *)malloc(pbuf_size);
 		if (pbuf == NULL) {
 			IOT_ERROR("buf malloc fail");
 			goto exit;
 		}
-		len = MQTTSerialize_publish_header(pbuf, 0, message->qos, message->retained, message->id,
-									topic, message->payloadlen);
-		if (len <= 0 || (rc = sendPacket(c, pbuf, len, timer)) != MQTT_SUCCESS) { // send the subscribe packet
+		len = MQTTSerialize_publish_header(pbuf, 0, msg->qos, msg->retained, msg_id,
+									topic, msg->payloadlen);
+		if (len <= 0 || (rc = sendPacket(c, pbuf, len, timer))) { // send the subscribe packet
 			goto exit;	  // there was a problem
 		}
 		free(pbuf);
 		/* Second, send application payload itself(no-copy) */
-		pbuf = message->payload;
-		len = message->payloadlen;
+		pbuf = msg->payload;
+		len = msg->payloadlen;
 		rc = sendPacket(c, pbuf, len, timer);
 		pbuf = NULL;
-		if (rc != MQTT_SUCCESS) { // send the subscribe packet
+		if (rc) { // send the subscribe packet
 			goto exit;	  // there was a problem
 		}
 #else
-		pbuf_size = MQTTSerialize_publish_size(message->qos, topic, message->payloadlen);
+		pbuf_size = MQTTSerialize_publish_size(msg->qos, topic, msg->payloadlen);
 		pbuf = (unsigned char *)malloc(pbuf_size);
 		if (pbuf == NULL) {
 			IOT_ERROR("buf malloc fail");
 			goto exit;
 		}
-		len = MQTTSerialize_publish(pbuf, pbuf_size, 0, message->qos, message->retained, message->id,
-									topic, (unsigned char *)message->payload, message->payloadlen);
+		len = MQTTSerialize_publish(pbuf, pbuf_size, 0, msg->qos, msg->retained, msg_id,
+									topic, (unsigned char *)msg->payload, msg->payloadlen);
 
-		if (len <= 0 || (rc = sendPacket(c, pbuf, len, timer)) != MQTT_SUCCESS) { // send the subscribe packet
+		if (len <= 0 || (rc = sendPacket(c, pbuf, len, timer))) { // send the subscribe packet
 			goto exit;	  // there was a problem
 		}
 		free(pbuf);
 		pbuf = NULL;
 #endif
-		if (message->qos == QOS1) {
+		if (msg->qos == st_mqtt_qos1) {
 			if (waitfor(c, PUBACK, timer) == PUBACK) {
 				unsigned short mypacketid;
 				unsigned char dup, type;
 
 				if (MQTTDeserialize_ack(&type, &dup, &mypacketid, c->readbuf, c->readbuf_size) != 1) {
-					rc = MQTT_FAILURE;
+					rc = E_ST_MQTT_FAILURE;
 				}
 				if (c->readbuf != NULL) {
 					free(c->readbuf);
 					c->readbuf = NULL;
 				}
 			} else {
-				rc = MQTT_FAILURE;
+				rc = E_ST_MQTT_FAILURE;
 			}
-		} else if (message->qos == QOS2) {
+		} else if (msg->qos == st_mqtt_qos2) {
 			if (waitfor(c, PUBCOMP, timer) == PUBCOMP) {
 				unsigned short mypacketid;
 				unsigned char dup, type;
 
 				if (MQTTDeserialize_ack(&type, &dup, &mypacketid, c->readbuf, c->readbuf_size) != 1) {
-					rc = MQTT_FAILURE;
+					rc = E_ST_MQTT_FAILURE;
 				}
 				free(c->readbuf);
 				c->readbuf = NULL;
 			} else {
-				rc = MQTT_FAILURE;
+				rc = E_ST_MQTT_FAILURE;
 			}
 		}
-	} while (rc != MQTT_SUCCESS && retry < CONFIG_STDK_MQTT_PUBLISH_RETRY);
+	} while (rc && retry < MQTT_PUBLISH_RETRY);
 
 exit:
 	if (pbuf != NULL)
@@ -910,30 +969,28 @@ exit:
 	if (timer != NULL)
 		iot_os_timer_destroy(&timer);
 
-	if (rc == MQTT_FAILURE) {
+	if (rc == E_ST_MQTT_FAILURE) {
 		IOT_WARN("mqtt publish fail");
 		MQTTCloseSession(c);
 	}
 
-#if defined(STDK_MQTT_TASK)
 	iot_os_mutex_unlock(&c->mutex);
-#endif
+
 	return rc;
 }
 
-int MQTTDisconnect(MQTTClient *c)
+int st_mqtt_disconnect(st_mqtt_client client)
 {
-	int rc = MQTT_FAILURE;
+	MQTTClient *c = client;
+	int rc = E_ST_MQTT_FAILURE;
 	iot_os_timer timer = NULL;		// we might wait for incomplete incoming publishes to complete
 	int len = 0;
 	unsigned char pbuf[MQTT_DISCONNECT_MAX_SIZE];
 
-#if defined(STDK_MQTT_TASK)
 	iot_os_mutex_lock(&c->mutex);
-#endif
 
 	if (!c->isconnected) {
-		rc = MQTT_DISCONNECTED;
+		rc = E_ST_MQTT_DISCONNECTED;
 		goto exit;
 	}
 
@@ -948,12 +1005,13 @@ int MQTTDisconnect(MQTTClient *c)
 	IOT_INFO("mqtt send disconnect");
 	MQTTCloseSession(c);
 
+	if (c->net->disconnect != NULL)
+		c->net->disconnect(c->net);
 exit:
 	if (timer != NULL)
 		iot_os_timer_destroy(&timer);
 
-#if defined(STDK_MQTT_TASK)
 	iot_os_mutex_unlock(&c->mutex);
-#endif
+
 	return rc;
 }

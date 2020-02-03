@@ -25,7 +25,7 @@
 #include "iot_os_util.h"
 #include "iot_crypto.h"
 #include "iot_net.h"
-#include "iot_mqtt_client.h"
+#include "iot_mqtt.h"
 
 #define IOT_WIFI_PROV_SSID_LEN		(31 + 1)
 #define IOT_WIFI_PROV_PASSWORD_LEN 	(63 + 1)
@@ -36,6 +36,8 @@
 #define IOT_EVENT_BIT_EASYSETUP_RESP	(1 << 3)
 #define IOT_EVENT_BIT_EASYSETUP_CONFIRM	(1 << 4)
 #define IOT_EVENT_BIT_ALL	(IOT_EVENT_BIT_COMMAND | IOT_EVENT_BIT_CAPABILITY | IOT_EVENT_BIT_EASYSETUP_REQ)
+
+#define IOT_MAIN_TASK_CYCLE			100
 
 enum _iot_noti_type {
 	/* Common notifications */
@@ -190,9 +192,7 @@ struct iot_registered_data {
  * @brief Contains "mqtt handling context" data
  */
 struct iot_mqtt_ctx {
-	iot_net_interface_t net;		/**< @brief network management handle for mqtt */
-	MQTTClient cli;			/**< @brief mqtt client handle for iot_core */
-	bool mqtt_connected;	/**< @brief mqtt connected status */
+	st_mqtt_client cli;			/**< @brief mqtt client handle for iot_core */
 
 	const char *cmd_filter;		/**< @brief mqtt command topic filter string */
 	const char *noti_filter;	/**< @brief mqtt notification topic filter string */
