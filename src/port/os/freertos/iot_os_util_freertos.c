@@ -156,6 +156,14 @@ int iot_os_mutex_unlock(iot_os_mutex* mutex)
 	return ret;
 }
 
+void iot_os_mutex_destroy(iot_os_mutex* mutex)
+{
+	if (!mutex || !mutex->sem)
+		return;
+
+	vSemaphoreDelete(mutex->sem);
+}
+
 /* Delay */
 void iot_os_delay(unsigned int delay_ms)
 {
@@ -186,14 +194,14 @@ char iot_os_timer_isexpired(iot_os_timer timer)
 	return xTaskCheckForTimeOut(&((Freertos_Timer *)timer)->xTimeOut, &((Freertos_Timer *)timer)->xTicksToWait) == pdTRUE;
 }
 
-void iot_os_timer_init(iot_os_timer *timer)
+int iot_os_timer_init(iot_os_timer *timer)
 {
 	*timer = malloc(sizeof(Freertos_Timer));
 	if (*timer == NULL)
-		return;
+		return IOT_ERROR_MEM_ALLOC;
 	memset(*timer, '\0', sizeof(Freertos_Timer));
 
-	return;
+	return IOT_ERROR_NONE;
 }
 
 void iot_os_timer_destroy(iot_os_timer *timer)

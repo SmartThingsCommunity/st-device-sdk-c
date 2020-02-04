@@ -56,9 +56,15 @@ static int sendPacket(MQTTClient *c, unsigned char *buf, int length, iot_os_time
 int st_mqtt_create(st_mqtt_client *client, unsigned int command_timeout_ms)
 {
 	int i;
-	MQTTClient *c;
+	MQTTClient *c = NULL;
+	int rc = E_ST_MQTT_FAILURE;
+	iot_error_t iot_err;
 
 	*client = malloc(sizeof(MQTTClient));
+	if (*client == NULL) {
+		IOT_ERROR("buf malloc fail");
+		goto error_handle;
+	}
 	memset(*client, '\0', sizeof(MQTTClient));
 
 	c = *client;
@@ -74,6 +80,10 @@ int st_mqtt_create(st_mqtt_client *client, unsigned int command_timeout_ms)
 	}
 
 	c->net = malloc(sizeof(iot_net_interface_t));
+	if (c->net == NULL) {
+		IOT_ERROR("buf malloc fail");
+		goto error_handle;
+	}
 	memset(c->net, '\0', sizeof(iot_net_interface_t));
 	c->readbuf = NULL;
 	c->readbuf_size = 0;
@@ -84,13 +94,45 @@ int st_mqtt_create(st_mqtt_client *client, unsigned int command_timeout_ms)
 	c->defaultMessageHandler = NULL;
 	c->defaultUserData = NULL;
 	c->next_packetid = 1;
-	iot_os_timer_init(&c->last_sent);
-	iot_os_timer_init(&c->last_received);
-	iot_os_timer_init(&c->ping_wait);
+	iot_err = iot_os_timer_init(&c->last_sent);
+	if (iot_err) {
+		IOT_ERROR("fail to init last_send timer");
+		goto error_handle;
+	}
+	iot_err = iot_os_timer_init(&c->last_received);
+	if (iot_err) {
+		IOT_ERROR("fail to init last_received timer");
+		goto error_handle;
+	}
+	iot_err = iot_os_timer_init(&c->ping_wait);
+	if (iot_err) {
+		IOT_ERROR("fail to init ping_wait timer");
+		goto error_handle;
+	}
 	iot_os_mutex_init(&c->mutex);
+	if (c->mutex.sem == NULL) {
+		IOT_ERROR("fail to init mutex");
+		goto error_handle;
+	}
 	c->thread = NULL;
 
 	return 0;
+error_handle:
+	if (c) {
+		if (c->net)
+			free(c->net);
+		if (c->last_sent)
+			iot_os_timer_destroy(&c->last_sent);
+		if (c->last_received)
+			iot_os_timer_destroy(&c->last_received);
+		if (c->ping_wait)
+			iot_os_timer_destroy(&c->ping_wait);
+		if (c->mutex.sem)
+			iot_os_mutex_destroy(&c->mutex);
+		free(c);
+		*client = NULL;
+	}
+	return rc;
 }
 
 void st_mqtt_destroy(st_mqtt_client client)
@@ -100,6 +142,7 @@ void st_mqtt_destroy(st_mqtt_client client)
 	iot_os_timer_destroy(&c->last_sent);
 	iot_os_timer_destroy(&c->last_received);
 	iot_os_timer_destroy(&c->ping_wait);
+	iot_os_mutex_destroy(&c->mutex);
 
 	free(c->net);
 	free(c);
@@ -256,6 +299,7 @@ int keepalive(MQTTClient *c)
 {
 	int rc = 0;
 	unsigned char pbuf[MQTT_PINGREQ_MAX_SIZE];
+	iot_error_t iot_err;
 
 	if (c->keepAliveInterval == 0) {
 		goto exit;
@@ -268,7 +312,12 @@ int keepalive(MQTTClient *c)
 	} else if ((c->ping_outstanding && iot_os_timer_isexpired(c->ping_wait) && c->ping_retry_count < MQTT_PING_RETRY) ||
 			(!c->ping_outstanding && (iot_os_timer_isexpired(c->last_sent) || iot_os_timer_isexpired(c->last_received)))) {
 		iot_os_timer timer;
-		iot_os_timer_init(&timer);
+		iot_err = iot_os_timer_init(&timer);
+		if (iot_err) {
+			IOT_ERROR("fail to init timer");
+			rc = E_ST_MQTT_FAILURE;
+			goto exit;
+		}
 		iot_os_timer_count_ms(timer, c->command_timeout_ms);
 		int len = MQTTSerialize_pingreq(pbuf, MQTT_PINGREQ_MAX_SIZE);
 
@@ -424,13 +473,18 @@ int st_mqtt_yield(st_mqtt_client client, int time)
 {
 	MQTTClient *c = client;
 	int rc = 0;
+	iot_error_t iot_err;
 	iot_os_timer timer;
 	int ret;
 
 	if (!c->isconnected)
 		return rc;
 
-	iot_os_timer_init(&timer);
+	iot_err = iot_os_timer_init(&timer);
+	if (iot_err) {
+		IOT_ERROR("fail to init timer");
+		return E_ST_MQTT_FAILURE;
+	}
 	iot_os_timer_count_ms(timer, time);
 
 	do {
@@ -443,7 +497,12 @@ int st_mqtt_yield(st_mqtt_client client, int time)
 		ret = c->net->select(c->net, iot_os_timer_left_ms(timer));
 		if (ret > 0) {
 			iot_os_timer command_timer;
-			iot_os_timer_init(&command_timer);
+			iot_err = iot_os_timer_init(&command_timer);
+			if (iot_err) {
+				IOT_ERROR("fail to init command timer");
+				rc = E_ST_MQTT_FAILURE;
+				break;
+			}
 			iot_os_timer_count_ms(command_timer, c->command_timeout_ms);
 			rc = cycle(c, command_timer);
 			iot_os_timer_destroy(&command_timer);
@@ -462,13 +521,18 @@ void MQTTRun(void *parm)
 {
 	iot_os_timer timer;
 	MQTTClient *c = (MQTTClient *)parm;
+	iot_error_t iot_err;
 
 	if ((c->net == NULL) || (c->net->select == NULL)) {
 		IOT_ERROR("net->select is null");
 		return;
 	}
 
-	iot_os_timer_init(&timer);
+	iot_err = iot_os_timer_init(&timer);
+	if (iot_err) {
+		IOT_ERROR("fail to init timer");
+		return;
+	}
 
 	while (1) {
 		iot_os_timer_count_ms(timer, MQTT_TASK_CYCLE); /* Don't wait too long if no traffic is incoming */
@@ -587,7 +651,11 @@ int MQTTConnectWithResults(st_mqtt_client client, st_mqtt_broker_info_t *broker,
 		goto exit;
 	}
 
-	iot_os_timer_init(&connect_timer);
+	iot_err = iot_os_timer_init(&connect_timer);
+	if (iot_err) {
+		IOT_ERROR("fail to init timer");
+		goto exit;
+	}
 	iot_os_timer_count_ms(connect_timer, c->command_timeout_ms);
 
 	if (connect_data->will_flag) {
@@ -719,6 +787,7 @@ int MQTTSubscribeWithResults(st_mqtt_client client, const char *topic, int qos, 
 {
 	MQTTClient *c = client;
 	int rc = E_ST_MQTT_FAILURE;
+	iot_error_t iot_err;
 	iot_os_timer timer = NULL;
 	int len = 0, pbuf_size;
 	unsigned char *pbuf = NULL;
@@ -732,7 +801,11 @@ int MQTTSubscribeWithResults(st_mqtt_client client, const char *topic, int qos, 
 		goto exit;
 	}
 
-	iot_os_timer_init(&timer);
+	iot_err = iot_os_timer_init(&timer);
+	if (iot_err) {
+		IOT_ERROR("fail to init timer");
+		goto exit;
+	}
 	iot_os_timer_count_ms(timer, c->command_timeout_ms);
 
 	pbuf_size = MQTTSerialize_subscribe_size(1, &Topic);
@@ -798,6 +871,7 @@ int st_mqtt_unsubscribe(st_mqtt_client client, const char *topic)
 {
 	MQTTClient *c = client;
 	int rc = E_ST_MQTT_FAILURE;
+	iot_error_t iot_err;
 	iot_os_timer timer = NULL;
 	MQTTString Topic = MQTTString_initializer;
 	Topic.cstring = (char *)topic;
@@ -811,7 +885,11 @@ int st_mqtt_unsubscribe(st_mqtt_client client, const char *topic)
 		goto exit;
 	}
 
-	iot_os_timer_init(&timer);
+	iot_err = iot_os_timer_init(&timer);
+	if (iot_err) {
+		IOT_ERROR("fail to init timer");
+		goto exit;
+	}
 	iot_os_timer_count_ms(timer, c->command_timeout_ms);
 
 	pbuf_size = MQTTSerialize_unsubscribe_size(1, &Topic);
@@ -866,6 +944,7 @@ int st_mqtt_publish(st_mqtt_client client, st_mqtt_msg *msg)
 {
 	MQTTClient *c = client;
 	int rc = E_ST_MQTT_FAILURE;
+	iot_error_t iot_err;
 	iot_os_timer timer = NULL;
 	MQTTString topic = MQTTString_initializer;
 	topic.cstring = (char *)msg->topic;
@@ -880,7 +959,11 @@ int st_mqtt_publish(st_mqtt_client client, st_mqtt_msg *msg)
 		goto exit;
 	}
 
-	iot_os_timer_init(&timer);
+	iot_err = iot_os_timer_init(&timer);
+	if (iot_err) {
+		IOT_ERROR("fail to init timer");
+		goto exit;
+	}
 	iot_os_timer_count_ms(timer, c->command_timeout_ms);
 
 	if (msg->qos == st_mqtt_qos1 || msg->qos == st_mqtt_qos2) {
@@ -983,6 +1066,7 @@ int st_mqtt_disconnect(st_mqtt_client client)
 {
 	MQTTClient *c = client;
 	int rc = E_ST_MQTT_FAILURE;
+	iot_error_t iot_err;
 	iot_os_timer timer = NULL;		// we might wait for incomplete incoming publishes to complete
 	int len = 0;
 	unsigned char pbuf[MQTT_DISCONNECT_MAX_SIZE];
@@ -994,7 +1078,11 @@ int st_mqtt_disconnect(st_mqtt_client client)
 		goto exit;
 	}
 
-	iot_os_timer_init(&timer);
+	iot_err = iot_os_timer_init(&timer);
+	if (iot_err) {
+		IOT_ERROR("fail to init timer");
+		goto exit;
+	}
 	iot_os_timer_count_ms(timer, c->command_timeout_ms);
 
 	len = MQTTSerialize_disconnect(pbuf, MQTT_DISCONNECT_MAX_SIZE);

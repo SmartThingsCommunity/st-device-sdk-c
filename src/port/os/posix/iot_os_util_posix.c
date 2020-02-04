@@ -301,6 +301,10 @@ int iot_os_mutex_unlock(iot_os_mutex* mutex)
 	return iot_os_true;
 }
 
+void iot_os_mutex_destroy(iot_os_mutex* mutex)
+{
+}
+
 /* Delay */
 void iot_os_delay(unsigned int delay_ms)
 {
@@ -359,7 +363,7 @@ char iot_os_timer_isexpired(iot_os_timer timer)
 	}
 }
 
-void iot_os_timer_init(iot_os_timer *timer)
+int iot_os_timer_init(iot_os_timer *timer)
 {
 	timer_t* timer_id = malloc(sizeof(timer_t));
 	struct sigevent sig;
@@ -368,10 +372,11 @@ void iot_os_timer_init(iot_os_timer *timer)
 	sig.sigev_value.sival_ptr = timer_id;
 	int ret = timer_create(CLOCK_REALTIME, &sig, timer_id);
 	if (ret == -1) {
-		return;
+		return IOT_ERROR_BAD_REQ;
 	}
 
 	*timer = *timer_id;
+	return IOT_ERROR_NONE;
 }
 
 void iot_os_timer_destroy(iot_os_timer *timer)

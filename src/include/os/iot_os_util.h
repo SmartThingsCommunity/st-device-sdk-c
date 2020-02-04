@@ -272,6 +272,15 @@ int iot_os_mutex_lock(iot_os_mutex* mutex);
 int iot_os_mutex_unlock(iot_os_mutex* mutex);
 
 /**
+ * @brief	destroy mutex
+ *
+ * This function will destroy a mutex
+ *
+ * @param[in] mutex	handle of mutex.
+ */
+void iot_os_mutex_destroy(iot_os_mutex* mutex);
+
+/**
  * @brief	delay a thread
  *
  * This function will delay thread for given time
@@ -288,8 +297,11 @@ void iot_os_delay(unsigned int delay_ms);
  *
  * @param[in] timer	pointer of timer to init
  *
+ * @return
+ *	IOT_ERROR_NONE : success
+ *	otherwise : fail
  */
-void iot_os_timer_init(iot_os_timer* timer);
+int iot_os_timer_init(iot_os_timer* timer);
 
 /**
  * @brief	check timer expired

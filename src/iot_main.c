@@ -768,8 +768,8 @@ IOT_CTX* st_conn_init(unsigned char *onboarding_config, unsigned int onboarding_
 	/* Initialize all values */
 	memset(ctx, 0, sizeof(struct iot_context));
 
-	iot_os_timer_init(&ctx->state_timer);
-	if (!ctx->state_timer) {
+	iot_err = iot_os_timer_init(&ctx->state_timer);
+	if (iot_err != IOT_ERROR_NONE) {
 		IOT_ERROR("failed to malloc for state_timer\n");
 		free(ctx);
 		return NULL;
