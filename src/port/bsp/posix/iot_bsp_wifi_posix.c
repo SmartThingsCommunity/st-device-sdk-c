@@ -94,7 +94,6 @@ iot_error_t iot_bsp_wifi_get_mac(struct iot_mac *wifi_mac)
 mac_out:
 	close(sockfd);
 	return err;
-	return IOT_ERROR_NONE;
 }
 
 iot_wifi_freq_t iot_bsp_wifi_get_freq(void)
