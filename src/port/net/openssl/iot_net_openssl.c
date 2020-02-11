@@ -193,7 +193,7 @@ static iot_error_t _iot_net_ssl_connect(iot_net_interface_t *n)
 	if (!n->context.ctx) {
 		goto exit;
 	}
-#if defined(CONFIG_STDK_IOT_CORE_OS_SUPPORT_FREERTOS)
+#if defined(CONFIG_STDK_IOT_CORE_OS_SUPPORT_FREERTOS) || defined(CONFIG_STDK_IOT_CORE_OS_SUPPORT_TIZENRT)
 	if (n->connection.ca_cert) {
 		retVal = SSL_CTX_load_verify_buffer(n->context.ctx, n->connection.ca_cert, n->connection.ca_cert_len);
 
