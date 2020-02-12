@@ -1,6 +1,6 @@
 /* ***************************************************************************
  *
- * Copyright 2019 Samsung Electronics All Rights Reserved.
+ * Copyright 2019-2020 Samsung Electronics All Rights Reserved.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -16,20 +16,19 @@
  *
  ****************************************************************************/
 
-#ifndef _ST_DEV_VERSION_H_
-#define _ST_DEV_VERSION_H_
+#include "iot_bsp_random.h"
+#ifdef CONFIG_ARCH_BOARD_ESP32_FAMILY
+extern uint32_t esp_random(void);
+#else
+#include <stdlib.h>
+#endif
 
-/* major: api incompatible */
-#define VER_MAJOR	(1)
-
-/* minor: feature added. keep api backward compatibility */
-#define VER_MINOR	(1)
-
-/* patch: bug fix */
-#define VER_PATCH	(0)
-
-/* External Macro for Apps, refer to linux's version.h */
-#define STDK_VERSION(a,b,c)	(((a) << 16) + ((b) << 8) + (c))
-#define STDK_VERSION_CODE	(STDK_VERSION(VER_MAJOR,VER_MINOR,VER_PATCH))
-
-#endif /* _ST_DEV_VERSION_H_ */
+unsigned int iot_bsp_random()
+{
+#ifdef CONFIG_ARCH_BOARD_ESP32_FAMILY
+	return esp_random();
+#else
+	srand(time(0));
+	return rand();
+#endif
+}

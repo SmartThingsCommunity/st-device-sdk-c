@@ -64,7 +64,12 @@ iot_error_t iot_mqtt_connect(struct iot_mqtt_ctx *target_cli,
 		goto done_mqtt_connect;
 	}
 
-	st_mqtt_create(&target_cli->cli, IOT_DEFAULT_TIMEOUT);
+	ret = st_mqtt_create(&target_cli->cli, IOT_DEFAULT_TIMEOUT);
+	if (ret) {
+		IOT_ERROR("Cannot create mqtt client");
+		iot_ret = IOT_ERROR_BAD_REQ;
+		goto done_mqtt_connect;
+	}
 
 	cloud_prov = &ctx->prov_data.cloud;
 	if (!cloud_prov->broker_url) {

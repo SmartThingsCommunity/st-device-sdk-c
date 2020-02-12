@@ -1,0 +1,40 @@
+# HISTORY
+
+## 1.1.0 :  Changes for version 1.1.0
+
+ * Need to use over the Mobile's SmartThings Apps v1.7.43 (for Android)
+
+New Improvements or features:
+
+ - Supports TizenRT based target - port TizenRT wrapper
+ - The port number changed for httpd during easy-setup
+ - Added new IOT_STAT_LV_CONN to notify it to user
+ - Added implementation of iot_bsp_wifi_get_mac()
+ - Supports rtl8720c bsp based target
+ - Supports mbedTLS usage in posix solution (instead of openssl, you can use mbedTLS for posix)
+ - Added rtl8721csm porting layer
+ - Update keygen tool - v2.1
+
+Enhancements or amendments:
+
+ - Don't send MQTT ping during there is outstanding packet
+ - Only support for dynamic buffer allocation in MQTT layer
+ - Add a contributing guideline
+ - Check the uuid validation
+ - Change lookup_id removing timing
+ - Increase the maximum number of sacn results
+ - Make iot_mqtt.h layer to import external MQTT solution
+ - Separate internal network interface layer
+ - Some function naming changed for httpd_init/deinit
+ - Internal network function related code cleanup
+ - Change auth mode to verify the certifcate
+
+Bug fixed:
+
+ - Fix rtl-chipset not support web security type connection issue
+ - Added easy-setup resources checking flag & deleting routine to avoid memory leaking
+ - Fix rtl-chipset based "RTW API: Join bss timeout" issue
+ - Fix wi-fi memory leak
+ - Internal network related build error fix
+
+## 1.0.0 : Initial public release.
