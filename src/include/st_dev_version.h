@@ -23,10 +23,10 @@
 #define VER_MAJOR	(1)
 
 /* minor: feature added. keep api backward compatibility */
-#define VER_MINOR	(0)
+#define VER_MINOR	(1)
 
 /* patch: bug fix */
-#define VER_PATCH	(16)
+#define VER_PATCH	(0)
 
 /* External Macro for Apps, refer to linux's version.h */
 #define STDK_VERSION(a,b,c)	(((a) << 16) + ((b) << 8) + (c))
