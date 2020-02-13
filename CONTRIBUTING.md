@@ -1,6 +1,6 @@
 # Contributing Guidelines
 
-Thank you for your interest in contributing to the SmartThings Device SDK(for short STDK) project. Please read through this document before submitting any issues or pull requests.
+Thank you for your interest in contributing to the SmartThings Device SDK(STDK for short) project. Please read through this document before submitting any issues or pull requests.
 
 ## Contributing
 
@@ -43,7 +43,7 @@ According to the our SCM(Software Configuration Management) policy, the `master`
 
 ### Security issue notifications
 
-If you discover a potential security issue in this project we ask that you notify us via our [e-mail](stdk@samsung.com). Please do NOT create a public GitHub issue.
+If you discover a potential security issue in this project we ask that you notify us via our [e-mail](mailto:stdk@samsung.com). Please do NOT create a public GitHub issue.
 
 ### License
 
