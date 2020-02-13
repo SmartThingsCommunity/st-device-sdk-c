@@ -384,6 +384,21 @@ iot_error_t iot_get_time_in_sec(char *buf, size_t buf_len)
 	return IOT_ERROR_NONE;
 }
 
+iot_error_t iot_get_time_in_sec_by_long(long *sec)
+{
+	struct timeval tv_now;
+
+	if (!sec) {
+		IOT_ERROR("buffer for time is NULL");
+		return IOT_ERROR_INVALID_ARGS;
+	}
+
+	gettimeofday(&tv_now, NULL);
+	*sec = tv_now.tv_sec;
+
+	return IOT_ERROR_NONE;
+}
+
 iot_error_t iot_get_time_in_ms(char *buf, size_t buf_len)
 {
 	struct timeval tv_now;

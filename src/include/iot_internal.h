@@ -1,6 +1,6 @@
 /* ***************************************************************************
  *
- * Copyright 2019 Samsung Electronics All Rights Reserved.
+ * Copyright 2019-2020 Samsung Electronics All Rights Reserved.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -276,11 +276,20 @@ void iot_cap_call_init_cb(iot_cap_handle_list_t *cap_handle_list);
 /**
  * @brief	get time data by sec
  * @details	this function tries to get time value in second by string
- * @param[in]	buf		buffer point to contain second based string value
+ * @param[out]	buf		buffer point to contain second based string value
  * @param[in]	buf_len		size of allocated buffer for string
  * @retval	IOT_ERROR_NONE                  success.
  */
 iot_error_t iot_get_time_in_sec(char *buf, size_t buf_len);
+
+/**
+ * @brief	get time date in second by long
+ * @details	this function tries to get time value in second by long
+ * @param[in]	sec		point to contain second based long value
+ * @retval	IOT_ERROR_NONE                  success.
+ */
+iot_error_t iot_get_time_in_sec_by_long(long *sec);
+
 
 /**
  * @brief	get time data in msec
