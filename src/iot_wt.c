@@ -20,7 +20,6 @@
 #include <stdlib.h>
 #include <string.h>
 
-
 #include "iot_internal.h"
 #include "iot_debug.h"
 #include "iot_error.h"
@@ -28,7 +27,442 @@
 #include "iot_wt.h"
 #include "iot_util.h"
 
-#include "cJSON.h"
+#if defined(STDK_IOT_CORE_WEBTOKEN_CBOR)
+
+#include <cbor.h>
+
+/*
+ * https://tools.ietf.org/html/rfc8152#section-3.1
+ */
+enum {
+	COSE_HEADER_ALG = 1,
+	COSE_HEADER_KID = 4,
+};
+
+/*
+ * https://tools.ietf.org/html/rfc8152#section-13
+ */
+enum {
+	COSE_KEY_TYPE_OKP = 1,
+	COSE_KEY_TYPE_EC2 = 2,
+	COSE_KEY_TYPE_SYMMETRIC = 4,
+};
+
+enum {
+	COSE_ALGORITHM_EdDSA = -8,
+};
+
+/*
+ * https://tools.ietf.org/html/rfc8392#section-3.1
+ */
+enum {
+	CWT_CLAIMS_ISS = 1,
+	CWT_CLAIMS_SUB = 2,
+	CWT_CLAIMS_AUD = 3,
+	CWT_CLAIMS_EXP = 4,
+	CWT_CLAIMS_NBF = 5,
+	CWT_CLAIMS_IAT = 6,
+	CWT_CLAIMS_CTI = 7,
+};
+
+struct cwt_tobesign_info {
+	unsigned char *protected;
+	size_t protected_len;
+	unsigned char *payload;
+	size_t payload_len;
+};
+
+#define COSE_MAP_ALLOC_LEN(x)	(1 + (x * 2))
+
+static iot_error_t _iot_cwt_create_protected(
+		unsigned char **protected, size_t *protected_len,
+		iot_crypto_pk_type_t pk_type)
+{
+	CborEncoder root = {0};
+	CborEncoder map = {0};
+	int entry_num;
+	unsigned char *cborbuf;
+	unsigned char *tmp;
+	size_t buflen = 32;
+	size_t olen;
+
+	if (!protected || !protected_len) {
+		IOT_ERROR("invalid args");
+		return IOT_ERROR_INVALID_ARGS;
+	}
+
+retry:
+	buflen += 32;
+
+	cborbuf = (unsigned char *)malloc(buflen);
+	if (cborbuf == NULL) {
+		IOT_ERROR("failed to malloc for cwt");
+		return IOT_ERROR_MEM_ALLOC;
+	}
+
+	memset(cborbuf, 0, buflen);
+
+	cbor_encoder_init(&root, cborbuf, buflen, 0);
+
+	entry_num = 1;
+
+	cbor_encoder_create_map(&root, &map, entry_num);
+
+	switch (pk_type) {
+	case IOT_CRYPTO_PK_ED25519:
+		cbor_encode_int(&map, COSE_HEADER_ALG);
+		cbor_encode_negative_int(&map, -COSE_ALGORITHM_EdDSA);
+		break;
+	default:
+		IOT_ERROR("'%d' not yet supported", pk_type);
+		free(cborbuf);
+		return IOT_ERROR_WEBTOKEN_FAIL;
+	}
+
+	cbor_encoder_close_container_checked(&root, &map);
+
+	olen = cbor_encoder_get_buffer_size(&root, cborbuf);
+	if (olen < buflen) {
+		tmp = (unsigned char *)realloc(cborbuf, olen + 1);
+		if (tmp) {
+			cborbuf = tmp;
+			cborbuf[olen] = 0;
+		}
+	} else {
+		IOT_ERROR("allocated size is not enough (%d < %d)",
+				(int)buflen, (int)olen);
+		free(cborbuf);
+		if (buflen < IOT_CBOR_MAX_BUF_LEN) {
+			goto retry;
+		} else {
+			return IOT_ERROR_WEBTOKEN_FAIL;
+		}
+	}
+
+	*protected = cborbuf;
+	*protected_len = olen;
+
+	return IOT_ERROR_NONE;
+}
+
+static iot_error_t _iot_cwt_create_unprotected(CborEncoder *root, const char *sn)
+{
+	CborEncoder map;
+	int entry_num = 1;
+
+	cbor_encoder_create_map(root, &map, entry_num);
+	cbor_encode_int(&map, COSE_HEADER_KID);
+	cbor_encode_byte_string(&map, (const unsigned char *)sn, strlen(sn));
+	cbor_encoder_close_container_checked(root, &map);
+
+	return IOT_ERROR_NONE;
+}
+
+static iot_error_t _iot_cwt_create_payload(
+		unsigned char **payload, size_t *payload_len)
+{
+	iot_error_t err;
+	CborEncoder root = {0};
+	CborEncoder map = {0};
+	int entry_num;
+	unsigned char *cborbuf;
+	unsigned char *tmp;
+	size_t buflen = 128;
+	size_t olen;
+
+	long time_in_sec;	/* 1559347200 is '2019-06-01 00:00:00 UTC' */
+	struct iot_uuid uuid;	/* 16 bytes */
+	const char *aud = "mqtts://greatgate.smartthings.com";
+
+	if (!payload || !payload_len) {
+		IOT_ERROR("invalid args");
+		return IOT_ERROR_INVALID_ARGS;
+	}
+
+	err = iot_get_time_in_sec_by_long(&time_in_sec);
+	if (err) {
+		IOT_ERROR("_iot_get_time_in_sec_by_long returned error : %d", err);
+		return err;
+	}
+
+	err = iot_util_get_random_uuid(&uuid);
+	if (err) {
+		IOT_ERROR("iot_util_get_random_uuid returned error : %d", err);
+		return err;
+	}
+
+retry:
+	buflen += 128;
+
+	cborbuf = (unsigned char *)malloc(buflen);
+	if (cborbuf == NULL) {
+		IOT_ERROR("failed to malloc for cwt");
+		return IOT_ERROR_MEM_ALLOC;
+	}
+
+	memset(cborbuf, 0, buflen);
+
+	cbor_encoder_init(&root, cborbuf, buflen, 0);
+
+	entry_num = 3;
+
+	cbor_encoder_create_map(&root, &map, entry_num);
+
+	/* iat */
+	cbor_encode_int(&map, CWT_CLAIMS_IAT);
+	cbor_encode_uint(&map, time_in_sec);
+	/* cti */
+	cbor_encode_int(&map, CWT_CLAIMS_CTI);
+	cbor_encode_byte_string(&map, uuid.id, sizeof(uuid.id));
+	/* aud : optional */
+	cbor_encode_int(&map, CWT_CLAIMS_AUD);
+	cbor_encode_text_string(&map, aud, strlen(aud));
+
+	cbor_encoder_close_container_checked(&root, &map);
+
+	olen = cbor_encoder_get_buffer_size(&root, cborbuf);
+	if (olen < buflen) {
+		tmp = (unsigned char *)realloc(cborbuf, olen + 1);
+		if (tmp) {
+			cborbuf = tmp;
+			cborbuf[olen] = 0;
+		}
+	} else {
+		IOT_ERROR("allocated size is not enough (%d < %d)",
+				(int)buflen, (int)olen);
+		free(cborbuf);
+		if (buflen < IOT_CBOR_MAX_BUF_LEN) {
+			goto retry;
+		} else {
+			return IOT_ERROR_WEBTOKEN_FAIL;
+		}
+	}
+
+	*payload = cborbuf;
+	*payload_len = olen;
+
+	return IOT_ERROR_NONE;
+}
+
+static iot_error_t _iot_cwt_create_signature(
+		unsigned char **sig, size_t *sig_len,
+		struct cwt_tobesign_info *tbs_info,
+		iot_crypto_pk_info_t *pk_info)
+{
+	iot_error_t err;
+	CborEncoder root = {0};
+	CborEncoder array = {0};
+	int array_num = 4;
+	unsigned char *cborbuf;
+	unsigned char *tmp;
+	size_t buflen = 128;
+	size_t olen;
+
+	iot_crypto_pk_context_t pk_ctx;
+	unsigned char *sigbuf;
+	size_t sigbuflen;
+	const char *context = "Signature1";
+
+	if (!sig || !sig_len || !tbs_info || !pk_info) {
+		IOT_ERROR("invalid args");
+		return IOT_ERROR_INVALID_ARGS;
+	}
+
+	if (!tbs_info->protected || (tbs_info->protected_len == 0) ||
+	    !tbs_info->payload || (tbs_info->payload_len == 0)) {
+		IOT_ERROR("invalid args");
+		return IOT_ERROR_INVALID_ARGS;
+	}
+
+	sigbuf = (unsigned char *)malloc(IOT_CRYPTO_SIGNATURE_LEN);
+	if (!sigbuf) {
+		IOT_ERROR("malloc failed for cwt");
+		return IOT_ERROR_MEM_ALLOC;
+	}
+
+	err = iot_crypto_pk_init(&pk_ctx, pk_info);
+	if (err) {
+		IOT_ERROR("iot_crypto_pk_init returned error : %d", err);
+		goto exit_sig;
+	}
+
+retry:
+	buflen += 128;
+
+	cborbuf = (unsigned char *)malloc(buflen);
+	if (cborbuf == NULL) {
+		IOT_ERROR("failed to malloc for cwt");
+		goto exit_pk;
+	}
+
+	memset(cborbuf, 0, buflen);
+
+	cbor_encoder_init(&root, cborbuf, buflen, 0);
+
+	cbor_encoder_create_array(&root, &array, array_num);
+
+	cbor_encode_text_string(&array, context, strlen(context));
+	cbor_encode_byte_string(&array, tbs_info->protected, tbs_info->protected_len);
+	cbor_encode_byte_string(&array, NULL, 0);
+	cbor_encode_byte_string(&array, tbs_info->payload, tbs_info->payload_len);
+
+	cbor_encoder_close_container_checked(&root, &array);
+
+	olen = cbor_encoder_get_buffer_size(&root, cborbuf);
+	if (olen < buflen) {
+		tmp = (unsigned char *)realloc(cborbuf, olen + 1);
+		if (tmp) {
+			cborbuf = tmp;
+			cborbuf[olen] = 0;
+		}
+	} else {
+		IOT_ERROR("allocated size is not enough (%d < %d)",
+				(int)buflen, (int)olen);
+		free(cborbuf);
+		if (buflen < IOT_CBOR_MAX_BUF_LEN) {
+			goto retry;
+		} else {
+			goto exit_pk;
+		}
+	}
+
+	err = iot_crypto_pk_sign(&pk_ctx, cborbuf, olen, sigbuf, &sigbuflen);
+	if (err) {
+		IOT_ERROR("iot_crypto_pk_sign returned error : %d", err);
+		goto exit_cborbuf;
+	}
+
+	free(cborbuf);
+	iot_crypto_pk_free(&pk_ctx);
+
+	*sig = sigbuf;
+	*sig_len = sigbuflen;
+
+	return IOT_ERROR_NONE;
+
+exit_cborbuf:
+	free(cborbuf);
+exit_pk:
+	iot_crypto_pk_free(&pk_ctx);
+exit_sig:
+	free(sigbuf);
+
+	return err;
+}
+
+static iot_error_t _iot_cwt_create(char **token, const char *sn, iot_crypto_pk_info_t *pk_info)
+{
+	iot_error_t err;
+	CborEncoder root = {0};
+	CborEncoder array = {0};
+	int array_num = 4;
+	unsigned char *cborbuf = NULL;
+	unsigned char *protected = NULL;
+	unsigned char *payload = NULL;
+	unsigned char *signature = NULL;
+	unsigned char *tmp = NULL;
+	size_t olen;
+	size_t protected_len;
+	size_t payload_len;
+	size_t buflen = 128;
+	struct cwt_tobesign_info tbs_info;
+retry:
+	buflen += 128;
+
+	cborbuf = (unsigned char *)malloc(buflen);
+	if (cborbuf == NULL) {
+		IOT_ERROR("failed to malloc for cbor");
+		return IOT_ERROR_MEM_ALLOC;
+	}
+
+	memset(cborbuf, 0, buflen);
+
+	/*
+	 * https://tools.ietf.org/html/rfc8152#section-4.2
+	 */
+	cbor_encoder_init(&root, cborbuf, buflen, 0);
+
+	cbor_encode_tag(&root, CborCOSE_Sign1Tag);
+
+	cbor_encoder_create_array(&root, &array, array_num);
+
+	/* protected */
+	err = _iot_cwt_create_protected(&protected, &protected_len, pk_info->type);
+	if (err)
+		goto exit_cborbuf;
+
+	cbor_encode_byte_string(&array, protected, protected_len);
+
+	/* unprotected */
+	err = _iot_cwt_create_unprotected(&array, sn);
+	if (err)
+		goto exit_protected;
+
+	/* payload */
+	err = _iot_cwt_create_payload(&payload, &payload_len);
+	if (err)
+		goto exit_unprotected;
+
+	cbor_encode_byte_string(&array, payload, payload_len);
+
+	/* signature */
+	tbs_info.protected = protected;
+	tbs_info.protected_len = protected_len;
+	tbs_info.payload = payload;
+	tbs_info.payload_len = payload_len;
+	err = _iot_cwt_create_signature(&signature, &olen, &tbs_info, pk_info);
+	if (err)
+		goto exit_payload;
+
+	cbor_encode_byte_string(&array, signature, olen);
+
+	cbor_encoder_close_container_checked(&root, &array);
+
+	olen = cbor_encoder_get_buffer_size(&root, cborbuf);
+	if (olen < buflen) {
+		tmp = (unsigned char *)realloc(cborbuf, olen + 1);
+		if (tmp) {
+			cborbuf = tmp;
+			cborbuf[olen] = 0;
+		} else {
+			IOT_WARN("realloc failed for cwt");
+		}
+	} else {
+		IOT_ERROR("allocated size is not enough (%d < %d)",
+				(int)buflen, (int)olen);
+		free(cborbuf);
+		if (buflen < IOT_CBOR_MAX_BUF_LEN) {
+			goto retry;
+		} else {
+			goto exit_signature;
+		}
+	}
+
+	*token = (char *)cborbuf;
+
+	free(signature);
+	free(payload);
+	free(protected);
+	free(cborbuf);
+
+	return IOT_ERROR_NONE;
+
+exit_signature:
+	free(signature);
+exit_payload:
+	free(payload);
+exit_unprotected:
+exit_protected:
+	free(protected);
+exit_cborbuf:
+	free(cborbuf);
+
+	return err;
+}
+
+#else /* !STDK_IOT_CORE_WEBTOKEN_CBOR */
+
+#include <cJSON.h>
 
 static char * _iot_jwt_alloc_b64_buffer(size_t plain_len, size_t *out_len)
 {
@@ -319,7 +753,7 @@ exit:
 	return err;
 }
 
-iot_error_t iot_wt_create(char **token, const char *sn, iot_crypto_pk_info_t *pk_info)
+static iot_error_t _iot_jwt_create(char **token, const char *sn, iot_crypto_pk_info_t *pk_info)
 {
 	iot_error_t err;
 	char *b64h;
@@ -401,3 +835,13 @@ exit:
 	return err;
 }
 
+#endif /* STDK_IOT_CORE_WEBTOKEN_CBOR */
+
+iot_error_t iot_wt_create(char **token, const char *sn, iot_crypto_pk_info_t *pk_info)
+{
+#if defined(STDK_IOT_CORE_WEBTOKEN_CBOR)
+	return _iot_cwt_create(token, sn, pk_info);
+#else
+	return _iot_jwt_create(token, sn, pk_info);
+#endif
+}
