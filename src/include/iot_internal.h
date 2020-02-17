@@ -240,57 +240,6 @@ iot_error_t iot_es_crypto_load_pk(iot_crypto_pk_info_t *pk_info);
 void iot_es_crypto_free_pk(iot_crypto_pk_info_t *pk_info);
 
 /**
- * @brief	mqtt connect
- * @details	this function connects ST server by mqtt
- * @param[in]	target_cli		mqtt handling context
- * @param[in]	username		username to connect ST server based on mqtt protocol
- * @param[in]	sign_data		specific password that was jwt token-based to connect ST server
- * @retval	IOT_ERROR_NONE		success.
- */
-iot_error_t iot_mqtt_connect(struct iot_mqtt_ctx *target_cli,
-		char *username, char *sign_data);
-
-/**
- * @brief	pyblish mqtt message
- * @details	this function is used to publish command & notification message
- * @param[in]	ctx			iot-core context
- * @param[in]	payload			raw message sending to server
- * @retval	IOT_ERROR_NONE		success.
- */
-iot_error_t iot_mqtt_publish(struct iot_context *ctx, void *payload);
-
-/**
- * @brief	subscribe mqtt topic
- * @details	this function is used to subscribe command & notification topics
- * @param[in]	mqtt_ctx		mqtt handling context
- * @retval	IOT_ERROR_NONE		success.
- */
-iot_error_t iot_mqtt_subscribe(struct iot_mqtt_ctx *mqtt_ctx);
-
-/**
- * @brief	unsubscribe mqtt topic
- * @details	this function is used to unsubscribe command & notification topics
- * @param[in]	mqtt_ctx		mqtt handling context
- * @retval	IOT_ERROR_NONE		success.
- */
-iot_error_t iot_mqtt_unsubscribe(struct iot_mqtt_ctx *mqtt_ctx);
-
-/**
- * @brief	mqtt disconnect
- * @details	this function is used to disconnect from server
- * @param[in]	target_cli		mqtt handling context
- */
-void iot_mqtt_disconnect(struct iot_mqtt_ctx *target_cli);
-
-/**
- * @brief	register device to ST server
- * @details	this function is used to handle the registration process
- * @param[in]	mqtt_ctx		mqtt handling context
- * @retval	IOT_ERROR_NONE		success.
- */
-iot_error_t iot_mqtt_registration(struct iot_mqtt_ctx *mqtt_ctx);
-
-/**
  * @brief	callback for mqtt command msg
  * @details	this function is used to handle command message from server
  * @param[in]	cap_handle_list		allocated capability handle list

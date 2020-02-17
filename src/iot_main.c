@@ -467,7 +467,7 @@ static iot_error_t _do_iot_main_command(struct iot_context *ctx,
 
 		case IOT_COMMAND_CLOUD_REGISTERING:
 			/* if there is previous connection, disconnect it first. */
-			if (ctx->client_ctx != NULL) {
+			if (ctx->reg_mqttcli != NULL) {
 				IOT_INFO("There is active registering, disconnect it first.\n");
 				iot_es_disconnect(ctx, IOT_CONNECT_TYPE_REGISTRATION);
 			}
@@ -519,7 +519,7 @@ static iot_error_t _do_iot_main_command(struct iot_context *ctx,
 			}
 
 			/* if there is previous connection, disconnect it first. */
-			if (ctx->reged_cli != NULL) {
+			if (ctx->evt_mqttcli != NULL) {
 				IOT_INFO("There is previous connecting, disconnect it first.\n");
 				iot_es_disconnect(ctx, IOT_CONNECT_TYPE_COMMUNICATION);
 			}
@@ -633,6 +633,40 @@ static void _do_cmd_tout_check(struct iot_context *ctx)
 	}
 }
 
+static iot_error_t _publish_event(struct iot_context *ctx, void *payload)
+{
+	int ret;
+	iot_error_t result = IOT_ERROR_NONE;
+	st_mqtt_msg msg;
+
+	if (ctx == NULL) {
+		IOT_ERROR("ctx is not intialized");
+		return IOT_ERROR_BAD_REQ;
+	}
+
+	if (!ctx->iot_reg_data.updated) {
+		IOT_ERROR("Failed as there is no deviceID");
+		return IOT_ERROR_BAD_REQ;
+	}
+
+	msg.qos = st_mqtt_qos1;
+	msg.retained = false;
+
+	msg.payload = payload;
+	msg.payloadlen = strlen(msg.payload);
+	msg.topic = ctx->mqtt_event_topic;
+
+	IOT_INFO("publish event, topic : %s, payload :\n%s", ctx->mqtt_event_topic, msg.payload);
+
+	ret = st_mqtt_publish(ctx->evt_mqttcli, &msg);
+	if (ret) {
+		IOT_WARN("MQTT pub error(%d)", ret);
+		result = IOT_ERROR_MQTT_PUBLISH_FAIL;
+	}
+
+	return result;
+}
+
 static void _iot_main_task(struct iot_context *ctx)
 {
 	struct iot_command cmd;
@@ -680,7 +714,7 @@ static void _iot_main_task(struct iot_context *ctx)
 					IOT_WARN("MQTT already disconnected. reset all pub_queue");
 					iot_os_queue_reset(ctx->pub_queue);
 				} else {
-					err = iot_mqtt_publish(ctx, payload);
+					err = _publish_event(ctx, payload);
 					free(payload);
 
 					if (err != IOT_ERROR_NONE) {
@@ -726,7 +760,7 @@ static void _iot_main_task(struct iot_context *ctx)
 
 #if !defined(STDK_MQTT_TASK)
 		/* check if there is MQTT packet from GG */
-		if (ctx->client_ctx && st_mqtt_yield(ctx->client_ctx->cli, 0) < 0) {
+		if (ctx->reg_mqttcli && st_mqtt_yield(ctx->reg_mqttcli, 0) < 0) {
 			IOT_WARN("Report Disconnected..");
 			next_state = IOT_STATE_CLOUD_DISCONNECTED;
 			err = iot_state_update(ctx, next_state, 0);
@@ -736,7 +770,7 @@ static void _iot_main_task(struct iot_context *ctx)
 			err = iot_state_update(ctx, next_state, 0);
 			iot_os_queue_reset(ctx->pub_queue);
 
-		} else if (ctx->reged_cli && st_mqtt_yield(ctx->reged_cli->cli, 0) < 0) {
+		} else if (ctx->evt_mqttcli && st_mqtt_yield(ctx->evt_mqttcli, 0) < 0) {
 			IOT_WARN("Report Disconnected..");
 			next_state = IOT_STATE_CLOUD_DISCONNECTED;
 			err = iot_state_update(ctx, next_state, 0);
