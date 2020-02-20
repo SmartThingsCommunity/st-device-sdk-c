@@ -1,0 +1,37 @@
+target_include_directories(iotcore
+        PUBLIC
+        deps/libsodium/libsodium/src/libsodium/include
+        deps/libsodium/libsodium/src/libsodium/include/sodium
+        deps/libsodium/port/include
+        deps/curl/curl/include
+        deps/curl/curl/include/curl
+        deps/json/cJSON
+        deps/mbedtls/mbedtls/include
+        port/net/mbedtls
+        include
+        include/bsp
+        include/bsp/posix
+        include/os
+        include/mqtt
+        )
+add_subdirectory(port/bsp/posix)
+add_subdirectory(port/os/posix)
+add_subdirectory(deps/json)
+add_subdirectory(easysetup)
+add_subdirectory(mqtt)
+add_subdirectory(crypto)
+add_subdirectory(deps/curl/curl)
+add_subdirectory(deps/libsodium)
+
+target_sources(iotcore
+        PRIVATE
+        iot_api.c
+        iot_crypto.c
+        iot_capability.c
+        iot_jwt.c
+        iot_main.c
+        iot_mqtt.c
+        iot_nv_data.c
+        iot_util.c
+        iot_uuid.c
+        )
