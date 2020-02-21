@@ -17,10 +17,8 @@
  ****************************************************************************/
 
 #include <string.h>
-#include "lwip_httpd/httpd.h"
-#include "lwip_httpd/fs.h"
-
 #include "cJSON.h"
+#include "es_tcp_httpd.h"
 #include "iot_main.h"
 #include "iot_internal.h"
 #include "iot_debug.h"
@@ -37,10 +35,6 @@ static const char http_header[] = "\r\nServer: SmartThings Device SDK\r\nConnect
 #define MAX_PAYLOAD_LENGTH	1024
 #define ARRAY_SIZE(x) (int)(sizeof(x)/sizeof(x[0]))
 
-#define LWIP_HTTPD_POST_MAX_PAYLOAD_LEN     512
-static char *http_post_payload;
-static u16_t http_post_payload_len = 0;
-static int post_cmd_index;
 static int ref_step;
 #if defined(CONFIG_STDK_IOT_CORE_EASYSETUP_HTTP_LOG_SUPPORT)
 static bool dump_enable;
@@ -282,67 +276,6 @@ iot_error_t _iot_easysetup_gen_post_payload(struct iot_context *ctx, const char 
 post_exit:
 	return err;
 }
-
-err_t httpd_post_begin(void *connection, const char *uri, const char *http_request,
-					u16_t http_request_len, int content_len, char *response_uri,
-					u16_t response_uri_len, u8_t *post_auto_wnd)
-{
-	int i;
-
-	if (!uri || (uri[0] == '\0') || (uri[0] != '/'))
-		return ERR_ARG;
-
-	for (i = 0; i < ARRAY_SIZE(post_cgi_cmds); i++) {
-		if (!strcmp(&uri[1], post_cgi_cmds[i])) {
-			post_cmd_index = i;
-			break;
-		}
-	}
-	if (i == ARRAY_SIZE(post_cgi_cmds))
-		return ERR_ARG;
-
-	return ERR_OK;
-}
-
-err_t httpd_post_receive_data(void *connection, struct pbuf *p)
-{
-	struct pbuf *q = p;
-	u32_t http_post_payload_full_flag = 0;
-
-	ENTER();
-
-	memset(http_post_payload, '\0', LWIP_HTTPD_POST_MAX_PAYLOAD_LEN);
-
-	while(q != NULL)
-	{
-		if(http_post_payload_len + q->len <= LWIP_HTTPD_POST_MAX_PAYLOAD_LEN) {
-			memcpy(http_post_payload+http_post_payload_len, q->payload, q->len);
-			http_post_payload_len += q->len;
-		} else {
-			http_post_payload_full_flag = 1;
-			break;
-		}
-		q = q->next;
-	}
-
-	pbuf_free(p);
-
-	if (http_post_payload_full_flag) {
-		http_post_payload_full_flag = 0;
-		http_post_payload_len = 0;
-	} else {
-		IOT_DEBUG("payload=%s", http_post_payload);
-		http_post_payload_len = 0;
-	}
-	return ERR_OK;
-}
-
-void httpd_post_finished(void *connection, char *response_uri, u16_t response_uri_len)
-{
-	snprintf(response_uri, response_uri_len, IOT_ES_URI_GET_POST_RESPONSE"?%s", post_cgi_cmds[post_cmd_index]);
-	IOT_DEBUG("%s", response_uri);
-}
-
 static inline bool _is_400_error(iot_error_t err)
 {
 	if (err <= IOT_ERROR_EASYSETUP_400_BASE
@@ -352,60 +285,42 @@ static inline bool _is_400_error(iot_error_t err)
 		return false;
 }
 
-void httpd_cgi_handler(const char* uri, int iNumParams, char **pcParam, char **pcValue, void *connection_state)
+static void http_msg_handler(const char* uri, void *buf, enum cgi_type type, char* data_buf)
 {
-	struct fs_file *file = (struct fs_file *) connection_state;
 	unsigned int buffer_len;
-	char *buffer = NULL;
 	char *payload = NULL;
 	char *ptr = NULL;
 	cJSON *root = NULL;
 	cJSON *item = NULL;
 	iot_error_t err = IOT_ERROR_NONE;
 
-	if (!file)
-		return;
-
-	if (!strcmp(uri, IOT_ES_URI_GET_POST_RESPONSE)) {
-		if (!iNumParams) {
-			IOT_WARN("invalid arg %d", iNumParams);
-			err = IOT_ERROR_EASYSETUP_INVALID_REQUEST;
-		} else {
-			err = _iot_easysetup_gen_post_payload(context, pcParam[0], http_post_payload, &payload);
+	if (type == POST) {
+			err = _iot_easysetup_gen_post_payload(context, uri, data_buf, &payload);
 			if (!err) {
 				buffer_len = strlen(payload) + strlen(http_status_200) + strlen(http_header) + 9;
-
-				if ((buffer = (char *)malloc(buffer_len)) == NULL) {
-					IOT_ERROR("failed to malloc for buffer");
-					goto cgi_out;
-				}
-				snprintf(buffer, buffer_len, "%s%s%4d\r\n\r\n%s",
+				snprintf(buf, buffer_len, "%s%s%4d\r\n\r\n%s",
 						http_status_200, http_header, (int)strlen(payload), payload);
-				IOT_INFO("%s ok", pcParam[0]);
+				IOT_INFO("%s ok", uri);
 			} else if (err == IOT_ERROR_EASYSETUP_INVALID_CMD) {
 				goto cgi_out;
 			} else {
-				IOT_INFO("%s not ok", pcParam[0]);
+				IOT_INFO("%s not ok", uri);
 			}
-		}
-	} else {
+	} else if (type == GET) {
 		err = _iot_easysetup_gen_get_payload(context, uri, &payload);
 		if (!err) {
 			buffer_len = strlen(payload) + strlen(http_status_200) + strlen(http_header) + 9;
-
-			if ((buffer = (char *)malloc(buffer_len)) == NULL) {
-				IOT_ERROR("failed to malloc for buffer");
-				goto cgi_out;
-			}
-			snprintf(buffer, buffer_len, "%s%s%4d\r\n\r\n%s",
+			snprintf(buf, buffer_len, "%s%s%4d\r\n\r\n%s",
 						http_status_200, http_header, (int)strlen(payload), payload);
 			IOT_INFO("%s ok", uri);
 		} else if (err == IOT_ERROR_EASYSETUP_INVALID_CMD) {
 			goto cgi_out;
 		} else {
-			IOT_INFO("%s not ok", pcParam[0]);
+			IOT_INFO("%s not ok", uri);
 		}
-	}
+	} else
+		IOT_ERROR("Not supported curl message type : %d", type);
+
 	if (err) {
 		item = cJSON_CreateObject();
 		if (!item) {
@@ -426,26 +341,15 @@ void httpd_cgi_handler(const char* uri, int iNumParams, char **pcParam, char **p
 		IOT_DEBUG("%s", ptr);
 
 		buffer_len = strlen(ptr) + strlen(http_status_500) + strlen(http_header) + 9;
-
-		if ((buffer = (char *)malloc(buffer_len)) == NULL) {
-			IOT_ERROR("failed to malloc for buffer");
-			goto cgi_out;
-		}
 		if (_is_400_error(err)) {
-			snprintf(buffer, buffer_len, "%s%s%4d\r\n\r\n%s",
+			snprintf(buf, buffer_len, "%s%s%4d\r\n\r\n%s",
 				http_status_400, http_header, (int)strlen(ptr), ptr);
 		} else {
-			snprintf(buffer, buffer_len, "%s%s%4d\r\n\r\n%s",
+			snprintf(buf, buffer_len, "%s%s%4d\r\n\r\n%s",
 				http_status_500, http_header, (int)strlen(ptr), ptr);
 		}
 	}
-	IOT_DEBUG("%s", buffer);
-
-	file->data = buffer;
-	file->len = file->index = strlen(buffer);
-	file->pextension = NULL;
-	file->flags = FS_FILE_FLAGS_HEADER_INCLUDED;
-
+	IOT_DEBUG("%s", buf);
 cgi_out:
 	if (root)
 		cJSON_Delete(root);
@@ -455,16 +359,26 @@ cgi_out:
 		free(ptr);
 }
 
-int fs_open_custom(struct fs_file *file, const char *name)
+int http_open_custom(const char *name, void *buf, char *payload, enum cgi_type type)
 {
 	int ret = 0;
 	int i;
 
-	for (i = 0; i < ARRAY_SIZE(get_cgi_cmds) ; i++) {
-		if (!strcmp(name,  get_cgi_cmds[i])) {
-			file->state = file;
-			ret = 1;
-			break;
+	if (type == GET) {
+		for (i = 0; i < ARRAY_SIZE(get_cgi_cmds) ; i++) {
+			if (!strcmp(name,  get_cgi_cmds[i])) {
+					http_msg_handler(name, buf, GET, payload);
+				ret = 1;
+				break;
+			}
+		}
+	} else if (type == POST) {
+		for (i = 0; i < ARRAY_SIZE(post_cgi_cmds) ; i++) {
+			if (!strcmp(name,  post_cgi_cmds[i])) {
+				http_msg_handler(name, buf, POST, payload);
+				ret = 1;
+				break;
+			}
 		}
 	}
 
@@ -474,17 +388,8 @@ int fs_open_custom(struct fs_file *file, const char *name)
 	return ret;
 }
 
-void fs_close_custom(struct fs_file *file)
-{
-	if (file->data) {
-		free((void*)file->data);
-		file->data = NULL;
-		file->len = file->index = 0;
-	}
-}
-
-void *fs_state_init(struct fs_file *file, const char *name) { return NULL; }
-void fs_state_free(struct fs_file *file, void *state) { return; }
+extern void es_tcp_init(void);
+extern void es_tcp_deinit(void);
 
 iot_error_t iot_easysetup_init(struct iot_context *ctx)
 {
@@ -494,21 +399,7 @@ iot_error_t iot_easysetup_init(struct iot_context *ctx)
 
 	context = ctx;
 
-	ctx->es_httpd_handle = es_httpd_init();
-
-	if (ctx->es_httpd_handle == NULL) {
-		IOT_ERROR("es_httpd_init failed");
-		return IOT_ERROR_UNINITIALIZED;
-	} else {
-		if (!http_post_payload) {
-			http_post_payload = malloc(LWIP_HTTPD_POST_MAX_PAYLOAD_LEN);
-			if (!http_post_payload) {
-				es_httpd_deinit(ctx->es_httpd_handle);
-				return IOT_ERROR_MEM_ALLOC;
-			}
-			http_post_payload_len = 0;
-		}
-	}
+	es_tcp_init();
 	ref_step = 0;
 
 #if defined(CONFIG_STDK_IOT_CORE_EASYSETUP_HTTP_LOG_SUPPORT)
@@ -528,15 +419,14 @@ iot_error_t iot_easysetup_init(struct iot_context *ctx)
 void iot_easysetup_deinit(struct iot_context *ctx)
 {
 	ENTER();
-	if (!ctx || !ctx->es_httpd_handle)
+	if (!ctx)
 		return;
-	es_httpd_deinit(ctx->es_httpd_handle);
-	ctx->es_httpd_handle = NULL;
+
+	es_tcp_deinit();
+
 #if defined(CONFIG_STDK_IOT_CORE_EASYSETUP_HTTP_LOG_SUPPORT)
 	dump_enable = false;
 	free(log_buffer);
 #endif
-	free(http_post_payload);
-	http_post_payload = NULL;
 	IOT_INFO("es_httpd_deinit done");
 }
