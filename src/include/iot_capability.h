@@ -123,4 +123,12 @@ struct iot_cap_handle_list {
 	struct iot_cap_handle_list *next;
 };
 
+/**
+ * @brief Contains data for final message handling.
+ */
+typedef struct iot_cap_msg {
+	char *msg;	/**< @brief final message for network handling layer such as MQTT */
+	int msglen; /**< @brief final message length */
+} iot_cap_msg_t;
+
 #endif /* _IOT_CAPABILITY_H_ */

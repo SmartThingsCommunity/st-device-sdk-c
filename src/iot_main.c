@@ -633,7 +633,7 @@ static void _do_cmd_tout_check(struct iot_context *ctx)
 	}
 }
 
-static iot_error_t _publish_event(struct iot_context *ctx, void *payload)
+static iot_error_t _publish_event(struct iot_context *ctx, iot_cap_msg_t *cap_msg)
 {
 	int ret;
 	iot_error_t result = IOT_ERROR_NONE;
@@ -641,19 +641,24 @@ static iot_error_t _publish_event(struct iot_context *ctx, void *payload)
 
 	if (ctx == NULL) {
 		IOT_ERROR("ctx is not intialized");
-		return IOT_ERROR_BAD_REQ;
+		return IOT_ERROR_INVALID_ARGS;
 	}
 
 	if (!ctx->iot_reg_data.updated) {
 		IOT_ERROR("Failed as there is no deviceID");
-		return IOT_ERROR_BAD_REQ;
+		return IOT_ERROR_INVALID_ARGS;
+	}
+
+	if (!cap_msg) {
+		IOT_ERROR("capability msg is NULL");
+		return IOT_ERROR_INVALID_ARGS;
 	}
 
 	msg.qos = st_mqtt_qos1;
 	msg.retained = false;
 
-	msg.payload = payload;
-	msg.payloadlen = strlen(msg.payload);
+	msg.payload = cap_msg->msg;
+	msg.payloadlen = cap_msg->msglen;
 	msg.topic = ctx->mqtt_event_topic;
 
 	IOT_INFO("publish event, topic : %s, payload :\n%s", ctx->mqtt_event_topic, msg.payload);
@@ -672,7 +677,7 @@ static void _iot_main_task(struct iot_context *ctx)
 	struct iot_command cmd;
 	unsigned int curr_events;
 	iot_error_t err = IOT_ERROR_NONE;
-	char *payload;
+	iot_cap_msg_t final_msg;
 	struct iot_easysetup_payload easysetup_req;
 	iot_state_t next_state;
 
@@ -706,16 +711,15 @@ static void _iot_main_task(struct iot_context *ctx)
 		}
 
 		if (curr_events & IOT_EVENT_BIT_CAPABILITY) {
-			payload = NULL;
 			if (iot_os_queue_receive(ctx->pub_queue,
-					&payload, 0) != IOT_OS_FALSE) {
+					&final_msg, 0) != IOT_OS_FALSE) {
 
 				if (ctx->curr_state < IOT_STATE_CLOUD_CONNECTING) {
 					IOT_WARN("MQTT already disconnected. reset all pub_queue");
 					iot_os_queue_reset(ctx->pub_queue);
 				} else {
-					err = _publish_event(ctx, payload);
-					free(payload);
+					err = _publish_event(ctx, &final_msg);
+					free(final_msg.msg);
 
 					if (err != IOT_ERROR_NONE) {
 						IOT_ERROR("failed publish event_data : %d", err);
@@ -852,7 +856,7 @@ IOT_CTX* st_conn_init(unsigned char *onboarding_config, unsigned int onboarding_
 
 	/* create msg queue for publish */
 	ctx->pub_queue = iot_os_queue_create(IOT_PUB_QUEUE_LENGTH,
-		sizeof(char*));
+		sizeof(iot_cap_msg_t));
 
 	if (!ctx->pub_queue) {
 		IOT_ERROR("failed to create Queue for publish data\n");

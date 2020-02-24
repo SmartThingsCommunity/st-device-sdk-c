@@ -34,8 +34,8 @@ static int32_t sqnum = 0;
 static iot_error_t _iot_parse_noti_data(void *data, iot_noti_data_t *noti_data);
 static iot_error_t _iot_parse_cmd_data(cJSON* cmditem, char** component,
 			char** capability, char** command, iot_cap_cmd_data_t* cmd_data);
-static char* _iot_make_evt_data(const char* component, const char* capability,
-			uint8_t arr_size, iot_cap_evt_data_t** evt_data_arr);
+static iot_error_t _iot_make_evt_data(const char* component, const char* capability,
+			uint8_t arr_size, iot_cap_evt_data_t** evt_data_arr, iot_cap_msg_t *msg);
 static void _iot_free_val(iot_cap_val_t* val);
 static void _iot_free_unit(iot_cap_unit_t* unit);
 static void _iot_free_cmd_data(iot_cap_cmd_data_t* cmd_data);
@@ -345,8 +345,9 @@ int st_cap_attr_send(IOT_CAP_HANDLE *cap_handle,
 	iot_cap_evt_data_t** evt_data = (iot_cap_evt_data_t**)event;
 	int ret;
 	struct iot_context *ctx;
-	void *payload = NULL;
+	iot_cap_msg_t final_msg;
 	struct iot_cap_handle *handle = (struct iot_cap_handle*)cap_handle;
+	iot_error_t err;
 
 	if (!handle || !evt_data || !evt_num) {
 		IOT_ERROR("There is no handle or evt_data");
@@ -362,17 +363,17 @@ int st_cap_attr_send(IOT_CAP_HANDLE *cap_handle,
 	sqnum = (sqnum + 1) & MAX_SQNUM;	// Use only positive number
 
 	/* Make event data format & enqueue data */
-	payload = (void *)_iot_make_evt_data(handle->component,
-			handle->capability, evt_num, evt_data);
-	if (!payload) {
+	err = _iot_make_evt_data(handle->component,
+			handle->capability, evt_num, evt_data, &final_msg);
+	if (err != IOT_ERROR_NONE) {
 		IOT_ERROR("Cannot make evt_data!!");
-		return IOT_ERROR_MEM_ALLOC;
+		return err;
 	}
 
-	ret = iot_os_queue_send(ctx->pub_queue, &payload, 0);
+	ret = iot_os_queue_send(ctx->pub_queue, &final_msg, 0);
 	if (ret != IOT_OS_TRUE) {
 		IOT_WARN("Cannot put the paylod into pub_queue");
-		free(payload);
+		free(final_msg.msg);
 
 		return IOT_ERROR_BAD_REQ;
 	} else {
@@ -759,8 +760,8 @@ static iot_error_t _iot_parse_cmd_data(cJSON* cmditem, char** component,
 }
 
 
-static char* _iot_make_evt_data(const char* component, const char* capability,
-			uint8_t arr_size, iot_cap_evt_data_t** evt_data_arr)
+static iot_error_t _iot_make_evt_data(const char* component, const char* capability,
+			uint8_t arr_size, iot_cap_evt_data_t** evt_data_arr, iot_cap_msg_t *msg)
 {
 	char *data = NULL;
 	cJSON *evt_root = NULL;
@@ -769,6 +770,12 @@ static char* _iot_make_evt_data(const char* component, const char* capability,
 	cJSON *evt_subarr = NULL;
 	cJSON *prov_data = NULL;
 	char time_in_ms[16]; /* 155934720000 is '2019-06-01 00:00:00.00 UTC' */
+	iot_error_t err = IOT_ERROR_NONE;
+
+	if (!msg) {
+		IOT_ERROR("msg is NULL");
+		return IOT_ERROR_INVALID_ARGS;
+	}
 
 	evt_root = cJSON_CreateObject();
 	evt_arr = cJSON_CreateArray();
@@ -798,6 +805,7 @@ static char* _iot_make_evt_data(const char* component, const char* capability,
 			cJSON_AddItemToObject(evt_item, "value", evt_subarr);
 		} else {
 			IOT_ERROR("Event data value type error :%d", evt_data_arr[i]->evt_value.type);
+			err = IOT_ERROR_INVALID_ARGS;
 			goto out;
 		}
 
@@ -822,13 +830,19 @@ static char* _iot_make_evt_data(const char* component, const char* capability,
 	cJSON_AddItemToObject(evt_root, "deviceEvents", evt_arr);
 
 	data = cJSON_PrintUnformatted(evt_root);
-	IOT_DEBUG("%s", data);
+	if (!data) {
+		err = IOT_ERROR_MEM_ALLOC;
+	} else {
+		IOT_DEBUG("%s", data);
+		msg->msg = data;
+		msg->msglen = strlen(data);
+	}
 
 out:
 	if (evt_root != NULL)
 		cJSON_Delete(evt_root);
 
-	return data;
+	return err;
 }
 
 void iot_cap_call_init_cb(iot_cap_handle_list_t *cap_handle_list)
