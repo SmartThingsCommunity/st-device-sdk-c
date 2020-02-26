@@ -811,6 +811,7 @@ static iot_error_t _iot_make_evt_data_cbor(const char* component, const char* ca
 	CborEncoder provider_map = {0};
 	char time_in_ms[16] = {0}; /* 155934720000 is '2019-06-01 00:00:00.00 UTC' */
 	uint8_t *buf;
+	uint8_t *tmp;
 	size_t buflen = 128;
 	size_t olen;
 	char **str_array_ptr;
@@ -905,7 +906,12 @@ retry:
 
 	olen = cbor_encoder_get_buffer_size(&root, buf);
 	if (olen < buflen) {
-		buf = (uint8_t *)realloc(buf, olen + 1);
+		tmp = (uint8_t *)realloc(buf, olen + 1);
+		if (!tmp) {
+			IOT_WARN("realloc failed for cbor");
+		} else {
+			buf = tmp;
+		}
 	} else {
 		IOT_ERROR("allocated size is not enough (%d < %d)",
 				(int)buflen, (int)olen);

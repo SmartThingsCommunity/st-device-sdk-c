@@ -173,6 +173,7 @@ static void *_iot_es_mqtt_registration_cbor(struct iot_context *ctx,
 	CborEncoder root = {0};
 	CborEncoder root_map = {0};
 	uint8_t *buf;
+	uint8_t *tmp;
 	size_t buflen = 128;
 	size_t olen;
 
@@ -229,7 +230,12 @@ retry:
 
 	olen = cbor_encoder_get_buffer_size(&root, buf);
 	if (olen < buflen) {
-		buf = (uint8_t *)realloc(buf, olen + 1);
+		tmp = (uint8_t *)realloc(buf, olen + 1);
+		if (!tmp) {
+			IOT_WARN("realloc failed for cbor");
+		} else {
+			buf = tmp;
+		}
 	} else {
 		IOT_ERROR("allocated size is not enough (%d < %d)",
 				(int)buflen, (int)olen);
