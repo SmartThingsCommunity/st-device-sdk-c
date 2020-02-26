@@ -67,7 +67,6 @@ target_include_directories(iotcore
         deps/json/cJSON
         deps/mbedtls/mbedtls/include
         port/net/mbedtls
-        port/net/openssl
         include/bsp
         include/bsp/posix
         include/os
