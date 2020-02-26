@@ -300,29 +300,14 @@ int st_cap_cmd_set_cb(IOT_CAP_HANDLE *cap_handle, const char *cmd_type,
 	needle_str = cmd_type;
 	str_len = strlen(needle_str);
 
-	new_list = (iot_cap_cmd_set_list_t *)malloc(sizeof(iot_cap_cmd_set_list_t));
-	if (!new_list) {
-		IOT_ERROR("failed to malloc for cmd set list");
-		return IOT_ERROR_MEM_ALLOC;
-	}
-
 	cur_list = handle->cmd_list;
-
-	if (cur_list == NULL) {
-		handle->cmd_list = new_list;
-		cur_list = handle->cmd_list;
-	} else {
-		while (cur_list->next != NULL) {
-			cmd_str = cur_list->command->cmd_type;
-			if (cmd_str && !strncmp(cmd_str, needle_str, str_len)) {
-				IOT_ERROR("There is already same handle for : %s",
-							needle_str);
-				return IOT_ERROR_INVALID_ARGS;
-			}
-			cur_list = cur_list->next;
+	while (cur_list) {
+		cmd_str = cur_list->command->cmd_type;
+		if (cmd_str && !strncmp(cmd_str, needle_str, str_len)) {
+			IOT_ERROR("There is already same handle for : %s",
+						needle_str);
+			return IOT_ERROR_INVALID_ARGS;
 		}
-
-		cur_list->next = new_list;
 		cur_list = cur_list->next;
 	}
 
@@ -331,13 +316,19 @@ int st_cap_cmd_set_cb(IOT_CAP_HANDLE *cap_handle, const char *cmd_type,
 		IOT_ERROR("failed to malloc for cmd set");
 		return IOT_ERROR_MEM_ALLOC;
 	}
-
 	command->cmd_type = strdup(needle_str);
 	command->cmd_cb = cmd_cb;
 	command->usr_data = usr_data;
 
-	cur_list->command = command;
-	cur_list->next = NULL;
+	new_list = (iot_cap_cmd_set_list_t *)malloc(sizeof(iot_cap_cmd_set_list_t));
+	if (!new_list) {
+		IOT_ERROR("failed to malloc for cmd set list");
+		free(command);
+		return IOT_ERROR_MEM_ALLOC;
+	}
+	new_list->command = command;
+	new_list->next = handle->cmd_list;
+	handle->cmd_list = new_list;
 
 	return IOT_ERROR_NONE;
 }
