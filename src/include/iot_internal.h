@@ -285,7 +285,7 @@ iot_error_t iot_get_time_in_sec(char *buf, size_t buf_len);
 /**
  * @brief	get time date in second by long
  * @details	this function tries to get time value in second by long
- * @param[in]	sec		point to contain second based long value
+ * @param[out]	sec		point to contain second based long value
  * @retval	IOT_ERROR_NONE                  success.
  */
 iot_error_t iot_get_time_in_sec_by_long(long *sec);
@@ -294,7 +294,7 @@ iot_error_t iot_get_time_in_sec_by_long(long *sec);
 /**
  * @brief	get time data in msec
  * @details	this function tries to get time value in millisecond by string
- * @param[in]	buf		buffer point to contain millisecond based string value
+ * @param[out]	buf		buffer point to contain millisecond based string value
  * @param[in]	buf_len		size of allocated buffer for string
  * @retval	IOT_ERROR_NONE                  success.
  */
