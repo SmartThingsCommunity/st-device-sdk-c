@@ -331,7 +331,7 @@ iot_error_t _iot_es_mqtt_registration(struct iot_context *ctx, st_mqtt_client mq
 	memset(location_id, 0, str_id_len);
 
 	iot_err = iot_util_convert_uuid_str(&ctx->prov_data.cloud.location_id,
-				location_id, sizeof(str_id_len));
+				location_id, str_id_len);
 	if (iot_err != IOT_ERROR_NONE) {
 		IOT_ERROR("%s error location_id convt (%d)", __func__, iot_err);
 		iot_err = IOT_ERROR_BAD_REQ;
