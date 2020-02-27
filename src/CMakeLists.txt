@@ -34,7 +34,7 @@ add_custom_command(
         WORKING_DIRECTORY ${CMAKE_CURRENT_SOURCE_DIR}
         COMMAND cat ${BOILERPLATE_HEADER} > ${ROOT_CA_SOURCE}
         COMMAND xxd -i ${ROOT_CA_FILE} >> ${ROOT_CA_SOURCE}
-        COMMAND sed -i.bak 's/src.*pem/st_root_ca/g' ${ROOT_CA_SOURCE}
+        COMMAND sed -i.bak 's/cert.*_pem/st_root_ca/g' ${ROOT_CA_SOURCE}
         COMMAND sed -i.bak 's/unsigned/const unsigned/g' ${ROOT_CA_SOURCE}
         COMMAND rm -f ${ROOT_CA_SOURCE}.bak
         BYPRODUCTS ${CMAKE_CURRENT_SOURCE_DIR}/${ROOT_CA_SOURCE}
