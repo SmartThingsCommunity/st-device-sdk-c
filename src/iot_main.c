@@ -37,6 +37,58 @@
 static iot_error_t _do_state_updating(struct iot_context *ctx,
 		iot_state_t new_state, int opt, unsigned int *timeout_ms);
 
+static iot_error_t _send_wifi_ctrl_cmd(struct iot_context *ctx,
+		iot_wifi_mode_t wifi_mode)
+{
+	iot_error_t iot_err;
+	iot_wifi_conf wifi_conf;
+
+	if (!ctx) {
+		IOT_ERROR("There is no ctx\n");
+		return IOT_ERROR_BAD_REQ;
+        }
+
+	memset(&wifi_conf, 0, sizeof(wifi_conf));
+	wifi_conf.mode = wifi_mode;
+
+	switch (wifi_mode) {
+	case IOT_WIFI_MODE_STATION:
+		memcpy(wifi_conf.ssid, ctx->prov_data.wifi.ssid,
+			strlen(ctx->prov_data.wifi.ssid));
+		memcpy(wifi_conf.pass, ctx->prov_data.wifi.password,
+			strlen(ctx->prov_data.wifi.password));
+		break;
+
+	case IOT_WIFI_MODE_SOFTAP:
+		/*wifi soft-ap mode w/ ssid E4 format*/
+		iot_err = iot_easysetup_create_ssid(&(ctx->devconf),
+					wifi_conf.ssid, IOT_WIFI_MAX_SSID_LEN);
+		if (iot_err != IOT_ERROR_NONE) {
+			IOT_ERROR("Can't create ssid for easysetup.(%d)", iot_err);
+			return iot_err;
+		}
+
+		snprintf(wifi_conf.pass, sizeof(wifi_conf.pass), "1111122222");
+		break;
+
+	case IOT_WIFI_MODE_SCAN:
+		/* fall through */
+	case IOT_WIFI_MODE_OFF:
+		IOT_DEBUG("No need more settings for [%d] mode\n", wifi_mode);
+		break;
+
+	default:
+		IOT_ERROR("Unsupported wifi ctrl mode[%d]\n", wifi_mode);
+		return IOT_ERROR_BAD_REQ;
+	}
+
+	iot_err = iot_command_send(ctx,
+				IOT_COMMAND_NETWORK_MODE,
+					&wifi_conf, sizeof(wifi_conf));
+
+	return iot_err;
+}
+
 static iot_error_t _check_prov_data_validation(struct iot_device_prov_data *prov_data)
 {
 	struct iot_wifi_prov_data *wifi = &(prov_data->wifi);
@@ -921,7 +973,6 @@ static iot_error_t _do_recovery(struct iot_context *ctx,
 			iot_state_t fail_state)
 {
 	iot_error_t iot_err = IOT_ERROR_NONE;
-	iot_wifi_conf wifi_conf;
 
 	IOT_WARN("state changing fail for %d, curr_state :%d",
 		fail_state, ctx->curr_state);
@@ -941,11 +992,7 @@ static iot_error_t _do_recovery(struct iot_context *ctx,
 			ctx->scan_num = 0;
 
 			/* wifi off, just keep idle state */
-			memset(&wifi_conf, 0, sizeof(wifi_conf));
-			wifi_conf.mode = IOT_WIFI_MODE_OFF;
-			iot_err = iot_command_send(ctx,
-						IOT_COMMAND_NETWORK_MODE,
-						&wifi_conf, sizeof(wifi_conf));
+			iot_err = _send_wifi_ctrl_cmd(ctx, IOT_WIFI_MODE_OFF);
 			if (iot_err != IOT_ERROR_NONE) {
 				IOT_ERROR("Can't send WIFI off command(%d)",
 					iot_err);
@@ -962,12 +1009,7 @@ static iot_error_t _do_recovery(struct iot_context *ctx,
 		case IOT_STATE_CLOUD_CONNECTING:
 			IOT_ERROR("Failed to go to CLOUD_CONNECTED on time");
 			/* wifi off */
-			memset(&wifi_conf, 0, sizeof(wifi_conf));
-			wifi_conf.mode = IOT_WIFI_MODE_OFF;
-			iot_err = iot_command_send(ctx,
-						IOT_COMMAND_NETWORK_MODE,
-						&wifi_conf, sizeof(wifi_conf));
-
+			iot_err = _send_wifi_ctrl_cmd(ctx, IOT_WIFI_MODE_OFF);
 			if (iot_err != IOT_ERROR_NONE) {
 				IOT_ERROR("Can't send WIFI off command(%d)",
 					iot_err);
@@ -975,15 +1017,7 @@ static iot_error_t _do_recovery(struct iot_context *ctx,
 			}
 
 			/* wifi on againg for station */
-			wifi_conf.mode = IOT_WIFI_MODE_STATION;
-			memcpy(wifi_conf.ssid, ctx->prov_data.wifi.ssid,
-			strlen(ctx->prov_data.wifi.ssid));
-			memcpy(wifi_conf.pass, ctx->prov_data.wifi.password,
-			strlen(ctx->prov_data.wifi.password));
-			iot_err = iot_command_send(ctx,
-						IOT_COMMAND_NETWORK_MODE,
-						&wifi_conf, sizeof(wifi_conf));
-
+			iot_err = _send_wifi_ctrl_cmd(ctx, IOT_WIFI_MODE_STATION);
 			if (iot_err != IOT_ERROR_NONE) {
 				IOT_ERROR("Can't send WIFI station command(%d)",
 					iot_err);
@@ -1011,18 +1045,14 @@ static iot_error_t _do_recovery(struct iot_context *ctx,
 		case IOT_STATE_PROV_CONFIRMING:
 			IOT_ERROR("Failed to do process [%d] on time, retry",
 				fail_state);
-			/* wifi off */
 			if (ctx->scan_result) {
 				free(ctx->scan_result);
 				ctx->scan_result = NULL;
 			}
 			ctx->scan_num = 0;
 
-			memset(&wifi_conf, 0, sizeof(wifi_conf));
-			wifi_conf.mode = IOT_WIFI_MODE_OFF;
-			iot_err = iot_command_send(ctx,
-						IOT_COMMAND_NETWORK_MODE,
-						&wifi_conf, sizeof(wifi_conf));
+			/* wifi off */
+			iot_err = _send_wifi_ctrl_cmd(ctx, IOT_WIFI_MODE_OFF);
 			if (iot_err != IOT_ERROR_NONE) {
 				IOT_ERROR("Can't send WIFI off command(%d)",
 					iot_err);
@@ -1034,12 +1064,7 @@ static iot_error_t _do_recovery(struct iot_context *ctx,
 			IOT_ERROR("Failed to do process [%d] on time, retry",
 				fail_state);
 			/* wifi off */
-			memset(&wifi_conf, 0, sizeof(wifi_conf));
-			wifi_conf.mode = IOT_WIFI_MODE_OFF;
-			iot_err = iot_command_send(ctx,
-						IOT_COMMAND_NETWORK_MODE,
-						&wifi_conf, sizeof(wifi_conf));
-
+			iot_err = _send_wifi_ctrl_cmd(ctx, IOT_WIFI_MODE_OFF);
 			if (iot_err != IOT_ERROR_NONE) {
 				IOT_ERROR("Can't send WIFI off command(%d)",
 					iot_err);
@@ -1080,7 +1105,6 @@ static iot_error_t _do_state_updating(struct iot_context *ctx,
 {
 	iot_error_t iot_err = IOT_ERROR_INVALID_ARGS;
 	enum iot_command_type iot_cmd;
-	iot_wifi_conf wifi_conf;
 
 	/* Set default timeout value for next state */
 	*timeout_ms = NEXT_STATE_TIMEOUT_MS;
@@ -1092,29 +1116,14 @@ static iot_error_t _do_state_updating(struct iot_context *ctx,
 		break;
 
 	case IOT_STATE_PROV_ENTER:
-		memset(&wifi_conf, 0, sizeof(wifi_conf));
-
-		wifi_conf.mode = IOT_WIFI_MODE_SCAN;
-		iot_cmd = IOT_COMMAND_NETWORK_MODE;
-		iot_err = iot_command_send(ctx, iot_cmd,
-					&wifi_conf, sizeof(wifi_conf));
+		iot_err = _send_wifi_ctrl_cmd(ctx, IOT_WIFI_MODE_SCAN);
 		if (iot_err != IOT_ERROR_NONE) {
 			IOT_ERROR("Can't send WIFI mode scan.(%d)", iot_err);
  			break;
  		}
 
 		/*wifi soft-ap mode w/ ssid E4 format*/
-		iot_err = iot_easysetup_create_ssid(&(ctx->devconf), wifi_conf.ssid, IOT_WIFI_MAX_SSID_LEN);
-		if (iot_err != IOT_ERROR_NONE) {
-			IOT_ERROR("Can't create ssid for easysetup.(%d)", iot_err);
- 			break;
- 		}
-		snprintf(wifi_conf.pass, sizeof(wifi_conf.pass), "1111122222");
-
-		wifi_conf.mode = IOT_WIFI_MODE_SOFTAP;
-		iot_cmd = IOT_COMMAND_NETWORK_MODE;
-		iot_err = iot_command_send(ctx, iot_cmd,
-					&wifi_conf, sizeof(wifi_conf));
+		iot_err = _send_wifi_ctrl_cmd(ctx, IOT_WIFI_MODE_SOFTAP);
 		if (iot_err != IOT_ERROR_NONE) {
 			IOT_ERROR("Can't send WIFI mode softap.(%d)", iot_err);
  			break;
@@ -1139,18 +1148,7 @@ static iot_error_t _do_state_updating(struct iot_context *ctx,
 	case IOT_STATE_PROV_DONE:
 		iot_os_delay(1000); /* delay for easysetup/httpd */
 
-		memset(&wifi_conf, 0, sizeof(wifi_conf));
-
-		wifi_conf.mode = IOT_WIFI_MODE_STATION;
-		memcpy(wifi_conf.ssid, ctx->prov_data.wifi.ssid,
-			strlen(ctx->prov_data.wifi.ssid));
-		memcpy(wifi_conf.pass, ctx->prov_data.wifi.password,
-			strlen(ctx->prov_data.wifi.password));
-
-		iot_cmd = IOT_COMMAND_NETWORK_MODE;
-		iot_err = iot_command_send(ctx, iot_cmd,
-					&wifi_conf, sizeof(wifi_conf));
-
+		iot_err = _send_wifi_ctrl_cmd(ctx, IOT_WIFI_MODE_STATION);
 		if (iot_err != IOT_ERROR_NONE) {
 			IOT_ERROR("Can't send WIFI mode command(%d)", iot_err);
 		} else {
