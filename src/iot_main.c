@@ -609,7 +609,7 @@ static void _do_cmd_tout_check(struct iot_context *ctx)
 		remained_tout = iot_os_timer_left_ms(ctx->state_timer);
 
 	if ((ctx->curr_state != ctx->req_state) || !remained_tout) {
-		if (!remained_tout) {
+		if (!remained_tout && !ctx->cmd_err) {
 			IOT_WARN("New state changing timeout");
 			next_state = IOT_STATE_CHANGE_FAILED;
 			if (iot_state_update(ctx, next_state, ctx->req_state)
