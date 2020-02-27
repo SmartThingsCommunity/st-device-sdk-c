@@ -29,6 +29,10 @@
 
 #include <string.h>
 #include <sys/socket.h>
+#if defined(__unix__) || (defined(__APPLE__) && defined(__MACH__))
+#include <netinet/in.h>
+#include <unistd.h>
+#endif
 #include "es_tcp_httpd.h"
 #include "iot_os_util.h"
 #include "iot_debug.h"
@@ -36,14 +40,12 @@
 
 #define PORT 8888
 #define RX_BUFFER_MAX    1024
-#define TX_BUFFER_MAX    1024 * 3
+#define TX_BUFFER_MAX    1024 * 4
 
 typedef struct { char *name, *value; } header_t;
 
-const int IPV4_GOTIP_BIT = BIT0;
 static header_t reqhdr[17] = {{"\0", "\0"}};
 static char *tx_buffer = NULL;
-static char *payload = NULL;
 
 // Client request
 char *method, // "GET" or "POST"
@@ -54,10 +56,10 @@ char *method, // "GET" or "POST"
 static void es_tcp_task(void *pvParameters)
 {
 	char rx_buffer[RX_BUFFER_MAX];
-	char addr_str[128];
 	int addr_family, ip_protocol, listen_sock, sock, err, len;
 	struct sockaddr_in sourceAddr;
 	uint addrLen;
+	char *payload = NULL;
 
 	while (1) {
 		struct sockaddr_in destAddr;
@@ -66,7 +68,6 @@ static void es_tcp_task(void *pvParameters)
 		destAddr.sin_port = htons(PORT);
 		addr_family = AF_INET;
 		ip_protocol = IPPROTO_IP;
-		inet_ntoa_r(destAddr.sin_addr, addr_str, sizeof(addr_str) - 1);
 
 		listen_sock = socket(addr_family, SOCK_STREAM, ip_protocol);
 		if (listen_sock < 0) {
@@ -85,13 +86,6 @@ static void es_tcp_task(void *pvParameters)
 			IOT_ERROR("Error occured during listen: errno %d", err);
 			break;
 		}
-
-		payload = malloc(RX_BUFFER_MAX);
-		if (!payload) {
-			IOT_ERROR("failed to malloc for payload");
-			break;
-		}
-		memset(payload, '\0', RX_BUFFER_MAX);
 
 		while (1) {
 			addrLen = sizeof(sourceAddr);
@@ -117,7 +111,6 @@ static void es_tcp_task(void *pvParameters)
 			}
 			else {
 	    		rx_buffer[len] = '\0';
-				inet_ntoa_r(((struct sockaddr_in *)&sourceAddr)->sin_addr.s_addr, addr_str, sizeof(addr_str) - 1);
 
 				method = strtok(rx_buffer, " \t\r\n");
 				uri = strtok(NULL, " \t");
@@ -151,11 +144,6 @@ static void es_tcp_task(void *pvParameters)
 				payload = t;
 				IOT_DEBUG("payload : %s", payload);
 
-				tx_buffer = malloc(TX_BUFFER_MAX);
-				if (!tx_buffer) {
-					IOT_ERROR("failed to malloc for tx_buffer");
-					break;
-				}
 				memset(tx_buffer, '\0', TX_BUFFER_MAX);
 
 				if (!strcmp(method,  "GET"))
@@ -173,12 +161,8 @@ static void es_tcp_task(void *pvParameters)
 					IOT_ERROR("Error occured during sending: errno %d", err);
 					break;
 				}
-				if (tx_buffer)
-					free(tx_buffer);
 			}
 		}
-		if (payload)
-			free(payload);
 
 		if (sock != -1) {
 			IOT_ERROR("Shutting down socket and restarting...");
@@ -194,19 +178,22 @@ static iot_os_thread es_tcp_task_handle = NULL;
 void es_tcp_init(void)
 {
 	IOT_INFO("es_tcp_init!!");
+	tx_buffer = malloc(TX_BUFFER_MAX);
+	if (!tx_buffer) {
+		IOT_ERROR("failed to malloc for tx_buffer");
+	}
+
 	iot_os_thread_create(es_tcp_task, "es_tcp_task", 4096, NULL, 5, (iot_os_thread * const)(&es_tcp_task_handle));
 }
 
 void es_tcp_deinit(void)
 {
-
 	if (es_tcp_task_handle)
 		iot_os_thread_delete(es_tcp_task_handle);
 
 	if (tx_buffer)
 		free(tx_buffer);
-	if (payload)
-		free(payload);
+
 	IOT_INFO("es_tcp_deinit!!");
 }
 
