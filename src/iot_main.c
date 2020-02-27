@@ -33,6 +33,10 @@
 
 #define NEXT_STATE_TIMEOUT_MS	(100000)
 #define EASYSETUP_TIMEOUT_MS	(300000) /* 5 min */
+#define RECOVER_TRY_MAX			(5)
+
+static int rcv_try_cnt;
+static iot_state_t rcv_fail_state;
 
 static iot_error_t _do_state_updating(struct iot_context *ctx,
 		iot_state_t new_state, int opt, unsigned int *timeout_ms);
@@ -365,6 +369,8 @@ static iot_error_t _do_iot_main_command(struct iot_context *ctx,
 
 		/* For Resource control */
 		case IOT_COMMAND_READY_TO_CTL:
+			rcv_fail_state = IOT_STATE_INITIALIZED;
+			rcv_try_cnt = 0;
 			iot_cap_call_init_cb(ctx->cap_handle_list);
 			break;
 
@@ -976,6 +982,48 @@ static iot_error_t _do_recovery(struct iot_context *ctx,
 
 	IOT_WARN("state changing fail for %d, curr_state :%d",
 		fail_state, ctx->curr_state);
+
+	if (fail_state != rcv_fail_state) {
+		rcv_try_cnt = 0;
+		rcv_fail_state = fail_state;
+	} else {
+		rcv_try_cnt++;
+	}
+
+	/* Repeated same exceptional cases
+	 * So try do something more first
+	 */
+	if (rcv_try_cnt > RECOVER_TRY_MAX) {
+		switch (fail_state) {
+		case IOT_STATE_CLOUD_REGISTERING:
+			/* fall through */
+		case IOT_STATE_CLOUD_CONNECTING:
+			/* wifi off */
+			iot_err = _send_wifi_ctrl_cmd(ctx, IOT_WIFI_MODE_OFF);
+			if (iot_err != IOT_ERROR_NONE) {
+				IOT_ERROR("Can't send WIFI off command(%d)",
+					iot_err);
+				break;
+			}
+
+			/* wifi on againg by station */
+			iot_err = _send_wifi_ctrl_cmd(ctx, IOT_WIFI_MODE_STATION);
+			if (iot_err != IOT_ERROR_NONE) {
+				IOT_ERROR("Can't send WIFI station command(%d)",
+					iot_err);
+				break;
+			}
+
+			/* reset rcv_try_cnt */
+			rcv_try_cnt = 0;
+			break;
+
+		default:
+			IOT_WARN("No action for repeating state:[%d] failure (%d)",
+				fail_state, rcv_try_cnt);
+			break;
+		}
+	}
 
 	if (ctx->curr_state == fail_state) {
 		/* We assume that these are intentional timeout cases
