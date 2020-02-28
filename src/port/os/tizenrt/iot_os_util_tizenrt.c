@@ -224,21 +224,12 @@ int iot_os_mutex_unlock(iot_os_mutex *mutex)
     return ret;
 }
 
-int iot_os_mutex_delete(iot_os_mutex *mutex)
+void iot_os_mutex_destroy(iot_os_mutex* mutex)
 {
-    int ret;
+    if (!mutex || !mutex->sem)
+        return;
 
-	if (!mutex) {
-		return IOT_ERROR_INVALID_ARGS;
-	}
-
-	ret = pthread_mutex_destroy((pthread_mutex_t *)mutex->sem);
-	if (!ret) {
-	    ret = IOT_ERROR_NONE;
-	} else {
-	    ret = IOT_ERROR_BAD_REQ;
-	}
-	return ret;
+    pthread_mutex_destroy((pthread_mutex_t *)mutex->sem);
 }
 
 /* Delay */
@@ -300,15 +291,15 @@ char iot_os_timer_isexpired(iot_os_timer timer)
 	return check_for_timeout(&os_timer->time_out, &os_timer->ticks_to_wait) == pdTRUE;
 }
 
-void iot_os_timer_init(iot_os_timer *timer)
+int iot_os_timer_init(iot_os_timer *timer)
 {
 	*timer = malloc(sizeof(tizenrt_timer));
 	if (*timer == NULL) {
-		return;
+		return IOT_ERROR_MEM_ALLOC;
 	}
 	memset(*timer, '\0', sizeof(tizenrt_timer));
 
-	return;
+	return IOT_ERROR_NONE;
 }
 
 void iot_os_timer_destroy(iot_os_timer *timer)

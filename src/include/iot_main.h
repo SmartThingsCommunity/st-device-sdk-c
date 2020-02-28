@@ -189,18 +189,6 @@ struct iot_registered_data {
 };
 
 /**
- * @brief Contains "mqtt handling context" data
- */
-struct iot_mqtt_ctx {
-	st_mqtt_client cli;			/**< @brief mqtt client handle for iot_core */
-
-	const char *cmd_filter;		/**< @brief mqtt command topic filter string */
-	const char *noti_filter;	/**< @brief mqtt notification topic filter string */
-
-	void *iot_ctx;				/**< @brief iot main context ref. used for mqtt message callback */
-};
-
-/**
  * @brief Contains "device's information" data
  */
 struct iot_device_info {
@@ -236,8 +224,9 @@ struct iot_context {
 
 	iot_cap_handle_list_t *cap_handle_list;		/**< @brief allocated capability handle lists */
 
-	struct iot_mqtt_ctx *client_ctx;	/**< @brief mqtt context ref. for registration */
-	struct iot_mqtt_ctx *reged_cli;		/**< @brief mqtt context ref. for connection */
+	st_mqtt_client evt_mqttcli;			/**< @brief SmartThings MQTT Client for event & commands */
+	st_mqtt_client reg_mqttcli;			/**< @brief SmartThings MQTT Client for registration */
+	char *mqtt_event_topic;				/**< @brief mqtt topic for event publish */
 
 	struct iot_device_prov_data prov_data;	/**< @brief allocated device provisioning data */
 	struct iot_devconf_prov_data devconf;	/**< @brief allocated device configuration data */

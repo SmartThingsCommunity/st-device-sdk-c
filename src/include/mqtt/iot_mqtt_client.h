@@ -76,7 +76,7 @@ typedef struct MQTTClient {
 	int cleansession;
 
 	struct MessageHandlers {
-		const char *topicFilter;
+		char *topicFilter;
 		void (*fp)(st_mqtt_msg *, void *);
 		void *userData;
 	} messageHandlers[MAX_MESSAGE_HANDLERS];	  /* Message handlers are indexed by subscription topic */

@@ -135,16 +135,51 @@ error_handle:
 	return rc;
 }
 
+void MQTTCleanSession(MQTTClient *c)
+{
+	int i = 0;
+
+	for (i = 0; i < MAX_MESSAGE_HANDLERS; ++i) {
+		if (c->messageHandlers[i].topicFilter != NULL) {
+			free(c->messageHandlers[i].topicFilter);
+			c->messageHandlers[i].topicFilter = NULL;
+		}
+	}
+}
+
+void MQTTCloseSession(MQTTClient *c)
+{
+	IOT_WARN("mqtt close session");
+	if (c->net && c->net->show_status)
+		c->net->show_status(c->net);
+	c->ping_outstanding = 0;
+	c->ping_retry_count = 0;
+	c->isconnected = 0;
+
+	if (c->cleansession) {
+		MQTTCleanSession(c);
+	}
+}
+
 void st_mqtt_destroy(st_mqtt_client client)
 {
 	MQTTClient *c = client;
 
+	iot_os_mutex_lock(&c->mutex);
+	if (c->isconnected) {
+		MQTTCloseSession(c);
+
+		if (c->net->disconnect != NULL)
+			c->net->disconnect(c->net);
+	}
+	free(c->net);
+
 	iot_os_timer_destroy(&c->last_sent);
 	iot_os_timer_destroy(&c->last_received);
 	iot_os_timer_destroy(&c->ping_wait);
-	iot_os_mutex_destroy(&c->mutex);
+	iot_os_mutex_unlock(&c->mutex);
 
-	free(c->net);
+	iot_os_mutex_destroy(&c->mutex);
 	free(c);
 }
 
@@ -332,32 +367,6 @@ int keepalive(MQTTClient *c)
 exit:
 	return rc;
 }
-
-
-void MQTTCleanSession(MQTTClient *c)
-{
-	int i = 0;
-
-	for (i = 0; i < MAX_MESSAGE_HANDLERS; ++i) {
-		c->messageHandlers[i].topicFilter = NULL;
-	}
-}
-
-
-void MQTTCloseSession(MQTTClient *c)
-{
-	IOT_WARN("mqtt close session");
-	if (c->net && c->net->show_status)
-		c->net->show_status(c->net);
-	c->ping_outstanding = 0;
-	c->ping_retry_count = 0;
-	c->isconnected = 0;
-
-	if (c->cleansession) {
-		MQTTCleanSession(c);
-	}
-}
-
 
 int cycle(MQTTClient *c, iot_os_timer timer)
 {
@@ -751,6 +760,7 @@ int MQTTSetMessageHandler(st_mqtt_client client, const char *topic, st_mqtt_msg_
 	for (i = 0; i < MAX_MESSAGE_HANDLERS; ++i) {
 		if (c->messageHandlers[i].topicFilter != NULL && strcmp(c->messageHandlers[i].topicFilter, topic) == 0) {
 			if (handler == NULL) { /* remove existing */
+				free(c->messageHandlers[i].topicFilter);
 				c->messageHandlers[i].topicFilter = NULL;
 				c->messageHandlers[i].fp = NULL;
 				c->messageHandlers[i].userData = user_data;
@@ -773,7 +783,7 @@ int MQTTSetMessageHandler(st_mqtt_client client, const char *topic, st_mqtt_msg_
 		}
 
 		if (i < MAX_MESSAGE_HANDLERS) {
-			c->messageHandlers[i].topicFilter = topic;
+			c->messageHandlers[i].topicFilter = strdup(topic);
 			c->messageHandlers[i].fp = handler;
 			c->messageHandlers[i].userData = user_data;
 		}

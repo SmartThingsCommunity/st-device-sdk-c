@@ -67,13 +67,15 @@ typedef enum iot_error_t {
 	IOT_ERROR_NET_INVALID_INTERFACE = -300,
 	IOT_ERROR_NET_CONNECT = -301,
 
+	/* easy setup error */
+	IOT_ERROR_EASYSETUP_CLIENT = -400,
+	IOT_ERROR_EASYSETUP_SERVER = -500,
+
 	IOT_ERROR_CRYPTO_BASE = -1000,
 	IOT_ERROR_JWT_BASE = -2000,
 
-	/* easy setup error */
 	IOT_ERROR_PROV_FAIL = -2998,
 	IOT_ERROR_CONNECT_FAIL = -2999,
-	IOT_ERROR_EASYSETUP_BASE = -3000,
 } iot_error_t;
 
 #ifdef __cplusplus
