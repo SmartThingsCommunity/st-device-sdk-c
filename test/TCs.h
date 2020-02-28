@@ -28,5 +28,6 @@ void TC_iot_api_onboarding_config_load(void **state);
 
 // TCs for iot_uuid.c
 void TC_iot_uuid_from_mac(void **state);
+void TC_iot_random_uuid_from_mac(void **state);
 
 #endif //ST_DEVICE_SDK_C_TCS_H

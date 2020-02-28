@@ -72,3 +72,31 @@ void TC_iot_uuid_from_mac(void **state)
     // Then: should return error
     assert_int_not_equal(err, IOT_ERROR_NONE);
 }
+
+void TC_iot_random_uuid_from_mac(void **state)
+{
+    iot_error_t err;
+    struct iot_uuid uuid;
+    unsigned char sample_mac[IOT_WIFI_MAX_BSSID_LEN] = { 0x11, 0x22, 0x33, 0x44, 0x55, 0x66 };
+
+    // Given: iot_bsp_wifi_get_mac() returns sample mac address
+    will_return(__wrap_iot_bsp_wifi_get_mac, cast_ptr_to_largest_integral_type(sample_mac));
+    will_return(__wrap_iot_bsp_wifi_get_mac, IOT_ERROR_NONE);
+    // When
+    err = iot_random_uuid_from_mac(&uuid);
+    // Then: API should success
+    assert_int_equal(err, IOT_ERROR_NONE);
+
+    // Given: iot_bsp_wifi_get_mac() failed
+    will_return(__wrap_iot_bsp_wifi_get_mac, NULL);
+    will_return(__wrap_iot_bsp_wifi_get_mac, IOT_ERROR_READ_FAIL);
+    // When
+    err = iot_random_uuid_from_mac(&uuid);
+    // Then: should return error
+    assert_int_not_equal(err, IOT_ERROR_NONE);
+
+    // When: null parameter
+    err = iot_random_uuid_from_mac(NULL);
+    // Then: should return error
+    assert_int_not_equal(err, IOT_ERROR_NONE);
+}
