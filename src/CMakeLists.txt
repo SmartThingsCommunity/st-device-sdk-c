@@ -44,7 +44,7 @@ add_library(iotcore
         iot_api.c
         iot_crypto.c
         iot_capability.c
-        iot_jwt.c
+        iot_wt.c
         iot_main.c
         iot_nv_data.c
         iot_util.c
