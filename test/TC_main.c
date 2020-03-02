@@ -29,6 +29,12 @@ int main(void) {
             cmocka_unit_test(TC_iot_api_onboarding_config_load),
             cmocka_unit_test(TC_iot_uuid_from_mac),
             cmocka_unit_test(TC_iot_random_uuid_from_mac),
+            cmocka_unit_test_teardown(TC_st_cap_attr_create_int_null_attribute, TC_iot_capability_teardown),
+            cmocka_unit_test_teardown(TC_st_cap_attr_create_int_null_unit, TC_iot_capability_teardown),
+            cmocka_unit_test_teardown(TC_st_cap_attr_create_int_with_unit, TC_iot_capability_teardown),
+            cmocka_unit_test_teardown(TC_st_cap_attr_create_number_null_attribute, TC_iot_capability_teardown),
+            cmocka_unit_test_teardown(TC_st_cap_attr_create_number_null_unit, TC_iot_capability_teardown),
+            cmocka_unit_test_teardown(TC_st_cap_attr_create_number_with_unit, TC_iot_capability_teardown),
     };
     return cmocka_run_group_tests(tests, NULL, NULL);
 }

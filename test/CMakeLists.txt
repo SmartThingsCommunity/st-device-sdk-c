@@ -25,7 +25,8 @@ if(ENABLE_STDK_TEST)
                    TCs.h
                    TC_iot_util.c
                    TC_iot_api.c
-                   TC_iot_uuid.c)
+                   TC_iot_uuid.c
+                   TC_iot_capability.c)
 
     target_link_libraries(stdk_test
                           PRIVATE
