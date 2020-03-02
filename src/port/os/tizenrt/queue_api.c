@@ -439,6 +439,7 @@ int32_t queue_reset_wrapper(void *queue)
 	/* read out all messages in recv queue */
 	while (queue_recv_wrapper(queue, item, 0) == pdPASS) {}
 
+	free(item);
 	return pdPASS;
 }
 
