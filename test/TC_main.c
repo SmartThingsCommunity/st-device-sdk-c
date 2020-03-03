@@ -41,6 +41,11 @@ int main(void) {
             cmocka_unit_test_teardown(TC_st_cap_attr_create_number_internal_failure, TC_iot_capability_teardown),
             cmocka_unit_test(TC_iot_crypto_pk_init_null_parameter),
             cmocka_unit_test(TC_iot_crypto_pk_init_ed25519),
+            cmocka_unit_test_setup_teardown(TC_iot_nv_get_root_certificate_success, TC_iot_nv_data_setup, TC_iot_nv_data_teardown),
+            cmocka_unit_test_setup_teardown(TC_iot_nv_get_root_certificate_null_parameters, TC_iot_nv_data_setup, TC_iot_nv_data_teardown),
+            cmocka_unit_test_setup_teardown(TC_iot_nv_get_root_certificate_internal_failure, TC_iot_nv_data_setup, TC_iot_nv_data_teardown),
+            cmocka_unit_test_setup_teardown(TC_iot_nv_get_public_key_success, TC_iot_nv_data_setup, TC_iot_nv_data_teardown),
+            cmocka_unit_test_setup_teardown(TC_iot_nv_get_public_key_null_parameters, TC_iot_nv_data_setup, TC_iot_nv_data_teardown),
     };
     return cmocka_run_group_tests(tests, NULL, NULL);
 }
