@@ -40,7 +40,6 @@
 
 #define PORT 8888
 #define RX_BUFFER_MAX    1024
-#define TX_BUFFER_MAX    1024 * 4
 
 typedef struct { char *name, *value; } header_t;
 
@@ -55,11 +54,11 @@ char *method, // "GET" or "POST"
 
 static void es_tcp_task(void *pvParameters)
 {
+	char *payload = NULL;
 	char rx_buffer[RX_BUFFER_MAX];
 	int addr_family, ip_protocol, listen_sock, sock, err, len;
 	struct sockaddr_in sourceAddr;
 	uint addrLen;
-	char *payload = NULL;
 
 	while (1) {
 		struct sockaddr_in destAddr;
@@ -144,14 +143,17 @@ static void es_tcp_task(void *pvParameters)
 				payload = t;
 				IOT_DEBUG("payload : %s", payload);
 
-				memset(tx_buffer, '\0', TX_BUFFER_MAX);
-
 				if (!strcmp(method,  "GET"))
-					http_open_custom(uri, tx_buffer, payload, GET);
+					http_open_custom(uri, &tx_buffer, payload, GET);
 				else if (!strcmp(method,  "POST"))
-					http_open_custom(uri, tx_buffer, payload, POST);
+					http_open_custom(uri, &tx_buffer, payload, POST);
 				else
 					IOT_ERROR("not support type");
+
+				if (!tx_buffer) {
+					IOT_ERROR("tx_buffer is NULL");
+					break;
+				}
 
 				len = strlen((char *)tx_buffer);
 				tx_buffer[len] = 0;
@@ -160,6 +162,10 @@ static void es_tcp_task(void *pvParameters)
 				if (err < 0) {
 					IOT_ERROR("Error occured during sending: errno %d", err);
 					break;
+				}
+				if (tx_buffer) {
+					free(tx_buffer);
+					tx_buffer = NULL;
 				}
 			}
 		}
@@ -178,11 +184,6 @@ static iot_os_thread es_tcp_task_handle = NULL;
 void es_tcp_init(void)
 {
 	IOT_INFO("es_tcp_init!!");
-	tx_buffer = malloc(TX_BUFFER_MAX);
-	if (!tx_buffer) {
-		IOT_ERROR("failed to malloc for tx_buffer");
-	}
-
 	iot_os_thread_create(es_tcp_task, "es_tcp_task", 4096, NULL, 5, (iot_os_thread * const)(&es_tcp_task_handle));
 }
 

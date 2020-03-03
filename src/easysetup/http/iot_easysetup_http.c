@@ -285,9 +285,10 @@ static inline bool _is_400_error(iot_error_t err)
 		return false;
 }
 
-static void http_msg_handler(const char* uri, void *buf, enum cgi_type type, char* data_buf)
+static void http_msg_handler(const char* uri, char **buffer, enum cgi_type type, char* data_buf)
 {
 	unsigned int buffer_len;
+	char *buf = NULL;
 	char *payload = NULL;
 	char *ptr = NULL;
 	cJSON *root = NULL;
@@ -298,6 +299,11 @@ static void http_msg_handler(const char* uri, void *buf, enum cgi_type type, cha
 			err = _iot_easysetup_gen_post_payload(context, uri, data_buf, &payload);
 			if (!err) {
 				buffer_len = strlen(payload) + strlen(http_status_200) + strlen(http_header) + 9;
+				buf = malloc(buffer_len);
+				if (!buf) {
+					IOT_ERROR("failed to malloc buffer for the post msg");
+					goto cgi_out;
+				}
 				snprintf(buf, buffer_len, "%s%s%4d\r\n\r\n%s",
 						http_status_200, http_header, (int)strlen(payload), payload);
 				IOT_INFO("%s ok", uri);
@@ -310,6 +316,11 @@ static void http_msg_handler(const char* uri, void *buf, enum cgi_type type, cha
 		err = _iot_easysetup_gen_get_payload(context, uri, &payload);
 		if (!err) {
 			buffer_len = strlen(payload) + strlen(http_status_200) + strlen(http_header) + 9;
+			buf = malloc(buffer_len);
+			if (!buf) {
+				IOT_ERROR("failed to malloc buffer for the get msg");
+				goto cgi_out;
+			}
 			snprintf(buf, buffer_len, "%s%s%4d\r\n\r\n%s",
 						http_status_200, http_header, (int)strlen(payload), payload);
 			IOT_INFO("%s ok", uri);
@@ -341,6 +352,11 @@ static void http_msg_handler(const char* uri, void *buf, enum cgi_type type, cha
 		IOT_DEBUG("%s", ptr);
 
 		buffer_len = strlen(ptr) + strlen(http_status_500) + strlen(http_header) + 9;
+		buf = malloc(buffer_len);
+		if (!buf) {
+			IOT_ERROR("failed to malloc buffer for the error msg");
+			goto cgi_out;
+		}
 		if (_is_400_error(err)) {
 			snprintf(buf, buffer_len, "%s%s%4d\r\n\r\n%s",
 				http_status_400, http_header, (int)strlen(ptr), ptr);
@@ -350,6 +366,8 @@ static void http_msg_handler(const char* uri, void *buf, enum cgi_type type, cha
 		}
 	}
 	IOT_DEBUG("%s", buf);
+	*buffer = buf;
+
 cgi_out:
 	if (root)
 		cJSON_Delete(root);
@@ -359,7 +377,7 @@ cgi_out:
 		free(ptr);
 }
 
-int http_open_custom(const char *name, void *buf, char *payload, enum cgi_type type)
+int http_open_custom(const char *name, char **buf, char *payload, enum cgi_type type)
 {
 	int ret = 0;
 	int i;

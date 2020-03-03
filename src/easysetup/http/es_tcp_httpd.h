@@ -28,7 +28,7 @@ enum cgi_type {
 	POST,
 };
 
-int http_open_custom(const char *name, void *buf, char *payload, enum cgi_type type);
+int http_open_custom(const char *name, char **buf, char *payload, enum cgi_type type);
 
 #ifdef __cplusplus
 }
