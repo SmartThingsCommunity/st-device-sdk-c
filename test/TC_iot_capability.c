@@ -27,8 +27,10 @@
 int TC_iot_capability_teardown(void **state)
 {
     iot_cap_evt_data_t* event_data = (iot_cap_evt_data_t*) *state;
-    if (event_data != NULL)
-        st_cap_attr_free(event_data);
+    IOT_EVENT* event = (IOT_EVENT*) event_data;
+
+    if (event != NULL)
+        st_cap_attr_free(event);
 
     set_mock_malloc_failure(false);
 
