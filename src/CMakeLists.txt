@@ -24,6 +24,12 @@ set(ENABLE_PROGRAMS OFF CACHE BOOL "Build mbed TLS programs." FORCE)
 set(ENABLE_TESTING OFF CACHE BOOL "Build mbed TLS tests." FORCE)
 add_subdirectory(deps/mbedtls/mbedtls)
 
+if(CMAKE_C_COMPILER_ID STREQUAL "GNU" AND CMAKE_BUILD_TYPE MATCHES Debug)
+    foreach(mock ${MOCKED_FUNCTIONS})
+        set(CMAKE_C_FLAGS_DEBUG "${CMAKE_C_FLAGS_DEBUG} -Wl,--wrap=${mock}")
+    endforeach()
+endif()
+
 set(BOILERPLATE_HEADER include/certs/boilerplate.h)
 set(ROOT_CA_FILE certs/root_ca.pem)
 set(ROOT_CA_SOURCE iot_root_ca.c)
