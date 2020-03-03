@@ -22,12 +22,15 @@
 #include <cmocka.h>
 #include <st_dev.h>
 #include <iot_capability.h>
+#include "TC_mock_functions.h"
 
 int TC_iot_capability_teardown(void **state)
 {
     iot_cap_evt_data_t* event_data = (iot_cap_evt_data_t*) *state;
     if (event_data != NULL)
         st_cap_attr_free(event_data);
+
+    set_mock_malloc_failure(false);
 
     return 0;
 }
@@ -82,6 +85,18 @@ void TC_st_cap_attr_create_int_with_unit(void **state)
     *state = event_data;
 }
 
+void TC_st_cap_attr_create_int_internal_failure(void **state)
+{
+    IOT_EVENT* event;
+
+    // Given: malloc will fail
+    set_mock_malloc_failure(true);
+    // When
+    event = st_cap_attr_create_int("temperature", 10, "C");
+    // Then: return null
+    assert_null(event);
+}
+
 void TC_st_cap_attr_create_number_null_attribute(void **state)
 {
     IOT_EVENT* event;
@@ -132,4 +147,16 @@ void TC_st_cap_attr_create_number_with_unit(void **state)
     assert_string_equal(event_data->evt_type, "bodyWeightMeasurement");
 
     *state = event_data;
+}
+
+void TC_st_cap_attr_create_number_internal_failure(void **state)
+{
+    IOT_EVENT* event;
+
+    // Given: malloc will fail
+    set_mock_malloc_failure(true);
+    // When
+    event = st_cap_attr_create_number("bodyWeightMeasurement", 56.7, "kg");
+    // Then: return null
+    assert_null(event);
 }

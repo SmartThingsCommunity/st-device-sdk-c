@@ -28,15 +28,19 @@ void TC_iot_api_onboarding_config_load(void **state);
 
 // TCs for iot_uuid.c
 void TC_iot_uuid_from_mac(void **state);
+void TC_iot_uuid_from_mac_internal_failure(void **state);
 void TC_iot_random_uuid_from_mac(void **state);
+void TC_iot_ramdom_uuid_from_mac_internal_failure(void **state);
 
 // TCs for iot_capability.c
 int TC_iot_capability_teardown(void **state);
 void TC_st_cap_attr_create_int_null_attribute(void **state);
 void TC_st_cap_attr_create_int_null_unit(void **state);
 void TC_st_cap_attr_create_int_with_unit(void **state);
+void TC_st_cap_attr_create_int_internal_failure(void **state);
 void TC_st_cap_attr_create_number_null_attribute(void **state);
 void TC_st_cap_attr_create_number_null_unit(void **state);
 void TC_st_cap_attr_create_number_with_unit(void **state);
+void TC_st_cap_attr_create_number_internal_failure(void **state);
 
 #endif //ST_DEVICE_SDK_C_TCS_H

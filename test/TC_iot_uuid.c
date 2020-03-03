@@ -25,20 +25,7 @@
 #include <iot_bsp_wifi.h>
 #include <iot_uuid.h>
 #include <iot_util.h>
-
-iot_error_t __wrap_iot_bsp_wifi_get_mac(struct iot_mac *wifi_mac)
-{
-    unsigned char *mock_mac;
-    if (wifi_mac == NULL) {
-        return IOT_ERROR_INVALID_ARGS;
-    }
-
-    mock_mac = mock_ptr_type(unsigned char *);
-    if (mock_mac != NULL) {
-        memcpy(wifi_mac->addr, mock_mac, IOT_WIFI_MAX_BSSID_LEN);
-    }
-    return mock_type(iot_error_t);
-}
+#include "TC_mock_functions.h"
 
 void TC_iot_uuid_from_mac(void **state)
 {
@@ -73,6 +60,26 @@ void TC_iot_uuid_from_mac(void **state)
     assert_int_not_equal(err, IOT_ERROR_NONE);
 }
 
+void TC_iot_uuid_from_mac_internal_failure(void **state)
+{
+    iot_error_t err;
+    struct iot_uuid uuid;
+    char uuid_str[IOT_REG_UUID_STR_LEN + 1];
+    unsigned char sample_mac[IOT_WIFI_MAX_BSSID_LEN] = { 0x11, 0x22, 0x33, 0x44, 0x55, 0x66 };
+    const char sample_uuid_str[] = "bb000ddd-92a0-a2a3-46f0-b531f278af06";
+
+    // Given: iot_bsp_wifi_get_mac() returns sample mac address but malloc failed
+    will_return(__wrap_iot_bsp_wifi_get_mac, cast_ptr_to_largest_integral_type(sample_mac));
+    will_return(__wrap_iot_bsp_wifi_get_mac, IOT_ERROR_NONE);
+    set_mock_malloc_failure(true);
+    // When:
+    err = iot_uuid_from_mac(&uuid);
+    // Then: should return error
+    assert_int_not_equal(err, IOT_ERROR_NONE);
+    // Teardown
+    set_mock_malloc_failure(false);
+}
+
 void TC_iot_random_uuid_from_mac(void **state)
 {
     iot_error_t err;
@@ -99,4 +106,24 @@ void TC_iot_random_uuid_from_mac(void **state)
     err = iot_random_uuid_from_mac(NULL);
     // Then: should return error
     assert_int_not_equal(err, IOT_ERROR_NONE);
+}
+
+void TC_iot_ramdom_uuid_from_mac_internal_failure(void **state)
+{
+    iot_error_t err;
+    struct iot_uuid uuid;
+    unsigned char sample_mac[IOT_WIFI_MAX_BSSID_LEN] = { 0x11, 0x22, 0x33, 0x44, 0x55, 0x66 };
+
+    // Given: iot_bsp_wifi_get_mac() returns sample mac address but malloc failed
+    will_return(__wrap_iot_bsp_wifi_get_mac, cast_ptr_to_largest_integral_type(sample_mac));
+    will_return(__wrap_iot_bsp_wifi_get_mac, IOT_ERROR_NONE);
+    set_mock_malloc_failure(true);
+
+    // When
+    err = iot_random_uuid_from_mac(&uuid);
+    // Then: should return error
+    assert_int_not_equal(err, IOT_ERROR_NONE);
+
+    // Teardown
+    set_mock_malloc_failure(false);
 }
