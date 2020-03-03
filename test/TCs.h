@@ -43,4 +43,7 @@ void TC_st_cap_attr_create_number_null_unit(void **state);
 void TC_st_cap_attr_create_number_with_unit(void **state);
 void TC_st_cap_attr_create_number_internal_failure(void **state);
 
+// TCs for iot_crypto.c
+void TC_iot_crypto_pk_init_null_parameter(void **state);
+void TC_iot_crypto_pk_init_ed25519(void **state);
 #endif //ST_DEVICE_SDK_C_TCS_H

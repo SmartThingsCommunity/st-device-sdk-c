@@ -27,6 +27,7 @@ if(ENABLE_STDK_TEST)
                    TC_iot_api.c
                    TC_iot_uuid.c
                    TC_iot_capability.c
+                   TC_iot_crypto.c
                    TC_mock_functions.c
                    TC_mock_functions.h)
 

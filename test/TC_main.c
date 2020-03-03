@@ -39,6 +39,8 @@ int main(void) {
             cmocka_unit_test_teardown(TC_st_cap_attr_create_number_null_unit, TC_iot_capability_teardown),
             cmocka_unit_test_teardown(TC_st_cap_attr_create_number_with_unit, TC_iot_capability_teardown),
             cmocka_unit_test_teardown(TC_st_cap_attr_create_number_internal_failure, TC_iot_capability_teardown),
+            cmocka_unit_test(TC_iot_crypto_pk_init_null_parameter),
+            cmocka_unit_test(TC_iot_crypto_pk_init_ed25519),
     };
     return cmocka_run_group_tests(tests, NULL, NULL);
 }
