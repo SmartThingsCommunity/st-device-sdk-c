@@ -121,9 +121,9 @@ void TC_iot_easysetup_create_ssid_success(void **state)
 
     // Given
     devconf = (struct iot_devconf_prov_data *)*state;
-    // When: All parameters null
+    // When: valid parameters
     err = iot_easysetup_create_ssid(devconf, ssid, sizeof(ssid));
-    // Then: returns error
+    // Then: returns success
     assert_int_equal(err, IOT_ERROR_NONE);
     assert_string_equal(ssid, sample_ssid);
 }
