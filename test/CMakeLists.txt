@@ -5,7 +5,7 @@ if(ENABLE_STDK_TEST)
     check_include_file(${CMOCKA_DIR}/include/cmocka.h CMOCKA_H)
     if (NOT CMOCKA_H)
         message(STATUS "submodule init for cmocka")
-        execute_process(COMMAND git submodule update --init ${CJSON_DIR}
+        execute_process(COMMAND git submodule update --init ${CMOCKA_DIR}
                         WORKING_DIRECTORY "${CMAKE_CURRENT_SOURCE_DIR}")
     endif (NOT CMOCKA_H)
 
