@@ -120,6 +120,8 @@ iot_error_t iot_easysetup_create_ssid(struct iot_devconf_prov_data *devconf, cha
 	int i;
 	iot_error_t err = IOT_ERROR_NONE;
 
+    IOT_WARN_CHECK((devconf == NULL || ssid == NULL || ssid_len == 0), IOT_ERROR_INVALID_ARGS, "Invalid args 'NULL'");
+
 	err = iot_nv_get_serial_number(&serial, &length);
 	if (err != IOT_ERROR_NONE) {
 		IOT_ERROR("Failed to get serial number : %d\n", err);
