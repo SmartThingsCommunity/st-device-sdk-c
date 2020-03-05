@@ -24,6 +24,7 @@
 #include <iot_internal.h>
 #include <iot_os_util.h>
 #include <iot_easysetup.h>
+#include <string.h>
 
 #define UNUSED(x) (void**)(x)
 
@@ -35,44 +36,6 @@ static char device_info_sample[] = {
         "\t\t\"publicKey\": \"publicKey_here\",\n"
         "\t\t\"serialNumber\": \"serialNumber_here\"\n"
         "\t}\n"
-        "}"
-};
-
-static char onboarding_profile_template[] = {
-        "{\n"
-        "  \"onboardingConfig\": {\n"
-        "    \"deviceOnboardingId\": \"NAME\",\n"
-        "    \"mnId\": \"MNID\",\n"
-        "    \"setupId\": \"999\",\n"
-        "    \"vid\": \"VID\",\n"
-        "    \"deviceTypeId\": \"TYPE\",\n"
-        "    \"ownershipValidationTypes\": [\n"
-        "      \"JUSTWORKS\",\n"
-        "      \"BUTTON\",\n"
-        "      \"PIN\",\n"
-        "      \"QR\"\n"
-        "    ],\n"
-        "    \"identityType\": \"ED25519_or_CERTIFICATE\"\n"
-        "  }\n"
-        "}"
-};
-
-static char onboarding_profile_example[] = {
-        "{\n"
-        "  \"onboardingConfig\": {\n"
-        "    \"deviceOnboardingId\": \"STDK\",\n"
-        "    \"mnId\": \"fTST\",\n"
-        "    \"setupId\": \"001\",\n"
-        "    \"vid\": \"STDK_BULB_0001\",\n"
-        "    \"deviceTypeId\": \"Switch\",\n"
-        "    \"ownershipValidationTypes\": [\n"
-        "      \"JUSTWORKS\",\n"
-        "      \"BUTTON\",\n"
-        "      \"PIN\",\n"
-        "      \"QR\"\n"
-        "    ],\n"
-        "    \"identityType\": \"ED25519\"\n"
-        "  }\n"
         "}"
 };
 
@@ -109,7 +72,56 @@ void TC_iot_api_device_info_load_success(void **state)
     // Then: success
     assert_int_equal(err, IOT_ERROR_NONE);
     assert_string_equal("MyTestingFirmwareVersion", info.firmware_version);
+
+    // local teardown
+    iot_api_device_info_mem_free(&info);
 }
+
+static char device_info_sample_without_firmware_version[] = {
+        "{\n"
+        "\t\"deviceInfo\": {\n"
+        "\t\t\"privateKey\": \"privateKey_here\",\n"
+        "\t\t\"publicKey\": \"publicKey_here\",\n"
+        "\t\t\"serialNumber\": \"serialNumber_here\"\n"
+        "\t}\n"
+        "}"
+};
+
+void TC_iot_api_device_info_load_without_firmware_version(void **state)
+{
+    iot_error_t err;
+    struct iot_device_info info;
+    UNUSED(state);
+
+    // Given
+    memset(&info, '\0', sizeof(struct iot_device_info));
+    // When: malformed json
+    err = iot_api_device_info_load(device_info_sample_without_firmware_version, sizeof(device_info_sample_without_firmware_version), &info);
+    // Then: returns error
+    assert_int_not_equal(err, IOT_ERROR_NONE);
+
+    // local teardown
+    iot_api_device_info_mem_free(&info);
+}
+
+static char onboarding_profile_template[] = {
+        "{\n"
+        "  \"onboardingConfig\": {\n"
+        "    \"deviceOnboardingId\": \"NAME\",\n"
+        "    \"mnId\": \"MNID\",\n"
+        "    \"setupId\": \"999\",\n"
+        "    \"vid\": \"VID\",\n"
+        "    \"deviceTypeId\": \"TYPE\",\n"
+        "    \"ownershipValidationTypes\": [\n"
+        "      \"JUSTWORKS\",\n"
+        "      \"BUTTON\",\n"
+        "      \"PIN\",\n"
+        "      \"QR\"\n"
+        "    ],\n"
+        "    \"identityType\": \"ED25519_or_CERTIFICATE\"\n"
+        "  }\n"
+        "}"
+};
 
 void TC_iot_api_onboarding_config_load_null_parameters(void **state)
 {
@@ -139,11 +151,35 @@ void TC_iot_api_onboarding_config_load_template_parameters(void **state)
     struct iot_devconf_prov_data devconf;
     UNUSED(state);
 
+    // Given
+    memset(&devconf, '\0', sizeof(struct iot_devconf_prov_data));
     // When: template is used as parameter
     err = iot_api_onboarding_config_load(onboarding_profile_template, sizeof(onboarding_profile_template), &devconf);
     // Then: returns error
     assert_int_not_equal(err, IOT_ERROR_NONE);
+
+    // local teardown
+    iot_api_onboarding_config_mem_free(&devconf);
 }
+
+static char onboarding_profile_example[] = {
+        "{\n"
+        "  \"onboardingConfig\": {\n"
+        "    \"deviceOnboardingId\": \"STDK\",\n"
+        "    \"mnId\": \"fTST\",\n"
+        "    \"setupId\": \"001\",\n"
+        "    \"vid\": \"STDK_BULB_0001\",\n"
+        "    \"deviceTypeId\": \"Switch\",\n"
+        "    \"ownershipValidationTypes\": [\n"
+        "      \"JUSTWORKS\",\n"
+        "      \"BUTTON\",\n"
+        "      \"PIN\",\n"
+        "      \"QR\"\n"
+        "    ],\n"
+        "    \"identityType\": \"ED25519\"\n"
+        "  }\n"
+        "}"
+};
 
 void TC_iot_api_onboarding_config_load_success(void **state)
 {
@@ -167,4 +203,117 @@ void TC_iot_api_onboarding_config_load_success(void **state)
 
     // Local teardown
     iot_api_onboarding_config_mem_free(&devconf);
+}
+
+static char onboarding_profile_without_mnid[] = {
+        "{\n"
+        "  \"onboardingConfig\": {\n"
+        "    \"deviceOnboardingId\": \"STDK\",\n"
+        "    \"setupId\": \"001\",\n"
+        "    \"vid\": \"STDK_BULB_0001\",\n"
+        "    \"deviceTypeId\": \"Switch\",\n"
+        "    \"ownershipValidationTypes\": [\n"
+        "      \"JUSTWORKS\",\n"
+        "      \"BUTTON\",\n"
+        "      \"PIN\",\n"
+        "      \"QR\"\n"
+        "    ],\n"
+        "    \"identityType\": \"ED25519\"\n"
+        "  }\n"
+        "}"
+};
+
+void TC_iot_api_onboarding_config_without_mnid(void **state)
+{
+    iot_error_t err;
+    struct iot_devconf_prov_data devconf;
+    UNUSED(state);
+
+    // Given
+    memset(&devconf, '\0', sizeof(struct iot_devconf_prov_data));
+    // When: malformed parameters
+    err = iot_api_onboarding_config_load(onboarding_profile_without_mnid, sizeof(onboarding_profile_without_mnid), &devconf);
+    // Then: returns fail
+    assert_int_not_equal(err, IOT_ERROR_NONE);
+
+    // Local teardown
+    iot_api_onboarding_config_mem_free(&devconf);
+}
+
+void TC_iot_get_time_in_sec_null_parameters(void **state)
+{
+    iot_error_t err;
+    UNUSED(state);
+
+    // When: null parameters
+    err = iot_get_time_in_sec(NULL, 0);
+    // Then: return error
+    assert_int_not_equal(err, IOT_ERROR_NONE);
+}
+
+void TC_iot_get_time_in_sec_success(void **state)
+{
+    iot_error_t err;
+    char time_buffer[32];
+    UNUSED(state);
+
+    // Given
+    memset(time_buffer, '\0', sizeof(time_buffer));
+    // When: valid parameters
+    err = iot_get_time_in_sec(time_buffer, sizeof(time_buffer));
+    // Then: return success
+    assert_int_equal(err, IOT_ERROR_NONE);
+    assert_true(strlen(time_buffer) > 0);
+    assert_int_not_equal(atol(time_buffer), 0);
+}
+
+void TC_iot_get_time_in_ms_null_parmaeters(void **state)
+{
+    iot_error_t err;
+    UNUSED(state);
+
+    // When: null parameters
+    err = iot_get_time_in_ms(NULL, 0);
+    // Then: return error
+    assert_int_not_equal(err, IOT_ERROR_NONE);
+}
+
+void TC_iot_get_time_in_ms_success(void **state)
+{
+    iot_error_t err;
+    char time_buffer[32];
+    UNUSED(state);
+
+    // Given
+    memset(time_buffer, '\0', sizeof(time_buffer));
+    // When: valid parameters
+    err = iot_get_time_in_ms(time_buffer, sizeof(time_buffer));
+    // Then: return success
+    assert_int_equal(err, IOT_ERROR_NONE);
+    assert_true(strlen(time_buffer) > 0);
+    assert_int_not_equal(atol(time_buffer), 0);
+}
+
+void TC_iot_get_time_in_sec_by_long_null_parameters(void **state)
+{
+    iot_error_t err;
+    UNUSED(state);
+
+    // When: null parameter
+    err = iot_get_time_in_sec_by_long(NULL);
+    // Then: return error
+    assert_int_not_equal(err, IOT_ERROR_NONE);
+}
+
+void TC_iot_get_time_in_sec_by_long_success(void **state)
+{
+    iot_error_t err;
+    long seconds = 0;
+    UNUSED(state);
+
+    // When: valid parameter
+    err = iot_get_time_in_sec_by_long(&seconds);
+    // Then: return success
+    assert_int_equal(err, IOT_ERROR_NONE);
+    assert_true(seconds > 0);
 }

@@ -25,9 +25,17 @@ void TC_iot_util_convert_str_mac(void **state);
 // TCs for iot_api.c
 void TC_iot_api_device_info_load_null_parameters(void **state);
 void TC_iot_api_device_info_load_success(void **state);
+void TC_iot_api_device_info_load_without_firmware_version(void **state);
 void TC_iot_api_onboarding_config_load_null_parameters(void **state);
 void TC_iot_api_onboarding_config_load_template_parameters(void **state);
 void TC_iot_api_onboarding_config_load_success(void **state);
+void TC_iot_api_onboarding_config_without_mnid(void **state);
+void TC_iot_get_time_in_sec_null_parameters(void **state);
+void TC_iot_get_time_in_sec_success(void **state);
+void TC_iot_get_time_in_ms_null_parmaeters(void **state);
+void TC_iot_get_time_in_ms_success(void **state);
+void TC_iot_get_time_in_sec_by_long_null_parameters(void **state);
+void TC_iot_get_time_in_sec_by_long_success(void **state);
 
 // TCs for iot_uuid.c
 void TC_iot_uuid_from_mac(void **state);
