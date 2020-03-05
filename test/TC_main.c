@@ -25,8 +25,11 @@ int main(void) {
     const struct CMUnitTest tests[] = {
             cmocka_unit_test(TC_iot_util_get_random_uuid),
             cmocka_unit_test(TC_iot_util_convert_str_mac),
-            cmocka_unit_test(TC_iot_api_device_info_load),
-            cmocka_unit_test(TC_iot_api_onboarding_config_load),
+            cmocka_unit_test(TC_iot_api_device_info_load_null_parameters),
+            cmocka_unit_test(TC_iot_api_device_info_load_success),
+            cmocka_unit_test(TC_iot_api_onboarding_config_load_null_parameters),
+            cmocka_unit_test(TC_iot_api_onboarding_config_load_template_parameters),
+            cmocka_unit_test(TC_iot_api_onboarding_config_load_success),
             cmocka_unit_test(TC_iot_uuid_from_mac),
             cmocka_unit_test(TC_iot_uuid_from_mac_internal_failure),
             cmocka_unit_test(TC_iot_random_uuid_from_mac),

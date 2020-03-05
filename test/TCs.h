@@ -23,8 +23,11 @@ void TC_iot_util_get_random_uuid(void **state);
 void TC_iot_util_convert_str_mac(void **state);
 
 // TCs for iot_api.c
-void TC_iot_api_device_info_load(void **state);
-void TC_iot_api_onboarding_config_load(void **state);
+void TC_iot_api_device_info_load_null_parameters(void **state);
+void TC_iot_api_device_info_load_success(void **state);
+void TC_iot_api_onboarding_config_load_null_parameters(void **state);
+void TC_iot_api_onboarding_config_load_template_parameters(void **state);
+void TC_iot_api_onboarding_config_load_success(void **state);
 
 // TCs for iot_uuid.c
 void TC_iot_uuid_from_mac(void **state);

@@ -25,6 +25,8 @@
 #include <iot_os_util.h>
 #include <iot_easysetup.h>
 
+#define UNUSED(x) (void**)(x)
+
 static char device_info_sample[] = {
         "{\n"
         "\t\"deviceInfo\": {\n"
@@ -70,15 +72,34 @@ static char onboarding_profile_example[] = {
         "  }\n"
         "}"
 };
-void TC_iot_api_device_info_load(void **state)
+
+void TC_iot_api_device_info_load_null_parameters(void **state)
 {
     iot_error_t err;
     struct iot_device_info info;
+    UNUSED(state);
 
-    // When: null parameters
+    // When: All parameters null
     err = iot_api_device_info_load(NULL, 10, NULL);
-    // Then
+    // Then: returns error
     assert_int_not_equal(err, IOT_ERROR_NONE);
+
+    // When: device_info is null
+    err = iot_api_device_info_load(NULL, 10, &info);
+    // Then: returns error
+    assert_int_not_equal(err, IOT_ERROR_NONE);
+
+    // When: info is null
+    err = iot_api_device_info_load(device_info_sample, sizeof(device_info_sample), NULL);
+    // Then: returns error
+    assert_int_not_equal(err, IOT_ERROR_NONE);
+}
+
+void TC_iot_api_device_info_load_success(void **state)
+{
+    iot_error_t err;
+    struct iot_device_info info;
+    UNUSED(state);
 
     // When: valid input
     err = iot_api_device_info_load(device_info_sample, sizeof(device_info_sample), &info);
@@ -87,27 +108,47 @@ void TC_iot_api_device_info_load(void **state)
     assert_string_equal("MyTestingFirmwareVersion", info.firmware_version);
 }
 
-void TC_iot_api_onboarding_config_load(void **state)
+void TC_iot_api_onboarding_config_load_null_parameters(void **state)
 {
     iot_error_t err;
     struct iot_devconf_prov_data devconf;
+    UNUSED(state);
+
+    // When: All parameters null
+    err = iot_api_onboarding_config_load(NULL, 0, NULL);
+    // Then: returns error
+    assert_int_not_equal(err, IOT_ERROR_NONE);
 
     // When: NULL pointer at output parameter
     err = iot_api_onboarding_config_load(onboarding_profile_template, sizeof(onboarding_profile_template), NULL);
-    // Then: error
+    // Then: returns error
     assert_int_not_equal(err, IOT_ERROR_NONE);
 
     // When: NULL pointer at output parameter
     err = iot_api_onboarding_config_load(NULL, 0, &devconf);
-    // Then: error
+    // Then: returns error
     assert_int_not_equal(err, IOT_ERROR_NONE);
+}
 
-    // When: template
+void TC_iot_api_onboarding_config_load_template_parameters(void **state)
+{
+    iot_error_t err;
+    struct iot_devconf_prov_data devconf;
+    UNUSED(state);
+
+    // When: template is used as parameter
     err = iot_api_onboarding_config_load(onboarding_profile_template, sizeof(onboarding_profile_template), &devconf);
-    // Then: error
+    // Then: returns error
     assert_int_not_equal(err, IOT_ERROR_NONE);
+}
 
-    // When: example
+void TC_iot_api_onboarding_config_load_success(void **state)
+{
+    iot_error_t err;
+    struct iot_devconf_prov_data devconf;
+    UNUSED(state);
+
+    // When: valid parameters
     err = iot_api_onboarding_config_load(onboarding_profile_example, sizeof(onboarding_profile_example), &devconf);
     // Then: success
     assert_int_equal(err, IOT_ERROR_NONE);
@@ -121,4 +162,6 @@ void TC_iot_api_onboarding_config_load(void **state)
     assert_false((unsigned)devconf.ownership_validation_type & (unsigned)IOT_OVF_TYPE_PIN);
     assert_false((unsigned)devconf.ownership_validation_type & (unsigned)IOT_OVF_TYPE_QR);
 
+    // Local teardown
+    iot_api_onboarding_config_mem_free(&devconf);
 }
