@@ -58,6 +58,8 @@ void TC_iot_nv_get_root_certificate_null_parameters(void **state);
 void TC_iot_nv_get_root_certificate_internal_failure(void **state);
 void TC_iot_nv_get_public_key_success(void **state);
 void TC_iot_nv_get_public_key_null_parameters(void **state);
+void TC_iot_nv_get_serial_number_success(void **state);
+void TC_iot_nv_get_serial_number_null_parameters(void **state);
 
 // TCs for iot_easysetup_d2d.c
 int TC_iot_easysetup_create_ssid_setup(void **state);

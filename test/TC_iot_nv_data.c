@@ -157,3 +157,47 @@ void TC_iot_nv_get_public_key_null_parameters(void **state)
     assert_int_equal(public_key_len, 0);
     assert_null(public_key);
 }
+
+void TC_iot_nv_get_serial_number_success(void **state)
+{
+    iot_error_t err;
+    char *serial_number = NULL;
+    unsigned int serial_number_len = 0;
+    const char *sample_serial_number = "STDKtESt7968d226";
+
+    // When
+    err = iot_nv_get_serial_number(&serial_number, &serial_number_len);
+    // Then
+    assert_int_equal(err, IOT_ERROR_NONE);
+    assert_memory_equal(serial_number, sample_serial_number, strlen(sample_serial_number));
+    assert_int_equal(serial_number_len, strlen(sample_serial_number));
+
+    // Local teardown
+    free(serial_number);
+}
+
+void TC_iot_nv_get_serial_number_null_parameters(void **state)
+{
+    iot_error_t err;
+    char *serial_number = NULL;
+    unsigned int serial_number_len = 0;
+
+    // When: All parameters null
+    err = iot_nv_get_serial_number(NULL, NULL);
+    //Then
+    assert_int_not_equal(err, IOT_ERROR_NONE);
+
+    // When: Key is null
+    err = iot_nv_get_serial_number(NULL, &serial_number_len);
+    //Then
+    assert_int_not_equal(err, IOT_ERROR_NONE);
+    assert_int_equal(serial_number_len, 0);
+
+    // When: Len is null
+    err = iot_nv_get_serial_number(&serial_number, NULL);
+    // Then
+    assert_int_not_equal(err, IOT_ERROR_NONE);
+    assert_int_equal(serial_number_len, 0);
+    assert_null(serial_number);
+}
+
