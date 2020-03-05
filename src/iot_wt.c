@@ -387,6 +387,11 @@ static iot_error_t _iot_cwt_create(char **token, const char *sn, iot_crypto_pk_i
 	size_t buflen = 128;
 	size_t b64_len;
 	struct cwt_tobesign_info tbs_info;
+
+	if (!token || !sn || !pk_info) {
+		return IOT_ERROR_INVALID_ARGS;
+	}
+
 retry:
 	buflen += 128;
 
@@ -782,6 +787,10 @@ static iot_error_t _iot_jwt_create(char **token, const char *sn, iot_crypto_pk_i
 	size_t b64s_len;
 	size_t token_len;
 	size_t written = 0;
+
+	if (!token || !sn || !pk_info) {
+		return IOT_ERROR_INVALID_ARGS;
+	}
 
 	/* b64h = b64(header) */
 
