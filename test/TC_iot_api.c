@@ -66,7 +66,10 @@ static char onboarding_profile_example[] = {
         "    \"vid\": \"STDK_BULB_0001\",\n"
         "    \"deviceTypeId\": \"Switch\",\n"
         "    \"ownershipValidationTypes\": [\n"
-        "      \"BUTTON\"\n"
+        "      \"JUSTWORKS\",\n"
+        "      \"BUTTON\",\n"
+        "      \"PIN\",\n"
+        "      \"QR\"\n"
         "    ],\n"
         "    \"identityType\": \"ED25519\"\n"
         "  }\n"
@@ -158,9 +161,9 @@ void TC_iot_api_onboarding_config_load_success(void **state)
     assert_string_equal("STDK_BULB_0001", devconf.vid);
     assert_string_equal("Switch", devconf.device_type);
     assert_true((unsigned)devconf.ownership_validation_type & (unsigned)IOT_OVF_TYPE_BUTTON);
-    assert_false((unsigned)devconf.ownership_validation_type & (unsigned)IOT_OVF_TYPE_JUSTWORKS);
-    assert_false((unsigned)devconf.ownership_validation_type & (unsigned)IOT_OVF_TYPE_PIN);
-    assert_false((unsigned)devconf.ownership_validation_type & (unsigned)IOT_OVF_TYPE_QR);
+    assert_true((unsigned)devconf.ownership_validation_type & (unsigned)IOT_OVF_TYPE_JUSTWORKS);
+    assert_true((unsigned)devconf.ownership_validation_type & (unsigned)IOT_OVF_TYPE_PIN);
+    assert_true((unsigned)devconf.ownership_validation_type & (unsigned)IOT_OVF_TYPE_QR);
 
     // Local teardown
     iot_api_onboarding_config_mem_free(&devconf);
