@@ -27,18 +27,18 @@ if(ENABLE_STDK_TEST)
 
 
     add_executable(stdk_test
-                   TC_main.c
-                   TC_mock_functions.c
-                   TC_mock_functions.h
+                   TEST_main.c
+                   TC_MOCK_functions.c
+                   TC_MOCK_functions.h
                    TC_STORY_easysetup_d2d.c
                    TCs.h
-                   TC_iot_util.c
-                   TC_iot_api.c
-                   TC_iot_uuid.c
-                   TC_iot_capability.c
-                   TC_iot_crypto.c
-                   TC_iot_nv_data.c
-                   TC_iot_easysetup_d2d.c
+                   TC_FUNC_iot_util.c
+                   TC_FUNC_iot_api.c
+                   TC_FUNC_iot_uuid.c
+                   TC_FUNC_iot_capability.c
+                   TC_FUNC_iot_crypto.c
+                   TC_FUNC_iot_nv_data.c
+                   TC_FUNC_iot_easysetup_d2d.c
                    )
 
     target_link_libraries(stdk_test

@@ -22,7 +22,7 @@
 #include <cmocka.h>
 #include <st_dev.h>
 #include <iot_capability.h>
-#include "TC_mock_functions.h"
+#include "TC_MOCK_functions.h"
 
 int TC_iot_capability_teardown(void **state)
 {

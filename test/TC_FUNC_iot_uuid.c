@@ -25,7 +25,7 @@
 #include <iot_bsp_wifi.h>
 #include <iot_uuid.h>
 #include <iot_util.h>
-#include "TC_mock_functions.h"
+#include "TC_MOCK_functions.h"
 
 void TC_iot_uuid_from_mac(void **state)
 {

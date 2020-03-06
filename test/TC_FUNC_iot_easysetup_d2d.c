@@ -24,7 +24,7 @@
 #include <iot_easysetup.h>
 #include <iot_nv_data.h>
 #include <iot_internal.h>
-#include "TC_mock_functions.h"
+#include "TC_MOCK_functions.h"
 
 static char sample_device_info[] = {
         "{\n"

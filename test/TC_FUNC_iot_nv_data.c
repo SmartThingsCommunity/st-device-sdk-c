@@ -22,7 +22,7 @@
 #include <iot_nv_data.h>
 #include <certs/root_ca.h>
 #include <string.h>
-#include "TC_mock_functions.h"
+#include "TC_MOCK_functions.h"
 
 static char sample_device_info[] = {
         "{\n"
