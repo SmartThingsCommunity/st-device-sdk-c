@@ -62,6 +62,7 @@ int main(void) {
             cmocka_unit_test(TC_iot_easysetup_create_ssid_null_parameters),
             cmocka_unit_test_setup_teardown(TC_iot_easysetup_create_ssid_success, TC_iot_easysetup_create_ssid_setup, TC_iot_easysetup_create_ssid_teardown),
             cmocka_unit_test(TC_iot_easysetup_request_handler_null_parameters),
+            cmocka_unit_test_setup_teardown(TC_easysetup_d2d_get_deviceinfo_success, TC_easysetup_d2d_setup, TC_easysetup_d2d_teardown),
     };
     return cmocka_run_group_tests(tests, NULL, NULL);
 }

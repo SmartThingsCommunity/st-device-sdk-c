@@ -76,4 +76,9 @@ void TC_iot_easysetup_create_ssid_null_parameters(void **state);
 void TC_iot_easysetup_create_ssid_success(void **state);
 void TC_iot_easysetup_request_handler_null_parameters(void **state);
 
+// TCs for easysetup d2d
+int TC_easysetup_d2d_setup(void **state);
+int TC_easysetup_d2d_teardown(void **state);
+void TC_easysetup_d2d_get_deviceinfo_success(void **state);
+
 #endif //ST_DEVICE_SDK_C_TCS_H
