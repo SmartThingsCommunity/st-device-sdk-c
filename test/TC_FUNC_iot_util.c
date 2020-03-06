@@ -23,16 +23,12 @@
 #include <iot_util.h>
 #define UNUSED(x) (void**)(x)
 
-void TC_iot_util_get_random_uuid(void **state)
+void TC_iot_util_get_random_uuid_success(void **state)
 {
     iot_error_t err;
     struct iot_uuid test_uuid_1;
     struct iot_uuid test_uuid_2;
-
-    //When: null argument
-    err = iot_util_get_random_uuid(NULL);
-    // Then
-    assert_int_equal(err, IOT_ERROR_INVALID_ARGS);
+    UNUSED(state);
 
     // Given: memset-ed argument
     memset(&test_uuid_1, '\0', sizeof(struct iot_uuid));
@@ -50,17 +46,24 @@ void TC_iot_util_get_random_uuid(void **state)
     assert_memory_not_equal(&test_uuid_1, &test_uuid_2, sizeof(struct iot_uuid));
 }
 
-void TC_iot_util_convert_str_mac(void **state)
+void TC_iot_util_get_random_uuid_null_parameter(void **state)
+{
+    iot_error_t err;
+    UNUSED(state);
+
+    //When: null argument
+    err = iot_util_get_random_uuid(NULL);
+    // Then
+    assert_int_equal(err, IOT_ERROR_INVALID_ARGS);
+}
+
+void TC_iot_util_convert_str_mac_success(void **state)
 {
     iot_error_t err;
     char mac_addr_str[] = "02:43:4e:59:25:7d";
     struct iot_mac mac;
     struct iot_mac mac_empty;
-
-    // When: null parameters
-    err = iot_util_convert_str_mac(NULL, NULL);
-    // Then: should return error
-    assert_int_equal(err, IOT_ERROR_INVALID_ARGS);
+    UNUSED(state);
 
     // Given
     memset(&mac, '\0', sizeof(struct iot_mac));
@@ -71,8 +74,20 @@ void TC_iot_util_convert_str_mac(void **state)
     // Then
     assert_int_equal(err, IOT_ERROR_NONE);
     assert_memory_not_equal(&mac, &mac_empty, sizeof(struct iot_mac));
+}
 
-    // Given
+void TC_iot_util_convert_str_mac_invalid_parameters(void **state)
+{
+    iot_error_t err;
+    struct iot_mac mac;
+    UNUSED(state);
+
+    // When: null parameters
+    err = iot_util_convert_str_mac(NULL, NULL);
+    // Then: should return error
+    assert_int_equal(err, IOT_ERROR_INVALID_ARGS);
+
+    // Given: non mac address string
     char wrong_string[] = "this is wrong";
     // When
     err = iot_util_convert_str_mac(wrong_string, &mac);

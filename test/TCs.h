@@ -19,8 +19,10 @@
 #define ST_DEVICE_SDK_C_TCS_H
 
 // TCs for iot_util.c
-void TC_iot_util_get_random_uuid(void **state);
-void TC_iot_util_convert_str_mac(void **state);
+void TC_iot_util_get_random_uuid_success(void **state);
+void TC_iot_util_get_random_uuid_null_parameter(void **state);
+void TC_iot_util_convert_str_mac_success(void **state);
+void TC_iot_util_convert_str_mac_invalid_parameters(void **state);
 void TC_iot_util_convert_str_uuid_success(void **state);
 void TC_iot_util_convert_str_uuid_null_parameters(void **state);
 
