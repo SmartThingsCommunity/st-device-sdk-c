@@ -21,6 +21,8 @@
 // TCs for iot_util.c
 void TC_iot_util_get_random_uuid(void **state);
 void TC_iot_util_convert_str_mac(void **state);
+void TC_iot_util_convert_str_uuid_success(void **state);
+void TC_iot_util_convert_str_uuid_null_parameters(void **state);
 
 // TCs for iot_api.c
 void TC_iot_api_device_info_load_null_parameters(void **state);
