@@ -329,8 +329,10 @@ static void http_msg_handler(const char* uri, char **buffer, enum cgi_type type,
 		} else {
 			IOT_INFO("%s not ok", uri);
 		}
-	} else
+	} else {
 		IOT_ERROR("Not supported curl message type : %d", type);
+		err = IOT_ERROR_EASYSETUP_INVALID_CMD;
+	}
 
 	if (err) {
 		item = cJSON_CreateObject();
@@ -377,16 +379,16 @@ cgi_out:
 		free(ptr);
 }
 
-int http_open_custom(const char *name, char **buf, char *payload, enum cgi_type type)
+void http_packet_handle(const char *name, char **buf, char *payload, enum cgi_type type)
 {
-	int ret = 0;
+	bool msg_processed = false;
 	int i;
 
 	if (type == GET) {
 		for (i = 0; i < ARRAY_SIZE(get_cgi_cmds) ; i++) {
 			if (!strcmp(name,  get_cgi_cmds[i])) {
 					http_msg_handler(name, buf, GET, payload);
-				ret = 1;
+				msg_processed = true;
 				break;
 			}
 		}
@@ -394,20 +396,17 @@ int http_open_custom(const char *name, char **buf, char *payload, enum cgi_type 
 		for (i = 0; i < ARRAY_SIZE(post_cgi_cmds) ; i++) {
 			if (!strcmp(name,  post_cgi_cmds[i])) {
 				http_msg_handler(name, buf, POST, payload);
-				ret = 1;
+				msg_processed = true;
 				break;
 			}
 		}
 	}
 
-	if (!ret)
+	if (!msg_processed) {
 		IOT_WARN("not supported uri <%s>", name);
-
-	return ret;
+		http_msg_handler(name, buf, ERROR, payload);
+	}
 }
-
-extern void es_tcp_init(void);
-extern void es_tcp_deinit(void);
 
 iot_error_t iot_easysetup_init(struct iot_context *ctx)
 {
