@@ -83,7 +83,7 @@ static void es_tcp_task(void *pvParameters)
 
 		err = listen(listen_sock, 1);
 		if (err != 0) {
-			IOT_ERROR("Error occured during listen: errno %d", errno);
+			IOT_ERROR("Error occurred during listen: errno %d", errno);
 			break;
 		}
 
