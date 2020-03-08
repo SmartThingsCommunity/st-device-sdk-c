@@ -29,6 +29,7 @@
 
 #include <string.h>
 #include <sys/socket.h>
+#include <errno.h>
 #if defined(__unix__) || (defined(__APPLE__) && defined(__MACH__))
 #include <netinet/in.h>
 #include <unistd.h>
@@ -70,19 +71,19 @@ static void es_tcp_task(void *pvParameters)
 
 		listen_sock = socket(addr_family, SOCK_STREAM, ip_protocol);
 		if (listen_sock < 0) {
-			IOT_ERROR("Unable to create socket: errno %d", listen_sock);
+			IOT_ERROR("Unable to create socket: errno %d", errno);
 			break;
 		}
 
 		err = bind(listen_sock, (struct sockaddr *)&destAddr, sizeof(destAddr));
 		if (err != 0) {
-			IOT_ERROR("Socket unable to bind: errno %d", err);
+			IOT_ERROR("Socket unable to bind: errno %d", errno);
 			break;
 		}
 
 		err = listen(listen_sock, 1);
 		if (err != 0) {
-			IOT_ERROR("Error occured during listen: errno %d", err);
+			IOT_ERROR("Error occured during listen: errno %d", errno);
 			break;
 		}
 
@@ -91,7 +92,7 @@ static void es_tcp_task(void *pvParameters)
 
 			sock = accept(listen_sock, (struct sockaddr *)&sourceAddr, &addrLen);
 			if (sock < 0) {
-				IOT_ERROR("Unable to accept connection: errno %d", sock);
+				IOT_ERROR("Unable to accept connection: errno %d", errno);
 				break;
 			}
 
@@ -101,7 +102,7 @@ static void es_tcp_task(void *pvParameters)
 			IOT_DEBUG("rx_buffer : %s", rx_buffer);
 
 			if (len < 0) {
-				IOT_ERROR("recv failed: errno %d", len);
+				IOT_ERROR("recv failed: errno %d", errno);
 				break;
 			}
 			else if (len == 0) {
@@ -109,7 +110,7 @@ static void es_tcp_task(void *pvParameters)
 				break;
 			}
 			else {
-	    		rx_buffer[len] = '\0';
+				rx_buffer[len] = '\0';
 
 				method = strtok(rx_buffer, " \t\r\n");
 				uri = strtok(NULL, " \t");
