@@ -69,6 +69,7 @@ LOCAL_CFLAGS := $(INCS)
 PREFIX := stdk_
 
 BILERPLATE_HEADER = src/include/certs/boilerplate.h
+ROOT_CA_FILE_LIST = $(wildcard src/certs/root_ca_*.pem)
 ROOT_CA_FILE = src/certs/root_ca.pem
 ROOT_CA_SOURCE = src/iot_root_ca.c
 SRCS	+= $(ROOT_CA_SOURCE)
@@ -89,6 +90,13 @@ subdir:
 	done
 
 $(ROOT_CA_SOURCE):
+	@if [ -e $(ROOT_CA_FILE) ]; then \
+		rm $(ROOT_CA_FILE); \
+	fi
+	@cat $(ROOT_CA_FILE_LIST) >> $(ROOT_CA_FILE)
+	@if [ $$? != 0 ]; then \
+		exit 1; \
+	fi
 	@cat $(BILERPLATE_HEADER) > $(ROOT_CA_SOURCE)
 	@if [ $$? != 0 ]; then \
 		exit 1; \
