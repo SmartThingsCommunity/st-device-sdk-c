@@ -26,6 +26,7 @@
 #include <string.h>
 #include <unistd.h>
 #include <signal.h>
+#include "iot_debug.h"
 #include "iot_error.h"
 #include "iot_os_util.h"
 #include "iot_bsp_random.h"
@@ -222,6 +223,7 @@ unsigned int iot_os_eventgroup_wait_bits(iot_os_eventgroup* eventgroup_handle,
 	struct timeval tv;
 	memset(&tv, 0x00, sizeof(tv));
 	unsigned int bits = 0x00000000;
+	ssize_t read_size = 0;
 
 	tv.tv_sec = wait_time_ms / 1000;
 	tv.tv_usec = (wait_time_ms % 1000) * 1000;
@@ -239,7 +241,8 @@ unsigned int iot_os_eventgroup_wait_bits(iot_os_eventgroup* eventgroup_handle,
 			if (eventgroup->group[i].id == (eventgroup->group[i].id & bits_to_wait_for)) {
 				if (FD_ISSET(eventgroup->group[i].fd[0], &readfds)) {
 					memset(buf, 0, sizeof(buf));
-					read(eventgroup->group[i].fd[0], buf, sizeof(buf));
+					read_size = read(eventgroup->group[i].fd[0], buf, sizeof(buf));
+					IOT_DEBUG("read_size = %d", read_size);
 					bits |= eventgroup->group[i].id;
 				}
 			}
@@ -254,10 +257,12 @@ unsigned int iot_os_eventgroup_set_bits(iot_os_eventgroup* eventgroup_handle,
 {
 	eventgroup_t *eventgroup = eventgroup_handle;
 	unsigned int bits = 0x00000000;
+	ssize_t write_size = 0;
 
 	for (int i = 0; i < EVENT_MAX; i++) {
 		if (eventgroup->group[i].id == (eventgroup->group[i].id & bits_to_set)) {
-			write(eventgroup->group[i].fd[1], "Set", strlen("Set"));
+			write_size = write(eventgroup->group[i].fd[1], "Set", strlen("Set"));
+			IOT_DEBUG("write_size = %d", write_size);
 			bits |= eventgroup->group[i].id;
 		}
 	}

@@ -1,6 +1,6 @@
 /* ***************************************************************************
  *
- * Copyright 2019 Samsung Electronics All Rights Reserved.
+ * Copyright 2019-2020 Samsung Electronics All Rights Reserved.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -56,6 +56,9 @@ typedef enum iot_error_t {
 	IOT_ERROR_FS_ENCRYPT_FAIL = -23,
 	IOT_ERROR_FS_DECRYPT_FAIL = -24,
 	IOT_ERROR_UUID_FAIL = -25,
+	IOT_ERROR_CBOR_PARSE = -26,
+	IOT_ERROR_CBOR_TO_JSON = -27,
+	IOT_ERROR_WEBTOKEN_FAIL = -28,
 
 	/* mqtt error */
 	IOT_ERROR_MQTT_NETCONN_FAIL = -200,
@@ -72,7 +75,6 @@ typedef enum iot_error_t {
 	IOT_ERROR_EASYSETUP_SERVER = -500,
 
 	IOT_ERROR_CRYPTO_BASE = -1000,
-	IOT_ERROR_JWT_BASE = -2000,
 
 	IOT_ERROR_PROV_FAIL = -2998,
 	IOT_ERROR_CONNECT_FAIL = -2999,

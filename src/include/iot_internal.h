@@ -1,6 +1,6 @@
 /* ***************************************************************************
  *
- * Copyright 2019 Samsung Electronics All Rights Reserved.
+ * Copyright 2019-2020 Samsung Electronics All Rights Reserved.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -21,6 +21,7 @@
 
 #include "iot_capability.h"
 #include "iot_crypto.h"
+#include "iot_serialize.h"
 
 #define IOT_TASK_NAME "iot-task"
 #define IOT_TASK_STACK_SIZE (1024*5)
@@ -31,12 +32,21 @@
 #define IOT_TOPIC_SIZE (100)
 #define IOT_PAYLOAD_SIZE (1024)
 
+#if defined(STDK_IOT_CORE_SERIALIZE_CBOR)
+#define IOT_PUB_TOPIC_REGISTRATION	"/v1/registrations/cbor"
+#define IOT_SUB_TOPIC_REGISTRATION	"/v1/registrations/notification/%s/cbor"
+
+#define IOT_PUB_TOPIC_EVENT		"/v1/deviceEvents/%s/cbor"
+#define IOT_SUB_TOPIC_COMMAND		"/v1/commands/%s/cbor"
+#define IOT_SUB_TOPIC_NOTIFICATION	"/v1/notifications/%s/cbor"
+#else
 #define IOT_PUB_TOPIC_REGISTRATION	"/v1/registrations"
 #define IOT_SUB_TOPIC_REGISTRATION	"/v1/registrations/notification/%s"
 
-#define IOT_PUB_TOPIC_EVENT			"/v1/deviceEvents/%s"
+#define IOT_PUB_TOPIC_EVENT		"/v1/deviceEvents/%s"
 #define IOT_SUB_TOPIC_COMMAND		"/v1/commands/%s"
 #define IOT_SUB_TOPIC_NOTIFICATION	"/v1/notifications/%s"
+#endif
 
 /* MQTT Pre-defined constant */
 #define IOT_DEFAULT_TIMEOUT 		12000	/* milli-seconds */
@@ -266,16 +276,25 @@ void iot_cap_call_init_cb(iot_cap_handle_list_t *cap_handle_list);
 /**
  * @brief	get time data by sec
  * @details	this function tries to get time value in second by string
- * @param[in]	buf		buffer point to contain second based string value
+ * @param[out]	buf		buffer point to contain second based string value
  * @param[in]	buf_len		size of allocated buffer for string
  * @retval	IOT_ERROR_NONE                  success.
  */
 iot_error_t iot_get_time_in_sec(char *buf, size_t buf_len);
 
 /**
+ * @brief	get time date in second by long
+ * @details	this function tries to get time value in second by long
+ * @param[out]	sec		point to contain second based long value
+ * @retval	IOT_ERROR_NONE                  success.
+ */
+iot_error_t iot_get_time_in_sec_by_long(long *sec);
+
+
+/**
  * @brief	get time data in msec
  * @details	this function tries to get time value in millisecond by string
- * @param[in]	buf		buffer point to contain millisecond based string value
+ * @param[out]	buf		buffer point to contain millisecond based string value
  * @param[in]	buf_len		size of allocated buffer for string
  * @retval	IOT_ERROR_NONE                  success.
  */

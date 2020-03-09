@@ -27,13 +27,16 @@
 #include "iot_util.h"
 #include "iot_nv_data.h"
 #include "iot_debug.h"
-#include "iot_jwt.h"
+#include "iot_wt.h"
 #include "iot_crypto.h"
 #include "iot_os_util.h"
 #include "iot_bsp_system.h"
 #include "iot_uuid.h"
 
 #include "cJSON.h"
+#if defined(STDK_IOT_CORE_SERIALIZE_CBOR)
+#include <cbor.h>
+#endif
 
 void _iot_mqtt_noti_sub_callback(st_mqtt_msg *md, void *userData)
 {
@@ -68,7 +71,29 @@ static void mqtt_reg_sub_cb(st_mqtt_msg *md, void *userData)
 	enum iot_command_type iot_cmd;
 
 	/*parsing mqtt_payload*/
+#if defined(STDK_IOT_CORE_SERIALIZE_CBOR)
+	iot_error_t err;
+	char *payload_json = NULL;
+	size_t payload_json_len = 0;
+
+	err = iot_serialize_cbor2json((uint8_t *)mqtt_payload,
+			strlen(mqtt_payload),
+			&payload_json, &payload_json_len);
+	if (err) {
+		IOT_ERROR("iot_serialize_cbor2json = %d", err);
+		goto reg_sub_out;
+	}
+
+	if ((payload_json == NULL) || (payload_json_len == 0)) {
+		IOT_ERROR("cbor2json failed (json buffer is null)");
+		goto reg_sub_out;
+	}
+
+	json = cJSON_Parse(payload_json);
+	free(payload_json);
+#else
 	json = cJSON_Parse(mqtt_payload);
+#endif
 	if (json == NULL) {
 		IOT_ERROR("mqtt_payload(%s) parsing failed", mqtt_payload);
 		goto reg_sub_out;
@@ -140,42 +165,118 @@ reg_sub_out:
 		cJSON_Delete(json);
 }
 
-iot_error_t _iot_es_mqtt_registration(struct iot_context *ctx, st_mqtt_client mqtt_ctx)
+#if defined(STDK_IOT_CORE_SERIALIZE_CBOR)
+static void *_iot_es_mqtt_registration_cbor(struct iot_context *ctx,
+			char *location_id, char *room_id)
 {
-	int ret;
-	iot_error_t iot_err = IOT_ERROR_NONE;
-	cJSON *root = NULL;
-	st_mqtt_msg msg;
-	char str_dump[40], valid_id = 0;
 	struct iot_devconf_prov_data *devconf;
+	CborEncoder root = {0};
+	CborEncoder root_map = {0};
+	uint8_t *buf;
+	uint8_t *tmp;
+	size_t buflen = 128;
+	size_t olen;
 
-	if (!mqtt_ctx) {
-		IOT_ERROR("There is no iot_mqtt_ctx!!");
-		return IOT_ERROR_INVALID_ARGS;
+	if (!ctx || !location_id) {
+		IOT_ERROR("ctx or location id is null");
+		return NULL;
+	}
+retry:
+	buflen += 128;
+
+	buf = (uint8_t *)malloc(buflen);
+	if (buf == NULL) {
+		IOT_ERROR("failed to malloc for cbor");
+		return NULL;
+	}
+	memset(buf, 0, buflen);
+
+	cbor_encoder_init(&root, buf, buflen, 0);
+
+	cbor_encoder_create_map(&root, &root_map, CborIndefiniteLength);
+
+	cbor_encode_text_stringz(&root_map, "locationId");
+	cbor_encode_text_stringz(&root_map, location_id);
+
+	devconf = &ctx->devconf;
+
+	/* label is optional value */
+	if (ctx->prov_data.cloud.label) {
+		cbor_encode_text_stringz(&root_map, "label");
+		cbor_encode_text_stringz(&root_map, ctx->prov_data.cloud.label);
+	} else {
+		IOT_WARN("There is no label for registration");
 	}
 
-	/* Step 2. Publish target's registration info to server */
-	ctx->iot_reg_data.updated = false;
+	cbor_encode_text_stringz(&root_map, "mnId");
+	cbor_encode_text_stringz(&root_map, devconf->mnid);
 
-	iot_err = iot_util_convert_uuid_str(&ctx->prov_data.cloud.location_id,
-				str_dump, sizeof(str_dump));
-	if (iot_err != IOT_ERROR_NONE) {
-		IOT_ERROR("%s error location_id convt (%d)", __func__, iot_err);
-		iot_err = IOT_ERROR_BAD_REQ;
-		goto failed_regist;
+	cbor_encode_text_stringz(&root_map, "vid");
+	cbor_encode_text_stringz(&root_map, devconf->vid);
+
+	cbor_encode_text_stringz(&root_map, "deviceTypeId");
+	cbor_encode_text_stringz(&root_map, devconf->device_type);
+
+	cbor_encode_text_stringz(&root_map, "lookupId");
+	cbor_encode_text_stringz(&root_map, ctx->lookup_id);
+
+	/* room id is optional value */
+	if (room_id) {
+		cbor_encode_text_stringz(&root_map, "roomId");
+		cbor_encode_text_stringz(&root_map, room_id);
+	}
+
+	cbor_encoder_close_container_checked(&root, &root_map);
+
+	olen = cbor_encoder_get_buffer_size(&root, buf);
+	if (olen < buflen) {
+		tmp = (uint8_t *)realloc(buf, olen + 1);
+		if (!tmp) {
+			IOT_WARN("realloc failed for cbor");
+		} else {
+			buf = tmp;
+		}
+	} else {
+		IOT_ERROR("allocated size is not enough (%d < %d)",
+				(int)buflen, (int)olen);
+		if (buflen < IOT_CBOR_MAX_BUF_LEN) {
+			free(buf);
+			goto retry;
+		} else {
+			goto exit_failed;
+		}
+	}
+
+	return (void *)buf;
+
+exit_failed:
+	free(buf);
+
+	return NULL;
+}
+#else /* !STDK_IOT_CORE_SERIALIZE_CBOR */
+static void *_iot_es_mqtt_registration_json(struct iot_context *ctx,
+			char *location_id, char *room_id)
+{
+	struct iot_devconf_prov_data *devconf;
+	cJSON *root = NULL;
+	char *payload;
+
+	if (!ctx || !location_id) {
+		IOT_ERROR("ctx or location id is null");
+		return NULL;
 	}
 
 	root = cJSON_CreateObject();
 	if (!root) {
-		IOT_ERROR("error cjson create");
-		iot_err = IOT_ERROR_BAD_REQ;
-		goto failed_regist;
+		IOT_ERROR("failed to create json");
+		return NULL;
 	}
 
 	devconf = &ctx->devconf;
 
 	cJSON_AddItemToObject(root, "locationId",
-		cJSON_CreateString(str_dump));
+		cJSON_CreateString(location_id));
 
 	/* label is optional value */
 	if (ctx->prov_data.cloud.label)
@@ -196,23 +297,81 @@ iot_error_t _iot_es_mqtt_registration(struct iot_context *ctx, st_mqtt_client mq
 	cJSON_AddItemToObject(root, "lookupId",
 		cJSON_CreateString(ctx->lookup_id));
 
+	if (room_id) {
+		cJSON_AddItemToObject(root, "roomId",
+			cJSON_CreateString(room_id));
+	}
+
+	payload = cJSON_PrintUnformatted(root);
+
+	cJSON_Delete(root);
+
+	return (void *)payload;
+}
+#endif /* STDK_IOT_CORE_SERIALIZE_CBOR */
+
+iot_error_t _iot_es_mqtt_registration(struct iot_context *ctx, st_mqtt_client mqtt_ctx)
+{
+	int ret;
+	iot_error_t iot_err = IOT_ERROR_NONE;
+	st_mqtt_msg msg;
+	char *location_id = NULL;
+	char *room_id = NULL;
+	size_t str_id_len = 40;
+	char valid_id = 0;
+
+	if (!mqtt_ctx) {
+		IOT_ERROR("There is no iot_mqtt_ctx!!");
+		return IOT_ERROR_INVALID_ARGS;
+	}
+
+	/* Step 2. Publish target's registration info to server */
+	ctx->iot_reg_data.updated = false;
+
+	location_id = (char *)malloc(str_id_len);
+	if (!location_id) {
+		IOT_ERROR("malloc failed for location id");
+		iot_err = IOT_ERROR_MEM_ALLOC;
+		goto failed_regist;
+	}
+	memset(location_id, 0, str_id_len);
+
+	iot_err = iot_util_convert_uuid_str(&ctx->prov_data.cloud.location_id,
+				location_id, str_id_len);
+	if (iot_err != IOT_ERROR_NONE) {
+		IOT_ERROR("%s error location_id convt (%d)", __func__, iot_err);
+		iot_err = IOT_ERROR_BAD_REQ;
+		goto failed_regist;
+	}
+
 	/* room id is optional value */
 	for (int i = 0; i < sizeof(ctx->prov_data.cloud.room_id); i++)
 		valid_id |= ctx->prov_data.cloud.room_id.id[i];
 
 	if (valid_id) {
+		room_id = (char *)malloc(str_id_len);
+		if (!room_id) {
+			IOT_ERROR("malloc failed for room id");
+			iot_err = IOT_ERROR_MEM_ALLOC;
+			goto failed_regist;
+		}
+		memset(room_id, 0, str_id_len);
+
 		iot_err = iot_util_convert_uuid_str(&ctx->prov_data.cloud.room_id,
-				str_dump, sizeof(str_dump));
+				room_id, str_id_len);
 		if (iot_err != IOT_ERROR_NONE) {
 			IOT_WARN("fail room_id convt (%d)", iot_err);
 			iot_err = IOT_ERROR_NONE;
-		} else {
-			cJSON_AddItemToObject(root, "roomId",
-				cJSON_CreateString(str_dump));
 		}
 	}
 
-	msg.payload = cJSON_PrintUnformatted(root);
+#if defined(STDK_IOT_CORE_SERIALIZE_CBOR)
+	msg.payload = _iot_es_mqtt_registration_cbor(ctx,
+				location_id, room_id);
+#else
+	msg.payload = _iot_es_mqtt_registration_json(ctx,
+				location_id, room_id);
+#endif
 	if (!msg.payload) {
 		IOT_ERROR("Failed to make payload for MQTTpub");
 		iot_err = IOT_ERROR_MEM_ALLOC;
@@ -230,12 +389,20 @@ iot_error_t _iot_es_mqtt_registration(struct iot_context *ctx, st_mqtt_client mq
 			iot_err = IOT_ERROR_BAD_REQ;
 		}
 
+#if defined(STDK_IOT_CORE_SERIALIZE_CBOR)
+		free(msg.payload);
+#else
 		cJSON_free(msg.payload);
+#endif
 	}
 
-	cJSON_Delete(root);
-
 failed_regist:
+	if (location_id)
+		free(location_id);
+
+	if (room_id)
+		free(room_id);
+
 	return iot_err;
 }
 
@@ -337,7 +504,7 @@ iot_error_t _iot_es_mqtt_connect(struct iot_context *ctx, st_mqtt_client target_
 		case E_ST_MQTT_BAD_USERNAME_OR_PASSWORD:
 			/* fall through */
 		case E_ST_MQTT_NOT_AUTHORIZED:
-			/* These cases are related to device's clientID, serialNumber, deviceId & JWT
+			/* These cases are related to device's clientID, serialNumber, deviceId & web token
 			 * So we try to cleanup all data & reboot
 			 */
 			IOT_WARN("Rejected by Server!! cleanup all & reboot");
@@ -380,7 +547,7 @@ iot_error_t iot_es_connect(struct iot_context *ctx, int conn_type)
 	st_mqtt_client mqtt_cli = NULL;
 	char *dev_sn = NULL;
 	unsigned int devsn_len;
-	char *jwt_data = NULL;
+	char *wt_data = NULL;
 	struct iot_crypto_pk_info pk_info = { 0, };
 	char *topicfilter = NULL;
 	iot_error_t iot_ret;
@@ -410,9 +577,9 @@ iot_error_t iot_es_connect(struct iot_context *ctx, int conn_type)
 		goto out;
 	}
 
-	iot_ret = iot_jwt_create(&jwt_data, dev_sn, &pk_info);
+	iot_ret = iot_wt_create(&wt_data, dev_sn, &pk_info);
 	if (iot_ret != IOT_ERROR_NONE) {
-		IOT_ERROR("failed to make jwt-token");
+		IOT_ERROR("failed to make wt-token");
 		goto out;
 	}
 
@@ -430,7 +597,7 @@ iot_error_t iot_es_connect(struct iot_context *ctx, int conn_type)
 			goto out;
 		}
 
-		iot_ret = _iot_es_mqtt_connect(ctx, mqtt_cli, (char *)ctx->iot_reg_data.deviceId, jwt_data);
+		iot_ret = _iot_es_mqtt_connect(ctx, mqtt_cli, (char *)ctx->iot_reg_data.deviceId, wt_data);
 		if (iot_ret != IOT_ERROR_NONE) {
 			IOT_ERROR("failed to connect");
 			goto out;
@@ -470,7 +637,7 @@ iot_error_t iot_es_connect(struct iot_context *ctx, int conn_type)
 		ctx->evt_mqttcli = mqtt_cli;
 	} else {
 		IOT_INFO("connect_type: registration");
-		iot_ret = _iot_es_mqtt_connect(ctx, mqtt_cli, (char *)dev_sn, jwt_data);
+		iot_ret = _iot_es_mqtt_connect(ctx, mqtt_cli, (char *)dev_sn, wt_data);
 		if (iot_ret != IOT_ERROR_NONE) {
 			IOT_ERROR("failed to connect");
 			goto out;
@@ -504,8 +671,8 @@ out:
 	if (dev_sn)
 		free((void *)dev_sn);
 
-	if (jwt_data)
-		free(jwt_data);
+	if (wt_data)
+		free(wt_data);
 
 	if (topicfilter)
 		free(topicfilter);

@@ -39,12 +39,12 @@ enum ownership_validation_feature {
 #define IOT_OVF_TYPE_PIN		(1 << OVF_BIT_PIN)
 #define IOT_OVF_TYPE_QR			(1 << OVF_BIT_QR)
 
-#define IOT_ES_URI_POST_KEYINFO			"keyinfo"
-#define IOT_ES_URI_POST_CONFIRMINFO		"confirminfo"
-#define IOT_ES_URI_POST_CONFIRM			"confirm"
-#define IOT_ES_URI_POST_WIFIPROVISIONINGINFO	"wifiprovisioninginfo"
-#define IOT_ES_URI_POST_SETUPCOMPLETE		"setupcomplete"
-#define IOT_ES_URI_POST_LOGS			"logs"
+#define IOT_ES_URI_POST_KEYINFO			"/keyinfo"
+#define IOT_ES_URI_POST_CONFIRMINFO		"/confirminfo"
+#define IOT_ES_URI_POST_CONFIRM			"/confirm"
+#define IOT_ES_URI_POST_WIFIPROVISIONINGINFO	"/wifiprovisioninginfo"
+#define IOT_ES_URI_POST_SETUPCOMPLETE		"/setupcomplete"
+#define IOT_ES_URI_POST_LOGS			"/logs"
 
 #define IOT_ES_URI_GET_DEVICEINFO		"/deviceinfo"
 #define IOT_ES_URI_GET_WIFISCANINFO		"/wifiscaninfo"

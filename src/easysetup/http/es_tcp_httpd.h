@@ -1,6 +1,6 @@
 /* ***************************************************************************
  *
- * Copyright 2019 Samsung Electronics All Rights Reserved.
+ * Copyright 2020 Samsung Electronics All Rights Reserved.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -16,20 +16,22 @@
  *
  ****************************************************************************/
 
-#ifndef _ST_DEV_VERSION_H_
-#define _ST_DEV_VERSION_H_
+#ifndef _TCP_HTTPD_H_
+#define _TCP_HTTPD_H_
 
-/* major: api incompatible */
-#define VER_MAJOR	(1)
+#ifdef __cplusplus
+extern "C" {
+#endif
 
-/* minor: feature added. keep api backward compatibility */
-#define VER_MINOR	(1)
+enum cgi_type {
+	GET= 0,
+	POST,
+};
 
-/* patch: bug fix */
-#define VER_PATCH	(2)
+int http_open_custom(const char *name, char **buf, char *payload, enum cgi_type type);
 
-/* External Macro for Apps, refer to linux's version.h */
-#define STDK_VERSION(a,b,c)	(((a) << 16) + ((b) << 8) + (c))
-#define STDK_VERSION_CODE	(STDK_VERSION(VER_MAJOR,VER_MINOR,VER_PATCH))
+#ifdef __cplusplus
+}
+#endif
 
-#endif /* _ST_DEV_VERSION_H_ */
+#endif /* _TCP_HTTPD_H_ */

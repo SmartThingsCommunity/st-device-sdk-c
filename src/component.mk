@@ -43,6 +43,9 @@ else
 	COMPONENT_ADD_INCLUDEDIRS += port/net/openssl
 endif
 
+COMPONENT_SRCDIRS += deps/cbor/tinycbor/src
+COMPONENT_ADD_INCLUDEDIRS += deps/cbor/tinycbor/src
+
 COMPONENT_SRCDIRS += crypto
 ifdef CONFIG_STDK_IOT_CORE_USE_MBEDTLS
 COMPONENT_SRCDIRS += crypto/mbedtls
@@ -57,8 +60,7 @@ endif
 COMPONENT_SRCDIRS += easysetup
 
 ifdef CONFIG_STDK_IOT_CORE_EASYSETUP_HTTP
-COMPONENT_SRCDIRS += easysetup/http \
-			easysetup/http/lwip_httpd
+COMPONENT_SRCDIRS += easysetup/http
 endif
 ifdef CONFIG_STDK_IOT_CORE_EASYSETUP_POSIX_TESTING
 COMPONENT_SRCDIRS += easysetup/posix_testing
