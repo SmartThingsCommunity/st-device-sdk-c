@@ -51,7 +51,7 @@ int TC_iot_nv_data_teardown(void **state)
 {
     iot_error_t err;
 
-    set_mock_malloc_failure(false);
+    do_not_use_mock_iot_os_malloc_failure();
     err = iot_nv_deinit();
     assert_int_equal(err, IOT_ERROR_NONE);
     return 0;
@@ -105,7 +105,7 @@ void TC_iot_nv_get_root_certificate_internal_failure(void **state)
     unsigned int root_cert_len = 0;
 
     // Given: malloc failed
-    set_mock_malloc_failure(true);
+    set_mock_iot_os_malloc_failure();
     // When
     err = iot_nv_get_root_certificate(&root_cert, &root_cert_len);
     // Then

@@ -29,10 +29,12 @@ void TC_iot_util_convert_str_uuid_null_parameters(void **state);
 // TCs for iot_api.c
 void TC_iot_api_device_info_load_null_parameters(void **state);
 void TC_iot_api_device_info_load_success(void **state);
+void TC_iot_api_device_info_load_internal_failure(void **state);
 void TC_iot_api_device_info_load_without_firmware_version(void **state);
 void TC_iot_api_onboarding_config_load_null_parameters(void **state);
 void TC_iot_api_onboarding_config_load_template_parameters(void **state);
 void TC_iot_api_onboarding_config_load_success(void **state);
+void TC_iot_api_onboarding_config_load_internal_failure(void **state);
 void TC_iot_api_onboarding_config_without_mnid(void **state);
 void TC_iot_get_time_in_sec_null_parameters(void **state);
 void TC_iot_get_time_in_sec_success(void **state);

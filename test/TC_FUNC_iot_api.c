@@ -25,6 +25,7 @@
 #include <iot_os_util.h>
 #include <iot_easysetup.h>
 #include <string.h>
+#include "TC_MOCK_functions.h"
 
 #define UNUSED(x) (void**)(x)
 
@@ -75,6 +76,29 @@ void TC_iot_api_device_info_load_success(void **state)
 
     // local teardown
     iot_api_device_info_mem_free(&info);
+}
+
+void TC_iot_api_device_info_load_internal_failure(void **state)
+{
+    iot_error_t err;
+    struct iot_device_info info;
+    UNUSED(state);
+
+    for (unsigned int i = 0; i < 2; i++) {
+        // Given: i-th malloc failure
+        memset(&info, '\0', sizeof(struct iot_device_info));
+        do_not_use_mock_iot_os_malloc_failure();
+        set_mock_iot_os_malloc_failure_with_index(i);
+        // When: valid input
+        err = iot_api_device_info_load(device_info_sample, sizeof(device_info_sample), &info);
+        // Then: success
+        assert_int_not_equal(err, IOT_ERROR_NONE);
+        // local teardown
+        iot_api_device_info_mem_free(&info);
+    }
+
+    // teardown
+    do_not_use_mock_iot_os_malloc_failure();
 }
 
 static char device_info_sample_without_firmware_version[] = {
@@ -203,6 +227,29 @@ void TC_iot_api_onboarding_config_load_success(void **state)
 
     // Local teardown
     iot_api_onboarding_config_mem_free(&devconf);
+}
+
+void TC_iot_api_onboarding_config_load_internal_failure(void **state)
+{
+    iot_error_t err;
+    struct iot_devconf_prov_data devconf;
+    UNUSED(state);
+
+    for (unsigned int i = 0; i < 6; i++) {
+        // Given: i-th malloc failure
+        memset(&devconf, '\0', sizeof(struct iot_devconf_prov_data));
+        do_not_use_mock_iot_os_malloc_failure();
+        set_mock_iot_os_malloc_failure_with_index(i);
+        // When: valid parameters
+        err = iot_api_onboarding_config_load(onboarding_profile_example, sizeof(onboarding_profile_example), &devconf);
+        // Then: failure
+        assert_int_not_equal(err, IOT_ERROR_NONE);
+        // Local teardown
+        iot_api_onboarding_config_mem_free(&devconf);
+    }
+
+    // teardown
+    do_not_use_mock_iot_os_malloc_failure();
 }
 
 static char onboarding_profile_without_mnid[] = {

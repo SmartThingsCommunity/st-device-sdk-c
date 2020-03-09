@@ -39,16 +39,49 @@ iot_error_t __wrap_iot_bsp_wifi_get_mac(struct iot_mac *wifi_mac)
     return mock_type(iot_error_t);
 }
 
-static bool _use_mocked_malloc;
-void set_mock_malloc_failure(bool use_mock)
+#define MAX_MOCKED_IOT_OS_MALLOC_IN_TC 10
+static unsigned int _mock_malloc_failure_index;
+static bool _mock_iot_os_malloc_failure_at[MAX_MOCKED_IOT_OS_MALLOC_IN_TC];
+static bool _mock_iot_os_malloc_start;
+
+void set_mock_iot_os_malloc_failure_with_index(unsigned int index)
 {
-    _use_mocked_malloc = use_mock;
+    assert_in_range(index, 0, MAX_MOCKED_IOT_OS_MALLOC_IN_TC - 1);
+    _mock_iot_os_malloc_failure_at[index] = true;
+    _mock_iot_os_malloc_start = true;
+}
+
+void set_mock_iot_os_malloc_failure()
+{
+    for (int i = 0; i < MAX_MOCKED_IOT_OS_MALLOC_IN_TC; i++) {
+        _mock_iot_os_malloc_failure_at[i] = true;
+    }
+    _mock_iot_os_malloc_start = true;
+}
+
+void do_not_use_mock_iot_os_malloc_failure()
+{
+    for (int i = 0; i < MAX_MOCKED_IOT_OS_MALLOC_IN_TC; i++) {
+        _mock_iot_os_malloc_failure_at[i] = false;
+    }
+    _mock_malloc_failure_index = 0;
+    _mock_iot_os_malloc_start = false;
 }
 
 void *__wrap_iot_os_malloc(size_t size)
 {
-    if (_use_mocked_malloc)
+    if (_mock_iot_os_malloc_start && _mock_iot_os_malloc_failure_at[_mock_malloc_failure_index]) {
+        if (++_mock_malloc_failure_index >= MAX_MOCKED_IOT_OS_MALLOC_IN_TC ) {
+            _mock_malloc_failure_index = MAX_MOCKED_IOT_OS_MALLOC_IN_TC - 1;
+        }
         return NULL;
-    else
+    }
+    else if (_mock_iot_os_malloc_start && !_mock_iot_os_malloc_failure_at[_mock_malloc_failure_index]){
+        if (++_mock_malloc_failure_index >= MAX_MOCKED_IOT_OS_MALLOC_IN_TC ) {
+            _mock_malloc_failure_index = MAX_MOCKED_IOT_OS_MALLOC_IN_TC - 1;
+        }
         return malloc(size);
+    } else {
+        return malloc(size);
+    }
 }

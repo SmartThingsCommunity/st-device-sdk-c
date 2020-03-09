@@ -81,7 +81,7 @@ int TC_iot_easysetup_create_ssid_teardown(void **state)
     iot_error_t err;
     struct iot_devconf_prov_data *devconf = (struct iot_devconf_prov_data *)*state;
 
-    set_mock_malloc_failure(false);
+    do_not_use_mock_iot_os_malloc_failure();
 
     iot_api_onboarding_config_mem_free(devconf);
 

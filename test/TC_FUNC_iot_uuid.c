@@ -71,13 +71,15 @@ void TC_iot_uuid_from_mac_internal_failure(void **state)
     // Given: iot_bsp_wifi_get_mac() returns sample mac address but malloc failed
     will_return(__wrap_iot_bsp_wifi_get_mac, cast_ptr_to_largest_integral_type(sample_mac));
     will_return(__wrap_iot_bsp_wifi_get_mac, IOT_ERROR_NONE);
-    set_mock_malloc_failure(true);
+    do_not_use_mock_iot_os_malloc_failure();
+    set_mock_iot_os_malloc_failure();
+
     // When:
     err = iot_uuid_from_mac(&uuid);
     // Then: should return error
     assert_int_not_equal(err, IOT_ERROR_NONE);
     // Teardown
-    set_mock_malloc_failure(false);
+    do_not_use_mock_iot_os_malloc_failure();
 }
 
 void TC_iot_random_uuid_from_mac(void **state)
@@ -117,7 +119,8 @@ void TC_iot_ramdom_uuid_from_mac_internal_failure(void **state)
     // Given: iot_bsp_wifi_get_mac() returns sample mac address but malloc failed
     will_return(__wrap_iot_bsp_wifi_get_mac, cast_ptr_to_largest_integral_type(sample_mac));
     will_return(__wrap_iot_bsp_wifi_get_mac, IOT_ERROR_NONE);
-    set_mock_malloc_failure(true);
+    do_not_use_mock_iot_os_malloc_failure();
+    set_mock_iot_os_malloc_failure();
 
     // When
     err = iot_random_uuid_from_mac(&uuid);
@@ -125,5 +128,5 @@ void TC_iot_ramdom_uuid_from_mac_internal_failure(void **state)
     assert_int_not_equal(err, IOT_ERROR_NONE);
 
     // Teardown
-    set_mock_malloc_failure(false);
+    do_not_use_mock_iot_os_malloc_failure();
 }

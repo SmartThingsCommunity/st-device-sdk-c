@@ -23,5 +23,8 @@
 
 #include <stdbool.h>
 
-void set_mock_malloc_failure(bool use_mock);
+void set_mock_iot_os_malloc_failure_with_index(unsigned int index);
+void set_mock_iot_os_malloc_failure();
+void do_not_use_mock_iot_os_malloc_failure();
+
 #endif //ST_DEVICE_SDK_C_TC_MOCK_FUNCTIONS_H
