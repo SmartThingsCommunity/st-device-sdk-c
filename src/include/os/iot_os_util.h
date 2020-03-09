@@ -18,6 +18,7 @@
 
 #ifndef _IOT_OS_UTIL_H_
 #define _IOT_OS_UTIL_H_
+#include <stdlib.h>
 
 typedef void *iot_os_thread;
 typedef void iot_os_queue;
@@ -349,5 +350,19 @@ unsigned int iot_os_timer_left_ms(iot_os_timer timer);
  *
  */
 void iot_os_timer_destroy(iot_os_timer* timer);
+
+#if defined(CONFIG_STDK_IOT_CORE_OS_SUPPORT_POSIX)
+/**
+ * @brief	allocate memory
+ *
+ * This function will allocate size bytes and returns a pointer to the allocated memory
+ *
+ * @param[in] size bytes of memory to allocate
+ *
+ */
+void *iot_os_malloc(size_t size);
+#else
+static inline void *iot_os_malloc(size_t size) { return malloc(size); }
+#endif
 
 #endif /* _IOT_OS_UTIL_H_ */

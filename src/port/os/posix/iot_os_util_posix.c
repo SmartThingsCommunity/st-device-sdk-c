@@ -393,3 +393,8 @@ void iot_os_timer_destroy(iot_os_timer *timer)
 		return;
 	}
 }
+
+void *iot_os_malloc(size_t size)
+{
+    return malloc(size);
+}
