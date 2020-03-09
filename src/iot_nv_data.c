@@ -881,7 +881,7 @@ iot_error_t iot_nv_get_root_certificate(char** cert, unsigned int* len)
 
 	char* new_buff = NULL;
 
-	new_buff = (char*)malloc(st_root_ca_len + 1);
+	new_buff = (char*)iot_os_malloc(st_root_ca_len + 1);
 	if (new_buff == NULL) {
 		IOT_WARN("failed to malloc for new_buff");
 		return IOT_ERROR_NV_DATA_ERROR;

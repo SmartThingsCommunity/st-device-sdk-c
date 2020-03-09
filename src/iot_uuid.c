@@ -54,7 +54,7 @@ iot_error_t iot_random_uuid_from_mac(struct iot_uuid *uuid)
 
 	buf_len = sizeof(mac) + sizeof(tv);
 
-	buf = (unsigned char *)malloc(buf_len);
+	buf = (unsigned char *)iot_os_malloc(buf_len);
 	if (!buf) {
 		IOT_ERROR("malloc failed for buf");
 		return IOT_ERROR_MEM_ALLOC;
@@ -102,7 +102,7 @@ iot_error_t iot_uuid_from_mac(struct iot_uuid *uuid)
 
 	buf_len = sizeof(mac);
 
-	buf = (unsigned char *)malloc(buf_len);
+	buf = (unsigned char *)iot_os_malloc(buf_len);
 	if (!buf) {
 		IOT_ERROR("malloc failed for buf");
 		return IOT_ERROR_MEM_ALLOC;

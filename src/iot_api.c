@@ -181,7 +181,7 @@ iot_error_t iot_api_onboarding_config_load(unsigned char *onboarding_config,
 	if (!onboarding_config || !devconf || onboarding_config_len == 0)
 		return IOT_ERROR_INVALID_ARGS;
 
-	data = malloc((size_t) onboarding_config_len + 1);
+	data = iot_os_malloc((size_t) onboarding_config_len + 1);
 	if (!data)
 		return IOT_ERROR_MEM_ALLOC;
 	memcpy(data, onboarding_config, onboarding_config_len);
@@ -208,7 +208,7 @@ iot_error_t iot_api_onboarding_config_load(unsigned char *onboarding_config,
 		iot_err = IOT_ERROR_UNINITIALIZED;
 		goto load_out;
 	}
-	device_onboarding_id = malloc(str_len + 1);
+	device_onboarding_id = iot_os_malloc(str_len + 1);
 	if (!device_onboarding_id) {
 		iot_err = IOT_ERROR_MEM_ALLOC;
 		goto load_out;
@@ -224,7 +224,7 @@ iot_error_t iot_api_onboarding_config_load(unsigned char *onboarding_config,
 		goto load_out;
 	}
 	str_len = strlen(cJSON_GetStringValue(item));
-	mnid = malloc(str_len + 1);
+	mnid = iot_os_malloc(str_len + 1);
 	if (!mnid) {
 		iot_err = IOT_ERROR_MEM_ALLOC;
 		goto load_out;
@@ -240,7 +240,7 @@ iot_error_t iot_api_onboarding_config_load(unsigned char *onboarding_config,
 		goto load_out;
 	}
 	str_len = strlen(cJSON_GetStringValue(item));
-	setupid = malloc(str_len + 1);
+	setupid = iot_os_malloc(str_len + 1);
 	if (!setupid) {
 		iot_err = IOT_ERROR_MEM_ALLOC;
 		goto load_out;
@@ -256,7 +256,7 @@ iot_error_t iot_api_onboarding_config_load(unsigned char *onboarding_config,
 		goto load_out;
 	}
 	str_len = strlen(cJSON_GetStringValue(item));
-	vid = malloc(str_len + 1);
+	vid = iot_os_malloc(str_len + 1);
 	if (!vid) {
 		iot_err = IOT_ERROR_MEM_ALLOC;
 		goto load_out;
@@ -272,7 +272,7 @@ iot_error_t iot_api_onboarding_config_load(unsigned char *onboarding_config,
 		goto load_out;
 	}
 	str_len = strlen(cJSON_GetStringValue(item));
-	devicetypeid = malloc(str_len + 1);
+	devicetypeid = iot_os_malloc(str_len + 1);
 	if (!devicetypeid) {
 		iot_err = IOT_ERROR_MEM_ALLOC;
 		goto load_out;
@@ -453,7 +453,7 @@ iot_error_t iot_api_device_info_load(unsigned char *device_info,
 	if (!device_info || !info || device_info_len == 0)
 		return IOT_ERROR_INVALID_ARGS;
 
-	data = malloc((size_t) device_info_len + 1);
+	data = iot_os_malloc((size_t) device_info_len + 1);
 	if (!data)
 		return IOT_ERROR_MEM_ALLOC;
 	memcpy(data, device_info, device_info_len);
@@ -475,7 +475,7 @@ iot_error_t iot_api_device_info_load(unsigned char *device_info,
 		goto load_out;
 	}
 	str_len = strlen(cJSON_GetStringValue(item));
-	firmware_version = malloc(str_len + 1);
+	firmware_version = iot_os_malloc(str_len + 1);
 	if (!firmware_version) {
 		iot_err = IOT_ERROR_MEM_ALLOC;
 		goto load_out;
@@ -549,7 +549,7 @@ iot_error_t iot_api_read_device_identity(unsigned char* nv_prof,
 	if (!nv_prof || !nv_data || nv_prof_len == 0)
 		return IOT_ERROR_INVALID_ARGS;
 
-	data = malloc((size_t) nv_prof_len + 1);
+	data = iot_os_malloc((size_t) nv_prof_len + 1);
 	if (!data)
 		return IOT_ERROR_MEM_ALLOC;
 	memcpy(data, nv_prof, nv_prof_len);
@@ -571,7 +571,7 @@ iot_error_t iot_api_read_device_identity(unsigned char* nv_prof,
 	}
 
 	str_len = strlen(cJSON_GetStringValue(item));
-	object_data = malloc(str_len + 1);
+	object_data = iot_os_malloc(str_len + 1);
 	if (!object_data) {
 		iot_err = IOT_ERROR_MEM_ALLOC;
 		goto load_out;

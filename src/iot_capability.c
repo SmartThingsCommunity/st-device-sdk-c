@@ -57,7 +57,7 @@ IOT_EVENT* st_cap_attr_create_int(const char *attribute, int integer, const char
 		return NULL;
 	}
 
-	evt_data = malloc(sizeof(iot_cap_evt_data_t));
+	evt_data = iot_os_malloc(sizeof(iot_cap_evt_data_t));
 	if (!evt_data) {
 		IOT_ERROR("failed to malloc for evt_data");
 		return NULL;
@@ -87,7 +87,7 @@ IOT_EVENT* st_cap_attr_create_number(const char *attribute, double number, const
 		return NULL;
 	}
 
-	evt_data = malloc(sizeof(iot_cap_evt_data_t));
+	evt_data = iot_os_malloc(sizeof(iot_cap_evt_data_t));
 	if (!evt_data) {
 		IOT_ERROR("failed to malloc for evt_data");
 		return NULL;
@@ -117,7 +117,7 @@ IOT_EVENT* st_cap_attr_create_string(const char *attribute, char *string, const 
 		return NULL;
 	}
 
-	evt_data = malloc(sizeof(iot_cap_evt_data_t));
+	evt_data = iot_os_malloc(sizeof(iot_cap_evt_data_t));
 	if (!evt_data) {
 		IOT_ERROR("failed to malloc for evt_data");
 		return NULL;
@@ -153,7 +153,7 @@ IOT_EVENT* st_cap_attr_create_string_array(const char *attribute,
 		return NULL;
 	}
 
-	evt_data = malloc(sizeof(iot_cap_evt_data_t));
+	evt_data = iot_os_malloc(sizeof(iot_cap_evt_data_t));
 	if (!evt_data) {
 		IOT_ERROR("failed to malloc for evt_data");
 		return NULL;
@@ -162,7 +162,7 @@ IOT_EVENT* st_cap_attr_create_string_array(const char *attribute,
 	memset(evt_data, 0, sizeof(iot_cap_evt_data_t));
 	evt_data->evt_value.type = IOT_CAP_VAL_TYPE_STR_ARRAY;
 	evt_data->evt_value.str_num = str_num;
-	evt_data->evt_value.strings = malloc(str_num * sizeof(char*));
+	evt_data->evt_value.strings = iot_os_malloc(str_num * sizeof(char*));
 	if (!evt_data->evt_value.strings) {
 		IOT_ERROR("failed to malloc for string array");
 		free(evt_data);
@@ -203,7 +203,7 @@ IOT_CAP_HANDLE *st_cap_handle_init(IOT_CTX *iot_ctx, const char *component,
 	struct iot_cap_handle_list *new_list;
 	struct iot_context *ctx = (struct iot_context*)iot_ctx;
 
-	handle = malloc(sizeof(struct iot_cap_handle));
+	handle = iot_os_malloc(sizeof(struct iot_cap_handle));
 	if (!handle) {
 		IOT_ERROR("failed to malloc for iot_cap_handle");
 		return NULL;
@@ -232,7 +232,7 @@ IOT_CAP_HANDLE *st_cap_handle_init(IOT_CTX *iot_ctx, const char *component,
 
 	handle->cmd_list = NULL;
 
-	new_list = (iot_cap_handle_list_t *)malloc(sizeof(iot_cap_handle_list_t));
+	new_list = (iot_cap_handle_list_t *)iot_os_malloc(sizeof(iot_cap_handle_list_t));
 	if (!new_list) {
 		IOT_ERROR("failed to malloc for handle list");
 		free((void *)handle->component);
@@ -311,7 +311,7 @@ int st_cap_cmd_set_cb(IOT_CAP_HANDLE *cap_handle, const char *cmd_type,
 		cur_list = cur_list->next;
 	}
 
-	command = (iot_cap_cmd_set_t *)malloc(sizeof(iot_cap_cmd_set_t));
+	command = (iot_cap_cmd_set_t *)iot_os_malloc(sizeof(iot_cap_cmd_set_t));
 	if (!command) {
 		IOT_ERROR("failed to malloc for cmd set");
 		return IOT_ERROR_MEM_ALLOC;
@@ -320,7 +320,7 @@ int st_cap_cmd_set_cb(IOT_CAP_HANDLE *cap_handle, const char *cmd_type,
 	command->cmd_cb = cmd_cb;
 	command->usr_data = usr_data;
 
-	new_list = (iot_cap_cmd_set_list_t *)malloc(sizeof(iot_cap_cmd_set_list_t));
+	new_list = (iot_cap_cmd_set_list_t *)iot_os_malloc(sizeof(iot_cap_cmd_set_list_t));
 	if (!new_list) {
 		IOT_ERROR("failed to malloc for cmd set list");
 		free(command);
@@ -804,7 +804,7 @@ static iot_error_t _iot_make_evt_data_cbor(const char* component, const char* ca
 retry:
 	buflen += 128;
 
-	buf = (uint8_t *)malloc(buflen);
+	buf = (uint8_t *)iot_os_malloc(buflen);
 	if (buf == NULL) {
 		IOT_ERROR("failed to malloc for cbor");
 		return IOT_ERROR_MEM_ALLOC;
