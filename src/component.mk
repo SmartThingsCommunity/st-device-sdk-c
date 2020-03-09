@@ -72,9 +72,12 @@ CPPFLAGS += -include $(COMPONENT_PATH)/include/iot_common.h
 COMPONENT_SRCDIRS += mqtt/client mqtt/packet mqtt/client/freertos
 
 BILERPLATE_HEADER=$(COMPONENT_PATH)/include/certs/boilerplate.h
+ROOT_CA_FILE_LIST=$(wildcard $(COMPONENT_PATH)/certs/root_ca_*.pem)
 ROOT_CA_FILE=$(COMPONENT_PATH)/certs/root_ca.pem
 ROOT_CA_SOURCE=$(COMPONENT_PATH)/iot_root_ca.c
 ROOT_CA_BACKUP_FILE=$(ROOT_CA_SOURCE).bak
+$(shell rm $(ROOT_CA_FILE) 2> /dev/null)
+$(foreach file,$(ROOT_CA_FILE_LIST),$(shell cat $(file) >> $(ROOT_CA_FILE)))
 result := $(shell cat $(BILERPLATE_HEADER) > $(ROOT_CA_SOURCE); echo $$?;)
 ifneq ($(result),0)
 	$(error)
