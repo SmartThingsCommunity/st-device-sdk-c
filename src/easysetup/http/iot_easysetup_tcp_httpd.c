@@ -175,7 +175,7 @@ static void es_tcp_task(void *pvParameters)
 
 		if (sock != -1) {
 			IOT_ERROR("Shutting down socket and restarting...");
-			shutdown(sock, 0);
+			shutdown(sock, SHUT_RD);
 			close(sock);
 		}
 	}
