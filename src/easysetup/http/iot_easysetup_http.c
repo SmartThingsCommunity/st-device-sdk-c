@@ -442,8 +442,11 @@ void iot_easysetup_deinit(struct iot_context *ctx)
 	es_tcp_deinit();
 
 #if defined(CONFIG_STDK_IOT_CORE_EASYSETUP_HTTP_LOG_SUPPORT)
-	dump_enable = false;
-	free(log_buffer);
+	if (log_buffer) {
+		dump_enable = false;
+		free(log_buffer);
+		log_buffer = NULL;
+	}
 #endif
 	IOT_INFO("es_httpd_deinit done");
 }

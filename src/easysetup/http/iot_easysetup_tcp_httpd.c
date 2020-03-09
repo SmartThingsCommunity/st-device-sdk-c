@@ -192,11 +192,15 @@ void es_tcp_init(void)
 
 void es_tcp_deinit(void)
 {
-	if (es_tcp_task_handle)
+	if (es_tcp_task_handle) {
 		iot_os_thread_delete(es_tcp_task_handle);
+		es_tcp_task_handle = NULL;
+	}
 
-	if (tx_buffer)
+	if (tx_buffer) {
 		free(tx_buffer);
+		tx_buffer = NULL;
+	}
 
 	IOT_INFO("es_tcp_deinit!!");
 }
