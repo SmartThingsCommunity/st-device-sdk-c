@@ -23,6 +23,7 @@
 #include <iot_error.h>
 #include <iot_bsp_wifi.h>
 #include <stdbool.h>
+#include <stdlib.h>
 
 iot_error_t __wrap_iot_bsp_wifi_get_mac(struct iot_mac *wifi_mac)
 {
@@ -44,11 +45,10 @@ void set_mock_malloc_failure(bool use_mock)
     _use_mocked_malloc = use_mock;
 }
 
-void * __real_malloc(size_t size);
-void *__wrap_malloc(size_t size)
+void *__wrap_iot_os_malloc(size_t size)
 {
     if (_use_mocked_malloc)
         return NULL;
     else
-        return __real_malloc(size);
+        return malloc(size);
 }
