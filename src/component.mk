@@ -28,10 +28,11 @@ else
 	COMPONENT_ADD_INCLUDEDIRS += include/bsp/posix
 endif
 
-# Todo : define os config
 ifeq ($(CONFIG_STDK_IOT_CORE_OS_SUPPORT_FREERTOS),y)
 	COMPONENT_SRCDIRS += port/os/freertos
-else
+else ifeq ($(CONFIG_STDK_IOT_CORE_OS_SUPPORT_TIZENRT),y)
+	COMPONENT_SRCDIRS += port/os/tizenrt
+else ifeq ($(CONFIG_STDK_IOT_CORE_OS_SUPPORT_POSIX),y)
 	COMPONENT_SRCDIRS += port/os/posix
 endif
 
