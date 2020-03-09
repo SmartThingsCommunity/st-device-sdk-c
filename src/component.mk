@@ -89,6 +89,7 @@ endif
 $(shell sed -i.bak 's/_.*pem/st_root_ca/g' $(ROOT_CA_SOURCE))
 $(shell sed -i.bak 's/unsigned/const unsigned/g' $(ROOT_CA_SOURCE))
 $(shell rm $(ROOT_CA_BACKUP_FILE))
+$(shell rm $(ROOT_CA_FILE))
 
 CFLAGS += -std=c99
 

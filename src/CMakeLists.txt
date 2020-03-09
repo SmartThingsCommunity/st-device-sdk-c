@@ -46,6 +46,7 @@ add_custom_command(
         COMMAND sed -i.bak 's/cert.*_pem/st_root_ca/g' ${ROOT_CA_SOURCE}
         COMMAND sed -i.bak 's/unsigned/const unsigned/g' ${ROOT_CA_SOURCE}
         COMMAND rm -f ${ROOT_CA_SOURCE}.bak
+        COMMAND rm -f ${ROOT_CA_FILE}
         BYPRODUCTS ${CMAKE_CURRENT_SOURCE_DIR}/${ROOT_CA_SOURCE}
 )
 

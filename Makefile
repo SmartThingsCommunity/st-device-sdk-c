@@ -108,6 +108,7 @@ $(ROOT_CA_SOURCE):
 	@sed -i.bak 's/src.*pem/st_root_ca/g' $(ROOT_CA_SOURCE)
 	@sed -i.bak 's/unsigned/const unsigned/g' $(ROOT_CA_SOURCE)
 	@rm -f $(ROOT_CA_SOURCE).bak
+	@rm -f $(ROOT_CA_FILE)
 
 clean:
 	@for dir in $(DEPS_DIRS); do \
