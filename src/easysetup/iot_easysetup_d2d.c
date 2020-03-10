@@ -56,7 +56,7 @@ static char *_es_json_parse_string(JSON_H *json, const char *name)
 	IOT_DEBUG("'%s' (%d): %s",
 			name, buf_len, recv->valuestring);
 
-	if ((buf = (char *)malloc(buf_len)) == NULL) {
+	if ((buf = (char *)iot_os_malloc(buf_len)) == NULL) {
 		IOT_ERROR("failed to malloc for buf");
 		return NULL;
 	}
@@ -74,7 +74,7 @@ static iot_error_t _es_crypto_cipher_gen_iv(iot_crypto_cipher_info_t *iv_info)
 	unsigned char *iv;
 
 	iv_len = IOT_CRYPTO_IV_LEN;
-	if ((iv = (unsigned char *)malloc(iv_len)) == NULL) {
+	if ((iv = (unsigned char *)iot_os_malloc(iv_len)) == NULL) {
 		IOT_ERROR("failed to malloc for iv");
 		err = IOT_ERROR_EASYSETUP_MEM_ALLOC_ERROR;
 		goto out;
@@ -138,11 +138,12 @@ iot_error_t iot_easysetup_create_ssid(struct iot_devconf_prov_data *devconf, cha
 		goto out;
 
 	if (base64_written >= HASH_SIZE) {
-		devconf->hashed_sn = calloc(sizeof(char), base64_written + 1);
+		devconf->hashed_sn = iot_os_malloc(base64_written + 1);
 		if (!devconf->hashed_sn) {
 			err = IOT_ERROR_MEM_ALLOC;
 			goto out;
 		}
+		memset(devconf->hashed_sn, '\0', base64_written + 1);
 		memcpy(devconf->hashed_sn, base64url_buffer, base64_written);
 		memcpy(hashed_sn, base64url_buffer, HASH_SIZE);
 	} else {
@@ -201,7 +202,7 @@ static iot_error_t _es_deviceinfo_handler(struct iot_context *ctx, char **out_pa
 	}
 
 	encode_buf_len = IOT_CRYPTO_CAL_B64_LEN(ctx->es_crypto_cipher_info->iv_len);
-	if ((encode_buf = (unsigned char *)malloc(encode_buf_len)) == NULL) {
+	if ((encode_buf = (unsigned char *)iot_os_malloc(encode_buf_len)) == NULL) {
 		IOT_ERROR("failed to malloc for encode_buf");
 		err = IOT_ERROR_EASYSETUP_MEM_ALLOC_ERROR;
 		goto out;
@@ -313,7 +314,7 @@ static iot_error_t _es_wifiscaninfo_handler(struct iot_context *ctx, char **out_
 
 	input_len = strlen(ptr);
 	output_len = iot_crypto_cipher_get_align_size(IOT_CRYPTO_CIPHER_AES256, input_len);
-	if ((encrypt_buf = malloc(output_len)) == NULL) {
+	if ((encrypt_buf = iot_os_malloc(output_len)) == NULL) {
 		IOT_ERROR("failed to malloc for encrypt_buf");
 		err = IOT_ERROR_EASYSETUP_MEM_ALLOC_ERROR;
 		goto out;
@@ -329,7 +330,7 @@ static iot_error_t _es_wifiscaninfo_handler(struct iot_context *ctx, char **out_
 
 	input_len = result_len;
 	output_len = IOT_CRYPTO_CAL_B64_LEN(input_len);
-	if ((encode_buf = malloc(output_len)) == NULL) {
+	if ((encode_buf = iot_os_malloc(output_len)) == NULL) {
 		IOT_ERROR("failed to malloc for encode_buf");
 		err = IOT_ERROR_EASYSETUP_MEM_ALLOC_ERROR;
 		goto out;
@@ -476,7 +477,7 @@ static iot_error_t _es_keyinfo_handler(struct iot_context *ctx, char *in_payload
 		goto exit;
 	}
 
-	master_secret = malloc(IOT_CRYPTO_SECRET_LEN + 1);
+	master_secret = iot_os_malloc(IOT_CRYPTO_SECRET_LEN + 1);
 	if (!master_secret) {
 		IOT_ERROR("failed to malloc for master_secret");
 		err = IOT_ERROR_EASYSETUP_MEM_ALLOC_ERROR;
@@ -530,7 +531,7 @@ static iot_error_t _es_keyinfo_handler(struct iot_context *ctx, char *in_payload
 
 	input_len = strlen(ptr);
 	output_len = iot_crypto_cipher_get_align_size(IOT_CRYPTO_CIPHER_AES256, input_len);
-	if ((encrypt_buf = malloc(output_len)) == NULL) {
+	if ((encrypt_buf = iot_os_malloc(output_len)) == NULL) {
 		IOT_ERROR("failed to malloc for encrypt_buf");
 		err = IOT_ERROR_EASYSETUP_MEM_ALLOC_ERROR;
 		goto exit;
@@ -546,7 +547,7 @@ static iot_error_t _es_keyinfo_handler(struct iot_context *ctx, char *in_payload
 
 	input_len = result_len;
 	output_len = IOT_CRYPTO_CAL_B64_LEN(input_len);
-	if ((encode_buf = malloc(output_len)) == NULL) {
+	if ((encode_buf = iot_os_malloc(output_len)) == NULL) {
 		IOT_ERROR("failed to malloc for encode_buf");
 		err = IOT_ERROR_EASYSETUP_MEM_ALLOC_ERROR;
 		goto exit_secret;
@@ -706,7 +707,7 @@ static iot_error_t _es_confirminfo_handler(struct iot_context *ctx, char *in_pay
 
 	input_len = (unsigned int)strlen(rev_message);
 	output_len = input_len;
-	if ((decode_buf = malloc(output_len)) == NULL) {
+	if ((decode_buf = iot_os_malloc(output_len)) == NULL) {
 		IOT_ERROR("failed to malloc for decode_buf");
 		err = IOT_ERROR_EASYSETUP_MEM_ALLOC_ERROR;
 		goto out;
@@ -723,7 +724,7 @@ static iot_error_t _es_confirminfo_handler(struct iot_context *ctx, char *in_pay
 
 	input_len = result_len;
 	output_len = iot_crypto_cipher_get_align_size(IOT_CRYPTO_CIPHER_AES256, input_len);
-	if ((decrypt_buf = malloc(output_len)) == NULL) {
+	if ((decrypt_buf = iot_os_malloc(output_len)) == NULL) {
 		IOT_ERROR("failed to malloc for decrypt_buf");
 		err = IOT_ERROR_EASYSETUP_MEM_ALLOC_ERROR;
 		goto out;
@@ -783,7 +784,7 @@ static iot_error_t _es_confirminfo_handler(struct iot_context *ctx, char *in_pay
 
 	input_len = (unsigned int)strlen(ptr);
 	output_len = iot_crypto_cipher_get_align_size(IOT_CRYPTO_CIPHER_AES256, input_len);
-	if ((encrypt_buf = malloc(output_len)) == NULL) {
+	if ((encrypt_buf = iot_os_malloc(output_len)) == NULL) {
 		IOT_ERROR("failed to malloc for encrypt_buf");
 		err = IOT_ERROR_EASYSETUP_MEM_ALLOC_ERROR;
 		goto out;
@@ -799,7 +800,7 @@ static iot_error_t _es_confirminfo_handler(struct iot_context *ctx, char *in_pay
 
 	input_len = result_len;
 	output_len = IOT_CRYPTO_CAL_B64_LEN(input_len);
-	if ((encode_buf = (unsigned char *)malloc(output_len)) == NULL) {
+	if ((encode_buf = (unsigned char *)iot_os_malloc(output_len)) == NULL) {
 		IOT_ERROR("failed to malloc for encode_buf");
 		err = IOT_ERROR_EASYSETUP_MEM_ALLOC_ERROR;
 		goto out;
