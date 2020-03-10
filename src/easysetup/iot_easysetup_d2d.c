@@ -225,7 +225,7 @@ out:
 		free(encode_buf);
 	if (root)
 		cJSON_Delete(root);
-	return IOT_ERROR_NONE;
+	return err;
 }
 
 static iot_error_t _es_wifiscaninfo_handler(struct iot_context *ctx, char **out_payload)
