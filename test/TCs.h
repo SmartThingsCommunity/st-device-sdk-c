@@ -47,7 +47,7 @@ void TC_iot_get_time_in_sec_by_long_success(void **state);
 void TC_iot_uuid_from_mac(void **state);
 void TC_iot_uuid_from_mac_internal_failure(void **state);
 void TC_iot_random_uuid_from_mac(void **state);
-void TC_iot_ramdom_uuid_from_mac_internal_failure(void **state);
+void TC_iot_random_uuid_from_mac_internal_failure(void **state);
 
 // TCs for iot_capability.c
 int TC_iot_capability_teardown(void **state);

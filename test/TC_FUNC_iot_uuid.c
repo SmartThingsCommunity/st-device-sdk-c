@@ -110,7 +110,7 @@ void TC_iot_random_uuid_from_mac(void **state)
     assert_int_not_equal(err, IOT_ERROR_NONE);
 }
 
-void TC_iot_ramdom_uuid_from_mac_internal_failure(void **state)
+void TC_iot_random_uuid_from_mac_internal_failure(void **state)
 {
     iot_error_t err;
     struct iot_uuid uuid;
