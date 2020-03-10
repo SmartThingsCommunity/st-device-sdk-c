@@ -37,6 +37,12 @@ typedef enum {
 	IOT_DEBUG_LEVEL_MAX
 } iot_debug_level_t;
 
+#ifdef SUPPORT_TC_ON_STATIC_FUNC
+#define STATIC_FUNCTION
+#else
+#define STATIC_STATIC_FUNCTION static
+#endif
+
 
 #define IOT_DEBUG_PREFIX "[IoT]"
 #define COLOR_CYAN "\033[0;36m"

@@ -36,7 +36,8 @@
 
 #define JSON_H	cJSON
 
-static char *_es_json_parse_string(JSON_H *json, const char *name)
+STATIC_FUNCTION
+char *_es_json_parse_string(JSON_H *json, const char *name)
 {
 	char *buf = NULL;
 	cJSON *recv = NULL;
@@ -66,7 +67,8 @@ static char *_es_json_parse_string(JSON_H *json, const char *name)
 	return buf;
 }
 
-static iot_error_t _es_crypto_cipher_gen_iv(iot_crypto_cipher_info_t *iv_info)
+STATIC_FUNCTION
+iot_error_t _es_crypto_cipher_gen_iv(iot_crypto_cipher_info_t *iv_info)
 {
 	int i;
 	iot_error_t err = IOT_ERROR_NONE;
@@ -90,7 +92,8 @@ out:
 	return err;
 }
 
-static iot_error_t _es_crypto_cipher_aes(iot_crypto_cipher_info_t *iv_info, iot_crypto_cipher_mode_t mode,
+STATIC_FUNCTION
+iot_error_t _es_crypto_cipher_aes(iot_crypto_cipher_info_t *iv_info, iot_crypto_cipher_mode_t mode,
 			unsigned char *input, unsigned char *output, size_t input_len, size_t output_len, size_t *dst_len)
 {
 	iot_error_t err;
@@ -176,7 +179,8 @@ out:
 	return err;
 }
 
-static iot_error_t _es_deviceinfo_handler(struct iot_context *ctx, char **out_payload)
+STATIC_FUNCTION
+iot_error_t _es_deviceinfo_handler(struct iot_context *ctx, char **out_payload)
 {
 	char *output_ptr = NULL;
 	cJSON *root = NULL;
@@ -228,7 +232,8 @@ out:
 	return err;
 }
 
-static iot_error_t _es_wifiscaninfo_handler(struct iot_context *ctx, char **out_payload)
+STATIC_FUNCTION
+iot_error_t _es_wifiscaninfo_handler(struct iot_context *ctx, char **out_payload)
 {
 	char *ptr = NULL;
 	char *output_ptr = NULL;
@@ -370,7 +375,8 @@ out:
 	return err;
 }
 
-static iot_error_t _es_keyinfo_handler(struct iot_context *ctx, char *in_payload, char **out_payload)
+STATIC_FUNCTION
+iot_error_t _es_keyinfo_handler(struct iot_context *ctx, char *in_payload, char **out_payload)
 {
 	char *ptr = NULL;
 	char *output_ptr = NULL;
@@ -604,7 +610,8 @@ void st_conn_ownership_confirm(IOT_CTX *iot_ctx, bool confirm)
 	}
 }
 
-static iot_error_t _es_confirm_check_manager(struct iot_context *ctx, enum ownership_validation_feature confirm_feature, char *sn)
+STATIC_FUNCTION
+iot_error_t _es_confirm_check_manager(struct iot_context *ctx, enum ownership_validation_feature confirm_feature, char *sn)
 {
 	char *dev_sn = NULL;
 	unsigned int curr_event = 0;
@@ -674,7 +681,8 @@ out:
 	return err;
 }
 
-static iot_error_t _es_confirminfo_handler(struct iot_context *ctx, char *in_payload, char **out_payload)
+STATIC_FUNCTION
+iot_error_t _es_confirminfo_handler(struct iot_context *ctx, char *in_payload, char **out_payload)
 {
 	char *ptr = NULL;
 	char *output_ptr = NULL;
@@ -846,7 +854,8 @@ out:
 	return err;
 }
 
-static iot_error_t _es_confirm_handler(struct iot_context *ctx, char *in_payload, char **out_payload)
+STATIC_FUNCTION
+iot_error_t _es_confirm_handler(struct iot_context *ctx, char *in_payload, char **out_payload)
 {
 	bool validation = true;
 	char pin[PIN_SIZE + 1];
@@ -1028,7 +1037,8 @@ out:
 	return err;
 }
 
-static iot_error_t _es_wifi_prov_parse(struct iot_context *ctx, char *in_payload)
+STATIC_FUNCTION
+iot_error_t _es_wifi_prov_parse(struct iot_context *ctx, char *in_payload)
 {
 	struct iot_wifi_prov_data *wifi_prov = NULL;
 	char bssid[] = "00:00:00:00:00:00";
@@ -1131,7 +1141,8 @@ wifi_parse_out:
 	return err;
 }
 
-static iot_error_t _es_cloud_prov_parse(char *in_payload)
+STATIC_FUNCTION
+iot_error_t _es_cloud_prov_parse(char *in_payload)
 {
 	struct iot_cloud_prov_data *cloud_prov = NULL;
 	char *full_url = NULL;
@@ -1232,7 +1243,8 @@ cloud_parse_out:
 	return err;
 }
 
-static iot_error_t _es_wifiprovisioninginfo_handler(struct iot_context *ctx, char *in_payload, char **out_payload)
+STATIC_FUNCTION
+iot_error_t _es_wifiprovisioninginfo_handler(struct iot_context *ctx, char *in_payload, char **out_payload)
 {
 	struct iot_uuid uuid;
 	char *ptr = NULL;
@@ -1407,7 +1419,8 @@ out:
 	return err;
 }
 
-static iot_error_t _es_setupcomplete_handler(struct iot_context *ctx, char *in_payload, char **out_payload)
+STATIC_FUNCTION
+iot_error_t _es_setupcomplete_handler(struct iot_context *ctx, char *in_payload, char **out_payload)
 {
 	char *ptr = NULL;
 	char *output_ptr = NULL;

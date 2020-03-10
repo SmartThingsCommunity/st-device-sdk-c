@@ -19,6 +19,7 @@ endforeach()
 
 if(CMAKE_C_COMPILER_ID STREQUAL "GNU" AND CMAKE_BUILD_TYPE MATCHES Debug)
     set(CMAKE_C_FLAGS_DEBUG "${CMAKE_C_FLAGS_DEBUG} -fprofile-arcs -ftest-coverage")
+    set(CMAKE_C_FLAGS_DEBUG "${CMAKE_C_FLAGS_DEBUG} -DSUPPORT_TC_ON_STATIC_FUNC")
     set(MOCKED_FUNCTIONS
         iot_bsp_wifi_get_mac
         iot_os_malloc
