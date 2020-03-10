@@ -39,7 +39,7 @@ if(ENABLE_STDK_TEST)
                    TC_FUNC_iot_crypto.c
                    TC_FUNC_iot_nv_data.c
                    TC_FUNC_iot_easysetup_d2d.c
-                   )
+                   TC_FUNC_iot_easysetup_crypto.c)
 
     target_link_libraries(stdk_test
                           PRIVATE

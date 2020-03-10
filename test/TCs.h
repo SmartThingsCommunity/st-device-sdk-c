@@ -77,6 +77,13 @@ void TC_iot_nv_get_public_key_null_parameters(void **state);
 void TC_iot_nv_get_serial_number_success(void **state);
 void TC_iot_nv_get_serial_number_null_parameters(void **state);
 
+// TCs for iot_easysetup_crypto.c
+int TC_iot_easysetup_crypto_setup(void **state);
+int TC_iot_easysetup_crypto_teardown(void **state);
+void TC_iot_es_crypto_load_pk_success(void** state);
+void TC_iot_es_crypto_load_pk_invalid_parameters(void **state);
+void TC_iot_es_crypto_init_pk(void **state);
+
 // TCs for iot_easysetup_d2d.c
 int TC_iot_easysetup_create_ssid_setup(void **state);
 int TC_iot_easysetup_create_ssid_teardown(void **state);
