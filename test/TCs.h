@@ -61,10 +61,13 @@ void TC_st_cap_attr_create_number_with_unit(void **state);
 void TC_st_cap_attr_create_number_internal_failure(void **state);
 
 // TCs for iot_crypto.c
+int TC_iot_crypto_pk_setup(void **state);
+int TC_iot_crypto_pk_teardown(void **state);
 void TC_iot_crypto_pk_init_null_parameter(void **state);
 void TC_iot_crypto_pk_init_ed25519(void **state);
 void TC_iot_crypto_pk_init_invalid_type(void **state);
 void TC_iot_crypto_pk_free(void **state);
+void TC_iot_crypto_pk_ed25519_success(void **state);
 
 // TCs for iot_nv_data.c
 int TC_iot_nv_data_setup(void **state);

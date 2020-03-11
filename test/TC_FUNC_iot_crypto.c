@@ -22,7 +22,83 @@
 #include <string.h>
 #include <iot_error.h>
 #include <iot_crypto.h>
+#include <iot_bsp_random.h>
 #define UNUSED(x)   (void**)(x)
+
+static unsigned char pubkey_b64[] = "tQdqhHSoMtruTdW0BAmDtmI7XzRKylfU1u5Lrz8lnm4=";
+static unsigned char seckey_b64[] = "QhFRpFn66t49JHEV+UrtrkIxgSQJWvq+TRRRpVn67e4=";
+
+void load_pubkey(iot_crypto_pk_info_t *pk_info)
+{
+	iot_error_t err;
+	unsigned char *pubkey;
+	unsigned char *seckey;
+	size_t key_len = IOT_CRYPTO_ED25519_LEN;
+	size_t olen;
+
+	pubkey = (unsigned char *)malloc(key_len);
+	assert_non_null(pubkey);
+
+	seckey = (unsigned char *)malloc(key_len);
+	assert_non_null(seckey);
+
+	pk_info->type = IOT_CRYPTO_PK_ED25519;
+
+	err = iot_crypto_base64_decode(pubkey_b64, strlen(pubkey_b64), pubkey, key_len, &olen);
+	assert_int_equal(err, IOT_ERROR_NONE);
+	assert_int_equal(olen, key_len);
+	pk_info->pubkey = pubkey;
+	pk_info->pubkey_len = olen;
+
+	err = iot_crypto_base64_decode(seckey_b64, strlen(seckey_b64), seckey, key_len, &olen);
+	assert_int_equal(err, IOT_ERROR_NONE);
+	assert_int_equal(olen, key_len);
+	pk_info->seckey = seckey;
+	pk_info->seckey_len = olen;
+}
+
+int TC_iot_crypto_pk_setup(void **state)
+{
+	iot_error_t err;
+	iot_crypto_pk_context_t *context;
+	iot_crypto_pk_info_t *pk_info;
+
+	context = (iot_crypto_pk_context_t *)malloc(sizeof(iot_crypto_pk_context_t));
+	assert_non_null(context);
+	memset(context, 0, sizeof(iot_crypto_pk_context_t));
+
+	pk_info = (iot_crypto_pk_info_t *)malloc(sizeof(iot_crypto_pk_info_t));
+	assert_non_null(pk_info);
+	memset(pk_info, 0, sizeof(iot_crypto_pk_info_t));
+
+	load_pubkey(pk_info);
+
+	err = iot_crypto_pk_init(context, pk_info);
+	assert_int_equal(err, IOT_ERROR_NONE);
+
+	*state = context;
+
+	return 0;
+}
+
+int TC_iot_crypto_pk_teardown(void **state)
+{
+	iot_crypto_pk_context_t *context;
+	iot_crypto_pk_info_t *pk_info;
+
+	context = (iot_crypto_pk_context_t *)*state;
+	assert_non_null(context);
+
+	pk_info = context->info;
+	assert_non_null(pk_info);
+
+	free(pk_info->pubkey);
+	free(pk_info->seckey);
+	free(pk_info);
+	free(context);
+
+	return 0;
+}
 
 void TC_iot_crypto_pk_init_null_parameter(void **state)
 {
@@ -88,4 +164,30 @@ void TC_iot_crypto_pk_free(void **state)
 	iot_crypto_pk_free(&context);
 	// Then
 	assert_ptr_not_equal(context.info, &pk_info);
+}
+
+void TC_iot_crypto_pk_ed25519_success(void **state)
+{
+	iot_error_t err;
+	iot_crypto_pk_context_t *context;
+	unsigned char *buf;
+	unsigned char sig[IOT_CRYPTO_SIGNATURE_LEN];
+	size_t buf_len;
+	size_t sig_len;
+	int i;
+
+	context = (iot_crypto_pk_context_t *)*state;
+	assert_non_null(context);
+	// Given
+	buf_len = 256;
+	buf = (unsigned char *)malloc(buf_len);
+	assert_non_null(buf);
+	for (i = 0; i < buf_len; i++) {
+		buf[i] = (unsigned char)(iot_bsp_random() & 0xff);
+	}
+	// When
+	err = iot_crypto_pk_sign(context, buf, buf_len, sig, &sig_len);
+	// Then
+	assert_int_equal(err, IOT_ERROR_NONE);
+	// TODO: need to check sig_len is equal to IOT_CRYPTO_SIGNATURE_LEN
 }
