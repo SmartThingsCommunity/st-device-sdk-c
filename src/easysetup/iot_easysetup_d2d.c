@@ -189,6 +189,9 @@ iot_error_t _es_deviceinfo_handler(struct iot_context *ctx, char **out_payload)
 	size_t encode_buf_len = 0;
 	unsigned char *encode_buf = NULL;
 
+	if (!ctx)
+	    return IOT_ERROR_INVALID_ARGS;
+
 	root = cJSON_CreateObject();
 	if (!root) {
 		IOT_ERROR("json create failed");
