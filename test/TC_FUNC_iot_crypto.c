@@ -26,66 +26,66 @@
 
 void TC_iot_crypto_pk_init_null_parameter(void **state)
 {
-    iot_error_t err;
-    iot_crypto_pk_context_t context;
-    UNUSED(state);
+	iot_error_t err;
+	iot_crypto_pk_context_t context;
+	UNUSED(state);
 
-    // When: Null parameters
-    err = iot_crypto_pk_init(NULL, NULL);
-    // Then: Should return error
-    assert_int_not_equal(err, IOT_ERROR_NONE);
+	// When: Null parameters
+	err = iot_crypto_pk_init(NULL, NULL);
+	// Then: Should return error
+	assert_int_not_equal(err, IOT_ERROR_NONE);
 
-    // When: Null info
-    err = iot_crypto_pk_init(&context, NULL);
-    // Then: Should return error
-    assert_int_not_equal(err, IOT_ERROR_NONE);
+	// When: Null info
+	err = iot_crypto_pk_init(&context, NULL);
+	// Then: Should return error
+	assert_int_not_equal(err, IOT_ERROR_NONE);
 }
 
 void TC_iot_crypto_pk_init_ed25519(void **state)
 {
-    iot_error_t err;
-    iot_crypto_pk_context_t context;
-    iot_crypto_pk_info_t pk_info;
-    UNUSED(state);
+	iot_error_t err;
+	iot_crypto_pk_context_t context;
+	iot_crypto_pk_info_t pk_info;
+	UNUSED(state);
 
-    //Given
-    memset(&pk_info, '\0', sizeof(iot_crypto_pk_info_t));
-    pk_info.type = IOT_CRYPTO_PK_ED25519;
+	//Given
+	memset(&pk_info, '\0', sizeof(iot_crypto_pk_info_t));
+	pk_info.type = IOT_CRYPTO_PK_ED25519;
 
-    // When
-    err = iot_crypto_pk_init(&context, &pk_info);
-    // Then
-    assert_int_equal(err, IOT_ERROR_NONE);
-    assert_memory_equal(context.info, &pk_info, sizeof(iot_crypto_pk_info_t));
+	// When
+	err = iot_crypto_pk_init(&context, &pk_info);
+	// Then
+	assert_int_equal(err, IOT_ERROR_NONE);
+	assert_memory_equal(context.info, &pk_info, sizeof(iot_crypto_pk_info_t));
 }
 
 void TC_iot_crypto_pk_init_invalid_type(void **state)
 {
-    iot_error_t err;
-    iot_crypto_pk_context_t context;
-    iot_crypto_pk_info_t pk_info;
-    UNUSED(state);
+	iot_error_t err;
+	iot_crypto_pk_context_t context;
+	iot_crypto_pk_info_t pk_info;
+	UNUSED(state);
 
-    //Given
-    memset(&pk_info, '\0', sizeof(iot_crypto_pk_info_t));
-    pk_info.type = 0x77;
+	//Given
+	memset(&pk_info, '\0', sizeof(iot_crypto_pk_info_t));
+	pk_info.type = 0x77;
 
-    // When
-    err = iot_crypto_pk_init(&context, &pk_info);
-    // Then
-    assert_int_not_equal(err, IOT_ERROR_NONE);
+	// When
+	err = iot_crypto_pk_init(&context, &pk_info);
+	// Then
+	assert_int_not_equal(err, IOT_ERROR_NONE);
 }
 
 void TC_iot_crypto_pk_free(void **state)
 {
-    iot_crypto_pk_context_t context;
-    iot_crypto_pk_info_t pk_info;
-    UNUSED(state);
+	iot_crypto_pk_context_t context;
+	iot_crypto_pk_info_t pk_info;
+	UNUSED(state);
 
-    // Given: set pk_info
-    context.info = &pk_info;
-    // When
-    iot_crypto_pk_free(&context);
-    // Then
-    assert_ptr_not_equal(context.info, &pk_info);
+	// Given: set pk_info
+	context.info = &pk_info;
+	// When
+	iot_crypto_pk_free(&context);
+	// Then
+	assert_ptr_not_equal(context.info, &pk_info);
 }
