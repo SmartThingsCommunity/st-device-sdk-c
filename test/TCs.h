@@ -85,11 +85,13 @@ void TC_iot_es_crypto_load_pk_invalid_parameters(void **state);
 void TC_iot_es_crypto_init_pk(void **state);
 
 // TCs for iot_easysetup_d2d.c
-int TC_iot_easysetup_create_ssid_setup(void **state);
-int TC_iot_easysetup_create_ssid_teardown(void **state);
+int TC_iot_easysetup_d2d_setup(void **state);
+int TC_iot_easysetup_d2d_teardown(void **state);
 void TC_iot_easysetup_create_ssid_null_parameters(void **state);
 void TC_iot_easysetup_create_ssid_success(void **state);
 void TC_iot_easysetup_request_handler_null_parameters(void **state);
+void TC_STATIC_es_deviceinfo_handler_null_parameter(void **state);
+void TC_STATIC_es_deviceinfo_handler_success(void **state);
 
 // TCs for easysetup d2d
 int TC_easysetup_d2d_setup(void **state);
