@@ -190,4 +190,9 @@ void TC_iot_crypto_pk_ed25519_success(void **state)
 	// Then
 	assert_int_equal(err, IOT_ERROR_NONE);
 	// TODO: need to check sig_len is equal to IOT_CRYPTO_SIGNATURE_LEN
+
+	// When
+	err = iot_crypto_pk_verify(context, buf, buf_len, sig, sig_len);
+	// Then
+	assert_int_equal(err, IOT_ERROR_NONE);
 }
