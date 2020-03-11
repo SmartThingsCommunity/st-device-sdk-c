@@ -205,6 +205,11 @@ void TC_STATIC_es_deviceinfo_handler_success(void **state)
     // Then
     assert_int_equal(err, IOT_ERROR_NONE);
     assert_deviceinfo(out_payload, TEST_FIRMWARE_VERSION, sample_hashed_sn);
+
+    // Local teardown
+    if (out_payload) {
+        free(out_payload);
+    }
 }
 
 void assert_deviceinfo(char *payload, char *expected_firmware_version, char *expected_hashed_sn)
