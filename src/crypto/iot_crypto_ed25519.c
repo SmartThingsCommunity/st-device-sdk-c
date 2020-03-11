@@ -175,9 +175,43 @@ static iot_error_t _iot_crypto_pk_ed25519_sign(iot_crypto_pk_context_t *ctx,
 	return IOT_ERROR_NONE;
 }
 
+#if defined(CONFIG_STDK_IOT_CORE_CRYPTO_SUPPORT_VERIFY)
+static iot_error_t _iot_crypto_pk_ed25519_verify(iot_crypto_pk_context_t *ctx,
+                                          unsigned char *input, size_t ilen,
+                                          unsigned char *sig, size_t slen)
+{
+	int ret;
+
+	IOT_DEBUG("input: %d@%p", ilen, input);
+	IOT_DEBUG("sig: %d@%p", slen, sig);
+	IOT_DEBUG("pubkey: %d@%p", ctx->info->pubkey_len, ctx->info->pubkey);
+
+	if (ctx->info->pubkey_len != crypto_sign_PUBLICKEYBYTES) {
+		IOT_ERROR("pubkey len (%d) is not '%d'\n",
+				ctx->info->pubkey_len,
+				crypto_sign_PUBLICKEYBYTES);
+		return IOT_ERROR_CRYPTO_PK_INVALID_KEYLEN;
+	}
+
+	ret = crypto_sign_verify_detached(sig, input, ilen, ctx->info->pubkey);
+	if (ret) {
+		IOT_ERROR("crypto_sign_verify_detached = %d\n", ret);
+		return IOT_ERROR_CRYPTO_PK_VERIFY;
+	}
+
+	IOT_DEBUG("sign verify success");
+
+	return IOT_ERROR_NONE;
+}
+#endif
+
 const iot_crypto_pk_funcs_t iot_crypto_pk_ed25519_funcs = {
 	.name = "ED25519",
 	.sign = _iot_crypto_pk_ed25519_sign,
+#if defined(CONFIG_STDK_IOT_CORE_CRYPTO_SUPPORT_VERIFY)
+	.verify = _iot_crypto_pk_ed25519_verify,
+#else
 	.verify = NULL,
+#endif
 };
 #endif

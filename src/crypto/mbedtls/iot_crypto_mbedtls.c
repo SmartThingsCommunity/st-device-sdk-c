@@ -281,10 +281,69 @@ exit:
 	return err;
 }
 
+#if defined(CONFIG_STDK_IOT_CORE_CRYPTO_SUPPORT_VERIFY)
+static iot_error_t _iot_crypto_pk_rsa_verify(iot_crypto_pk_context_t *ctx,
+                                          unsigned char *input, size_t ilen,
+                                          unsigned char *sig, size_t slen)
+{
+	iot_error_t err = IOT_ERROR_NONE;
+	mbedtls_pk_context pk;
+	mbedtls_md_type_t md_alg;
+	unsigned char *hash = NULL;
+	size_t hash_len;
+	int ret;
+
+	IOT_DEBUG("input: %d@%p, key: %d@%p", ilen, input,
+				ctx->info->seckey_len, ctx->info->seckey);
+
+	mbedtls_pk_init(&pk);
+
+	ret = mbedtls_pk_parse_key(&pk, (const unsigned char *)ctx->info->seckey,
+					ctx->info->seckey_len + 1, NULL, 0);
+	if (ret) {
+		IOT_ERROR("mbedtls_pk_parse_key = 0x%04X\n", ret);
+		err = IOT_ERROR_CRYPTO_PK_PARSEKEY;
+		goto exit;
+	}
+
+	md_alg = MBEDTLS_MD_SHA256;
+	hash_len = IOT_CRYPTO_SHA256_LEN;
+	hash = (unsigned char *)malloc(hash_len);
+
+	err = iot_crypto_sha256(input, ilen, hash);
+	if (err) {
+		goto exit;
+	}
+
+	IOT_DEBUG("hash: %d@%p", hash_len, hash);
+
+	ret = mbedtls_pk_verify(&pk, md_alg, hash, hash_len, sig, slen);
+	if (ret) {
+		IOT_ERROR("mbedtls_pk_verify = 0x%04X\n", ret);
+		err = IOT_ERROR_CRYPTO_PK_VERIFY;
+		goto exit;
+	}
+
+	IOT_DEBUG("sign verify success");
+exit:
+	mbedtls_pk_free(&pk);
+
+	if (hash) {
+		free(hash);
+	}
+
+	return err;
+}
+#endif
+
 const iot_crypto_pk_funcs_t iot_crypto_pk_rsa_funcs = {
 	.name = "RSA",
 	.sign = _iot_crypto_pk_rsa_sign,
+#if defined(CONFIG_STDK_IOT_CORE_CRYPTO_SUPPORT_VERIFY)
+	.verify = _iot_crypto_pk_rsa_verify,
+#else
 	.verify = NULL,
+#endif
 };
 #endif
 
