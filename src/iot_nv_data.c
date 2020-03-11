@@ -37,14 +37,14 @@
 
 #if !defined(CONFIG_STDK_IOT_CORE_SUPPORT_STNV_PARTITION)
 static unsigned char *device_nv_info;
-static unsigned int device_nv_info_len;
+static size_t device_nv_info_len;
 static const char name_privateKey[] = "privateKey";
 static const char name_publicKey[] = "publicKey";
 static const char name_subCert[] = "subCert";
 static const char name_serialNumber[] = "serialNumber";
 #endif
 
-iot_error_t _iot_nv_read_data(const char* path, char* data, unsigned int size)
+iot_error_t _iot_nv_read_data(const char* path, char* data, size_t size)
 {
 	iot_error_t ret;
 	iot_bsp_fs_handle_t handle;
@@ -100,7 +100,7 @@ iot_error_t _iot_nv_read_data_from_stnv(const char* path, char* data, unsigned i
 }
 #endif
 
-iot_error_t _iot_nv_write_data(const char* path, const char* data, unsigned int size)
+iot_error_t _iot_nv_write_data(const char* path, const char* data, size_t size)
 {
 	iot_error_t ret;
 	iot_bsp_fs_handle_t handle;
@@ -121,7 +121,7 @@ iot_error_t _iot_nv_write_data(const char* path, const char* data, unsigned int 
 	return ret;
 }
 
-iot_error_t iot_nv_init(unsigned char *device_info, unsigned int device_info_len)
+iot_error_t iot_nv_init(unsigned char *device_info, size_t device_info_len)
 {
 	HIT();
 	iot_error_t ret = iot_bsp_fs_init();
@@ -720,7 +720,7 @@ exit:
 	return ret;
 }
 
-iot_error_t iot_nv_get_private_key(char** key, unsigned int* len)
+iot_error_t iot_nv_get_private_key(char** key, size_t* len)
 {
 	HIT();
 	IOT_WARN_CHECK((key == NULL || len == NULL), IOT_ERROR_INVALID_ARGS, "Invalid args 'NULL'");
@@ -797,7 +797,7 @@ exit:
 #endif
 }
 
-iot_error_t iot_nv_get_public_key(char** key, unsigned int* len)
+iot_error_t iot_nv_get_public_key(char** key, size_t* len)
 {
 	HIT();
 	IOT_WARN_CHECK((key == NULL || len == NULL), IOT_ERROR_INVALID_ARGS, "Invalid args 'NULL'");
@@ -874,7 +874,7 @@ exit:
 #endif
 }
 
-iot_error_t iot_nv_get_root_certificate(char** cert, unsigned int* len)
+iot_error_t iot_nv_get_root_certificate(char** cert, size_t* len)
 {
 	HIT();
 	IOT_WARN_CHECK((cert == NULL || len == NULL), IOT_ERROR_INVALID_ARGS, "Invalid args 'NULL'");
@@ -897,7 +897,7 @@ iot_error_t iot_nv_get_root_certificate(char** cert, unsigned int* len)
 
 }
 
-iot_error_t iot_nv_get_client_certificate(char** cert, unsigned int* len)
+iot_error_t iot_nv_get_client_certificate(char** cert, size_t* len)
 {
 	HIT();
 	IOT_WARN_CHECK((cert == NULL || len == NULL), IOT_ERROR_INVALID_ARGS, "Invalid args 'NULL'");
@@ -974,7 +974,7 @@ exit:
 #endif
 }
 
-iot_error_t iot_nv_get_device_id(char** device_id, unsigned int* len)
+iot_error_t iot_nv_get_device_id(char** device_id, size_t* len)
 {
 	HIT();
 	IOT_WARN_CHECK((device_id == NULL || len == NULL), IOT_ERROR_INVALID_ARGS, "Invalid args 'NULL'");
@@ -1034,7 +1034,7 @@ iot_error_t iot_nv_set_device_id(const char* device_id)
 	return ret;
 }
 
-iot_error_t iot_nv_get_serial_number(char** sn, unsigned int* len)
+iot_error_t iot_nv_get_serial_number(char** sn, size_t* len)
 {
 	HIT();
 	IOT_WARN_CHECK((sn == NULL || len == NULL), IOT_ERROR_INVALID_ARGS, "Invalid args 'NULL'");

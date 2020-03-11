@@ -79,7 +79,7 @@ typedef enum {
  *
  * @see iot_bsp_fs_init
  */
-iot_error_t iot_nv_init(unsigned char *device_info, unsigned int device_info_len);
+iot_error_t iot_nv_init(unsigned char *device_info, size_t device_info_len);
 
 /**
  * @brief Deinitialize a nv file-system.
@@ -183,7 +183,7 @@ iot_error_t iot_nv_set_cloud_prov_data(struct iot_cloud_prov_data* cloud_prov);
  *
  * @warning The caller is always responsible to free the allocated pointer after using the data.
  */
-iot_error_t iot_nv_get_private_key(char** key, unsigned int* len);
+iot_error_t iot_nv_get_private_key(char** key, size_t* len);
 
 /**
  * @brief Get a public key from the nv file-system.
@@ -196,7 +196,7 @@ iot_error_t iot_nv_get_private_key(char** key, unsigned int* len);
  *
  * @warning The caller is always responsible to free the allocated pointer after using the data.
  */
-iot_error_t iot_nv_get_public_key(char** key, unsigned int* len);
+iot_error_t iot_nv_get_public_key(char** key, size_t* len);
 
 /**
  * @brief Get a root cert from the nv file-system.
@@ -209,7 +209,7 @@ iot_error_t iot_nv_get_public_key(char** key, unsigned int* len);
  *
  * @warning The caller is always responsible to free the allocated pointer after using the data.
  */
-iot_error_t iot_nv_get_root_certificate(char** cert, unsigned int* len);
+iot_error_t iot_nv_get_root_certificate(char** cert, size_t* len);
 
 /**
  * @brief Get a client cert from the nv file-system.
@@ -222,7 +222,7 @@ iot_error_t iot_nv_get_root_certificate(char** cert, unsigned int* len);
  *
  * @warning The caller is always responsible to free the allocated pointer after using the data.
  */
-iot_error_t iot_nv_get_client_certificate(char** cert, unsigned int* len);
+iot_error_t iot_nv_get_client_certificate(char** cert, size_t* len);
 
 /**
  * @brief Get a device id from the nv file-system.
@@ -235,7 +235,7 @@ iot_error_t iot_nv_get_client_certificate(char** cert, unsigned int* len);
  *
  * @warning The caller is always responsible to free the allocated pointer after using the data.
  */
-iot_error_t iot_nv_get_device_id(char** device_id, unsigned int* len);
+iot_error_t iot_nv_get_device_id(char** device_id, size_t* len);
 
 /**
  * @brief Set a device id to the nv file-system.
@@ -258,7 +258,7 @@ iot_error_t iot_nv_set_device_id(const char* device_id);
  *
  * @warning The caller is always responsible to free the allocated pointer after using the data.
  */
-iot_error_t iot_nv_get_serial_number(char** sn, unsigned int* len);
+iot_error_t iot_nv_get_serial_number(char** sn, size_t* len);
 
 /**
  * @brief Erase a nv data.
