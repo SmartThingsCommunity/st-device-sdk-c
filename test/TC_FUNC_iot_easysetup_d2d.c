@@ -207,9 +207,7 @@ void TC_STATIC_es_deviceinfo_handler_success(void **state)
     assert_deviceinfo(out_payload, TEST_FIRMWARE_VERSION, sample_hashed_sn);
 
     // Local teardown
-    if (out_payload) {
-        free(out_payload);
-    }
+    free(out_payload);
 }
 
 void assert_deviceinfo(char *payload, char *expected_firmware_version, char *expected_hashed_sn)
@@ -231,4 +229,76 @@ void assert_deviceinfo(char *payload, char *expected_firmware_version, char *exp
     assert_true(strlen(cJSON_GetStringValue(item)) > 4);
 
     cJSON_Delete(root);
+}
+
+// Static function declare for test
+extern iot_error_t _es_keyinfo_handler(struct iot_context *ctx, char *in_payload, char **out_payload);
+extern iot_error_t _es_crypto_cipher_gen_iv(iot_crypto_cipher_info_t *iv_info);
+
+char* _create_post_keyinfo_payload(void);
+void assert_keyinfo(char *payload);
+
+void TC_STATIC_es_keyinfo_handler_success(void **state)
+{
+    iot_error_t err;
+    char *out_payload = NULL;
+    char *in_payload = NULL;
+    struct iot_context *context;
+
+    // Given
+    context = (struct iot_context *)*state;
+    err = _es_crypto_cipher_gen_iv(context->es_crypto_cipher_info);
+    assert_int_equal(err, IOT_ERROR_NONE);
+    in_payload = _create_post_keyinfo_payload();
+    // When
+    err = _es_keyinfo_handler(context, in_payload, &out_payload);
+    // Then
+    assert_int_equal(err, IOT_ERROR_NONE);
+    assert_non_null(out_payload);
+    assert_keyinfo(out_payload);
+
+    // Local teardown
+    free(out_payload);
+    free(in_payload);
+}
+
+#define TEST_SERVER_PUBLIC_B64URL_KEY "-NOQ46BofjUn5f8OQ34Knwg3h7ByLMtlIQc3wQew-Ag="
+#define TEST_SERVER_PRIVATE_B64URL_KEY "7BVH45ba3HSubazIky5IzV2COWAdiGjw63d1TQsEOIA="
+#define TEST_SRAND "OTI0NTU3YjQ5OTRjNmRiN2UxOTAzMzAwYzc1ZmRlMmFmNTYwMDJiYmZhOWQzMGZjZGMwZWJiMDYwYWZlOWIxZg=="
+
+char* _create_post_keyinfo_payload(void)
+{
+    char *post_message;
+    cJSON *root = NULL;
+
+    root = cJSON_CreateObject();
+    assert_non_null(root);
+    cJSON_AddItemToObject(root, "spub", cJSON_CreateString(TEST_SERVER_PUBLIC_B64URL_KEY));
+    cJSON_AddItemToObject(root, "rand", cJSON_CreateString(TEST_SRAND));
+    post_message = cJSON_PrintUnformatted(root);
+    cJSON_Delete(root);
+
+    return post_message;
+}
+
+void assert_keyinfo(char *payload)
+{
+    cJSON *root = NULL;
+    cJSON *item = NULL;
+    cJSON *error_message = NULL;
+    char *b64url_aes256_message = NULL;
+
+    assert_non_null(payload);
+
+    root = cJSON_Parse(payload);
+    assert_non_null(root);
+    error_message = cJSON_GetObjectItem(root, "error");
+    assert_null(error_message);
+
+    item = cJSON_GetObjectItem(root, "message");
+    assert_non_null(item);
+    b64url_aes256_message = cJSON_GetStringValue(item);
+    assert_true(strlen(b64url_aes256_message) > 10);
+
+    // TODO: decode & decrypt & validate values
 }
