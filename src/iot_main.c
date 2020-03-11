@@ -332,7 +332,7 @@ static iot_error_t _do_iot_main_command(struct iot_context *ctx,
 	int state_opt = IOT_STATE_OPT_NONE;
 	iot_wifi_conf *conf = NULL;
 	char *usr_id = NULL;
-	unsigned int str_len;
+	size_t str_len;
 	struct iot_state_data *state_data;
 	unsigned int needed_tout = 0;
 	iot_noti_data_t *noti = NULL;

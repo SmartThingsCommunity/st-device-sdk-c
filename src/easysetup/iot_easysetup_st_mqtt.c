@@ -434,7 +434,7 @@ iot_error_t _iot_es_mqtt_connect(struct iot_context *ctx, st_mqtt_client target_
 	char *client_id = NULL;
 	struct iot_cloud_prov_data *cloud_prov;
 	char *root_cert = NULL;
-	unsigned int root_cert_len;
+	size_t root_cert_len;
 
 	/* Use mac based random client_id for GreatGate */
 	iot_ret = iot_random_uuid_from_mac(&iot_uuid);
@@ -546,7 +546,7 @@ iot_error_t iot_es_connect(struct iot_context *ctx, int conn_type)
 {
 	st_mqtt_client mqtt_cli = NULL;
 	char *dev_sn = NULL;
-	unsigned int devsn_len;
+	size_t devsn_len;
 	char *wt_data = NULL;
 	struct iot_crypto_pk_info pk_info = { 0, };
 	char *topicfilter = NULL;

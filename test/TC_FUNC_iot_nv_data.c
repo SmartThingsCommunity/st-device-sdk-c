@@ -61,7 +61,7 @@ void TC_iot_nv_get_root_certificate_success(void **state)
 {
     iot_error_t err;
     char *root_cert = NULL;
-    unsigned int root_cert_len = 0;
+    size_t root_cert_len = 0;
 
     // When
     err = iot_nv_get_root_certificate(&root_cert, &root_cert_len);
@@ -78,7 +78,7 @@ void TC_iot_nv_get_root_certificate_null_parameters(void **state)
 {
     iot_error_t err;
     char *root_cert = NULL;
-    unsigned int root_cert_len = 0;
+    size_t root_cert_len = 0;
 
     // When: All null parameters
     err = iot_nv_get_root_certificate(NULL, NULL);
@@ -102,7 +102,7 @@ void TC_iot_nv_get_root_certificate_internal_failure(void **state)
 {
     iot_error_t err;
     char *root_cert = NULL;
-    unsigned int root_cert_len = 0;
+    size_t root_cert_len = 0;
 
     // Given: malloc failed
     set_mock_iot_os_malloc_failure();
@@ -119,7 +119,7 @@ void TC_iot_nv_get_public_key_success(void **state)
 {
     iot_error_t err;
     char *public_key = NULL;
-    unsigned int public_key_len = 0;
+    size_t public_key_len = 0;
     const char *sample_public_key = "BKb7+m1Mo8OuMsodM91ohz/+rZKDc/otzUPSn4UkCUk=";
 
     // When
@@ -137,7 +137,7 @@ void TC_iot_nv_get_public_key_null_parameters(void **state)
 {
     iot_error_t err;
     char *public_key = NULL;
-    unsigned int public_key_len = 0;
+    size_t public_key_len = 0;
 
     // When: All parameters null
     err = iot_nv_get_public_key(NULL, NULL);
@@ -162,7 +162,7 @@ void TC_iot_nv_get_serial_number_success(void **state)
 {
     iot_error_t err;
     char *serial_number = NULL;
-    unsigned int serial_number_len = 0;
+    size_t serial_number_len = 0;
     const char *sample_serial_number = "STDKtESt7968d226";
 
     // When
@@ -180,7 +180,7 @@ void TC_iot_nv_get_serial_number_null_parameters(void **state)
 {
     iot_error_t err;
     char *serial_number = NULL;
-    unsigned int serial_number_len = 0;
+    size_t serial_number_len = 0;
 
     // When: All parameters null
     err = iot_nv_get_serial_number(NULL, NULL);

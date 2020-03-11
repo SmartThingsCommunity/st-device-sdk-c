@@ -116,7 +116,7 @@ iot_error_t iot_easysetup_create_ssid(struct iot_devconf_prov_data *devconf, cha
 	char ssid_build[33] = { 0, };
 	unsigned char last_sn[HASH_SIZE + 1] = { 0,};
 	unsigned char hashed_sn[HASH_SIZE + 1] = { 0,};
-	unsigned int length;
+	size_t length;
 	int i;
 	iot_error_t err = IOT_ERROR_NONE;
 
@@ -608,7 +608,7 @@ static iot_error_t _es_confirm_check_manager(struct iot_context *ctx, enum owner
 {
 	char *dev_sn = NULL;
 	unsigned int curr_event = 0;
-	unsigned int devsn_len;
+	size_t devsn_len;
 	iot_error_t err = IOT_ERROR_NONE;
 
 	iot_os_eventgroup_clear_bits(ctx->iot_events, IOT_EVENT_BIT_EASYSETUP_CONFIRM);

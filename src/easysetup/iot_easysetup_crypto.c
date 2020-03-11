@@ -58,8 +58,7 @@ static iot_error_t _iot_es_pk_load_ed25519(iot_crypto_pk_info_t *pk_info)
 	size_t seckey_len = IOT_CRYPTO_ED25519_LEN;
 	size_t pubkey_len = IOT_CRYPTO_ED25519_LEN;
 
-	err = iot_nv_get_private_key((char **)&seckey_b64,
-				(unsigned int *)&seckey_b64_len);
+	err = iot_nv_get_private_key((char **)&seckey_b64, &seckey_b64_len);
 	if (err) {
 		IOT_ERROR("failed to load seckey, ret = %d", err);
 		goto exit_failed;
@@ -78,8 +77,7 @@ static iot_error_t _iot_es_pk_load_ed25519(iot_crypto_pk_info_t *pk_info)
 		goto exit_failed;
 	}
 
-	err = iot_nv_get_public_key((char **)&pubkey_b64,
-				(unsigned int *)&pubkey_b64_len);
+	err = iot_nv_get_public_key((char **)&pubkey_b64, &pubkey_b64_len);
 	if (err) {
 		IOT_ERROR("failed to load pukey, ret = %d", err);
 		goto exit_failed;
