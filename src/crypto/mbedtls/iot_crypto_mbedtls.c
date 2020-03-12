@@ -586,6 +586,21 @@ iot_error_t iot_crypto_cipher_aes(iot_crypto_cipher_info_t *info,
 	mbedtls_operation_t mode = MBEDTLS_ENCRYPT;
 	int ret;
 
+	if (!info) {
+		IOT_ERROR("cipher info is null");
+		return IOT_ERROR_INVALID_ARGS;
+	}
+
+	if (!input || !out || !olen) {
+		IOT_ERROR("buffer is null");
+		return IOT_ERROR_INVALID_ARGS;
+	}
+
+	if ((ilen == 0) || (osize == 0)) {
+		IOT_ERROR("buffer length is zero");
+		return IOT_ERROR_INVALID_ARGS;
+	}
+
 	IOT_DEBUG("input: %d@%p", ilen, input);
 	IOT_DEBUG("key:   %d@%p", info->key_len, info->key);
 	IOT_DEBUG("iv:    %d@%p", info->iv_len, info->iv);
