@@ -756,7 +756,7 @@ static iot_error_t _es_confirminfo_handler(struct iot_context *ctx, char *in_pay
 
 	IOT_INFO("otmSupportFeature = %d", recv->valueint);
 
-	if ((recv->valueint >= OVF_BIT_JUSTWORKS) || (recv->valueint < OVF_BIT_MAX_FEATURE)) {
+	if ((recv->valueint >= OVF_BIT_JUSTWORKS) && (recv->valueint < OVF_BIT_MAX_FEATURE)) {
 		char *sn = NULL;
 
 		if (recv->valueint == OVF_BIT_QR)

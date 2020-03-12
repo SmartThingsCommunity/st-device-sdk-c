@@ -26,9 +26,14 @@ extern "C" {
 enum cgi_type {
 	GET= 0,
 	POST,
+	ERROR,
 };
 
-int http_open_custom(const char *name, char **buf, char *payload, enum cgi_type type);
+void http_packet_handle(const char *name, char **buf, char *payload, enum cgi_type type);
+
+void es_tcp_init(void);
+
+void es_tcp_deinit(void);
 
 #ifdef __cplusplus
 }
