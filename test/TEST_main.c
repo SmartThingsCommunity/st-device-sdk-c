@@ -66,6 +66,8 @@ int TEST_FUNC_iot_crypto(void)
             cmocka_unit_test(TC_iot_crypto_pk_init_invalid_type),
             cmocka_unit_test(TC_iot_crypto_pk_free),
             cmocka_unit_test_setup_teardown(TC_iot_crypto_pk_ed25519_success, TC_iot_crypto_pk_setup, TC_iot_crypto_pk_teardown),
+            cmocka_unit_test_setup_teardown(TC_iot_crypto_cipher_aes_null_parameter, TC_iot_crypto_cipher_aes_setup, TC_iot_crypto_cipher_aes_teardown),
+            cmocka_unit_test_setup_teardown(TC_iot_crypto_cipher_aes_success, TC_iot_crypto_cipher_aes_setup, TC_iot_crypto_cipher_aes_teardown),
     };
     return cmocka_run_group_tests_name("iot_crypto.c", tests, NULL, NULL);
 }
