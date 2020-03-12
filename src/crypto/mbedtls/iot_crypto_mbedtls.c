@@ -636,6 +636,11 @@ iot_error_t iot_crypto_cipher_aes(iot_crypto_cipher_info_t *info,
 			IOT_ERROR("output buffer size is not sufficient");
 			return IOT_ERROR_CRYPTO_CIPHER_OUTSIZE;
 		}
+	} else if (info->mode == IOT_CRYPTO_CIPHER_DECRYPT) {
+		if (osize < ilen) {
+			IOT_ERROR("output buffer size is not sufficient");
+			return IOT_ERROR_CRYPTO_CIPHER_OUTSIZE;
+		}
 	}
 
 	cipher_info = mbedtls_cipher_info_from_type(cipher_alg);
