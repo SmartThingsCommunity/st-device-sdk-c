@@ -59,6 +59,10 @@ void TC_st_cap_attr_create_number_null_attribute(void **state);
 void TC_st_cap_attr_create_number_null_unit(void **state);
 void TC_st_cap_attr_create_number_with_unit(void **state);
 void TC_st_cap_attr_create_number_internal_failure(void **state);
+void TC_st_cap_attr_create_string_null_unit(void **state);
+void TC_st_cap_attr_create_string_with_unit(void **state);
+void TC_st_cap_attr_create_string_internal_failure(void **state);
+void TC_st_cap_attr_create_string_null_parameters(void **state);
 
 // TCs for iot_crypto.c
 int TC_iot_crypto_pk_setup(void **state);

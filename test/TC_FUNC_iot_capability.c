@@ -97,6 +97,7 @@ void TC_st_cap_attr_create_int_internal_failure(void **state)
     event = st_cap_attr_create_int("temperature", 10, "C");
     // Then: return null
     assert_null(event);
+    *state = NULL;
 }
 
 void TC_st_cap_attr_create_number_null_attribute(void **state)
@@ -161,4 +162,81 @@ void TC_st_cap_attr_create_number_internal_failure(void **state)
     event = st_cap_attr_create_number("bodyWeightMeasurement", 56.7, "kg");
     // Then: return null
     assert_null(event);
+
+    *state = NULL;
+}
+
+void TC_st_cap_attr_create_string_null_unit(void **state)
+{
+    IOT_EVENT* event;
+    iot_cap_evt_data_t* event_data = NULL;
+
+    // When: unit is null
+    event = st_cap_attr_create_string("powerSource", "battery", NULL);
+    // Then: return proper event data with unit type string
+    event_data = (iot_cap_evt_data_t*) event;
+    assert_int_equal(event_data->evt_unit.type, IOT_CAP_UNIT_TYPE_UNUSED);
+    assert_int_equal(event_data->evt_value.type, IOT_CAP_VAL_TYPE_STRING);
+    assert_string_equal(event_data->evt_value.string, "battery");
+    assert_string_equal(event_data->evt_type, "powerSource");
+
+    *state = event_data;
+}
+
+void TC_st_cap_attr_create_string_with_unit(void **state)
+{
+    IOT_EVENT* event;
+    iot_cap_evt_data_t* event_data = NULL;
+
+    // When: unit is null
+    event = st_cap_attr_create_string("fakeAttribute", "fakeValue", "fakeUnit");
+    // Then: return proper event data with unit type string
+    event_data = (iot_cap_evt_data_t*) event;
+    assert_int_equal(event_data->evt_unit.type, IOT_CAP_UNIT_TYPE_STRING);
+    assert_string_equal(event_data->evt_unit.string, "fakeUnit");
+    assert_int_equal(event_data->evt_value.type, IOT_CAP_VAL_TYPE_STRING);
+    assert_string_equal(event_data->evt_value.string, "fakeValue");
+    assert_string_equal(event_data->evt_type, "fakeAttribute");
+
+    *state = event_data;
+}
+
+void TC_st_cap_attr_create_string_internal_failure(void **state)
+{
+    IOT_EVENT* event;
+
+    // Given: malloc will fail
+    set_mock_iot_os_malloc_failure();
+    // When
+    event = st_cap_attr_create_string("fakeAttribute", "fakeValue", "fakeUnit");
+    // Then: return null
+    assert_null(event);
+    *state = NULL;
+}
+
+void TC_st_cap_attr_create_string_null_parameters(void **state)
+{
+    IOT_EVENT* event;
+
+    // When: all null parameters
+    event = st_cap_attr_create_string(NULL, "fakeValue", NULL);
+    // Then: return null
+    assert_null(event);
+
+    // When: attribute is null
+    event = st_cap_attr_create_string(NULL, "fakeValue", "fakeUnit");
+    // Then: return null
+    assert_null(event);
+
+    // When: value is null
+    event = st_cap_attr_create_string("fakeAttribute", NULL, "fakeUnit");
+    // Then: return null
+    assert_null(event);
+
+    // When: all null
+    event = st_cap_attr_create_string(NULL, NULL, NULL);
+    // Then: return null
+    assert_null(event);
+
+    *state = NULL;
 }
