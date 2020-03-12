@@ -285,6 +285,94 @@ void TC_iot_crypto_cipher_aes_null_parameter(void **state)
 	assert_int_not_equal(err, IOT_ERROR_NONE);
 }
 
+void TC_iot_crypto_cipher_aes_invalid_parameter(void **state)
+{
+	iot_error_t err;
+	iot_crypto_cipher_info_t *cipher_info;
+	unsigned char *plain;
+	unsigned char *encrypt;
+	unsigned char *decrypt;
+	size_t plain_len = 256;
+	size_t encrypt_len;
+	size_t required_len;
+	size_t olen;
+	int i;
+
+	cipher_info = (iot_crypto_cipher_info_t *)*state;
+	assert_non_null(cipher_info);
+
+	// buffer for plain
+	plain = (unsigned char *)malloc(plain_len);
+	assert_non_null(plain);
+	for (i = 0; i < plain_len; i++) {
+		plain[i] = (unsigned char)(iot_bsp_random() & 0xff);
+	}
+	// buffer for encryption
+	required_len = iot_crypto_cipher_get_align_size(cipher_info->type, plain_len);
+	encrypt = (unsigned char *)malloc(required_len);
+	assert_non_null(encrypt);
+	// buffer for decryption
+	decrypt = (unsigned char *)malloc(required_len);
+	assert_non_null(decrypt);
+
+	// Given
+	cipher_info->type = -1;
+	// When
+	err = iot_crypto_cipher_aes(cipher_info, plain, plain_len, encrypt, &olen, required_len);
+	// Then
+	assert_int_equal(err, IOT_ERROR_CRYPTO_CIPHER_UNKNOWN_TYPE);
+	// Local teardown
+	cipher_info->type = IOT_CRYPTO_CIPHER_AES256;
+
+	// Given
+	cipher_info->mode = -1;
+	// When
+	err = iot_crypto_cipher_aes(cipher_info, plain, plain_len, encrypt, &olen, required_len);
+	// Then
+	assert_int_equal(err, IOT_ERROR_CRYPTO_CIPHER_UNKNOWN_MODE);
+	// Local teardown
+	cipher_info->mode = IOT_CRYPTO_CIPHER_ENCRYPT;
+
+	// Given
+	cipher_info->key_len = 256;
+	// When
+	err = iot_crypto_cipher_aes(cipher_info, plain, plain_len, encrypt, &olen, required_len);
+	// Then
+	assert_int_equal(err, IOT_ERROR_CRYPTO_CIPHER_KEYLEN);
+	// Local teardown
+	cipher_info->key_len = IOT_CRYPTO_SECRET_LEN;
+
+	// Given
+	cipher_info->iv_len = 256;
+	// When
+	err = iot_crypto_cipher_aes(cipher_info, plain, plain_len, encrypt, &olen, required_len);
+	// Then
+	assert_int_equal(err, IOT_ERROR_CRYPTO_CIPHER_IVLEN);
+	// Local teardown
+	cipher_info->iv_len = IOT_CRYPTO_IV_LEN;
+
+	// Given
+	cipher_info->mode = IOT_CRYPTO_CIPHER_ENCRYPT;
+	required_len = plain_len;
+	// When
+	err = iot_crypto_cipher_aes(cipher_info, plain, plain_len, encrypt, &olen, required_len);
+	// Then
+	assert_int_equal(err, IOT_ERROR_CRYPTO_CIPHER_OUTSIZE);
+
+	// Given
+	cipher_info->mode = IOT_CRYPTO_CIPHER_DECRYPT;
+	encrypt_len = iot_crypto_cipher_get_align_size(cipher_info->type, plain_len);
+	required_len = plain_len;
+	// When
+	err = iot_crypto_cipher_aes(cipher_info, encrypt, encrypt_len, decrypt, &olen, required_len);
+	// Then
+	assert_int_equal(err, IOT_ERROR_CRYPTO_CIPHER_OUTSIZE);
+
+	free(decrypt);
+	free(encrypt);
+	free(plain);
+}
+
 void TC_iot_crypto_cipher_aes_success(void **state)
 {
 	iot_error_t err;

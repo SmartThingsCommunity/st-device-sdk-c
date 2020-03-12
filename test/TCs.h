@@ -71,6 +71,7 @@ void TC_iot_crypto_pk_ed25519_success(void **state);
 int TC_iot_crypto_cipher_aes_setup(void **state);
 int TC_iot_crypto_cipher_aes_teardown(void **state);
 void TC_iot_crypto_cipher_aes_null_parameter(void **state);
+void TC_iot_crypto_cipher_aes_invalid_parameter(void **state);
 void TC_iot_crypto_cipher_aes_success(void **state);
 
 // TCs for iot_nv_data.c
