@@ -131,7 +131,7 @@ iot_error_t iot_crypto_base64_decode(const unsigned char *src, size_t src_len,
 	return IOT_ERROR_NONE;
 }
 
-iot_error_t iot_crypto_base64_encode_urlsafe(unsigned char *src, size_t src_len,
+iot_error_t iot_crypto_base64_encode_urlsafe(const unsigned char *src, size_t src_len,
                                              unsigned char *dst, size_t dst_len,
                                              size_t *out_len)
 {
@@ -158,7 +158,7 @@ iot_error_t iot_crypto_base64_encode_urlsafe(unsigned char *src, size_t src_len,
 	return IOT_ERROR_NONE;
 }
 
-iot_error_t iot_crypto_base64_decode_urlsafe(unsigned char *src, size_t src_len,
+iot_error_t iot_crypto_base64_decode_urlsafe(const unsigned char *src, size_t src_len,
                                              unsigned char *dst, size_t dst_len,
                                              size_t *out_len)
 {
@@ -193,7 +193,8 @@ iot_error_t iot_crypto_base64_decode_urlsafe(unsigned char *src, size_t src_len,
 
 	IOT_DEBUG("base64 : %s (%d)", src_dup, pad_len);
 
-	ret = mbedtls_base64_decode(dst, dst_len, out_len, src_dup, pad_len);
+	ret = mbedtls_base64_decode(dst, dst_len, out_len,
+			(const unsigned char *)src_dup, pad_len);
 	if (ret) {
 		IOT_ERROR("mbedtls_base64_decode = -0x%04X", -ret);
 		err = IOT_ERROR_CRYPTO_BASE64_URLSAFE;

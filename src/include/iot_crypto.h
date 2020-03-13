@@ -105,7 +105,7 @@ iot_error_t iot_crypto_base64_decode(const unsigned char *src, size_t src_len,
  * @retval	IOT_ERROR_CRYPTO_BASE64_URLSAFE	failed to encode the string as
  *		urlsafe
  */
-iot_error_t iot_crypto_base64_encode_urlsafe(unsigned char *src, size_t src_len,
+iot_error_t iot_crypto_base64_encode_urlsafe(const unsigned char *src, size_t src_len,
                                              unsigned char *dst, size_t dst_len,
                                              size_t *out_len);
 
@@ -121,7 +121,7 @@ iot_error_t iot_crypto_base64_encode_urlsafe(unsigned char *src, size_t src_len,
  * @retval	IOT_ERROR_CRYPTO_BASE64_URLSAFE	failed to encode the string as
  *		urlsafe
  */
-iot_error_t iot_crypto_base64_decode_urlsafe(unsigned char *src, size_t src_len,
+iot_error_t iot_crypto_base64_decode_urlsafe(const unsigned char *src, size_t src_len,
                                              unsigned char *dst, size_t dst_len,
                                              size_t *out_len);
 
