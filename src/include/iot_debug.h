@@ -40,7 +40,7 @@ typedef enum {
 #ifdef SUPPORT_TC_ON_STATIC_FUNC
 #define STATIC_FUNCTION
 #else
-#define STATIC_STATIC_FUNCTION static
+#define STATIC_FUNCTION static
 #endif
 
 
