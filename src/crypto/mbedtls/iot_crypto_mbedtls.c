@@ -164,43 +164,36 @@ iot_error_t iot_crypto_base64_decode_urlsafe(unsigned char *src, size_t src_len,
 {
 	int ret;
 	iot_error_t err = IOT_ERROR_NONE;
-	unsigned char *src_ptr;
-	unsigned char *pad = NULL;
+	unsigned char *src_dup = NULL;
 	size_t pad_len;
 	int i;
 
 	IOT_DEBUG("urlsafe: %s (%d)", src, src_len);
 
 	pad_len = IOT_CRYPTO_ALIGN_B64_LEN(src_len);
-	if (pad_len != src_len) {
-		pad = (unsigned char *)malloc(pad_len + 1);
-		if (pad == NULL) {
-			IOT_ERROR("malloc failed for align buffer");
-			return IOT_ERROR_MEM_ALLOC;
-		}
-
-		/* add padding with '=' */
-		memcpy(pad, src, src_len);
-		for (i = src_len; i < pad_len; i++) {
-			pad[i] = '=';
-		}
-		pad[pad_len] = '\0';
-
-		src_ptr = pad;
-	} else {
-		src_ptr = src;
+	src_dup = (unsigned char *)malloc(pad_len + 1);
+	if (src_dup == NULL) {
+		IOT_ERROR("malloc failed for align buffer");
+		return IOT_ERROR_MEM_ALLOC;
 	}
 
-	ret = _iot_crypto_url_decode((char *)src_ptr, pad_len);
+	memcpy(src_dup, src, src_len);
+	/* consider '=' removed from tail */
+	for (i = src_len; i < pad_len; i++) {
+		src_dup[i] = '=';
+	}
+	src_dup[pad_len] = '\0';
+
+	ret = _iot_crypto_url_decode((char *)src_dup, pad_len);
 	if (ret) {
 		IOT_ERROR("_iot_crypto_url_decode = %d", ret);
 		err = IOT_ERROR_CRYPTO_BASE64_URLSAFE;
 		goto exit;
 	}
 
-	IOT_DEBUG("base64 : %s (%d)", src_ptr, pad_len);
+	IOT_DEBUG("base64 : %s (%d)", src_dup, pad_len);
 
-	ret = mbedtls_base64_decode(dst, dst_len, out_len, src_ptr, pad_len);
+	ret = mbedtls_base64_decode(dst, dst_len, out_len, src_dup, pad_len);
 	if (ret) {
 		IOT_ERROR("mbedtls_base64_decode = -0x%04X", -ret);
 		err = IOT_ERROR_CRYPTO_BASE64_URLSAFE;
@@ -209,8 +202,8 @@ iot_error_t iot_crypto_base64_decode_urlsafe(unsigned char *src, size_t src_len,
 
 	IOT_DEBUG("plain : %s (%d)", dst, *out_len);
 exit:
-	if (pad)
-		free(pad);
+	if (src_dup)
+		free(src_dup);
 
 	return err;
 }
