@@ -93,7 +93,7 @@ static iot_error_t _iot_crypto_url_decode(char *buf, size_t buf_len)
 	return IOT_ERROR_NONE;
 }
 
-iot_error_t iot_crypto_base64_encode(unsigned char *src, size_t src_len,
+iot_error_t iot_crypto_base64_encode(const unsigned char *src, size_t src_len,
                                      unsigned char *dst, size_t dst_len,
                                      size_t *out_len)
 {
@@ -112,7 +112,7 @@ iot_error_t iot_crypto_base64_encode(unsigned char *src, size_t src_len,
 	return IOT_ERROR_NONE;
 }
 
-iot_error_t iot_crypto_base64_decode(unsigned char *src, size_t src_len,
+iot_error_t iot_crypto_base64_decode(const unsigned char *src, size_t src_len,
                                      unsigned char *dst, size_t dst_len,
                                      size_t *out_len)
 {
