@@ -77,6 +77,10 @@ int TC_iot_crypto_cipher_aes_teardown(void **state);
 void TC_iot_crypto_cipher_aes_null_parameter(void **state);
 void TC_iot_crypto_cipher_aes_invalid_parameter(void **state);
 void TC_iot_crypto_cipher_aes_success(void **state);
+void TC_iot_crypto_base64_encode_success(void **state);
+void TC_iot_crypto_base64_decode_success(void **state);
+void TC_iot_crypto_base64_urlsafe_encode_success(void **state);
+void TC_iot_crypto_base64_urlsafe_decode_success(void **state);
 
 // TCs for iot_nv_data.c
 int TC_iot_nv_data_setup(void **state);
