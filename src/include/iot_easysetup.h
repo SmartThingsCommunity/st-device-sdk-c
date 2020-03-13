@@ -34,10 +34,10 @@ enum ownership_validation_feature {
 	OVF_BIT_MAX_FEATURE,
 };
 
-#define IOT_OVF_TYPE_JUSTWORKS		(1 << OVF_BIT_JUSTWORKS)
-#define IOT_OVF_TYPE_BUTTON		(1 << OVF_BIT_BUTTON)
-#define IOT_OVF_TYPE_PIN		(1 << OVF_BIT_PIN)
-#define IOT_OVF_TYPE_QR			(1 << OVF_BIT_QR)
+#define IOT_OVF_TYPE_JUSTWORKS		(1u << (unsigned)OVF_BIT_JUSTWORKS)
+#define IOT_OVF_TYPE_BUTTON		(1u << (unsigned)OVF_BIT_BUTTON)
+#define IOT_OVF_TYPE_PIN		(1u << (unsigned)OVF_BIT_PIN)
+#define IOT_OVF_TYPE_QR			(1u << (unsigned)OVF_BIT_QR)
 
 #define IOT_ES_URI_POST_KEYINFO			"/keyinfo"
 #define IOT_ES_URI_POST_CONFIRMINFO		"/confirminfo"
