@@ -99,6 +99,10 @@ iot_error_t iot_crypto_base64_encode(const unsigned char *src, size_t src_len,
 {
 	int ret;
 
+	if (!src || !dst || !out_len) {
+		return IOT_ERROR_INVALID_ARGS;
+	}
+
 	IOT_DEBUG("plain : %s (%d)", src, src_len);
 
 	ret = mbedtls_base64_encode(dst, dst_len, out_len, src, src_len);
@@ -118,6 +122,10 @@ iot_error_t iot_crypto_base64_decode(const unsigned char *src, size_t src_len,
 {
 	int ret;
 
+	if (!src || !dst || !out_len) {
+		return IOT_ERROR_INVALID_ARGS;
+	}
+
 	IOT_DEBUG("base64 : %s (%d)", src, src_len);
 
 	ret = mbedtls_base64_decode(dst, dst_len, out_len, src, src_len);
@@ -136,6 +144,10 @@ iot_error_t iot_crypto_base64_encode_urlsafe(const unsigned char *src, size_t sr
                                              size_t *out_len)
 {
 	int ret;
+
+	if (!src || !dst || !out_len) {
+		return IOT_ERROR_INVALID_ARGS;
+	}
 
 	IOT_DEBUG("plain : %s (%d)", src, src_len);
 
@@ -167,6 +179,10 @@ iot_error_t iot_crypto_base64_decode_urlsafe(const unsigned char *src, size_t sr
 	unsigned char *src_dup = NULL;
 	size_t pad_len;
 	int i;
+
+	if (!src || !dst || !out_len) {
+		return IOT_ERROR_INVALID_ARGS;
+	}
 
 	IOT_DEBUG("urlsafe: %s (%d)", src, src_len);
 
