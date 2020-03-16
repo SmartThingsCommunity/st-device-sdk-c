@@ -12,4 +12,4 @@
 	url = https://github.com/curl/curl.git
 [submodule "test/framework/cmocka"]
 	path = test/framework/cmocka
-	url = https://git.cryptomilk.org/projects/cmocka.git
+	url = git://git.cryptomilk.org/projects/cmocka.git
