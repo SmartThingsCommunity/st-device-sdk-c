@@ -510,6 +510,35 @@ void TC_iot_crypto_base64_invalid_parameter(void **state)
 	assert_int_equal(err, IOT_ERROR_CRYPTO_BASE64_URLSAFE);
 }
 
+void TC_iot_crypto_base64_failure(void **state)
+{
+	iot_error_t err;
+	unsigned char *src;
+	unsigned char dst[256];
+	unsigned char tmp[256] = {0x90, 0x13, 0x14, '='};
+	size_t src_len;
+	size_t dst_len;
+	size_t out_len;
+
+	// Given
+	src = (unsigned char *)tmp;
+	src_len = 4;
+	dst_len = IOT_CRYPTO_CAL_B64_LEN(src_len);
+	// When
+	err = iot_crypto_base64_decode(src, src_len, dst, dst_len, &out_len);
+	// Then
+	assert_int_not_equal(err, IOT_ERROR_NONE);
+
+	// Given
+	src = (unsigned char *)tmp;
+	src_len = 4;
+	dst_len = IOT_CRYPTO_CAL_B64_LEN(src_len);
+	// When
+	err = iot_crypto_base64_decode_urlsafe(src, src_len, dst, dst_len, &out_len);
+	// Then
+	assert_int_not_equal(err, IOT_ERROR_NONE);
+}
+
 void TC_iot_crypto_base64_encode_success(void **state)
 {
 	iot_error_t err;
