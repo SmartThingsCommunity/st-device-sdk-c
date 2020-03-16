@@ -430,6 +430,86 @@ static const unsigned char *sample = "ab~c123!?$*&()'-=@~abc";
 static const unsigned char *sample_b64 = "YWJ+YzEyMyE/JComKCknLT1AfmFiYw==";
 static const unsigned char *sample_b64url = "YWJ-YzEyMyE_JComKCknLT1AfmFiYw==";
 
+typedef iot_error_t (*iot_crypto_base64_func)(const unsigned char *, size_t, unsigned char *, size_t, size_t *);
+
+void TC_iot_crypto_base64_invalid_parameter(void **state)
+{
+	iot_error_t err;
+	unsigned char *src;
+	unsigned char dst[256];
+	size_t src_len;
+	size_t dst_len;
+	size_t out_len;
+	int i;
+	iot_crypto_base64_func base64_func_target;
+	iot_crypto_base64_func base64_funcs[] = {
+			iot_crypto_base64_encode,
+			iot_crypto_base64_decode,
+			iot_crypto_base64_encode_urlsafe,
+			iot_crypto_base64_decode_urlsafe,
+	};
+
+	for (i = 0; i < (sizeof(base64_funcs) / sizeof(base64_funcs[0])); i++) {
+		base64_func_target = base64_funcs[i];
+		assert_non_null(base64_func_target);
+
+		// Given
+		src = (unsigned char *) sample;
+		src_len = strlen(src);
+		dst_len = IOT_CRYPTO_CAL_B64_LEN(src_len);
+		// When: src is null
+		err = base64_func_target(NULL, src_len, dst, dst_len, &out_len);
+		// Then
+		assert_int_not_equal(err, IOT_ERROR_NONE);
+
+		// When: dst is null
+		err = base64_func_target(src, src_len, NULL, dst_len, &out_len);
+		// Then
+		assert_int_not_equal(err, IOT_ERROR_NONE);
+
+		// When: out_len is null
+		err = base64_func_target(src, src_len, dst, dst_len, NULL);
+		// Then
+		assert_int_not_equal(err, IOT_ERROR_NONE);
+	}
+
+	// Given
+	src = (unsigned char *)sample;
+	src_len = strlen(src);
+	// When: small output buffer
+	dst_len = IOT_CRYPTO_CAL_B64_LEN(src_len) - 1;
+	err = iot_crypto_base64_encode(src, src_len, dst, dst_len, &out_len);
+	// Then
+	assert_int_equal(err, IOT_ERROR_CRYPTO_BASE64);
+
+	// Given
+	src = (unsigned char *)sample_b64;
+	src_len = strlen(src);
+	// When: small output buffer
+	dst_len = 8;
+	err = iot_crypto_base64_decode(src, src_len, dst, dst_len, &out_len);
+	// Then
+	assert_int_equal(err, IOT_ERROR_CRYPTO_BASE64);
+
+	// Given
+	src = (unsigned char *)sample;
+	src_len = strlen(src);
+	// When: small output buffer
+	dst_len = IOT_CRYPTO_CAL_B64_LEN(src_len) - 1;
+	err = iot_crypto_base64_encode_urlsafe(src, src_len, dst, dst_len, &out_len);
+	// Then
+	assert_int_equal(err, IOT_ERROR_CRYPTO_BASE64_URLSAFE);
+
+	// Given: small output buffer
+	src = (unsigned char *)sample_b64url;
+	src_len = strlen(src);
+	// When
+	dst_len = 8;
+	err = iot_crypto_base64_decode_urlsafe(src, src_len, dst, dst_len, &out_len);
+	// Then
+	assert_int_equal(err, IOT_ERROR_CRYPTO_BASE64_URLSAFE);
+}
+
 void TC_iot_crypto_base64_encode_success(void **state)
 {
 	iot_error_t err;
