@@ -722,7 +722,6 @@ static iot_error_t _iot_parse_cmd_data(cJSON* cmditem, char** component,
 	cJSON *cap_command = NULL;
 	cJSON *cap_args = NULL;
 	cJSON *subitem = NULL;
-	cJSON *arg_json = NULL;
 	int arr_size = 0;
 	int num_args = 0;
 
@@ -764,22 +763,11 @@ static iot_error_t _iot_parse_cmd_data(cJSON* cmditem, char** component,
 				num_args++;
 			}
 			else if (cJSON_IsObject(subitem)) {
-				arg_json = subitem->child;
-				while (arg_json != NULL) {
-					cmd_data->args_str[num_args] = strdup(arg_json->string);
-					if (cJSON_IsNumber(arg_json)) {
-						IOT_DEBUG("[%d] %d | %f", num_args, arg_json->valueint, arg_json->valuedouble);
-						cmd_data->cmd_data[num_args].type = IOT_CAP_VAL_TYPE_INT_OR_NUM;
-						cmd_data->cmd_data[num_args].integer = arg_json->valueint;
-						cmd_data->cmd_data[num_args].number = arg_json->valuedouble;
-					} else if (cJSON_IsString(arg_json)) {
-						IOT_DEBUG("[%d] %s", num_args, cJSON_GetStringValue(arg_json));
-						cmd_data->cmd_data[num_args].type = IOT_CAP_VAL_TYPE_STRING;
-						cmd_data->cmd_data[num_args].string = strdup(cJSON_GetStringValue(arg_json));
-					}
-					num_args++;
-					arg_json = arg_json->next;
-				}
+				cmd_data->args_str[num_args] = NULL;
+				cmd_data->cmd_data[num_args].type = IOT_CAP_VAL_TYPE_JSON_OBJECT;
+				cmd_data->cmd_data[num_args].json_payload = cJSON_PrintUnformatted(subitem);
+				IOT_DEBUG("[%d] %s", num_args, cmd_data->cmd_data[num_args].json_payload);
+				num_args++;
 			}
 			subitem = subitem->next;
 		}
@@ -1062,6 +1050,8 @@ static void _iot_free_val(iot_cap_val_t* val)
 			}
 		}
 		free(val->strings);
+	} else if (val->type == IOT_CAP_VAL_TYPE_JSON_OBJECT) {
+		free(val->json_payload);
 	}
 }
 
