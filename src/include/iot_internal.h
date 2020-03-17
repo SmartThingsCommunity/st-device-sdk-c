@@ -22,6 +22,7 @@
 #include "iot_capability.h"
 #include "iot_crypto.h"
 #include "iot_serialize.h"
+#include "iot_bsp_wifi.h"
 
 #define IOT_TASK_NAME "iot-task"
 #define IOT_TASK_STACK_SIZE (1024*5)
@@ -66,6 +67,18 @@
  */
 iot_error_t iot_command_send(struct iot_context *ctx,
 	enum iot_command_type cmd_type, const void *param, int param_size);
+
+/**
+ * @brief	send wifi control request
+ * @details	this function sends wifi control command using iot_command_send internally
+ * @param[in]	ctx					iot-core context
+ * @param[in]	wifi_mode			actual wifi control mode
+ * @retval	IOT_ERROR_NONE			success.
+ * @retval	IOT_ERROR_MEM_ALLOC		memory allocation failed
+ * @retval	IOT_ERROR_BAD_REQ		queue send error
+ */
+iot_error_t iot_wifi_ctrl_request(struct iot_context *ctx,
+		iot_wifi_mode_t wifi_mode);
 
 /**
  * @brief	update iot state

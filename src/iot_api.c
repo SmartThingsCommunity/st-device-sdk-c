@@ -71,6 +71,59 @@ iot_error_t iot_command_send(struct iot_context *ctx,
 	return err;
 }
 
+iot_error_t iot_wifi_ctrl_request(struct iot_context *ctx,
+		iot_wifi_mode_t wifi_mode)
+{
+	iot_error_t iot_err;
+	iot_wifi_conf wifi_conf;
+
+	if (!ctx) {
+		IOT_ERROR("There is no ctx\n");
+		return IOT_ERROR_BAD_REQ;
+	}
+
+	memset(&wifi_conf, 0, sizeof(wifi_conf));
+	wifi_conf.mode = wifi_mode;
+
+	switch (wifi_mode) {
+	case IOT_WIFI_MODE_STATION:
+		memcpy(wifi_conf.ssid, ctx->prov_data.wifi.ssid,
+			strlen(ctx->prov_data.wifi.ssid));
+		memcpy(wifi_conf.pass, ctx->prov_data.wifi.password,
+			strlen(ctx->prov_data.wifi.password));
+		break;
+
+	case IOT_WIFI_MODE_SOFTAP:
+		/*wifi soft-ap mode w/ ssid E4 format*/
+		iot_err = iot_easysetup_create_ssid(&(ctx->devconf),
+					wifi_conf.ssid, IOT_WIFI_MAX_SSID_LEN);
+		if (iot_err != IOT_ERROR_NONE) {
+			IOT_ERROR("Can't create ssid for easysetup.(%d)", iot_err);
+			return iot_err;
+		}
+
+		snprintf(wifi_conf.pass, sizeof(wifi_conf.pass), "1111122222");
+		break;
+
+	case IOT_WIFI_MODE_SCAN:
+		/* fall through */
+	case IOT_WIFI_MODE_OFF:
+		IOT_DEBUG("No need more settings for [%d] mode\n", wifi_mode);
+		break;
+
+	default:
+		IOT_ERROR("Unsupported wifi ctrl mode[%d]\n", wifi_mode);
+		return IOT_ERROR_BAD_REQ;
+	}
+
+	iot_err = iot_command_send(ctx,
+				IOT_COMMAND_NETWORK_MODE,
+					&wifi_conf, sizeof(wifi_conf));
+
+	return iot_err;
+}
+
+
 iot_error_t iot_easysetup_request(struct iot_context *ctx,
 				enum iot_easysetup_step step, const void *payload)
 {
