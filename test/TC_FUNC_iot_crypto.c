@@ -23,6 +23,7 @@
 #include <iot_error.h>
 #include <iot_crypto.h>
 #include <iot_bsp_random.h>
+
 #define UNUSED(x)   (void**)(x)
 
 static unsigned char pubkey_b64[] = "tQdqhHSoMtruTdW0BAmDtmI7XzRKylfU1u5Lrz8lnm4=";
@@ -424,6 +425,123 @@ void TC_iot_crypto_cipher_aes_success(void **state)
 	free(decrypt);
 	free(encrypt);
 	free(plain);
+}
+
+static unsigned char things_seckey_ed25519[] = {
+	0x18, 0xdc, 0xba, 0x03, 0xef, 0xa9, 0x26, 0x19,
+	0x79, 0x24, 0xbd, 0x44, 0xae, 0x39, 0x3d, 0xe0,
+	0xf1, 0x9f, 0x9e, 0x9c, 0xdc, 0x6f, 0xd1, 0xe9,
+	0xef, 0x10, 0xdc, 0x94, 0x29, 0x7e, 0x61, 0x85
+};
+
+static unsigned char things_seckey_curve25519[] = {
+	0x88, 0xcf, 0x25, 0xca, 0x07, 0x0f, 0xef, 0xf9,
+	0x90, 0x0a, 0xba, 0x15, 0x89, 0xa4, 0x58, 0x6c,
+	0x05, 0x6e, 0xac, 0x9f, 0x97, 0x18, 0x85, 0xc5,
+	0xd1, 0x0e, 0xda, 0xcb, 0x7a, 0xb8, 0x5c, 0x54
+};
+
+static unsigned char cloud_pubkey_ed25519[] = {
+	0x88, 0x8a, 0xe2, 0xc2, 0x92, 0x91, 0x92, 0x31,
+	0x32, 0x42, 0x49, 0x84, 0xc3, 0x14, 0x0f, 0xce,
+	0x09, 0xb4, 0x52, 0x88, 0x66, 0x4a, 0x28, 0x6c,
+	0x72, 0xbf, 0xae, 0xce, 0x40, 0x6f, 0x63, 0x5d
+};
+
+static unsigned char cloud_pubkey_curve25519[] = {
+	0x6e, 0xc7, 0x18, 0xce, 0x29, 0x4e, 0xcb, 0x76,
+	0xb4, 0x50, 0xa9, 0x48, 0xce, 0x24, 0x87, 0x02,
+	0xdc, 0xcf, 0x4f, 0xb2, 0x91, 0x12, 0x15, 0x67,
+	0x21, 0xa0, 0x8d, 0xf8, 0x36, 0x13, 0xde, 0x25
+};
+
+static unsigned char ecdh_master_secret_expected[] = {
+	0x6c, 0x61, 0xcc, 0x93, 0x50, 0xbf, 0x87, 0xe1,
+	0x3c, 0x0d, 0xc8, 0x60, 0xbd, 0xfd, 0xfc, 0x58,
+	0xab, 0xc7, 0x9f, 0xe7, 0x0f, 0x35, 0x3a, 0x33,
+	0xd3, 0x11, 0xc4, 0x36, 0x1b, 0x32, 0x53, 0xe8
+};
+
+static unsigned char ecdh_hash_token[] = {
+	0xd0, 0xdf, 0x40, 0xee, 0x8c, 0x54, 0x25, 0xba,
+	0x46, 0x74, 0xf3, 0x4a, 0x33, 0x95, 0xde, 0xc6,
+	0xec, 0xe9, 0xe1, 0xd6, 0x60, 0x50, 0x1e, 0xd5,
+	0x16, 0xbe, 0xaf, 0xce, 0x1c, 0x24, 0x49, 0x4c
+};
+
+int TC_iot_crypto_ecdh_setup(void **state)
+{
+	iot_crypto_ecdh_params_t *ecdh_params;
+	size_t ecdh_params_len = sizeof(iot_crypto_ecdh_params_t);
+	ecdh_params = (iot_crypto_ecdh_params_t *)malloc(ecdh_params_len);
+	assert_non_null(ecdh_params);
+
+	ecdh_params->t_seckey = things_seckey_curve25519;
+	ecdh_params->s_pubkey = cloud_pubkey_curve25519;
+	ecdh_params->hash_token = ecdh_hash_token;
+	ecdh_params->hash_token_len = sizeof(ecdh_hash_token);
+
+	*state = ecdh_params;
+
+	return 0;
+}
+
+int TC_iot_crypto_ecdh_teardown(void **state)
+{
+	iot_crypto_ecdh_params_t *ecdh_params;
+	ecdh_params = (iot_crypto_ecdh_params_t *)*state;
+
+	free(ecdh_params);
+
+	return 0;
+}
+
+void TC_iot_crypto_ecdh_invalid_parameter(void **state)
+{
+	iot_error_t err;
+	iot_crypto_ecdh_params_t *ecdh_params;
+	unsigned char master[IOT_CRYPTO_SECRET_LEN];
+	size_t master_len = sizeof(master);
+
+	ecdh_params = (iot_crypto_ecdh_params_t *)*state;
+
+	// When: master is null
+	err = iot_crypto_ecdh_gen_master_secret(NULL, master_len, ecdh_params);
+	// Then
+	assert_int_equal(err, IOT_ERROR_INVALID_ARGS);
+
+	// When: mlen is zero
+	err = iot_crypto_ecdh_gen_master_secret(master, 0, ecdh_params);
+	// Then
+	assert_int_equal(err, IOT_ERROR_INVALID_ARGS);
+
+	// When: params is null
+	err = iot_crypto_ecdh_gen_master_secret(master, master_len, NULL);
+	// Then
+	assert_int_equal(err, IOT_ERROR_INVALID_ARGS);
+
+	// Given: insufficient master buffer
+	master_len = sizeof(master) - 1;
+	// When
+	err = iot_crypto_ecdh_gen_master_secret(master, master_len, ecdh_params);
+	// Then
+	assert_int_equal(err, IOT_ERROR_INVALID_ARGS);
+}
+
+void TC_iot_crypto_ecdh_success(void **state)
+{
+	iot_error_t err;
+	iot_crypto_ecdh_params_t *ecdh_params;
+	unsigned char master[IOT_CRYPTO_SECRET_LEN];
+	size_t master_len = sizeof(master);
+
+	// Given
+	ecdh_params = (iot_crypto_ecdh_params_t *)*state;
+	// When
+	err = iot_crypto_ecdh_gen_master_secret(master, master_len, ecdh_params);
+	// Then
+	assert_int_equal(err, IOT_ERROR_NONE);
+	assert_memory_equal(master, ecdh_master_secret_expected, master_len);
 }
 
 static const unsigned char *sample = "ab~c123!?$*&()'-=@~abc";
