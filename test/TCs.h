@@ -111,6 +111,7 @@ void TC_iot_easysetup_request_handler_null_parameters(void **state);
 void TC_STATIC_es_deviceinfo_handler_null_parameter(void **state);
 void TC_STATIC_es_deviceinfo_handler_success(void **state);
 void TC_STATIC_es_keyinfo_handler_success(void **state);
+void TC_STATIC_es_wifiprovisioninginfo_handler_success(void **state);
 
 // TCs for easysetup d2d
 int TC_easysetup_d2d_setup(void **state);
