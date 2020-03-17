@@ -88,6 +88,16 @@ iot_error_t iot_crypto_ed25519_convert_keypair(iot_crypto_ed25519_keypair_t *kp)
 {
 	int ret;
 
+	if (!kp) {
+		return IOT_ERROR_INVALID_ARGS;
+	}
+
+	if (!kp->curve.pubkey || !kp->sign.pubkey ||
+	    !kp->curve.seckey || !kp->sign.seckey) {
+		IOT_ERROR("iot_crypto_ed25519_init_keypair is needed");
+		return IOT_ERROR_INVALID_ARGS;
+	}
+
 	ret = crypto_sign_ed25519_pk_to_curve25519(kp->curve.pubkey, kp->sign.pubkey);
 	if (ret) {
 		IOT_ERROR("crypto_sign_ed25519_pk_to_curve25519 = %d", ret);
@@ -108,6 +118,10 @@ iot_error_t iot_crypto_ed25519_convert_pubkey(unsigned char *ed25519_key,
 {
 	int ret;
 
+	if (!ed25519_key || !curve25519_key) {
+		return IOT_ERROR_INVALID_ARGS;
+	}
+
 	ret = crypto_sign_ed25519_pk_to_curve25519(curve25519_key, ed25519_key);
 	if (ret) {
 		IOT_ERROR("crypto_sign_ed25519_pk_to_curve25519 = %d", ret);
@@ -121,6 +135,10 @@ iot_error_t iot_crypto_ed25519_convert_seckey(unsigned char *ed25519_key,
 					unsigned char *curve25519_key)
 {
 	int ret;
+
+	if (!ed25519_key || !curve25519_key) {
+		return IOT_ERROR_INVALID_ARGS;
+	}
 
 	ret = crypto_sign_ed25519_sk_to_curve25519(curve25519_key, ed25519_key);
 	if (ret) {
