@@ -220,6 +220,7 @@ void TC_easysetup_d2d_get_deviceinfo_success(void **state)
     // Then
     assert_int_equal(ret, 0);
     root = cJSON_Parse(buffer);
+    assert_non_null(root);
     errmsg = cJSON_GetObjectItem(root, "error");
     _dump_json(root);
     assert_null(errmsg);
