@@ -82,7 +82,7 @@ struct tc_key_pair* SERVER_KEYPAIR;
 struct tc_key_pair* DEVICE_KEYPAIR;
 static struct tc_key_pair* _generate_test_keypair(const unsigned char *pk_b64url, size_t pk_b64url_len,
                                                   const unsigned char *sk_b64url, size_t sk_b64url_len);
-static void _free_cipher(iot_crypto_cipher_info_t *cipher);;
+static void _free_cipher(iot_crypto_cipher_info_t *cipher);
 
 int TC_iot_easysetup_d2d_setup(void **state)
 {
@@ -557,7 +557,7 @@ static char* _create_post_wifiprovisioninginfo_payload(iot_crypto_cipher_info_t 
     cJSON_Delete(root);
 
     cipher->mode = IOT_CRYPTO_CIPHER_ENCRYPT;
-    encoded_message = _encryt_and_encode_mssage(cipher, plain_message, strlen(plain_message));
+    encoded_message = _encryt_and_encode_mssage(cipher, (unsigned char*) plain_message, strlen(plain_message));
     free(plain_message);
 
     // { "message": "XXXXX" }
@@ -578,7 +578,7 @@ void assert_keyinfo(char *payload, iot_crypto_cipher_info_t *server_cipher, unsi
     cJSON *array = NULL;
     cJSON *item = NULL;
     cJSON *error_message = NULL;
-    unsigned char *b64url_aes256_message = NULL;
+    char *b64url_aes256_message = NULL;
     char *plain_message = NULL;
     unsigned int otm_support = 0;
 
@@ -592,10 +592,10 @@ void assert_keyinfo(char *payload, iot_crypto_cipher_info_t *server_cipher, unsi
 
     item = cJSON_GetObjectItem(root, "message");
     assert_non_null(item);
-    b64url_aes256_message = (unsigned char *) cJSON_GetStringValue(item);
-    assert_true(strlen((const char *) b64url_aes256_message) > 10);
+    b64url_aes256_message = cJSON_GetStringValue(item);
+    assert_true(strlen( b64url_aes256_message) > 10);
 
-    plain_message = _decode_and_decrypt_message(server_cipher, b64url_aes256_message, strlen((const char*)b64url_aes256_message));
+    plain_message = _decode_and_decrypt_message(server_cipher, (unsigned char*) b64url_aes256_message, strlen(b64url_aes256_message));
 
     // validate values
     root = cJSON_Parse((const char*) plain_message);
@@ -631,15 +631,15 @@ static void assert_lookup_id(const char *payload, iot_crypto_cipher_info_t *ciph
     cJSON *root;
     cJSON *item;
     unsigned char *b64url_aes256_message;
-    unsigned char *plain_message;
+    char *plain_message;
     assert_non_null(payload);
     assert_non_null(cipher);
 
     root = cJSON_Parse(payload);
     item = cJSON_GetObjectItem(root, "message");
-    b64url_aes256_message = cJSON_GetStringValue(item);
+    b64url_aes256_message = (unsigned char*) cJSON_GetStringValue(item);
 
-    plain_message = _decode_and_decrypt_message(cipher, b64url_aes256_message, strlen(b64url_aes256_message));
+    plain_message = _decode_and_decrypt_message(cipher, b64url_aes256_message, strlen((const char*)b64url_aes256_message));
     cJSON_Delete(root);
 
     root = cJSON_Parse(plain_message);
@@ -647,6 +647,7 @@ static void assert_lookup_id(const char *payload, iot_crypto_cipher_info_t *ciph
     assert_non_null(item);
     assert_uuid_format(cJSON_GetStringValue(item));
     free(plain_message);
+    cJSON_Delete(root);
 }
 
 static void _generate_hash_token(unsigned char *hash_token, size_t hash_token_size)
@@ -661,7 +662,7 @@ static void _generate_hash_token(unsigned char *hash_token, size_t hash_token_si
     assert_true(hash_token_size >= IOT_CRYPTO_SHA256_LEN);
 
     memset(rand_ascii, '\0', sizeof(rand_ascii));
-    err = iot_crypto_base64_decode(TEST_SRAND, strlen(TEST_SRAND),
+    err = iot_crypto_base64_decode((const unsigned char*)TEST_SRAND, strlen(TEST_SRAND),
                                    rand_ascii, sizeof(rand_ascii),
                                    &out_length);
     assert_int_equal(err, IOT_ERROR_NONE);
