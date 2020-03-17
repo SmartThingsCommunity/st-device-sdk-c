@@ -579,13 +579,7 @@ void assert_keyinfo(char *payload, iot_crypto_cipher_info_t *server_cipher, unsi
     cJSON *item = NULL;
     cJSON *error_message = NULL;
     unsigned char *b64url_aes256_message = NULL;
-    unsigned char *aes256_message = NULL;
-    unsigned char *plain_message = NULL;
-    size_t aes256_message_buffer_length;
-    size_t aes256_message_actual_length;
-    size_t plain_message_buffer_length;
-    size_t plain_message_actual_length;
-    iot_error_t err;
+    char *plain_message = NULL;
     unsigned int otm_support = 0;
 
     assert_non_null(payload);
@@ -601,29 +595,7 @@ void assert_keyinfo(char *payload, iot_crypto_cipher_info_t *server_cipher, unsi
     b64url_aes256_message = (unsigned char *) cJSON_GetStringValue(item);
     assert_true(strlen((const char *) b64url_aes256_message) > 10);
 
-    // Decode
-    // TODO: calc more accurate decoded size
-    aes256_message_buffer_length = strlen((const char *) b64url_aes256_message);
-    aes256_message = malloc(aes256_message_buffer_length);
-
-    err = iot_crypto_base64_decode_urlsafe(b64url_aes256_message, strlen((const char *) b64url_aes256_message),
-                                           aes256_message, aes256_message_buffer_length, &aes256_message_actual_length);
-    assert_int_equal(err, IOT_ERROR_NONE);
-    cJSON_Delete(root);
-
-    // Decrypt
-    plain_message_buffer_length = iot_crypto_cipher_get_align_size(IOT_CRYPTO_CIPHER_AES256, aes256_message_actual_length);
-    plain_message = malloc(plain_message_buffer_length);
-    memset(plain_message, '\0', plain_message_buffer_length);
-
-    server_cipher->mode = IOT_CRYPTO_CIPHER_DECRYPT;
-    err = iot_crypto_cipher_aes(server_cipher, aes256_message, aes256_message_actual_length,
-            plain_message, &plain_message_actual_length, plain_message_buffer_length);
-    assert_int_equal(err, IOT_ERROR_NONE);
-
-    // null termination
-    if (plain_message_actual_length < plain_message_buffer_length)
-        *(plain_message + plain_message_actual_length) = '\0';
+    plain_message = _decode_and_decrypt_message(server_cipher, b64url_aes256_message, strlen((const char*)b64url_aes256_message));
 
     // validate values
     root = cJSON_Parse((const char*) plain_message);
@@ -637,6 +609,7 @@ void assert_keyinfo(char *payload, iot_crypto_cipher_info_t *server_cipher, unsi
     assert_int_equal(otm_support, expected_otm_support);
 
     cJSON_Delete(root);
+    free(plain_message);
 }
 
 static void assert_uuid_format(char *input_string)
