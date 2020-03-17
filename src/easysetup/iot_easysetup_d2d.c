@@ -17,7 +17,7 @@
  ****************************************************************************/
 
 #include <string.h>
-#include "cJSON.h"
+#include "JSON.h"
 #include "iot_main.h"
 #include "iot_bsp_random.h"
 #include "iot_easysetup.h"
@@ -34,13 +34,12 @@
 #define WIFIINFO_BUFFER_SIZE	20
 #define ES_CONFIRM_MAX_DELAY	10000
 
-#define JSON_H	cJSON
 
 STATIC_FUNCTION
 char *_es_json_parse_string(JSON_H *json, const char *name)
 {
 	char *buf = NULL;
-	cJSON *recv = NULL;
+	JSON_H *recv = NULL;
 	unsigned int buf_len;
 
 	if (!json || !name) {
@@ -48,7 +47,7 @@ char *_es_json_parse_string(JSON_H *json, const char *name)
 		return NULL;
 	}
 
-	if ((recv = cJSON_GetObjectItem(json, name)) == NULL) {
+	if ((recv = JSON_GET_OBJECT_ITEM(json, name)) == NULL) {
 		IOT_ERROR("failed to find '%s'", name);
 		return NULL;
 	}
@@ -183,7 +182,7 @@ STATIC_FUNCTION
 iot_error_t _es_deviceinfo_handler(struct iot_context *ctx, char **out_payload)
 {
 	char *output_ptr = NULL;
-	cJSON *root = NULL;
+	JSON_H *root = NULL;
 	iot_error_t err = IOT_ERROR_NONE;
 	size_t base64_written = 0;
 	size_t encode_buf_len = 0;
@@ -192,15 +191,15 @@ iot_error_t _es_deviceinfo_handler(struct iot_context *ctx, char **out_payload)
 	if (!ctx)
 	    return IOT_ERROR_INVALID_ARGS;
 
-	root = cJSON_CreateObject();
+	root = JSON_CREATE_OBJECT();
 	if (!root) {
 		IOT_ERROR("json create failed");
 		return IOT_ERROR_EASYSETUP_JSON_CREATE_ERROR;
 	}
-	cJSON_AddItemToObject(root, "protocolVersion", cJSON_CreateString("0.4.2"));
-	cJSON_AddItemToObject(root, "firmwareVersion", cJSON_CreateString(ctx->device_info.firmware_version));
-	cJSON_AddItemToObject(root, "hashedSn", cJSON_CreateString((char *)ctx->devconf.hashed_sn));
-	cJSON_AddNumberToObject(root, "wifiSupportFrequency", (double) iot_bsp_wifi_get_freq());
+	JSON_ADD_ITEM_TO_OBJECT(root, "protocolVersion", JSON_CREATE_STRING("0.4.2"));
+	JSON_ADD_ITEM_TO_OBJECT(root, "firmwareVersion", JSON_CREATE_STRING(ctx->device_info.firmware_version));
+	JSON_ADD_ITEM_TO_OBJECT(root, "hashedSn", JSON_CREATE_STRING((char *)ctx->devconf.hashed_sn));
+	JSON_ADD_NUMBER_TO_OBJECT(root, "wifiSupportFrequency", (double) iot_bsp_wifi_get_freq());
 
 	err = _es_crypto_cipher_gen_iv(ctx->es_crypto_cipher_info);
 	if (err != IOT_ERROR_NONE) {
@@ -223,15 +222,15 @@ iot_error_t _es_deviceinfo_handler(struct iot_context *ctx, char **out_payload)
 		goto out;
 	}
 
-	cJSON_AddItemToObject(root, "iv", cJSON_CreateString((char *)encode_buf));
-	output_ptr = cJSON_PrintUnformatted(root);
+	JSON_ADD_ITEM_TO_OBJECT(root, "iv", JSON_CREATE_STRING((char *)encode_buf));
+	output_ptr = JSON_PRINT(root);
 
 	*out_payload = output_ptr;
 out:
 	if (encode_buf)
 		free(encode_buf);
 	if (root)
-		cJSON_Delete(root);
+		JSON_DELETE(root);
 	return err;
 }
 
@@ -241,9 +240,9 @@ iot_error_t _es_wifiscaninfo_handler(struct iot_context *ctx, char **out_payload
 	char *ptr = NULL;
 	char *output_ptr = NULL;
 	char wifi_bssid[WIFIINFO_BUFFER_SIZE] = {0, };
-	cJSON *root = NULL;
-	cJSON *array = NULL;
-	cJSON *array_obj = NULL;
+	JSON_H *root = NULL;
+	JSON_H *array = NULL;
+	JSON_H *array_obj = NULL;
 	int i;
 	iot_error_t err = IOT_ERROR_NONE;
 	size_t input_len = 0;
@@ -260,7 +259,7 @@ iot_error_t _es_wifiscaninfo_handler(struct iot_context *ctx, char **out_payload
 	if (!ctx->scan_num)
 		return IOT_ERROR_EASYSETUP_WIFI_SCAN_NOT_FOUND;
 
-	array = cJSON_CreateArray();
+	array = JSON_CREATE_ARRAY();
 	if (!array) {
 		IOT_ERROR("json_array create failed");
 		return IOT_ERROR_EASYSETUP_JSON_CREATE_ERROR;
@@ -278,20 +277,20 @@ iot_error_t _es_wifiscaninfo_handler(struct iot_context *ctx, char **out_payload
 						ctx->scan_result[i].bssid[2], ctx->scan_result[i].bssid[3],
 						ctx->scan_result[i].bssid[4], ctx->scan_result[i].bssid[5]);
 
-		array_obj = cJSON_CreateObject();
+		array_obj = JSON_CREATE_OBJECT();
 		if (!array_obj) {
 			IOT_ERROR("json create failed");
 			err = IOT_ERROR_EASYSETUP_JSON_CREATE_ERROR;
 			goto out;
 		}
-		cJSON_AddItemToObject(array_obj, "bssid", cJSON_CreateString(wifi_bssid));
-		cJSON_AddItemToObject(array_obj, "ssid", cJSON_CreateString((char*)ctx->scan_result[i].ssid));
-		cJSON_AddNumberToObject(array_obj, "rssi", (double) ctx->scan_result[i].rssi);
-		cJSON_AddNumberToObject(array_obj, "frequency", (double) ctx->scan_result[i].freq);
-		cJSON_AddNumberToObject(array_obj, "authType", ctx->scan_result[i].authmode);
+		JSON_ADD_ITEM_TO_OBJECT(array_obj, "bssid", JSON_CREATE_STRING(wifi_bssid));
+		JSON_ADD_ITEM_TO_OBJECT(array_obj, "ssid", JSON_CREATE_STRING((char*)ctx->scan_result[i].ssid));
+		JSON_ADD_NUMBER_TO_OBJECT(array_obj, "rssi", (double) ctx->scan_result[i].rssi);
+		JSON_ADD_NUMBER_TO_OBJECT(array_obj, "frequency", (double) ctx->scan_result[i].freq);
+		JSON_ADD_NUMBER_TO_OBJECT(array_obj, "authType", ctx->scan_result[i].authmode);
 #if 0
-		total_ptr = cJSON_PrintUnformatted(array);
-		ptr = cJSON_PrintUnformatted(array_obj);
+		total_ptr = JSON_PRINT(array);
+		ptr = JSON_PRINT(array_obj);
 		total_size = strlen(total_ptr);
 		item_size = strlen(ptr);
 		cJSON_free(total_ptr);
@@ -303,22 +302,22 @@ iot_error_t _es_wifiscaninfo_handler(struct iot_context *ctx, char **out_payload
 						strlen("{\"wifiScanInfos\":}") + strlen(", "));
 		if ((total_size + item_size + strlen("{\"wifiScanInfos\":}") + strlen(", ")) >= length) {
 			IOT_INFO("Too large payload. just skip to add item");
-			cJSON_Delete(array_obj);
+			JSON_DELETE(array_obj);
 			break;
 		}
 #endif
-		cJSON_AddItemToArray(array, array_obj);
+		JSON_ADD_ITEM_TO_ARRAY(array, array_obj);
 	}
 
-	root = cJSON_CreateObject();
+	root = JSON_CREATE_OBJECT();
 	if (!root) {
 		IOT_ERROR("json create failed");
 		err = IOT_ERROR_EASYSETUP_JSON_CREATE_ERROR;
 		goto out;
 	}
-	cJSON_AddItemToObject(root, "wifiScanInfo", (cJSON *)array);
+	JSON_ADD_ITEM_TO_OBJECT(root, "wifiScanInfo", array);
 
-	ptr = cJSON_PrintUnformatted(root);
+	ptr = JSON_PRINT(root);
 
 	input_len = strlen(ptr);
 	output_len = iot_crypto_cipher_get_align_size(IOT_CRYPTO_CIPHER_AES256, input_len);
@@ -353,17 +352,17 @@ iot_error_t _es_wifiscaninfo_handler(struct iot_context *ctx, char **out_payload
 	}
 
 	if (root)
-		cJSON_Delete(root);
+		JSON_DELETE(root);
 	root = NULL;
 
-	root = cJSON_CreateObject();
+	root = JSON_CREATE_OBJECT();
 	if (!root) {
 		IOT_ERROR("json create failed");
 		err = IOT_ERROR_EASYSETUP_JSON_CREATE_ERROR;
 		goto out;
 	}
-	cJSON_AddItemToObject(root, "message", cJSON_CreateString((char *) encode_buf));
-	output_ptr = cJSON_PrintUnformatted(root);
+	JSON_ADD_ITEM_TO_OBJECT(root, "message", JSON_CREATE_STRING((char *) encode_buf));
+	output_ptr = JSON_PRINT(root);
 
 	*out_payload = output_ptr;
 out:
@@ -374,7 +373,7 @@ out:
 	if (encrypt_buf)
 		free(encrypt_buf);
 	if (root)
-		cJSON_Delete(root);
+		JSON_DELETE(root);
 	return err;
 }
 
@@ -385,9 +384,9 @@ iot_error_t _es_keyinfo_handler(struct iot_context *ctx, char *in_payload, char 
 	char *output_ptr = NULL;
 	char tmp[3] = {0};
 	char rand_asc[IOT_CRYPTO_SHA256_LEN * 2 + 1] = { 0 };
-	cJSON *recv = NULL;
-	cJSON *root = NULL;
-	cJSON *array = NULL;
+	JSON_H *recv = NULL;
+	JSON_H *root = NULL;
+	JSON_H *array = NULL;
 	int i, j;
 	iot_crypto_pk_info_t pk_info;
 	iot_crypto_ecdh_params_t params;
@@ -407,19 +406,19 @@ iot_error_t _es_keyinfo_handler(struct iot_context *ctx, char *in_payload, char 
 	size_t spub_len = 0;
 	size_t rand_asc_len = 0;
 
-	root = cJSON_Parse(in_payload);
+	root = JSON_PARSE(in_payload);
 	if (!root) {
 		IOT_ERROR("Invalid json format of payload");
 		err = IOT_ERROR_EASYSETUP_INVALID_REQUEST;
 		goto exit;
 	}
 
-	if ((recv = cJSON_GetObjectItem(root, "spub")) == NULL) {
+	if ((recv = JSON_GET_OBJECT_ITEM(root, "spub")) == NULL) {
 		IOT_INFO("no spub info");
 		err  = IOT_ERROR_EASYSETUP_INVALID_REQUEST;
 		goto exit;
 	}
-	p_spub_str = (unsigned char *)cJSON_GetStringValue(recv);
+	p_spub_str = (unsigned char *)JSON_GET_STRING_VALUE(recv);
 	IOT_DEBUG("spub_info = %s", p_spub_str);
 	err = iot_crypto_base64_decode_urlsafe(p_spub_str, strlen((char*)p_spub_str),
 					key_spub_sign, sizeof(key_spub_sign),
@@ -436,12 +435,12 @@ iot_error_t _es_keyinfo_handler(struct iot_context *ctx, char *in_payload, char 
 		IOT_INFO("spub len %u", spub_len);
 	}
 
-	if ((recv = cJSON_GetObjectItem(root, "rand")) == NULL) {
+	if ((recv = JSON_GET_OBJECT_ITEM(root, "rand")) == NULL) {
 		IOT_INFO("no spub info");
 		err = IOT_ERROR_EASYSETUP_INVALID_REQUEST;
 		goto exit;
 	}
-	p_rand_str = (unsigned char *)cJSON_GetStringValue(recv);
+	p_rand_str = (unsigned char *)JSON_GET_STRING_VALUE(recv);
 	IOT_DEBUG("rand_info = %s", p_rand_str);
 	err = iot_crypto_base64_decode(p_rand_str, strlen((char*)p_rand_str),
 					(unsigned char *)rand_asc, sizeof(rand_asc), &rand_asc_len);
@@ -513,17 +512,17 @@ iot_error_t _es_keyinfo_handler(struct iot_context *ctx, char *in_payload, char 
 	ctx->es_crypto_cipher_info->key_len = IOT_CRYPTO_SECRET_LEN;
 
 	if (root)
-		cJSON_Delete(root);
+		JSON_DELETE(root);
 	root = NULL;
 
-	root = cJSON_CreateObject();
+	root = JSON_CREATE_OBJECT();
 	if (!root) {
 		IOT_ERROR("json create failed");
 		err = IOT_ERROR_MEM_ALLOC;
 		goto exit_secret;
 	}
 
-	array = cJSON_CreateArray();
+	array = JSON_CREATE_ARRAY();
 	if (!array) {
 		err = IOT_ERROR_MEM_ALLOC;
 		goto exit_secret;
@@ -531,12 +530,12 @@ iot_error_t _es_keyinfo_handler(struct iot_context *ctx, char *in_payload, char 
 
 	for (i = OVF_BIT_JUSTWORKS; i < OVF_BIT_MAX_FEATURE; i++) {
 		if (ctx->devconf.ownership_validation_type & (1 << i)) {
-			cJSON_AddItemToArray(array, cJSON_CreateNumber(i));
+			JSON_ADD_ITEM_TO_ARRAY(array, JSON_CREATE_NUMBER(i));
 		}
 	}
-	cJSON_AddItemToObject(root, "otmSupportFeatures", array);
+	JSON_ADD_ITEM_TO_OBJECT(root, "otmSupportFeatures", array);
 
-	ptr = cJSON_PrintUnformatted(root);
+	ptr = JSON_PRINT(root);
 
 	input_len = strlen(ptr);
 	output_len = iot_crypto_cipher_get_align_size(IOT_CRYPTO_CIPHER_AES256, input_len);
@@ -571,17 +570,17 @@ iot_error_t _es_keyinfo_handler(struct iot_context *ctx, char *in_payload, char 
 	}
 
 	if (root)
-		cJSON_Delete(root);
+		JSON_DELETE(root);
 	root = NULL;
 
-	root = cJSON_CreateObject();
+	root = JSON_CREATE_OBJECT();
 	if (!root) {
 		IOT_ERROR("json create failed");
 		err = IOT_ERROR_EASYSETUP_MEM_ALLOC_ERROR;
 		goto exit_secret;
 	}
-	cJSON_AddItemToObject(root, "message", cJSON_CreateString((char *) encode_buf));
-	output_ptr = cJSON_PrintUnformatted(root);
+	JSON_ADD_ITEM_TO_OBJECT(root, "message", JSON_CREATE_STRING((char *) encode_buf));
+	output_ptr = JSON_PRINT(root);
 
 	*out_payload = output_ptr;
 exit_secret:
@@ -597,7 +596,7 @@ exit_pk:
 		iot_es_crypto_free_pk(&pk_info);
 exit:
 	if (root)
-		cJSON_Delete(root);
+		JSON_DELETE(root);
 	return err;
 }
 
@@ -690,8 +689,8 @@ iot_error_t _es_confirminfo_handler(struct iot_context *ctx, char *in_payload, c
 	char *ptr = NULL;
 	char *output_ptr = NULL;
 	char *rev_message = NULL;
-	cJSON *recv = NULL;
-	cJSON *root = NULL;
+	JSON_H *recv = NULL;
+	JSON_H *root = NULL;
 	iot_error_t err = IOT_ERROR_NONE;
 	size_t input_len = 0;
 	size_t output_len = 0;
@@ -701,14 +700,14 @@ iot_error_t _es_confirminfo_handler(struct iot_context *ctx, char *in_payload, c
 	unsigned char *decrypt_buf = NULL;
 	unsigned char *encrypt_buf = NULL;
 
-	root = cJSON_Parse(in_payload);
+	root = JSON_PARSE(in_payload);
 	if (!root) {
 		IOT_ERROR("Invalid args");
 		err = IOT_ERROR_EASYSETUP_INVALID_REQUEST;
 		goto out;
 	}
 
-	if ((recv = cJSON_GetObjectItem(root, "message")) == NULL) {
+	if ((recv = JSON_GET_OBJECT_ITEM(root, "message")) == NULL) {
 		IOT_INFO("no message");
 		err = IOT_ERROR_EASYSETUP_INVALID_REQUEST;
 		goto out;
@@ -750,17 +749,17 @@ iot_error_t _es_confirminfo_handler(struct iot_context *ctx, char *in_payload, c
 	}
 
 	if (root)
-		cJSON_Delete(root);
+		JSON_DELETE(root);
 	root = NULL;
 
-	root = cJSON_Parse((char *) decrypt_buf);
+	root = JSON_PARSE((char *) decrypt_buf);
 	if (!root) {
 		IOT_ERROR("Invalid payload json format");
 		err = IOT_ERROR_EASYSETUP_INVALID_REQUEST;
 		goto out;
 	}
 
-	if ((recv = cJSON_GetObjectItem(root, "otmSupportFeature")) == NULL) {
+	if ((recv = JSON_GET_OBJECT_ITEM(root, "otmSupportFeature")) == NULL) {
 		IOT_INFO("no otmsupportfeature info");
 		err = IOT_ERROR_EASYSETUP_INVALID_REQUEST;
 		goto out;
@@ -781,17 +780,17 @@ iot_error_t _es_confirminfo_handler(struct iot_context *ctx, char *in_payload, c
 		IOT_ERROR("Not supported otmsupportfeature : %d", recv->valueint);
 
 	if (root)
-		cJSON_Delete(root);
+		JSON_DELETE(root);
 	root = NULL;
 
-	root = cJSON_CreateObject();
+	root = JSON_CREATE_OBJECT();
 	if (!root) {
 		IOT_ERROR("json create failed");
 		err = IOT_ERROR_EASYSETUP_JSON_CREATE_ERROR;
 		goto out;
 	}
 
-	ptr = cJSON_PrintUnformatted(root);
+	ptr = JSON_PRINT(root);
 
 	input_len = (unsigned int)strlen(ptr);
 	output_len = iot_crypto_cipher_get_align_size(IOT_CRYPTO_CIPHER_AES256, input_len);
@@ -826,17 +825,17 @@ iot_error_t _es_confirminfo_handler(struct iot_context *ctx, char *in_payload, c
 	}
 
 	if (root)
-		cJSON_Delete(root);
+		JSON_DELETE(root);
 	root = NULL;
 
-	root = cJSON_CreateObject();
+	root = JSON_CREATE_OBJECT();
 	if (!root) {
 		IOT_ERROR("json create failed");
 		err = IOT_ERROR_EASYSETUP_JSON_CREATE_ERROR;
 		goto out;
 	}
-	cJSON_AddItemToObject(root, "message", cJSON_CreateString((char *) encode_buf));
-	output_ptr = cJSON_PrintUnformatted(root);
+	JSON_ADD_ITEM_TO_OBJECT(root, "message", JSON_CREATE_STRING((char *) encode_buf));
+	output_ptr = JSON_PRINT(root);
 
 	*out_payload = output_ptr;
 out:
@@ -853,7 +852,7 @@ out:
 	if (encode_buf)
 		free(encode_buf);
 	if (root)
-		cJSON_Delete(root);
+		JSON_DELETE(root);
 	return err;
 }
 
@@ -865,8 +864,8 @@ iot_error_t _es_confirm_handler(struct iot_context *ctx, char *in_payload, char 
 	char *ptr = NULL;
 	char *output_ptr = NULL;
 	char *rev_message = NULL;
-	cJSON *recv = NULL;
-	cJSON *root = NULL;
+	JSON_H *recv = NULL;
+	JSON_H *root = NULL;
 	int i;
 	iot_error_t err = IOT_ERROR_NONE;
 	size_t input_len = 0;
@@ -877,7 +876,7 @@ iot_error_t _es_confirm_handler(struct iot_context *ctx, char *in_payload, char 
 	unsigned char *encode_buf = NULL;
 	unsigned char *encrypt_buf = NULL;
 
-	root = cJSON_Parse(in_payload);
+	root = JSON_PARSE(in_payload);
 	if (!root) {
 		IOT_ERROR("Invalid args");
 		err = IOT_ERROR_EASYSETUP_INVALID_REQUEST;
@@ -923,14 +922,14 @@ iot_error_t _es_confirm_handler(struct iot_context *ctx, char *in_payload, char 
 		goto out;
 	}
 
-	root = cJSON_Parse((char *)decrypt_buf);
+	root = JSON_PARSE((char *)decrypt_buf);
 	if (!root) {
 		IOT_ERROR("Invalid payload json format");
 		err = IOT_ERROR_EASYSETUP_INVALID_REQUEST;
 		goto out;
 	}
 
-	if ((recv = cJSON_GetObjectItem(root, "pin")) == NULL) {
+	if ((recv = JSON_GET_OBJECT_ITEM(root, "pin")) == NULL) {
 		IOT_INFO("no pin info");
 		err = IOT_ERROR_EASYSETUP_INVALID_PIN;
 		goto out;
@@ -960,7 +959,7 @@ iot_error_t _es_confirm_handler(struct iot_context *ctx, char *in_payload, char 
 			break;
 		}
 	}
-	cJSON_Delete(root);
+	JSON_DELETE(root);
 	root = NULL;
 	if (!validation) {
 		err = IOT_ERROR_EASYSETUP_INVALID_PIN;
@@ -970,13 +969,13 @@ iot_error_t _es_confirm_handler(struct iot_context *ctx, char *in_payload, char 
 	/*
 	 * output payload
 	 */
-	root = cJSON_CreateObject();
+	root = JSON_CREATE_OBJECT();
 	if (!root) {
 		IOT_ERROR("json create failed");
 		err = IOT_ERROR_EASYSETUP_JSON_CREATE_ERROR;
 		goto out;
 	}
-	ptr = cJSON_PrintUnformatted(root);
+	ptr = JSON_PRINT(root);
 
 	input_len = (unsigned int)strlen(ptr);
 	output_len = iot_crypto_cipher_get_align_size(IOT_CRYPTO_CIPHER_AES256, input_len);
@@ -1011,17 +1010,17 @@ iot_error_t _es_confirm_handler(struct iot_context *ctx, char *in_payload, char 
 	}
 
 	if (root)
-		cJSON_Delete(root);
+		JSON_DELETE(root);
 	root = NULL;
 
-	root = cJSON_CreateObject();
+	root = JSON_CREATE_OBJECT();
 	if (!root) {
 		IOT_ERROR("json create failed");
 		err = IOT_ERROR_EASYSETUP_MEM_ALLOC_ERROR;
 		goto out;
 	}
-	cJSON_AddItemToObject(root, "message", cJSON_CreateString((char *) encode_buf));
-	output_ptr = cJSON_PrintUnformatted(root);
+	JSON_ADD_ITEM_TO_OBJECT(root, "message", JSON_CREATE_STRING((char *) encode_buf));
+	output_ptr = JSON_PRINT(root);
 
 	*out_payload = output_ptr;
 out:
@@ -1036,7 +1035,7 @@ out:
 	if (encode_buf)
 		free(encode_buf);
 	if (root)
-		cJSON_Delete(root);
+		JSON_DELETE(root);
 	return err;
 }
 
@@ -1045,20 +1044,20 @@ iot_error_t _es_wifi_prov_parse(struct iot_context *ctx, char *in_payload)
 {
 	struct iot_wifi_prov_data *wifi_prov = NULL;
 	char bssid[] = "00:00:00:00:00:00";
-	cJSON *item = NULL;
-	cJSON *root = NULL;
-	cJSON *wifi_credential = NULL;
+	JSON_H *item = NULL;
+	JSON_H *root = NULL;
+	JSON_H *wifi_credential = NULL;
 	iot_error_t err = IOT_ERROR_NONE;
 	int i = 0;
 
-	root = cJSON_Parse(in_payload);
+	root = JSON_PARSE(in_payload);
 	if (!root) {
 		IOT_ERROR("Invalid args");
 		err = IOT_ERROR_EASYSETUP_INVALID_REQUEST;
 		goto wifi_parse_out;
 	}
 
-	if ((wifi_credential = cJSON_GetObjectItem(root, "wifiCredential")) == NULL) {
+	if ((wifi_credential = JSON_GET_OBJECT_ITEM(root, "wifiCredential")) == NULL) {
 		IOT_ERROR("failed to find wifiCredential");
 		err = IOT_ERROR_EASYSETUP_INVALID_REQUEST;
 		goto wifi_parse_out;
@@ -1072,23 +1071,23 @@ iot_error_t _es_wifi_prov_parse(struct iot_context *ctx, char *in_payload)
 
 	memset(wifi_prov, 0, sizeof(struct iot_wifi_prov_data));
 
-	if ((item = cJSON_GetObjectItem(wifi_credential, "ssid")) == NULL) {
+	if ((item = JSON_GET_OBJECT_ITEM(wifi_credential, "ssid")) == NULL) {
 		IOT_ERROR("failed to find ssid");
 		err = IOT_ERROR_EASYSETUP_INVALID_REQUEST;
 		goto wifi_parse_out;
 	}
-	strncpy(wifi_prov->ssid, cJSON_GetStringValue(item), sizeof(wifi_prov->ssid) - 1);
+	strncpy(wifi_prov->ssid, JSON_GET_STRING_VALUE(item), sizeof(wifi_prov->ssid) - 1);
 
 	// password is optional.
-	if ((item = cJSON_GetObjectItem(wifi_credential, "password")) == NULL)
+	if ((item = JSON_GET_OBJECT_ITEM(wifi_credential, "password")) == NULL)
 		IOT_INFO("No wifi password");
 	else
-		strncpy(wifi_prov->password, cJSON_GetStringValue(item), sizeof(wifi_prov->password) - 1);
+		strncpy(wifi_prov->password, JSON_GET_STRING_VALUE(item), sizeof(wifi_prov->password) - 1);
 
-	if ((item = cJSON_GetObjectItem(wifi_credential, "macAddress")) == NULL)
+	if ((item = JSON_GET_OBJECT_ITEM(wifi_credential, "macAddress")) == NULL)
 		IOT_INFO("no macAddress");
 	else
-		strncpy(bssid, cJSON_GetStringValue(item), sizeof(bssid));
+		strncpy(bssid, JSON_GET_STRING_VALUE(item), sizeof(bssid));
 
 	err = iot_util_convert_str_mac(bssid, &wifi_prov->bssid);
 	if (err) {
@@ -1097,7 +1096,7 @@ iot_error_t _es_wifi_prov_parse(struct iot_context *ctx, char *in_payload)
 		goto wifi_parse_out;
 	}
 
-	if ((item = cJSON_GetObjectItem(wifi_credential, "authType")) == NULL) {
+	if ((item = JSON_GET_OBJECT_ITEM(wifi_credential, "authType")) == NULL) {
 		IOT_INFO("no authType");
 		for (i = 0; i < ctx->scan_num; i++) {
 			if (!strcmp(wifi_prov->ssid, (char *)ctx->scan_result[i].ssid)) {
@@ -1140,7 +1139,7 @@ wifi_parse_out:
 	if (wifi_prov)
 		free(wifi_prov);
 	if (root)
-		cJSON_Delete(root);
+		JSON_DELETE(root);
 	return err;
 }
 
@@ -1151,11 +1150,11 @@ iot_error_t _es_cloud_prov_parse(char *in_payload)
 	char *full_url = NULL;
 	char *location_id_str = NULL;
 	char *room_id_str = NULL;
-	cJSON *root = NULL;
+	JSON_H *root = NULL;
 	iot_error_t err = IOT_ERROR_NONE;
 	url_parse_t url = { .protocol = NULL, .domain = NULL, .port = 0};
 
-	root = cJSON_Parse(in_payload);
+	root = JSON_PARSE(in_payload);
 	if (!root) {
 		IOT_ERROR("Invalid payload json format");
 		err = IOT_ERROR_EASYSETUP_INVALID_REQUEST;
@@ -1242,7 +1241,7 @@ cloud_parse_out:
 	if (room_id_str)
 		free(room_id_str);
 	if (root)
-		cJSON_Delete(root);
+		JSON_DELETE(root);
 	return err;
 }
 
@@ -1253,7 +1252,7 @@ iot_error_t _es_wifiprovisioninginfo_handler(struct iot_context *ctx, char *in_p
 	char *ptr = NULL;
 	char *output_ptr = NULL;
 	char *rev_message = NULL;
-	cJSON *root = NULL;
+	JSON_H *root = NULL;
 	int uuid_len = 40;
 	iot_error_t err = IOT_ERROR_NONE;
 	size_t input_len = 0;
@@ -1264,7 +1263,7 @@ iot_error_t _es_wifiprovisioninginfo_handler(struct iot_context *ctx, char *in_p
 	unsigned char *decrypt_buf = NULL;
 	unsigned char *encrypt_buf = NULL;
 
-	root = cJSON_Parse(in_payload);
+	root = JSON_PARSE(in_payload);
 	if (!root) {
 		IOT_ERROR("Invalid args");
 		err = IOT_ERROR_EASYSETUP_INVALID_REQUEST;
@@ -1291,7 +1290,7 @@ iot_error_t _es_wifiprovisioninginfo_handler(struct iot_context *ctx, char *in_p
 	}
 
 	if (root)
-		cJSON_Delete(root);
+		JSON_DELETE(root);
 	root = NULL;
 
 	input_len = result_len;
@@ -1340,15 +1339,15 @@ iot_error_t _es_wifiprovisioninginfo_handler(struct iot_context *ctx, char *in_p
 
 	IOT_DEBUG("lookupid = %s", ctx->lookup_id);
 
-	root = cJSON_CreateObject();
+	root = JSON_CREATE_OBJECT();
 	if (!root) {
 		IOT_ERROR("json create failed");
 		err = IOT_ERROR_EASYSETUP_JSON_CREATE_ERROR;
 		goto out;
 	}
-	cJSON_AddItemToObject(root, "lookupId", cJSON_CreateString(ctx->lookup_id));
+	JSON_ADD_ITEM_TO_OBJECT(root, "lookupId", JSON_CREATE_STRING(ctx->lookup_id));
 
-	ptr = cJSON_PrintUnformatted(root);
+	ptr = JSON_PRINT(root);
 
 	input_len = (unsigned int)strlen(ptr);
 	output_len = iot_crypto_cipher_get_align_size(IOT_CRYPTO_CIPHER_AES256, input_len);
@@ -1383,17 +1382,17 @@ iot_error_t _es_wifiprovisioninginfo_handler(struct iot_context *ctx, char *in_p
 	}
 
 	if (root)
-		cJSON_Delete(root);
+		JSON_DELETE(root);
 	root = NULL;
 
-	root = cJSON_CreateObject();
+	root = JSON_CREATE_OBJECT();
 	if (!root) {
 		IOT_ERROR("json create failed");
 		err = IOT_ERROR_EASYSETUP_JSON_CREATE_ERROR;
 		goto out;
 	}
-	cJSON_AddItemToObject(root, "message", cJSON_CreateString((char *) encode_buf));
-	output_ptr = cJSON_PrintUnformatted(root);
+	JSON_ADD_ITEM_TO_OBJECT(root, "message", JSON_CREATE_STRING((char *) encode_buf));
+	output_ptr = JSON_PRINT(root);
 
 	*out_payload = output_ptr;
 
@@ -1418,7 +1417,7 @@ out:
 	if (encode_buf)
 		free(encode_buf);
 	if (root)
-		cJSON_Delete(root);
+		JSON_DELETE(root);
 	return err;
 }
 
@@ -1427,7 +1426,7 @@ iot_error_t _es_setupcomplete_handler(struct iot_context *ctx, char *in_payload,
 {
 	char *ptr = NULL;
 	char *output_ptr = NULL;
-	cJSON *root = NULL;
+	JSON_H *root = NULL;
 	iot_error_t err = IOT_ERROR_NONE;
 	size_t input_len = 0;
 	size_t output_len = 0;
@@ -1435,14 +1434,14 @@ iot_error_t _es_setupcomplete_handler(struct iot_context *ctx, char *in_payload,
 	unsigned char *encode_buf = NULL;
 	unsigned char *encrypt_buf = NULL;
 
-	root = cJSON_CreateObject();
+	root = JSON_CREATE_OBJECT();
 	if (!root) {
 		IOT_ERROR("json create failed");
 		err = IOT_ERROR_EASYSETUP_JSON_CREATE_ERROR;
 		goto out;
 	}
 
-	ptr = cJSON_PrintUnformatted(root);
+	ptr = JSON_PRINT(root);
 
 	input_len = strlen(ptr);
 	output_len = iot_crypto_cipher_get_align_size(IOT_CRYPTO_CIPHER_AES256, input_len);
@@ -1477,17 +1476,17 @@ iot_error_t _es_setupcomplete_handler(struct iot_context *ctx, char *in_payload,
 	}
 
 	if (root)
-		cJSON_Delete(root);
+		JSON_DELETE(root);
 	root = NULL;
 
-	root = cJSON_CreateObject();
+	root = JSON_CREATE_OBJECT();
 	if (!root) {
 		IOT_ERROR("json create failed");
 		err = IOT_ERROR_EASYSETUP_JSON_CREATE_ERROR;
 		goto out;
 	}
-	cJSON_AddItemToObject(root, "message", cJSON_CreateString((char *) encode_buf));
-	output_ptr = cJSON_PrintUnformatted(root);
+	JSON_ADD_ITEM_TO_OBJECT(root, "message", JSON_CREATE_STRING((char *) encode_buf));
+	output_ptr = JSON_PRINT(root);
 
 	*out_payload = output_ptr;
 
@@ -1499,7 +1498,7 @@ out:
 	if (encode_buf)
 		free(encode_buf);
 	if (root)
-		cJSON_Delete(root);
+		JSON_DELETE(root);
 	return err;
 }
 
@@ -1507,48 +1506,48 @@ out:
 static iot_error_t _es_log_systeminfo_handler(struct iot_context *ctx, char **out_payload)
 {
 	char *output_ptr = NULL;
-	cJSON *root = NULL;
+	JSON_H *root = NULL;
 	iot_error_t err = IOT_ERROR_NONE;
 
-	root = cJSON_CreateObject();
+	root = JSON_CREATE_OBJECT();
 	if (!root) {
 		IOT_ERROR("json create failed");
 		err = IOT_ERROR_EASYSETUP_JSON_CREATE_ERROR;
 		goto out;
 	}
 
-	cJSON_AddItemToObject(root, "version", cJSON_CreateString("1.0"));
+	JSON_ADD_ITEM_TO_OBJECT(root, "version", JSON_CREATE_STRING("1.0"));
 
-	output_ptr = cJSON_PrintUnformatted(root);
+	output_ptr = JSON_PRINT(root);
 
 	*out_payload = output_ptr;
 
 out:
 	if (root)
-		cJSON_Delete(root);
+		JSON_DELETE(root);
 	return err;
 }
 
 static iot_error_t _es_log_create_dump_handler(struct iot_context *ctx, char *in_payload, char **out_payload)
 {
 	char *output_ptr = NULL;
-	cJSON *root = NULL;
+	JSON_H *root = NULL;
 	iot_error_t err = IOT_ERROR_NONE;
 
-	root = cJSON_CreateObject();
+	root = JSON_CREATE_OBJECT();
 	if (!root) {
 		IOT_ERROR("json create failed");
 		err = IOT_ERROR_EASYSETUP_JSON_CREATE_ERROR;
 		goto out;
 	}
 
-	output_ptr = cJSON_PrintUnformatted(root);
+	output_ptr = JSON_PRINT(root);
 
 	*out_payload = output_ptr;
 
 out:
 	if (root)
-		cJSON_Delete(root);
+		JSON_DELETE(root);
 	return err;
 }
 
@@ -1556,11 +1555,11 @@ static iot_error_t _es_log_get_dump_handler(struct iot_context *ctx, char **out_
 {
 	char *log_dump = NULL;
 	char *output_ptr = NULL;
-	cJSON *item = NULL;
-	cJSON *root = NULL;
+	JSON_H *item = NULL;
+	JSON_H *root = NULL;
 	iot_error_t err = IOT_ERROR_NONE;
 
-	item = cJSON_CreateObject();
+	item = JSON_CREATE_OBJECT();
 	if (!item) {
 		IOT_ERROR("json create failed");
 		err = IOT_ERROR_EASYSETUP_JSON_CREATE_ERROR;
@@ -1568,24 +1567,24 @@ static iot_error_t _es_log_get_dump_handler(struct iot_context *ctx, char **out_
 	}
 
 	log_dump = iot_debug_get_log();
-	cJSON_AddNumberToObject(item, "code", 1);
-	cJSON_AddItemToObject(item, "message", cJSON_CreateString(log_dump));
+	JSON_ADD_NUMBER_TO_OBJECT(item, "code", 1);
+	JSON_ADD_ITEM_TO_OBJECT(item, "message", JSON_CREATE_STRING(log_dump));
 
-	root = cJSON_CreateObject();
+	root = JSON_CREATE_OBJECT();
 	if (!root) {
 		IOT_ERROR("json create failed");
 		err = IOT_ERROR_EASYSETUP_MEM_ALLOC_ERROR;
 		goto out;
 	}
 
-	cJSON_AddItemToObject(root, "error", item);
+	JSON_ADD_ITEM_TO_OBJECT(root, "error", item);
 
-	output_ptr = cJSON_PrintUnformatted(root);
+	output_ptr = JSON_PRINT(root);
 
 	*out_payload = output_ptr;
 out:
 	if (root)
-		cJSON_Delete(root);
+		JSON_DELETE(root);
 	return err;
 }
 #endif
