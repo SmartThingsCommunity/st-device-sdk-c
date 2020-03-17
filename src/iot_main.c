@@ -343,7 +343,8 @@ static iot_error_t _do_iot_main_command(struct iot_context *ctx,
 	switch (cmd->cmd_type) {
 		case IOT_CMD_STATE_HANDLE:
 			state_data = (struct iot_state_data *)cmd->param;
-			if (ctx->curr_state == state_data->iot_state) {
+			if ((ctx->curr_state > IOT_STATE_UNKNOWN) &&
+					(ctx->curr_state == state_data->iot_state)) {
 				IOT_WARN("Redundant command. state update in progress !");
 				break;
 			}
