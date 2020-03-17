@@ -357,31 +357,27 @@ const iot_crypto_pk_funcs_t iot_crypto_pk_rsa_funcs = {
 };
 #endif
 
-static iot_error_t _iot_crypto_swap_secret(unsigned char *key, size_t len)
+static unsigned char *_iot_crypto_swap_secret(const unsigned char *key, size_t len)
 {
-	unsigned char *tmp;
+	unsigned char *swap;
 	int i;
 
-	tmp = (unsigned char *)malloc(len);
-	if (tmp == NULL) {
+	swap = (unsigned char *)malloc(len);
+	if (swap == NULL) {
 		IOT_ERROR("malloc failed for swap");
-		return IOT_ERROR_MEM_ALLOC;
+		return NULL;
 	}
 
 	for (i = 0; i < len; i++) {
-		tmp[(len - 1) - i] = key[i];
+		swap[(len - 1) - i] = key[i];
 	}
 
-	memcpy(key, tmp, len);
-
-	free((void *)tmp);
-
-	return IOT_ERROR_NONE;
+	return swap;
 }
 
 static iot_error_t _iot_crypto_ecdh_gen_premaster_secret(
 		unsigned char **secret, size_t *olen,
-		unsigned char *t_seckey, unsigned char *s_pubkey)
+		const unsigned char *t_seckey, const unsigned char *s_pubkey)
 {
 	iot_error_t err;
 	mbedtls_ecdh_context ecdh;
@@ -390,6 +386,8 @@ static iot_error_t _iot_crypto_ecdh_gen_premaster_secret(
 	mbedtls_ecp_group_id ecp_grp_id = MBEDTLS_ECP_DP_CURVE25519;
 	const char *pers = "iot_crypto_ecdh";
 	size_t key_len = IOT_CRYPTO_ED25519_LEN;
+	unsigned char *swap_key = NULL;
+	unsigned char premaster_secret[IOT_CRYPTO_ED25519_LEN];
 	int ret;
 
 	mbedtls_ecdh_init(&ecdh);
@@ -411,33 +409,39 @@ static iot_error_t _iot_crypto_ecdh_gen_premaster_secret(
 		goto exit;
 	}
 
-	err = _iot_crypto_swap_secret(t_seckey, key_len);
-	if (err) {
-		IOT_ERROR("_iot_crypto_swap_secret = %d", err);
-		err = IOT_ERROR_CRYPTO_PK_ECDH;
+	swap_key = _iot_crypto_swap_secret(t_seckey, key_len);
+	if (!swap_key) {
+		IOT_ERROR("_iot_crypto_swap_secret returned NULL");
+		err = IOT_ERROR_MEM_ALLOC;
 		goto exit;
 	}
 
-	ret = mbedtls_mpi_read_binary(&ecdh.d, t_seckey, key_len);
+	ret = mbedtls_mpi_read_binary(&ecdh.d, swap_key, key_len);
 	if (ret) {
 		IOT_ERROR("mbedtls_mpi_read_binary = -0x%04X", -ret);
 		err = IOT_ERROR_CRYPTO_PK_ECDH;
+		free(swap_key);
 		goto exit;
 	}
 
-	err = _iot_crypto_swap_secret(s_pubkey, key_len);
-	if (err) {
-		IOT_ERROR("_iot_crypto_swap_secret = %d", err);
-		err = IOT_ERROR_CRYPTO_PK_ECDH;
+	free(swap_key);
+
+	swap_key = _iot_crypto_swap_secret(s_pubkey, key_len);
+	if (!swap_key) {
+		IOT_ERROR("_iot_crypto_swap_secret returned NULL");
+		err = IOT_ERROR_MEM_ALLOC;
 		goto exit;
 	}
 
-	ret = mbedtls_mpi_read_binary(&ecdh.Qp.X, s_pubkey, key_len);
+	ret = mbedtls_mpi_read_binary(&ecdh.Qp.X, swap_key, key_len);
 	if (ret) {
 		IOT_ERROR("mbedtls_mpi_read_binary = -0x%04X", -ret);
 		err = IOT_ERROR_CRYPTO_PK_ECDH;
+		free(swap_key);
 		goto exit;
 	}
+
+	free(swap_key);
 
 	ret = mbedtls_mpi_lset(&ecdh.Qp.Z, 1);
 	if (ret) {
@@ -451,27 +455,23 @@ static iot_error_t _iot_crypto_ecdh_gen_premaster_secret(
 	if (ret) {
 		IOT_ERROR("mbedtls_ecdh_compute_shared = -0x%04X", -ret);
 		err = IOT_ERROR_CRYPTO_PK_ECDH;
-		goto exit; }
-
-	*secret = (unsigned char *)malloc(key_len);
-	if (*secret == NULL) {
-		IOT_ERROR("malloc failed for secret");
-		err = IOT_ERROR_MEM_ALLOC;
 		goto exit;
 	}
 
-	ret = mbedtls_mpi_write_binary(&ecdh.z, *secret, key_len);
+	key_len = sizeof(premaster_secret);
+
+	ret = mbedtls_mpi_write_binary(&ecdh.z, premaster_secret, key_len);
 	if (ret) {
 		IOT_ERROR("mbedtls_mpi_write_binary = -0x%04X", -ret);
 		err = IOT_ERROR_CRYPTO_PK_ECDH;
-		goto exit_secret;
+		goto exit;
 	}
 
-	err = _iot_crypto_swap_secret(*secret, key_len);
-	if (err) {
-		IOT_ERROR("_iot_crypto_swap_secret = %d", err);
+	*secret = _iot_crypto_swap_secret(premaster_secret, key_len);
+	if (*secret == NULL) {
+		IOT_ERROR("_iot_crypto_swap_secret returned NULL");
 		err = IOT_ERROR_CRYPTO_PK_ECDH;
-		goto exit_secret;
+		goto exit;
 	}
 
 	*olen = key_len;
@@ -479,9 +479,6 @@ static iot_error_t _iot_crypto_ecdh_gen_premaster_secret(
 	err = IOT_ERROR_NONE;
 	goto exit;
 
-exit_secret:
-	free((void *)*secret);
-	*secret = NULL;
 exit:
 	mbedtls_ecdh_free(&ecdh);
 	mbedtls_ctr_drbg_free(&ctr_drbg);
@@ -515,7 +512,8 @@ iot_error_t iot_crypto_ecdh_gen_master_secret(unsigned char *master,
 	}
 
 	err = _iot_crypto_ecdh_gen_premaster_secret(&pmsecret, &pmslen,
-					params->t_seckey, params->s_pubkey);
+				(const unsigned char *)params->t_seckey,
+				(const unsigned char *)params->s_pubkey);
 	if (err) {
 		goto exit;
 	}
