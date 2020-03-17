@@ -596,6 +596,7 @@ void assert_keyinfo(char *payload, iot_crypto_cipher_info_t *server_cipher, unsi
     assert_true(strlen( b64url_aes256_message) > 10);
 
     plain_message = _decode_and_decrypt_message(server_cipher, (unsigned char*) b64url_aes256_message, strlen(b64url_aes256_message));
+    cJSON_Delete(root);
 
     // validate values
     root = cJSON_Parse((const char*) plain_message);
