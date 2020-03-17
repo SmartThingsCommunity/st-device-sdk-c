@@ -81,6 +81,8 @@ int TC_iot_crypto_ecdh_setup(void **state);
 int TC_iot_crypto_ecdh_teardown(void **state);
 void TC_iot_crypto_ecdh_invalid_parameter(void **state);
 void TC_iot_crypto_ecdh_success(void **state);
+void TC_iot_crypto_ed25519_convert_invalid_parameter(void **state);
+void TC_iot_crypto_ed25519_convert_success(void **state);
 void TC_iot_crypto_base64_invalid_parameter(void **state);
 void TC_iot_crypto_base64_failure(void **state);
 void TC_iot_crypto_base64_encode_success(void **state);

@@ -544,6 +544,62 @@ void TC_iot_crypto_ecdh_success(void **state)
 	assert_memory_equal(master, ecdh_master_secret_expected, master_len);
 }
 
+void TC_iot_crypto_ed25519_convert_invalid_parameter(void **state)
+{
+	iot_error_t err;
+	unsigned char key_curve25519[IOT_CRYPTO_ED25519_LEN];
+
+	// Given: ed25519 buffer is null
+	// When
+	err = iot_crypto_ed25519_convert_pubkey(cloud_pubkey_ed25519, NULL);
+	// Then
+	assert_int_equal(err, IOT_ERROR_INVALID_ARGS);
+
+	// Given: curve25519 buffer is null
+	// When
+	err = iot_crypto_ed25519_convert_pubkey(NULL, key_curve25519);
+	// Then
+	assert_int_equal(err, IOT_ERROR_INVALID_ARGS);
+
+	// Given: ed25519 buffer is null
+	// When
+	err = iot_crypto_ed25519_convert_seckey(things_seckey_ed25519, NULL);
+	// Then
+	assert_int_equal(err, IOT_ERROR_INVALID_ARGS);
+
+	// Given: curve25519 buffer is null
+	// When
+	err = iot_crypto_ed25519_convert_seckey(NULL, key_curve25519);
+	// Then
+	assert_int_equal(err, IOT_ERROR_INVALID_ARGS);
+}
+
+void TC_iot_crypto_ed25519_convert_success(void **state)
+{
+	iot_error_t err;
+	unsigned char *key_ed25519;
+	unsigned char key_curve25519[IOT_CRYPTO_ED25519_LEN];
+	unsigned char *key_curve25519_expected;
+
+	// Given: pubkey
+	key_ed25519 = cloud_pubkey_ed25519;
+	key_curve25519_expected = cloud_pubkey_curve25519;
+	// When
+	err = iot_crypto_ed25519_convert_pubkey(key_ed25519, key_curve25519);
+	// Then
+	assert_int_equal(err, IOT_ERROR_NONE);
+	assert_memory_equal(key_curve25519, key_curve25519_expected, IOT_CRYPTO_ED25519_LEN);
+
+	// Given: seckey
+	key_ed25519 = things_seckey_ed25519;
+	key_curve25519_expected = things_seckey_curve25519;
+	// When
+	err = iot_crypto_ed25519_convert_seckey(key_ed25519, key_curve25519);
+	// Then
+	assert_int_equal(err, IOT_ERROR_NONE);
+	assert_memory_equal(key_curve25519, key_curve25519_expected, IOT_CRYPTO_ED25519_LEN);
+}
+
 static const unsigned char *sample = "ab~c123!?$*&()'-=@~abc";
 static const unsigned char *sample_b64 = "YWJ+YzEyMyE/JComKCknLT1AfmFiYw==";
 static const unsigned char *sample_b64url = "YWJ-YzEyMyE_JComKCknLT1AfmFiYw==";
