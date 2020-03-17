@@ -75,6 +75,8 @@ int TEST_FUNC_iot_crypto(void)
             cmocka_unit_test_setup_teardown(TC_iot_crypto_cipher_aes_success, TC_iot_crypto_cipher_aes_setup, TC_iot_crypto_cipher_aes_teardown),
             cmocka_unit_test_setup_teardown(TC_iot_crypto_ecdh_invalid_parameter, TC_iot_crypto_ecdh_setup, TC_iot_crypto_ecdh_teardown),
             cmocka_unit_test_setup_teardown(TC_iot_crypto_ecdh_success, TC_iot_crypto_ecdh_setup, TC_iot_crypto_ecdh_teardown),
+            cmocka_unit_test_setup_teardown(TC_iot_crypto_ed25519_keypair_invalid_parameter, TC_iot_crypto_ed25519_keypair_setup, TC_iot_crypto_ed25519_keypair_teardown),
+            cmocka_unit_test_setup_teardown(TC_iot_crypto_ed25519_keypair_success, TC_iot_crypto_ed25519_keypair_setup, TC_iot_crypto_ed25519_keypair_teardown),
             cmocka_unit_test(TC_iot_crypto_ed25519_convert_invalid_parameter),
             cmocka_unit_test(TC_iot_crypto_ed25519_convert_success),
             cmocka_unit_test(TC_iot_crypto_base64_invalid_parameter),

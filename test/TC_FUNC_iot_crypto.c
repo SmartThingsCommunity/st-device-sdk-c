@@ -544,6 +544,111 @@ void TC_iot_crypto_ecdh_success(void **state)
 	assert_memory_equal(master, ecdh_master_secret_expected, master_len);
 }
 
+int TC_iot_crypto_ed25519_keypair_setup(void **state)
+{
+	iot_crypto_ed25519_keypair_t *keypair;
+	size_t keypair_len = sizeof(iot_crypto_ed25519_keypair_t);
+
+	keypair = (iot_crypto_ed25519_keypair_t *)malloc(keypair_len);
+	assert_non_null(keypair);
+
+	iot_crypto_ed25519_init_keypair(keypair);
+
+	*state = keypair;
+
+	return 0;
+}
+
+int TC_iot_crypto_ed25519_keypair_teardown(void **state)
+{
+	iot_crypto_ed25519_keypair_t *keypair;
+
+	keypair = (iot_crypto_ed25519_keypair_t *)*state;
+
+	iot_crypto_ed25519_free_keypair(keypair);
+
+	free(keypair);
+
+	return 0;
+}
+
+void TC_iot_crypto_ed25519_keypair_invalid_parameter(void **state)
+{
+	iot_error_t err;
+	iot_crypto_ed25519_keypair_t *keypair;
+	unsigned char *tmpkey;
+
+	keypair = (iot_crypto_ed25519_keypair_t *)*state;
+	assert_non_null(keypair);
+
+	// Given: pk is null
+	// When
+	err = iot_crypto_ed25519_convert_keypair(NULL);
+	// then
+	assert_int_equal(err, IOT_ERROR_INVALID_ARGS);
+
+	// Given: ed25519 pubkey is null
+	tmpkey = keypair->sign.pubkey;
+	keypair->sign.pubkey = NULL;
+	// When
+	err = iot_crypto_ed25519_convert_keypair(keypair);
+	// Then
+	assert_int_equal(err, IOT_ERROR_INVALID_ARGS);
+	// Local teardown
+	keypair->sign.pubkey = tmpkey;
+
+	// Given: ed25519 seckey is null
+	tmpkey = keypair->sign.seckey;
+	keypair->sign.seckey = NULL;
+	// When
+	err = iot_crypto_ed25519_convert_keypair(keypair);
+	// Then
+	assert_int_equal(err, IOT_ERROR_INVALID_ARGS);
+	// Local teardown
+	keypair->sign.seckey = tmpkey;
+
+	// Given: curve25519 pubkey is null
+	tmpkey = keypair->curve.pubkey;
+	keypair->curve.pubkey = NULL;
+	// When
+	err = iot_crypto_ed25519_convert_keypair(keypair);
+	// Then
+	assert_int_equal(err, IOT_ERROR_INVALID_ARGS);
+	// Local teardown
+	keypair->curve.pubkey = tmpkey;
+
+	// Given: curve25519 seckey is null
+	tmpkey = keypair->curve.seckey;
+	keypair->curve.seckey = NULL;
+	// When
+	err = iot_crypto_ed25519_convert_keypair(keypair);
+	// Then
+	assert_int_equal(err, IOT_ERROR_INVALID_ARGS);
+	// Local teardown
+	keypair->curve.seckey = tmpkey;
+}
+
+void TC_iot_crypto_ed25519_keypair_success(void **state)
+{
+	iot_error_t err;
+	iot_crypto_ed25519_keypair_t *keypair;
+	unsigned char *pubkey_curve25519_expected = cloud_pubkey_curve25519;
+	unsigned char *seckey_curve25519_expected = things_seckey_curve25519;
+
+	keypair = (iot_crypto_ed25519_keypair_t *)*state;
+	assert_non_null(keypair);
+
+	// Given
+	memcpy(keypair->sign.pubkey, cloud_pubkey_ed25519, sizeof(cloud_pubkey_ed25519));
+	memcpy(keypair->sign.seckey, things_seckey_ed25519, sizeof(things_seckey_ed25519));
+	// When
+	err = iot_crypto_ed25519_convert_keypair(keypair);
+	// Then
+	assert_int_equal(err, IOT_ERROR_NONE);
+	assert_memory_equal(keypair->curve.pubkey, pubkey_curve25519_expected, IOT_CRYPTO_ED25519_LEN);
+	assert_memory_equal(keypair->curve.seckey, seckey_curve25519_expected, IOT_CRYPTO_ED25519_LEN);
+}
+
 void TC_iot_crypto_ed25519_convert_invalid_parameter(void **state)
 {
 	iot_error_t err;
