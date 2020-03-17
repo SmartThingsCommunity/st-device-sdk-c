@@ -28,7 +28,7 @@
 #include "iot_nv_data.h"
 #include "iot_os_util.h"
 
-#include "cJSON.h"
+#include "JSON.h"
 
 iot_error_t iot_command_send(struct iot_context *ctx,
 	enum iot_command_type new_cmd, const void *param, int param_size)
@@ -163,9 +163,9 @@ iot_error_t iot_api_onboarding_config_load(unsigned char *onboarding_config,
 		unsigned int onboarding_config_len, struct iot_devconf_prov_data *devconf)
 {
 	iot_error_t iot_err = IOT_ERROR_NONE;
-	cJSON *root = NULL;
-	cJSON *config = NULL;
-	cJSON *item = NULL;
+	JSON_H *root = NULL;
+	JSON_H *config = NULL;
+	JSON_H *item = NULL;
 	char *data = NULL;
 	char *device_onboarding_id = NULL;
 	char *mnid = NULL;
@@ -187,8 +187,8 @@ iot_error_t iot_api_onboarding_config_load(unsigned char *onboarding_config,
 	memcpy(data, onboarding_config, onboarding_config_len);
 	data[onboarding_config_len] = '\0';
 
-	root = cJSON_Parse((char *)data);
-	config = cJSON_GetObjectItem(root, name_onboardingConfig);
+	root = JSON_PARSE((char *)data);
+	config = JSON_GET_OBJECT_ITEM(root, name_onboardingConfig);
 	if (!config) {
 		current_name = (char *)name_onboardingConfig;
 		iot_err = IOT_ERROR_UNINITIALIZED;
@@ -196,13 +196,13 @@ iot_error_t iot_api_onboarding_config_load(unsigned char *onboarding_config,
 	}
 
 	/* device_onboarding_id */
-	item = cJSON_GetObjectItem(config, name_deviceOnboardingId);
+	item = JSON_GET_OBJECT_ITEM(config, name_deviceOnboardingId);
 	if (!item) {
 		current_name = (char *)name_deviceOnboardingId;
 		iot_err = IOT_ERROR_UNINITIALIZED;
 		goto load_out;
 	}
-	str_len = strlen(cJSON_GetStringValue(item));
+	str_len = strlen(JSON_GET_STRING_VALUE(item));
 	if (str_len > 13) {
 		current_name = (char *)name_deviceOnboardingId;
 		iot_err = IOT_ERROR_UNINITIALIZED;
@@ -213,93 +213,93 @@ iot_error_t iot_api_onboarding_config_load(unsigned char *onboarding_config,
 		iot_err = IOT_ERROR_MEM_ALLOC;
 		goto load_out;
 	}
-	strncpy(device_onboarding_id, cJSON_GetStringValue(item), str_len);
+	strncpy(device_onboarding_id, JSON_GET_STRING_VALUE(item), str_len);
 	device_onboarding_id[str_len] = '\0';
 
 	/* mnid */
-	item = cJSON_GetObjectItem(config, name_mnId);
-	if (!item || !strcmp(cJSON_GetStringValue(item), "MNID")) {
+	item = JSON_GET_OBJECT_ITEM(config, name_mnId);
+	if (!item || !strcmp(JSON_GET_STRING_VALUE(item), "MNID")) {
 		current_name = (char *)name_mnId;
 		iot_err = IOT_ERROR_UNINITIALIZED;
 		goto load_out;
 	}
-	str_len = strlen(cJSON_GetStringValue(item));
+	str_len = strlen(JSON_GET_STRING_VALUE(item));
 	mnid = iot_os_malloc(str_len + 1);
 	if (!mnid) {
 		iot_err = IOT_ERROR_MEM_ALLOC;
 		goto load_out;
 	}
-	strncpy(mnid, cJSON_GetStringValue(item), str_len);
+	strncpy(mnid, JSON_GET_STRING_VALUE(item), str_len);
 	mnid[str_len] = '\0';
 
 	/* setup_id */
-	item = cJSON_GetObjectItem(config, name_setupId);
+	item = JSON_GET_OBJECT_ITEM(config, name_setupId);
 	if (!item) {
 		current_name = (char *)name_setupId;
 		iot_err = IOT_ERROR_UNINITIALIZED;
 		goto load_out;
 	}
-	str_len = strlen(cJSON_GetStringValue(item));
+	str_len = strlen(JSON_GET_STRING_VALUE(item));
 	setupid = iot_os_malloc(str_len + 1);
 	if (!setupid) {
 		iot_err = IOT_ERROR_MEM_ALLOC;
 		goto load_out;
 	}
-	strncpy(setupid, cJSON_GetStringValue(item), str_len);
+	strncpy(setupid, JSON_GET_STRING_VALUE(item), str_len);
 	setupid[str_len] = '\0';
 
 	/* vid */
-	item = cJSON_GetObjectItem(config, name_vid);
+	item = JSON_GET_OBJECT_ITEM(config, name_vid);
 	if (!item) {
 		current_name = (char *)name_vid;
 		iot_err = IOT_ERROR_UNINITIALIZED;
 		goto load_out;
 	}
-	str_len = strlen(cJSON_GetStringValue(item));
+	str_len = strlen(JSON_GET_STRING_VALUE(item));
 	vid = iot_os_malloc(str_len + 1);
 	if (!vid) {
 		iot_err = IOT_ERROR_MEM_ALLOC;
 		goto load_out;
 	}
-	strncpy(vid, cJSON_GetStringValue(item), str_len);
+	strncpy(vid, JSON_GET_STRING_VALUE(item), str_len);
 	vid[str_len] = '\0';
 
 	/* device_type_id */
-	item = cJSON_GetObjectItem(config, name_deviceTypeId);
-	if (!item || !strcmp(cJSON_GetStringValue(item), "TYPE")) {
+	item = JSON_GET_OBJECT_ITEM(config, name_deviceTypeId);
+	if (!item || !strcmp(JSON_GET_STRING_VALUE(item), "TYPE")) {
 		current_name = (char *)name_deviceTypeId;
 		iot_err = IOT_ERROR_UNINITIALIZED;
 		goto load_out;
 	}
-	str_len = strlen(cJSON_GetStringValue(item));
+	str_len = strlen(JSON_GET_STRING_VALUE(item));
 	devicetypeid = iot_os_malloc(str_len + 1);
 	if (!devicetypeid) {
 		iot_err = IOT_ERROR_MEM_ALLOC;
 		goto load_out;
 	}
-	strncpy(devicetypeid, cJSON_GetStringValue(item), str_len);
+	strncpy(devicetypeid, JSON_GET_STRING_VALUE(item), str_len);
 	devicetypeid[str_len] = '\0';
 
 	/* ownership validation type */
-	item = cJSON_GetObjectItem(config, name_ownershipValidationTypes);
+	item = JSON_GET_OBJECT_ITEM(config, name_ownershipValidationTypes);
 	if (!item) {
 		current_name = (char *)name_ownershipValidationTypes;
 		iot_err = IOT_ERROR_UNINITIALIZED;
 		goto load_out;
 	}
-	for (i = 0; i < cJSON_GetArraySize(item); i++) {
-		cJSON *ovf = cJSON_GetArrayItem(item, i);
-		if (ovf && cJSON_IsString(ovf)) {
-			if (!strcmp(cJSON_GetStringValue(ovf), "JUSTWORKS"))
+	for (i = 0; i < JSON_GET_ARRAY_SIZE(item); i++) {
+		JSON_H *ovf = JSON_GET_ARRAY_ITEM(item, i);
+		if (ovf && JSON_IS_STRING(ovf)) {
+			if (!strcmp(JSON_GET_STRING_VALUE(ovf), "JUSTWORKS"))
 				ownership_validation_type |= (unsigned int) IOT_OVF_TYPE_JUSTWORKS;
-			else if (!strcmp(cJSON_GetStringValue(ovf), "BUTTON"))
+			else if (!strcmp(JSON_GET_STRING_VALUE(ovf), "BUTTON"))
 				ownership_validation_type |= (unsigned int) IOT_OVF_TYPE_BUTTON;
-			else if (!strcmp(cJSON_GetStringValue(ovf), "PIN"))
+			else if (!strcmp(JSON_GET_STRING_VALUE(ovf), "PIN"))
 				ownership_validation_type |= (unsigned int) IOT_OVF_TYPE_PIN;
-			else if (!strcmp(cJSON_GetStringValue(ovf), "QR"))
+			else if (!strcmp(JSON_GET_STRING_VALUE(ovf), "QR"))
 				ownership_validation_type |= (unsigned int) IOT_OVF_TYPE_QR;
 			else {
-				IOT_ERROR("Unknown validation type: %s", cJSON_GetStringValue(ovf));
+				IOT_ERROR("Unknown validation type: %s", JSON_GET_STRING_VALUE(ovf));
 				current_name = (char *)name_ownershipValidationTypes;
 				iot_err = IOT_ERROR_UNINITIALIZED;
 				goto load_out;
@@ -315,10 +315,10 @@ iot_error_t iot_api_onboarding_config_load(unsigned char *onboarding_config,
 	}
 
 	/* device identity */
-	item = cJSON_GetObjectItem(config, name_identityType);
-	if (!item || !strcmp(cJSON_GetStringValue(item), "ED25519")) {
+	item = JSON_GET_OBJECT_ITEM(config, name_identityType);
+	if (!item || !strcmp(JSON_GET_STRING_VALUE(item), "ED25519")) {
 		pk_type = IOT_CRYPTO_PK_ED25519;
-	} else if (!strcmp(cJSON_GetStringValue(item), "CERTIFICATE")) {
+	} else if (!strcmp(JSON_GET_STRING_VALUE(item), "CERTIFICATE")) {
 		pk_type = IOT_CRYPTO_PK_RSA;
 	} else {
 		current_name = (char *)name_identityType;
@@ -335,7 +335,7 @@ iot_error_t iot_api_onboarding_config_load(unsigned char *onboarding_config,
 	devconf->pk_type = pk_type;
 
 	if (root)
-		cJSON_Delete(root);
+		JSON_DELETE(root);
 	if (data)
 		free(data);
 
@@ -343,9 +343,9 @@ iot_error_t iot_api_onboarding_config_load(unsigned char *onboarding_config,
 
 load_out:
 	if (iot_err == IOT_ERROR_UNINITIALIZED) {
-		if (item && cJSON_IsString(item)) {
+		if (item && JSON_IS_STRING(item)) {
 			IOT_ERROR("[%s] wrong onboarding config value detected: %s",
-					current_name, cJSON_GetStringValue(item));
+					current_name, JSON_GET_STRING_VALUE(item));
 		}
 		else {
 			IOT_ERROR("[%s] wrong onboarding config value detected", current_name);
@@ -362,7 +362,7 @@ load_out:
 	if (devicetypeid)
 		free(devicetypeid);
 	if (root)
-		cJSON_Delete(root);
+		JSON_DELETE(root);
 	if (data)
 		free(data);
 
@@ -441,9 +441,9 @@ iot_error_t iot_api_device_info_load(unsigned char *device_info,
 		unsigned int device_info_len, struct iot_device_info *info)
 {
 	iot_error_t iot_err = IOT_ERROR_NONE;
-	cJSON *root = NULL;
-	cJSON *profile = NULL;
-	cJSON *item = NULL;
+	JSON_H *root = NULL;
+	JSON_H *profile = NULL;
+	JSON_H *item = NULL;
 	char *firmware_version = NULL;
 	char *data = NULL;
 	size_t str_len = 0;
@@ -459,8 +459,8 @@ iot_error_t iot_api_device_info_load(unsigned char *device_info,
 	memcpy(data, device_info, device_info_len);
 	data[device_info_len] = '\0';
 
-	root = cJSON_Parse((char *)data);
-	profile = cJSON_GetObjectItem(root, name_deviceInfo);
+	root = JSON_PARSE((char *)data);
+	profile = JSON_GET_OBJECT_ITEM(root, name_deviceInfo);
 	if (!profile) {
 		current_name = (char *)name_deviceInfo;
 		iot_err = IOT_ERROR_UNINITIALIZED;
@@ -468,25 +468,25 @@ iot_error_t iot_api_device_info_load(unsigned char *device_info,
 	}
 
 	/* version */
-	item = cJSON_GetObjectItem(profile, name_version);
+	item = JSON_GET_OBJECT_ITEM(profile, name_version);
 	if (!item) {
 		current_name = (char *)name_version;
 		iot_err = IOT_ERROR_UNINITIALIZED;
 		goto load_out;
 	}
-	str_len = strlen(cJSON_GetStringValue(item));
+	str_len = strlen(JSON_GET_STRING_VALUE(item));
 	firmware_version = iot_os_malloc(str_len + 1);
 	if (!firmware_version) {
 		iot_err = IOT_ERROR_MEM_ALLOC;
 		goto load_out;
 	}
-	strncpy(firmware_version, cJSON_GetStringValue(item), str_len);
+	strncpy(firmware_version, JSON_GET_STRING_VALUE(item), str_len);
 	firmware_version[str_len] = '\0';
 
 	info->firmware_version = firmware_version;
 
 	if (root)
-		cJSON_Delete(root);
+		JSON_DELETE(root);
 	if (data)
 		free(data);
 
@@ -496,23 +496,23 @@ iot_error_t iot_api_device_info_load(unsigned char *device_info,
 
 load_out:
 	if (iot_err == IOT_ERROR_UNINITIALIZED) {
-		if (item && cJSON_IsString(item)) {
+		if (item && JSON_IS_STRING(item)) {
 			IOT_ERROR("[%s] wrong device info value detected: %s",
-					current_name, cJSON_GetStringValue(item));
+					current_name, JSON_GET_STRING_VALUE(item));
 		}
 		else {
 			IOT_ERROR("[%s] wrong device info value detected", current_name);
 		}
 	}
 	if (iot_err == IOT_ERROR_INVALID_ARGS) {
-		if (item && cJSON_IsNumber(item)) {
+		if (item && JSON_IS_NUMBER(item)) {
 			IOT_ERROR("invalid device info value: %d", item->valueint);
 		}
 	}
 	if (firmware_version)
 		free(firmware_version);
 	if (root)
-		cJSON_Delete(root);
+		JSON_DELETE(root);
 	if (data)
 		free(data);
 
@@ -538,9 +538,9 @@ iot_error_t iot_api_read_device_identity(unsigned char* nv_prof,
 		unsigned int nv_prof_len, const char* object, char** nv_data)
 {
 	iot_error_t iot_err = IOT_ERROR_NONE;
-	cJSON *root = NULL;
-	cJSON *profile = NULL;
-	cJSON *item = NULL;
+	JSON_H *root = NULL;
+	JSON_H *profile = NULL;
+	JSON_H *item = NULL;
 	char *data = NULL;
 	char *object_data = NULL;
 	int str_len = 0;
@@ -555,35 +555,35 @@ iot_error_t iot_api_read_device_identity(unsigned char* nv_prof,
 	memcpy(data, nv_prof, nv_prof_len);
 	data[nv_prof_len] = '\0';
 
-	root = cJSON_Parse((char *)data);
-	profile = cJSON_GetObjectItem(root, name_deviceInfo);
+	root = JSON_PARSE((char *)data);
+	profile = JSON_GET_OBJECT_ITEM(root, name_deviceInfo);
 	if (!profile) {
 		current_name = (char*)name_deviceInfo;
 		iot_err = IOT_ERROR_UNINITIALIZED;
 		goto load_out;
 	}
 
-	item = cJSON_GetObjectItem(profile, object);
-	if (!item || !strcmp(cJSON_GetStringValue(item), object)) {
+	item = JSON_GET_OBJECT_ITEM(profile, object);
+	if (!item || !strcmp(JSON_GET_STRING_VALUE(item), object)) {
 		current_name = (char *)object;
 		iot_err = IOT_ERROR_UNINITIALIZED;
 		goto load_out;
 	}
 
-	str_len = strlen(cJSON_GetStringValue(item));
+	str_len = strlen(JSON_GET_STRING_VALUE(item));
 	object_data = iot_os_malloc(str_len + 1);
 	if (!object_data) {
 		iot_err = IOT_ERROR_MEM_ALLOC;
 		goto load_out;
 	}
 
-	strncpy(object_data, cJSON_GetStringValue(item), str_len);
+	strncpy(object_data, JSON_GET_STRING_VALUE(item), str_len);
 	object_data[str_len] = '\0';
 
 	*nv_data = object_data;
 
 	if (root)
-		cJSON_Delete(root);
+		JSON_DELETE(root);
 	if (data)
 		free(data);
 
@@ -591,9 +591,9 @@ iot_error_t iot_api_read_device_identity(unsigned char* nv_prof,
 
 load_out:
 	if (iot_err == IOT_ERROR_UNINITIALIZED) {
-		if (item && cJSON_IsString(item)) {
+		if (item && JSON_IS_STRING(item)) {
 			IOT_ERROR("[%s] wrong nv profile value detected: %s",
-					current_name, cJSON_GetStringValue(item));
+					current_name, JSON_GET_STRING_VALUE(item));
 		}
 		else {
 			IOT_ERROR("[%s] wrong nv profile value detected", current_name);
@@ -601,7 +601,7 @@ load_out:
 	}
 
 	if (root)
-		cJSON_Delete(root);
+		JSON_DELETE(root);
 	if (data)
 		free(data);
 
