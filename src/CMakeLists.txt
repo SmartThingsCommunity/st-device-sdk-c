@@ -81,6 +81,7 @@ target_include_directories(iotcore
         include/bsp/posix
         include/os
         include/mqtt
+        include/external
         PUBLIC
         include
         )
