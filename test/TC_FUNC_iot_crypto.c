@@ -427,6 +427,47 @@ void TC_iot_crypto_cipher_aes_success(void **state)
 	free(plain);
 }
 
+void TC_iot_crypto_cipher_get_align_size(void **state)
+{
+	iot_crypto_cipher_type_t cipher_type;
+	size_t len;
+	size_t align_len;
+	size_t expected_len;
+
+	// Given: not supported cipher algorithm
+	cipher_type = -1;
+	// When
+	align_len = iot_crypto_cipher_get_align_size(cipher_type, len);
+	// Then
+	assert_int_equal(align_len, 0);
+
+	// Given: invalid input size
+	cipher_type = IOT_CRYPTO_CIPHER_AES256;
+	len = 0;
+	// When
+	align_len = iot_crypto_cipher_get_align_size(cipher_type, len);
+	// Then
+	assert_int_equal(align_len, 0);
+
+	// Given
+	cipher_type = IOT_CRYPTO_CIPHER_AES256;
+	len = 16;
+	expected_len = 32;
+	// When
+	align_len = iot_crypto_cipher_get_align_size(cipher_type, len);
+	// Then
+	assert_int_equal(align_len, expected_len);
+
+	// Given
+	cipher_type = IOT_CRYPTO_CIPHER_AES256;
+	len = 24;
+	expected_len = 32;
+	// When
+	align_len = iot_crypto_cipher_get_align_size(cipher_type, len);
+	// Then
+	assert_int_equal(align_len, expected_len);
+}
+
 static unsigned char things_seckey_ed25519[] = {
 	0x18, 0xdc, 0xba, 0x03, 0xef, 0xa9, 0x26, 0x19,
 	0x79, 0x24, 0xbd, 0x44, 0xae, 0x39, 0x3d, 0xe0,

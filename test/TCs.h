@@ -80,6 +80,7 @@ int TC_iot_crypto_cipher_aes_teardown(void **state);
 void TC_iot_crypto_cipher_aes_null_parameter(void **state);
 void TC_iot_crypto_cipher_aes_invalid_parameter(void **state);
 void TC_iot_crypto_cipher_aes_success(void **state);
+void TC_iot_crypto_cipher_get_align_size(void **state);
 int TC_iot_crypto_ecdh_setup(void **state);
 int TC_iot_crypto_ecdh_teardown(void **state);
 void TC_iot_crypto_ecdh_invalid_parameter(void **state);
