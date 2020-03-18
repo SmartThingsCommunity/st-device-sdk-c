@@ -21,8 +21,11 @@
 #include <setjmp.h>
 #include <cmocka.h>
 #include <st_dev.h>
+#include <string.h>
 #include <iot_capability.h>
 #include "TC_MOCK_functions.h"
+
+#define UNUSED(x) (void*)(x)
 
 int TC_iot_capability_teardown(void **state)
 {
@@ -239,4 +242,58 @@ void TC_st_cap_attr_create_string_null_parameters(void **state)
     assert_null(event);
 
     *state = NULL;
+}
+
+void test_cap_init_callback(IOT_CAP_HANDLE *handle, void *usr_data)
+{
+    assert_non_null(handle);
+    UNUSED(usr_data);
+}
+
+void TC_st_cap_handle_init_invalid_argument(void **state)
+{
+    IOT_CAP_HANDLE *cap_handle;
+    char *usr_data;
+    UNUSED(*state);
+
+    // Given
+    usr_data = strdup("UserString");
+    // When: IOT_CTX null
+    cap_handle = st_cap_handle_init(NULL, "main", "switch", test_cap_init_callback, usr_data);
+    // Then
+    assert_null(cap_handle);
+    // Teardown
+    free(usr_data);
+
+    // Given
+    usr_data = strdup("UserString");
+    // When: IOT_CTX, capability null
+    cap_handle = st_cap_handle_init(NULL, "main", NULL, test_cap_init_callback, usr_data);
+    // Then
+    assert_null(cap_handle);
+    // Teardown
+    free(usr_data);
+
+    // Given
+    usr_data = strdup("UserString");
+    // When: IOT_CTX, component and capability null
+    cap_handle = st_cap_handle_init(NULL, NULL, NULL, test_cap_init_callback, usr_data);
+    // Then
+    assert_null(cap_handle);
+    // Teardown
+    free(usr_data);
+
+    // Given
+    usr_data = strdup("UserString");
+    // When: IOT_CTX, component,capability and init_cb null
+    cap_handle = st_cap_handle_init(NULL, NULL, NULL, NULL, usr_data);
+    // Then
+    assert_null(cap_handle);
+    // Teardown
+    free(usr_data);
+
+    // When: all null
+    cap_handle = st_cap_handle_init(NULL, NULL, NULL, NULL, NULL);
+    // Then
+    assert_null(cap_handle);
 }

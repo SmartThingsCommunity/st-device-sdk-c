@@ -58,6 +58,7 @@ int TEST_FUNC_iot_capability(void)
             cmocka_unit_test_teardown(TC_st_cap_attr_create_string_with_unit, TC_iot_capability_teardown),
             cmocka_unit_test_teardown(TC_st_cap_attr_create_string_internal_failure, TC_iot_capability_teardown),
             cmocka_unit_test_teardown(TC_st_cap_attr_create_string_null_parameters, TC_iot_capability_teardown),
+            cmocka_unit_test(TC_st_cap_handle_init_invalid_argument),
     };
     return cmocka_run_group_tests_name("iot_capability.c", tests, NULL, NULL);
 }
