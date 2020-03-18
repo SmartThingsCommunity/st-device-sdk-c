@@ -203,6 +203,10 @@ IOT_CAP_HANDLE *st_cap_handle_init(IOT_CTX *iot_ctx, const char *component,
 	struct iot_cap_handle_list *new_list;
 	struct iot_context *ctx = (struct iot_context*)iot_ctx;
 
+	if (!ctx || !capability) {
+	    return NULL;
+	}
+
 	handle = iot_os_malloc(sizeof(struct iot_cap_handle));
 	if (!handle) {
 		IOT_ERROR("failed to malloc for iot_cap_handle");
