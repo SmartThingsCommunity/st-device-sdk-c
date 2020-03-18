@@ -285,7 +285,29 @@ static char* _create_post_keyinfo_payload(void);
 static iot_crypto_cipher_info_t* _generate_server_cipher(unsigned char *iv_data, size_t iv_length);
 static iot_crypto_cipher_info_t* _generate_device_cipher(unsigned char *iv_data, size_t iv_length);
 static void assert_keyinfo(char *payload, iot_crypto_cipher_info_t *server_cipher, unsigned int expected_otm_support);
+void assert_cipher_iv(iot_crypto_cipher_info_t cipher);
 
+void TC_es_crypto_cipher_gen_iv_success(void **state)
+{
+    iot_error_t err;
+    iot_crypto_cipher_info_t cipher;
+    UNUSED(state);
+
+    // When
+    err = _es_crypto_cipher_gen_iv(&cipher);
+    // Then
+    assert_int_equal(err, IOT_ERROR_NONE);
+    assert_cipher_iv(cipher);
+}
+
+void assert_cipher_iv(iot_crypto_cipher_info_t cipher)
+{
+    unsigned char result = 0x00;
+    for (int i = 0; i < cipher.iv_len; i++) {
+        result |= cipher.iv[i];
+    }
+    assert_int_not_equal(cipher.iv[0], result);
+}
 
 void TC_STATIC_es_keyinfo_handler_success(void **state)
 {
