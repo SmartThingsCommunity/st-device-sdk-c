@@ -82,7 +82,7 @@ iot_error_t _es_crypto_cipher_gen_iv(iot_crypto_cipher_info_t *iv_info)
 	}
 
 	for (i = 0; i < iv_len; i++) {
-		iv[i] = (unsigned char)iot_bsp_random() & 0xff;
+		iv[i] = (unsigned char)iot_bsp_random() & (unsigned char)0xff;
 	}
 	iv_info->iv = iv;
 	iv_info->iv_len = iv_len;
@@ -364,7 +364,7 @@ iot_error_t _es_keyinfo_handler(struct iot_context *ctx, char *in_payload, char 
 	JSON_H *recv = NULL;
 	JSON_H *root = NULL;
 	JSON_H *array = NULL;
-	int i, j;
+	unsigned int i, j;
 	iot_crypto_pk_info_t pk_info;
 	iot_crypto_ecdh_params_t params;
 	iot_error_t err = IOT_ERROR_NONE;
@@ -506,7 +506,7 @@ iot_error_t _es_keyinfo_handler(struct iot_context *ctx, char *in_payload, char 
 	}
 
 	for (i = OVF_BIT_JUSTWORKS; i < OVF_BIT_MAX_FEATURE; i++) {
-		if (ctx->devconf.ownership_validation_type & (1 << i)) {
+		if (ctx->devconf.ownership_validation_type & (unsigned)(1 << i)) {
 			JSON_ADD_ITEM_TO_ARRAY(array, JSON_CREATE_NUMBER(i));
 		}
 	}
@@ -1581,54 +1581,64 @@ iot_error_t iot_easysetup_request_handler(struct iot_context *ctx, struct iot_ea
 	switch (request.step) {
 	case IOT_EASYSETUP_STEP_DEVICEINFO:
 		err = _es_deviceinfo_handler(ctx, &response.payload);
-		if (err)
+		if (err) {
 			IOT_ERROR("failed to handle deviceinfo %d", err);
+		}
 		break;
 	case IOT_EASYSETUP_STEP_WIFISCANINFO:
 		err = _es_wifiscaninfo_handler(ctx, &response.payload);
-		if (err)
+		if (err) {
 			IOT_ERROR("failed to handle wifiscaninfo %d", err);
+		}
 		break;
 	case IOT_EASYSETUP_STEP_KEYINFO:
 		err = _es_keyinfo_handler(ctx, request.payload, &response.payload);
-		if (err)
+		if (err) {
 			IOT_ERROR("failed to handle keyinfo %d", err);
+		}
 		break;
 	case IOT_EASYSETUP_STEP_CONFIRMINFO:
 		err = _es_confirminfo_handler(ctx, request.payload, &response.payload);
-		if (err)
+		if (err) {
 			IOT_ERROR("failed to handle confirminfo %d", err);
+		}
 		break;
 	case IOT_EASYSETUP_STEP_CONFIRM:
 		err = _es_confirm_handler(ctx, request.payload, &response.payload);
-		if (err)
+		if (err) {
 			IOT_ERROR("failed to handle confirm %d", err);
+		}
 		break;
 	case IOT_EASYSETUP_STEP_WIFIPROVIONINGINFO:
 		err = _es_wifiprovisioninginfo_handler(ctx, request.payload, &response.payload);
-		if (err)
+		if (err) {
 			IOT_ERROR("failed to handle wifiprovisionininginfo %d", err);
+		}
 		break;
 	case IOT_EASYSETUP_STEP_SETUPCOMPLETE:
 		err = _es_setupcomplete_handler(ctx, request.payload, &response.payload);
-		if (err)
+		if (err) {
 			IOT_ERROR("failed to handle setupcomplete %d", err);
+		}
 		break;
 #if defined(CONFIG_STDK_IOT_CORE_EASYSETUP_HTTP_LOG_SUPPORT)
 	case IOT_EASYSETUP_STEP_LOG_SYSTEMINFO:
 		err = _es_log_systeminfo_handler(ctx, &response.payload);
-		if (err)
+		if (err) {
 			IOT_ERROR("failed to handle logsysteminfo %d", err);
+		}
 		break;
 	case IOT_EASYSETUP_STEP_LOG_CREATE_DUMP:
 		err = _es_log_create_dump_handler(ctx, request.payload, &response.payload);
-		if (err)
+		if (err) {
 			IOT_ERROR("failed to handle logcreatedump %d", err);
+		}
 	break;
 	case IOT_EASYSETUP_STEP_LOG_GET_DUMP:
 		err = _es_log_get_dump_handler(ctx, &response.payload);
-		if (err)
+		if (err) {
 			IOT_ERROR("failed to handle loggetdump %d", err);
+		}
 		break;
 #endif
 	default:

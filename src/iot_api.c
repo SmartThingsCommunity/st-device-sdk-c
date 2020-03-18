@@ -172,9 +172,9 @@ iot_error_t iot_api_onboarding_config_load(unsigned char *onboarding_config,
 	char *setupid = NULL;
 	char *vid = NULL;
 	char *devicetypeid = NULL;
-	int ownership_validation_type = 0;
+	unsigned int ownership_validation_type = 0;
 	iot_crypto_pk_type_t pk_type;
-	int str_len = 0;
+	size_t str_len = 0;
 	int i;
 	char *current_name = NULL;
 

@@ -147,7 +147,7 @@ struct iot_devconf_prov_data {
 	char *setupid;					/**< @brief setupid, determined in devworks */
 	char *device_type;				/**< @brief device_type, determined in devworks */
 	char *vid;						/**< @brief vid, determined in devworks */
-	int ownership_validation_type;	/**< @brief onboarding process validation type, JUSTWORKS, BUTTON, PIN, QR */
+	unsigned int ownership_validation_type;	/**< @brief onboarding process validation type, JUSTWORKS, BUTTON, PIN, QR */
 	iot_crypto_pk_type_t pk_type;	/**< @brief Authentication type, determined in devworks */
 	char *hashed_sn;				/**< @brief hashed serial, self-generating values during onboarding process */
 };
