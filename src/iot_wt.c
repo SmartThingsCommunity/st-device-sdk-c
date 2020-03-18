@@ -502,64 +502,64 @@ exit_cborbuf:
 
 #else /* !STDK_IOT_CORE_WEBTOKEN_CBOR */
 
-#include <cJSON.h>
+#include <JSON.h>
 
 static char * _iot_jwt_header_rs256(const char *sn)
 {
-	cJSON *object;
+	JSON_H *object;
 	char *object_str;
 
-	object = cJSON_CreateObject();
+	object = JSON_CREATE_OBJECT();
 	if (!object) {
-		IOT_ERROR("cJSON_CreateObject returned NULL");
+		IOT_ERROR("JSON_CREATE_OBJECT returned NULL");
 		return NULL;
 	}
 
-	cJSON_AddItemToObject(object, "alg", cJSON_CreateString("RS256"));
-	cJSON_AddItemToObject(object, "kty", cJSON_CreateString("RSA"));
-	cJSON_AddItemToObject(object, "crv", cJSON_CreateString(""));
-	cJSON_AddItemToObject(object, "typ", cJSON_CreateString("JWT"));
-	cJSON_AddItemToObject(object, "ver", cJSON_CreateString("0.0.1"));
-	cJSON_AddItemToObject(object, "kid", cJSON_CreateString(sn));
+	JSON_ADD_ITEM_TO_OBJECT(object, "alg", JSON_CREATE_STRING("RS256"));
+	JSON_ADD_ITEM_TO_OBJECT(object, "kty", JSON_CREATE_STRING("RSA"));
+	JSON_ADD_ITEM_TO_OBJECT(object, "crv", JSON_CREATE_STRING(""));
+	JSON_ADD_ITEM_TO_OBJECT(object, "typ", JSON_CREATE_STRING("JWT"));
+	JSON_ADD_ITEM_TO_OBJECT(object, "ver", JSON_CREATE_STRING("0.0.1"));
+	JSON_ADD_ITEM_TO_OBJECT(object, "kid", JSON_CREATE_STRING(sn));
 
-	object_str = cJSON_PrintUnformatted(object);
+	object_str = JSON_PRINT(object);
 	if (!object_str) {
-		IOT_ERROR("cJSON_PrintUnformatted returned NULL");
-		cJSON_Delete(object);
+		IOT_ERROR("JSON_PRINT returned NULL");
+		JSON_DELETE(object);
 		return NULL;
 	}
 
-	cJSON_Delete(object);
+	JSON_DELETE(object);
 
 	return object_str;
 }
 
 static char * _iot_jwt_header_ed25519(const char *sn)
 {
-	cJSON *object;
+	JSON_H *object;
 	char *object_str;
 
-	object = cJSON_CreateObject();
+	object = JSON_CREATE_OBJECT();
 	if (!object) {
-		IOT_ERROR("cJSON_CreateObject returned NULL");
+		IOT_ERROR("JSON_CREATE_OBJECT returned NULL");
 		return NULL;
 	}
 
-	cJSON_AddItemToObject(object, "alg", cJSON_CreateString("EdDSA"));
-	cJSON_AddItemToObject(object, "kty", cJSON_CreateString("OKP"));
-	cJSON_AddItemToObject(object, "crv", cJSON_CreateString("Ed25519"));
-	cJSON_AddItemToObject(object, "typ", cJSON_CreateString("JWT"));
-	cJSON_AddItemToObject(object, "ver", cJSON_CreateString("0.0.1"));
-	cJSON_AddItemToObject(object, "kid", cJSON_CreateString(sn));
+	JSON_ADD_ITEM_TO_OBJECT(object, "alg", JSON_CREATE_STRING("EdDSA"));
+	JSON_ADD_ITEM_TO_OBJECT(object, "kty", JSON_CREATE_STRING("OKP"));
+	JSON_ADD_ITEM_TO_OBJECT(object, "crv", JSON_CREATE_STRING("Ed25519"));
+	JSON_ADD_ITEM_TO_OBJECT(object, "typ", JSON_CREATE_STRING("JWT"));
+	JSON_ADD_ITEM_TO_OBJECT(object, "ver", JSON_CREATE_STRING("0.0.1"));
+	JSON_ADD_ITEM_TO_OBJECT(object, "kid", JSON_CREATE_STRING(sn));
 
-	object_str = cJSON_PrintUnformatted(object);
+	object_str = JSON_PRINT(object);
 	if (!object_str) {
-		IOT_ERROR("cJSON_PrintUnformatted returned NULL");
-		cJSON_Delete(object);
+		IOT_ERROR("JSON_PRINT returned NULL");
+		JSON_DELETE(object);
 		return NULL;
 	}
 
-	cJSON_Delete(object);
+	JSON_DELETE(object);
 
 	return object_str;
 }
@@ -630,7 +630,7 @@ exit:
 static char * _iot_jwt_create_payload(void)
 {
 	iot_error_t err;
-	cJSON *object;
+	JSON_H *object;
 	char *object_str;
 	char time_in_sec[16]; /* 1559347200 is '2019-06-01 00:00:00 UTC' */
 	char uuid_str[40];    /* 4066c24f-cd48-4e92-a538-362e74337c7f */
@@ -655,23 +655,23 @@ static char * _iot_jwt_create_payload(void)
 	}
 
 
-	object = cJSON_CreateObject();
+	object = JSON_CREATE_OBJECT();
 	if (!object) {
-		IOT_ERROR("cJSON_CreateObject returned NULL");
+		IOT_ERROR("JSON_CREATE_OBJECT returned NULL");
 		return NULL;
 	}
 
-	cJSON_AddItemToObject(object, "iat", cJSON_CreateString(time_in_sec));
-	cJSON_AddItemToObject(object, "jti", cJSON_CreateString(uuid_str));
+	JSON_ADD_ITEM_TO_OBJECT(object, "iat", JSON_CREATE_STRING(time_in_sec));
+	JSON_ADD_ITEM_TO_OBJECT(object, "jti", JSON_CREATE_STRING(uuid_str));
 
-	object_str = cJSON_PrintUnformatted(object);
+	object_str = JSON_PRINT(object);
 	if (!object_str) {
-		IOT_ERROR("cJSON_PrintUnformatted returned NULL");
-		cJSON_Delete(object);
+		IOT_ERROR("JSON_PRINT returned NULL");
+		JSON_DELETE(object);
 		return NULL;
 	}
 
-	cJSON_Delete(object);
+	JSON_DELETE(object);
 
 	return object_str;
 }
