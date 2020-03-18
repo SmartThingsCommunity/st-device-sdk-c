@@ -61,7 +61,7 @@ static void mqtt_reg_sub_cb(st_mqtt_msg *md, void *userData)
 	struct iot_context *ctx = (struct iot_context *)userData;
 	struct iot_registered_data *reged_data = &ctx->iot_reg_data;
 	char * mqtt_payload = md->payload;
-	char * registed_msg = NULL;
+	char * registered_msg = NULL;
 	JSON_H *json = NULL;
 	JSON_H *svr_did = NULL;
 	JSON_H *event = NULL;
@@ -99,12 +99,12 @@ static void mqtt_reg_sub_cb(st_mqtt_msg *md, void *userData)
 		goto reg_sub_out;
 	}
 
-	registed_msg = JSON_PRINT(json);
-	if (registed_msg == NULL) {
-		IOT_ERROR("There are no registed msg, payload : %s", mqtt_payload);
+	registered_msg = JSON_PRINT(json);
+	if (registered_msg == NULL) {
+		IOT_ERROR("There are no registered msg, payload : %s", mqtt_payload);
 		goto reg_sub_out;
 	}
-	IOT_INFO("Registered MSG : %s", registed_msg);
+	IOT_INFO("Registered MSG : %s", registered_msg);
 
 	event = JSON_GET_OBJECT_ITEM(json, "event");
 	if (event != NULL) {
@@ -158,8 +158,8 @@ reg_sub_out:
 	if (svr_did_str != NULL)
 		free(svr_did_str);
 
-	if (registed_msg != NULL)
-		free(registed_msg);
+	if (registered_msg != NULL)
+		free(registered_msg);
 
 	if (json != NULL)
 		JSON_DELETE(json);
