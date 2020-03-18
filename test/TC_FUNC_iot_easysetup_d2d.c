@@ -24,7 +24,7 @@
 #include <iot_easysetup.h>
 #include <iot_nv_data.h>
 #include <iot_internal.h>
-#include <cJSON.h>
+#include <JSON.h>
 #include <bsp/iot_bsp_random.h>
 #include <sys/types.h>
 #include <regex.h>
@@ -257,23 +257,23 @@ void TC_STATIC_es_deviceinfo_handler_success(void **state)
 
 static void assert_deviceinfo(char *payload, char *expected_firmware_version, char *expected_hashed_sn)
 {
-    cJSON *root;
-    cJSON *item;
+    JSON_H *root;
+    JSON_H *item;
     assert_non_null(payload);
 
-    root = cJSON_Parse(payload);
-    item = cJSON_GetObjectItem(root, "error");
+    root = JSON_PARSE(payload);
+    item = JSON_GET_OBJECT_ITEM(root, "error");
     assert_null(item);
-    item = cJSON_GetObjectItem(root, "firmwareVersion");
-    assert_string_equal(cJSON_GetStringValue(item), expected_firmware_version);
-    item = cJSON_GetObjectItem(root, "hashedSn");
-    assert_string_equal(cJSON_GetStringValue(item), expected_hashed_sn);
-    item = cJSON_GetObjectItem(root, "wifiSupportFrequency");
+    item = JSON_GET_OBJECT_ITEM(root, "firmwareVersion");
+    assert_string_equal(JSON_GET_STRING_VALUE(item), expected_firmware_version);
+    item = JSON_GET_OBJECT_ITEM(root, "hashedSn");
+    assert_string_equal(JSON_GET_STRING_VALUE(item), expected_hashed_sn);
+    item = JSON_GET_OBJECT_ITEM(root, "wifiSupportFrequency");
     assert_in_range(item->valueint, 0, 2); // 0 for 2.4GHz, 1 for 5GHz, 2 for All
-    item = cJSON_GetObjectItem(root, "iv");
-    assert_true(strlen(cJSON_GetStringValue(item)) > 4);
+    item = JSON_GET_OBJECT_ITEM(root, "iv");
+    assert_true(strlen(JSON_GET_STRING_VALUE(item)) > 4);
 
-    cJSON_Delete(root);
+    JSON_DELETE(root);
 }
 
 // Static function of STDK declared to test
@@ -458,7 +458,7 @@ static struct tc_key_pair* _generate_test_keypair(const unsigned char *pk_b64url
 static char* _create_post_keyinfo_payload(void)
 {
     char *post_message;
-    cJSON *root = NULL;
+    JSON_H *root = NULL;
     iot_error_t err;
     size_t out_length;
     unsigned char *curve25519_server_pk_b64;
@@ -472,12 +472,12 @@ static char* _create_post_keyinfo_payload(void)
             curve25519_server_pk_b64, curve25519_server_pk_b64_len, &out_length);
     assert_int_equal(err, IOT_ERROR_NONE);
 
-    root = cJSON_CreateObject();
+    root = JSON_CREATE_OBJECT();
     assert_non_null(root);
-    cJSON_AddItemToObject(root, "spub", cJSON_CreateString((const char *) curve25519_server_pk_b64));
-    cJSON_AddItemToObject(root, "rand", cJSON_CreateString(TEST_SRAND));
-    post_message = cJSON_PrintUnformatted(root);
-    cJSON_Delete(root);
+    JSON_ADD_ITEM_TO_OBJECT(root, "spub", JSON_CREATE_STRING((const char *) curve25519_server_pk_b64));
+    JSON_ADD_ITEM_TO_OBJECT(root, "rand", JSON_CREATE_STRING(TEST_SRAND));
+    post_message = JSON_PRINT(root);
+    JSON_DELETE(root);
     free(curve25519_server_pk_b64);
 
     return post_message;
@@ -560,49 +560,49 @@ static char* _create_post_wifiprovisioninginfo_payload(iot_crypto_cipher_info_t 
     char *post_message;
     char *encoded_message;
     char *plain_message;
-    cJSON *root = NULL;
-    cJSON *wifi_credential = NULL;
+    JSON_H *root = NULL;
+    JSON_H *wifi_credential = NULL;
 
-    root = cJSON_CreateObject();
+    root = JSON_CREATE_OBJECT();
     assert_non_null(root);
-    wifi_credential = cJSON_CreateObject();
+    wifi_credential = JSON_CREATE_OBJECT();
     if (prov.ssid) {
-        cJSON_AddItemToObject(wifi_credential, "ssid", cJSON_CreateString(prov.ssid));
+        JSON_ADD_ITEM_TO_OBJECT(wifi_credential, "ssid", JSON_CREATE_STRING(prov.ssid));
     }
     if (prov.password) {
-        cJSON_AddItemToObject(wifi_credential, "password", cJSON_CreateString(prov.password));
+        JSON_ADD_ITEM_TO_OBJECT(wifi_credential, "password", JSON_CREATE_STRING(prov.password));
     }
     if (prov.mac_address) {
-        cJSON_AddItemToObject(wifi_credential, "macAddress", cJSON_CreateString(prov.mac_address));
+        JSON_ADD_ITEM_TO_OBJECT(wifi_credential, "macAddress", JSON_CREATE_STRING(prov.mac_address));
     }
-    cJSON_AddItemToObject(wifi_credential, "authType", cJSON_CreateNumber((double) prov.auth_type));
-    cJSON_AddItemToObject(root, "wifiCredential", wifi_credential);
+    JSON_ADD_ITEM_TO_OBJECT(wifi_credential, "authType", JSON_CREATE_NUMBER((double) prov.auth_type));
+    JSON_ADD_ITEM_TO_OBJECT(root, "wifiCredential", wifi_credential);
     if (prov.broker_url) {
-        cJSON_AddItemToObject(root, "brokerUrl", cJSON_CreateString(prov.broker_url));
+        JSON_ADD_ITEM_TO_OBJECT(root, "brokerUrl", JSON_CREATE_STRING(prov.broker_url));
     }
     if (prov.location_id) {
-        cJSON_AddItemToObject(root, "locationId", cJSON_CreateString(prov.location_id));
+        JSON_ADD_ITEM_TO_OBJECT(root, "locationId", JSON_CREATE_STRING(prov.location_id));
     }
     if (prov.room_id) {
-        cJSON_AddItemToObject(root, "roomId", cJSON_CreateString(prov.room_id));
+        JSON_ADD_ITEM_TO_OBJECT(root, "roomId", JSON_CREATE_STRING(prov.room_id));
     }
     if (prov.device_name) {
-        cJSON_AddItemToObject(root, "deviceName", cJSON_CreateString(prov.device_name));
+        JSON_ADD_ITEM_TO_OBJECT(root, "deviceName", JSON_CREATE_STRING(prov.device_name));
     }
-    plain_message = cJSON_PrintUnformatted(root);
-    cJSON_Delete(root);
+    plain_message = JSON_PRINT(root);
+    JSON_DELETE(root);
 
     cipher->mode = IOT_CRYPTO_CIPHER_ENCRYPT;
     encoded_message = _encryt_and_encode_mssage(cipher, (unsigned char*) plain_message, strlen(plain_message));
     free(plain_message);
 
     // { "message": "XXXXX" }
-    root = cJSON_CreateObject();
+    root = JSON_CREATE_OBJECT();
     assert_non_null(root);
-    cJSON_AddItemToObject(root, "message", cJSON_CreateString(encoded_message));
+    JSON_ADD_ITEM_TO_OBJECT(root, "message", JSON_CREATE_STRING(encoded_message));
 
-    post_message = cJSON_PrintUnformatted(root);
-    cJSON_Delete(root);
+    post_message = JSON_PRINT(root);
+    JSON_DELETE(root);
     free(encoded_message);
 
     return post_message;
@@ -610,10 +610,10 @@ static char* _create_post_wifiprovisioninginfo_payload(iot_crypto_cipher_info_t 
 
 void assert_keyinfo(char *payload, iot_crypto_cipher_info_t *server_cipher, unsigned int expected_otm_support)
 {
-    cJSON *root = NULL;
-    cJSON *array = NULL;
-    cJSON *item = NULL;
-    cJSON *error_message = NULL;
+    JSON_H *root = NULL;
+    JSON_H *array = NULL;
+    JSON_H *item = NULL;
+    JSON_H *error_message = NULL;
     char *b64url_aes256_message = NULL;
     char *plain_message = NULL;
     unsigned int otm_support = 0;
@@ -621,31 +621,31 @@ void assert_keyinfo(char *payload, iot_crypto_cipher_info_t *server_cipher, unsi
     assert_non_null(payload);
     assert_non_null(server_cipher);
 
-    root = cJSON_Parse(payload);
+    root = JSON_PARSE(payload);
     assert_non_null(root);
-    error_message = cJSON_GetObjectItem(root, "error");
+    error_message = JSON_GET_OBJECT_ITEM(root, "error");
     assert_null(error_message);
 
-    item = cJSON_GetObjectItem(root, "message");
+    item = JSON_GET_OBJECT_ITEM(root, "message");
     assert_non_null(item);
-    b64url_aes256_message = cJSON_GetStringValue(item);
+    b64url_aes256_message = JSON_GET_STRING_VALUE(item);
     assert_true(strlen( b64url_aes256_message) > 10);
 
     plain_message = _decode_and_decrypt_message(server_cipher, (unsigned char*) b64url_aes256_message, strlen(b64url_aes256_message));
-    cJSON_Delete(root);
+    JSON_DELETE(root);
 
     // validate values
-    root = cJSON_Parse((const char*) plain_message);
+    root = JSON_PARSE((const char*) plain_message);
     assert_non_null(root);
-    array = cJSON_GetObjectItem(root, "otmSupportFeatures");
+    array = JSON_GET_OBJECT_ITEM(root, "otmSupportFeatures");
     assert_non_null(array);
-    for (int i = 0; i < cJSON_GetArraySize(array); i++) {
-        item = cJSON_GetArrayItem(array, i);
+    for (int i = 0; i < JSON_GET_ARRAY_SIZE(array); i++) {
+        item = JSON_GET_ARRAY_ITEM(array, i);
         otm_support |= (1u << (unsigned)item->valueint);
     }
     assert_int_equal(otm_support, expected_otm_support);
 
-    cJSON_Delete(root);
+    JSON_DELETE(root);
     free(plain_message);
 }
 
@@ -665,26 +665,26 @@ static void assert_uuid_format(char *input_string)
 
 static void assert_lookup_id(const char *payload, iot_crypto_cipher_info_t *cipher)
 {
-    cJSON *root;
-    cJSON *item;
+    JSON_H *root;
+    JSON_H *item;
     unsigned char *b64url_aes256_message;
     char *plain_message;
     assert_non_null(payload);
     assert_non_null(cipher);
 
-    root = cJSON_Parse(payload);
-    item = cJSON_GetObjectItem(root, "message");
-    b64url_aes256_message = (unsigned char*) cJSON_GetStringValue(item);
+    root = JSON_PARSE(payload);
+    item = JSON_GET_OBJECT_ITEM(root, "message");
+    b64url_aes256_message = (unsigned char*) JSON_GET_STRING_VALUE(item);
 
     plain_message = _decode_and_decrypt_message(cipher, b64url_aes256_message, strlen((const char*)b64url_aes256_message));
-    cJSON_Delete(root);
+    JSON_DELETE(root);
 
-    root = cJSON_Parse(plain_message);
-    item = cJSON_GetObjectItem(root, "lookupId");
+    root = JSON_PARSE(plain_message);
+    item = JSON_GET_OBJECT_ITEM(root, "lookupId");
     assert_non_null(item);
-    assert_uuid_format(cJSON_GetStringValue(item));
+    assert_uuid_format(JSON_GET_STRING_VALUE(item));
     free(plain_message);
-    cJSON_Delete(root);
+    JSON_DELETE(root);
 }
 
 static void _generate_hash_token(unsigned char *hash_token, size_t hash_token_size)

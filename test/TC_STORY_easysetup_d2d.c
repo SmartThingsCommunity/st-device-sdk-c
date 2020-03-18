@@ -21,7 +21,7 @@
 #include <cmocka.h>
 #include <string.h>
 #include <curl/curl.h>
-#include <cJSON.h>
+#include <JSON.h>
 #include <errno.h>
 #include <st_dev.h>
 #include <iot_easysetup.h>
@@ -197,20 +197,20 @@ static int _testcase_http_operation(char *uri, char *in_buffer,
     return _http_operation(url_buffer, in_buffer, out_buffer, out_len, timeout);
 }
 
-static void _dump_json(cJSON* item)
+static void _dump_json(JSON_H* item)
 {
-    char *ptr = cJSON_Print(item);
+    char *ptr = JSON_PRINT(item);
     IOT_DEBUG("%s", ptr);
-    cJSON_free(ptr);
+    JSON_FREE(ptr);
 }
 
 void TC_easysetup_d2d_get_deviceinfo_success(void **state)
 {
     int ret = 0;
     char buffer[1024];
-    cJSON *root = NULL;
-    cJSON *item = NULL;
-    cJSON *errmsg = NULL;
+    JSON_H *root = NULL;
+    JSON_H *item = NULL;
+    JSON_H *errmsg = NULL;
     UNUSED(state);
 
     // Given
@@ -219,20 +219,20 @@ void TC_easysetup_d2d_get_deviceinfo_success(void **state)
     ret = _testcase_http_operation("deviceinfo", NULL, buffer, sizeof(buffer), 0);
     // Then
     assert_int_equal(ret, 0);
-    root = cJSON_Parse(buffer);
+    root = JSON_PARSE(buffer);
     assert_non_null(root);
-    errmsg = cJSON_GetObjectItem(root, "error");
+    errmsg = JSON_GET_OBJECT_ITEM(root, "error");
     _dump_json(root);
     assert_null(errmsg);
-    item = cJSON_GetObjectItem(root, "firmwareVersion");
-    assert_string_equal(cJSON_GetStringValue(item), TEST_FIRMWARE_VERSION);
-    item = cJSON_GetObjectItem(root, "hashedSn");
-    assert_string_equal(cJSON_GetStringValue(item), TEST_SERIAL_NUMBER_HASHED);
-    item = cJSON_GetObjectItem(root, "wifiSupportFrequency");
+    item = JSON_GET_OBJECT_ITEM(root, "firmwareVersion");
+    assert_string_equal(JSON_GET_STRING_VALUE(item), TEST_FIRMWARE_VERSION);
+    item = JSON_GET_OBJECT_ITEM(root, "hashedSn");
+    assert_string_equal(JSON_GET_STRING_VALUE(item), TEST_SERIAL_NUMBER_HASHED);
+    item = JSON_GET_OBJECT_ITEM(root, "wifiSupportFrequency");
     assert_in_range(item->valueint, 0, 2); // 0 for 2.4GHz, 1 for 5GHz, 2 for All
-    item = cJSON_GetObjectItem(root, "iv");
-    assert_true(strlen(cJSON_GetStringValue(item)) > 4);
+    item = JSON_GET_OBJECT_ITEM(root, "iv");
+    assert_true(strlen(JSON_GET_STRING_VALUE(item)) > 4);
 
     // local teardown
-    cJSON_Delete(root);
+    JSON_DELETE(root);
 }
