@@ -64,6 +64,7 @@ void TC_st_cap_attr_create_string_with_unit(void **state);
 void TC_st_cap_attr_create_string_internal_failure(void **state);
 void TC_st_cap_attr_create_string_null_parameters(void **state);
 void TC_st_cap_handle_init_invalid_argument(void **state);
+void TC_st_cap_handle_init_success(void **state);
 
 // TCs for iot_crypto.c
 int TC_iot_crypto_pk_setup(void **state);
