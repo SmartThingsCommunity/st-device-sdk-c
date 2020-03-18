@@ -720,7 +720,7 @@ static iot_crypto_cipher_info_t* _generate_cipher(unsigned char *pk, unsigned ch
         memcpy(cipher->iv, iv, IOT_CRYPTO_IV_LEN);
     } else {
         for (int i = 0; i < IOT_CRYPTO_IV_LEN; i++) {
-            cipher->iv[i] = (unsigned char)iot_bsp_random() & (unsigned char)0xff;
+            cipher->iv[i] = (unsigned char)iot_bsp_random();
         }
     }
 
