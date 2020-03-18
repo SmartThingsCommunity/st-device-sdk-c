@@ -552,6 +552,11 @@ size_t iot_crypto_cipher_get_align_size(iot_crypto_cipher_type_t type,
 	unsigned int block_size;
 	int ret;
 
+	if (!size) {
+		IOT_ERROR("input size is zero");
+		return 0;
+	}
+
 	if (type == IOT_CRYPTO_CIPHER_AES256) {
 		cipher_alg = MBEDTLS_CIPHER_AES_256_CBC;
 	} else {
