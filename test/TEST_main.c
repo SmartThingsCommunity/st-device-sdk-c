@@ -88,6 +88,7 @@ int TEST_FUNC_iot_crypto(void)
             cmocka_unit_test(TC_iot_crypto_base64_decode_success),
             cmocka_unit_test(TC_iot_crypto_base64_urlsafe_encode_success),
             cmocka_unit_test(TC_iot_crypto_base64_urlsafe_decode_success),
+            cmocka_unit_test(TC_iot_crypto_base64_buffer_size),
     };
     return cmocka_run_group_tests_name("iot_crypto.c", tests, NULL, NULL);
 }

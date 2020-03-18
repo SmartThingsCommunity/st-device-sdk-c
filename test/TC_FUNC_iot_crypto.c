@@ -925,3 +925,54 @@ void TC_iot_crypto_base64_urlsafe_decode_success(void **state)
 	// teardown
 	free(dst);
 }
+
+static const size_t b64_encode_len_input[] = {
+	2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15, 16,
+	17, 18, 19, 20, 21, 22, 23, 24, 25, 26, 27, 28, 29, 30, 31
+};
+
+static const size_t b64_encode_len_required[] = {
+	4, 4, 8, 8, 8, 12, 12, 12, 16, 16, 16, 20, 20, 20, 24,
+	24, 24, 28, 28, 28, 32, 32, 32, 36, 36, 36, 40, 40, 40, 44
+};
+
+static const size_t b64_decode_len_input[] = {
+	2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15, 16,
+	17, 18, 19, 20, 21, 22, 23, 24, 25, 26, 27, 28, 29, 30, 31
+};
+
+static const size_t b64_decode_len_required[] = {
+	3, 3, 3, 6, 6, 6, 6, 9, 9, 9, 9, 12, 12, 12, 12,
+	15, 15, 15, 15, 18, 18, 18, 18, 21, 21, 21, 21, 24, 24, 24
+};
+
+void TC_iot_crypto_base64_buffer_size(void **state)
+{
+	const size_t *input;
+	const size_t *expected;
+	size_t required_len;
+	int test_len;
+	int i;
+
+	// Given
+	test_len = sizeof(b64_encode_len_input) / sizeof(b64_encode_len_input[0]);
+	input = b64_encode_len_input;
+	expected = b64_encode_len_required;
+	for (i = 0; i < test_len; i++) {
+		// When
+		required_len = IOT_CRYPTO_CAL_B64_LEN(input[i]);
+		// Then
+		assert_int_equal(required_len, expected[i] + 1);
+	}
+
+	// Given
+	test_len = sizeof(b64_decode_len_input) / sizeof(b64_decode_len_input[0]);
+	input = b64_decode_len_input;
+	expected = b64_decode_len_required;
+	for (i = 0; i < test_len; i++) {
+		// When
+		required_len = IOT_CRYPTO_CAL_B64_DEC_LEN(input[i]);
+		// Then
+		assert_int_equal(required_len, expected[i] + 1);
+	}
+}
