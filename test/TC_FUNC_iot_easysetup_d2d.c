@@ -302,11 +302,25 @@ void TC_es_crypto_cipher_gen_iv_success(void **state)
 
 void assert_cipher_iv(iot_crypto_cipher_info_t cipher)
 {
+    int i;
     unsigned char result = 0x00;
-    for (int i = 0; i < cipher.iv_len; i++) {
+
+    for (i = 0; i < cipher.iv_len; i++) {
         result |= cipher.iv[i];
     }
-    assert_int_not_equal(cipher.iv[0], result);
+
+    for (i = 0; i < cipher.iv_len; i++) {
+        if (cipher.iv[i] != 0xff) {
+            assert_int_not_equal(cipher.iv[i], result);
+            break;
+        }
+    }
+
+    if (i == cipher.iv_len) {
+        // all iv[i] is 0xff
+        assert_false(true);
+    }
+
 }
 
 void TC_STATIC_es_keyinfo_handler_success(void **state)
