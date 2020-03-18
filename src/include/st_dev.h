@@ -91,13 +91,13 @@ typedef struct {
 	iot_cap_val_type_t type; /**< @brief Type of capability's data. */
 
 	uint8_t str_num; /**< @brief Number of stings. Only used for sting array. */
+	int	integer;	/**< @brief Integer. */
 
 	union {
-		int	integer;	/**< @brief Integer. */
 		double number;	/**< @brief Float number. */
 		char *string;	/**< @brief NULL-terminated string. */
 		char **strings; /**< @brief Array of NULL-terminated strings. */
-		char *json_payload; /**< @brief Json object payload strings */
+		char *json_object; /**< @brief Json object payload strings */
 	};
 } iot_cap_val_t;
 
