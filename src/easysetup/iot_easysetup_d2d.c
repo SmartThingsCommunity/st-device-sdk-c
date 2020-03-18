@@ -82,7 +82,7 @@ iot_error_t _es_crypto_cipher_gen_iv(iot_crypto_cipher_info_t *iv_info)
 	}
 
 	for (i = 0; i < iv_len; i++) {
-		iv[i] = (unsigned char)iot_bsp_random() & (unsigned char)0xff;
+		iv[i] = (unsigned char)iot_bsp_random();
 	}
 	iv_info->iv = iv;
 	iv_info->iv_len = iv_len;
