@@ -250,11 +250,6 @@ iot_error_t _es_wifiscaninfo_handler(struct iot_context *ctx, char **out_payload
 	size_t result_len = 0;
 	unsigned char *encode_buf = NULL;
 	unsigned char *encrypt_buf = NULL;
-#if 0
-	char *total_ptr = NULL;
-	size_t item_size = 0;
-	size_t total_size = 0;
-#endif
 
 	if (!ctx->scan_num)
 		return IOT_ERROR_EASYSETUP_WIFI_SCAN_NOT_FOUND;
@@ -288,24 +283,6 @@ iot_error_t _es_wifiscaninfo_handler(struct iot_context *ctx, char **out_payload
 		JSON_ADD_NUMBER_TO_OBJECT(array_obj, "rssi", (double) ctx->scan_result[i].rssi);
 		JSON_ADD_NUMBER_TO_OBJECT(array_obj, "frequency", (double) ctx->scan_result[i].freq);
 		JSON_ADD_NUMBER_TO_OBJECT(array_obj, "authType", ctx->scan_result[i].authmode);
-#if 0
-		total_ptr = JSON_PRINT(array);
-		ptr = JSON_PRINT(array_obj);
-		total_size = strlen(total_ptr);
-		item_size = strlen(ptr);
-		cJSON_free(total_ptr);
-		cJSON_free(ptr);
-		total_ptr = NULL;
-		ptr = NULL;
-
-		IOT_DEBUG("[%d] total_size: %d, item_size: %d, extra: %d", length, total_size, item_size,
-						strlen("{\"wifiScanInfos\":}") + strlen(", "));
-		if ((total_size + item_size + strlen("{\"wifiScanInfos\":}") + strlen(", ")) >= length) {
-			IOT_INFO("Too large payload. just skip to add item");
-			JSON_DELETE(array_obj);
-			break;
-		}
-#endif
 		JSON_ADD_ITEM_TO_ARRAY(array, array_obj);
 	}
 
