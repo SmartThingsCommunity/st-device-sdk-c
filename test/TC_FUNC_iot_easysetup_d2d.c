@@ -287,7 +287,7 @@ static iot_crypto_cipher_info_t* _generate_device_cipher(unsigned char *iv_data,
 static void assert_keyinfo(char *payload, iot_crypto_cipher_info_t *server_cipher, unsigned int expected_otm_support);
 void assert_cipher_iv(iot_crypto_cipher_info_t cipher);
 
-void TC_es_crypto_cipher_gen_iv_success(void **state)
+void TC_STATIC_es_crypto_cipher_gen_iv_success(void **state)
 {
     iot_error_t err;
     iot_crypto_cipher_info_t cipher;
