@@ -185,6 +185,81 @@ IOT_EVENT* st_cap_attr_create_string_array(const char *attribute,
 	return (IOT_EVENT*)evt_data;
 }
 
+IOT_EVENT* st_cap_attr_create(const char *attribute,
+			iot_cap_val_t *value, const char *unit, const char *data)
+{
+	iot_cap_evt_data_t* evt_data;
+
+	if (!attribute) {
+		IOT_ERROR("attribute is NULL");
+		return NULL;
+	}
+
+	if (!value) {
+		IOT_ERROR("value is NULL");
+		return NULL;
+	}
+
+	evt_data = iot_os_malloc(sizeof(iot_cap_evt_data_t));
+	if (!evt_data) {
+		IOT_ERROR("failed to malloc for evt_data");
+		return NULL;
+	}
+	memset(evt_data, 0, sizeof(iot_cap_evt_data_t));
+
+
+	evt_data->evt_type = strdup(attribute);
+	switch (value->type) {
+	case IOT_CAP_VAL_TYPE_INTEGER:
+		evt_data->evt_value.type = IOT_CAP_VAL_TYPE_INTEGER;
+		evt_data->evt_value.integer = value->integer;
+		break;
+	case IOT_CAP_VAL_TYPE_NUMBER:
+		evt_data->evt_value.type = IOT_CAP_VAL_TYPE_NUMBER;
+		evt_data->evt_value.number = value->number;
+		break;
+	case IOT_CAP_VAL_TYPE_STRING:
+		evt_data->evt_value.type = IOT_CAP_VAL_TYPE_STRING;
+		evt_data->evt_value.string = strdup(value->string);
+		break;
+	case IOT_CAP_VAL_TYPE_STR_ARRAY:
+		evt_data->evt_value.type = IOT_CAP_VAL_TYPE_STR_ARRAY;
+		evt_data->evt_value.str_num = value->str_num;
+		evt_data->evt_value.strings = iot_os_malloc(value->str_num * sizeof(char*));
+		if (!evt_data->evt_value.strings) {
+			IOT_ERROR("failed to malloc for string array");
+			free(evt_data);
+			return NULL;
+		}
+		for (int i = 0; i < value->str_num; i++) {
+			if (value->strings[i])
+				evt_data->evt_value.strings[i] = strdup(value->strings[i]);
+		}
+		break;
+	case IOT_CAP_VAL_TYPE_JSON_OBJECT:
+		evt_data->evt_value.type = IOT_CAP_VAL_TYPE_JSON_OBJECT;
+		evt_data->evt_value.json_object = strdup(value->json_object);
+		break;
+	default:
+		IOT_ERROR("unknown attribute data type");
+		free(evt_data);
+		return NULL;
+	}
+
+	if (unit != NULL) {
+		evt_data->evt_unit.type = IOT_CAP_UNIT_TYPE_STRING;
+		evt_data->evt_unit.string = strdup(unit);
+	} else {
+		evt_data->evt_unit.type = IOT_CAP_UNIT_TYPE_UNUSED;
+	}
+
+	if (data != NULL) {
+		evt_data->evt_value_data = strdup(data);
+	}
+
+	return (IOT_EVENT*)evt_data;
+}
+
 void st_cap_attr_free(IOT_EVENT* event)
 {
 	iot_cap_evt_data_t* evt_data = (iot_cap_evt_data_t*) event;
@@ -926,6 +1001,8 @@ static iot_error_t _iot_make_evt_data_json(const char* component, const char* ca
 	cJSON *evt_arr = NULL;
 	cJSON *evt_item = NULL;
 	cJSON *evt_subarr = NULL;
+	cJSON *evt_subjson = NULL;
+	cJSON *evt_subdata = NULL;
 	cJSON *prov_data = NULL;
 	char time_in_ms[16]; /* 155934720000 is '2019-06-01 00:00:00.00 UTC' */
 	iot_error_t err = IOT_ERROR_NONE;
@@ -961,6 +1038,9 @@ static iot_error_t _iot_make_evt_data_json(const char* component, const char* ca
 			evt_subarr = cJSON_CreateStringArray(
 				(const char**)evt_data_arr[i]->evt_value.strings, evt_data_arr[i]->evt_value.str_num);
 			cJSON_AddItemToObject(evt_item, "value", evt_subarr);
+		} else if (evt_data_arr[i]->evt_value.type == IOT_CAP_VAL_TYPE_JSON_OBJECT) {
+			evt_subjson = cJSON_Parse(evt_data_arr[i]->evt_value.json_object);
+			cJSON_AddItemToObject(evt_item, "value", evt_subjson);
 		} else {
 			IOT_ERROR("Event data value type error :%d", evt_data_arr[i]->evt_value.type);
 			err = IOT_ERROR_INVALID_ARGS;
@@ -970,6 +1050,12 @@ static iot_error_t _iot_make_evt_data_json(const char* component, const char* ca
 		/* unit */
 		if (evt_data_arr[i]->evt_unit.type == IOT_CAP_UNIT_TYPE_STRING)
 			cJSON_AddStringToObject(evt_item, "unit", evt_data_arr[i]->evt_unit.string);
+
+		/* data */
+		if (evt_data_arr[i]->evt_value_data) {
+			evt_subdata = cJSON_Parse(evt_data_arr[i]->evt_value_data);
+			cJSON_AddItemToObject(evt_item, "data", evt_subdata);
+		}
 
 		/* providerData */
 		prov_data = cJSON_CreateObject();
@@ -1096,5 +1182,9 @@ static void _iot_free_evt_data(iot_cap_evt_data_t* evt_data)
 	}
 	_iot_free_val(&evt_data->evt_value);
 	_iot_free_unit(&evt_data->evt_unit);
+
+	if (evt_data->evt_value_data != NULL) {
+		free(evt_data->evt_value_data);
+	}
 }
 /* External API */
