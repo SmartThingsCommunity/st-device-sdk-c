@@ -31,7 +31,6 @@ if(ENABLE_STDK_TEST)
                    TEST_main.c
                    TC_MOCK_functions.c
                    TC_MOCK_functions.h
-                   TC_STORY_easysetup_d2d.c
                    TCs.h
                    TC_FUNC_iot_util.c
                    TC_FUNC_iot_api.c
@@ -49,6 +48,5 @@ if(ENABLE_STDK_TEST)
                           pthread
                           rt
                           cjson
-                          curl
                           )
 endif()

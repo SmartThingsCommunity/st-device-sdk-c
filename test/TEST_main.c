@@ -158,14 +158,6 @@ int TEST_FUNC_iot_easysetup_crypto(void)
 
 }
 
-int TEST_STORY_easysetup_d2d(void)
-{
-    const struct CMUnitTest tests[] = {
-            cmocka_unit_test_setup_teardown(TC_easysetup_d2d_get_deviceinfo_success, TC_easysetup_d2d_setup, TC_easysetup_d2d_teardown),
-    };
-    return cmocka_run_group_tests_name("easysetup d2d story", tests, NULL, NULL);
-}
-
 int main(void) {
     int err = 0;
 
@@ -177,7 +169,6 @@ int main(void) {
     err += TEST_FUNC_iot_uuid();
     err += TEST_FUNC_iot_easysetup_d2d();
     err += TEST_FUNC_iot_easysetup_crypto();
-    err += TEST_STORY_easysetup_d2d();
 
     return err;
 }

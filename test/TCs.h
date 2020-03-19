@@ -129,9 +129,4 @@ void TC_STATIC_es_keyinfo_handler_success(void **state);
 void TC_STATIC_es_wifiprovisioninginfo_handler_success(void **state);
 void TC_es_crypto_cipher_gen_iv_success(void **state);
 
-// TCs for easysetup d2d
-int TC_easysetup_d2d_setup(void **state);
-int TC_easysetup_d2d_teardown(void **state);
-void TC_easysetup_d2d_get_deviceinfo_success(void **state);
-
 #endif //ST_DEVICE_SDK_C_TCS_H
