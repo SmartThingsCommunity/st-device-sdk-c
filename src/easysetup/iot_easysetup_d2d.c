@@ -1,6 +1,6 @@
 /* ***************************************************************************
  *
- * Copyright 2019 Samsung Electronics All Rights Reserved.
+ * Copyright 2019-2020 Samsung Electronics All Rights Reserved.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -188,8 +188,9 @@ iot_error_t _es_deviceinfo_handler(struct iot_context *ctx, char **out_payload)
 	size_t encode_buf_len = 0;
 	unsigned char *encode_buf = NULL;
 
-	if (!ctx)
-	    return IOT_ERROR_INVALID_ARGS;
+	if (!ctx) {
+		return IOT_ERROR_EASYSETUP_INTERNAL_SERVER_ERROR;
+	}
 
 	root = JSON_CREATE_OBJECT();
 	if (!root) {
@@ -251,7 +252,7 @@ iot_error_t _es_wifiscaninfo_handler(struct iot_context *ctx, char **out_payload
 	unsigned char *encode_buf = NULL;
 	unsigned char *encrypt_buf = NULL;
 
-	if (!ctx || !*out_payload) {
+	if (!ctx) {
 	    return IOT_ERROR_EASYSETUP_INTERNAL_SERVER_ERROR;
 	}
 
