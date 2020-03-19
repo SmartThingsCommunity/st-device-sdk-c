@@ -896,8 +896,7 @@ static char *_decode_and_decrypt_message(iot_crypto_cipher_info_t *cipher, unsig
     assert_true(b64url_aes256_message_length > 0);
 
     // Decode
-    // TODO: calc more accurate decoded size
-    aes256_message_buffer_length = b64url_aes256_message_length;
+    aes256_message_buffer_length = IOT_CRYPTO_CAL_B64_DEC_LEN(b64url_aes256_message_length);
     aes256_message = malloc(aes256_message_buffer_length);
 
     err = iot_crypto_base64_decode_urlsafe(b64url_aes256_message, b64url_aes256_message_length,
