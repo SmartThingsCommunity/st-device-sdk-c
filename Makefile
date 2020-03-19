@@ -20,7 +20,7 @@ CBOR_DIR = src/deps/cbor/tinycbor/src
 CFLAGS	:= -std=c99 -D_GNU_SOURCE
 CFLAGS	+= $(CFLAGS_CONFIG)
 
-INCS	:= -I/usr/include -Isrc/include -Isrc/include/mqtt -Isrc/include/os -Isrc/include/bsp -I$(NET_DIR)
+INCS	:= -I/usr/include -Isrc/include -Isrc/include/mqtt -Isrc/include/os -Isrc/include/bsp -Isrc/include/external -I$(NET_DIR)
 INCS	+= -I$(CBOR_DIR)
 
 SRCS	:= $(wildcard src/*.c)
