@@ -298,6 +298,30 @@ void TC_st_cap_handle_init_invalid_argument(void **state)
     assert_null(cap_handle);
 }
 
+void TC_st_cap_handle_init_internal_failure(void **state)
+{
+    IOT_CAP_HANDLE *cap_handle;
+    IOT_CTX context;
+    char *usr_data;
+    UNUSED(*state);
+
+    for (int i = 0; i < 2; i++) {
+        // Given: valid parameters but n-th malloc failure
+        usr_data = strdup("UserString");
+        context = (IOT_CTX) malloc(sizeof(struct iot_context));
+        memset(context, 0, sizeof(struct iot_context));
+        set_mock_iot_os_malloc_failure_with_index(i);
+        // When
+        cap_handle = st_cap_handle_init(context, "main", "switch", test_cap_init_callback, usr_data);
+        // Then
+        assert_null(cap_handle);
+        // Teardown
+        free(context);
+        free(usr_data);
+        do_not_use_mock_iot_os_malloc_failure();
+    }
+}
+
 void TC_st_cap_handle_init_success(void **state)
 {
     IOT_CAP_HANDLE *cap_handle;
