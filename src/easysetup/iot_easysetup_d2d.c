@@ -251,6 +251,10 @@ iot_error_t _es_wifiscaninfo_handler(struct iot_context *ctx, char **out_payload
 	unsigned char *encode_buf = NULL;
 	unsigned char *encrypt_buf = NULL;
 
+	if (!ctx || !*out_payload) {
+	    return IOT_ERROR_EASYSETUP_INTERNAL_SERVER_ERROR;
+	}
+
 	if (!ctx->scan_num)
 		return IOT_ERROR_EASYSETUP_WIFI_SCAN_NOT_FOUND;
 
