@@ -128,5 +128,6 @@ void TC_STATIC_es_deviceinfo_handler_success(void **state);
 void TC_STATIC_es_keyinfo_handler_success(void **state);
 void TC_STATIC_es_wifiprovisioninginfo_handler_success(void **state);
 void TC_es_crypto_cipher_gen_iv_success(void **state);
+void TC_STATIC_es_wifiscaninfo_handler_invalid_parameters(void **state);
 
 #endif //ST_DEVICE_SDK_C_TCS_H

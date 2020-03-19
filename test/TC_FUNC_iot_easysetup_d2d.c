@@ -425,6 +425,32 @@ static void assert_wifi_provisioning(struct iot_context *context, struct test_wi
     assert_string_equal(context->prov_data.wifi.ssid, prov.ssid);
 }
 
+// Static function of STDK declared to test
+extern iot_error_t _es_wifiscaninfo_handler(struct iot_context *ctx, char **out_payload);
+
+void TC_STATIC_es_wifiscaninfo_handler_invalid_parameters(void **state)
+{
+    iot_error_t err;
+    struct iot_context *context;
+    char *payload;
+
+    // Given: null payload
+    context = (struct iot_context *)*state;
+    payload = NULL;
+    // When
+    err = _es_wifiscaninfo_handler(context, &payload);
+    // Then
+    assert_int_not_equal(err, IOT_ERROR_NONE);
+
+    // Given: null context, payload
+    context = NULL;
+    payload = NULL;
+    // When
+    err = _es_wifiscaninfo_handler(context, &payload);
+    // Then
+    assert_int_not_equal(err, IOT_ERROR_NONE);
+}
+
 static struct tc_key_pair* _generate_test_keypair(const unsigned char *pk_b64url, size_t pk_b64url_len,
                                                   const unsigned char *sk_b64url, size_t sk_b64url_len)
 {
