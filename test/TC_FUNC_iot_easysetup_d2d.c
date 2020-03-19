@@ -608,7 +608,7 @@ static char* _create_post_wifiprovisioninginfo_payload(iot_crypto_cipher_info_t 
     return post_message;
 }
 
-void assert_keyinfo(char *payload, iot_crypto_cipher_info_t *server_cipher, unsigned int expected_otm_support)
+static void assert_keyinfo(char *payload, iot_crypto_cipher_info_t *server_cipher, unsigned int expected_otm_support)
 {
     JSON_H *root = NULL;
     JSON_H *array = NULL;
