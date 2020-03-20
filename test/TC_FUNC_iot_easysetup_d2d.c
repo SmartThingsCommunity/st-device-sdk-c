@@ -37,13 +37,14 @@
 #define TEST_FIRMWARE_VERSION "testFirmwareVersion"
 #define TEST_DEVICE_PUBLIC_B64_KEY "BKb7+m1Mo8OuMsodM91ohz/+rZKDc/otzUPSn4UkCUk="
 #define TEST_DEVICE_SECRET_B64_KEY "ztqmQ24u86J9bpFLjaoMfwauUZwKLjUIGsnrDwwnDM8="
+#define TEST_DEVICE_SERIAL_NUMBER "STDKtESt7968d226"
 static char sample_device_info[] = {
         "{\n"
         "\t\"deviceInfo\": {\n"
         "\t\t\"firmwareVersion\": \""TEST_FIRMWARE_VERSION"\",\n"
         "\t\t\"privateKey\": \""TEST_DEVICE_SECRET_B64_KEY"\",\n"
         "\t\t\"publicKey\": \""TEST_DEVICE_PUBLIC_B64_KEY"\",\n"
-        "\t\t\"serialNumber\": \"STDKtESt7968d226\"\n"
+        "\t\t\"serialNumber\": \""TEST_DEVICE_SERIAL_NUMBER"\"\n"
         "\t}\n"
         "}"
 };
@@ -420,6 +421,241 @@ void TC_STATIC_es_wifiscaninfo_handler_success(void **state)
     free(out_payload);
 }
 
+// Static function of STDK declared to test
+extern iot_error_t _es_confirminfo_handler(struct iot_context *ctx, char *in_payload, char **out_payload);
+
+static char *_generate_confirminfo_payload(iot_crypto_cipher_info_t *cipher, enum ownership_validation_feature feature,
+                                    const char *serial_number_for_qr);
+static void assert_confirminfo(iot_crypto_cipher_info_t *cipher, char *payload);
+
+void TC_STATIC_es_confirminfo_handler_null_parameters(void **state)
+{
+    iot_error_t err;
+    char *in_payload;
+    char *out_payload;
+    struct iot_context *context;
+    iot_crypto_cipher_info_t *server_cipher;
+
+    // Given: in_payload null
+    context = (struct iot_context *)*state;
+    context->es_crypto_cipher_info = _generate_device_cipher(NULL, 0);
+    server_cipher = _generate_server_cipher(context->es_crypto_cipher_info->iv, context->es_crypto_cipher_info->iv_len);
+    in_payload = NULL;
+    out_payload = NULL;
+    // When
+    err = _es_confirminfo_handler(context, in_payload, &out_payload);
+    // Then
+    assert_int_not_equal(err, IOT_ERROR_NONE);
+    assert_null(out_payload); // out_payload untouched
+
+
+    // Given: context null
+    context = NULL;
+    in_payload = _generate_confirminfo_payload(server_cipher, OVF_BIT_MAX_FEATURE, NULL);
+    out_payload = NULL;
+    // When
+    err = _es_confirminfo_handler(context, in_payload, &out_payload);
+    // Then
+    assert_int_not_equal(err, IOT_ERROR_NONE);
+    assert_null(out_payload); // out_payload untouched
+
+    // Local teardown
+    _free_cipher(server_cipher);
+    free(in_payload);
+}
+
+void TC_STATIC_es_confirminfo_handler_out_ranged_otm_feature(void **state)
+{
+    iot_error_t err;
+    char *in_payload;
+    char *out_payload;
+    struct iot_context *context;
+    iot_crypto_cipher_info_t *server_cipher;
+
+    // Given
+    context = (struct iot_context *)*state;
+    context->es_crypto_cipher_info = _generate_device_cipher(NULL, 0);
+    server_cipher = _generate_server_cipher(context->es_crypto_cipher_info->iv, context->es_crypto_cipher_info->iv_len);
+    in_payload = _generate_confirminfo_payload(server_cipher, OVF_BIT_MAX_FEATURE, NULL);
+    out_payload = NULL;
+    // When
+    err = _es_confirminfo_handler(context, in_payload, &out_payload);
+    // Then
+    assert_int_not_equal(err, IOT_ERROR_NONE);
+    assert_null(out_payload); // out_payload untouched
+
+    // Local teardown
+    _free_cipher(server_cipher);
+    free(in_payload);
+}
+
+void TC_STATIC_es_confirminfo_handler_justworks_and_pin(void **state)
+{
+    iot_error_t err;
+    char *in_payload;
+    char *out_payload;
+    struct iot_context *context;
+    iot_crypto_cipher_info_t *server_cipher;
+
+    // Given: common
+    context = (struct iot_context *)*state;
+    context->es_crypto_cipher_info = _generate_device_cipher(NULL, 0);
+    context->usr_events = iot_os_eventgroup_create();
+    context->iot_events = iot_os_eventgroup_create();
+    context->cmd_queue = iot_os_queue_create(IOT_QUEUE_LENGTH, sizeof(struct iot_command));
+    server_cipher = _generate_server_cipher(context->es_crypto_cipher_info->iv, context->es_crypto_cipher_info->iv_len);
+
+    // Given: justworks payload
+    in_payload = _generate_confirminfo_payload(server_cipher, OVF_BIT_JUSTWORKS, NULL);
+    out_payload = NULL;
+    // When
+    err = _es_confirminfo_handler(context, in_payload, &out_payload);
+    // Then
+    assert_int_equal(err, IOT_ERROR_NONE);
+    assert_confirminfo(server_cipher, out_payload);
+    // Teardown: justworks
+    free(in_payload);
+    free(out_payload);
+
+    // Given: pin payload
+    in_payload = _generate_confirminfo_payload(server_cipher, OVF_BIT_PIN, NULL);
+    out_payload = NULL;
+    // When
+    err = _es_confirminfo_handler(context, in_payload, &out_payload);
+    // Then
+    assert_int_equal(err, IOT_ERROR_NONE);
+    assert_confirminfo(server_cipher, out_payload);
+    // Teardown: pin
+    free(in_payload);
+    free(out_payload);
+
+    // Teardown: common
+    iot_os_eventgroup_delete(context->usr_events);
+    iot_os_eventgroup_delete(context->iot_events);
+    iot_os_queue_delete(context->cmd_queue);
+    _free_cipher(server_cipher);
+}
+
+void TC_STATIC_es_confirminfo_handler_qr_code(void **state)
+{
+    iot_error_t err;
+    char *in_payload;
+    char *out_payload;
+    struct iot_context *context;
+    iot_crypto_cipher_info_t *server_cipher;
+
+    // Given: common
+    context = (struct iot_context *)*state;
+    context->es_crypto_cipher_info = _generate_device_cipher(NULL, 0);
+    context->usr_events = iot_os_eventgroup_create();
+    context->iot_events = iot_os_eventgroup_create();
+    context->cmd_queue = iot_os_queue_create(IOT_QUEUE_LENGTH, sizeof(struct iot_command));
+
+    // Given: valid serial number
+    server_cipher = _generate_server_cipher(context->es_crypto_cipher_info->iv, context->es_crypto_cipher_info->iv_len);
+    in_payload = _generate_confirminfo_payload(server_cipher, OVF_BIT_QR, TEST_DEVICE_SERIAL_NUMBER);
+    out_payload = NULL;
+    // When
+    err = _es_confirminfo_handler(context, in_payload, &out_payload);
+    // Then
+    assert_int_equal(err, IOT_ERROR_NONE);
+    assert_confirminfo(server_cipher, out_payload);
+
+    // Teardown: valid serial number
+    free(in_payload);
+    free(out_payload);
+
+    // Given: invalid serial number
+    server_cipher = _generate_server_cipher(context->es_crypto_cipher_info->iv, context->es_crypto_cipher_info->iv_len);
+    in_payload = _generate_confirminfo_payload(server_cipher, OVF_BIT_QR, "1234"); // invalid sn
+    out_payload = NULL;
+    // When
+    err = _es_confirminfo_handler(context, in_payload, &out_payload);
+    // Then
+    assert_int_equal(err, IOT_ERROR_EASYSETUP_INVALID_SERIAL_NUMBER);
+    assert_null(out_payload); // out_payload untouched
+
+    // Teardown: invalid serial number
+    free(in_payload);
+
+    // Teardown: common
+    iot_os_eventgroup_delete(context->usr_events);
+    iot_os_eventgroup_delete(context->iot_events);
+    iot_os_queue_delete(context->cmd_queue);
+    _free_cipher(server_cipher);
+}
+
+void TC_STATIC_es_confirminfo_handler_button(void **state)
+{
+    iot_error_t err;
+    char *in_payload;
+    char *out_payload;
+    struct iot_context *context;
+    iot_crypto_cipher_info_t *server_cipher;
+
+    // Given
+    context = (struct iot_context *)*state;
+    context->es_crypto_cipher_info = _generate_device_cipher(NULL, 0);
+    context->usr_events = iot_os_eventgroup_create();
+    context->iot_events = iot_os_eventgroup_create();
+    context->cmd_queue = iot_os_queue_create(IOT_QUEUE_LENGTH, sizeof(struct iot_command));
+    server_cipher = _generate_server_cipher(context->es_crypto_cipher_info->iv, context->es_crypto_cipher_info->iv_len);
+    in_payload = _generate_confirminfo_payload(server_cipher, OVF_BIT_BUTTON, NULL);
+    out_payload = NULL;
+    iot_os_eventgroup_set_bits(context->iot_events, IOT_EVENT_BIT_EASYSETUP_CONFIRM);
+    // When
+    err = _es_confirminfo_handler(context, in_payload, &out_payload);
+    // Then
+    assert_int_equal(err, IOT_ERROR_NONE);
+    assert_confirminfo(server_cipher, out_payload);
+
+    // Teardown
+    free(in_payload);
+    free(out_payload);
+    iot_os_eventgroup_delete(context->usr_events);
+    iot_os_eventgroup_delete(context->iot_events);
+    iot_os_queue_delete(context->cmd_queue);
+    _free_cipher(server_cipher);
+}
+
+static char *_generate_confirminfo_payload(iot_crypto_cipher_info_t *cipher, enum ownership_validation_feature feature,
+                                    const char *serial_number_for_qr)
+{
+    JSON_H *root;
+    JSON_H *item;
+    char* plain_message;
+    char* encoded_message;
+    char* formed_message;
+
+    assert_non_null(cipher);
+
+    root = JSON_CREATE_OBJECT();
+    assert_non_null(root);
+    item = JSON_CREATE_NUMBER(feature);
+    assert_non_null(item);
+    JSON_ADD_ITEM_TO_OBJECT(root, "otmSupportFeature", item);
+    if (feature == OVF_BIT_QR) {
+        JSON_ADD_ITEM_TO_OBJECT(root, "sn", JSON_CREATE_STRING(serial_number_for_qr));
+    }
+    plain_message = JSON_PRINT(root);
+    JSON_DELETE(root);
+
+    encoded_message = _encrypt_and_encode_message(cipher, (unsigned char*)plain_message, strlen(plain_message));
+    free(plain_message);
+
+    root = JSON_CREATE_OBJECT();
+    assert_non_null(root);
+    JSON_ADD_ITEM_TO_OBJECT(root, "message", JSON_CREATE_STRING(encoded_message));
+
+    formed_message = JSON_PRINT(root);
+    assert_non_null(formed_message);
+
+    free(encoded_message);
+    JSON_DELETE(root);
+
+    return formed_message;
+}
+
 static void _generate_wifi_scan_list(struct iot_context *context, uint16_t amount)
 {
     assert_non_null(context);
@@ -754,6 +990,30 @@ static void assert_wifiscaninfo_payload(iot_crypto_cipher_info_t *cipher, char *
     free(plain_message);
     JSON_DELETE(root);
 }
+
+static void assert_confirminfo(iot_crypto_cipher_info_t *cipher, char *payload)
+{
+    JSON_H* root;
+    JSON_H* item;
+    char *plain_message;
+
+    assert_non_null(payload);
+    assert_non_null(cipher);
+
+    // {"message":"xxxxx"}
+    root = JSON_PARSE(payload);
+    assert_non_null(root);
+
+    item = JSON_GET_OBJECT_ITEM(root, "message");
+    assert_non_null(item);
+    plain_message = _decode_and_decrypt_message(cipher, (unsigned char*)JSON_GET_STRING_VALUE(item), strlen(JSON_GET_STRING_VALUE(item)));
+    assert_non_null(plain_message);
+    JSON_DELETE(root);
+
+    assert_string_equal(plain_message, "{}");
+    free(plain_message);
+}
+
 
 static void _generate_hash_token(unsigned char *hash_token, size_t hash_token_size)
 {

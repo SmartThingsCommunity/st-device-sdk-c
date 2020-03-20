@@ -130,5 +130,10 @@ void TC_STATIC_es_wifiprovisioninginfo_handler_success(void **state);
 void TC_STATIC_es_crypto_cipher_gen_iv_success(void **state);
 void TC_STATIC_es_wifiscaninfo_handler_invalid_parameters(void **state);
 void TC_STATIC_es_wifiscaninfo_handler_success(void **state);
+void TC_STATIC_es_confirminfo_handler_null_parameters(void **state);
+void TC_STATIC_es_confirminfo_handler_out_ranged_otm_feature(void **state);
+void TC_STATIC_es_confirminfo_handler_justworks_and_pin(void **state);
+void TC_STATIC_es_confirminfo_handler_qr_code(void **state);
+void TC_STATIC_es_confirminfo_handler_button(void **state);
 
 #endif //ST_DEVICE_SDK_C_TCS_H
