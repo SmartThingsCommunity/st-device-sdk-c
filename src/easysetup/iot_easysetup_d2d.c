@@ -935,9 +935,9 @@ iot_error_t _es_confirm_handler(struct iot_context *ctx, char *in_payload, char 
 	}
 
 	if (strlen(JSON_GET_STRING_VALUE(recv)) != PIN_SIZE) {
-	    IOT_ERROR("pin size mistmatch");
-	    err = IOT_ERROR_EASYSETUP_INVALID_PIN;
-	    goto out;
+		IOT_ERROR("pin size mistmatch");
+		err = IOT_ERROR_EASYSETUP_INVALID_PIN;
+		goto out;
 	}
 
 	strncpy(pin, recv->valuestring, sizeof(pin) - 1);
