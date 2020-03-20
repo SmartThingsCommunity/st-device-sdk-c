@@ -682,6 +682,10 @@ iot_error_t _es_confirminfo_handler(struct iot_context *ctx, char *in_payload, c
 	unsigned char *decrypt_buf = NULL;
 	unsigned char *encrypt_buf = NULL;
 
+	if (!ctx || !in_payload) {
+	    return IOT_ERROR_EASYSETUP_INTERNAL_SERVER_ERROR;
+	}
+
 	root = JSON_PARSE(in_payload);
 	if (!root) {
 		IOT_ERROR("Invalid args");
@@ -758,8 +762,11 @@ iot_error_t _es_confirminfo_handler(struct iot_context *ctx, char *in_payload, c
 		err = _es_confirm_check_manager(ctx, recv->valueint, sn);
 		if (err != IOT_ERROR_NONE)
 			goto out;
-	} else
-		IOT_ERROR("Not supported otmsupportfeature : %d", recv->valueint);
+	} else {
+        IOT_ERROR("Not supported otmsupportfeature : %d", recv->valueint);
+        err = IOT_ERROR_EASYSETUP_NOT_SUPPORTED;
+        goto out;
+    }
 
 	if (root)
 		JSON_DELETE(root);
