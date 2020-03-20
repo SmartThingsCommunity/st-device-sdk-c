@@ -795,6 +795,7 @@ static void _iot_main_task(struct iot_context *ctx)
 					if (err != IOT_ERROR_NONE) {
 						IOT_ERROR("failed publish event_data : %d", err);
 						if (err == IOT_ERROR_MQTT_PUBLISH_FAIL) {
+							iot_es_disconnect(ctx, IOT_CONNECT_TYPE_COMMUNICATION);
 							IOT_WARN("Report Disconnected..");
 							next_state = IOT_STATE_CLOUD_DISCONNECTED;
 							err = iot_state_update(ctx, next_state, 0);
@@ -836,6 +837,7 @@ static void _iot_main_task(struct iot_context *ctx)
 #if !defined(STDK_MQTT_TASK)
 		/* check if there is MQTT packet from GG */
 		if (ctx->reg_mqttcli && st_mqtt_yield(ctx->reg_mqttcli, 0) < 0) {
+			iot_es_disconnect(ctx, IOT_CONNECT_TYPE_REGISTRATION);
 			IOT_WARN("Report Disconnected..");
 			next_state = IOT_STATE_CLOUD_DISCONNECTED;
 			err = iot_state_update(ctx, next_state, 0);
@@ -846,6 +848,7 @@ static void _iot_main_task(struct iot_context *ctx)
 			iot_os_queue_reset(ctx->pub_queue);
 
 		} else if (ctx->evt_mqttcli && st_mqtt_yield(ctx->evt_mqttcli, 0) < 0) {
+			iot_es_disconnect(ctx, IOT_CONNECT_TYPE_COMMUNICATION);
 			IOT_WARN("Report Disconnected..");
 			next_state = IOT_STATE_CLOUD_DISCONNECTED;
 			err = iot_state_update(ctx, next_state, 0);

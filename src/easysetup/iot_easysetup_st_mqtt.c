@@ -601,6 +601,8 @@ iot_error_t iot_es_connect(struct iot_context *ctx, int conn_type)
 		if (iot_ret != IOT_ERROR_NONE) {
 			IOT_ERROR("failed to connect");
 			goto out;
+		} else {
+			IOT_INFO("MQTT connect success");
 		}
 
 		snprintf(topicfilter, IOT_TOPIC_SIZE, IOT_SUB_TOPIC_NOTIFICATION, ctx->iot_reg_data.deviceId);
@@ -641,6 +643,8 @@ iot_error_t iot_es_connect(struct iot_context *ctx, int conn_type)
 		if (iot_ret != IOT_ERROR_NONE) {
 			IOT_ERROR("failed to connect");
 			goto out;
+		} else {
+			IOT_INFO("MQTT connect success");
 		}
 
 		/* register notification subscribe for registration */
