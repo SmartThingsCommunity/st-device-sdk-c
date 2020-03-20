@@ -865,6 +865,16 @@ iot_error_t _es_confirm_handler(struct iot_context *ctx, char *in_payload, char 
 	unsigned char *encode_buf = NULL;
 	unsigned char *encrypt_buf = NULL;
 
+	if (!ctx || !ctx->pin) {
+		IOT_ERROR("no pin from device app");
+		return IOT_ERROR_EASYSETUP_PIN_NOT_FOUND;
+	}
+
+	if (ctx->curr_otm_feature != OVF_BIT_PIN) {
+		IOT_ERROR("otm is not pin.");
+		return IOT_ERROR_EASYSETUP_INVALID_CMD;
+	}
+
 	root = JSON_PARSE(in_payload);
 	if (!root) {
 		IOT_ERROR("Invalid args");
@@ -924,10 +934,10 @@ iot_error_t _es_confirm_handler(struct iot_context *ctx, char *in_payload, char 
 		goto out;
 	}
 
-	if (!ctx || !ctx->pin) {
-		IOT_ERROR("no pin from application");
-		err = IOT_ERROR_EASYSETUP_PIN_NOT_FOUND;
-		goto out;
+	if (strlen(JSON_GET_STRING_VALUE(recv)) != PIN_SIZE) {
+	    IOT_ERROR("pin size mistmatch");
+	    err = IOT_ERROR_EASYSETUP_INVALID_PIN;
+	    goto out;
 	}
 
 	strncpy(pin, recv->valuestring, sizeof(pin) - 1);
