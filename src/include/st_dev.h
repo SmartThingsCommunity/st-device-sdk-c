@@ -257,6 +257,28 @@ IOT_EVENT* st_cap_attr_create_string_array(const char *attribute,
 		uint8_t str_num, char *string_array[], const char *unit);
 
 /**
+ * @brief Create IOT_EVENT data.
+ *
+ * @details This function creates a new IOT_EVENT data with input parameters.
+ * Once it returns, user has full responsibility for deallocating event data
+ * by using [st_cap_attr_free](@ref st_cap_attr_free).
+ *
+ * @param[in] attribute The attribute string of IOT_EVENT data.
+ * @param[in] value The value to add to IOT_EVENT data.
+ * @param[in] unit The unit string if needed. Otherwise NULL.
+ * @param[in] data The data json object if needed. Otherwise NULL.
+ *
+ * @return Pointer of `IOT_EVENT` which is used to publish device status.
+ *
+ * @warning Must call [st_cap_attr_free](@ref st_cap_attr_free)
+ * to free IOT_EVENT data after using it.
+ *
+ * @see @ref st_cap_attr_send
+ */
+IOT_EVENT* st_cap_attr_create(const char *attribute,
+			iot_cap_val_t *value, const char *unit, const char *data);
+
+/**
  * @brief Free IOT_EVENT data.
  *
  * @details This function frees IOT_EVENT data.

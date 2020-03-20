@@ -55,6 +55,12 @@ typedef struct iot_cap_evt_data_t {
 	 *
 	 */
 	iot_cap_unit_t evt_unit;
+
+	/**
+	 * @brief 'data' data for deviceEvent.
+	 *
+	 */
+	char *evt_value_data;
 } iot_cap_evt_data_t;
 
 /**
