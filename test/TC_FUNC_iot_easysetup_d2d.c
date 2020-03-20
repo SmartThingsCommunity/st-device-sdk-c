@@ -84,7 +84,7 @@ static struct tc_key_pair* _generate_test_keypair(const unsigned char *pk_b64url
                                                   const unsigned char *sk_b64url, size_t sk_b64url_len);
 static void _free_cipher(iot_crypto_cipher_info_t *cipher);
 static char *_decode_and_decrypt_message(iot_crypto_cipher_info_t *cipher, unsigned char *b64url_aes256_message, size_t b64url_aes256_message_length);
-static char *_encryt_and_encode_mssage(iot_crypto_cipher_info_t *cipher, unsigned char *message, size_t message_length);
+static char *_encrypt_and_encode_message(iot_crypto_cipher_info_t *cipher, unsigned char *message, size_t message_length);
 
 int TC_iot_easysetup_d2d_setup(void **state)
 {
@@ -531,8 +531,7 @@ static char* _generate_post_wifiprovisioninginfo_payload(iot_crypto_cipher_info_
     plain_message = JSON_PRINT(root);
     JSON_DELETE(root);
 
-    cipher->mode = IOT_CRYPTO_CIPHER_ENCRYPT;
-    encoded_message = _encryt_and_encode_mssage(cipher, (unsigned char*) plain_message, strlen(plain_message));
+    encoded_message = _encrypt_and_encode_message(cipher, (unsigned char *) plain_message, strlen(plain_message));
     free(plain_message);
 
     // { "message": "XXXXX" }
@@ -852,7 +851,7 @@ static void _free_cipher(iot_crypto_cipher_info_t *cipher)
     free(cipher);
 }
 
-static char *_encryt_and_encode_mssage(iot_crypto_cipher_info_t *cipher, unsigned char *message, size_t message_length)
+static char *_encrypt_and_encode_message(iot_crypto_cipher_info_t *cipher, unsigned char *message, size_t message_length)
 {
     size_t aes256_len;
     size_t b64_aes256_len;
@@ -868,6 +867,7 @@ static char *_encryt_and_encode_mssage(iot_crypto_cipher_info_t *cipher, unsigne
     aes256_len = iot_crypto_cipher_get_align_size(IOT_CRYPTO_CIPHER_AES256, message_length);
     aes256_message = (unsigned char *) malloc(aes256_len);
     assert_non_null(aes256_message);
+    cipher->mode = IOT_CRYPTO_CIPHER_ENCRYPT;
     err = iot_crypto_cipher_aes(cipher, message, message_length, aes256_message, &out_length, aes256_len);
     assert_int_equal(err, IOT_ERROR_NONE);
 
