@@ -96,6 +96,7 @@ iot_os_queue* iot_os_queue_create(int queue_length, int item_size)
 
 	queue->mqd = mq_open(queue->name, O_CREAT | O_RDWR, 0644, &attr);
 	if (queue->mqd == -1) {
+		free(queue);
 		return NULL;
 	}
 
@@ -186,6 +187,7 @@ iot_os_eventgroup* iot_os_eventgroup_create(void)
 		eventgroup->group[i].id = (1 << i);
 		int ret = pipe(eventgroup->group[i].fd);
 		if (ret == -1) {
+			free(eventgroup);
 			return NULL;
 		}
 	}
