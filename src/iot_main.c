@@ -1,6 +1,6 @@
 /* ***************************************************************************
  *
- * Copyright 2019 Samsung Electronics All Rights Reserved.
+ * Copyright 2019-2020 Samsung Electronics All Rights Reserved.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -819,7 +819,12 @@ IOT_CTX* st_conn_init(unsigned char *onboarding_config, unsigned int onboarding_
 	struct iot_devconf_prov_data *devconf_prov;
 	struct iot_device_info *dev_info;
 
-	ctx = malloc(sizeof(struct iot_context));
+	if (!onboarding_config || !device_info) {
+		IOT_ERROR("invalid parameters\n");
+		return NULL;
+	}
+
+	ctx = iot_os_malloc(sizeof(struct iot_context));
 	if (!ctx) {
 		IOT_ERROR("failed to malloc for iot_context\n");
 		return NULL;
@@ -847,14 +852,14 @@ IOT_CTX* st_conn_init(unsigned char *onboarding_config, unsigned int onboarding_
 	iot_err = iot_api_onboarding_config_load(onboarding_config, onboarding_config_len, devconf_prov);
 	if (iot_err != IOT_ERROR_NONE) {
 		IOT_ERROR("failed loading onboarding profile (%d)", iot_err);
-		goto error_main_bsp_init;
+		goto error_main_load_onboarding_config;
 	}
 
 	dev_info = &(ctx->device_info);
 	iot_err = iot_api_device_info_load(device_info, device_info_len, dev_info);
 	if (iot_err != IOT_ERROR_NONE) {
 		IOT_ERROR("failed loading device info (%d)", iot_err);
-		goto error_main_load_prod;
+		goto error_main_load_device_info;
 	}
 
 	// Initialize Wi-Fi
@@ -930,10 +935,14 @@ error_main_init_usr_evts:
 error_main_init_cmd_q:
 	iot_api_device_info_mem_free(dev_info);
 
-error_main_load_prod:
+error_main_load_device_info:
 	iot_api_onboarding_config_mem_free(devconf_prov);
 
+error_main_load_onboarding_config:
+	iot_nv_deinit();
+
 error_main_bsp_init:
+	iot_os_timer_destroy(&ctx->state_timer);
 	free(ctx);
 
 	return NULL;
