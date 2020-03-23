@@ -763,10 +763,10 @@ iot_error_t _es_confirminfo_handler(struct iot_context *ctx, char *in_payload, c
 		if (err != IOT_ERROR_NONE)
 			goto out;
 	} else {
-        IOT_ERROR("Not supported otmsupportfeature : %d", recv->valueint);
-        err = IOT_ERROR_EASYSETUP_NOT_SUPPORTED;
-        goto out;
-    }
+		IOT_ERROR("Not supported otmsupportfeature : %d", recv->valueint);
+		err = IOT_ERROR_EASYSETUP_CONFIRM_NOT_SUPPORT ;
+		goto out;
+	}
 
 	if (root)
 		JSON_DELETE(root);
