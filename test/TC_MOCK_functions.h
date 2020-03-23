@@ -24,5 +24,6 @@
 void set_mock_iot_os_malloc_failure_with_index(unsigned int index);
 void set_mock_iot_os_malloc_failure();
 void do_not_use_mock_iot_os_malloc_failure();
+void set_mock_detect_memory_leak(bool detect);
 
 #endif //ST_DEVICE_SDK_C_TC_MOCK_FUNCTIONS_H

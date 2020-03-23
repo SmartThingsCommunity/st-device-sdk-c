@@ -85,6 +85,7 @@ uint16_t __wrap_iot_bsp_wifi_get_scan_result(iot_wifi_scan_result_t *scan_result
 static unsigned int _mock_malloc_failure_index;
 static bool _mock_iot_os_malloc_failure_at[MAX_MOCKED_IOT_OS_MALLOC_IN_TC];
 static bool _mock_iot_os_malloc_start;
+static bool _mock_detect_memory_leak;
 
 void set_mock_iot_os_malloc_failure_with_index(unsigned int index)
 {
@@ -122,8 +123,27 @@ void *__wrap_iot_os_malloc(size_t size)
         if (++_mock_malloc_failure_index >= MAX_MOCKED_IOT_OS_MALLOC_IN_TC ) {
             _mock_malloc_failure_index = MAX_MOCKED_IOT_OS_MALLOC_IN_TC - 1;
         }
-        return malloc(size);
+        if (_mock_detect_memory_leak)
+            return test_malloc(size);
+        else
+            return malloc(size);
     } else {
-        return malloc(size);
+        if (_mock_detect_memory_leak)
+            return test_malloc(size);
+        else
+            return malloc(size);
     }
+}
+
+void __wrap_iot_os_free(void* ptr)
+{
+    if (_mock_detect_memory_leak)
+        return test_free(ptr);
+    else
+        return free(ptr);
+}
+
+void set_mock_detect_memory_leak(bool detect)
+{
+    _mock_detect_memory_leak = detect;
 }
