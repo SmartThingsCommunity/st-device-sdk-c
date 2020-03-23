@@ -40,6 +40,20 @@ static char device_info_sample[] = {
         "}"
 };
 
+int TC_iot_api_memleak_detect_setup(void **state)
+{
+    UNUSED(state);
+    set_mock_detect_memory_leak(true);
+    return 0;
+}
+
+int TC_iot_api_memleak_detect_teardown(void **state)
+{
+    UNUSED(state);
+    set_mock_detect_memory_leak(false);
+    return 0;
+}
+
 void TC_iot_api_device_info_load_null_parameters(void **state)
 {
     iot_error_t err;
@@ -97,7 +111,7 @@ void TC_iot_api_device_info_load_internal_failure(void **state)
         iot_api_device_info_mem_free(&info);
     }
 
-    // teardown
+    // Teardown
     do_not_use_mock_iot_os_malloc_failure();
 }
 
@@ -248,7 +262,7 @@ void TC_iot_api_onboarding_config_load_internal_failure(void **state)
         iot_api_onboarding_config_mem_free(&devconf);
     }
 
-    // teardown
+    // Teardown
     do_not_use_mock_iot_os_malloc_failure();
 }
 

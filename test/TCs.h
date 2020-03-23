@@ -27,6 +27,8 @@ void TC_iot_util_convert_str_uuid_success(void **state);
 void TC_iot_util_convert_str_uuid_null_parameters(void **state);
 
 // TCs for iot_api.c
+int TC_iot_api_memleak_detect_setup(void **state);
+int TC_iot_api_memleak_detect_teardown(void **state);
 void TC_iot_api_device_info_load_null_parameters(void **state);
 void TC_iot_api_device_info_load_success(void **state);
 void TC_iot_api_device_info_load_internal_failure(void **state);
