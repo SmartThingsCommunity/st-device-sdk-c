@@ -136,4 +136,10 @@ void TC_STATIC_es_confirminfo_handler_justworks_and_pin(void **state);
 void TC_STATIC_es_confirminfo_handler_qr_code(void **state);
 void TC_STATIC_es_confirminfo_handler_button(void **state);
 
+// TCs for iot_main.c
+void TC_st_conn_init_null_parameters(void **state);
+void TC_st_conn_init_malloc_failure(void **state);
+void TC_st_conn_init_wrong_onboarding_config(void **state);
+void TC_st_conn_init_wrong_device_info(void **state);
+
 #endif //ST_DEVICE_SDK_C_TCS_H

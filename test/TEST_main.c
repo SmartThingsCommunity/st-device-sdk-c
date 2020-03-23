@@ -165,6 +165,18 @@ int TEST_FUNC_iot_easysetup_crypto(void)
 
 }
 
+int TEST_FUNC_iot_main()
+{
+    const struct CMUnitTest tests[] = {
+            cmocka_unit_test(TC_st_conn_init_null_parameters),
+            cmocka_unit_test(TC_st_conn_init_malloc_failure),
+            cmocka_unit_test(TC_st_conn_init_wrong_onboarding_config),
+            cmocka_unit_test(TC_st_conn_init_wrong_device_info),
+
+    };
+    return cmocka_run_group_tests_name("iot_main.c", tests, NULL, NULL);
+}
+
 int main(void) {
     int err = 0;
 
@@ -176,6 +188,7 @@ int main(void) {
     err += TEST_FUNC_iot_uuid();
     err += TEST_FUNC_iot_easysetup_d2d();
     err += TEST_FUNC_iot_easysetup_crypto();
+    err += TEST_FUNC_iot_main();
 
     return err;
 }
