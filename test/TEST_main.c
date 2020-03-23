@@ -24,21 +24,21 @@
 int TEST_FUNC_iot_api(void)
 {
     const struct CMUnitTest tests[] = {
-            cmocka_unit_test_setup_teardown(TC_iot_api_device_info_load_null_parameters,TC_iot_api_memleak_detect_setup,TC_iot_api_memleak_detect_teardown),
-            cmocka_unit_test_setup_teardown(TC_iot_api_device_info_load_success,TC_iot_api_memleak_detect_setup,TC_iot_api_memleak_detect_teardown),
-            cmocka_unit_test_setup_teardown(TC_iot_api_device_info_load_internal_failure,TC_iot_api_memleak_detect_setup,TC_iot_api_memleak_detect_teardown),
-            cmocka_unit_test_setup_teardown(TC_iot_api_device_info_load_without_firmware_version,TC_iot_api_memleak_detect_setup,TC_iot_api_memleak_detect_teardown),
-            cmocka_unit_test_setup_teardown(TC_iot_api_onboarding_config_load_null_parameters,TC_iot_api_memleak_detect_setup,TC_iot_api_memleak_detect_teardown),
-            cmocka_unit_test_setup_teardown(TC_iot_api_onboarding_config_load_template_parameters,TC_iot_api_memleak_detect_setup,TC_iot_api_memleak_detect_teardown),
-            cmocka_unit_test_setup_teardown(TC_iot_api_onboarding_config_load_success,TC_iot_api_memleak_detect_setup,TC_iot_api_memleak_detect_teardown),
-            cmocka_unit_test_setup_teardown(TC_iot_api_onboarding_config_load_internal_failure,TC_iot_api_memleak_detect_setup,TC_iot_api_memleak_detect_teardown),
-            cmocka_unit_test_setup_teardown(TC_iot_api_onboarding_config_without_mnid,TC_iot_api_memleak_detect_setup,TC_iot_api_memleak_detect_teardown),
-            cmocka_unit_test_setup_teardown(TC_iot_get_time_in_sec_null_parameters,TC_iot_api_memleak_detect_setup,TC_iot_api_memleak_detect_teardown),
-            cmocka_unit_test_setup_teardown(TC_iot_get_time_in_sec_success,TC_iot_api_memleak_detect_setup,TC_iot_api_memleak_detect_teardown),
-            cmocka_unit_test_setup_teardown(TC_iot_get_time_in_ms_null_parmaeters,TC_iot_api_memleak_detect_setup,TC_iot_api_memleak_detect_teardown),
-            cmocka_unit_test_setup_teardown(TC_iot_get_time_in_ms_success,TC_iot_api_memleak_detect_setup,TC_iot_api_memleak_detect_teardown),
-            cmocka_unit_test_setup_teardown(TC_iot_get_time_in_sec_by_long_null_parameters,TC_iot_api_memleak_detect_setup,TC_iot_api_memleak_detect_teardown),
-            cmocka_unit_test_setup_teardown(TC_iot_get_time_in_sec_by_long_success,TC_iot_api_memleak_detect_setup,TC_iot_api_memleak_detect_teardown),
+            cmocka_unit_test_setup_teardown(TC_iot_api_device_info_load_null_parameters, TC_iot_api_memleak_detect_setup, TC_iot_api_memleak_detect_teardown),
+            cmocka_unit_test_setup_teardown(TC_iot_api_device_info_load_success, TC_iot_api_memleak_detect_setup, TC_iot_api_memleak_detect_teardown),
+            cmocka_unit_test_setup_teardown(TC_iot_api_device_info_load_internal_failure, TC_iot_api_memleak_detect_setup, TC_iot_api_memleak_detect_teardown),
+            cmocka_unit_test_setup_teardown(TC_iot_api_device_info_load_without_firmware_version, TC_iot_api_memleak_detect_setup, TC_iot_api_memleak_detect_teardown),
+            cmocka_unit_test_setup_teardown(TC_iot_api_onboarding_config_load_null_parameters, TC_iot_api_memleak_detect_setup, TC_iot_api_memleak_detect_teardown),
+            cmocka_unit_test_setup_teardown(TC_iot_api_onboarding_config_load_template_parameters, TC_iot_api_memleak_detect_setup, TC_iot_api_memleak_detect_teardown),
+            cmocka_unit_test_setup_teardown(TC_iot_api_onboarding_config_load_success, TC_iot_api_memleak_detect_setup, TC_iot_api_memleak_detect_teardown),
+            cmocka_unit_test_setup_teardown(TC_iot_api_onboarding_config_load_internal_failure, TC_iot_api_memleak_detect_setup, TC_iot_api_memleak_detect_teardown),
+            cmocka_unit_test_setup_teardown(TC_iot_api_onboarding_config_without_mnid, TC_iot_api_memleak_detect_setup, TC_iot_api_memleak_detect_teardown),
+            cmocka_unit_test_setup_teardown(TC_iot_get_time_in_sec_null_parameters, TC_iot_api_memleak_detect_setup, TC_iot_api_memleak_detect_teardown),
+            cmocka_unit_test_setup_teardown(TC_iot_get_time_in_sec_success, TC_iot_api_memleak_detect_setup, TC_iot_api_memleak_detect_teardown),
+            cmocka_unit_test_setup_teardown(TC_iot_get_time_in_ms_null_parmaeters, TC_iot_api_memleak_detect_setup, TC_iot_api_memleak_detect_teardown),
+            cmocka_unit_test_setup_teardown(TC_iot_get_time_in_ms_success, TC_iot_api_memleak_detect_setup, TC_iot_api_memleak_detect_teardown),
+            cmocka_unit_test_setup_teardown(TC_iot_get_time_in_sec_by_long_null_parameters, TC_iot_api_memleak_detect_setup, TC_iot_api_memleak_detect_teardown),
+            cmocka_unit_test_setup_teardown(TC_iot_get_time_in_sec_by_long_success, TC_iot_api_memleak_detect_setup, TC_iot_api_memleak_detect_teardown),
     };
     return cmocka_run_group_tests_name("iot_api.c", tests, NULL, NULL);
 }

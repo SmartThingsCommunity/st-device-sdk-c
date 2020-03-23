@@ -363,6 +363,18 @@ void iot_os_timer_destroy(iot_os_timer* timer);
 void *iot_os_malloc(size_t size);
 
 /**
+ * @brief	allocate memory
+ *
+ * This function allocates memory for an array of nmemb elements of size bytes each
+ * and returns a pointer to the allocated memory.
+ *
+ * @param[in] nmemb count of memory block to allocate
+ * @param[in] size bytes of memory block to allocate
+ *
+ */
+void *iot_os_calloc(size_t nmemb, size_t size);
+
+/**
  * @brief	free memory
  *
  * frees the memory space pointed to by ptr,
@@ -374,6 +386,7 @@ void *iot_os_malloc(size_t size);
 void iot_os_free(void *ptr);
 #else
 static inline void *iot_os_malloc(size_t size) { return malloc(size); }
+static inline void *iot_os_calloc(size_t nmemb, size_t size) { return calloc(nmemb, size); }
 static inline void iot_os_free(void *ptr) { return free(ptr); }
 #endif
 
