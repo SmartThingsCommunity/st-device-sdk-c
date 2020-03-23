@@ -384,10 +384,22 @@ void *iot_os_calloc(size_t nmemb, size_t size);
  *
  */
 void iot_os_free(void *ptr);
+
+/**
+ * @brief	duplicate a string
+ *
+ * this function returns a pointer to a new string which is a duplicate of the string src.
+ * Memory for the new string is obtained with iot_os_malloc, and can be freed with iot_os_free
+ *
+ * @param[in] src string to duplicate
+ *
+ */
+char *iot_os_strdup(const char *src);
 #else
 static inline void *iot_os_malloc(size_t size) { return malloc(size); }
 static inline void *iot_os_calloc(size_t nmemb, size_t size) { return calloc(nmemb, size); }
 static inline void iot_os_free(void *ptr) { return free(ptr); }
+static inline char *iot_os_strdup(const char *src) { return strdup(src); }
 #endif
 
 #endif /* _IOT_OS_UTIL_H_ */

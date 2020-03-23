@@ -1,6 +1,6 @@
 /* ***************************************************************************
  *
- * Copyright 2019 Samsung Electronics All Rights Reserved.
+ * Copyright 2019-2020 Samsung Electronics All Rights Reserved.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -409,4 +409,9 @@ void *iot_os_calloc(size_t nmemb, size_t size)
 void iot_os_free(void *ptr)
 {
     return free(ptr);
+}
+
+char *iot_os_strdup(const char *src)
+{
+    return strdup(src);
 }
