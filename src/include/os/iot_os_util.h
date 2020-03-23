@@ -361,8 +361,20 @@ void iot_os_timer_destroy(iot_os_timer* timer);
  *
  */
 void *iot_os_malloc(size_t size);
+
+/**
+ * @brief	free memory
+ *
+ * frees the memory space pointed to by ptr,
+ * which must have been returned by a previous call to iot_os_malloc
+ *
+ * @param[in] ptr pinter of memory
+ *
+ */
+void iot_os_free(void *ptr);
 #else
 static inline void *iot_os_malloc(size_t size) { return malloc(size); }
+static inline void iot_os_free(void *ptr) { return free(ptr); }
 #endif
 
 #endif /* _IOT_OS_UTIL_H_ */
