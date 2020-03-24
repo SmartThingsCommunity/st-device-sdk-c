@@ -59,7 +59,7 @@ iot_error_t iot_command_send(struct iot_context *ctx,
 		err = IOT_ERROR_BAD_REQ;
 	} else {
 		if (new_cmd != IOT_CMD_STATE_HANDLE) {
-			ctx->cmd_status |= (1 << new_cmd);
+			ctx->cmd_status |= (1u << new_cmd);
 			ctx->cmd_count[new_cmd]++;
 		}
 
@@ -163,18 +163,12 @@ iot_error_t iot_state_update(struct iot_context *ctx,
 	struct iot_state_data state_data;
 	iot_error_t err;
 
-	switch (new_state) {
-	case IOT_STATE_PROV_CONFIRMING:
-		if (opt == IOT_STATE_OPT_NEED_INTERACT) {
-			IOT_INFO("Trigger user_event with 0x%0x",
-				(1 << new_state));
-			iot_os_eventgroup_set_bits(ctx->usr_events,
-				(1 << new_state));
-		}
-		break;
-
-	default:
-		break;
+	if ((new_state == IOT_STATE_PROV_CONFIRMING)
+			&& (opt == IOT_STATE_OPT_NEED_INTERACT)) {
+		IOT_INFO("Trigger user_event with 0x%0x",
+				(1u << (unsigned)IOT_STATE_PROV_CONFIRMING));
+		iot_os_eventgroup_set_bits(ctx->usr_events,
+				(1u << (unsigned)IOT_STATE_PROV_CONFIRMING));
 	}
 
 	state_data.iot_state = new_state;
@@ -235,8 +229,10 @@ iot_error_t iot_api_onboarding_config_load(unsigned char *onboarding_config,
 		return IOT_ERROR_INVALID_ARGS;
 
 	data = iot_os_malloc((size_t) onboarding_config_len + 1);
-	if (!data)
+	if (!data) {
 		return IOT_ERROR_MEM_ALLOC;
+	}
+
 	memcpy(data, onboarding_config, onboarding_config_len);
 	data[onboarding_config_len] = '\0';
 
@@ -389,8 +385,8 @@ iot_error_t iot_api_onboarding_config_load(unsigned char *onboarding_config,
 
 	if (root)
 		JSON_DELETE(root);
-	if (data)
-		iot_os_free(data);
+
+	iot_os_free(data);
 
 	return iot_err;
 
@@ -514,8 +510,10 @@ iot_error_t iot_api_device_info_load(unsigned char *device_info,
 		return IOT_ERROR_INVALID_ARGS;
 
 	data = iot_os_malloc((size_t) device_info_len + 1);
-	if (!data)
+	if (!data) {
 		return IOT_ERROR_MEM_ALLOC;
+	}
+
 	memcpy(data, device_info, device_info_len);
 	data[device_info_len] = '\0';
 
@@ -547,8 +545,8 @@ iot_error_t iot_api_device_info_load(unsigned char *device_info,
 
 	if (root)
 		JSON_DELETE(root);
-	if (data)
-		iot_os_free(data);
+
+	iot_os_free(data);
 
 	_dump_device_info(info);
 
@@ -588,9 +586,7 @@ void iot_api_prov_data_mem_free(struct iot_device_prov_data *prov)
 		iot_os_free(prov->cloud.broker_url);
 
 	if (prov->cloud.label)
-        iot_os_free(prov->cloud.label);
-
-	return;
+		iot_os_free(prov->cloud.label);
 }
 
 #if !defined(CONFIG_STDK_IOT_CORE_SUPPORT_STNV_PARTITION)
@@ -603,7 +599,7 @@ iot_error_t iot_api_read_device_identity(unsigned char* nv_prof,
 	JSON_H *item = NULL;
 	char *data = NULL;
 	char *object_data = NULL;
-	int str_len = 0;
+	size_t str_len = 0;
 	char *current_name = NULL;
 
 	if (!nv_prof || !nv_data || nv_prof_len == 0)
@@ -611,8 +607,8 @@ iot_error_t iot_api_read_device_identity(unsigned char* nv_prof,
 
 	data = iot_os_malloc((size_t) nv_prof_len + 1);
 	if (!data) {
-        return IOT_ERROR_MEM_ALLOC;
-    }
+		return IOT_ERROR_MEM_ALLOC;
+	}
 
 	memcpy(data, nv_prof, nv_prof_len);
 	data[nv_prof_len] = '\0';
@@ -683,14 +679,17 @@ iot_error_t iot_device_cleanup(struct iot_context *ctx)
 	iot_api_prov_data_mem_free(&(ctx->prov_data));
 	memset(&(ctx->prov_data), 0x0, sizeof(ctx->prov_data));
 
-	if ((iot_err = iot_nv_erase_prov_data()) != IOT_ERROR_NONE)
+	if ((iot_err = iot_nv_erase_prov_data()) != IOT_ERROR_NONE) {
 		IOT_ERROR("%s: failed to erase provisioning data: %d", __func__, iot_err);
+	}
 
-	if ((iot_err = iot_nv_erase(IOT_NVD_DEVICE_ID)) != IOT_ERROR_NONE)
+	if ((iot_err = iot_nv_erase(IOT_NVD_DEVICE_ID)) != IOT_ERROR_NONE) {
 		IOT_ERROR("%s: failed to erase device ID: %d", __func__, iot_err);
+	}
 
-	if((iot_err = iot_es_disconnect(ctx, IOT_CONNECT_TYPE_COMMUNICATION)) != IOT_ERROR_NONE)
+	if((iot_err = iot_es_disconnect(ctx, IOT_CONNECT_TYPE_COMMUNICATION)) != IOT_ERROR_NONE) {
 		IOT_ERROR("%s: mqtt disconnect failed %d", __func__, iot_err);
+	}
 
 	config.mode = IOT_WIFI_MODE_OFF;
 	iot_bsp_wifi_set_mode(&config);
