@@ -143,6 +143,22 @@ void __wrap_iot_os_free(void* ptr)
         return free(ptr);
 }
 
+void *__wrap_iot_os_strdup(const char *src)
+{
+    if (_mock_detect_memory_leak) {
+        char *dest;
+        size_t size = strlen(src) + 1;
+
+        dest = test_malloc(size);
+        if (dest) {
+            memcpy(dest, src, size);
+        }
+        return dest;
+    } else {
+        return strdup(src);
+    }
+}
+
 void set_mock_detect_memory_leak(bool detect)
 {
     _mock_detect_memory_leak = detect;
