@@ -20,6 +20,7 @@
 #include "JSON.h"
 #include "iot_main.h"
 #include "iot_bsp_random.h"
+#include "iot_bsp_system.h"
 #include "iot_easysetup.h"
 #include "iot_internal.h"
 #include "iot_nv_data.h"
@@ -107,6 +108,48 @@ iot_error_t _es_crypto_cipher_aes(iot_crypto_cipher_info_t *iv_info, iot_crypto_
 	*dst_len = olen;
 exit:
 	return err;
+}
+
+STATIC_FUNCTION
+iot_error_t _es_time_set(unsigned char *time)
+{
+	char time_str[11] = {0,};
+	iot_error_t err = IOT_ERROR_NONE;
+	struct tm tm = { 0 };
+	time_t now = 0;
+
+	if (sscanf((char *)time, "%4d-%2d-%2dT%2d.%2d.%2d", &tm.tm_year, &tm.tm_mon, &tm.tm_mday, &tm.tm_hour, &tm.tm_min, &tm.tm_sec) != 6) {
+		IOT_ERROR("Invalid UTC time!!");
+		return IOT_ERROR_EASYSETUP_INVALID_TIME;
+	}
+
+	/*
+	This code is applied by the Year 2038 problem.
+	The Year 2038 problem relates to representing time in many digital systems
+	as the number of seconds passed since 00:00:00 UTC on 1 January 1970 and storing it as a signed 32-bit integer.
+	Such implementations cannot encode times after 03:14:07 UTC on 19 January 2038.
+	The Year 2038 problem is caused by insufficient capacity used to represent time.
+	If it meet the problem, the time info will be updated by SNTP.
+	*/
+	if (sizeof(time_t) == 4) {
+		if (tm.tm_year >= 2038) {
+			IOT_ERROR("Not support time by year 2038 problem(Y2038 Problem)");
+			return IOT_ERROR_NONE;
+		}
+	}
+
+	tm.tm_year -= 1900;
+	tm.tm_mon -= 1;
+
+	now = mktime(&tm);
+	snprintf(time_str, sizeof(time_str), "%ld", now);
+
+	err = iot_bsp_system_set_time_in_sec(time_str);
+	if (err) {
+		IOT_ERROR("Time set error!!");
+		err = IOT_ERROR_EASYSETUP_INVALID_TIME;
+	}
+	return IOT_ERROR_NONE;
 }
 
 iot_error_t iot_easysetup_create_ssid(struct iot_devconf_prov_data *devconf, char *ssid, size_t ssid_len)
@@ -197,7 +240,7 @@ iot_error_t _es_deviceinfo_handler(struct iot_context *ctx, char **out_payload)
 		IOT_ERROR("json create failed");
 		return IOT_ERROR_EASYSETUP_JSON_CREATE_ERROR;
 	}
-	JSON_ADD_ITEM_TO_OBJECT(root, "protocolVersion", JSON_CREATE_STRING("0.4.2"));
+	JSON_ADD_ITEM_TO_OBJECT(root, "protocolVersion", JSON_CREATE_STRING("0.4.7"));
 	JSON_ADD_ITEM_TO_OBJECT(root, "firmwareVersion", JSON_CREATE_STRING(ctx->device_info.firmware_version));
 	JSON_ADD_ITEM_TO_OBJECT(root, "hashedSn", JSON_CREATE_STRING((char *)ctx->devconf.hashed_sn));
 	JSON_ADD_NUMBER_TO_OBJECT(root, "wifiSupportFrequency", (double) iot_bsp_wifi_get_freq());
@@ -377,11 +420,15 @@ iot_error_t _es_keyinfo_handler(struct iot_context *ctx, char *in_payload, char 
 	unsigned char key_tsec_curve[IOT_CRYPTO_ED25519_LEN];
 	unsigned char key_spub_sign[IOT_CRYPTO_ED25519_LEN];
 	unsigned char key_rand[IOT_CRYPTO_SHA256_LEN];
+	unsigned char *decode_buf = NULL;
 	unsigned char *encode_buf = NULL;
 	unsigned char *encrypt_buf = NULL;
 	unsigned char *master_secret = NULL;
 	unsigned char *p_spub_str = NULL;
 	unsigned char *p_rand_str = NULL;
+	unsigned char *p_datetime_str = NULL;
+	unsigned char *p_regionaldatetime_str = NULL;
+	unsigned char *p_timezoneid_str = NULL;
 	size_t input_len = 0;
 	size_t output_len = 0;
 	size_t result_len = 0;
@@ -493,6 +540,102 @@ iot_error_t _es_keyinfo_handler(struct iot_context *ctx, char *in_payload, char 
 	ctx->es_crypto_cipher_info->key = master_secret;
 	ctx->es_crypto_cipher_info->key_len = IOT_CRYPTO_SECRET_LEN;
 
+	if ((recv = JSON_GET_OBJECT_ITEM(root, "datetime")) == NULL) {
+		IOT_INFO("no datetime info");
+		err  = IOT_ERROR_EASYSETUP_INVALID_REQUEST;
+		goto temp_exit;
+	}
+	p_datetime_str = (unsigned char *)JSON_GET_STRING_VALUE(recv);
+
+	input_len = (unsigned int)strlen((char*)p_datetime_str);
+	output_len = input_len;
+	if ((decode_buf = iot_os_malloc(output_len)) == NULL) {
+		IOT_ERROR("failed to malloc for decode_buf");
+		err = IOT_ERROR_EASYSETUP_MEM_ALLOC_ERROR;
+		goto exit;
+	}
+	memset(decode_buf, 0, output_len);
+
+	err = iot_crypto_base64_decode_urlsafe((unsigned char *) p_datetime_str, input_len,
+					decode_buf, output_len,
+					&result_len);
+	if (err) {
+		IOT_ERROR("base64 decode error!! : %d", err);
+		err = IOT_ERROR_EASYSETUP_BASE64_DECODE_ERROR;
+		goto exit;
+	}
+
+	IOT_DEBUG("datetime = %s", decode_buf);
+
+	err = _es_time_set(decode_buf);
+	if (err)
+		goto exit;
+
+	if (decode_buf)
+		free(decode_buf);
+	decode_buf = NULL;
+
+	if ((recv = JSON_GET_OBJECT_ITEM(root, "regionaldatetime")) == NULL) {
+		IOT_INFO("no regionaldatetime info");
+		err  = IOT_ERROR_EASYSETUP_INVALID_REQUEST;
+		goto exit;
+	}
+	p_regionaldatetime_str = (unsigned char *)JSON_GET_STRING_VALUE(recv);
+
+	input_len = (unsigned int)strlen((char*)p_regionaldatetime_str);
+	output_len = input_len;
+	if ((decode_buf = iot_os_malloc(output_len)) == NULL) {
+		IOT_ERROR("failed to malloc for decode_buf");
+		err = IOT_ERROR_EASYSETUP_MEM_ALLOC_ERROR;
+		goto exit;
+	}
+	memset(decode_buf, 0, output_len);
+
+	err = iot_crypto_base64_decode_urlsafe((unsigned char *) p_regionaldatetime_str, input_len,
+					decode_buf, output_len,
+					&result_len);
+	if (err) {
+		IOT_ERROR("base64 decode error!! : %d", err);
+		err = IOT_ERROR_EASYSETUP_BASE64_DECODE_ERROR;
+		goto exit;
+	}
+
+	IOT_DEBUG("regionaldatetime = %s", decode_buf);
+
+	if (decode_buf)
+		free(decode_buf);
+	decode_buf = NULL;
+
+	if ((recv = JSON_GET_OBJECT_ITEM(root, "timezoneid")) == NULL) {
+		IOT_INFO("no timezoneid info");
+		err  = IOT_ERROR_EASYSETUP_INVALID_REQUEST;
+		goto exit;
+	}
+	p_timezoneid_str = (unsigned char *)JSON_GET_STRING_VALUE(recv);
+
+	input_len = (unsigned int)strlen((char*)p_timezoneid_str);
+	output_len = input_len;
+	if ((decode_buf = iot_os_malloc(output_len)) == NULL) {
+		IOT_ERROR("failed to malloc for decode_buf");
+		err = IOT_ERROR_EASYSETUP_MEM_ALLOC_ERROR;
+		goto exit;
+	}
+
+	memset(decode_buf, 0, output_len);
+
+	err = iot_crypto_base64_decode_urlsafe((unsigned char *) p_timezoneid_str, input_len,
+					decode_buf, output_len,
+					&result_len);
+	if (err) {
+		IOT_ERROR("base64 decode error!! : %d", err);
+		err = IOT_ERROR_EASYSETUP_BASE64_DECODE_ERROR;
+		goto exit;
+	}
+
+	IOT_DEBUG("timezoneid = %s", decode_buf);
+
+temp_exit://if app is published with the related change, it will be deleted.
+
 	if (root)
 		JSON_DELETE(root);
 	root = NULL;
@@ -568,6 +711,8 @@ iot_error_t _es_keyinfo_handler(struct iot_context *ctx, char *in_payload, char 
 exit_secret:
 	if (ptr)
 		free(ptr);
+	if (decode_buf)
+		free(decode_buf);
 	if (encode_buf)
 		free(encode_buf);
 	if (encrypt_buf)
