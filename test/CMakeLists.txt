@@ -1,14 +1,6 @@
 option(ENABLE_STDK_TEST "Enables st-device-sdk-c test" ON)
 if(ENABLE_STDK_TEST)
     set(CMOCKA_DIR framework/cmocka)
-    include(CheckIncludeFile)
-    check_include_file(${CMOCKA_DIR}/include/cmocka.h CMOCKA_H)
-    if (NOT CMOCKA_H)
-        message(STATUS "submodule init for cmocka")
-        execute_process(COMMAND git submodule update --init ${CMOCKA_DIR}
-                        WORKING_DIRECTORY "${CMAKE_CURRENT_SOURCE_DIR}")
-    endif (NOT CMOCKA_H)
-
     add_subdirectory(${CMOCKA_DIR})
     include_directories(${cmocka-header_SOURCE_DIR}
                         ${st_device_sdk_c_SOURCE_DIR}/src/include
