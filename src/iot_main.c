@@ -643,7 +643,7 @@ static void _do_cmd_tout_check(struct iot_context *ctx)
 	 * we don't need to check timeout & condition
 	 */
 	if ((ctx->curr_state == IOT_STATE_UNKNOWN) &&
-			(ctx->req_state == IOT_STATE_UNKNOWN));
+			(ctx->req_state == IOT_STATE_UNKNOWN))
 		return;
 
 	/* If device comes to connected_state, we don't need timeout checking */
