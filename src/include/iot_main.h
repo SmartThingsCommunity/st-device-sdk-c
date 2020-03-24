@@ -255,6 +255,8 @@ struct iot_context {
 	unsigned int cmd_err;						/**< @brief current command handling error checking value */
 	unsigned int cmd_status;					/**< @brief current command status */
 	uint16_t cmd_count[IOT_COMMAND_TYPE_MAX];	/**< @brief current queued command counts */
+
+	iot_os_thread main_thread; /**< @brief iot main task thread */
 };
 
 #endif /* _IOT_MAIN_H_ */

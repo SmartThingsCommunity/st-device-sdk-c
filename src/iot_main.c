@@ -928,7 +928,7 @@ IOT_CTX* st_conn_init(unsigned char *onboarding_config, unsigned int onboarding_
 	/* create task */
 	if (iot_os_thread_create(_iot_main_task, IOT_TASK_NAME,
 			IOT_TASK_STACK_SIZE, (void *)ctx, IOT_TASK_PRIORITY,
-			NULL) != IOT_OS_TRUE) {
+			&ctx->main_thread) != IOT_OS_TRUE) {
 		IOT_ERROR("failed to create iot_task\n");
 		goto error_main_task_init;
 	}
