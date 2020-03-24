@@ -416,3 +416,160 @@ void TC_st_cap_handle_init_success(void **state)
     free(context);
     free(usr_data);
 }
+
+static void test_st_cap_noti_cb(iot_noti_data_t *noti_data, void *noti_usr_data)
+{
+    assert_non_null(noti_data);
+    UNUSED(noti_usr_data);
+}
+
+void TC_st_conn_set_noti_cb_null_parameters(void **state)
+{
+    int ret;
+    IOT_CTX* context;
+    struct iot_context *internal_context;
+    char *user_data;
+    UNUSED(*state);
+
+    // When: all parameters null
+    ret = st_conn_set_noti_cb(NULL, NULL, NULL);
+    // Then
+    assert_int_not_equal(ret, 0);
+
+    // Given
+    internal_context = (struct iot_context *)malloc(sizeof(struct iot_context));
+    memset(internal_context, 0, sizeof(struct iot_context));
+    context = (IOT_CTX*) internal_context;
+    // When: notification callback null
+    ret = st_conn_set_noti_cb(context, NULL, NULL);
+    // Then
+    assert_int_not_equal(ret, 0);
+    // Teardown
+    free(context);
+
+    // When: context null
+    ret = st_conn_set_noti_cb(NULL, test_st_cap_noti_cb, NULL);
+    // Then
+    assert_int_not_equal(ret, 0);
+
+    // Given
+    user_data = strdup("fakeData");
+    // When: context, notification callback null
+    ret = st_conn_set_noti_cb(NULL, NULL, (void*)user_data);
+    // Then
+    assert_int_not_equal(ret, 0);
+    // Teardown
+    free(user_data);
+}
+
+void TC_st_conn_set_noti_cb_success(void **state)
+{
+    int ret;
+    IOT_CTX* context;
+    struct iot_context *internal_context;
+    char *user_data;
+    UNUSED(*state);
+
+    // Given
+    internal_context = (struct iot_context *)malloc(sizeof(struct iot_context));
+    memset(internal_context, 0, sizeof(struct iot_context));
+    context = (IOT_CTX*) internal_context;
+    user_data = strdup("fakeData");
+    // When: notification callback null
+    ret = st_conn_set_noti_cb(context, test_st_cap_noti_cb, (void*)user_data);
+    // Then
+    assert_int_equal(ret, 0);
+    assert_ptr_equal(internal_context->noti_cb, test_st_cap_noti_cb);
+    assert_ptr_equal(internal_context->noti_usr_data, user_data);
+    // Teardown
+    free(context);
+    free(user_data);
+}
+
+static void test_cap_cmd_cb(IOT_CAP_HANDLE *cap_handle,
+                      iot_cap_cmd_data_t *cmd_data, void *usr_data)
+{
+    assert_non_null(cap_handle);
+    UNUSED(cmd_data);
+    UNUSED(usr_data);
+}
+
+void TC_st_cap_cmd_set_cb_invalid_parameters(void **state)
+{
+    int ret;
+    struct iot_cap_handle *internal_handle;
+    IOT_CAP_HANDLE* handle;
+    char *user_data;
+
+    // When: all null
+    ret = st_cap_cmd_set_cb(NULL, NULL, NULL, NULL);
+    // Then
+    assert_int_not_equal(ret, 0);
+
+    // Given
+    user_data = strdup("fakeData");
+    // When: null handle
+    ret = st_cap_cmd_set_cb(NULL, "fakeCommand", test_cap_cmd_cb, (void*)user_data);
+    // Then
+    assert_int_not_equal(ret, 0);
+    // Teardown
+    free(user_data);
+
+    // Given
+    internal_handle = (struct iot_cap_handle*) malloc(sizeof(struct iot_cap_handle));
+    memset(internal_handle, '\0', sizeof(struct iot_cap_handle));
+    handle = (IOT_CAP_HANDLE*) internal_handle;
+    user_data = strdup("fakeData");
+    // When: cmd_type null
+    ret = st_cap_cmd_set_cb(handle, NULL, test_cap_cmd_cb, (void*)user_data);
+    // Then
+    assert_int_not_equal(ret, 0);
+    assert_null(internal_handle->cmd_list);
+    // Teardown
+    free(user_data);
+    free(internal_handle);
+
+    // Given
+    internal_handle = (struct iot_cap_handle*) malloc(sizeof(struct iot_cap_handle));
+    memset(internal_handle, '\0', sizeof(struct iot_cap_handle));
+    handle = (IOT_CAP_HANDLE*) internal_handle;
+    user_data = strdup("fakeData");
+    // When: cmd_cb null
+    ret = st_cap_cmd_set_cb(handle, "fakeCommand", NULL, (void*)user_data);
+    // Then
+    assert_int_not_equal(ret, 0);
+    assert_null(internal_handle->cmd_list);
+    // Teardown
+    free(user_data);
+    free(internal_handle);
+}
+
+void TC_st_cap_cmd_set_cb_success(void **state)
+{
+    int ret;
+    struct iot_cap_handle *internal_handle;
+    IOT_CAP_HANDLE* handle;
+    char *user_data;
+
+    // Given
+    internal_handle = (struct iot_cap_handle*) malloc(sizeof(struct iot_cap_handle));
+    memset(internal_handle, '\0', sizeof(struct iot_cap_handle));
+    handle = (IOT_CAP_HANDLE*) internal_handle;
+    user_data = strdup("fakeData");
+    // When
+    ret = st_cap_cmd_set_cb(handle, "fakeCommand", test_cap_cmd_cb, (void*)user_data);
+    // Then
+    assert_int_equal(ret, 0);
+    assert_non_null(internal_handle->cmd_list);
+    assert_non_null(internal_handle->cmd_list->command);
+    assert_null(internal_handle->cmd_list->next);
+    assert_string_equal(internal_handle->cmd_list->command->cmd_type, "fakeCommand");
+    assert_ptr_equal(internal_handle->cmd_list->command->cmd_cb, test_cap_cmd_cb);
+    assert_ptr_equal(internal_handle->cmd_list->command->usr_data, user_data);
+    // Teardown
+    free(user_data);
+    iot_os_free((void*)internal_handle->cmd_list->command->cmd_type);
+    iot_os_free(internal_handle->cmd_list->command);
+    iot_os_free(internal_handle->cmd_list);
+    free(internal_handle);
+}
