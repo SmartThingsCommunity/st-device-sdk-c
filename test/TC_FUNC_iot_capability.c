@@ -27,15 +27,21 @@
 
 #define UNUSED(x) (void*)(x)
 
+int TC_iot_capability_setup(void **state)
+{
+    UNUSED(*state);
+
+    set_mock_detect_memory_leak(true);
+
+    return 0;
+}
+
 int TC_iot_capability_teardown(void **state)
 {
-    iot_cap_evt_data_t* event_data = (iot_cap_evt_data_t*) *state;
-    IOT_EVENT* event = (IOT_EVENT*) event_data;
-
-    if (event != NULL)
-        st_cap_attr_free(event);
+    UNUSED(*state);
 
     do_not_use_mock_iot_os_malloc_failure();
+    set_mock_detect_memory_leak(false);
 
     return 0;
 }
@@ -43,6 +49,7 @@ int TC_iot_capability_teardown(void **state)
 void TC_st_cap_attr_create_int_null_attribute(void **state)
 {
     IOT_EVENT* event;
+    UNUSED(*state);
 
     // When: all null parameters
     event = st_cap_attr_create_int(NULL, 10, NULL);
@@ -53,14 +60,13 @@ void TC_st_cap_attr_create_int_null_attribute(void **state)
     event = st_cap_attr_create_int(NULL, 10, "F");
     // Then: return null
     assert_null(event);
-
-    *state = NULL;
 }
 
 void TC_st_cap_attr_create_int_null_unit(void **state)
 {
     IOT_EVENT* event;
     iot_cap_evt_data_t* event_data = NULL;
+    UNUSED(*state);
 
     // When: unit is null
     event = st_cap_attr_create_int("temperature", 10, NULL);
@@ -70,13 +76,15 @@ void TC_st_cap_attr_create_int_null_unit(void **state)
     assert_int_equal(event_data->evt_value.type, IOT_CAP_VAL_TYPE_INTEGER);
     assert_string_equal("temperature", event_data->evt_type);
 
-    *state = event_data;
+    // Teardown
+    st_cap_attr_free(event);
 }
 
 void TC_st_cap_attr_create_int_with_unit(void **state)
 {
     IOT_EVENT* event;
     iot_cap_evt_data_t* event_data = NULL;
+    UNUSED(*state);
 
     // When: unit is "F"
     event = st_cap_attr_create_int("temperature", 10, "C");
@@ -87,12 +95,14 @@ void TC_st_cap_attr_create_int_with_unit(void **state)
     assert_int_equal(event_data->evt_value.type, IOT_CAP_VAL_TYPE_INTEGER);
     assert_string_equal("temperature", event_data->evt_type);
 
-    *state = event_data;
+    // Teardown
+    st_cap_attr_free(event);
 }
 
 void TC_st_cap_attr_create_int_internal_failure(void **state)
 {
     IOT_EVENT* event;
+    UNUSED(*state);
 
     // Given: malloc will fail
     set_mock_iot_os_malloc_failure();
@@ -100,12 +110,12 @@ void TC_st_cap_attr_create_int_internal_failure(void **state)
     event = st_cap_attr_create_int("temperature", 10, "C");
     // Then: return null
     assert_null(event);
-    *state = NULL;
 }
 
 void TC_st_cap_attr_create_number_null_attribute(void **state)
 {
     IOT_EVENT* event;
+    UNUSED(*state);
 
     // When: all null parameters
     event = st_cap_attr_create_number(NULL, 56.7, NULL);
@@ -116,14 +126,13 @@ void TC_st_cap_attr_create_number_null_attribute(void **state)
     event = st_cap_attr_create_number(NULL, 56.7, "kg");
     // Then: return null
     assert_null(event);
-
-    *state = NULL;
 }
 
 void TC_st_cap_attr_create_number_null_unit(void **state)
 {
     IOT_EVENT* event;
     iot_cap_evt_data_t* event_data = NULL;
+    UNUSED(*state);
 
     // When: unit is null
     event = st_cap_attr_create_number("bodyWeightMeasurement", 56.7, NULL);
@@ -134,13 +143,15 @@ void TC_st_cap_attr_create_number_null_unit(void **state)
     assert_float_equal(event_data->evt_value.number, 56.7, 0);
     assert_string_equal(event_data->evt_type, "bodyWeightMeasurement");
 
-    *state = event_data;
+    // Teardown
+    st_cap_attr_free(event);
 }
 
 void TC_st_cap_attr_create_number_with_unit(void **state)
 {
     IOT_EVENT* event;
     iot_cap_evt_data_t* event_data = NULL;
+    UNUSED(*state);
 
     // When: unit is null
     event = st_cap_attr_create_number("bodyWeightMeasurement", 56.7, "kg");
@@ -152,12 +163,14 @@ void TC_st_cap_attr_create_number_with_unit(void **state)
     assert_float_equal(event_data->evt_value.number, 56.7, 0);
     assert_string_equal(event_data->evt_type, "bodyWeightMeasurement");
 
-    *state = event_data;
+    // Teardown
+    st_cap_attr_free(event);
 }
 
 void TC_st_cap_attr_create_number_internal_failure(void **state)
 {
     IOT_EVENT* event;
+    UNUSED(*state);
 
     // Given: malloc will fail
     set_mock_iot_os_malloc_failure();
@@ -165,14 +178,13 @@ void TC_st_cap_attr_create_number_internal_failure(void **state)
     event = st_cap_attr_create_number("bodyWeightMeasurement", 56.7, "kg");
     // Then: return null
     assert_null(event);
-
-    *state = NULL;
 }
 
 void TC_st_cap_attr_create_string_null_unit(void **state)
 {
     IOT_EVENT* event;
     iot_cap_evt_data_t* event_data = NULL;
+    UNUSED(*state);
 
     // When: unit is null
     event = st_cap_attr_create_string("powerSource", "battery", NULL);
@@ -183,13 +195,15 @@ void TC_st_cap_attr_create_string_null_unit(void **state)
     assert_string_equal(event_data->evt_value.string, "battery");
     assert_string_equal(event_data->evt_type, "powerSource");
 
-    *state = event_data;
+    // Teardown
+    st_cap_attr_free(event);
 }
 
 void TC_st_cap_attr_create_string_with_unit(void **state)
 {
     IOT_EVENT* event;
     iot_cap_evt_data_t* event_data = NULL;
+    UNUSED(*state);
 
     // When: unit is null
     event = st_cap_attr_create_string("fakeAttribute", "fakeValue", "fakeUnit");
@@ -201,12 +215,14 @@ void TC_st_cap_attr_create_string_with_unit(void **state)
     assert_string_equal(event_data->evt_value.string, "fakeValue");
     assert_string_equal(event_data->evt_type, "fakeAttribute");
 
-    *state = event_data;
+    // Teardown
+    st_cap_attr_free(event);
 }
 
 void TC_st_cap_attr_create_string_internal_failure(void **state)
 {
     IOT_EVENT* event;
+    UNUSED(*state);
 
     // Given: malloc will fail
     set_mock_iot_os_malloc_failure();
@@ -214,12 +230,12 @@ void TC_st_cap_attr_create_string_internal_failure(void **state)
     event = st_cap_attr_create_string("fakeAttribute", "fakeValue", "fakeUnit");
     // Then: return null
     assert_null(event);
-    *state = NULL;
 }
 
 void TC_st_cap_attr_create_string_null_parameters(void **state)
 {
     IOT_EVENT* event;
+    UNUSED(*state);
 
     // When: all null parameters
     event = st_cap_attr_create_string(NULL, "fakeValue", NULL);
@@ -240,8 +256,6 @@ void TC_st_cap_attr_create_string_null_parameters(void **state)
     event = st_cap_attr_create_string(NULL, NULL, NULL);
     // Then: return null
     assert_null(event);
-
-    *state = NULL;
 }
 
 void test_cap_init_callback(IOT_CAP_HANDLE *handle, void *usr_data)
@@ -301,14 +315,14 @@ void TC_st_cap_handle_init_invalid_argument(void **state)
 void TC_st_cap_handle_init_internal_failure(void **state)
 {
     IOT_CAP_HANDLE *cap_handle;
-    IOT_CTX context;
+    IOT_CTX *context;
     char *usr_data;
     UNUSED(*state);
 
     for (int i = 0; i < 2; i++) {
         // Given: valid parameters but n-th malloc failure
         usr_data = strdup("UserString");
-        context = (IOT_CTX) malloc(sizeof(struct iot_context));
+        context = (IOT_CTX*) malloc(sizeof(struct iot_context));
         memset(context, 0, sizeof(struct iot_context));
         set_mock_iot_os_malloc_failure_with_index(i);
         // When
@@ -327,13 +341,14 @@ void TC_st_cap_handle_init_success(void **state)
     IOT_CAP_HANDLE *cap_handle;
     struct iot_cap_handle *handle;
     struct iot_context *ctx = NULL;
-    IOT_CTX context;
+    IOT_CTX *context;
     char *usr_data;
     UNUSED(*state);
 
+
     // Given
     usr_data = strdup("UserString");
-    context = (IOT_CTX)malloc(sizeof(struct iot_context));
+    context = (IOT_CTX*)malloc(sizeof(struct iot_context));
     memset(context, 0, sizeof(struct iot_context));
     // When
     cap_handle = st_cap_handle_init(context, "main", "switch", test_cap_init_callback, usr_data);
@@ -351,29 +366,29 @@ void TC_st_cap_handle_init_success(void **state)
     assert_ptr_equal(handle->ctx, ctx);
     // Teardown
     if (handle->capability) {
-        free((void*)handle->capability);
+        iot_os_free((void*)handle->capability);
     }
     if (handle->component) {
-        free((void*)handle->component);
+        iot_os_free((void*)handle->component);
     }
     if (ctx->cap_handle_list) {
-        free(ctx->cap_handle_list);
+        iot_os_free(ctx->cap_handle_list);
     }
+    iot_os_free(cap_handle);
     free(context);
-    free(cap_handle);
     free(usr_data);
 
     // Given: Already existing handle in conext
     usr_data = strdup("UserString");
-    context = (IOT_CTX)malloc(sizeof(struct iot_context));
+    context = (IOT_CTX*) malloc(sizeof(struct iot_context));
     memset(context, 0, sizeof(struct iot_context));
-    handle = (struct iot_cap_handle*)cap_handle;
     ctx = (struct iot_context*) context;
     ctx->cap_handle_list = malloc(sizeof(iot_cap_handle_list_t));
     ctx->cap_handle_list->next = NULL;
     // When
     cap_handle = st_cap_handle_init(context, "main", "switch", test_cap_init_callback, usr_data);
     // Then
+    handle = (struct iot_cap_handle*)cap_handle;
     assert_non_null(cap_handle);
     assert_non_null(ctx->cap_handle_list->next);
     assert_ptr_equal(ctx->cap_handle_list->next->handle, handle);
@@ -386,18 +401,18 @@ void TC_st_cap_handle_init_success(void **state)
     assert_ptr_equal(handle->ctx, ctx);
     // Teardown
     if (handle->capability) {
-        free((void*)handle->capability);
+        iot_os_free((void*)handle->capability);
     }
     if (handle->component) {
-        free((void*)handle->component);
+        iot_os_free((void*)handle->component);
     }
     if (ctx->cap_handle_list->next) {
-        free(ctx->cap_handle_list->next);
+        iot_os_free(ctx->cap_handle_list->next);
     }
     if (ctx->cap_handle_list) {
         free(ctx->cap_handle_list);
     }
+    iot_os_free(cap_handle);
     free(context);
-    free(cap_handle);
     free(usr_data);
 }
