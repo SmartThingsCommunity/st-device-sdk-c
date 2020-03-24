@@ -50,7 +50,7 @@ int iot_os_thread_create(void * thread_function, const char* name, int stack_siz
 	pthread_attr_destroy(&attr);
 
 	if (thread_handle != NULL) {
-		thread_handle = (iot_os_thread*)&thread;
+		*thread_handle = (iot_os_thread*)thread;
 	}
 
 	return iot_os_true;
