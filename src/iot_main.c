@@ -99,8 +99,9 @@ static iot_error_t _create_easysetup_resources(struct iot_context *ctx, iot_pin_
 		}
 
 		return IOT_ERROR_MEM_ALLOC;
-	} else
-		memset(ctx->es_crypto_cipher_info, 0,sizeof(ctx->es_crypto_cipher_info));
+	} else {
+		memset(ctx->es_crypto_cipher_info, 0,sizeof(iot_crypto_cipher_info_t));
+	}
 
 	if (!ctx->easysetup_req_queue) {
 		ctx->easysetup_req_queue = iot_os_queue_create(1, sizeof(struct iot_easysetup_payload));
