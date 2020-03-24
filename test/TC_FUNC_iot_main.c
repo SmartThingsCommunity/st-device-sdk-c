@@ -21,6 +21,9 @@
 #include <cmocka.h>
 #include <st_dev.h>
 #include <string.h>
+#include <iot_main.h>
+#include <iot_internal.h>
+#include <iot_nv_data.h>
 #include "TC_MOCK_functions.h"
 
 #define UNUSED(x) (void**)(x)
@@ -50,14 +53,19 @@ static char wrong_device_info_no_firmwareVersion[] = {
         "}"
 };
 
+#define TEST_ONBOARDING_MNID    "fTST"
+#define TEST_ONBOARDING_SETUPID "001"
+#define TEST_ONBOARDING_VID "STDK_BULB_0001"
+#define TEST_ONBOARDING_DEVICETYPEID    "Switch"
+
 static char sample_onboarding_config[] = {
         "{\n"
         "  \"onboardingConfig\": {\n"
         "    \"deviceOnboardingId\": \"STDK\",\n"
-        "    \"mnId\": \"fTST\",\n"
-        "    \"setupId\": \"001\",\n"
-        "    \"vid\": \"STDK_BULB_0001\",\n"
-        "    \"deviceTypeId\": \"Switch\",\n"
+        "    \"mnId\": \""TEST_ONBOARDING_MNID"\",\n"
+        "    \"setupId\": \""TEST_ONBOARDING_SETUPID"\",\n"
+        "    \"vid\": \""TEST_ONBOARDING_VID"\",\n"
+        "    \"deviceTypeId\": \""TEST_ONBOARDING_DEVICETYPEID"\",\n"
         "    \"ownershipValidationTypes\": [\n"
         "      \"BUTTON\"\n"
         "    ],\n"
@@ -143,4 +151,40 @@ void TC_st_conn_init_wrong_device_info(void **state)
     context = st_conn_init(sample_onboarding_config, sizeof(sample_onboarding_config), wrong_device_info_no_firmwareVersion, sizeof(wrong_device_info_no_firmwareVersion));
     // Then
     assert_null(context);
+}
+
+void TC_st_conn_init_success(void **state)
+{
+    IOT_CTX *context;
+    struct iot_context *internal_context;
+    UNUSED(state);
+
+    // When
+    context = st_conn_init(sample_onboarding_config, sizeof(sample_onboarding_config), sample_device_info, sizeof(sample_device_info));
+    // Then
+    assert_non_null(context);
+    internal_context = (struct iot_context*) context;
+    assert_string_equal(internal_context->devconf.mnid, TEST_ONBOARDING_MNID);
+    assert_string_equal(internal_context->devconf.vid, TEST_ONBOARDING_VID);
+    assert_string_equal(internal_context->devconf.setupid, TEST_ONBOARDING_SETUPID);
+    assert_string_equal(internal_context->devconf.device_type, TEST_ONBOARDING_DEVICETYPEID);
+    assert_int_equal(internal_context->devconf.pk_type, IOT_CRYPTO_PK_ED25519);
+    assert_string_equal(internal_context->device_info.firmware_version, TEST_FIRMWARE_VERSION);
+    assert_non_null(internal_context->state_timer);
+    assert_non_null(internal_context->cmd_queue);
+    assert_non_null(internal_context->usr_events);
+    assert_non_null(internal_context->pub_queue);
+    assert_non_null(internal_context->iot_events);
+    assert_non_null(internal_context->main_thread);
+    //Teardown
+    iot_os_thread_delete(internal_context->main_thread);
+    iot_os_eventgroup_delete(internal_context->iot_events);
+    iot_os_queue_delete(internal_context->pub_queue);
+    iot_os_eventgroup_delete(internal_context->usr_events);
+    iot_os_queue_delete(internal_context->cmd_queue);
+    iot_api_device_info_mem_free(&internal_context->device_info);
+    iot_api_onboarding_config_mem_free(&internal_context->devconf);
+    iot_nv_deinit();
+    iot_os_timer_destroy(&internal_context->state_timer);
+    iot_os_free(internal_context);
 }

@@ -151,5 +151,6 @@ void TC_st_conn_init_null_parameters(void **state);
 void TC_st_conn_init_malloc_failure(void **state);
 void TC_st_conn_init_wrong_onboarding_config(void **state);
 void TC_st_conn_init_wrong_device_info(void **state);
+void TC_st_conn_init_success(void **state);
 
 #endif //ST_DEVICE_SDK_C_TCS_H
