@@ -444,7 +444,7 @@ iot_error_t iot_nv_get_cloud_prov_data(struct iot_cloud_prov_data* cloud_prov)
 	char* data = NULL;
 	char* new_buff = NULL;
 
-	data = malloc(sizeof(char) * DATA_SIZE);
+	data = iot_os_malloc(sizeof(char) * DATA_SIZE);
 	IOT_WARN_CHECK(data == NULL, IOT_ERROR_NV_DATA_ERROR, "memory alloc fail");
 
 	/* CHECK IOT_NVD_CLOUD_PROV_STATUS */
@@ -465,7 +465,7 @@ iot_error_t iot_nv_get_cloud_prov_data(struct iot_cloud_prov_data* cloud_prov)
 	ret = _iot_nv_read_data(iot_bsp_nv_get_data_path(IOT_NVD_SERVER_URL), data, DATA_SIZE);
 	if (ret == IOT_ERROR_NONE) {
 		size = strlen(data);
-		new_buff = (char *)malloc(size + 1);
+		new_buff = (char *)iot_os_malloc(size + 1);
 		if (new_buff == NULL) {
 			IOT_WARN("failed to malloc for new_buff");
 			ret = IOT_ERROR_NV_DATA_ERROR;
@@ -544,7 +544,7 @@ iot_error_t iot_nv_get_cloud_prov_data(struct iot_cloud_prov_data* cloud_prov)
 	ret = _iot_nv_read_data(iot_bsp_nv_get_data_path(IOT_NVD_LABEL), data, DATA_SIZE);
 	if (ret == IOT_ERROR_NONE) {
 		size = strlen(data);
-		new_buff = (char *)malloc(size + 1);
+		new_buff = (char *)iot_os_malloc(size + 1);
 		if (new_buff == NULL) {
 			IOT_WARN("failed to malloc for new_buff");
 			ret = IOT_ERROR_NV_DATA_ERROR;
@@ -565,7 +565,7 @@ iot_error_t iot_nv_get_cloud_prov_data(struct iot_cloud_prov_data* cloud_prov)
 	}
 
 exit:
-	free(data);
+	iot_os_free(data);
 
 	return ret;
 }
@@ -742,7 +742,7 @@ iot_error_t iot_nv_get_private_key(char** key, size_t* len)
 	}
 
 	size = strlen(data);
-	new_buff = (char*)malloc(size + 1);
+	new_buff = (char*)iot_os_malloc(size + 1);
 	if (new_buff == NULL) {
 		IOT_WARN("failed to malloc for new_buff");
 		ret = IOT_ERROR_NV_DATA_ERROR;
@@ -755,7 +755,7 @@ iot_error_t iot_nv_get_private_key(char** key, size_t* len)
 	*key = new_buff;
 	*len = size;
 
-	free(data);
+	iot_os_free(data);
 
 exit:
 	return ret;
@@ -766,7 +766,7 @@ exit:
 	char* data = NULL;
 	char* new_buff = NULL;
 
-	data = malloc(sizeof(char) * DATA_SIZE);
+	data = iot_os_malloc(sizeof(char) * DATA_SIZE);
 	IOT_WARN_CHECK(data == NULL, IOT_ERROR_NV_DATA_ERROR, "failed to malloc for data");
 
 	ret = _iot_nv_read_data_from_stnv(iot_bsp_nv_get_data_path(IOT_NVD_PRIVATE_KEY), data, DATA_SIZE);
@@ -777,7 +777,7 @@ exit:
 	}
 
 	size = strlen(data);
-	new_buff = (char*)malloc(size + 1);
+	new_buff = (char*)iot_os_malloc(size + 1);
 	if (new_buff == NULL) {
 		IOT_WARN("failed to malloc for new_buff");
 		ret = IOT_ERROR_NV_DATA_ERROR;
@@ -791,7 +791,7 @@ exit:
 	*len = size;
 
 exit:
-	free(data);
+	iot_os_free(data);
 
 	return ret;
 #endif
@@ -819,7 +819,7 @@ iot_error_t iot_nv_get_public_key(char** key, size_t* len)
 	}
 
 	size = strlen(data);
-	new_buff = (char*)malloc(size + 1);
+	new_buff = (char*)iot_os_malloc(size + 1);
 	if (new_buff == NULL) {
 		IOT_WARN("failed to malloc for new_buff");
 		ret = IOT_ERROR_NV_DATA_ERROR;
@@ -832,7 +832,7 @@ iot_error_t iot_nv_get_public_key(char** key, size_t* len)
 	*key = new_buff;
 	*len = size;
 
-	free(data);
+	iot_os_free(data);
 
 exit:
 	return ret;
@@ -843,7 +843,7 @@ exit:
 	char* data = NULL;
 	char* new_buff = NULL;
 
-	data = malloc(sizeof(char) * DATA_SIZE);
+	data = iot_os_malloc(sizeof(char) * DATA_SIZE);
 	IOT_WARN_CHECK(data == NULL, IOT_ERROR_NV_DATA_ERROR, "memory alloc fail");
 
 	ret = _iot_nv_read_data_from_stnv(iot_bsp_nv_get_data_path(IOT_NVD_PUBLIC_KEY), data, DATA_SIZE);
@@ -854,7 +854,7 @@ exit:
 	}
 
 	size = strlen(data);
-	new_buff = (char *)malloc(size + 1);
+	new_buff = (char *)iot_os_malloc(size + 1);
 	if (new_buff == NULL) {
 		IOT_WARN("failed to malloc for new_buff");
 		ret = IOT_ERROR_NV_DATA_ERROR;
@@ -868,7 +868,7 @@ exit:
 	*len = size;
 
 exit:
-	free(data);
+	iot_os_free(data);
 
 	return ret;
 #endif

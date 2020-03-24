@@ -585,10 +585,10 @@ void iot_api_prov_data_mem_free(struct iot_device_prov_data *prov)
 		return;
 
 	if (prov->cloud.broker_url)
-		free(prov->cloud.broker_url);
+		iot_os_free(prov->cloud.broker_url);
 
 	if (prov->cloud.label)
-		free(prov->cloud.label);
+        iot_os_free(prov->cloud.label);
 
 	return;
 }
@@ -610,8 +610,10 @@ iot_error_t iot_api_read_device_identity(unsigned char* nv_prof,
 		return IOT_ERROR_INVALID_ARGS;
 
 	data = iot_os_malloc((size_t) nv_prof_len + 1);
-	if (!data)
-		return IOT_ERROR_MEM_ALLOC;
+	if (!data) {
+        return IOT_ERROR_MEM_ALLOC;
+    }
+
 	memcpy(data, nv_prof, nv_prof_len);
 	data[nv_prof_len] = '\0';
 
@@ -644,8 +646,8 @@ iot_error_t iot_api_read_device_identity(unsigned char* nv_prof,
 
 	if (root)
 		JSON_DELETE(root);
-	if (data)
-		free(data);
+
+	iot_os_free(data);
 
 	return iot_err;
 
