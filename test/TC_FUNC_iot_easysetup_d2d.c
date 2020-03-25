@@ -263,7 +263,7 @@ extern iot_error_t _es_keyinfo_handler(struct iot_context *ctx, char *in_payload
 extern iot_error_t _es_crypto_cipher_gen_iv(iot_crypto_cipher_info_t *iv_info);
 
 // static functions for test
-static char* _generate_post_keyinfo_payload(void);
+static char *_generate_post_keyinfo_payload(int year, char *time_to_set, size_t time_to_set_len);
 static iot_crypto_cipher_info_t* _generate_server_cipher(unsigned char *iv_data, size_t iv_length);
 static iot_crypto_cipher_info_t* _generate_device_cipher(unsigned char *iv_data, size_t iv_length);
 static void assert_keyinfo(char *payload, iot_crypto_cipher_info_t *server_cipher, unsigned int expected_otm_support);
@@ -289,12 +289,16 @@ void TC_STATIC_es_keyinfo_handler_success(void **state)
     char *in_payload = NULL;
     struct iot_context *context;
     iot_crypto_cipher_info_t *server_cipher;
+    char *time_to_set;
 
-    // Given
+    // Given: time is under 32bit time_t (Y2038)
     context = (struct iot_context *)*state;
     err = _es_crypto_cipher_gen_iv(context->es_crypto_cipher_info);
     assert_int_equal(err, IOT_ERROR_NONE);
-    in_payload = _generate_post_keyinfo_payload();
+    time_to_set = calloc(sizeof(char), 11);
+    assert_non_null(time_to_set);
+    in_payload = _generate_post_keyinfo_payload(2020, time_to_set, 11);
+    expect_string(__wrap_iot_bsp_system_set_time_in_sec, time_in_sec, time_to_set);
     server_cipher = _generate_server_cipher(context->es_crypto_cipher_info->iv, context->es_crypto_cipher_info->iv_len);
     // When
     err = _es_keyinfo_handler(context, in_payload, &out_payload);
@@ -307,6 +311,39 @@ void TC_STATIC_es_keyinfo_handler_success(void **state)
     _free_cipher(server_cipher);
     free(out_payload);
     free(in_payload);
+    free(time_to_set);
+}
+
+void TC_STATIC_es_keyinfo_handler_success_with_y2038(void **state)
+{
+    iot_error_t err;
+    char *out_payload = NULL;
+    char *in_payload = NULL;
+    struct iot_context *context;
+    iot_crypto_cipher_info_t *server_cipher;
+    char *time_to_set;
+
+    // Given: time is over 32bit time_t (Y2038)
+    context = (struct iot_context *)*state;
+    err = _es_crypto_cipher_gen_iv(context->es_crypto_cipher_info);
+    assert_int_equal(err, IOT_ERROR_NONE);
+    time_to_set = calloc(sizeof(char), 11);
+    assert_non_null(time_to_set);
+    in_payload = _generate_post_keyinfo_payload(2038, time_to_set, 11);
+    expect_string(__wrap_iot_bsp_system_set_time_in_sec, time_in_sec, time_to_set);
+    server_cipher = _generate_server_cipher(context->es_crypto_cipher_info->iv, context->es_crypto_cipher_info->iv_len);
+    // When
+    err = _es_keyinfo_handler(context, in_payload, &out_payload);
+    // Then
+    assert_int_equal(err, IOT_ERROR_NONE);
+    assert_non_null(out_payload);
+    assert_keyinfo(out_payload, server_cipher, IOT_OVF_TYPE_BUTTON);
+
+    // Local teardown
+    _free_cipher(server_cipher);
+    free(out_payload);
+    free(in_payload);
+    free(time_to_set);
 }
 
 struct test_wifi_provisioning_data {
@@ -826,7 +863,7 @@ static void _generate_wifi_scan_list(struct iot_context *context, uint16_t amoun
 }
 
 
-static char* _generate_post_keyinfo_payload(void)
+static char *_generate_post_keyinfo_payload(int year, char *time_to_set, size_t time_to_set_len)
 {
     char *post_message;
     JSON_H *root = NULL;
@@ -834,8 +871,23 @@ static char* _generate_post_keyinfo_payload(void)
     size_t out_length;
     unsigned char *curve25519_server_pk_b64;
     size_t curve25519_server_pk_b64_len = IOT_CRYPTO_CAL_B64_LEN(IOT_CRYPTO_ED25519_LEN) + 1;
+    char datetime[32];
+    char regionaldatetime[32];
+    char timezoneid[16];
+    unsigned char *b64url_datetime;
+    unsigned char *b64url_regionaldatetime;
+    unsigned char *b64url_timezoneid;
+    struct tm test_tm;
+    time_t test_time;
+
 
     assert_non_null(SERVER_KEYPAIR);
+    assert_non_null(time_to_set);
+    assert_true(year > 2000);
+
+    if (sizeof(time_t) == 4) {
+        assert_true(year < 2038);
+    }
 
     curve25519_server_pk_b64 = malloc(curve25519_server_pk_b64_len);
     memset(curve25519_server_pk_b64, '\0', curve25519_server_pk_b64_len);
@@ -843,13 +895,50 @@ static char* _generate_post_keyinfo_payload(void)
                                            curve25519_server_pk_b64, curve25519_server_pk_b64_len, &out_length);
     assert_int_equal(err, IOT_ERROR_NONE);
 
+    snprintf(datetime, sizeof(datetime), "%04d-03-25T02.40.14 UTC", year);
+    snprintf(regionaldatetime, sizeof(regionaldatetime), "%04d-03-25T11.40.14 GMT+09:00", year);
+    snprintf(timezoneid, sizeof(timezoneid), "Asia/Seoul");
+
+    memset(&test_tm, '\0', sizeof(struct tm));
+    test_tm.tm_year = year - 1900;
+    test_tm.tm_mon = 2;
+    test_tm.tm_mday = 25;
+    test_tm.tm_hour = 2;
+    test_tm.tm_min = 40;
+    test_tm.tm_sec = 14;
+
+    test_time = mktime(&test_tm);
+    snprintf(time_to_set, time_to_set_len, "%ld", test_time);
+
+    b64url_datetime = (unsigned char*) malloc(IOT_CRYPTO_CAL_B64_LEN(strlen(datetime)));
+    b64url_regionaldatetime = (unsigned char*) malloc(IOT_CRYPTO_CAL_B64_LEN(strlen(regionaldatetime)));
+    b64url_timezoneid = (unsigned char*) malloc(IOT_CRYPTO_CAL_B64_LEN(strlen(timezoneid)));
+
+    err = iot_crypto_base64_encode_urlsafe(datetime, strlen(datetime),
+            b64url_datetime, IOT_CRYPTO_CAL_B64_LEN(strlen(datetime)), &out_length);
+    assert_int_equal(err, IOT_ERROR_NONE);
+
+    err = iot_crypto_base64_encode_urlsafe(regionaldatetime, strlen(regionaldatetime),
+            b64url_regionaldatetime, IOT_CRYPTO_CAL_B64_LEN(strlen(regionaldatetime)), &out_length);
+    assert_int_equal(err, IOT_ERROR_NONE);
+
+    err = iot_crypto_base64_encode_urlsafe(timezoneid, strlen(timezoneid),
+            b64url_timezoneid, IOT_CRYPTO_CAL_B64_LEN(strlen(datetime)), &out_length);
+    assert_int_equal(err, IOT_ERROR_NONE);
+
     root = JSON_CREATE_OBJECT();
     assert_non_null(root);
     JSON_ADD_ITEM_TO_OBJECT(root, "spub", JSON_CREATE_STRING((const char *) curve25519_server_pk_b64));
     JSON_ADD_ITEM_TO_OBJECT(root, "rand", JSON_CREATE_STRING(TEST_SRAND));
+    JSON_ADD_ITEM_TO_OBJECT(root, "datetime", JSON_CREATE_STRING((const char *) b64url_datetime));
+    JSON_ADD_ITEM_TO_OBJECT(root, "regionaldatetime", JSON_CREATE_STRING((const char *) b64url_regionaldatetime));
+    JSON_ADD_ITEM_TO_OBJECT(root, "timezoneid", JSON_CREATE_STRING((const char *)b64url_timezoneid));
     post_message = JSON_PRINT(root);
     JSON_DELETE(root);
     free(curve25519_server_pk_b64);
+    free(b64url_datetime);
+    free(b64url_regionaldatetime);
+    free(b64url_timezoneid);
 
     return post_message;
 }
