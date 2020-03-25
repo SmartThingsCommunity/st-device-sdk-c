@@ -638,21 +638,57 @@ void iot_noti_sub_cb(struct iot_context *ctx, char *payload)
 		&noti_data, sizeof(noti_data));
 }
 
+static iot_error_t _iot_process_cmd(iot_cap_handle_list_t *cap_handle_list, char *component_name,
+			char *capability_name, char *command_name, iot_cap_cmd_data_t *cmd_data)
+{
+	struct iot_cap_handle_list *handle_list = NULL;
+	struct iot_cap_handle *handle = NULL;
+	struct iot_cap_cmd_set_list *command_list = NULL;
+	struct iot_cap_cmd_set *command = NULL;
+
+	/* find handle with capability */
+	handle_list = cap_handle_list;
+	while (handle_list != NULL) {
+		handle = handle_list->handle;
+		if (handle && !strcmp(component_name, handle->component) && !strcmp(capability_name, handle->capability)) {
+			IOT_DEBUG("found handle for [%s]%s", component_name, capability_name);
+			break;
+		}
+		handle_list = handle_list->next;
+	}
+
+	if (handle_list == NULL) {
+		IOT_ERROR("Cannot find handle for [%s]%s", component_name, capability_name);
+		return IOT_ERROR_BAD_REQ;
+	}
+
+	/* find cmd set */
+	command_list = handle->cmd_list;
+	while (command_list != NULL) {
+		command = command_list->command;
+		if (!strcmp(command_name, command->cmd_type)) {
+			command->cmd_cb((IOT_CAP_HANDLE *)handle,
+				cmd_data, command->usr_data);
+			break;
+		}
+		command_list = command_list->next;
+	}
+
+	if (command_list == NULL) {
+		IOT_WARN("Not registed cmd set received '%s'", command_name);
+		return IOT_ERROR_BAD_REQ;
+	}
+
+	return IOT_ERROR_NONE;
+}
+
 void iot_cap_sub_cb(iot_cap_handle_list_t *cap_handle_list, char *payload)
 {
 	JSON_H *json = NULL;
 	JSON_H *cap_cmds = NULL;
 	JSON_H *cmditem = NULL;
-	char *com = NULL;
-	char *cap = NULL;
-	char *cmd = NULL;
 	char *raw_data = NULL;
-	iot_cap_cmd_data_t cmd_data;
 	iot_error_t err;
-	struct iot_cap_handle *handle = NULL;
-	struct iot_cap_handle_list *handle_list;
-	struct iot_cap_cmd_set *command;
-	struct iot_cap_cmd_set_list *command_list;
 	int k;
 	int arr_size = 0;
 
@@ -660,7 +696,6 @@ void iot_cap_sub_cb(iot_cap_handle_list_t *cap_handle_list, char *payload)
 		IOT_ERROR("There is no cap_handle_list or payload");
 		return;
 	}
-	cmd_data.num_args = 0;
 
 #if defined(STDK_IOT_CORE_SERIALIZE_CBOR)
 	char *payload_json = NULL;
@@ -705,52 +740,24 @@ void iot_cap_sub_cb(iot_cap_handle_list_t *cap_handle_list, char *payload)
 	}
 
 	for (k = 0; k < arr_size; k++) {
+		char *component_name = NULL;
+		char *capability_name = NULL;
+		char *command_name = NULL;
+		iot_cap_cmd_data_t cmd_data;
+
+		cmd_data.num_args = 0;
+
 		cmditem = JSON_GET_ARRAY_ITEM(cap_cmds, k);
 		if (!cmditem) {
 			IOT_ERROR("Cannot get %dth commands data", k);
-			break;
+			continue;
 		}
 
-		err = _iot_parse_cmd_data(cmditem, &com, &cap, &cmd, &cmd_data);
+		err = _iot_parse_cmd_data(cmditem, &component_name, &capability_name, &command_name, &cmd_data);
 		if (err != IOT_ERROR_NONE) {
-			IOT_ERROR("Cannot parse command data");
-			break;
-		}
-
-		/* find handle with capability */
-		handle_list = cap_handle_list;
-		while (handle_list != NULL) {
-			handle = handle_list->handle;
-			if (handle && !strcmp(com, handle->component)) {
-				if (!strcmp(cap, handle->capability)) {
-					IOT_DEBUG("found '%s' capability from '%s'", cap, com);
-					break;
-				}
-			}
-
-			handle_list = handle_list->next;
-		}
-
-		if (handle_list == NULL) {
-			IOT_ERROR("Cannot find handle for '%s'", cap);
-			break;
-		}
-
-		/* find cmd set */
-		command_list = handle->cmd_list;
-		while (command_list != NULL) {
-			command = command_list->command;
-			if (!strcmp(cmd, command->cmd_type)) {
-				command->cmd_cb((IOT_CAP_HANDLE *)handle,
-					&cmd_data, command->usr_data);
-				break;
-			}
-
-			command_list = command_list->next;
-		}
-
-		if (command_list == NULL) {
-			IOT_WARN("Not registed cmd set received '%s'", cmd);
+			IOT_ERROR("Cannot parse %dth command data", k);
+		} else {
+			_iot_process_cmd(cap_handle_list, component_name, capability_name, command_name, &cmd_data);
 		}
 
 		if (cmd_data.num_args != 0) {
@@ -758,35 +765,23 @@ void iot_cap_sub_cb(iot_cap_handle_list_t *cap_handle_list, char *payload)
 			cmd_data.num_args = 0;
 		}
 
-		if (com != NULL) {
-			free(com);
-			com = NULL;
+		if (component_name != NULL) {
+			free(component_name);
+			component_name = NULL;
 		}
 
-		if (cap != NULL) {
-			free(cap);
-			cap = NULL;
+		if (capability_name != NULL) {
+			free(capability_name);
+			capability_name = NULL;
 		}
 
-		if (cmd != NULL) {
-			free(cmd);
-			cmd = NULL;
+		if (command_name != NULL) {
+			free(command_name);
+			command_name = NULL;
 		}
 	}
 
 out:
-	if (cmd_data.num_args != 0)
-		_iot_free_cmd_data(&cmd_data);
-
-	if (com != NULL)
-		free(com);
-
-	if (cap != NULL)
-		free(cap);
-
-	if (cmd != NULL)
-		free(cmd);
-
 	if (json != NULL)
 		JSON_DELETE(json);
 }
