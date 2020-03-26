@@ -13,9 +13,8 @@ if(ENABLE_STDK_TEST)
                         ${st_device_sdk_c_SOURCE_DIR}/src/deps/mbedtls/mbedtls/include
                         ${st_device_sdk_c_SOURCE_DIR}/src/port/net/mbedtls)
 
-
     foreach(mock ${MOCKED_FUNCTIONS})
-        set(CMAKE_C_FLAGS_DEBUG "${CMAKE_C_FLAGS_DEBUG} -Wl,--wrap=${mock}")
+        set(CMAKE_C_FLAGS_UNITTEST "${CMAKE_C_FLAGS_UNITTEST} -Wl,--wrap=${mock}")
     endforeach()
 
 
