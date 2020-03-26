@@ -39,14 +39,14 @@ add_custom_command(
         OUTPUT ${CMAKE_CURRENT_SOURCE_DIR}/${ROOT_CA_SOURCE}
         COMMENT "Generating root certiciate"
         WORKING_DIRECTORY ${CMAKE_CURRENT_SOURCE_DIR}
-        COMMAND if [ -e ${ROOT_CA_FILE} ] \; then rm ${ROOT_CA_FILE} \; fi \;
-        COMMAND cat ${ROOT_CA_FILE_LIST} >> ${ROOT_CA_FILE}
-        COMMAND cat ${BOILERPLATE_HEADER} > ${ROOT_CA_SOURCE}
-        COMMAND xxd -i ${ROOT_CA_FILE} >> ${ROOT_CA_SOURCE}
-        COMMAND sed -i.bak 's/cert.*_pem/st_root_ca/g' ${ROOT_CA_SOURCE}
-        COMMAND sed -i.bak 's/unsigned/const unsigned/g' ${ROOT_CA_SOURCE}
-        COMMAND rm -f ${ROOT_CA_SOURCE}.bak
-        COMMAND rm -f ${ROOT_CA_FILE}
+        COMMAND sh -c \"if [ -e ${ROOT_CA_FILE} ] \; then rm ${ROOT_CA_FILE} \; fi \;\"
+        COMMAND sh -c \"cat ${ROOT_CA_FILE_LIST} >> ${ROOT_CA_FILE}\"
+        COMMAND sh -c \"cat ${BOILERPLATE_HEADER} > ${ROOT_CA_SOURCE}\"
+        COMMAND sh -c \"xxd -i ${ROOT_CA_FILE} >> ${ROOT_CA_SOURCE}\"
+        COMMAND sh -c \"sed -i.bak 's/cert.*_pem/st_root_ca/g' ${ROOT_CA_SOURCE}\"
+        COMMAND sh -c \"sed -i.bak 's/unsigned/const unsigned/g' ${ROOT_CA_SOURCE}\"
+        COMMAND sh -c \"rm -f ${ROOT_CA_SOURCE}.bak\"
+        COMMAND sh -c \"rm -f ${ROOT_CA_FILE}\"
         BYPRODUCTS ${CMAKE_CURRENT_SOURCE_DIR}/${ROOT_CA_SOURCE}
 )
 
