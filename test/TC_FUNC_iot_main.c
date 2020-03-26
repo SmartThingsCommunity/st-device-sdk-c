@@ -188,3 +188,58 @@ void TC_st_conn_init_success(void **state)
     iot_os_timer_destroy(&internal_context->state_timer);
     iot_os_free(internal_context);
 }
+
+void TC_st_conn_cleanup_invalid_parameters(void **state)
+{
+    IOT_CTX *context;
+    int err;
+    UNUSED(state);
+
+    // When: Null iot_ctx and reboot true
+    err = st_conn_cleanup(NULL, true);
+    // Then
+    assert_int_not_equal(err, 0);
+
+    // When: Null iot_ctx
+    err = st_conn_cleanup(NULL, false);
+    // Then
+    assert_int_not_equal(err, 0);
+
+    // Given: empty context
+    context = (IOT_CTX*) malloc(sizeof(struct iot_context));
+    memset(context, '\0', sizeof(struct iot_context));
+    // When: Null iot_ctx
+    err = st_conn_cleanup(context, true);
+    // Then
+    assert_int_not_equal(err, 0);
+    // Teardown
+    free(context);
+}
+
+void TC_st_conn_cleanup_success(void **state)
+{
+    IOT_CTX *context;
+    struct iot_context *internal_context;
+    int err;
+    UNUSED(state);
+
+    // Given
+    internal_context = malloc(sizeof(struct iot_context));
+    assert_non_null(internal_context);
+    memset(internal_context, '\0', sizeof(struct iot_context));
+    context = (IOT_CTX *) internal_context;
+    internal_context->cmd_queue = iot_os_queue_create(IOT_QUEUE_LENGTH,
+                                         sizeof(struct iot_command));
+    assert_non_null(internal_context->cmd_queue);
+    internal_context->iot_events = iot_os_eventgroup_create();
+    assert_non_null(internal_context->iot_events);
+    expect_any(__wrap_iot_os_delay, delay_ms);
+    // When: Null iot_ctx
+    err = st_conn_cleanup(context, true);
+    // Then
+    assert_return_code(err, 0);
+    // Teardown
+    iot_os_queue_delete(internal_context->cmd_queue);
+    iot_os_eventgroup_delete(internal_context->iot_events);
+    free(internal_context);
+}

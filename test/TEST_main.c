@@ -181,6 +181,8 @@ int TEST_FUNC_iot_main()
             cmocka_unit_test(TC_st_conn_init_wrong_onboarding_config),
             cmocka_unit_test(TC_st_conn_init_wrong_device_info),
             cmocka_unit_test(TC_st_conn_init_success),
+            cmocka_unit_test(TC_st_conn_cleanup_invalid_parameters),
+            cmocka_unit_test(TC_st_conn_cleanup_success),
     };
     return cmocka_run_group_tests_name("iot_main.c", tests, NULL, NULL);
 }
