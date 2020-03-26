@@ -139,6 +139,9 @@ int iot_os_queue_send(iot_os_queue* queue_handle, void * data, unsigned int wait
 	iot_os_queue_posix_t* queue = (iot_os_queue_posix_t*)queue_handle;
 	struct timespec ts = {0,};
 
+	if (!queue || !data)
+	    return iot_os_false;
+
 	ts.tv_sec = wait_time_ms / 1000;
 	ts.tv_nsec = (wait_time_ms % 1000) * 1000000;
 
