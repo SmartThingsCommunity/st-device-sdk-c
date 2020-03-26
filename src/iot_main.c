@@ -1320,6 +1320,9 @@ int st_conn_cleanup(IOT_CTX *iot_ctx, bool reboot)
 	iot_error_t iot_err;
 	struct iot_context *ctx = (struct iot_context*)iot_ctx;
 
+	if (!ctx)
+		return IOT_ERROR_BAD_REQ;
+
 	iot_err = iot_command_send(ctx,
 			IOT_COMMAND_SELF_CLEANUP, &reboot, sizeof(bool));
 
