@@ -396,6 +396,7 @@ void iot_os_free(void *ptr);
  */
 char *iot_os_strdup(const char *src);
 #else
+#include <string.h>
 static inline void *iot_os_malloc(size_t size) { return malloc(size); }
 static inline void *iot_os_calloc(size_t nmemb, size_t size) { return calloc(nmemb, size); }
 static inline void iot_os_free(void *ptr) { return free(ptr); }

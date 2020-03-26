@@ -99,8 +99,9 @@ static iot_error_t _create_easysetup_resources(struct iot_context *ctx, iot_pin_
 		}
 
 		return IOT_ERROR_MEM_ALLOC;
-	} else
-		memset(ctx->es_crypto_cipher_info, 0,sizeof(ctx->es_crypto_cipher_info));
+	} else {
+		memset(ctx->es_crypto_cipher_info, 0,sizeof(iot_crypto_cipher_info_t));
+	}
 
 	if (!ctx->easysetup_req_queue) {
 		ctx->easysetup_req_queue = iot_os_queue_create(1, sizeof(struct iot_easysetup_payload));
@@ -492,7 +493,15 @@ static iot_error_t _do_iot_main_command(struct iot_context *ctx,
 			}
 
 			err = iot_es_connect(ctx, IOT_CONNECT_TYPE_REGISTRATION);
-			if (err != IOT_ERROR_NONE) {
+			if (err == IOT_ERROR_MQTT_REJECT_CONNECT) {
+				/* This error case will be happended when server replies
+				 * some specific response, so the trial to connect with server
+				 * is succeeded (with REJECT). By this reason, we don't want
+				 * to change the STATE by the failure.
+				 */
+				IOT_WARN("Intended error case(reboot), go to STATE_UNKONWN\n");
+				err = iot_state_update(ctx, IOT_STATE_UNKNOWN, state_opt);
+			} else if (err != IOT_ERROR_NONE) {
 				IOT_ERROR("failed to iot_es_connect for registration\n");
 				ctx->cmd_err |= (1 << cmd->cmd_type);
 				next_state = IOT_STATE_CHANGE_FAILED;
@@ -544,7 +553,15 @@ static iot_error_t _do_iot_main_command(struct iot_context *ctx,
 			}
 
 			err = iot_es_connect(ctx, IOT_CONNECT_TYPE_COMMUNICATION);
-			if (err != IOT_ERROR_NONE) {
+			if (err == IOT_ERROR_MQTT_REJECT_CONNECT) {
+				/* This error case will be happended when server replies
+				 * some specific response, so the trial to connect with server
+				 * is succeeded (with REJECT). By this reason, we don't want
+				 * to change the STATE by the failure.
+				 */
+				IOT_WARN("Intended error case(reboot), go to STATE_UNKONWN\n");
+				next_state = IOT_STATE_UNKNOWN;
+			} else if (err != IOT_ERROR_NONE) {
 				IOT_ERROR("failed to iot_es_connect for communication\n");
 				ctx->cmd_err |= (1 << cmd->cmd_type);
 				next_state = IOT_STATE_CHANGE_FAILED;
@@ -621,6 +638,13 @@ static void _do_cmd_tout_check(struct iot_context *ctx)
 {
 	unsigned int remained_tout;
 	iot_state_t next_state;
+
+	/* If the iot-core is stayed in IOT_STATE_UNKNOWN,
+	 * we don't need to check timeout & condition
+	 */
+	if ((ctx->curr_state == IOT_STATE_UNKNOWN) &&
+			(ctx->req_state == IOT_STATE_UNKNOWN))
+		return;
 
 	/* If device comes to connected_state, we don't need timeout checking */
 	if (ctx->curr_state == IOT_STATE_CLOUD_CONNECTED)
@@ -1209,6 +1233,16 @@ static iot_error_t _do_state_updating(struct iot_context *ctx,
 	case IOT_STATE_CHANGE_FAILED:
 		iot_err = _do_recovery(ctx, (iot_state_t)opt);
 		*timeout_ms = IOT_OS_MAX_DELAY;
+		break;
+
+	case IOT_STATE_UNKNOWN:
+		/* At this state, iot-core can't make next decision by itself
+		 * So just wait(stop) process until external triggering happened
+		 * such as reboot, re-start command from user-apps
+		 */
+		IOT_WARN("Iot-core task will be stopped, needed ext-triggering\n");
+		*timeout_ms = IOT_OS_MAX_DELAY;
+		iot_err = IOT_ERROR_NONE;
 		break;
 
 	default:

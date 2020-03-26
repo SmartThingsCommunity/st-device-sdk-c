@@ -52,6 +52,7 @@ void TC_iot_random_uuid_from_mac(void **state);
 void TC_iot_random_uuid_from_mac_internal_failure(void **state);
 
 // TCs for iot_capability.c
+int TC_iot_capability_setup(void **state);
 int TC_iot_capability_teardown(void **state);
 void TC_st_cap_attr_create_int_null_attribute(void **state);
 void TC_st_cap_attr_create_int_null_unit(void **state);
@@ -68,6 +69,10 @@ void TC_st_cap_attr_create_string_null_parameters(void **state);
 void TC_st_cap_handle_init_invalid_argument(void **state);
 void TC_st_cap_handle_init_internal_failure(void **state);
 void TC_st_cap_handle_init_success(void **state);
+void TC_st_conn_set_noti_cb_null_parameters(void **state);
+void TC_st_conn_set_noti_cb_success(void **state);
+void TC_st_cap_cmd_set_cb_invalid_parameters(void **state);
+void TC_st_cap_cmd_set_cb_success(void **state);
 
 // TCs for iot_crypto.c
 int TC_iot_crypto_pk_setup(void **state);
