@@ -339,24 +339,32 @@ static iot_error_t _do_iot_main_command(struct iot_context *ctx,
 		/* For Device control */
 		case IOT_COMMAND_NETWORK_MODE:
 			conf = (iot_wifi_conf *)cmd->param;
-
 			if (!conf) {
 				IOT_ERROR("failed to get iot_wifi_conf\n");
-				ctx->cmd_err |= (1 << cmd->cmd_type);
-				next_state = IOT_STATE_CHANGE_FAILED;
-				state_opt = ctx->req_state;
-				err = iot_state_update(ctx,
-						next_state, state_opt);
+				if (ctx->req_state != IOT_STATE_CHANGE_FAILED) {
+					ctx->cmd_err |= (1 << cmd->cmd_type);
+					next_state = IOT_STATE_CHANGE_FAILED;
+					state_opt = ctx->req_state;
+					err = iot_state_update(ctx,
+							next_state, state_opt);
+				} else {
+					IOT_WARN("Duplicated error handling, skip updating!!");
+				}
 				break;
 			}
+
 			err = iot_bsp_wifi_set_mode(conf);
 			if (err < 0) {
 				IOT_ERROR("failed to set wifi_set_mode\n");
-				ctx->cmd_err |= (1 << cmd->cmd_type);
-				next_state = IOT_STATE_CHANGE_FAILED;
-				state_opt = ctx->req_state;
-				err = iot_state_update(ctx,
-						next_state, state_opt);
+				if (ctx->req_state != IOT_STATE_CHANGE_FAILED) {
+					ctx->cmd_err |= (1 << cmd->cmd_type);
+					next_state = IOT_STATE_CHANGE_FAILED;
+					state_opt = ctx->req_state;
+					err = iot_state_update(ctx,
+							next_state, state_opt);
+				} else {
+					IOT_WARN("Duplicated error handling, skip updating!!");
+				}
 				break;
 			}
 
@@ -389,11 +397,15 @@ static iot_error_t _do_iot_main_command(struct iot_context *ctx,
 
 					if (err != IOT_ERROR_NONE) {
 						IOT_ERROR("failed to iot_easysetup_init(%d)", err);
-						ctx->cmd_err |= (1 << cmd->cmd_type);
-						next_state = IOT_STATE_CHANGE_FAILED;
-						state_opt = ctx->req_state;
-						err = iot_state_update(ctx,
-							next_state, state_opt);
+						if (ctx->req_state != IOT_STATE_CHANGE_FAILED) {
+							ctx->cmd_err |= (1 << cmd->cmd_type);
+							next_state = IOT_STATE_CHANGE_FAILED;
+							state_opt = ctx->req_state;
+							err = iot_state_update(ctx,
+								next_state, state_opt);
+						} else {
+							IOT_WARN("Duplicated error handling, skip updating!!");
+						}
 					}
 				}
 				break;
@@ -503,11 +515,15 @@ static iot_error_t _do_iot_main_command(struct iot_context *ctx,
 				err = iot_state_update(ctx, IOT_STATE_UNKNOWN, state_opt);
 			} else if (err != IOT_ERROR_NONE) {
 				IOT_ERROR("failed to iot_es_connect for registration\n");
-				ctx->cmd_err |= (1 << cmd->cmd_type);
-				next_state = IOT_STATE_CHANGE_FAILED;
-				state_opt = ctx->req_state;
-				err = iot_state_update(ctx,
-						next_state, state_opt);
+				if (ctx->req_state != IOT_STATE_CHANGE_FAILED) {
+					ctx->cmd_err |= (1 << cmd->cmd_type);
+					next_state = IOT_STATE_CHANGE_FAILED;
+					state_opt = ctx->req_state;
+					err = iot_state_update(ctx,
+							next_state, state_opt);
+				} else {
+					IOT_WARN("Duplicated error handling, skip updating!!");
+				}
 			}
 
 			IOT_MEM_CHECK("CLOUD_REGISTERING DONE >>PT<<");
@@ -992,6 +1008,8 @@ static iot_error_t _do_recovery(struct iot_context *ctx,
 	 * So try do something more first
 	 */
 	if (rcv_try_cnt > RECOVER_TRY_MAX) {
+		IOT_WARN("Recovery state:[%d] repeated MAX times(%d)",
+			fail_state, rcv_try_cnt);
 		switch (fail_state) {
 		case IOT_STATE_CLOUD_REGISTERING:
 			/* fall through */
