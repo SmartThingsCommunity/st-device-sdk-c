@@ -441,16 +441,17 @@ void iot_easysetup_deinit(struct iot_context *ctx)
 
 	es_tcp_deinit();
 
-	if (ctx->es_crypto_cipher_info->iv) {
-		free(ctx->es_crypto_cipher_info->iv);
-		ctx->es_crypto_cipher_info->iv = NULL;
-	}
+	if (ctx->es_crypto_cipher_info) {
+		if (ctx->es_crypto_cipher_info->iv) {
+			free(ctx->es_crypto_cipher_info->iv);
+			ctx->es_crypto_cipher_info->iv = NULL;
+		}
 
-	if (ctx->es_crypto_cipher_info->key) {
-		free(ctx->es_crypto_cipher_info->key);
-		ctx->es_crypto_cipher_info->key = NULL;
+		if (ctx->es_crypto_cipher_info->key) {
+			free(ctx->es_crypto_cipher_info->key);
+			ctx->es_crypto_cipher_info->key = NULL;
+		}
 	}
-
 #if defined(CONFIG_STDK_IOT_CORE_EASYSETUP_HTTP_LOG_SUPPORT)
 	if (log_buffer) {
 		dump_enable = false;
