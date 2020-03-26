@@ -49,6 +49,7 @@ if(CMAKE_C_COMPILER_ID STREQUAL "GNU" AND CMAKE_BUILD_TYPE MATCHES UnitTest)
         iot_os_strdup
         iot_bsp_wifi_get_scan_result
         iot_bsp_system_set_time_in_sec
+        iot_os_delay
         )
 endif()
 
