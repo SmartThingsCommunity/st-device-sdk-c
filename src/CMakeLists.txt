@@ -24,7 +24,14 @@ set(ENABLE_PROGRAMS OFF CACHE BOOL "Build mbed TLS programs." FORCE)
 set(ENABLE_TESTING OFF CACHE BOOL "Build mbed TLS tests." FORCE)
 add_subdirectory(deps/mbedtls/mbedtls)
 
+if(CMAKE_C_COMPILER_ID STREQUAL "GNU" AND CMAKE_BUILD_TYPE MATCHES Debug)
+    foreach(mock ${MOCKED_FUNCTIONS})
+        set(CMAKE_C_FLAGS_DEBUG "${CMAKE_C_FLAGS_DEBUG} -Wl,--wrap=${mock}")
+    endforeach()
+endif()
+
 set(BOILERPLATE_HEADER include/certs/boilerplate.h)
+file(GLOB ROOT_CA_FILE_LIST "certs/root_ca_*.pem")
 set(ROOT_CA_FILE certs/root_ca.pem)
 set(ROOT_CA_SOURCE iot_root_ca.c)
 add_custom_command(
@@ -32,11 +39,14 @@ add_custom_command(
         OUTPUT ${CMAKE_CURRENT_SOURCE_DIR}/${ROOT_CA_SOURCE}
         COMMENT "Generating root certiciate"
         WORKING_DIRECTORY ${CMAKE_CURRENT_SOURCE_DIR}
+        COMMAND if [ -e ${ROOT_CA_FILE} ] \; then rm ${ROOT_CA_FILE} \; fi \;
+        COMMAND cat ${ROOT_CA_FILE_LIST} >> ${ROOT_CA_FILE}
         COMMAND cat ${BOILERPLATE_HEADER} > ${ROOT_CA_SOURCE}
         COMMAND xxd -i ${ROOT_CA_FILE} >> ${ROOT_CA_SOURCE}
         COMMAND sed -i.bak 's/cert.*_pem/st_root_ca/g' ${ROOT_CA_SOURCE}
         COMMAND sed -i.bak 's/unsigned/const unsigned/g' ${ROOT_CA_SOURCE}
         COMMAND rm -f ${ROOT_CA_SOURCE}.bak
+        COMMAND rm -f ${ROOT_CA_FILE}
         BYPRODUCTS ${CMAKE_CURRENT_SOURCE_DIR}/${ROOT_CA_SOURCE}
 )
 
@@ -71,6 +81,7 @@ target_include_directories(iotcore
         include/bsp/posix
         include/os
         include/mqtt
+        include/external
         PUBLIC
         include
         )

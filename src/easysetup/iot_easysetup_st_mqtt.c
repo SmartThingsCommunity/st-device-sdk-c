@@ -33,7 +33,7 @@
 #include "iot_bsp_system.h"
 #include "iot_uuid.h"
 
-#include "cJSON.h"
+#include "JSON.h"
 #if defined(STDK_IOT_CORE_SERIALIZE_CBOR)
 #include <cbor.h>
 #endif
@@ -61,11 +61,11 @@ static void mqtt_reg_sub_cb(st_mqtt_msg *md, void *userData)
 	struct iot_context *ctx = (struct iot_context *)userData;
 	struct iot_registered_data *reged_data = &ctx->iot_reg_data;
 	char * mqtt_payload = md->payload;
-	char * registed_msg = NULL;
-	cJSON *json = NULL;
-	cJSON *svr_did = NULL;
-	cJSON *event = NULL;
-	cJSON *cur_time = NULL;
+	char * registered_msg = NULL;
+	JSON_H *json = NULL;
+	JSON_H *svr_did = NULL;
+	JSON_H *event = NULL;
+	JSON_H *cur_time = NULL;
 	char time_str[11] = {0,};
 	char *svr_did_str = NULL;
 	enum iot_command_type iot_cmd;
@@ -89,27 +89,27 @@ static void mqtt_reg_sub_cb(st_mqtt_msg *md, void *userData)
 		goto reg_sub_out;
 	}
 
-	json = cJSON_Parse(payload_json);
+	json = JSON_PARSE(payload_json);
 	free(payload_json);
 #else
-	json = cJSON_Parse(mqtt_payload);
+	json = JSON_PARSE(mqtt_payload);
 #endif
 	if (json == NULL) {
 		IOT_ERROR("mqtt_payload(%s) parsing failed", mqtt_payload);
 		goto reg_sub_out;
 	}
 
-	registed_msg = cJSON_PrintUnformatted(json);
-	if (registed_msg == NULL) {
-		IOT_ERROR("There are no registed msg, payload : %s", mqtt_payload);
+	registered_msg = JSON_PRINT(json);
+	if (registered_msg == NULL) {
+		IOT_ERROR("There are no registered msg, payload : %s", mqtt_payload);
 		goto reg_sub_out;
 	}
-	IOT_INFO("Registered MSG : %s", registed_msg);
+	IOT_INFO("Registered MSG : %s", registered_msg);
 
-	event = cJSON_GetObjectItem(json, "event");
+	event = JSON_GET_OBJECT_ITEM(json, "event");
 	if (event != NULL) {
 		if (!strncmp(event->valuestring, "expired.jwt", 11)) {
-			cur_time = cJSON_GetObjectItem(json, "currentTime");
+			cur_time = JSON_GET_OBJECT_ITEM(json, "currentTime");
 			if (cur_time == NULL) {
 				IOT_ERROR("%s : there is no currentTime in json, mqtt_payload : \n%s",
 					__func__, mqtt_payload);
@@ -134,9 +134,9 @@ static void mqtt_reg_sub_cb(st_mqtt_msg *md, void *userData)
 		}
 	}
 
-	svr_did = cJSON_GetObjectItem(json, "deviceId");
+	svr_did = JSON_GET_OBJECT_ITEM(json, "deviceId");
 	if (svr_did != NULL && !reged_data->updated) {
-		svr_did_str = cJSON_PrintUnformatted(svr_did);
+		svr_did_str = JSON_PRINT(svr_did);
 		if (svr_did_str == NULL) {
 			IOT_ERROR("Can't print server's did str!!");
 			goto reg_sub_out;
@@ -158,11 +158,11 @@ reg_sub_out:
 	if (svr_did_str != NULL)
 		free(svr_did_str);
 
-	if (registed_msg != NULL)
-		free(registed_msg);
+	if (registered_msg != NULL)
+		free(registered_msg);
 
 	if (json != NULL)
-		cJSON_Delete(json);
+		JSON_DELETE(json);
 }
 
 #if defined(STDK_IOT_CORE_SERIALIZE_CBOR)
@@ -259,7 +259,7 @@ static void *_iot_es_mqtt_registration_json(struct iot_context *ctx,
 			char *location_id, char *room_id)
 {
 	struct iot_devconf_prov_data *devconf;
-	cJSON *root = NULL;
+	JSON_H *root = NULL;
 	char *payload;
 
 	if (!ctx || !location_id) {
@@ -267,7 +267,7 @@ static void *_iot_es_mqtt_registration_json(struct iot_context *ctx,
 		return NULL;
 	}
 
-	root = cJSON_CreateObject();
+	root = JSON_CREATE_OBJECT();
 	if (!root) {
 		IOT_ERROR("failed to create json");
 		return NULL;
@@ -275,36 +275,36 @@ static void *_iot_es_mqtt_registration_json(struct iot_context *ctx,
 
 	devconf = &ctx->devconf;
 
-	cJSON_AddItemToObject(root, "locationId",
-		cJSON_CreateString(location_id));
+	JSON_ADD_ITEM_TO_OBJECT(root, "locationId",
+		JSON_CREATE_STRING(location_id));
 
 	/* label is optional value */
 	if (ctx->prov_data.cloud.label)
-		cJSON_AddItemToObject(root, "label",
-			cJSON_CreateString(ctx->prov_data.cloud.label));
+		JSON_ADD_ITEM_TO_OBJECT(root, "label",
+			JSON_CREATE_STRING(ctx->prov_data.cloud.label));
 	else
 		IOT_WARN("There is no label for registration");
 
-	cJSON_AddItemToObject(root, "mnId",
-		cJSON_CreateString(devconf->mnid));
+	JSON_ADD_ITEM_TO_OBJECT(root, "mnId",
+		JSON_CREATE_STRING(devconf->mnid));
 
-	cJSON_AddItemToObject(root, "vid",
-		cJSON_CreateString(devconf->vid));
+	JSON_ADD_ITEM_TO_OBJECT(root, "vid",
+		JSON_CREATE_STRING(devconf->vid));
 
-	cJSON_AddItemToObject(root, "deviceTypeId",
-		cJSON_CreateString(devconf->device_type));
+	JSON_ADD_ITEM_TO_OBJECT(root, "deviceTypeId",
+		JSON_CREATE_STRING(devconf->device_type));
 
-	cJSON_AddItemToObject(root, "lookupId",
-		cJSON_CreateString(ctx->lookup_id));
+	JSON_ADD_ITEM_TO_OBJECT(root, "lookupId",
+		JSON_CREATE_STRING(ctx->lookup_id));
 
 	if (room_id) {
-		cJSON_AddItemToObject(root, "roomId",
-			cJSON_CreateString(room_id));
+		JSON_ADD_ITEM_TO_OBJECT(root, "roomId",
+			JSON_CREATE_STRING(room_id));
 	}
 
-	payload = cJSON_PrintUnformatted(root);
+	payload = JSON_PRINT(root);
 
-	cJSON_Delete(root);
+	JSON_DELETE(root);
 
 	return (void *)payload;
 }
@@ -392,7 +392,7 @@ iot_error_t _iot_es_mqtt_registration(struct iot_context *ctx, st_mqtt_client mq
 #if defined(STDK_IOT_CORE_SERIALIZE_CBOR)
 		free(msg.payload);
 #else
-		cJSON_free(msg.payload);
+		JSON_FREE(msg.payload);
 #endif
 	}
 
@@ -434,7 +434,7 @@ iot_error_t _iot_es_mqtt_connect(struct iot_context *ctx, st_mqtt_client target_
 	char *client_id = NULL;
 	struct iot_cloud_prov_data *cloud_prov;
 	char *root_cert = NULL;
-	unsigned int root_cert_len;
+	size_t root_cert_len;
 
 	/* Use mac based random client_id for GreatGate */
 	iot_ret = iot_random_uuid_from_mac(&iot_uuid);
@@ -546,7 +546,7 @@ iot_error_t iot_es_connect(struct iot_context *ctx, int conn_type)
 {
 	st_mqtt_client mqtt_cli = NULL;
 	char *dev_sn = NULL;
-	unsigned int devsn_len;
+	size_t devsn_len;
 	char *wt_data = NULL;
 	struct iot_crypto_pk_info pk_info = { 0, };
 	char *topicfilter = NULL;
@@ -601,6 +601,8 @@ iot_error_t iot_es_connect(struct iot_context *ctx, int conn_type)
 		if (iot_ret != IOT_ERROR_NONE) {
 			IOT_ERROR("failed to connect");
 			goto out;
+		} else {
+			IOT_INFO("MQTT connect success");
 		}
 
 		snprintf(topicfilter, IOT_TOPIC_SIZE, IOT_SUB_TOPIC_NOTIFICATION, ctx->iot_reg_data.deviceId);
@@ -641,6 +643,8 @@ iot_error_t iot_es_connect(struct iot_context *ctx, int conn_type)
 		if (iot_ret != IOT_ERROR_NONE) {
 			IOT_ERROR("failed to connect");
 			goto out;
+		} else {
+			IOT_INFO("MQTT connect success");
 		}
 
 		/* register notification subscribe for registration */

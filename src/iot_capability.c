@@ -1,6 +1,6 @@
 /* ***************************************************************************
  *
- * Copyright 2019 Samsung Electronics All Rights Reserved.
+ * Copyright (c) 2019-2020 Samsung Electronics All Rights Reserved.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -57,20 +57,20 @@ IOT_EVENT* st_cap_attr_create_int(const char *attribute, int integer, const char
 		return NULL;
 	}
 
-	evt_data = malloc(sizeof(iot_cap_evt_data_t));
+	evt_data = iot_os_malloc(sizeof(iot_cap_evt_data_t));
 	if (!evt_data) {
 		IOT_ERROR("failed to malloc for evt_data");
 		return NULL;
 	}
 
 	memset(evt_data, 0, sizeof(iot_cap_evt_data_t));
-	evt_data->evt_type = strdup(attribute);
+	evt_data->evt_type = iot_os_strdup(attribute);
 	evt_data->evt_value.type = IOT_CAP_VAL_TYPE_INTEGER;
 	evt_data->evt_value.integer = integer;
 
 	if (unit != NULL) {
 		evt_data->evt_unit.type = IOT_CAP_UNIT_TYPE_STRING;
-		evt_data->evt_unit.string = strdup(unit);
+		evt_data->evt_unit.string = iot_os_strdup(unit);
 	} else {
 		evt_data->evt_unit.type = IOT_CAP_UNIT_TYPE_UNUSED;
 	}
@@ -87,20 +87,20 @@ IOT_EVENT* st_cap_attr_create_number(const char *attribute, double number, const
 		return NULL;
 	}
 
-	evt_data = malloc(sizeof(iot_cap_evt_data_t));
+	evt_data = iot_os_malloc(sizeof(iot_cap_evt_data_t));
 	if (!evt_data) {
 		IOT_ERROR("failed to malloc for evt_data");
 		return NULL;
 	}
 
 	memset(evt_data, 0, sizeof(iot_cap_evt_data_t));
-	evt_data->evt_type = strdup(attribute);
+	evt_data->evt_type = iot_os_strdup(attribute);
 	evt_data->evt_value.type = IOT_CAP_VAL_TYPE_NUMBER;
 	evt_data->evt_value.number = number;
 
 	if (unit != NULL) {
 		evt_data->evt_unit.type = IOT_CAP_UNIT_TYPE_STRING;
-		evt_data->evt_unit.string = strdup(unit);
+		evt_data->evt_unit.string = iot_os_strdup(unit);
 	} else {
 		evt_data->evt_unit.type = IOT_CAP_UNIT_TYPE_UNUSED;
 	}
@@ -117,20 +117,20 @@ IOT_EVENT* st_cap_attr_create_string(const char *attribute, char *string, const 
 		return NULL;
 	}
 
-	evt_data = malloc(sizeof(iot_cap_evt_data_t));
+	evt_data = iot_os_malloc(sizeof(iot_cap_evt_data_t));
 	if (!evt_data) {
 		IOT_ERROR("failed to malloc for evt_data");
 		return NULL;
 	}
 
 	memset(evt_data, 0, sizeof(iot_cap_evt_data_t));
-	evt_data->evt_type = strdup(attribute);
+	evt_data->evt_type = iot_os_strdup(attribute);
 	evt_data->evt_value.type = IOT_CAP_VAL_TYPE_STRING;
-	evt_data->evt_value.string = strdup(string);
+	evt_data->evt_value.string = iot_os_strdup(string);
 
 	if (unit != NULL) {
 		evt_data->evt_unit.type = IOT_CAP_UNIT_TYPE_STRING;
-		evt_data->evt_unit.string = strdup(unit);
+		evt_data->evt_unit.string = iot_os_strdup(unit);
 	} else {
 		evt_data->evt_unit.type = IOT_CAP_UNIT_TYPE_UNUSED;
 	}
@@ -153,7 +153,7 @@ IOT_EVENT* st_cap_attr_create_string_array(const char *attribute,
 		return NULL;
 	}
 
-	evt_data = malloc(sizeof(iot_cap_evt_data_t));
+	evt_data = iot_os_malloc(sizeof(iot_cap_evt_data_t));
 	if (!evt_data) {
 		IOT_ERROR("failed to malloc for evt_data");
 		return NULL;
@@ -162,7 +162,7 @@ IOT_EVENT* st_cap_attr_create_string_array(const char *attribute,
 	memset(evt_data, 0, sizeof(iot_cap_evt_data_t));
 	evt_data->evt_value.type = IOT_CAP_VAL_TYPE_STR_ARRAY;
 	evt_data->evt_value.str_num = str_num;
-	evt_data->evt_value.strings = malloc(str_num * sizeof(char*));
+	evt_data->evt_value.strings = iot_os_malloc(str_num * sizeof(char*));
 	if (!evt_data->evt_value.strings) {
 		IOT_ERROR("failed to malloc for string array");
 		free(evt_data);
@@ -171,15 +171,90 @@ IOT_EVENT* st_cap_attr_create_string_array(const char *attribute,
 
 	for (int i = 0; i < str_num; i++) {
 		if (string_array[i])
-			evt_data->evt_value.strings[i] = strdup(string_array[i]);
+			evt_data->evt_value.strings[i] = iot_os_strdup(string_array[i]);
 	}
 
-	evt_data->evt_type = strdup(attribute);
+	evt_data->evt_type = iot_os_strdup(attribute);
 	if (unit != NULL) {
 		evt_data->evt_unit.type = IOT_CAP_UNIT_TYPE_STRING;
-		evt_data->evt_unit.string = strdup(unit);
+		evt_data->evt_unit.string = iot_os_strdup(unit);
 	} else {
 		evt_data->evt_unit.type = IOT_CAP_UNIT_TYPE_UNUSED;
+	}
+
+	return (IOT_EVENT*)evt_data;
+}
+
+IOT_EVENT* st_cap_attr_create(const char *attribute,
+			iot_cap_val_t *value, const char *unit, const char *data)
+{
+	iot_cap_evt_data_t* evt_data;
+
+	if (!attribute) {
+		IOT_ERROR("attribute is NULL");
+		return NULL;
+	}
+
+	if (!value) {
+		IOT_ERROR("value is NULL");
+		return NULL;
+	}
+
+	evt_data = iot_os_malloc(sizeof(iot_cap_evt_data_t));
+	if (!evt_data) {
+		IOT_ERROR("failed to malloc for evt_data");
+		return NULL;
+	}
+	memset(evt_data, 0, sizeof(iot_cap_evt_data_t));
+
+
+	evt_data->evt_type = iot_os_strdup(attribute);
+	switch (value->type) {
+	case IOT_CAP_VAL_TYPE_INTEGER:
+		evt_data->evt_value.type = IOT_CAP_VAL_TYPE_INTEGER;
+		evt_data->evt_value.integer = value->integer;
+		break;
+	case IOT_CAP_VAL_TYPE_NUMBER:
+		evt_data->evt_value.type = IOT_CAP_VAL_TYPE_NUMBER;
+		evt_data->evt_value.number = value->number;
+		break;
+	case IOT_CAP_VAL_TYPE_STRING:
+		evt_data->evt_value.type = IOT_CAP_VAL_TYPE_STRING;
+		evt_data->evt_value.string = iot_os_strdup(value->string);
+		break;
+	case IOT_CAP_VAL_TYPE_STR_ARRAY:
+		evt_data->evt_value.type = IOT_CAP_VAL_TYPE_STR_ARRAY;
+		evt_data->evt_value.str_num = value->str_num;
+		evt_data->evt_value.strings = iot_os_malloc(value->str_num * sizeof(char*));
+		if (!evt_data->evt_value.strings) {
+			IOT_ERROR("failed to malloc for string array");
+			free(evt_data);
+			return NULL;
+		}
+		for (int i = 0; i < value->str_num; i++) {
+			if (value->strings[i])
+				evt_data->evt_value.strings[i] = iot_os_strdup(value->strings[i]);
+		}
+		break;
+	case IOT_CAP_VAL_TYPE_JSON_OBJECT:
+		evt_data->evt_value.type = IOT_CAP_VAL_TYPE_JSON_OBJECT;
+		evt_data->evt_value.json_object = iot_os_strdup(value->json_object);
+		break;
+	default:
+		IOT_ERROR("unknown attribute data type");
+		free(evt_data);
+		return NULL;
+	}
+
+	if (unit != NULL) {
+		evt_data->evt_unit.type = IOT_CAP_UNIT_TYPE_STRING;
+		evt_data->evt_unit.string = iot_os_strdup(unit);
+	} else {
+		evt_data->evt_unit.type = IOT_CAP_UNIT_TYPE_UNUSED;
+	}
+
+	if (data != NULL) {
+		evt_data->evt_value_data = iot_os_strdup(data);
 	}
 
 	return (IOT_EVENT*)evt_data;
@@ -191,7 +266,7 @@ void st_cap_attr_free(IOT_EVENT* event)
 
 	if (evt_data) {
 		_iot_free_evt_data(evt_data);
-		free(evt_data);
+		iot_os_free(evt_data);
 	}
 }
 
@@ -203,7 +278,11 @@ IOT_CAP_HANDLE *st_cap_handle_init(IOT_CTX *iot_ctx, const char *component,
 	struct iot_cap_handle_list *new_list;
 	struct iot_context *ctx = (struct iot_context*)iot_ctx;
 
-	handle = malloc(sizeof(struct iot_cap_handle));
+	if (!ctx || !capability) {
+	    return NULL;
+	}
+
+	handle = iot_os_malloc(sizeof(struct iot_cap_handle));
 	if (!handle) {
 		IOT_ERROR("failed to malloc for iot_cap_handle");
 		return NULL;
@@ -212,32 +291,32 @@ IOT_CAP_HANDLE *st_cap_handle_init(IOT_CTX *iot_ctx, const char *component,
 	memset(handle, 0, sizeof(struct iot_cap_handle));
 
 	if (component) {
-		handle->component = strdup(component);
+		handle->component = iot_os_strdup(component);
 	} else {
-		handle->component = strdup("main");
+		handle->component = iot_os_strdup("main");
 	}
 	if (!handle->component) {
 		IOT_ERROR("failed to malloc for component");
-		free(handle);
+		iot_os_free(handle);
 		return NULL;
 	}
 
-	handle->capability = strdup(capability);
+	handle->capability = iot_os_strdup(capability);
 	if (!handle->capability) {
 		IOT_ERROR("failed to malloc for capability");
-		free((void *)handle->component);
-		free(handle);
+		iot_os_free((void *)handle->component);
+		iot_os_free(handle);
 		return NULL;
 	}
 
 	handle->cmd_list = NULL;
 
-	new_list = (iot_cap_handle_list_t *)malloc(sizeof(iot_cap_handle_list_t));
+	new_list = (iot_cap_handle_list_t *)iot_os_malloc(sizeof(iot_cap_handle_list_t));
 	if (!new_list) {
 		IOT_ERROR("failed to malloc for handle list");
-		free((void *)handle->component);
-		free((void *)handle->capability);
-		free(handle);
+		iot_os_free((void *)handle->component);
+		iot_os_free((void *)handle->capability);
+		iot_os_free(handle);
 		return NULL;
 	}
 
@@ -311,19 +390,19 @@ int st_cap_cmd_set_cb(IOT_CAP_HANDLE *cap_handle, const char *cmd_type,
 		cur_list = cur_list->next;
 	}
 
-	command = (iot_cap_cmd_set_t *)malloc(sizeof(iot_cap_cmd_set_t));
+	command = (iot_cap_cmd_set_t *)iot_os_malloc(sizeof(iot_cap_cmd_set_t));
 	if (!command) {
 		IOT_ERROR("failed to malloc for cmd set");
 		return IOT_ERROR_MEM_ALLOC;
 	}
-	command->cmd_type = strdup(needle_str);
+	command->cmd_type = iot_os_strdup(needle_str);
 	command->cmd_cb = cmd_cb;
 	command->usr_data = usr_data;
 
-	new_list = (iot_cap_cmd_set_list_t *)malloc(sizeof(iot_cap_cmd_set_list_t));
+	new_list = (iot_cap_cmd_set_list_t *)iot_os_malloc(sizeof(iot_cap_cmd_set_list_t));
 	if (!new_list) {
 		IOT_ERROR("failed to malloc for cmd set list");
-		free(command);
+		iot_os_free(command);
 		return IOT_ERROR_MEM_ALLOC;
 	}
 	new_list->command = command;
@@ -722,7 +801,6 @@ static iot_error_t _iot_parse_cmd_data(cJSON* cmditem, char** component,
 	cJSON *cap_command = NULL;
 	cJSON *cap_args = NULL;
 	cJSON *subitem = NULL;
-	cJSON *arg_json = NULL;
 	int arr_size = 0;
 	int num_args = 0;
 
@@ -736,9 +814,9 @@ static iot_error_t _iot_parse_cmd_data(cJSON* cmditem, char** component,
 		return IOT_ERROR_BAD_REQ;
 	}
 
-	*component = strdup(cap_component->valuestring);
-	*capability = strdup(cap_capability->valuestring);
-	*command = strdup(cap_command->valuestring);
+	*component = iot_os_strdup(cap_component->valuestring);
+	*capability = iot_os_strdup(cap_capability->valuestring);
+	*command = iot_os_strdup(cap_command->valuestring);
 
 	IOT_DEBUG("component:%s, capability:%s command:%s", *component, *capability, *command);
 
@@ -760,26 +838,15 @@ static iot_error_t _iot_parse_cmd_data(cJSON* cmditem, char** component,
 				IOT_DEBUG("[%d] %s", num_args, cJSON_GetStringValue(subitem));
 				cmd_data->args_str[num_args] = NULL;
 				cmd_data->cmd_data[num_args].type = IOT_CAP_VAL_TYPE_STRING;
-				cmd_data->cmd_data[num_args].string = strdup(cJSON_GetStringValue(subitem));
+				cmd_data->cmd_data[num_args].string = iot_os_strdup(cJSON_GetStringValue(subitem));
 				num_args++;
 			}
 			else if (cJSON_IsObject(subitem)) {
-				arg_json = subitem->child;
-				while (arg_json != NULL) {
-					cmd_data->args_str[num_args] = strdup(arg_json->string);
-					if (cJSON_IsNumber(arg_json)) {
-						IOT_DEBUG("[%d] %d | %f", num_args, arg_json->valueint, arg_json->valuedouble);
-						cmd_data->cmd_data[num_args].type = IOT_CAP_VAL_TYPE_INT_OR_NUM;
-						cmd_data->cmd_data[num_args].integer = arg_json->valueint;
-						cmd_data->cmd_data[num_args].number = arg_json->valuedouble;
-					} else if (cJSON_IsString(arg_json)) {
-						IOT_DEBUG("[%d] %s", num_args, cJSON_GetStringValue(arg_json));
-						cmd_data->cmd_data[num_args].type = IOT_CAP_VAL_TYPE_STRING;
-						cmd_data->cmd_data[num_args].string = strdup(cJSON_GetStringValue(arg_json));
-					}
-					num_args++;
-					arg_json = arg_json->next;
-				}
+				cmd_data->args_str[num_args] = NULL;
+				cmd_data->cmd_data[num_args].type = IOT_CAP_VAL_TYPE_JSON_OBJECT;
+				cmd_data->cmd_data[num_args].json_object = cJSON_PrintUnformatted(subitem);
+				IOT_DEBUG("[%d] %s", num_args, cmd_data->cmd_data[num_args].json_object);
+				num_args++;
 			}
 			subitem = subitem->next;
 		}
@@ -816,7 +883,7 @@ static iot_error_t _iot_make_evt_data_cbor(const char* component, const char* ca
 retry:
 	buflen += 128;
 
-	buf = (uint8_t *)malloc(buflen);
+	buf = (uint8_t *)iot_os_malloc(buflen);
 	if (buf == NULL) {
 		IOT_ERROR("failed to malloc for cbor");
 		return IOT_ERROR_MEM_ALLOC;
@@ -934,6 +1001,8 @@ static iot_error_t _iot_make_evt_data_json(const char* component, const char* ca
 	cJSON *evt_arr = NULL;
 	cJSON *evt_item = NULL;
 	cJSON *evt_subarr = NULL;
+	cJSON *evt_subjson = NULL;
+	cJSON *evt_subdata = NULL;
 	cJSON *prov_data = NULL;
 	char time_in_ms[16]; /* 155934720000 is '2019-06-01 00:00:00.00 UTC' */
 	iot_error_t err = IOT_ERROR_NONE;
@@ -969,6 +1038,9 @@ static iot_error_t _iot_make_evt_data_json(const char* component, const char* ca
 			evt_subarr = cJSON_CreateStringArray(
 				(const char**)evt_data_arr[i]->evt_value.strings, evt_data_arr[i]->evt_value.str_num);
 			cJSON_AddItemToObject(evt_item, "value", evt_subarr);
+		} else if (evt_data_arr[i]->evt_value.type == IOT_CAP_VAL_TYPE_JSON_OBJECT) {
+			evt_subjson = cJSON_Parse(evt_data_arr[i]->evt_value.json_object);
+			cJSON_AddItemToObject(evt_item, "value", evt_subjson);
 		} else {
 			IOT_ERROR("Event data value type error :%d", evt_data_arr[i]->evt_value.type);
 			err = IOT_ERROR_INVALID_ARGS;
@@ -978,6 +1050,12 @@ static iot_error_t _iot_make_evt_data_json(const char* component, const char* ca
 		/* unit */
 		if (evt_data_arr[i]->evt_unit.type == IOT_CAP_UNIT_TYPE_STRING)
 			cJSON_AddStringToObject(evt_item, "unit", evt_data_arr[i]->evt_unit.string);
+
+		/* data */
+		if (evt_data_arr[i]->evt_value_data) {
+			evt_subdata = cJSON_Parse(evt_data_arr[i]->evt_value_data);
+			cJSON_AddItemToObject(evt_item, "data", evt_subdata);
+		}
 
 		/* providerData */
 		prov_data = cJSON_CreateObject();
@@ -1052,16 +1130,18 @@ static void _iot_free_val(iot_cap_val_t* val)
 
 	if (val->type == IOT_CAP_VAL_TYPE_STRING
 				&& val->string != NULL) {
-		free(val->string);
+		iot_os_free(val->string);
 	}
 	else if (val->type == IOT_CAP_VAL_TYPE_STR_ARRAY
 				&& val->strings != NULL) {
 		for (int i = 0; i < val->str_num; i++) {
 			if (val->strings[i] != NULL) {
-				free(val->strings[i]);
+				iot_os_free(val->strings[i]);
 			}
 		}
-		free(val->strings);
+		iot_os_free(val->strings);
+	} else if (val->type == IOT_CAP_VAL_TYPE_JSON_OBJECT) {
+		iot_os_free(val->json_object);
 	}
 }
 
@@ -1073,7 +1153,7 @@ static void _iot_free_unit(iot_cap_unit_t* unit)
 
 	if (unit->type == IOT_CAP_UNIT_TYPE_STRING
 				&& unit->string != NULL) {
-		free(unit->string);
+		iot_os_free(unit->string);
 	}
 }
 
@@ -1098,9 +1178,13 @@ static void _iot_free_evt_data(iot_cap_evt_data_t* evt_data)
 	}
 
 	if (evt_data->evt_type != NULL) {
-		free((void *)evt_data->evt_type);
+		iot_os_free((void *)evt_data->evt_type);
 	}
 	_iot_free_val(&evt_data->evt_value);
 	_iot_free_unit(&evt_data->evt_unit);
+
+	if (evt_data->evt_value_data != NULL) {
+		iot_os_free(evt_data->evt_value_data);
+	}
 }
 /* External API */

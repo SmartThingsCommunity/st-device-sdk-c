@@ -1,6 +1,6 @@
 /* ***************************************************************************
  *
- * Copyright 2019 Samsung Electronics All Rights Reserved.
+ * Copyright 2019-2020 Samsung Electronics All Rights Reserved.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -96,6 +96,7 @@ iot_os_queue* iot_os_queue_create(int queue_length, int item_size)
 
 	queue->mqd = mq_open(queue->name, O_CREAT | O_RDWR, 0644, &attr);
 	if (queue->mqd == -1) {
+		free(queue);
 		return NULL;
 	}
 
@@ -186,6 +187,7 @@ iot_os_eventgroup* iot_os_eventgroup_create(void)
 		eventgroup->group[i].id = (1 << i);
 		int ret = pipe(eventgroup->group[i].fd);
 		if (ret == -1) {
+			free(eventgroup);
 			return NULL;
 		}
 	}
@@ -392,4 +394,24 @@ void iot_os_timer_destroy(iot_os_timer *timer)
 	if (ret == -1) {
 		return;
 	}
+}
+
+void *iot_os_malloc(size_t size)
+{
+    return malloc(size);
+}
+
+void *iot_os_calloc(size_t nmemb, size_t size)
+{
+    return calloc(nmemb, size);
+}
+
+void iot_os_free(void *ptr)
+{
+    return free(ptr);
+}
+
+char *iot_os_strdup(const char *src)
+{
+    return strdup(src);
 }

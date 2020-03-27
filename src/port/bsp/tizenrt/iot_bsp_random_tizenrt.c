@@ -17,18 +17,41 @@
  ****************************************************************************/
 
 #include "iot_bsp_random.h"
-#ifdef CONFIG_ARCH_BOARD_ESP32_FAMILY
+#if defined(CONFIG_CRYPTO_RANDOM_POOL)
+#include <sys/random.h>
+#else
+#if defined(CONFIG_ARCH_BOARD_ESP32_FAMILY)
 extern uint32_t esp_random(void);
 #else
 #include <stdlib.h>
 #endif
+#endif
 
 unsigned int iot_bsp_random()
 {
-#ifdef CONFIG_ARCH_BOARD_ESP32_FAMILY
+#if defined(CONFIG_CRYPTO_RANDOM_POOL)
+    unsigned int value;
+
+    getrandom(&value, sizeof(value));
+
+    return value;
+#else
+#if defined(CONFIG_ARCH_BOARD_ESP32_FAMILY)
 	return esp_random();
 #else
-	srand(time(0));
-	return rand();
+    static int seed = 0;
+
+    if (seed == 0) {
+        srand(time(NULL));
+        seed = 1;
+    }
+
+    uint32_t rand1 = rand() << 24;
+    uint32_t rand2 = (rand() << 16) & 0x00FF0000;
+    uint32_t rand3 = (rand() << 8) & 0x0000FF00;;
+    uint32_t rand4 = rand() & 0x000000FF;
+
+    return (rand1 | rand2 | rand3 | rand4) % UINT32_MAX;
+#endif
 #endif
 }

@@ -147,7 +147,7 @@ void MQTTCleanSession(MQTTClient *c)
 	}
 }
 
-void MQTTCloseSession(MQTTClient *c)
+static void _iot_mqtt_close_session(MQTTClient *c)
 {
 	IOT_WARN("mqtt close session");
 	if (c->net && c->net->show_status)
@@ -159,6 +159,8 @@ void MQTTCloseSession(MQTTClient *c)
 	if (c->cleansession) {
 		MQTTCleanSession(c);
 	}
+	if (c->net->disconnect != NULL)
+		c->net->disconnect(c->net);
 }
 
 void st_mqtt_destroy(st_mqtt_client client)
@@ -167,10 +169,7 @@ void st_mqtt_destroy(st_mqtt_client client)
 
 	iot_os_mutex_lock(&c->mutex);
 	if (c->isconnected) {
-		MQTTCloseSession(c);
-
-		if (c->net->disconnect != NULL)
-			c->net->disconnect(c->net);
+		_iot_mqtt_close_session(c);
 	}
 	free(c->net);
 
@@ -471,8 +470,6 @@ int cycle(MQTTClient *c, iot_os_timer timer)
 exit:
 	if (!rc) {
 		rc = packet_type;
-	} else if (c->isconnected) {
-		MQTTCloseSession(c);
 	}
 
 	return rc;
@@ -516,10 +513,11 @@ int st_mqtt_yield(st_mqtt_client client, int time)
 			rc = cycle(c, command_timer);
 			iot_os_timer_destroy(&command_timer);
 		} else if (ret < 0) {
-			MQTTCloseSession(c);
-			rc = -1;
-		} else if ((rc = keepalive(c)))
-			MQTTCloseSession(c);
+			rc = E_ST_MQTT_FAILURE;
+			break;
+		} else if ((rc = keepalive(c))) {
+			break;
+		}
 	} while (!iot_os_timer_isexpired(timer));
 	iot_os_timer_destroy(&timer);
 
@@ -560,10 +558,10 @@ void MQTTRun(void *parm)
 			iot_os_timer_count_ms(timer, c->command_timeout_ms);
 			rc = cycle(c, timer);
 		} else if (ret < 0) {
-			MQTTCloseSession(c);
-			rc = -1;
-		} else if ((rc = keepalive(c)))
-			MQTTCloseSession(c);
+			rc = E_ST_MQTT_FAILURE;
+		} else {
+			rc = keepalive(c);
+		}
 
 		if (rc == E_ST_MQTT_FAILURE) {
 			IOT_WARN("MQTTRun task exit");
@@ -663,7 +661,7 @@ int MQTTConnectWithResults(st_mqtt_client client, st_mqtt_broker_info_t *broker,
 	iot_err = iot_os_timer_init(&connect_timer);
 	if (iot_err) {
 		IOT_ERROR("fail to init timer");
-		goto exit;
+		goto exit_with_netcon;
 	}
 	iot_os_timer_count_ms(connect_timer, c->command_timeout_ms);
 
@@ -691,15 +689,15 @@ int MQTTConnectWithResults(st_mqtt_client client, st_mqtt_broker_info_t *broker,
 	pbuf = (unsigned char *)malloc(pbuf_size);
 	if (pbuf == NULL) {
 		IOT_ERROR("buf malloc fail");
-		goto exit;
+		goto exit_with_netcon;
 	}
 	if ((len = MQTTSerialize_connect(pbuf, pbuf_size, &options)) <= 0) {
-		goto exit;
+		goto exit_with_netcon;
 	}
 
 	rc = sendPacket(c, pbuf, len, connect_timer);
 	if (rc) { // send the connect packet
-		goto exit;	  // there was a problem
+		goto exit_with_netcon;	  // there was a problem
 	}
 	free(pbuf);
 	pbuf = NULL;
@@ -726,19 +724,22 @@ int MQTTConnectWithResults(st_mqtt_client client, st_mqtt_broker_info_t *broker,
 		rc = E_ST_MQTT_FAILURE;
 	}
 
-exit:
+exit_with_netcon:
+	if (rc) {
+		c->net->disconnect(c->net);
+	} else {
+		c->isconnected = 1;
+		c->ping_outstanding = 0;
+		c->ping_retry_count = 0;
+	}
+
 	if (pbuf != NULL)
 		free(pbuf);
 
 	if (connect_timer != NULL)
 		iot_os_timer_destroy(&connect_timer);
 
-	if (!rc) {
-		c->isconnected = 1;
-		c->ping_outstanding = 0;
-		c->ping_retry_count = 0;
-	}
-
+exit:
 	iot_os_mutex_unlock(&c->mutex);
 
 	return rc;
@@ -861,11 +862,6 @@ exit:
 	if (timer != NULL)
 		iot_os_timer_destroy(&timer);
 
-	if (rc == E_ST_MQTT_FAILURE) {
-		IOT_WARN("mqtt subscribe fail");
-		MQTTCloseSession(c);
-	}
-
 	iot_os_mutex_unlock(&c->mutex);
 
 	return rc;
@@ -939,11 +935,6 @@ exit:
 
 	if (timer != NULL)
 		iot_os_timer_destroy(&timer);
-
-	if (rc == E_ST_MQTT_FAILURE) {
-		IOT_WARN("mqtt unsubscribe fail");
-		MQTTCloseSession(c);
-	}
 
 	iot_os_mutex_unlock(&c->mutex);
 
@@ -1062,11 +1053,6 @@ exit:
 	if (timer != NULL)
 		iot_os_timer_destroy(&timer);
 
-	if (rc == E_ST_MQTT_FAILURE) {
-		IOT_WARN("mqtt publish fail");
-		MQTTCloseSession(c);
-	}
-
 	iot_os_mutex_unlock(&c->mutex);
 
 	return rc;
@@ -1101,10 +1087,8 @@ int st_mqtt_disconnect(st_mqtt_client client)
 		rc = sendPacket(c, pbuf, len, timer);    // send the disconnect packet
 	}
 	IOT_INFO("mqtt send disconnect");
-	MQTTCloseSession(c);
+	_iot_mqtt_close_session(c);
 
-	if (c->net->disconnect != NULL)
-		c->net->disconnect(c->net);
 exit:
 	if (timer != NULL)
 		iot_os_timer_destroy(&timer);

@@ -94,6 +94,10 @@ choice STDK_IOT_CORE_OS_SUPPORT
 
 config STDK_IOT_CORE_OS_SUPPORT_FREERTOS
     bool "FreeRTOS"
+config STDK_IOT_CORE_OS_SUPPORT_TIZENRT
+    bool "TizenRT"
+config STDK_IOT_CORE_OS_SUPPORT_POSIX
+    bool "Posix"
 endchoice
 
 config STDK_DEBUG_MEMORY_CHECK

@@ -4,7 +4,7 @@
 
 ifdef CONFIG_STDK_IOT_CORE
 
-COMPONENT_ADD_INCLUDEDIRS += include include/bsp include/os include/mqtt include/mqtt/freertos
+COMPONENT_ADD_INCLUDEDIRS += include include/bsp include/os include/mqtt include/mqtt/freertos include/external
 
 COMPONENT_SRCDIRS += ./
 
@@ -28,10 +28,11 @@ else
 	COMPONENT_ADD_INCLUDEDIRS += include/bsp/posix
 endif
 
-# Todo : define os config
 ifeq ($(CONFIG_STDK_IOT_CORE_OS_SUPPORT_FREERTOS),y)
 	COMPONENT_SRCDIRS += port/os/freertos
-else
+else ifeq ($(CONFIG_STDK_IOT_CORE_OS_SUPPORT_TIZENRT),y)
+	COMPONENT_SRCDIRS += port/os/tizenrt
+else ifeq ($(CONFIG_STDK_IOT_CORE_OS_SUPPORT_POSIX),y)
 	COMPONENT_SRCDIRS += port/os/posix
 endif
 
@@ -71,9 +72,12 @@ CPPFLAGS += -include $(COMPONENT_PATH)/include/iot_common.h
 COMPONENT_SRCDIRS += mqtt/client mqtt/packet mqtt/client/freertos
 
 BILERPLATE_HEADER=$(COMPONENT_PATH)/include/certs/boilerplate.h
+ROOT_CA_FILE_LIST=$(wildcard $(COMPONENT_PATH)/certs/root_ca_*.pem)
 ROOT_CA_FILE=$(COMPONENT_PATH)/certs/root_ca.pem
 ROOT_CA_SOURCE=$(COMPONENT_PATH)/iot_root_ca.c
 ROOT_CA_BACKUP_FILE=$(ROOT_CA_SOURCE).bak
+$(shell rm $(ROOT_CA_FILE) 2> /dev/null)
+$(foreach file,$(ROOT_CA_FILE_LIST),$(shell cat $(file) >> $(ROOT_CA_FILE)))
 result := $(shell cat $(BILERPLATE_HEADER) > $(ROOT_CA_SOURCE); echo $$?;)
 ifneq ($(result),0)
 	$(error)
@@ -85,6 +89,7 @@ endif
 $(shell sed -i.bak 's/_.*pem/st_root_ca/g' $(ROOT_CA_SOURCE))
 $(shell sed -i.bak 's/unsigned/const unsigned/g' $(ROOT_CA_SOURCE))
 $(shell rm $(ROOT_CA_BACKUP_FILE))
+$(shell rm $(ROOT_CA_FILE))
 
 CFLAGS += -std=c99
 
