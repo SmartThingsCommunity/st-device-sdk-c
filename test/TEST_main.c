@@ -187,6 +187,14 @@ int TEST_FUNC_iot_main()
     return cmocka_run_group_tests_name("iot_main.c", tests, NULL, NULL);
 }
 
+int TEST_FUNC_iot_mqtt_client()
+{
+    const struct CMUnitTest tests[] = {
+            cmocka_unit_test(TC_st_mqtt_create_success),
+    };
+    return cmocka_run_group_tests_name("iot_mqtt_client.c", tests, NULL, NULL);
+}
+
 int main(void) {
     int err = 0;
 
@@ -199,6 +207,7 @@ int main(void) {
     err += TEST_FUNC_iot_easysetup_d2d();
     err += TEST_FUNC_iot_easysetup_crypto();
     err += TEST_FUNC_iot_main();
+    err += TEST_FUNC_iot_mqtt_client();
 
     return err;
 }

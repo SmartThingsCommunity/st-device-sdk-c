@@ -32,6 +32,7 @@ if(ENABLE_STDK_TEST)
                    TC_FUNC_iot_easysetup_d2d.c
                    TC_FUNC_iot_easysetup_crypto.c
                    TC_FUNC_iot_main.c
+                   TC_FUNC_iot_mqtt_client.c
                    )
 
     target_link_libraries(stdk_test
