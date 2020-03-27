@@ -66,7 +66,7 @@ enum iot_command_type {
 	IOT_COMMAND_NOTIFICATION_RECEIVED,
 
 	IOT_COMMAND_TYPE_MAX, /* MAX : under 32 */
-	IOT_CMD_STATE_HANDLE,
+	IOT_COMMNAD_STATE_UPDATE,
 };
 
 enum iot_easysetup_step {

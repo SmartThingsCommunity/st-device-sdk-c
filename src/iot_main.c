@@ -274,6 +274,15 @@ static void _do_status_report(struct iot_context *ctx,
 
 }
 
+static void _clear_cmd_status(struct iot_context *ctx, enum iot_command_type cmd_type)
+{
+	if (cmd_type != IOT_COMMNAD_STATE_UPDATE) {
+		ctx->cmd_count[cmd_type]--;
+		if (!ctx->cmd_count[cmd_type])
+		ctx->cmd_status &= ~(1u << cmd_type);
+	}
+}
+
 static iot_error_t _do_iot_main_command(struct iot_context *ctx,
 	struct iot_command *cmd)
 {
@@ -302,7 +311,7 @@ static iot_error_t _do_iot_main_command(struct iot_context *ctx,
 	}
 
 	switch (cmd->cmd_type) {
-		case IOT_CMD_STATE_HANDLE:
+		case IOT_COMMNAD_STATE_UPDATE:
 			state_data = (struct iot_state_data *)cmd->param;
 			if ((ctx->curr_state > IOT_STATE_UNKNOWN) &&
 					(ctx->curr_state == state_data->iot_state)) {
@@ -641,10 +650,8 @@ static iot_error_t _do_iot_main_command(struct iot_context *ctx,
 out_do_cmd:
 	if (err != IOT_ERROR_NONE) {
 		IOT_ERROR("failed to handle cmd: %d\n", cmd->cmd_type);
-	} else if (cmd->cmd_type != IOT_CMD_STATE_HANDLE) {
-		ctx->cmd_count[cmd->cmd_type]--;
-		if (!ctx->cmd_count[cmd->cmd_type])
-			ctx->cmd_status &= ~(1 << cmd->cmd_type);
+	} else {
+		_clear_cmd_status(ctx, cmd->cmd_type);
 	}
 
 	return err;
@@ -1301,8 +1308,8 @@ int st_conn_start(IOT_CTX *iot_ctx, st_status_cb status_cb,
 	state_data.iot_state = IOT_STATE_INITIALIZED;
 	state_data.opt = IOT_STATE_OPT_NONE;
 
-	iot_err = iot_command_send(ctx, IOT_CMD_STATE_HANDLE,
-				&state_data, sizeof(struct iot_state_data));
+	iot_err = iot_command_send(ctx, IOT_COMMNAD_STATE_UPDATE,
+                               &state_data, sizeof(struct iot_state_data));
 
 	if (iot_err != IOT_ERROR_NONE) {
 		IOT_ERROR("failed to send command(%d)", iot_err);

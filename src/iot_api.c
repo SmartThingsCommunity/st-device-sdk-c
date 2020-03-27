@@ -30,6 +30,14 @@
 
 #include "JSON.h"
 
+static void _set_cmd_status(struct iot_context *ctx, enum iot_command_type cmd_type)
+{
+	if ((cmd_type) != IOT_COMMNAD_STATE_UPDATE) {
+		ctx->cmd_status |= (1u << (cmd_type));
+		ctx->cmd_count[(cmd_type)]++;
+	}
+}
+
 iot_error_t iot_command_send(struct iot_context *ctx,
 	enum iot_command_type new_cmd, const void *param, int param_size)
 {
@@ -58,10 +66,7 @@ iot_error_t iot_command_send(struct iot_context *ctx,
 			free(cmd_data.param);
 		err = IOT_ERROR_BAD_REQ;
 	} else {
-		if (new_cmd != IOT_CMD_STATE_HANDLE) {
-			ctx->cmd_status |= (1u << new_cmd);
-			ctx->cmd_count[new_cmd]++;
-		}
+		_set_cmd_status(ctx, new_cmd);
 
 		iot_os_eventgroup_set_bits(ctx->iot_events,
 			IOT_EVENT_BIT_COMMAND);
@@ -174,8 +179,8 @@ iot_error_t iot_state_update(struct iot_context *ctx,
 	state_data.iot_state = new_state;
 	state_data.opt = opt;
 
-	err = iot_command_send(ctx, IOT_CMD_STATE_HANDLE,
-			&state_data, sizeof(struct iot_state_data));
+	err = iot_command_send(ctx, IOT_COMMNAD_STATE_UPDATE,
+                           &state_data, sizeof(struct iot_state_data));
 
 	return err;
 }
