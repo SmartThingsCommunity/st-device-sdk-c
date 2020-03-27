@@ -342,7 +342,7 @@ static iot_error_t _do_iot_main_command(struct iot_context *ctx,
 			if (!conf) {
 				IOT_ERROR("failed to get iot_wifi_conf\n");
 				if (ctx->req_state != IOT_STATE_CHANGE_FAILED) {
-					ctx->cmd_err |= (1 << cmd->cmd_type);
+					ctx->cmd_err |= (1u << cmd->cmd_type);
 					next_state = IOT_STATE_CHANGE_FAILED;
 					state_opt = ctx->req_state;
 					err = iot_state_update(ctx,
@@ -357,7 +357,7 @@ static iot_error_t _do_iot_main_command(struct iot_context *ctx,
 			if (err < 0) {
 				IOT_ERROR("failed to set wifi_set_mode\n");
 				if (ctx->req_state != IOT_STATE_CHANGE_FAILED) {
-					ctx->cmd_err |= (1 << cmd->cmd_type);
+					ctx->cmd_err |= (1u << cmd->cmd_type);
 					next_state = IOT_STATE_CHANGE_FAILED;
 					state_opt = ctx->req_state;
 					err = iot_state_update(ctx,
@@ -398,7 +398,7 @@ static iot_error_t _do_iot_main_command(struct iot_context *ctx,
 					if (err != IOT_ERROR_NONE) {
 						IOT_ERROR("failed to iot_easysetup_init(%d)", err);
 						if (ctx->req_state != IOT_STATE_CHANGE_FAILED) {
-							ctx->cmd_err |= (1 << cmd->cmd_type);
+							ctx->cmd_err |= (1u << cmd->cmd_type);
 							next_state = IOT_STATE_CHANGE_FAILED;
 							state_opt = ctx->req_state;
 							err = iot_state_update(ctx,
@@ -464,7 +464,7 @@ static iot_error_t _do_iot_main_command(struct iot_context *ctx,
 
 						iot_device_cleanup(ctx);
 
-						ctx->cmd_err |= (1 << cmd->cmd_type);
+						ctx->cmd_err |= (1u << cmd->cmd_type);
 						next_state = IOT_STATE_CHANGE_FAILED;
 						state_opt = ctx->req_state;
 						/* The device will be reboot forcely */
@@ -516,7 +516,7 @@ static iot_error_t _do_iot_main_command(struct iot_context *ctx,
 			} else if (err != IOT_ERROR_NONE) {
 				IOT_ERROR("failed to iot_es_connect for registration\n");
 				if (ctx->req_state != IOT_STATE_CHANGE_FAILED) {
-					ctx->cmd_err |= (1 << cmd->cmd_type);
+					ctx->cmd_err |= (1u << cmd->cmd_type);
 					next_state = IOT_STATE_CHANGE_FAILED;
 					state_opt = ctx->req_state;
 					err = iot_state_update(ctx,
@@ -543,7 +543,7 @@ static iot_error_t _do_iot_main_command(struct iot_context *ctx,
 			}
 
 			if (err != IOT_ERROR_NONE) {
-				ctx->cmd_err |= (1 << cmd->cmd_type);
+				ctx->cmd_err |= (1u << cmd->cmd_type);
 				next_state = IOT_STATE_CHANGE_FAILED;
 				state_opt = ctx->req_state;
 			} else {
@@ -579,7 +579,7 @@ static iot_error_t _do_iot_main_command(struct iot_context *ctx,
 				next_state = IOT_STATE_UNKNOWN;
 			} else if (err != IOT_ERROR_NONE) {
 				IOT_ERROR("failed to iot_es_connect for communication\n");
-				ctx->cmd_err |= (1 << cmd->cmd_type);
+				ctx->cmd_err |= (1u << cmd->cmd_type);
 				next_state = IOT_STATE_CHANGE_FAILED;
 				state_opt = ctx->req_state;
 			} else {
