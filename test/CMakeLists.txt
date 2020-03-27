@@ -20,8 +20,9 @@ if(ENABLE_STDK_TEST)
 
     add_executable(stdk_test
                    TEST_main.c
-                   TC_MOCK_functions.c
                    TC_MOCK_functions.h
+                   TC_MOCK_iot_bsp.c
+                   TC_MOCK_iot_os.c
                    TCs.h
                    TC_FUNC_iot_util.c
                    TC_FUNC_iot_api.c
