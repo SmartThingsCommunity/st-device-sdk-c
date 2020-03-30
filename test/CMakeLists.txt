@@ -4,6 +4,7 @@ if(ENABLE_STDK_TEST)
     add_subdirectory(${CMOCKA_DIR})
     include_directories(${cmocka-header_SOURCE_DIR}
                         ${st_device_sdk_c_SOURCE_DIR}/src/include
+                        ${st_device_sdk_c_SOURCE_DIR}/src/include/certs
                         ${st_device_sdk_c_SOURCE_DIR}/src/include/bsp
                         ${st_device_sdk_c_SOURCE_DIR}/src/include/bsp/posix
                         ${st_device_sdk_c_SOURCE_DIR}/src/include/os
