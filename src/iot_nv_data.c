@@ -1114,7 +1114,7 @@ exit:
 iot_error_t iot_nv_erase(iot_nvd_t nv_type)
 {
 	HIT();
-	IOT_WARN_CHECK((nv_type < 0 || nv_type > IOT_NVD_MAX), IOT_ERROR_INVALID_ARGS, "Invalid args");
+	IOT_WARN_CHECK((nv_type < 0 || nv_type >= IOT_NVD_MAX), IOT_ERROR_INVALID_ARGS, "Invalid args");
 
 	iot_error_t ret;
 
