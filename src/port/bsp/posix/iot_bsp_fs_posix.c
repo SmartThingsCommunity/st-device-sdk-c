@@ -1,6 +1,6 @@
 /* ***************************************************************************
  *
- * Copyright 2019 Samsung Electronics All Rights Reserved.
+ * Copyright (c) 2019-2020 Samsung Electronics All Rights Reserved.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -106,6 +106,8 @@ iot_error_t iot_bsp_fs_close(iot_bsp_fs_handle_t handle)
 iot_error_t iot_bsp_fs_remove(const char* filename)
 {
 	int ret = remove(filename);
+
+	IOT_DEBUG_CHECK(((ret != 0) && (errno == ENOENT)), IOT_ERROR_FS_NO_FILE, "remove fail [%s]", strerror(errno));
 	IOT_DEBUG_CHECK(ret != 0, IOT_ERROR_FS_REMOVE_FAIL, "remove fail [%s]", strerror(errno));
 
 	return IOT_ERROR_NONE;
