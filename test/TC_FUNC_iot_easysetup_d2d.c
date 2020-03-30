@@ -463,7 +463,7 @@ extern iot_error_t _es_confirminfo_handler(struct iot_context *ctx, char *in_pay
 
 static char *_generate_confirminfo_payload(iot_crypto_cipher_info_t *cipher, enum ownership_validation_feature feature,
                                     const char *serial_number_for_qr);
-static void assert_confirm_and_confirminfo(iot_crypto_cipher_info_t *cipher, char *payload);
+static void assert_empty_json(iot_crypto_cipher_info_t *cipher, char *payload);
 
 void TC_STATIC_es_confirminfo_handler_null_parameters(void **state)
 {
@@ -549,7 +549,7 @@ void TC_STATIC_es_confirminfo_handler_justworks_and_pin(void **state)
     err = _es_confirminfo_handler(context, in_payload, &out_payload);
     // Then
     assert_int_equal(err, IOT_ERROR_NONE);
-    assert_confirm_and_confirminfo(server_cipher, out_payload);
+    assert_empty_json(server_cipher, out_payload);
     // Teardown: justworks
     free(in_payload);
     free(out_payload);
@@ -561,7 +561,7 @@ void TC_STATIC_es_confirminfo_handler_justworks_and_pin(void **state)
     err = _es_confirminfo_handler(context, in_payload, &out_payload);
     // Then
     assert_int_equal(err, IOT_ERROR_NONE);
-    assert_confirm_and_confirminfo(server_cipher, out_payload);
+    assert_empty_json(server_cipher, out_payload);
     // Teardown: pin
     free(in_payload);
     free(out_payload);
@@ -596,7 +596,7 @@ void TC_STATIC_es_confirminfo_handler_qr_code(void **state)
     err = _es_confirminfo_handler(context, in_payload, &out_payload);
     // Then
     assert_int_equal(err, IOT_ERROR_NONE);
-    assert_confirm_and_confirminfo(server_cipher, out_payload);
+    assert_empty_json(server_cipher, out_payload);
 
     // Teardown: valid serial number
     free(in_payload);
@@ -644,7 +644,7 @@ void TC_STATIC_es_confirminfo_handler_button(void **state)
     err = _es_confirminfo_handler(context, in_payload, &out_payload);
     // Then
     assert_int_equal(err, IOT_ERROR_NONE);
-    assert_confirm_and_confirminfo(server_cipher, out_payload);
+    assert_empty_json(server_cipher, out_payload);
 
     // Teardown
     free(in_payload);
@@ -684,7 +684,7 @@ void TC_STATIC_es_confirm_handler_success(void** state)
     err = _es_confirm_handler(context, in_payload, &out_payload);
     // Then
     assert_int_equal(err, IOT_ERROR_NONE);
-    assert_confirm_and_confirminfo(server_cipher, out_payload);
+    assert_empty_json(server_cipher, out_payload);
 
     // Teardown
     free(context->pin);
@@ -770,6 +770,30 @@ void TC_STATIC_es_confirm_handler_non_pin_otm(void** state)
     // Teardown
     free(context->pin);
     free(in_payload);
+    free(out_payload);
+    _free_cipher(server_cipher);
+}
+
+extern iot_error_t _es_setupcomplete_handler(struct iot_context *ctx, char *in_payload, char **out_payload);
+
+void TC_STATIC_es_setupcomplete_handler_success(void** state)
+{
+    iot_error_t err;
+    struct iot_context *context;
+    iot_crypto_cipher_info_t *server_cipher;
+    char *out_payload;
+
+    // Given
+    context = (struct iot_context *)*state;
+    context->es_crypto_cipher_info = _generate_device_cipher(NULL, 0);
+    server_cipher = _generate_server_cipher(context->es_crypto_cipher_info->iv, context->es_crypto_cipher_info->iv_len);
+    // When
+    err = _es_setupcomplete_handler(context, NULL, &out_payload);
+    // Then
+    assert_int_equal(err, IOT_ERROR_NONE);
+    assert_empty_json(server_cipher, out_payload);
+
+    // Teardown
     free(out_payload);
     _free_cipher(server_cipher);
 }
@@ -1234,7 +1258,7 @@ static void assert_wifiscaninfo_payload(iot_crypto_cipher_info_t *cipher, char *
     JSON_DELETE(root);
 }
 
-static void assert_confirm_and_confirminfo(iot_crypto_cipher_info_t *cipher, char *payload)
+static void assert_empty_json(iot_crypto_cipher_info_t *cipher, char *payload)
 {
     JSON_H* root;
     JSON_H* item;
