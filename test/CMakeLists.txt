@@ -23,6 +23,7 @@ if(ENABLE_STDK_TEST)
                    TC_MOCK_functions.h
                    TC_MOCK_iot_bsp.c
                    TC_MOCK_iot_os.c
+                   TC_MOCK_iot_net.c
                    TCs.h
                    TC_FUNC_iot_util.c
                    TC_FUNC_iot_api.c
