@@ -44,7 +44,7 @@ enum ownership_validation_feature {
 #define IOT_ES_URI_POST_CONFIRM			"/confirm"
 #define IOT_ES_URI_POST_WIFIPROVISIONINGINFO	"/wifiprovisioninginfo"
 #define IOT_ES_URI_POST_SETUPCOMPLETE		"/setupcomplete"
-#define IOT_ES_URI_POST_LOGS			"/logs"
+#define IOT_ES_URI_POST_LOGS			"/logs/dump"
 
 #define IOT_ES_URI_GET_DEVICEINFO		"/deviceinfo"
 #define IOT_ES_URI_GET_WIFISCANINFO		"/wifiscaninfo"
