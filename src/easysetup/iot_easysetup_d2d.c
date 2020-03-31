@@ -640,11 +640,11 @@ iot_error_t _es_keyinfo_handler(struct iot_context *ctx, char *in_payload, char 
 	p_datetime_str = (unsigned char *)JSON_GET_STRING_VALUE(recv);
 
 	input_len = (unsigned int)strlen((char*)p_datetime_str);
-	output_len = input_len;
+	output_len = IOT_CRYPTO_CAL_B64_DEC_LEN(input_len);
 	if ((decode_buf = iot_os_malloc(output_len)) == NULL) {
 		IOT_ERROR("failed to malloc for decode_buf");
 		err = IOT_ERROR_EASYSETUP_MEM_ALLOC_ERROR;
-		goto exit;
+		goto exit_secret;
 	}
 	memset(decode_buf, 0, output_len);
 
@@ -654,32 +654,31 @@ iot_error_t _es_keyinfo_handler(struct iot_context *ctx, char *in_payload, char 
 	if (err) {
 		IOT_ERROR("base64 decode error!! : %d", err);
 		err = IOT_ERROR_EASYSETUP_BASE64_DECODE_ERROR;
-		goto exit;
+		goto exit_secret;
 	}
 
 	IOT_DEBUG("datetime = %s", decode_buf);
 
 	err = _es_time_set(decode_buf);
-	if (err)
-		goto exit;
-
-	if (decode_buf)
-		free(decode_buf);
+	if (err) {
+		goto exit_secret;
+	}
+	iot_os_free(decode_buf);
 	decode_buf = NULL;
 
 	if ((recv = JSON_GET_OBJECT_ITEM(root, "regionaldatetime")) == NULL) {
 		IOT_INFO("no regionaldatetime info");
 		err  = IOT_ERROR_EASYSETUP_INVALID_REQUEST;
-		goto exit;
+		goto exit_secret;
 	}
 	p_regionaldatetime_str = (unsigned char *)JSON_GET_STRING_VALUE(recv);
 
 	input_len = (unsigned int)strlen((char*)p_regionaldatetime_str);
-	output_len = input_len;
+	output_len = IOT_CRYPTO_CAL_B64_DEC_LEN(input_len);
 	if ((decode_buf = iot_os_malloc(output_len)) == NULL) {
 		IOT_ERROR("failed to malloc for decode_buf");
 		err = IOT_ERROR_EASYSETUP_MEM_ALLOC_ERROR;
-		goto exit;
+		goto exit_secret;
 	}
 	memset(decode_buf, 0, output_len);
 
@@ -689,28 +688,25 @@ iot_error_t _es_keyinfo_handler(struct iot_context *ctx, char *in_payload, char 
 	if (err) {
 		IOT_ERROR("base64 decode error!! : %d", err);
 		err = IOT_ERROR_EASYSETUP_BASE64_DECODE_ERROR;
-		goto exit;
+		goto exit_secret;
 	}
-
 	IOT_DEBUG("regionaldatetime = %s", decode_buf);
-
-	if (decode_buf)
-		free(decode_buf);
+	iot_os_free(decode_buf); // TODO: how to use this value
 	decode_buf = NULL;
 
 	if ((recv = JSON_GET_OBJECT_ITEM(root, "timezoneid")) == NULL) {
 		IOT_INFO("no timezoneid info");
 		err  = IOT_ERROR_EASYSETUP_INVALID_REQUEST;
-		goto exit;
+		goto exit_secret;
 	}
 	p_timezoneid_str = (unsigned char *)JSON_GET_STRING_VALUE(recv);
 
 	input_len = (unsigned int)strlen((char*)p_timezoneid_str);
-	output_len = input_len;
+	output_len = IOT_CRYPTO_CAL_B64_DEC_LEN(input_len);
 	if ((decode_buf = iot_os_malloc(output_len)) == NULL) {
 		IOT_ERROR("failed to malloc for decode_buf");
 		err = IOT_ERROR_EASYSETUP_MEM_ALLOC_ERROR;
-		goto exit;
+		goto exit_secret;
 	}
 
 	memset(decode_buf, 0, output_len);
@@ -721,16 +717,14 @@ iot_error_t _es_keyinfo_handler(struct iot_context *ctx, char *in_payload, char 
 	if (err) {
 		IOT_ERROR("base64 decode error!! : %d", err);
 		err = IOT_ERROR_EASYSETUP_BASE64_DECODE_ERROR;
-		goto exit;
+		goto exit_secret;
 	}
 
-	IOT_DEBUG("timezoneid = %s", decode_buf);
+	IOT_DEBUG("timezoneid = %s", decode_buf); // TODO: where to store
 
-temp_exit://if app is published with the related change, it will be deleted.
+temp_exit:// TODO: once app is published with time info feature, it should be deleted.
 
-	if (root)
-		JSON_DELETE(root);
-	root = NULL;
+	JSON_DELETE(root);
 
 	root = JSON_CREATE_OBJECT();
 	if (!root) {
@@ -755,7 +749,7 @@ temp_exit://if app is published with the related change, it will be deleted.
 	plain_msg = JSON_PRINT(root);
 
 	err = _encrypt_and_encode(ctx->es_crypto_cipher_info, (unsigned char*) plain_msg, strlen(plain_msg), &enc_msg);
-	if (!enc_msg) {
+	if (err != IOT_ERROR_NONE) {
 		IOT_ERROR("encrypt and encode failed 0x%x", err);
 		goto exit_secret;
 	}
@@ -1098,7 +1092,7 @@ iot_error_t _es_confirm_handler(struct iot_context *ctx, char *in_payload, char 
 	plain_msg = JSON_PRINT(root);
 
 	err = _encrypt_and_encode(ctx->es_crypto_cipher_info, (unsigned char*) plain_msg, strlen(plain_msg), &enc_msg);
-	if (!enc_msg) {
+	if (err != IOT_ERROR_NONE) {
 		IOT_ERROR("encrypt and encode failed 0x%x", err);
 		goto out;
 	}
@@ -1447,7 +1441,7 @@ iot_error_t _es_wifiprovisioninginfo_handler(struct iot_context *ctx, char *in_p
 	plain_msg = JSON_PRINT(root);
 
 	err = _encrypt_and_encode(ctx->es_crypto_cipher_info, (unsigned char*) plain_msg, strlen(plain_msg), &enc_msg);
-	if (!enc_msg) {
+	if (err != IOT_ERROR_NONE) {
 		IOT_ERROR("encrypt and encode failed 0x%x", err);
 		goto out;
 	}
@@ -1512,7 +1506,7 @@ iot_error_t _es_setupcomplete_handler(struct iot_context *ctx, char *in_payload,
 	plain_msg = JSON_PRINT(root);
 
 	err = _encrypt_and_encode(ctx->es_crypto_cipher_info, (unsigned char*) plain_msg, strlen(plain_msg), &enc_msg);
-	if (!enc_msg) {
+	if (err != IOT_ERROR_NONE) {
 		IOT_ERROR("encrypt and encode failed 0x%x", err);
 		goto out;
 	}
