@@ -168,12 +168,12 @@ iot_error_t iot_state_update(struct iot_context *ctx,
 	struct iot_state_data state_data;
 	iot_error_t err;
 
-	if ((new_state == IOT_STATE_PROV_CONFIRMING)
+	if ((new_state == IOT_STATE_PROV_CONFIRM)
 			&& (opt == IOT_STATE_OPT_NEED_INTERACT)) {
 		IOT_INFO("Trigger user_event with 0x%0x",
-				(1u << (unsigned)IOT_STATE_PROV_CONFIRMING));
+				(1u << (unsigned)IOT_STATE_PROV_CONFIRM));
 		iot_os_eventgroup_set_bits(ctx->usr_events,
-				(1u << (unsigned)IOT_STATE_PROV_CONFIRMING));
+				(1u << (unsigned)IOT_STATE_PROV_CONFIRM));
 	}
 
 	state_data.iot_state = new_state;
