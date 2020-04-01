@@ -50,7 +50,7 @@ int iot_os_thread_create(void * thread_function, const char* name, int stack_siz
 	pthread_attr_destroy(&attr);
 
 	if (thread_handle != NULL) {
-		thread_handle = (iot_os_thread*)&thread;
+		*thread_handle = (iot_os_thread*)thread;
 	}
 
 	return iot_os_true;
@@ -138,6 +138,9 @@ int iot_os_queue_send(iot_os_queue* queue_handle, void * data, unsigned int wait
 {
 	iot_os_queue_posix_t* queue = (iot_os_queue_posix_t*)queue_handle;
 	struct timespec ts = {0,};
+
+	if (!queue || !data)
+	    return iot_os_false;
 
 	ts.tv_sec = wait_time_ms / 1000;
 	ts.tv_nsec = (wait_time_ms % 1000) * 1000000;

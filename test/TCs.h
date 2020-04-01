@@ -116,6 +116,10 @@ void TC_iot_nv_get_public_key_success(void **state);
 void TC_iot_nv_get_public_key_null_parameters(void **state);
 void TC_iot_nv_get_serial_number_success(void **state);
 void TC_iot_nv_get_serial_number_null_parameters(void **state);
+void TC_iot_nv_get_device_id_null_parameters(void **state);
+void TC_iot_nv_set_device_id_null_parameter(void **state);
+void TC_iot_nv_get_set_erase_device_id_success(void **state);
+void TC_iot_nv_erase_internal_failure(void** state);
 
 // TCs for iot_easysetup_crypto.c
 int TC_iot_easysetup_crypto_setup(void **state);
@@ -133,6 +137,7 @@ void TC_iot_easysetup_request_handler_null_parameters(void **state);
 void TC_STATIC_es_deviceinfo_handler_null_parameter(void **state);
 void TC_STATIC_es_deviceinfo_handler_success(void **state);
 void TC_STATIC_es_keyinfo_handler_success(void **state);
+void TC_STATIC_es_keyinfo_handler_success_with_y2038(void **state);
 void TC_STATIC_es_wifiprovisioninginfo_handler_success(void **state);
 void TC_STATIC_es_crypto_cipher_gen_iv_success(void **state);
 void TC_STATIC_es_wifiscaninfo_handler_invalid_parameters(void **state);
@@ -145,11 +150,19 @@ void TC_STATIC_es_confirminfo_handler_button(void **state);
 void TC_STATIC_es_confirm_handler_success(void** state);
 void TC_STATIC_es_confirm_handler_invalid_pin(void** state);
 void TC_STATIC_es_confirm_handler_non_pin_otm(void** state);
+void TC_STATIC_es_setupcomplete_handler_success(void** state);
 
 // TCs for iot_main.c
 void TC_st_conn_init_null_parameters(void **state);
 void TC_st_conn_init_malloc_failure(void **state);
 void TC_st_conn_init_wrong_onboarding_config(void **state);
 void TC_st_conn_init_wrong_device_info(void **state);
+void TC_st_conn_init_success(void **state);
+void TC_st_conn_cleanup_invalid_parameters(void **state);
+void TC_st_conn_cleanup_success(void **state);
+
+// TCs for iot_mqtt_client.c
+void TC_st_mqtt_create_success(void** state);
+void TC_st_mqtt_connect_success(void** state);
 
 #endif //ST_DEVICE_SDK_C_TCS_H

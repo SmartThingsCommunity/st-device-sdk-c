@@ -18,7 +18,6 @@
 
 #include <stdlib.h>
 #include <string.h>
-#include <cJSON.h>
 #if defined(STDK_IOT_CORE_SERIALIZE_CBOR)
 #include <cbor.h>
 #endif
@@ -29,13 +28,14 @@
 #include "iot_capability.h"
 #include "iot_os_util.h"
 #include "iot_bsp_system.h"
+#include "JSON.h"
 
 #define MAX_SQNUM 0x7FFFFFFF
 
 static int32_t sqnum = 0;
 
 static iot_error_t _iot_parse_noti_data(void *data, iot_noti_data_t *noti_data);
-static iot_error_t _iot_parse_cmd_data(cJSON* cmditem, char** component,
+static iot_error_t _iot_parse_cmd_data(JSON_H* cmditem, char** component,
 			char** capability, char** command, iot_cap_cmd_data_t* cmd_data);
 static iot_error_t _iot_make_evt_data(const char* component, const char* capability,
 			uint8_t arr_size, iot_cap_evt_data_t** evt_data_arr, iot_cap_msg_t *msg);
@@ -461,9 +461,9 @@ static iot_error_t _iot_parse_noti_data(void *data, iot_noti_data_t *noti_data)
 {
 	iot_error_t err = IOT_ERROR_NONE;
 	size_t noti_str_len;
-	cJSON *json = NULL;
-	cJSON *noti_type = NULL;
-	cJSON *item = NULL;
+	JSON_H *json = NULL;
+	JSON_H *noti_type = NULL;
+	JSON_H *item = NULL;
 	char *payload = NULL;
 	char time_str[11] = {0,};
 
@@ -481,21 +481,21 @@ static iot_error_t _iot_parse_noti_data(void *data, iot_noti_data_t *noti_data)
 		return IOT_ERROR_BAD_REQ;
 	}
 
-	json = cJSON_Parse(payload_json);
+	json = JSON_PARSE(payload_json);
 	free(payload_json);
 #else
-	json = cJSON_Parse(data);
+	json = JSON_PARSE(data);
 #endif
 	if (json == NULL) {
 		IOT_ERROR("Cannot parse by json");
 		return IOT_ERROR_BAD_REQ;
 	}
 
-	payload = cJSON_PrintUnformatted(json);
+	payload = JSON_PRINT(json);
 	IOT_INFO("payload : %s", payload);
 	free(payload);
 
-	noti_type = cJSON_GetObjectItem(json, "event");
+	noti_type = JSON_GET_OBJECT_ITEM(json, "event");
 	if (noti_type == NULL) {
 		IOT_ERROR("there is no event in raw_msgn");
 		err = IOT_ERROR_BAD_REQ;
@@ -525,7 +525,7 @@ static iot_error_t _iot_parse_noti_data(void *data, iot_noti_data_t *noti_data)
 
 		noti_data->type = _IOT_NOTI_TYPE_JWT_EXPIRED;
 
-		item = cJSON_GetObjectItem(json, "currentTime");
+		item = JSON_GET_OBJECT_ITEM(json, "currentTime");
 		if (item == NULL) {
 			IOT_ERROR("there is no currentTime in raw_msgn");
 			err = IOT_ERROR_BAD_REQ;
@@ -547,7 +547,7 @@ static iot_error_t _iot_parse_noti_data(void *data, iot_noti_data_t *noti_data)
 
 		noti_data->type = _IOT_NOTI_TYPE_RATE_LIMIT;
 
-		item = cJSON_GetObjectItem(json, "count");
+		item = JSON_GET_OBJECT_ITEM(json, "count");
 		if (item == NULL) {
 			IOT_ERROR("there is no count in raw_msgn");
 			err = IOT_ERROR_BAD_REQ;
@@ -555,7 +555,7 @@ static iot_error_t _iot_parse_noti_data(void *data, iot_noti_data_t *noti_data)
 		}
 		noti_data->raw.rate_limit.count = item->valueint;
 
-		item = cJSON_GetObjectItem(json, "threshold");
+		item = JSON_GET_OBJECT_ITEM(json, "threshold");
 		if (item == NULL) {
 			IOT_ERROR("there is no threshold in raw_msgn");
 			err = IOT_ERROR_BAD_REQ;
@@ -563,7 +563,7 @@ static iot_error_t _iot_parse_noti_data(void *data, iot_noti_data_t *noti_data)
 		}
 		noti_data->raw.rate_limit.threshold = item->valueint;
 
-		item = cJSON_GetObjectItem(json, "remainingTime");
+		item = JSON_GET_OBJECT_ITEM(json, "remainingTime");
 		if (item == NULL) {
 			IOT_ERROR("there is no remainingTime in raw_msgn");
 			err = IOT_ERROR_BAD_REQ;
@@ -571,7 +571,7 @@ static iot_error_t _iot_parse_noti_data(void *data, iot_noti_data_t *noti_data)
 		}
 		noti_data->raw.rate_limit.remainingTime = item->valueint;
 
-		item = cJSON_GetObjectItem(json, "sequenceNumber");
+		item = JSON_GET_OBJECT_ITEM(json, "sequenceNumber");
 		if (item == NULL) {
 			IOT_ERROR("there is no sequenceNumber in raw_msgn");
 			err = IOT_ERROR_BAD_REQ;
@@ -589,7 +589,7 @@ static iot_error_t _iot_parse_noti_data(void *data, iot_noti_data_t *noti_data)
 
 		noti_data->type = _IOT_NOTI_TYPE_QUOTA_REACHED;
 
-		item = cJSON_GetObjectItem(json, "used");
+		item = JSON_GET_OBJECT_ITEM(json, "used");
 		if (item == NULL) {
 			IOT_ERROR("there is no used in raw_msgn");
 			err = IOT_ERROR_BAD_REQ;
@@ -597,7 +597,7 @@ static iot_error_t _iot_parse_noti_data(void *data, iot_noti_data_t *noti_data)
 		}
 		noti_data->raw.quota.used = item->valueint;
 
-		item = cJSON_GetObjectItem(json, "limit");
+		item = JSON_GET_OBJECT_ITEM(json, "limit");
 		if (item == NULL) {
 			IOT_ERROR("there is no limit in raw_msgn");
 			err = IOT_ERROR_BAD_REQ;
@@ -610,7 +610,7 @@ static iot_error_t _iot_parse_noti_data(void *data, iot_noti_data_t *noti_data)
 out_noti_parse:
 
 	if (json)
-		cJSON_Delete(json);
+		JSON_DELETE(json);
 
 	return err;
 }
@@ -638,21 +638,57 @@ void iot_noti_sub_cb(struct iot_context *ctx, char *payload)
 		&noti_data, sizeof(noti_data));
 }
 
+static iot_error_t _iot_process_cmd(iot_cap_handle_list_t *cap_handle_list, char *component_name,
+			char *capability_name, char *command_name, iot_cap_cmd_data_t *cmd_data)
+{
+	struct iot_cap_handle_list *handle_list = NULL;
+	struct iot_cap_handle *handle = NULL;
+	struct iot_cap_cmd_set_list *command_list = NULL;
+	struct iot_cap_cmd_set *command = NULL;
+
+	/* find handle with capability */
+	handle_list = cap_handle_list;
+	while (handle_list != NULL) {
+		handle = handle_list->handle;
+		if (handle && !strcmp(component_name, handle->component) && !strcmp(capability_name, handle->capability)) {
+			IOT_DEBUG("found handle for [%s]%s", component_name, capability_name);
+			break;
+		}
+		handle_list = handle_list->next;
+	}
+
+	if (handle_list == NULL) {
+		IOT_ERROR("Cannot find handle for [%s]%s", component_name, capability_name);
+		return IOT_ERROR_BAD_REQ;
+	}
+
+	/* find cmd set */
+	command_list = handle->cmd_list;
+	while (command_list != NULL) {
+		command = command_list->command;
+		if (!strcmp(command_name, command->cmd_type)) {
+			command->cmd_cb((IOT_CAP_HANDLE *)handle,
+				cmd_data, command->usr_data);
+			break;
+		}
+		command_list = command_list->next;
+	}
+
+	if (command_list == NULL) {
+		IOT_WARN("Not registed cmd set received '%s'", command_name);
+		return IOT_ERROR_BAD_REQ;
+	}
+
+	return IOT_ERROR_NONE;
+}
+
 void iot_cap_sub_cb(iot_cap_handle_list_t *cap_handle_list, char *payload)
 {
-	cJSON *json = NULL;
-	cJSON *cap_cmds = NULL;
-	cJSON *cmditem = NULL;
-	char *com = NULL;
-	char *cap = NULL;
-	char *cmd = NULL;
+	JSON_H *json = NULL;
+	JSON_H *cap_cmds = NULL;
+	JSON_H *cmditem = NULL;
 	char *raw_data = NULL;
-	iot_cap_cmd_data_t cmd_data;
 	iot_error_t err;
-	struct iot_cap_handle *handle = NULL;
-	struct iot_cap_handle_list *handle_list;
-	struct iot_cap_cmd_set *command;
-	struct iot_cap_cmd_set_list *command_list;
 	int k;
 	int arr_size = 0;
 
@@ -660,7 +696,6 @@ void iot_cap_sub_cb(iot_cap_handle_list_t *cap_handle_list, char *payload)
 		IOT_ERROR("There is no cap_handle_list or payload");
 		return;
 	}
-	cmd_data.num_args = 0;
 
 #if defined(STDK_IOT_CORE_SERIALIZE_CBOR)
 	char *payload_json = NULL;
@@ -676,27 +711,27 @@ void iot_cap_sub_cb(iot_cap_handle_list_t *cap_handle_list, char *payload)
 		return;
 	}
 
-	json = cJSON_Parse(payload_json);
+	json = JSON_PARSE(payload_json);
 	free(payload_json);
 #else
-	json = cJSON_Parse(payload);
+	json = JSON_PARSE(payload);
 #endif
 	if (json == NULL) {
 		IOT_ERROR("Cannot parse by json");
 		goto out;
 	}
 
-	raw_data = cJSON_PrintUnformatted(json);
+	raw_data = JSON_PRINT(json);
 	IOT_INFO("command : %s", raw_data);
 	free(raw_data);
 
-	cap_cmds = cJSON_GetObjectItem(json, "commands");
+	cap_cmds = JSON_GET_OBJECT_ITEM(json, "commands");
 	if (cap_cmds == NULL) {
 		IOT_ERROR("there is no commands in raw_data");
 		goto out;
 	}
 
-	arr_size = cJSON_GetArraySize(cap_cmds);
+	arr_size = JSON_GET_ARRAY_SIZE(cap_cmds);
 	IOT_DEBUG("cap_cmds arr_size=%d", arr_size);
 
 	if (arr_size == 0) {
@@ -705,52 +740,24 @@ void iot_cap_sub_cb(iot_cap_handle_list_t *cap_handle_list, char *payload)
 	}
 
 	for (k = 0; k < arr_size; k++) {
-		cmditem = cJSON_GetArrayItem(cap_cmds, k);
+		char *component_name = NULL;
+		char *capability_name = NULL;
+		char *command_name = NULL;
+		iot_cap_cmd_data_t cmd_data;
+
+		cmd_data.num_args = 0;
+
+		cmditem = JSON_GET_ARRAY_ITEM(cap_cmds, k);
 		if (!cmditem) {
 			IOT_ERROR("Cannot get %dth commands data", k);
-			break;
+			continue;
 		}
 
-		err = _iot_parse_cmd_data(cmditem, &com, &cap, &cmd, &cmd_data);
+		err = _iot_parse_cmd_data(cmditem, &component_name, &capability_name, &command_name, &cmd_data);
 		if (err != IOT_ERROR_NONE) {
-			IOT_ERROR("Cannot parse command data");
-			break;
-		}
-
-		/* find handle with capability */
-		handle_list = cap_handle_list;
-		while (handle_list != NULL) {
-			handle = handle_list->handle;
-			if (handle && !strcmp(com, handle->component)) {
-				if (!strcmp(cap, handle->capability)) {
-					IOT_DEBUG("found '%s' capability from '%s'", cap, com);
-					break;
-				}
-			}
-
-			handle_list = handle_list->next;
-		}
-
-		if (handle_list == NULL) {
-			IOT_ERROR("Cannot find handle for '%s'", cap);
-			break;
-		}
-
-		/* find cmd set */
-		command_list = handle->cmd_list;
-		while (command_list != NULL) {
-			command = command_list->command;
-			if (!strcmp(cmd, command->cmd_type)) {
-				command->cmd_cb((IOT_CAP_HANDLE *)handle,
-					&cmd_data, command->usr_data);
-				break;
-			}
-
-			command_list = command_list->next;
-		}
-
-		if (command_list == NULL) {
-			IOT_WARN("Not registed cmd set received '%s'", cmd);
+			IOT_ERROR("Cannot parse %dth command data", k);
+		} else {
+			_iot_process_cmd(cap_handle_list, component_name, capability_name, command_name, &cmd_data);
 		}
 
 		if (cmd_data.num_args != 0) {
@@ -758,56 +765,44 @@ void iot_cap_sub_cb(iot_cap_handle_list_t *cap_handle_list, char *payload)
 			cmd_data.num_args = 0;
 		}
 
-		if (com != NULL) {
-			free(com);
-			com = NULL;
+		if (component_name != NULL) {
+			free(component_name);
+			component_name = NULL;
 		}
 
-		if (cap != NULL) {
-			free(cap);
-			cap = NULL;
+		if (capability_name != NULL) {
+			free(capability_name);
+			capability_name = NULL;
 		}
 
-		if (cmd != NULL) {
-			free(cmd);
-			cmd = NULL;
+		if (command_name != NULL) {
+			free(command_name);
+			command_name = NULL;
 		}
 	}
 
 out:
-	if (cmd_data.num_args != 0)
-		_iot_free_cmd_data(&cmd_data);
-
-	if (com != NULL)
-		free(com);
-
-	if (cap != NULL)
-		free(cap);
-
-	if (cmd != NULL)
-		free(cmd);
-
 	if (json != NULL)
-		cJSON_Delete(json);
+		JSON_DELETE(json);
 }
 
 
 /* Internal API */
-static iot_error_t _iot_parse_cmd_data(cJSON* cmditem, char** component,
+static iot_error_t _iot_parse_cmd_data(JSON_H* cmditem, char** component,
 			char** capability, char** command, iot_cap_cmd_data_t* cmd_data)
 {
-	cJSON *cap_component = NULL;
-	cJSON *cap_capability = NULL;
-	cJSON *cap_command = NULL;
-	cJSON *cap_args = NULL;
-	cJSON *subitem = NULL;
+	JSON_H *cap_component = NULL;
+	JSON_H *cap_capability = NULL;
+	JSON_H *cap_command = NULL;
+	JSON_H *cap_args = NULL;
+	JSON_H *subitem = NULL;
 	int arr_size = 0;
 	int num_args = 0;
 
-	cap_component = cJSON_GetObjectItem(cmditem, "component");
-	cap_capability = cJSON_GetObjectItem(cmditem, "capability");
-	cap_command = cJSON_GetObjectItem(cmditem, "command");
-	cap_args = cJSON_GetObjectItem(cmditem, "arguments");
+	cap_component = JSON_GET_OBJECT_ITEM(cmditem, "component");
+	cap_capability = JSON_GET_OBJECT_ITEM(cmditem, "capability");
+	cap_command = JSON_GET_OBJECT_ITEM(cmditem, "command");
+	cap_args = JSON_GET_OBJECT_ITEM(cmditem, "arguments");
 
 	if (cap_capability == NULL || cap_command == NULL) {
 		IOT_ERROR("Cannot find value index!!");
@@ -820,13 +815,13 @@ static iot_error_t _iot_parse_cmd_data(cJSON* cmditem, char** component,
 
 	IOT_DEBUG("component:%s, capability:%s command:%s", *component, *capability, *command);
 
-	arr_size = cJSON_GetArraySize(cap_args);
+	arr_size = JSON_GET_ARRAY_SIZE(cap_args);
 	IOT_DEBUG("cap_args arr_size=%d", arr_size);
-	subitem = cJSON_GetArrayItem(cap_args, 0);
+	subitem = JSON_GET_ARRAY_ITEM(cap_args, 0);
 
 	if (subitem != NULL) {
 		for (int i = 0; i < arr_size; i++) {
-			if (cJSON_IsNumber(subitem)) {
+			if (JSON_IS_NUMBER(subitem)) {
 				IOT_DEBUG("[%d] %d | %f", num_args, subitem->valueint, subitem->valuedouble);
 				cmd_data->args_str[num_args] = NULL;
 				cmd_data->cmd_data[num_args].type = IOT_CAP_VAL_TYPE_INT_OR_NUM;
@@ -834,17 +829,17 @@ static iot_error_t _iot_parse_cmd_data(cJSON* cmditem, char** component,
 				cmd_data->cmd_data[num_args].number = subitem->valuedouble;
 				num_args++;
 			}
-			else if (cJSON_IsString(subitem)) {
-				IOT_DEBUG("[%d] %s", num_args, cJSON_GetStringValue(subitem));
+			else if (JSON_IS_STRING(subitem)) {
+				IOT_DEBUG("[%d] %s", num_args, JSON_GET_STRING_VALUE(subitem));
 				cmd_data->args_str[num_args] = NULL;
 				cmd_data->cmd_data[num_args].type = IOT_CAP_VAL_TYPE_STRING;
-				cmd_data->cmd_data[num_args].string = iot_os_strdup(cJSON_GetStringValue(subitem));
+				cmd_data->cmd_data[num_args].string = iot_os_strdup(JSON_GET_STRING_VALUE(subitem));
 				num_args++;
 			}
-			else if (cJSON_IsObject(subitem)) {
+			else if (JSON_IS_OBJECT(subitem)) {
 				cmd_data->args_str[num_args] = NULL;
 				cmd_data->cmd_data[num_args].type = IOT_CAP_VAL_TYPE_JSON_OBJECT;
-				cmd_data->cmd_data[num_args].json_object = cJSON_PrintUnformatted(subitem);
+				cmd_data->cmd_data[num_args].json_object = JSON_PRINT(subitem);
 				IOT_DEBUG("[%d] %s", num_args, cmd_data->cmd_data[num_args].json_object);
 				num_args++;
 			}
@@ -997,13 +992,13 @@ static iot_error_t _iot_make_evt_data_json(const char* component, const char* ca
 			uint8_t arr_size, iot_cap_evt_data_t** evt_data_arr, iot_cap_msg_t *msg)
 {
 	char *data = NULL;
-	cJSON *evt_root = NULL;
-	cJSON *evt_arr = NULL;
-	cJSON *evt_item = NULL;
-	cJSON *evt_subarr = NULL;
-	cJSON *evt_subjson = NULL;
-	cJSON *evt_subdata = NULL;
-	cJSON *prov_data = NULL;
+	JSON_H *evt_root = NULL;
+	JSON_H *evt_arr = NULL;
+	JSON_H *evt_item = NULL;
+	JSON_H *evt_subarr = NULL;
+	JSON_H *evt_subjson = NULL;
+	JSON_H *evt_subdata = NULL;
+	JSON_H *prov_data = NULL;
 	char time_in_ms[16]; /* 155934720000 is '2019-06-01 00:00:00.00 UTC' */
 	iot_error_t err = IOT_ERROR_NONE;
 
@@ -1012,35 +1007,35 @@ static iot_error_t _iot_make_evt_data_json(const char* component, const char* ca
 		return IOT_ERROR_INVALID_ARGS;
 	}
 
-	evt_root = cJSON_CreateObject();
-	evt_arr = cJSON_CreateArray();
+	evt_root = JSON_CREATE_OBJECT();
+	evt_arr = JSON_CREATE_ARRAY();
 
 	for (int i = 0; i < arr_size; i++) {
-		evt_item = cJSON_CreateObject();
+		evt_item = JSON_CREATE_OBJECT();
 
 		/* component */
-		cJSON_AddStringToObject(evt_item, "component", component);
+		JSON_ADD_STRING_TO_OBJECT(evt_item, "component", component);
 
 		/* capability */
-		cJSON_AddStringToObject(evt_item, "capability", capability);
+		JSON_ADD_STRING_TO_OBJECT(evt_item, "capability", capability);
 
 		/* attribute */
-		cJSON_AddStringToObject(evt_item, "attribute", evt_data_arr[i]->evt_type);
+		JSON_ADD_STRING_TO_OBJECT(evt_item, "attribute", evt_data_arr[i]->evt_type);
 
 		/* value */
 		if (evt_data_arr[i]->evt_value.type == IOT_CAP_VAL_TYPE_INTEGER) {
-			cJSON_AddNumberToObject(evt_item, "value", evt_data_arr[i]->evt_value.integer);
+			JSON_ADD_NUMBER_TO_OBJECT(evt_item, "value", evt_data_arr[i]->evt_value.integer);
 		} else if (evt_data_arr[i]->evt_value.type == IOT_CAP_VAL_TYPE_NUMBER) {
-			cJSON_AddNumberToObject(evt_item, "value", evt_data_arr[i]->evt_value.number);
+			JSON_ADD_NUMBER_TO_OBJECT(evt_item, "value", evt_data_arr[i]->evt_value.number);
 		} else if (evt_data_arr[i]->evt_value.type == IOT_CAP_VAL_TYPE_STRING) {
-			cJSON_AddStringToObject(evt_item, "value", evt_data_arr[i]->evt_value.string);
+			JSON_ADD_STRING_TO_OBJECT(evt_item, "value", evt_data_arr[i]->evt_value.string);
 		} else if (evt_data_arr[i]->evt_value.type == IOT_CAP_VAL_TYPE_STR_ARRAY) {
-			evt_subarr = cJSON_CreateStringArray(
+			evt_subarr = JSON_CREATE_STRING_ARRAY(
 				(const char**)evt_data_arr[i]->evt_value.strings, evt_data_arr[i]->evt_value.str_num);
-			cJSON_AddItemToObject(evt_item, "value", evt_subarr);
+			JSON_ADD_ITEM_TO_OBJECT(evt_item, "value", evt_subarr);
 		} else if (evt_data_arr[i]->evt_value.type == IOT_CAP_VAL_TYPE_JSON_OBJECT) {
-			evt_subjson = cJSON_Parse(evt_data_arr[i]->evt_value.json_object);
-			cJSON_AddItemToObject(evt_item, "value", evt_subjson);
+			evt_subjson = JSON_PARSE(evt_data_arr[i]->evt_value.json_object);
+			JSON_ADD_ITEM_TO_OBJECT(evt_item, "value", evt_subjson);
 		} else {
 			IOT_ERROR("Event data value type error :%d", evt_data_arr[i]->evt_value.type);
 			err = IOT_ERROR_INVALID_ARGS;
@@ -1049,31 +1044,31 @@ static iot_error_t _iot_make_evt_data_json(const char* component, const char* ca
 
 		/* unit */
 		if (evt_data_arr[i]->evt_unit.type == IOT_CAP_UNIT_TYPE_STRING)
-			cJSON_AddStringToObject(evt_item, "unit", evt_data_arr[i]->evt_unit.string);
+			JSON_ADD_STRING_TO_OBJECT(evt_item, "unit", evt_data_arr[i]->evt_unit.string);
 
 		/* data */
 		if (evt_data_arr[i]->evt_value_data) {
-			evt_subdata = cJSON_Parse(evt_data_arr[i]->evt_value_data);
-			cJSON_AddItemToObject(evt_item, "data", evt_subdata);
+			evt_subdata = JSON_PARSE(evt_data_arr[i]->evt_value_data);
+			JSON_ADD_ITEM_TO_OBJECT(evt_item, "data", evt_subdata);
 		}
 
 		/* providerData */
-		prov_data = cJSON_CreateObject();
-		cJSON_AddNumberToObject(prov_data, "sequenceNumber", sqnum);
+		prov_data = JSON_CREATE_OBJECT();
+		JSON_ADD_NUMBER_TO_OBJECT(prov_data, "sequenceNumber", sqnum);
 
 		if (iot_get_time_in_ms(time_in_ms, sizeof(time_in_ms)) != IOT_ERROR_NONE)
 			IOT_WARN("Cannot add optional timestamp value");
 		else
-			cJSON_AddStringToObject(prov_data, "timestamp", time_in_ms);
+			JSON_ADD_STRING_TO_OBJECT(prov_data, "timestamp", time_in_ms);
 
-		cJSON_AddItemToObject(evt_item, "providerData", prov_data);
+		JSON_ADD_ITEM_TO_OBJECT(evt_item, "providerData", prov_data);
 
-		cJSON_AddItemToArray(evt_arr, evt_item);
+		JSON_ADD_ITEM_TO_ARRAY(evt_arr, evt_item);
 	}
 
-	cJSON_AddItemToObject(evt_root, "deviceEvents", evt_arr);
+	JSON_ADD_ITEM_TO_OBJECT(evt_root, "deviceEvents", evt_arr);
 
-	data = cJSON_PrintUnformatted(evt_root);
+	data = JSON_PRINT(evt_root);
 	if (!data) {
 		err = IOT_ERROR_MEM_ALLOC;
 	} else {
@@ -1084,7 +1079,7 @@ static iot_error_t _iot_make_evt_data_json(const char* component, const char* ca
 
 out:
 	if (evt_root != NULL)
-		cJSON_Delete(evt_root);
+		JSON_DELETE(evt_root);
 
 	return err;
 }

@@ -20,6 +20,7 @@
 #define _IOT_NET_H_
 
 #include "iot_net_platform.h"
+#include "iot_os_util.h"
 
 #ifdef __cplusplus
 extern "C" {

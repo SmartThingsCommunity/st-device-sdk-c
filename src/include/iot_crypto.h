@@ -62,7 +62,7 @@ extern "C" {
 
 #define IOT_CRYPTO_CAL_B64_LEN(x)	((((x) + 2) / 3) * 4 + 1)
 #define IOT_CRYPTO_CAL_B64_DEC_LEN(x)	(IOT_CRYPTO_ALIGN_B64_LEN(x) / 4 * 3 + 1)
-#define IOT_CRYPTO_ALIGN_B64_LEN(x)	((x + 3) & ~3)
+#define IOT_CRYPTO_ALIGN_B64_LEN(x)	(((x) + 3) & ~3u)
 
 /**
  * @brief	Encode a string as a base64 string
