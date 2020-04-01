@@ -680,6 +680,8 @@ void TC_STATIC_es_confirm_handler_success(void** state)
     context->pin = malloc(sizeof(iot_pin_t));
     memset(context->pin, '\0', sizeof(iot_pin_t));
     memcpy(context->pin->pin, pin_for_test, strlen(pin_for_test));
+    context->cmd_queue = iot_os_queue_create(IOT_QUEUE_LENGTH, sizeof(struct iot_command));
+    context->iot_events = iot_os_eventgroup_create();
     // When
     err = _es_confirm_handler(context, in_payload, &out_payload);
     // Then
@@ -687,6 +689,8 @@ void TC_STATIC_es_confirm_handler_success(void** state)
     assert_empty_json(server_cipher, out_payload);
 
     // Teardown
+    iot_os_eventgroup_delete(context->iot_events);
+    iot_os_queue_delete(context->cmd_queue);
     free(context->pin);
     free(in_payload);
     free(out_payload);
@@ -725,6 +729,8 @@ void TC_STATIC_es_confirm_handler_invalid_pin(void** state)
         out_payload = NULL;
         context->curr_otm_feature = OVF_BIT_PIN;
         context->devconf.ownership_validation_type = IOT_OVF_TYPE_PIN; // forced overwriting
+        context->cmd_queue = iot_os_queue_create(IOT_QUEUE_LENGTH, sizeof(struct iot_command));
+        context->iot_events = iot_os_eventgroup_create();
         // When
         err = _es_confirm_handler(context, in_payload, &out_payload);
         // Then
@@ -732,6 +738,8 @@ void TC_STATIC_es_confirm_handler_invalid_pin(void** state)
         assert_null(out_payload); // out_payload untouched
 
         // Teardown
+        iot_os_eventgroup_delete(context->iot_events);
+        iot_os_queue_delete(context->cmd_queue);
         free(in_payload);
         free(out_payload);
     }
@@ -761,6 +769,9 @@ void TC_STATIC_es_confirm_handler_non_pin_otm(void** state)
     context->pin = malloc(sizeof(iot_pin_t));
     memset(context->pin, '\0', sizeof(iot_pin_t));
     memcpy(context->pin->pin, pin_for_test, strlen(pin_for_test));
+    context->cmd_queue = iot_os_queue_create(IOT_QUEUE_LENGTH, sizeof(struct iot_command));
+    context->iot_events = iot_os_eventgroup_create();
+
     // When
     err = _es_confirm_handler(context, in_payload, &out_payload);
     // Then
@@ -768,6 +779,8 @@ void TC_STATIC_es_confirm_handler_non_pin_otm(void** state)
     assert_null(out_payload); // out_payload untouched
 
     // Teardown
+    iot_os_eventgroup_delete(context->iot_events);
+    iot_os_queue_delete(context->cmd_queue);
     free(context->pin);
     free(in_payload);
     free(out_payload);
