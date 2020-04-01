@@ -1212,7 +1212,7 @@ static iot_error_t _do_state_updating(struct iot_context *ctx,
 		break;
 
 	case IOT_STATE_PROV_CONFIRM:
-		IOT_INFO("the state changes to IOT_STATE_PROV_CONFIRM");
+		IOT_REMARK("the state changes to IOT_STATE_PROV_CONFIRM");
 		iot_err = IOT_ERROR_NONE;
 		break;
 
@@ -1235,7 +1235,7 @@ static iot_error_t _do_state_updating(struct iot_context *ctx,
 
 		iot_cmd = IOT_COMMAND_CLOUD_REGISTERING;
 		iot_err = iot_command_send(ctx, iot_cmd, NULL, 0);
-		IOT_INFO("the state changes to IOT_STATE_CLOUD_REGISTERING");
+		IOT_REMARK("the state changes to IOT_STATE_CLOUD_REGISTERING");
 		break;
 
 	case IOT_STATE_CLOUD_CONNECTING:

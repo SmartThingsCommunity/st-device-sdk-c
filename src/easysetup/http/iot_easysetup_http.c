@@ -414,7 +414,7 @@ void http_packet_handle(const char *name, char **buf, char *payload, enum cgi_ty
 iot_error_t iot_easysetup_init(struct iot_context *ctx)
 {
 	ENTER();
-	IOT_INFO("IOT_STATE_PROV_ES_START");
+	IOT_REMARK("IOT_STATE_PROV_ES_START");
 	if (!ctx)
 		return IOT_ERROR_INVALID_ARGS;
 
@@ -432,7 +432,7 @@ iot_error_t iot_easysetup_init(struct iot_context *ctx)
 	log_len = 0;
 	dump_enable= true;
 #endif
-	IOT_INFO("IOT_STATE_PROV_ES_INIT_DONE");
+	IOT_REMARK("IOT_STATE_PROV_ES_INIT_DONE");
 
 	return IOT_ERROR_NONE;
 }
@@ -463,5 +463,5 @@ void iot_easysetup_deinit(struct iot_context *ctx)
 		log_buffer = NULL;
 	}
 #endif
-	IOT_INFO("IOT_STATE_PROV_ES_DONE");
+	IOT_REMARK("IOT_STATE_PROV_ES_DONE");
 }

@@ -83,8 +83,10 @@ extern char *iot_debug_get_log(void);
  */
 #if defined(CONFIG_STDK_IOT_CORE_LOG_LEVEL_INFO)
 #define IOT_INFO(fmt, args...) iot_bsp_debug(IOT_DEBUG_LEVEL_INFO, IOT_DEBUG_PREFIX, "%s(%d) > "fmt, __FUNCTION__, __LINE__, ##args)
+#define IOT_REMARK(fmt, args...) iot_bsp_debug(IOT_DEBUG_LEVEL_INFO, IOT_DEBUG_PREFIX, "%s(%d) > "fmt, __FUNCTION__, __LINE__, ##args)
 #else
 #define IOT_INFO(fmt, args...)
+#define IOT_REMARK(fmt, args...)
 #endif
 
 /**

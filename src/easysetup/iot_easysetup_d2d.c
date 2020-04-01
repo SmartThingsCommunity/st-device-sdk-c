@@ -811,7 +811,7 @@ iot_error_t _es_confirm_check_manager(struct iot_context *ctx, enum ownership_va
 	iot_os_eventgroup_clear_bits(ctx->iot_events, IOT_EVENT_BIT_EASYSETUP_CONFIRM);
 	ctx->curr_otm_feature = confirm_feature;
 
-	IOT_INFO("IOT_STATE_PROV_CONFIRMING");
+	IOT_REMARK("IOT_STATE_PROV_CONFIRMING");
 
 	err = iot_state_update(ctx, IOT_STATE_PROV_CONFIRM,
 			IOT_STATE_OPT_NEED_INTERACT);
