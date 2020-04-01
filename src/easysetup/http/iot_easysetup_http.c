@@ -345,7 +345,6 @@ static void http_msg_handler(const char* uri, char **buffer, enum cgi_type type,
 			goto cgi_out;
 		}
 		cJSON_AddItemToObject(item, "code", cJSON_CreateNumber((double) err));
-		cJSON_AddItemToObject(item, "message", cJSON_CreateString(""));
 		root = cJSON_CreateObject();
 		if (!root) {
 			IOT_ERROR("json create failed");
