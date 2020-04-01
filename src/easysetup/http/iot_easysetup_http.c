@@ -153,11 +153,13 @@ fail_status_update:
 	if (err) {
 		iot_error_t err1;
 		ref_step = 0;
+		if (cur_step > IOT_EASYSETUP_STEP_SETUPCOMPLETE) {
 		err1 = iot_state_update(ctx, IOT_STATE_CHANGE_FAILED, ctx->curr_state);
 		if (err1) {
 			IOT_ERROR("cannot update state to failed (%d)", err1);
 			err = IOT_ERROR_EASYSETUP_INTERNAL_SERVER_ERROR;
 		}
+	}
 	}
 
 get_exit:
@@ -252,10 +254,12 @@ iot_error_t _iot_easysetup_gen_post_payload(struct iot_context *ctx, const char 
 	if (err) {
 		iot_error_t err1;
 		ref_step = 0;
+		if (cur_step > IOT_EASYSETUP_STEP_SETUPCOMPLETE) {
 		err1 = iot_state_update(ctx, IOT_STATE_CHANGE_FAILED, ctx->curr_state);
 		if (err1) {
 			IOT_ERROR("cannot update state to failed (%d)", err1);
 			err = IOT_ERROR_EASYSETUP_INTERNAL_SERVER_ERROR;
+		}
 		}
 	} else {
 		iot_error_t err1;
