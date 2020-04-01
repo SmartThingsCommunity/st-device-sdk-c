@@ -234,12 +234,9 @@ iot_error_t iot_bsp_wifi_set_mode(iot_wifi_conf *conf)
 		wifi_set_autoreconnect(0);
 	break;
 	case IOT_WIFI_MODE_SCAN:
-		if(rtw_mode != RTW_MODE_STA) {
-			iot_bsp_wifi_off();
-			vTaskDelay(20);
+		if(rtw_mode == RTW_MODE_NONE) {
+			IOT_ERROR("Scan could perform on both STA or SOFTAP mode, but current mode is NONE.\n");
 		}
-
-		iot_bsp_wifi_on(IOT_WIFI_MODE_SCAN);
 	break;
 	case IOT_WIFI_MODE_STATION:
 

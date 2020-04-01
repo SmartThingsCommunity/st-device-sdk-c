@@ -768,14 +768,14 @@ iot_error_t _es_confirm_check_manager(struct iot_context *ctx, enum ownership_va
 			if (sn == NULL) {
 				IOT_ERROR("to get invalid QR serial num\n");
 				err = IOT_ERROR_EASYSETUP_INVALID_QR;
-				break;
+				goto out;
 			}
 
 			err = iot_nv_get_serial_number(&dev_sn, &devsn_len);
 			if (err != IOT_ERROR_NONE) {
 				IOT_ERROR("failed to get serial num\n");
 				err = IOT_ERROR_EASYSETUP_SERIAL_NOT_FOUND;
-				break;
+				goto out;
 			}
 
 			if (!strcmp(sn, dev_sn)) {
@@ -783,6 +783,7 @@ iot_error_t _es_confirm_check_manager(struct iot_context *ctx, enum ownership_va
 			} else {
 				IOT_ERROR("confirm fail");
 				err = IOT_ERROR_EASYSETUP_INVALID_SERIAL_NUMBER;
+				goto out;
 			}
 			break;
 		case OVF_BIT_BUTTON:
@@ -796,17 +797,26 @@ iot_error_t _es_confirm_check_manager(struct iot_context *ctx, enum ownership_va
 			} else {
 				IOT_ERROR("confirm failed");
 				err = IOT_ERROR_EASYSETUP_CONFIRM_DENIED;
+				goto out;
 			}
 			break;
 		case OVF_BIT_PIN:
 			IOT_INFO("The pin number confirmation is requested");
-			break;
+			return err;
 		default:
 			IOT_INFO("Not Supported confirmation type is requested");
-			break;
+			return err;
+	}
+
+	err = iot_wifi_ctrl_request(ctx, IOT_WIFI_MODE_SCAN);
+	if (err != IOT_ERROR_NONE) {
+		IOT_ERROR("Can't send WIFI mode scan.(%d)", err);
+		err = IOT_ERROR_EASYSETUP_WIFI_SCAN_NOT_FOUND;
 	}
 
 out:
+	if (dev_sn)
+		free(dev_sn);
 	return err;
 }
 
@@ -972,6 +982,7 @@ iot_error_t _es_confirminfo_handler(struct iot_context *ctx, char *in_payload, c
 	output_ptr = JSON_PRINT(root);
 
 	*out_payload = output_ptr;
+
 out:
 	if (ptr)
 		free(ptr);
@@ -1137,6 +1148,13 @@ iot_error_t _es_confirm_handler(struct iot_context *ctx, char *in_payload, char 
 	final_msg = JSON_PRINT(root);
 
 	*out_payload = final_msg;
+
+	err = iot_wifi_ctrl_request(ctx, IOT_WIFI_MODE_SCAN);
+	if (err != IOT_ERROR_NONE) {
+		IOT_ERROR("Can't send WIFI mode scan.(%d)", err);
+		err = IOT_ERROR_EASYSETUP_WIFI_SCAN_NOT_FOUND;
+	}
+
 out:
 	if (plain_msg) {
 		free(plain_msg);

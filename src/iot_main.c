@@ -394,8 +394,8 @@ static iot_error_t _do_iot_main_command(struct iot_context *ctx,
 						IOT_ERROR("failed to malloc for iot_wifi_scan_result_t\n");
 						break;
 					}
+					memset(ctx->scan_result, 0x0, (IOT_WIFI_MAX_SCAN_RESULT * sizeof(iot_wifi_scan_result_t)));
 				}
-				memset(ctx->scan_result, 0x0, (IOT_WIFI_MAX_SCAN_RESULT * sizeof(iot_wifi_scan_result_t)));
 
 				ctx->scan_num = iot_bsp_wifi_get_scan_result(ctx->scan_result);
 				break;
