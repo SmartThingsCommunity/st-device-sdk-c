@@ -17,6 +17,7 @@
  ****************************************************************************/
 
 #include <string.h>
+#include <time.h>
 #include "JSON.h"
 #include "iot_main.h"
 #include "iot_bsp_random.h"
