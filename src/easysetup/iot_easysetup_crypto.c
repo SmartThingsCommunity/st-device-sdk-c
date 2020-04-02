@@ -64,7 +64,7 @@ static iot_error_t _iot_es_pk_load_ed25519(iot_crypto_pk_info_t *pk_info)
 		goto exit_failed;
 	}
 
-	seckey = (unsigned char *)malloc(seckey_len);
+	seckey = (unsigned char *)iot_os_malloc(seckey_len);
 	if (seckey == NULL) {
 		IOT_ERROR("malloc failed for seckey");
 		err = IOT_ERROR_MEM_ALLOC;
@@ -83,7 +83,7 @@ static iot_error_t _iot_es_pk_load_ed25519(iot_crypto_pk_info_t *pk_info)
 		goto exit_failed;
 	}
 
-	pubkey = (unsigned char *)malloc(pubkey_len);
+	pubkey = (unsigned char *)iot_os_malloc(pubkey_len);
 	if (pubkey == NULL) {
 		IOT_ERROR("malloc failed for pubkey");
 		err = IOT_ERROR_MEM_ALLOC;
@@ -105,14 +105,14 @@ static iot_error_t _iot_es_pk_load_ed25519(iot_crypto_pk_info_t *pk_info)
 
 exit_failed:
 	if (seckey)
-		free((void *)seckey);
+		iot_os_free((void *)seckey);
 	if (pubkey)
-		free((void *)pubkey);
+		iot_os_free((void *)pubkey);
 exit:
 	if (seckey_b64)
-		free((void *)seckey_b64);
+		iot_os_free((void *)seckey_b64);
 	if (pubkey_b64)
-		free((void *)pubkey_b64);
+		iot_os_free((void *)pubkey_b64);
 
 	return err;
 }
@@ -160,10 +160,10 @@ void iot_es_crypto_free_pk(iot_crypto_pk_info_t *pk_info)
 		return;
 
 	if (pk_info->pubkey)
-		free((void *)pk_info->pubkey);
+		iot_os_free((void *)pk_info->pubkey);
 
 	if (pk_info->seckey)
-		free((void *)pk_info->seckey);
+		iot_os_free((void *)pk_info->seckey);
 
 	memset(pk_info, 0, sizeof(iot_crypto_pk_info_t));
 }

@@ -30,11 +30,11 @@
 #define IOT_WIFI_PROV_SSID_LEN		(31 + 1)
 #define IOT_WIFI_PROV_PASSWORD_LEN 	(63 + 1)
 
-#define IOT_EVENT_BIT_COMMAND		(1 << 0)
-#define IOT_EVENT_BIT_CAPABILITY	(1 << 1)
-#define IOT_EVENT_BIT_EASYSETUP_REQ	(1 << 2)
-#define IOT_EVENT_BIT_EASYSETUP_RESP	(1 << 3)
-#define IOT_EVENT_BIT_EASYSETUP_CONFIRM	(1 << 4)
+#define IOT_EVENT_BIT_COMMAND		(1u << 0u)
+#define IOT_EVENT_BIT_CAPABILITY	(1u << 1u)
+#define IOT_EVENT_BIT_EASYSETUP_REQ	(1u << 2u)
+#define IOT_EVENT_BIT_EASYSETUP_RESP	(1u << 3u)
+#define IOT_EVENT_BIT_EASYSETUP_CONFIRM	(1u << 4u)
 #define IOT_EVENT_BIT_ALL	(IOT_EVENT_BIT_COMMAND | IOT_EVENT_BIT_CAPABILITY | IOT_EVENT_BIT_EASYSETUP_REQ)
 
 #define IOT_MAIN_TASK_CYCLE			100
@@ -66,7 +66,7 @@ enum iot_command_type {
 	IOT_COMMAND_NOTIFICATION_RECEIVED,
 
 	IOT_COMMAND_TYPE_MAX, /* MAX : under 32 */
-	IOT_CMD_STATE_HANDLE,
+	IOT_COMMNAD_STATE_UPDATE,
 };
 
 enum iot_easysetup_step {
@@ -255,6 +255,8 @@ struct iot_context {
 	unsigned int cmd_err;						/**< @brief current command handling error checking value */
 	unsigned int cmd_status;					/**< @brief current command status */
 	uint16_t cmd_count[IOT_COMMAND_TYPE_MAX];	/**< @brief current queued command counts */
+
+	iot_os_thread main_thread; /**< @brief iot main task thread */
 };
 
 #endif /* _IOT_MAIN_H_ */

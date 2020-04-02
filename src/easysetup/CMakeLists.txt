@@ -1,4 +1,4 @@
-if(CMAKE_BUILD_TYPE MATCHES Debug)
+if(CMAKE_BUILD_TYPE MATCHES UnitTest)
     set(EASYSETUP_D2D_SOURCES
         iot_easysetup_d2d.c
         http/iot_easysetup_tcp_httpd.c
