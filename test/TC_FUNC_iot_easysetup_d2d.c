@@ -202,20 +202,41 @@ void TC_iot_easysetup_create_ssid_success(void **state)
     assert_string_equal(devconf->hashed_sn, sample_hashed_sn_b64url);
 }
 
-void TC_iot_easysetup_request_handler_null_parameters(void **state)
+void TC_iot_easysetup_request_handler_invalid_parameters(void **state)
 {
+    struct iot_context *context;
     iot_error_t err;
+    int rc;
     struct iot_easysetup_payload request;
-    UNUSED(state);
+    struct iot_easysetup_payload response;
 
-    // Given
+    // Given: context is null
     request.step = IOT_EASYSETUP_STEP_DEVICEINFO;
     request.payload = NULL;
     request.err = IOT_ERROR_NONE;
-    // When: ctx is null
-    err = iot_easysetup_request_handler(NULL, request);
+    context = NULL;
+    // When
+    err = iot_easysetup_request_handler(context, request);
     // Then
     assert_int_not_equal(err, IOT_ERROR_NONE);
+
+    // Given: over ranged step
+    request.step = IOT_EASYSETUP_STEP_LOG_GET_DUMP + 1;
+    request.payload = NULL;
+    request.err = IOT_ERROR_NONE;
+    context = (struct iot_context *)*state;
+    context->easysetup_resp_queue = iot_os_queue_create(1, sizeof(struct iot_easysetup_payload));
+    context->iot_events = iot_os_eventgroup_create();
+    // When
+    err = iot_easysetup_request_handler(context, request);
+    // Then
+    assert_int_equal(err, IOT_ERROR_NONE);
+    rc = iot_os_queue_receive(context->easysetup_resp_queue, &response, 0);
+    assert_true(rc > 0);
+    assert_int_equal(response.err, IOT_ERROR_EASYSETUP_INTERNAL_SERVER_ERROR);
+    // Teardown
+    iot_os_queue_delete(context->easysetup_resp_queue);
+    iot_os_eventgroup_delete(context->iot_events);
 }
 
 // Static function declare for test
