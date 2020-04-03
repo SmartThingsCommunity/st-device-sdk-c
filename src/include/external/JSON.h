@@ -106,6 +106,10 @@ static inline bool JSON_IS_OBJECT(const JSON_H * const item) {
     return cJSON_IsObject(item);
 }
 
+static inline bool JSON_IS_ARRAY(const JSON_H * const item) {
+    return cJSON_IsArray(item);
+}
+
 #else
 typedef void JSON_H;
 JSON_H *JSON_CREATE_OBJECT(void);
@@ -128,6 +132,7 @@ void JSON_FREE(void *obj);
 bool JSON_IS_STRING(const JSON_H * const item);
 bool JSON_IS_NUMBER(const JSON_H * const item);
 bool JSON_IS_OBJECT(const JSON_H * const item);
+bool JSON_IS_ARRAY(const JSON_H * const item);
 #endif
 
 
