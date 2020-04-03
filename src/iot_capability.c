@@ -422,7 +422,7 @@ int st_cap_attr_send(IOT_CAP_HANDLE *cap_handle,
 	struct iot_cap_handle *handle = (struct iot_cap_handle*)cap_handle;
 	iot_error_t err;
 
-	if (!handle || !evt_data || !evt_num) {
+	if (!handle || !handle->component || !handle->capability || !handle->ctx || !evt_data || !evt_num) {
 		IOT_ERROR("There is no handle or evt_data");
 		return IOT_ERROR_INVALID_ARGS;
 	}
