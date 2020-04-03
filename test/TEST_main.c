@@ -148,6 +148,7 @@ int TEST_FUNC_iot_easysetup_d2d(void)
             cmocka_unit_test(TC_iot_easysetup_create_ssid_null_parameters),
             cmocka_unit_test_setup_teardown(TC_iot_easysetup_create_ssid_success, TC_iot_easysetup_d2d_setup, TC_iot_easysetup_d2d_teardown),
             cmocka_unit_test_setup_teardown(TC_iot_easysetup_request_handler_invalid_parameters, TC_iot_easysetup_d2d_setup, TC_iot_easysetup_d2d_teardown),
+            cmocka_unit_test_setup_teardown(TC_iot_easysetup_request_handler_step_deviceinfo, TC_iot_easysetup_d2d_setup, TC_iot_easysetup_d2d_teardown),
             cmocka_unit_test(TC_STATIC_es_deviceinfo_handler_null_parameter),
             cmocka_unit_test(TC_STATIC_es_crypto_cipher_gen_iv_success),
             cmocka_unit_test_setup_teardown(TC_STATIC_es_deviceinfo_handler_success, TC_iot_easysetup_d2d_setup, TC_iot_easysetup_d2d_teardown),

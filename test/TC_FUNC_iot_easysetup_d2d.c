@@ -238,6 +238,39 @@ void TC_iot_easysetup_request_handler_invalid_parameters(void **state)
     iot_os_queue_delete(context->easysetup_resp_queue);
     iot_os_eventgroup_delete(context->iot_events);
 }
+static void assert_deviceinfo(char *payload, char *expected_firmware_version, char *expected_hashed_sn);
+
+void TC_iot_easysetup_request_handler_step_deviceinfo(void **state)
+{
+    struct iot_context *context;
+    iot_error_t err;
+    int rc;
+    struct iot_easysetup_payload request;
+    struct iot_easysetup_payload response;
+    struct iot_devconf_prov_data *devconf;
+
+    // Given: deviceinfo
+    request.step = IOT_EASYSETUP_STEP_DEVICEINFO;
+    request.payload = NULL;
+    request.err = IOT_ERROR_NONE;
+    context = (struct iot_context *)*state;
+    devconf = &context->devconf;
+    devconf->hashed_sn = sample_hashed_sn_b64url;
+    context->easysetup_resp_queue = iot_os_queue_create(1, sizeof(struct iot_easysetup_payload));
+    context->iot_events = iot_os_eventgroup_create();
+    // When
+    err = iot_easysetup_request_handler(context, request);
+    // Then
+    assert_int_equal(err, IOT_ERROR_NONE);
+    rc = iot_os_queue_receive(context->easysetup_resp_queue, &response, 0);
+    assert_true(rc > 0);
+    assert_int_equal(response.err, IOT_ERROR_NONE);
+    assert_deviceinfo(response.payload, TEST_FIRMWARE_VERSION, sample_hashed_sn_b64url);
+    // Teardown
+    iot_os_queue_delete(context->easysetup_resp_queue);
+    iot_os_eventgroup_delete(context->iot_events);
+    free(response.payload);
+}
 
 // Static function declare for test
 extern iot_error_t _es_deviceinfo_handler(struct iot_context *ctx, char **out_payload);
@@ -257,7 +290,6 @@ void TC_STATIC_es_deviceinfo_handler_null_parameter(void **state)
     assert_int_not_equal(err, IOT_ERROR_NONE);
 }
 
-static void assert_deviceinfo(char *payload, char *expected_firmware_version, char *expected_hashed_sn);
 void TC_STATIC_es_deviceinfo_handler_success(void **state)
 {
     iot_error_t err;

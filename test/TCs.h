@@ -136,6 +136,7 @@ int TC_iot_easysetup_d2d_teardown(void **state);
 void TC_iot_easysetup_create_ssid_null_parameters(void **state);
 void TC_iot_easysetup_create_ssid_success(void **state);
 void TC_iot_easysetup_request_handler_invalid_parameters(void **state);
+void TC_iot_easysetup_request_handler_step_deviceinfo(void **state);
 void TC_STATIC_es_deviceinfo_handler_null_parameter(void **state);
 void TC_STATIC_es_deviceinfo_handler_success(void **state);
 void TC_STATIC_es_keyinfo_handler_success(void **state);
