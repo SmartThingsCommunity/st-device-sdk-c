@@ -23,6 +23,7 @@
 #include <certs/root_ca.h>
 #include <string.h>
 #include "TC_MOCK_functions.h"
+#define UNUSED(x) (void**)(x)
 
 static char sample_device_info[] = {
         "{\n"
@@ -38,6 +39,8 @@ static char sample_device_info[] = {
 int TC_iot_nv_data_setup(void **state)
 {
     iot_error_t err;
+    UNUSED(state);
+
 #if !defined(CONFIG_STDK_IOT_CORE_SUPPORT_STNV_PARTITION)
     err = iot_nv_init((unsigned char *)sample_device_info, strlen(sample_device_info));
 #else
@@ -50,6 +53,7 @@ int TC_iot_nv_data_setup(void **state)
 int TC_iot_nv_data_teardown(void **state)
 {
     iot_error_t err;
+    UNUSED(state);
 
     do_not_use_mock_iot_os_malloc_failure();
     err = iot_nv_deinit();
@@ -62,6 +66,7 @@ void TC_iot_nv_get_root_certificate_success(void **state)
     iot_error_t err;
     char *root_cert = NULL;
     size_t root_cert_len = 0;
+    UNUSED(state);
 
     // When
     err = iot_nv_get_root_certificate(&root_cert, &root_cert_len);
@@ -79,6 +84,7 @@ void TC_iot_nv_get_root_certificate_null_parameters(void **state)
     iot_error_t err;
     char *root_cert = NULL;
     size_t root_cert_len = 0;
+    UNUSED(state);
 
     // When: All null parameters
     err = iot_nv_get_root_certificate(NULL, NULL);
@@ -103,6 +109,7 @@ void TC_iot_nv_get_root_certificate_internal_failure(void **state)
     iot_error_t err;
     char *root_cert = NULL;
     size_t root_cert_len = 0;
+    UNUSED(state);
 
     // Given: malloc failed
     set_mock_iot_os_malloc_failure();
@@ -121,6 +128,7 @@ void TC_iot_nv_get_public_key_success(void **state)
     char *public_key = NULL;
     size_t public_key_len = 0;
     const char *sample_public_key = "BKb7+m1Mo8OuMsodM91ohz/+rZKDc/otzUPSn4UkCUk=";
+    UNUSED(state);
 
     // When
     err = iot_nv_get_public_key(&public_key, &public_key_len);
@@ -138,6 +146,7 @@ void TC_iot_nv_get_public_key_null_parameters(void **state)
     iot_error_t err;
     char *public_key = NULL;
     size_t public_key_len = 0;
+    UNUSED(state);
 
     // When: All parameters null
     err = iot_nv_get_public_key(NULL, NULL);
@@ -164,6 +173,7 @@ void TC_iot_nv_get_serial_number_success(void **state)
     char *serial_number = NULL;
     size_t serial_number_len = 0;
     const char *sample_serial_number = "STDKtESt7968d226";
+    UNUSED(state);
 
     // When
     err = iot_nv_get_serial_number(&serial_number, &serial_number_len);
@@ -181,6 +191,7 @@ void TC_iot_nv_get_serial_number_null_parameters(void **state)
     iot_error_t err;
     char *serial_number = NULL;
     size_t serial_number_len = 0;
+    UNUSED(state);
 
     // When: All parameters null
     err = iot_nv_get_serial_number(NULL, NULL);
@@ -201,3 +212,80 @@ void TC_iot_nv_get_serial_number_null_parameters(void **state)
     assert_null(serial_number);
 }
 
+void TC_iot_nv_get_device_id_null_parameters(void **state)
+{
+    iot_error_t err;
+    size_t len;
+    char *device_id;
+    UNUSED(state);
+
+    // When: All parameters null
+    err = iot_nv_get_device_id(NULL, NULL);
+    // Then
+    assert_int_not_equal(err, IOT_ERROR_NONE);
+
+    // When: device_id is null
+    err = iot_nv_get_device_id(NULL, &len);
+    // Then
+    assert_int_not_equal(err, IOT_ERROR_NONE);
+
+    // When: len is null
+    err = iot_nv_get_device_id(&device_id, NULL);
+    // Then
+    assert_int_not_equal(err, IOT_ERROR_NONE);
+}
+
+void TC_iot_nv_set_device_id_null_parameter(void **state)
+{
+    iot_error_t err;
+    UNUSED(state);
+
+    // When: device_id is null
+    err = iot_nv_set_device_id(NULL);
+    // Then
+    assert_int_not_equal(err, IOT_ERROR_NONE);
+}
+
+void TC_iot_nv_get_set_erase_device_id_success(void **state)
+{
+    iot_error_t err;
+    char *set_device_id = "1cd8e3f2-0c88-4298-90e3-cd9b35a82140";
+    char *got_device_id;
+    size_t len;
+
+
+    // When: set device id
+    err = iot_nv_set_device_id(set_device_id);
+    // Then:
+    assert_int_equal(err, IOT_ERROR_NONE);
+
+    // When: get device id
+    err = iot_nv_get_device_id(&got_device_id, &len);
+    // Then
+    assert_int_equal(err, IOT_ERROR_NONE);
+    assert_string_equal(set_device_id, got_device_id);
+    assert_int_equal(strlen(set_device_id), len);
+
+    // When: erase device id
+    err = iot_nv_erase(IOT_NVD_DEVICE_ID);
+    // Then:
+    assert_int_equal(err, IOT_ERROR_NONE);
+
+    // Teardown
+    free(got_device_id);
+}
+
+void TC_iot_nv_erase_internal_failure(void** state)
+{
+    iot_error_t err;
+
+    // When: out ranged
+    err = iot_nv_erase(IOT_NVD_MAX);
+    // Then
+    assert_int_equal(err, IOT_ERROR_INVALID_ARGS);
+
+    // When: not existed
+    err = iot_nv_erase(IOT_NVD_DEVICE_ID);
+    // Then
+    assert_int_equal(err, IOT_ERROR_NV_DATA_NOT_EXIST);
+}

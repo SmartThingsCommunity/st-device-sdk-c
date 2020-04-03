@@ -153,10 +153,12 @@ fail_status_update:
 	if (err) {
 		iot_error_t err1;
 		ref_step = 0;
-		err1 = iot_state_update(ctx, IOT_STATE_CHANGE_FAILED, ctx->curr_state);
-		if (err1) {
-			IOT_ERROR("cannot update state to failed (%d)", err1);
-			err = IOT_ERROR_EASYSETUP_INTERNAL_SERVER_ERROR;
+		if (cur_step >= IOT_EASYSETUP_STEP_LOG_SYSTEMINFO) {
+			err1 = iot_state_update(ctx, IOT_STATE_CHANGE_FAILED, ctx->curr_state);
+			if (err1) {
+				IOT_ERROR("cannot update state to failed (%d)", err1);
+				err = IOT_ERROR_EASYSETUP_INTERNAL_SERVER_ERROR;
+			}
 		}
 	}
 
@@ -252,10 +254,12 @@ iot_error_t _iot_easysetup_gen_post_payload(struct iot_context *ctx, const char 
 	if (err) {
 		iot_error_t err1;
 		ref_step = 0;
-		err1 = iot_state_update(ctx, IOT_STATE_CHANGE_FAILED, ctx->curr_state);
-		if (err1) {
-			IOT_ERROR("cannot update state to failed (%d)", err1);
-			err = IOT_ERROR_EASYSETUP_INTERNAL_SERVER_ERROR;
+		if (cur_step >= IOT_EASYSETUP_STEP_LOG_SYSTEMINFO) {
+			err1 = iot_state_update(ctx, IOT_STATE_CHANGE_FAILED, ctx->curr_state);
+			if (err1) {
+				IOT_ERROR("cannot update state to failed (%d)", err1);
+				err = IOT_ERROR_EASYSETUP_INTERNAL_SERVER_ERROR;
+			}
 		}
 	} else {
 		iot_error_t err1;
@@ -341,7 +345,6 @@ static void http_msg_handler(const char* uri, char **buffer, enum cgi_type type,
 			goto cgi_out;
 		}
 		cJSON_AddItemToObject(item, "code", cJSON_CreateNumber((double) err));
-		cJSON_AddItemToObject(item, "message", cJSON_CreateString(""));
 		root = cJSON_CreateObject();
 		if (!root) {
 			IOT_ERROR("json create failed");
@@ -441,16 +444,17 @@ void iot_easysetup_deinit(struct iot_context *ctx)
 
 	es_tcp_deinit();
 
-	if (ctx->es_crypto_cipher_info->iv) {
-		free(ctx->es_crypto_cipher_info->iv);
-		ctx->es_crypto_cipher_info->iv = NULL;
-	}
+	if (ctx->es_crypto_cipher_info) {
+		if (ctx->es_crypto_cipher_info->iv) {
+			free(ctx->es_crypto_cipher_info->iv);
+			ctx->es_crypto_cipher_info->iv = NULL;
+		}
 
-	if (ctx->es_crypto_cipher_info->key) {
-		free(ctx->es_crypto_cipher_info->key);
-		ctx->es_crypto_cipher_info->key = NULL;
+		if (ctx->es_crypto_cipher_info->key) {
+			free(ctx->es_crypto_cipher_info->key);
+			ctx->es_crypto_cipher_info->key = NULL;
+		}
 	}
-
 #if defined(CONFIG_STDK_IOT_CORE_EASYSETUP_HTTP_LOG_SUPPORT)
 	if (log_buffer) {
 		dump_enable = false;

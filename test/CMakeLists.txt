@@ -1,17 +1,10 @@
 option(ENABLE_STDK_TEST "Enables st-device-sdk-c test" ON)
 if(ENABLE_STDK_TEST)
     set(CMOCKA_DIR framework/cmocka)
-    include(CheckIncludeFile)
-    check_include_file(${CMOCKA_DIR}/include/cmocka.h CMOCKA_H)
-    if (NOT CMOCKA_H)
-        message(STATUS "submodule init for cmocka")
-        execute_process(COMMAND git submodule update --init ${CMOCKA_DIR}
-                        WORKING_DIRECTORY "${CMAKE_CURRENT_SOURCE_DIR}")
-    endif (NOT CMOCKA_H)
-
     add_subdirectory(${CMOCKA_DIR})
     include_directories(${cmocka-header_SOURCE_DIR}
                         ${st_device_sdk_c_SOURCE_DIR}/src/include
+                        ${st_device_sdk_c_SOURCE_DIR}/src/include/certs
                         ${st_device_sdk_c_SOURCE_DIR}/src/include/bsp
                         ${st_device_sdk_c_SOURCE_DIR}/src/include/bsp/posix
                         ${st_device_sdk_c_SOURCE_DIR}/src/include/os
@@ -21,16 +14,17 @@ if(ENABLE_STDK_TEST)
                         ${st_device_sdk_c_SOURCE_DIR}/src/deps/mbedtls/mbedtls/include
                         ${st_device_sdk_c_SOURCE_DIR}/src/port/net/mbedtls)
 
-
     foreach(mock ${MOCKED_FUNCTIONS})
-        set(CMAKE_C_FLAGS_DEBUG "${CMAKE_C_FLAGS_DEBUG} -Wl,--wrap=${mock}")
+        set(CMAKE_C_FLAGS_UNITTEST "${CMAKE_C_FLAGS_UNITTEST} -Wl,--wrap=${mock}")
     endforeach()
 
 
     add_executable(stdk_test
                    TEST_main.c
-                   TC_MOCK_functions.c
                    TC_MOCK_functions.h
+                   TC_MOCK_iot_bsp.c
+                   TC_MOCK_iot_os.c
+                   TC_MOCK_iot_net.c
                    TCs.h
                    TC_FUNC_iot_util.c
                    TC_FUNC_iot_api.c
@@ -41,6 +35,7 @@ if(ENABLE_STDK_TEST)
                    TC_FUNC_iot_easysetup_d2d.c
                    TC_FUNC_iot_easysetup_crypto.c
                    TC_FUNC_iot_main.c
+                   TC_FUNC_iot_mqtt_client.c
                    )
 
     target_link_libraries(stdk_test
