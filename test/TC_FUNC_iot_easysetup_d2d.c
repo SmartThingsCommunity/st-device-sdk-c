@@ -502,7 +502,7 @@ void TC_STATIC_es_confirminfo_handler_justworks_and_pin(void **state)
     context->es_crypto_cipher_info = _generate_device_cipher(NULL, 0);
     context->usr_events = iot_os_eventgroup_create();
     context->iot_events = iot_os_eventgroup_create();
-    context->cmd_queue = iot_os_queue_create(IOT_QUEUE_LENGTH, sizeof(struct iot_command));
+    context->cmd_queue = iot_os_queue_create(IOT_QUEUE_LENGTH);
     server_cipher = _generate_server_cipher(context->es_crypto_cipher_info->iv, context->es_crypto_cipher_info->iv_len);
 
     // Given: justworks payload
@@ -549,7 +549,7 @@ void TC_STATIC_es_confirminfo_handler_qr_code(void **state)
     context->es_crypto_cipher_info = _generate_device_cipher(NULL, 0);
     context->usr_events = iot_os_eventgroup_create();
     context->iot_events = iot_os_eventgroup_create();
-    context->cmd_queue = iot_os_queue_create(IOT_QUEUE_LENGTH, sizeof(struct iot_command));
+    context->cmd_queue = iot_os_queue_create(IOT_QUEUE_LENGTH);
 
     // Given: valid serial number
     server_cipher = _generate_server_cipher(context->es_crypto_cipher_info->iv, context->es_crypto_cipher_info->iv_len);
@@ -598,7 +598,7 @@ void TC_STATIC_es_confirminfo_handler_button(void **state)
     context->es_crypto_cipher_info = _generate_device_cipher(NULL, 0);
     context->usr_events = iot_os_eventgroup_create();
     context->iot_events = iot_os_eventgroup_create();
-    context->cmd_queue = iot_os_queue_create(IOT_QUEUE_LENGTH, sizeof(struct iot_command));
+    context->cmd_queue = iot_os_queue_create(IOT_QUEUE_LENGTH);
     server_cipher = _generate_server_cipher(context->es_crypto_cipher_info->iv, context->es_crypto_cipher_info->iv_len);
     in_payload = _generate_confirminfo_payload(server_cipher, OVF_BIT_BUTTON, NULL);
     out_payload = NULL;

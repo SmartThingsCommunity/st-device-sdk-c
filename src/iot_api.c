@@ -33,29 +33,29 @@
 iot_error_t iot_command_send(struct iot_context *ctx,
 	enum iot_command_type new_cmd, const void *param, int param_size)
 {
-	struct iot_command cmd_data;
+	struct iot_command *cmd_data = (struct iot_command *)malloc(sizeof(struct iot_command));
 	int ret;
 	iot_error_t err;
 
 	if (param && (param_size > 0)) {
-		cmd_data.param = malloc(param_size);
-		if (!cmd_data.param) {
+		cmd_data->param = malloc(param_size);
+		if (!cmd_data->param) {
 			IOT_ERROR("failed to malloc for iot_command param");
 			return IOT_ERROR_MEM_ALLOC;
 		}
 
-		memcpy(cmd_data.param, param, param_size);
+		memcpy(cmd_data->param, param, param_size);
 	} else {
-		cmd_data.param = NULL;
+		cmd_data->param = NULL;
 	}
 
-	cmd_data.cmd_type = new_cmd;
+	cmd_data->cmd_type = new_cmd;
 
-	ret = iot_os_queue_send(ctx->cmd_queue, &cmd_data, 0);
+	ret = iot_os_queue_send(ctx->cmd_queue, cmd_data, 0);
 	if (ret != IOT_OS_TRUE) {
 		IOT_ERROR("Cannot put the cmd into cmd_queue");
-		if (cmd_data.param)
-			free(cmd_data.param);
+		if (cmd_data->param)
+			free(cmd_data->param);
 		err = IOT_ERROR_BAD_REQ;
 	} else {
 		if (new_cmd != IOT_CMD_STATE_HANDLE) {
@@ -127,20 +127,20 @@ iot_error_t iot_wifi_ctrl_request(struct iot_context *ctx,
 iot_error_t iot_easysetup_request(struct iot_context *ctx,
 				enum iot_easysetup_step step, const void *payload)
 {
-	struct iot_easysetup_payload request;
+	struct iot_easysetup_payload *request = malloc(sizeof(struct iot_easysetup_payload));
 	int ret;
 	iot_error_t err;
 
 	if (payload) {
-		request.payload = (char *)payload;
+		request->payload = (char *)payload;
 	} else {
-		request.payload = NULL;
+		request->payload = NULL;
 	}
 
-	request.step = step;
+	request->step = step;
 
 	if (ctx->easysetup_req_queue) {
-		ret = iot_os_queue_send(ctx->easysetup_req_queue, &request, 0);
+		ret = iot_os_queue_send(ctx->easysetup_req_queue, request, 0);
 		if (ret != IOT_OS_TRUE) {
 			IOT_ERROR("Cannot put the request into easysetup_req_queue");
 			err = IOT_ERROR_BAD_REQ;

@@ -221,9 +221,9 @@ These APIs are related to operating system.
 | int iot_os_mutex_init  ( iot_os_mutex *  mutex )             | This function will create mutex                              |
 | int iot_os_mutex_lock  ( iot_os_mutex *  mutex )             | This function will lock mutex before critical section        |
 | int iot_os_mutex_unlock  ( iot_os_mutex *  mutex )           | This function will unlock mutex after critical section       |
-| iot_os_queue* iot_os_queue_create  ( int  queue_length,  <br/>  int  item_size ) | This function create queue and return queue handle           |
+| iot_os_queue* iot_os_queue_create  ( int  queue_length) | This function create queue and return queue handle           |
 | void iot_os_queue_delete  ( iot_os_queue *  queue_handle )   | This function delete queue                                   |
-| int iot_os_queue_receive  ( iot_os_queue *  queue_handle,  <br/>  void *  data,  <br/>  unsigned int  wait_time_ms ) | This function will receive item from the front of queue      |
+| int iot_os_queue_receive  ( iot_os_queue *  queue_handle,  <br/>  void **  data,  <br/>  unsigned int  wait_time_ms ) | This function will receive item from the front of queue      |
 | int iot_os_queue_reset  ( iot_os_queue *  queue_handle )     | This function reset queue                                    |
 | int iot_os_queue_send  ( iot_os_queue *  queue_handle,  <br/>  void *  data,  <br/>  unsigned int  wait_time_ms ) | This function will send item to the back of queue            |
 | int iot_os_thread_create  ( void *  thread_function,  <br/>  const char *  name,  <br/>  int  stack_size,  <br/>  void *  data,  <br/>  int  priority,  <br/>  iot_os_thread *  thread_handle ) | This function create and run thread                          |

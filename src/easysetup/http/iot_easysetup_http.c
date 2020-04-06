@@ -90,7 +90,7 @@ char *iot_debug_get_log(void)
 iot_error_t _iot_easysetup_gen_get_payload(struct iot_context *ctx, const char *cmd, char **out_payload)
 {
 	iot_error_t err = IOT_ERROR_NONE;
-	struct iot_easysetup_payload response;
+	struct iot_easysetup_payload *response = NULL;
 	int cur_step;
 
 	if (!strcmp(cmd, IOT_ES_URI_GET_DEVICEINFO)) {
@@ -136,18 +136,19 @@ iot_error_t _iot_easysetup_gen_get_payload(struct iot_context *ctx, const char *
 	iot_os_eventgroup_wait_bits(ctx->iot_events,
 			IOT_EVENT_BIT_EASYSETUP_RESP, true, false, IOT_OS_MAX_DELAY);
 	err = iot_os_queue_receive(ctx->easysetup_resp_queue, &response, 0);
-	if (response.step != cur_step) {
-		IOT_ERROR("unexpected response %d:%d", cur_step, response.step);
-		if (response.payload)
-			free(response.payload);
+	if (response->step != cur_step) {
+		IOT_ERROR("unexpected response %d:%d", cur_step, response->step);
+		if (response->payload)
+			free(response->payload);
 		err = IOT_ERROR_EASYSETUP_INTERNAL_SERVER_ERROR;
 	} else {
-		if (!response.err) {
-			*out_payload = response.payload;
+		if (!response->err) {
+			*out_payload = response->payload;
 			IOT_DEBUG("payload: %s", *out_payload);
 		}
-		err = response.err;
+		err = response->err;
 	}
+	free(response);
 
 fail_status_update:
 	if (err) {
@@ -177,7 +178,7 @@ get_exit:
 iot_error_t _iot_easysetup_gen_post_payload(struct iot_context *ctx, const char *cmd, char *in_payload, char **out_payload)
 {
 	iot_error_t err = IOT_ERROR_NONE;
-	struct iot_easysetup_payload response;
+	struct iot_easysetup_payload *response = NULL;
 	int cur_step;
 	unsigned int curr_event;
 
@@ -236,18 +237,19 @@ iot_error_t _iot_easysetup_gen_post_payload(struct iot_context *ctx, const char 
 	}
 
 	err = iot_os_queue_receive(ctx->easysetup_resp_queue, &response, 0);
-	if (response.step != cur_step) {
-		IOT_ERROR("unexpected response %d:%d", cur_step, response.step);
-		if (response.payload)
-			free(response.payload);
+	if (response->step != cur_step) {
+		IOT_ERROR("unexpected response %d:%d", cur_step, response->step);
+		if (response->payload)
+			free(response->payload);
 		err = IOT_ERROR_EASYSETUP_INTERNAL_SERVER_ERROR;
 	} else {
-		if (!response.err) {
-			*out_payload = response.payload;
+		if (!response->err) {
+			*out_payload = response->payload;
 			IOT_DEBUG("payload: %s", *out_payload);
 		}
-		err = response.err;
+		err = response->err;
 	}
+	free(response);
 
 	if (err) {
 		iot_error_t err1;

@@ -418,7 +418,7 @@ int st_cap_attr_send(IOT_CAP_HANDLE *cap_handle,
 	iot_cap_evt_data_t** evt_data = (iot_cap_evt_data_t**)event;
 	int ret;
 	struct iot_context *ctx;
-	iot_cap_msg_t final_msg;
+	iot_cap_msg_t *final_msg = (iot_cap_msg_t *)malloc(sizeof(iot_cap_msg_t));
 	struct iot_cap_handle *handle = (struct iot_cap_handle*)cap_handle;
 	iot_error_t err;
 
@@ -437,16 +437,16 @@ int st_cap_attr_send(IOT_CAP_HANDLE *cap_handle,
 
 	/* Make event data format & enqueue data */
 	err = _iot_make_evt_data(handle->component,
-			handle->capability, evt_num, evt_data, &final_msg);
+			handle->capability, evt_num, evt_data, final_msg);
 	if (err != IOT_ERROR_NONE) {
 		IOT_ERROR("Cannot make evt_data!!");
 		return err;
 	}
 
-	ret = iot_os_queue_send(ctx->pub_queue, &final_msg, 0);
+	ret = iot_os_queue_send(ctx->pub_queue, final_msg, 0);
 	if (ret != IOT_OS_TRUE) {
 		IOT_WARN("Cannot put the paylod into pub_queue");
-		free(final_msg.msg);
+		free(final_msg->msg);
 
 		return IOT_ERROR_BAD_REQ;
 	} else {

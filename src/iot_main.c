@@ -104,7 +104,7 @@ static iot_error_t _create_easysetup_resources(struct iot_context *ctx, iot_pin_
 	}
 
 	if (!ctx->easysetup_req_queue) {
-		ctx->easysetup_req_queue = iot_os_queue_create(1, sizeof(struct iot_easysetup_payload));
+		ctx->easysetup_req_queue = iot_os_queue_create(1);
 		if (!ctx->easysetup_req_queue) {
 			IOT_ERROR("failed to create Queue for easysetup request\n");
 			free(ctx->es_crypto_cipher_info);
@@ -119,7 +119,7 @@ static iot_error_t _create_easysetup_resources(struct iot_context *ctx, iot_pin_
 	}
 
 	if (!ctx->easysetup_resp_queue) {
-		ctx->easysetup_resp_queue = iot_os_queue_create(1, sizeof(struct iot_easysetup_payload));
+		ctx->easysetup_resp_queue = iot_os_queue_create(1);
 		if (!ctx->easysetup_resp_queue) {
 			IOT_ERROR("failed to create Queue for easysetup response\n");
 			iot_os_queue_delete(ctx->easysetup_req_queue);
@@ -718,11 +718,11 @@ static iot_error_t _publish_event(struct iot_context *ctx, iot_cap_msg_t *cap_ms
 
 static void _iot_main_task(struct iot_context *ctx)
 {
-	struct iot_command cmd;
+	struct iot_command *cmd = NULL;
 	unsigned int curr_events;
 	iot_error_t err = IOT_ERROR_NONE;
-	iot_cap_msg_t final_msg;
-	struct iot_easysetup_payload easysetup_req;
+	iot_cap_msg_t *final_msg = NULL;
+	struct iot_easysetup_payload *easysetup_req = NULL;
 	iot_state_t next_state;
 
 	for( ; ; ) {
@@ -734,23 +734,23 @@ static void _iot_main_task(struct iot_context *ctx)
 			IOT_EVENT_BIT_ALL, true, false, IOT_MAIN_TASK_CYCLE);
 #endif
 		if (curr_events & IOT_EVENT_BIT_COMMAND) {
-			cmd.param = NULL;
 			if (iot_os_queue_receive(ctx->cmd_queue,
 					&cmd, 0) != IOT_OS_FALSE) {
 
-				IOT_DEBUG("cmd: %d\n", cmd.cmd_type);
+				IOT_DEBUG("cmd: %d\n", cmd->cmd_type);
 
-				err = _do_iot_main_command(ctx, &cmd);
-				if (cmd.param)
-					free(cmd.param);
+				err = _do_iot_main_command(ctx, cmd);
+				if (cmd->param)
+					free(cmd->param);
 
 				if (err != IOT_ERROR_NONE)
-					IOT_ERROR("failed handle cmd (%d): %d\n", cmd.cmd_type, err);
+					IOT_ERROR("failed handle cmd (%d): %d\n", cmd->cmd_type, err);
 
 				/* Set bit again to check whether the several cmds are already
 				 * stacked up in the queue.
 				 */
 				iot_os_eventgroup_set_bits(ctx->iot_events, IOT_EVENT_BIT_COMMAND);
+				free(cmd);
 			}
 		}
 
@@ -762,8 +762,8 @@ static void _iot_main_task(struct iot_context *ctx)
 					IOT_WARN("MQTT already disconnected. reset all pub_queue");
 					iot_os_queue_reset(ctx->pub_queue);
 				} else {
-					err = _publish_event(ctx, &final_msg);
-					free(final_msg.msg);
+					err = _publish_event(ctx, final_msg);
+					free(final_msg->msg);
 
 					if (err != IOT_ERROR_NONE) {
 						IOT_ERROR("failed publish event_data : %d", err);
@@ -785,25 +785,25 @@ static void _iot_main_task(struct iot_context *ctx)
 					 */
 					iot_os_eventgroup_set_bits(ctx->iot_events, IOT_EVENT_BIT_CAPABILITY);
 				}
+				free(final_msg);
 			}
 		}
 
 		if ((curr_events & IOT_EVENT_BIT_EASYSETUP_REQ) &&
 						ctx->easysetup_req_queue) {
-			easysetup_req.payload = NULL;
-			easysetup_req.err = IOT_ERROR_NONE;
 			if (iot_os_queue_receive(ctx->easysetup_req_queue,
 					&easysetup_req, 0) != IOT_OS_FALSE) {
-				IOT_DEBUG("request step: %d\n", easysetup_req.step);
+				IOT_DEBUG("request step: %d\n", easysetup_req->step);
 
-				err = iot_easysetup_request_handler(ctx, easysetup_req);
+				err = iot_easysetup_request_handler(ctx, *easysetup_req);
 				if (err != IOT_ERROR_NONE)
-					IOT_ERROR("failed handle easysetup request step %d: %d\n", easysetup_req.step, err);
+					IOT_ERROR("failed handle easysetup request step %d: %d\n", easysetup_req->step, err);
 
 				/* Set bit again to check whether the several cmds are already
 				 * stacked up in the queue.
 				 */
 				iot_os_eventgroup_set_bits(ctx->iot_events, IOT_EVENT_BIT_EASYSETUP_REQ);
+				free(easysetup_req);
 			}
 		}
 
@@ -891,8 +891,7 @@ IOT_CTX* st_conn_init(unsigned char *onboarding_config, unsigned int onboarding_
 	iot_bsp_wifi_init();
 
 	/* create queue */
-	ctx->cmd_queue = iot_os_queue_create(IOT_QUEUE_LENGTH,
-			sizeof(struct iot_command));
+	ctx->cmd_queue = iot_os_queue_create(IOT_QUEUE_LENGTH);
 
 	if (!ctx->cmd_queue) {
 		IOT_ERROR("failed to create Queue for iot core task\n");
@@ -907,8 +906,7 @@ IOT_CTX* st_conn_init(unsigned char *onboarding_config, unsigned int onboarding_
 	}
 
 	/* create msg queue for publish */
-	ctx->pub_queue = iot_os_queue_create(IOT_PUB_QUEUE_LENGTH,
-		sizeof(iot_cap_msg_t));
+	ctx->pub_queue = iot_os_queue_create(IOT_PUB_QUEUE_LENGTH);
 
 	if (!ctx->pub_queue) {
 		IOT_ERROR("failed to create Queue for publish data\n");

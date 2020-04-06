@@ -88,14 +88,13 @@ void iot_os_thread_yield();
  * This function create queue and return queue handle
  *
  * @param[in] queue_length	maximum number of queue item
- * @param[in] item_size	size of item
  *
  * @return
  *	return is queue handle of queue created by this function
  *	If queue was not created, NULL is returned.
  *
  */
-iot_os_queue* iot_os_queue_create(int queue_length, int item_size);
+iot_os_queue* iot_os_queue_create(int queue_length);
 
 /**
  * @brief	reset queue
@@ -143,7 +142,7 @@ int iot_os_queue_send(iot_os_queue* queue_handle, void * data, unsigned int wait
  * This function will receive item from the front of queue
  *
  * @param[in] queue_handle	handle of queue to receive item
- * @param[in] data	buffer for item received from queue
+ * @param[in] data	pointer for item received from queue
  * @param[in] wait_time_ms	maximum time to wait until queue is not empty
  *
  * @return
@@ -151,7 +150,7 @@ int iot_os_queue_send(iot_os_queue* queue_handle, void * data, unsigned int wait
  *	otherwise :  fail
  *
  */
-int iot_os_queue_receive(iot_os_queue* queue_handle, void * data, unsigned int wait_time_ms);
+int iot_os_queue_receive(iot_os_queue* queue_handle, void ** data, unsigned int wait_time_ms);
 
 /**
  * @brief	create eventgroup

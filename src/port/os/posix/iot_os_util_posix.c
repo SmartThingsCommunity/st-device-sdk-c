@@ -80,19 +80,19 @@ typedef struct {
 	mqd_t mqd;
 } iot_os_queue_posix_t;
 
-iot_os_queue* iot_os_queue_create(int queue_length, int item_size)
+iot_os_queue* iot_os_queue_create(int queue_length)
 {
 	iot_os_queue_posix_t* queue = malloc(sizeof(iot_os_queue_posix_t));
 	struct mq_attr attr;
 
 	attr.mq_flags = 0;
 	attr.mq_maxmsg = (queue_length <= 10) ? queue_length : 10;
-	attr.mq_msgsize = item_size;
+	attr.mq_msgsize = sizeof(void *);
 	attr.mq_curmsgs = 0;
 
 	snprintf(queue->name, sizeof(queue->name), "/q%u", iot_bsp_random());
 	queue->length = queue_length;
-	queue->msg_size = item_size;
+	queue->msg_size = sizeof(void *);
 
 	queue->mqd = mq_open(queue->name, O_CREAT | O_RDWR, 0644, &attr);
 	if (queue->mqd == -1) {
@@ -150,7 +150,7 @@ int iot_os_queue_send(iot_os_queue* queue_handle, void * data, unsigned int wait
 	return iot_os_true;
 }
 
-int iot_os_queue_receive(iot_os_queue* queue_handle, void * data, unsigned int wait_time_ms)
+int iot_os_queue_receive(iot_os_queue* queue_handle, void ** data, unsigned int wait_time_ms)
 {
 	iot_os_queue_posix_t* queue = (iot_os_queue_posix_t*)queue_handle;
 	struct timespec ts = {0,};

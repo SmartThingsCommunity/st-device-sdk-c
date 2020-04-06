@@ -48,9 +48,9 @@ void iot_os_thread_yield()
 }
 
 /* Queue */
-iot_os_queue* iot_os_queue_create(int queue_length, int item_size)
+iot_os_queue* iot_os_queue_create(int queue_length)
 {
-	return xQueueCreate(queue_length, item_size);
+	return xQueueCreate(queue_length, sizeof(void *));
 }
 
 int iot_os_queue_reset(iot_os_queue* queue_handle)
@@ -68,7 +68,7 @@ int iot_os_queue_send(iot_os_queue* queue_handle, void * data, unsigned int wait
 	return xQueueSend(queue_handle, data, pdMS_TO_TICKS(wait_time_ms));
 }
 
-int iot_os_queue_receive(iot_os_queue* queue_handle, void * data, unsigned int wait_time_ms)
+int iot_os_queue_receive(iot_os_queue* queue_handle, void ** data, unsigned int wait_time_ms)
 {
 	return xQueueReceive(queue_handle, data, pdMS_TO_TICKS(wait_time_ms));
 }
