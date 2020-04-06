@@ -17,6 +17,22 @@
         "tls-openssl": {
             "help": "Use OpenSSL",
             "value": false
+        },
+        "debug-level-error": {
+            "help": "Debug Level Error",
+            "value": true
+        },
+        "debug-level-info": {
+            "help": "Debug Level Error",
+            "value": true
+        },
+        "debug-level-warn": {
+            "help": "Debug Level Warning",
+            "value": true
+        },
+        "debug-level-debug": {
+            "help": "Debug Level ALL",
+            "value": false
         }
     }
 }
