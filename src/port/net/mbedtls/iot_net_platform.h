@@ -43,4 +43,7 @@ typedef struct iot_net_platform_context {
 	mbedtls_x509_crt cacert;
 } iot_net_platform_context_t;
 
+#ifdef __cplusplus
+}
+#endif
 #endif /* _IOT_NET_PLATFORM_H_ */
