@@ -80,6 +80,19 @@ void TC_iot_util_convert_str_mac_invalid_parameters(void **state)
 {
     iot_error_t err;
     struct iot_mac mac;
+    char invalid_mac[11][20] = {
+            "a2:b3:fe:c9:8e:d", // short length
+            "a2:b3:fe:c9:8e:7d1", // long length
+            " a2:b3:fe:c9:8e:7d", // start with space
+            "a2:b3:fe:c9:8e:7d ", // end with space
+            "a2:b3:fe c9:8e:7d ", // space in the middle
+            "a2:b3:fe:c9:8e;7d", // invalid delimiter ';'
+            "a2:b3:fg:c9:8e:7d", // non hex char 'g'
+            "a2b:3:fe:c9:8e:7d", // 3-1-2-2-2-2
+            "a2:b3f:e:c9:8e:7d", // 2-3-1-2-2-2
+            "a2:b3:fec:9:8e:7d", // 2-2-3-1-2-2
+            "a2:b3:fe:c9:8e7:d", // 2-2-2-2-3-1
+    };
     UNUSED(state);
 
     // When: null parameters
@@ -87,18 +100,19 @@ void TC_iot_util_convert_str_mac_invalid_parameters(void **state)
     // Then: should return error
     assert_int_equal(err, IOT_ERROR_INVALID_ARGS);
 
-    // Given: non mac address string
-    char wrong_string[] = "this is wrong";
-    // When
-    err = iot_util_convert_str_mac(wrong_string, &mac);
-    // Then
-    assert_int_not_equal(err, IOT_ERROR_NONE);
+    for (int i = 0; i < 11; i++) {
+        // When: invalid mac format
+        err = iot_util_convert_str_mac(invalid_mac[i], &mac);
+        // Then
+        assert_int_not_equal(err, IOT_ERROR_NONE);
+    }
 }
 
 void TC_iot_util_convert_str_uuid_success(void **state)
 {
     iot_error_t err;
-    const char *sample_uuid_str = "c236f527-5d8d-4d0b-86f6-0add22717f0e";
+    const char *sample_uuid_lower = "c236f527-5d8d-4d0b-86f6-0add22717f0e";
+    const char *sample_uuid_upper = "C236F527-5d8D-4D0B-86F6-0ADD22717F0E";
     struct iot_uuid sample_uuid = {
             .id[0] = 0xc2,
             .id[1] = 0x36,
@@ -120,19 +134,39 @@ void TC_iot_util_convert_str_uuid_success(void **state)
     struct iot_uuid uuid;
     UNUSED(state);
 
-    // Given
+    // Given: lower case uuid string
     memset(&uuid, '\0', sizeof(struct iot_uuid));
     // When
-    err = iot_util_convert_str_uuid(sample_uuid_str, &uuid);
+    err = iot_util_convert_str_uuid(sample_uuid_lower, &uuid);
+    // Then
+    assert_int_equal(err, IOT_ERROR_NONE);
+    assert_memory_equal(&uuid, &sample_uuid, sizeof(struct iot_uuid));
+
+    // Given: upper case uuid string
+    memset(&uuid, '\0', sizeof(struct iot_uuid));
+    // When
+    err = iot_util_convert_str_uuid(sample_uuid_upper, &uuid);
     // Then
     assert_int_equal(err, IOT_ERROR_NONE);
     assert_memory_equal(&uuid, &sample_uuid, sizeof(struct iot_uuid));
 }
 
-void TC_iot_util_convert_str_uuid_null_parameters(void **state)
+void TC_iot_util_convert_str_uuid_invalid_parameters(void **state)
 {
     iot_error_t err;
-    const char *sample_uuid_str = "c236f527-5d8d-4d0b-86f6-0add22717f0e";
+    const char *valid_uuid_str = "c236f527-5d8d-4d0b-86f6-0add22717f0e";
+    const char invalid_uuid_str[10][39] = {
+            "c236f527-5d8d-4d0b-86f6-0add22717f e", // space at middle
+            "c236f527_5d8d_4d0b_86f6_0add22717f0e", // invalid delimiter '_'
+            "c236f527-5d8d-4d0b-86f6-0add2271", // short length
+            "c236f527-5d8d-4d0b-86f6-0add22717f0e8", // long length
+            "c236f527-5d8d-4d0b-86f6-0add22717f0z", // invalid character 'z'
+            "c236f527-5d8d-4d0b-86f6-0add22717f0e ", // space at last
+            " c236f527-5d8d-4d0b-86f6-0add22717f0e", // space at first
+            "c236f52-75d8d-4d0b-86f6-0add22717f0e", // 7-5-4-4-12 format
+            "c236f527-5d8-d4d0b-86f6-0add22717f0e", // 8-3-5-4-12 format
+            "c236f527-5d8d-4d0-b86f6-0add22717f0e", // 8-4-3-5-12 format
+    };
     struct iot_uuid uuid;
     UNUSED(state);
 
@@ -147,9 +181,16 @@ void TC_iot_util_convert_str_uuid_null_parameters(void **state)
     assert_int_not_equal(err, IOT_ERROR_NONE);
 
     // When: uuid is null
-    err = iot_util_convert_str_uuid(sample_uuid_str, NULL);
+    err = iot_util_convert_str_uuid(valid_uuid_str, NULL);
     // Then
     assert_int_not_equal(err, IOT_ERROR_NONE);
+
+    for (int i = 0; i < 10; i++) {
+        // When: invalid uuid
+        err = iot_util_convert_str_uuid(invalid_uuid_str[i], &uuid);
+        // Then
+        assert_int_not_equal(err, IOT_ERROR_NONE);
+    }
 }
 
 struct _wifi_channel_map {
