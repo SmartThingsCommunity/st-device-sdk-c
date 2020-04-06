@@ -294,7 +294,6 @@ iot_error_t iot_util_convert_mac_str(struct iot_mac* mac, char* str, int max_sz)
 		return IOT_ERROR_INVALID_ARGS;
 	}
 
-	/* dump random mac */
 	for (i = 0; i < 6; i++) {
 		wrt = sprintf(&str[written], "%02x", (unsigned char)mac->addr[i]);
 		written += wrt;
