@@ -19,6 +19,7 @@
 #include "mbed.h"
 #include "WhdSoftAPInterface.h"
 #include "EthernetInterface.h"
+#include "lwip/apps/sntp.h"
 
 #include "iot_debug.h"
 #include "iot_bsp_wifi.h"
@@ -32,6 +33,51 @@
 
 static int WIFI_INITIALIZED = false;
 bool ap_mode = false;
+
+static void _initialize_sntp(void)
+{
+	IOT_INFO("Initializing SNTP");
+	sntp_setoperatingmode(SNTP_OPMODE_POLL);
+	sntp_setservername(0, "pool.ntp.org");
+	sntp_setservername(1, "1.kr.pool.ntp.org");
+	sntp_setservername(2, "1.asia.pool.ntp.org");
+	sntp_setservername(3, "us.pool.ntp.org");
+	sntp_setservername(4, "1.cn.pool.ntp.org");
+	sntp_setservername(5, "1.hk.pool.ntp.org");
+	sntp_setservername(6, "europe.pool.ntp.org");
+	sntp_setservername(7, "time1.google.com");
+
+	sntp_init();
+}
+
+static void _obtain_time(void) {
+	time_t now = 0;
+	struct tm timeinfo = { 0 };
+	int retry = 0;
+	const int retry_count = 10;
+
+	time(&now);
+	localtime_r(&now, &timeinfo);
+	IOT_INFO("DATE: (%02d-%02d-%04d %02d:%02d:02%d)", timeinfo.tm_mday,
+			timeinfo.tm_mon+1, timeinfo.tm_year+1900,
+			timeinfo.tm_hour, timeinfo.tm_min, timeinfo.tm_sec);
+
+	_initialize_sntp();
+
+	while (timeinfo.tm_year < (2016 - 1900) && ++retry < retry_count) {
+		IOT_INFO("Waiting for system time to be set... (%d/%d)", retry, retry_count);
+		IOT_DELAY(2000);
+		time(&now);
+		localtime_r(&now, &timeinfo);
+		IOT_INFO("DATE: (%02d-%02d-%04d %02d:%02d:02%d)", timeinfo.tm_mday,
+				timeinfo.tm_mon+1, timeinfo.tm_year+1900,
+				timeinfo.tm_hour, timeinfo.tm_min, timeinfo.tm_sec);
+	}
+
+	if (retry < 10) {
+		IOT_INFO("[WIFI] system time updated by %ld", now);
+	}
+}
 
 iot_error_t iot_bsp_wifi_init()
 {
@@ -160,7 +206,7 @@ iot_error_t iot_bsp_wifi_set_mode(iot_wifi_conf *conf)
 		IOT_DEBUG("connected to ap SSID:%s password:%s", conf->ssid, conf->pass);
 
 		IOT_INFO("Time is not set yet. Connecting to WiFi and getting time over NTP.");
-
+		_obtain_time();
 		break;
 	}
 	case IOT_WIFI_MODE_SOFTAP: {

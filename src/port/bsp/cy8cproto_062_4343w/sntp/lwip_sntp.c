@@ -332,6 +332,12 @@ sntp_process(const struct sntp_timestamps *timestamps)
   LWIP_UNUSED_ARG(frac); /* might be unused if only seconds are set */
   LWIP_DEBUGF(SNTP_DEBUG_TRACE, ("sntp_process: %s, %" U32_F " us\n",
                                  sntp_format_time(sec), SNTP_FRAC_TO_US(frac)));
+
+  /* NTP gives seconds since 01-01-1900 epoch
+   * 2208988800L is 01-01-1970 in seconds since 1900
+   * set_time() expects seconds elaspsed since 01-01-1970 epoch
+   */
+  set_time(sec - 2208988800L);
 }
 
 /**
