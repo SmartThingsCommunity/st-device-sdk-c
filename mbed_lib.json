@@ -1,0 +1,22 @@
+{
+    "name": "stdk",
+    "config": {
+        "present": 1,
+        "crypto-rsa": {
+            "help": "STDK crypto Support RSA",
+            "value": false
+        },
+        "crypto-ed25519": {
+            "help": "STDK crypto Support ED25519",
+            "value": true
+        },
+        "tls-mbedtls": {
+            "help": "Use mbedTLS",
+            "value": true
+        },
+        "tls-openssl": {
+            "help": "Use OpenSSL",
+            "value": false
+        }
+    }
+}
