@@ -22,28 +22,45 @@
 #include "platform/mbed_rtc_time.h"
 #include "iot_bsp_system.h"
 #include "iot_debug.h"
+#include "mbed.h"
 
 void iot_bsp_system_reboot()
 {
-
+	//TODO: implement API
+	NVIC_SystemReset();
 }
 
 void iot_bsp_system_poweroff()
 {
-
+	//TODO: implement API
+	exit(0);
 }
 
 iot_error_t iot_bsp_system_get_time_in_sec(char* buf, unsigned int buf_len)
 {
-        return IOT_ERROR_NONE;
+	IOT_WARN_CHECK(buf == NULL, IOT_ERROR_INVALID_ARGS, "buffer for time is NULL");
+
+	time_t seconds = time(NULL);
+
+	snprintf(buf, buf_len, "%lld", seconds);
+
+	return IOT_ERROR_NONE;
 }
 
 iot_error_t iot_bsp_system_set_time_in_sec(const char* time_in_sec)
 {
-        return IOT_ERROR_NONE;
+	IOT_WARN_CHECK(time_in_sec == NULL, IOT_ERROR_INVALID_ARGS, "time data is NULL");
+
+	time_t seconds;
+
+	sscanf(time_in_sec, "%lld", &seconds);
+	set_time(seconds);
+
+	return IOT_ERROR_NONE;
 }
 
 iot_error_t iot_bsp_system_get_uniqueid(unsigned char **uid, size_t *olen)
 {
-        return IOT_ERROR_NONE;
+	//TODO: implement API
+	return IOT_ERROR_NONE;
 }

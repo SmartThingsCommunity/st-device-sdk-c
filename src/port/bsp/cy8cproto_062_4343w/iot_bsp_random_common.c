@@ -17,8 +17,11 @@
  ****************************************************************************/
 
 #include "iot_bsp_random.h"
+#include <stdlib.h>
+#include "time.h"
 
 unsigned int iot_bsp_random()
 {
-	return 0;
+	srand(time(0));
+	return rand();
 }
