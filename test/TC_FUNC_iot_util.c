@@ -60,7 +60,7 @@ void TC_iot_util_get_random_uuid_null_parameter(void **state)
 void TC_iot_util_convert_str_mac_success(void **state)
 {
     iot_error_t err;
-    char mac_addr_str[] = "02:43:4e:59:25:7d";
+    char mac_addr_str[] = "a2:b3:fe:c9:8e:7d";
     struct iot_mac mac;
     struct iot_mac mac_empty;
     UNUSED(state);
@@ -151,3 +151,105 @@ void TC_iot_util_convert_str_uuid_null_parameters(void **state)
     // Then
     assert_int_not_equal(err, IOT_ERROR_NONE);
 }
+
+struct _wifi_channel_map {
+    uint8_t ch;
+    uint16_t freq;
+};
+
+void TC_iot_util_convert_channel_freq(void **state)
+{
+    UNUSED(state);
+    // Given
+    struct _wifi_channel_map channel_map[] = {
+            {1, 2412}, {2, 2417}, {3, 2422}, {4, 2427},
+            {5, 2432}, {6, 2437}, {7, 2442}, {8, 2447},
+            {9, 2452}, {10,2457}, {11, 2462}, {12, 2467},
+            {13, 2472}, {14, 2484}, {32, 5160}, {34, 5170},
+            {36, 5180}, {42, 5210}, {120, 5600}, {165, 5825},
+            {174, 0}, {31, 0}, {183, 0}, {196, 0},
+            {0xff, 0}, {0, 0}
+
+    };
+    // When, Then
+    for (int i = 0; i < (sizeof(channel_map) / sizeof(struct _wifi_channel_map)); i++) {
+        assert_int_equal(iot_util_convert_channel_freq(channel_map[i].ch), channel_map[i].freq);
+    }
+}
+
+void TC_iot_util_convert_mac_str_invalid_parameters(void **state)
+{
+    iot_error_t err;
+    struct iot_mac* mac;
+    char out_buffer[32];
+    UNUSED(state);
+
+    // Given: null mac
+    mac = NULL;
+    // When
+    err = iot_util_convert_mac_str(mac, out_buffer, sizeof(out_buffer));
+    // Then
+    assert_int_not_equal(err, IOT_ERROR_NONE);
+
+    // Given: null mac, str
+    mac = NULL;
+    // When
+    err = iot_util_convert_mac_str(mac, NULL, 16);
+    // Then
+    assert_int_not_equal(err, IOT_ERROR_NONE);
+
+    // Given: null str
+    mac = (struct iot_mac*) calloc(1, sizeof(struct iot_mac));
+    mac->addr[0] = 0x0a;
+    mac->addr[1] = 0x0b;
+    mac->addr[2] = 0x11;
+    mac->addr[3] = 0x22;
+    mac->addr[4] = 0x33;
+    mac->addr[5] = 0x44;
+    // When
+    err = iot_util_convert_mac_str(mac, NULL, 16);
+    // Then
+    assert_int_not_equal(err, IOT_ERROR_NONE);
+    // Teardown
+    free(mac);
+
+    // Given: short buffer length
+    mac = (struct iot_mac*) calloc(1, sizeof(struct iot_mac));
+    mac->addr[0] = 0x0a;
+    mac->addr[1] = 0x0b;
+    mac->addr[2] = 0x11;
+    mac->addr[3] = 0x22;
+    mac->addr[4] = 0x33;
+    mac->addr[5] = 0x44;
+    // When
+    err = iot_util_convert_mac_str(mac, out_buffer, 5);
+    // Then
+    assert_int_not_equal(err, IOT_ERROR_NONE);
+    // Teardown
+    free(mac);
+}
+
+void TC_iot_util_convert_mac_str_success(void **state)
+{
+    iot_error_t err;
+    struct iot_mac* mac;
+    char out_buffer[32];
+    UNUSED(state);
+
+    // Given
+    mac = (struct iot_mac*) calloc(1, sizeof(struct iot_mac));
+    mac->addr[0] = 0x0a;
+    mac->addr[1] = 0x0b;
+    mac->addr[2] = 0x11;
+    mac->addr[3] = 0x22;
+    mac->addr[4] = 0x33;
+    mac->addr[5] = 0x44;
+    // When
+    err = iot_util_convert_mac_str(mac, out_buffer, sizeof(out_buffer));
+    // Then
+    assert_int_equal(err, IOT_ERROR_NONE);
+    assert_string_equal("0a:0b:11:22:33:44", out_buffer);
+    // Teardown
+    free(mac);
+}
+

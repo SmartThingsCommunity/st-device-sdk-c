@@ -127,6 +127,9 @@ int TEST_FUNC_iot_util(void)
             cmocka_unit_test(TC_iot_util_convert_str_mac_invalid_parameters),
             cmocka_unit_test(TC_iot_util_convert_str_uuid_success),
             cmocka_unit_test(TC_iot_util_convert_str_uuid_null_parameters),
+            cmocka_unit_test(TC_iot_util_convert_channel_freq),
+            cmocka_unit_test(TC_iot_util_convert_mac_str_invalid_parameters),
+            cmocka_unit_test(TC_iot_util_convert_mac_str_success),
     };
     return cmocka_run_group_tests_name("iot_util.c", tests, NULL, NULL);
 }

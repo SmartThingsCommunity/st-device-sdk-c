@@ -25,6 +25,9 @@ void TC_iot_util_convert_str_mac_success(void **state);
 void TC_iot_util_convert_str_mac_invalid_parameters(void **state);
 void TC_iot_util_convert_str_uuid_success(void **state);
 void TC_iot_util_convert_str_uuid_null_parameters(void **state);
+void TC_iot_util_convert_channel_freq(void **state);
+void TC_iot_util_convert_mac_str_invalid_parameters(void **state);
+void TC_iot_util_convert_mac_str_success(void **state);
 
 // TCs for iot_api.c
 int TC_iot_api_memleak_detect_setup(void **state);
