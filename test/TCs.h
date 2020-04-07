@@ -41,6 +41,7 @@ void TC_iot_api_onboarding_config_load_template_parameters(void **state);
 void TC_iot_api_onboarding_config_load_success(void **state);
 void TC_iot_api_onboarding_config_load_internal_failure(void **state);
 void TC_iot_api_onboarding_config_without_mnid(void **state);
+void TC_iot_api_onboarding_config_without_dip_id(void **state);
 void TC_iot_get_time_in_sec_null_parameters(void **state);
 void TC_iot_get_time_in_sec_success(void **state);
 void TC_iot_get_time_in_ms_null_parmaeters(void **state);

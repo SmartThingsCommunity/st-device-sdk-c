@@ -139,6 +139,15 @@ struct iot_cloud_prov_data {
 };
 
 /**
+ * @brief Contains "Device Integration Profile" data
+ */
+struct iot_dip_data {
+	struct iot_uuid dip_id;		/**< @brief Device Integration Profile ID */
+	int dip_major_version;		/**< @brief DIP's major version */
+	int dip_minor_version;		/**< @brief DIP's minor version */
+};
+
+/**
  * @brief Contains "device configuration" data
  */
 struct iot_devconf_prov_data {
@@ -150,6 +159,7 @@ struct iot_devconf_prov_data {
 	unsigned int ownership_validation_type;	/**< @brief onboarding process validation type, JUSTWORKS, BUTTON, PIN, QR */
 	iot_crypto_pk_type_t pk_type;	/**< @brief Authentication type, determined in devworks */
 	char *hashed_sn;				/**< @brief hashed serial, self-generating values during onboarding process */
+	struct iot_dip_data *dip;		/**< @brief Device Integration Profile data, determined in devworks, optional */
 };
 
 /**

@@ -27,6 +27,7 @@
 #include "iot_crypto.h"
 #include "iot_nv_data.h"
 #include "iot_os_util.h"
+#include "iot_util.h"
 
 #include "JSON.h"
 
@@ -200,6 +201,8 @@ void iot_api_onboarding_config_mem_free(struct iot_devconf_prov_data *devconf)
 		iot_os_free(devconf->vid);
 	if (devconf->device_type)
 		iot_os_free(devconf->device_type);
+	if (devconf->dip)
+		iot_os_free(devconf->dip);
 }
 
 static const char name_onboardingConfig[] = "onboardingConfig";
@@ -210,6 +213,7 @@ static const char name_vid[] = "vid";
 static const char name_deviceTypeId[] = "deviceTypeId";
 static const char name_ownershipValidationTypes[] = "ownershipValidationTypes";
 static const char name_identityType[] = "identityType";
+static const char name_deviceIntegrationProfileId[] = "deviceIntegrationProfileKey";
 
 iot_error_t iot_api_onboarding_config_load(unsigned char *onboarding_config,
 		unsigned int onboarding_config_len, struct iot_devconf_prov_data *devconf)
@@ -217,6 +221,7 @@ iot_error_t iot_api_onboarding_config_load(unsigned char *onboarding_config,
 	iot_error_t iot_err = IOT_ERROR_NONE;
 	JSON_H *root = NULL;
 	JSON_H *config = NULL;
+	JSON_H *dip = NULL;
 	JSON_H *item = NULL;
 	char *data = NULL;
 	char *device_onboarding_id = NULL;
@@ -229,6 +234,7 @@ iot_error_t iot_api_onboarding_config_load(unsigned char *onboarding_config,
 	size_t str_len = 0;
 	int i;
 	char *current_name = NULL;
+	struct iot_dip_data *new_dip = NULL;
 
 	if (!onboarding_config || !devconf || onboarding_config_len == 0)
 		return IOT_ERROR_INVALID_ARGS;
@@ -380,6 +386,47 @@ iot_error_t iot_api_onboarding_config_load(unsigned char *onboarding_config,
 		goto load_out;
 	}
 
+	/* Device Integration Profile, optional */
+	dip = JSON_GET_OBJECT_ITEM(config, name_deviceIntegrationProfileId);
+	if (dip) {
+		current_name = (char *)name_deviceIntegrationProfileId;
+		new_dip = iot_os_malloc(sizeof(struct iot_dip_data));
+		if (!new_dip) {
+			iot_err = IOT_ERROR_MEM_ALLOC;
+			goto load_out;
+		}
+
+		item = JSON_GET_OBJECT_ITEM(dip, "id");
+		if (!item) {
+			IOT_ERROR("Can't get id (NULL)");
+			iot_err = IOT_ERROR_UNINITIALIZED;
+			goto load_out;
+		}
+
+		iot_err = iot_util_convert_str_uuid(JSON_GET_STRING_VALUE(item),
+						&new_dip->dip_id);
+		if (iot_err != IOT_ERROR_NONE) {
+			IOT_ERROR("Can't convert uuid (str:%d)", JSON_GET_STRING_VALUE(item));
+			goto load_out;
+		}
+
+		item = JSON_GET_OBJECT_ITEM(dip, "majorVersion");
+		if (!item) {
+			IOT_ERROR("Can't get majorVersion (NULL)");
+			iot_err = IOT_ERROR_UNINITIALIZED;
+			goto load_out;
+		}
+		new_dip->dip_major_version = item->valueint;
+
+		item = JSON_GET_OBJECT_ITEM(dip, "minorVersion");
+		if (!item) {
+			IOT_ERROR("Can't get minorVersion (NULL)");
+			iot_err = IOT_ERROR_UNINITIALIZED;
+			goto load_out;
+		}
+		new_dip->dip_minor_version = item->valueint;
+	}
+
 	devconf->device_onboarding_id = device_onboarding_id;
 	devconf->mnid = mnid;
 	devconf->setupid = setupid;
@@ -387,6 +434,9 @@ iot_error_t iot_api_onboarding_config_load(unsigned char *onboarding_config,
 	devconf->device_type = devicetypeid;
 	devconf->ownership_validation_type = ownership_validation_type;
 	devconf->pk_type = pk_type;
+	if (new_dip) {
+		devconf->dip = new_dip;
+	}
 
 	if (root)
 		JSON_DELETE(root);
@@ -425,6 +475,9 @@ load_out:
 	}
 	if (data) {
 		iot_os_free(data);
+	}
+	if (new_dip) {
+		iot_os_free(new_dip);
 	}
 
 	return iot_err;
