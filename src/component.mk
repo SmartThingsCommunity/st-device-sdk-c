@@ -4,7 +4,7 @@
 
 ifdef CONFIG_STDK_IOT_CORE
 
-COMPONENT_ADD_INCLUDEDIRS += include include/bsp include/os include/mqtt include/mqtt/freertos include/external
+COMPONENT_ADD_INCLUDEDIRS += include include/bsp include/os include/mqtt include/external
 
 COMPONENT_SRCDIRS += ./
 
