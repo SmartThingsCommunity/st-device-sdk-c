@@ -35,15 +35,15 @@ static inline JSON_H *JSON_GET_OBJECT_ITEM(const JSON_H * const obj, const char 
 }
 
 static inline void JSON_ADD_ITEM_TO_OBJECT(JSON_H *obj, const char *string, JSON_H *item) {
-    return cJSON_AddItemToObject(obj, string, item);
+    cJSON_AddItemToObject(obj, string, item);
 }
 
-static inline JSON_H *JSON_ADD_NUMBER_TO_OBJECT(JSON_H * const obj, const char * const name, const double number) {
-    return cJSON_AddNumberToObject(obj, name, number);
+static inline void JSON_ADD_NUMBER_TO_OBJECT(JSON_H * const obj, const char * const name, const double number) {
+    cJSON_AddNumberToObject(obj, name, number);
 }
 
-static inline JSON_H *JSON_ADD_STRING_TO_OBJECT(JSON_H * const obj, const char * const name, const char * const string) {
-    return cJSON_AddStringToObject(obj, name, string);
+static inline void JSON_ADD_STRING_TO_OBJECT(JSON_H * const obj, const char * const name, const char * const string) {
+    cJSON_AddStringToObject(obj, name, string);
 }
 
 static inline JSON_H *JSON_CREATE_STRING(const char *string) {
@@ -115,8 +115,8 @@ typedef void JSON_H;
 JSON_H *JSON_CREATE_OBJECT(void);
 JSON_H *JSON_GET_OBJECT_ITEM(const JSON_H * const obj, const char * const string);
 void JSON_ADD_ITEM_TO_OBJECT(JSON_H *obj, const char *string, JSON_H *item);
-JSON_H *JSON_ADD_NUMBER_TO_OBJECT(JSON_H * const obj, const char * const name, const double number);
-JSON_H *JSON_ADD_STRING_TO_OBJECT(JSON_H * const obj, const char * const name, const char * const string);
+void JSON_ADD_NUMBER_TO_OBJECT(JSON_H * const obj, const char * const name, const double number);
+void JSON_ADD_STRING_TO_OBJECT(JSON_H * const obj, const char * const name, const char * const string);
 JSON_H *JSON_CREATE_STRING(const char *string);
 JSON_H *JSON_CREATE_STRING_ARRAY(const char **strings, int count);
 char *JSON_PRINT(const JSON_H *item);
