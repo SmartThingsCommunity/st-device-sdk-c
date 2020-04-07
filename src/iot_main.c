@@ -444,9 +444,9 @@ static iot_error_t _do_iot_main_command(struct iot_context *ctx,
 
 					ctx->iot_reg_data.new_reged = true;
 					next_state = IOT_STATE_PROV_ENTER;
+				} else {
+					next_state = IOT_STATE_PROV_DONE;
 				}
-
-				next_state = IOT_STATE_PROV_DONE;
 			}
 
 			err = iot_state_update(ctx, next_state, state_opt);
