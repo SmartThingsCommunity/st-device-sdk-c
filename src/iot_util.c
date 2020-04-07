@@ -110,57 +110,62 @@ void iot_util_dump_mem(char *tag, uint8_t *buf, size_t len)
 	printf("\n");
 }
 
+#define UUID_STRING_LENGTH	(36)
+#define UUID_TIME_LOW_LEN	(8)
+#define UUID_TIME_MID_LEN	(4)
+#define UUID_TIME_HI_LEN	(3)
+#define UUID_CLOCK_SEQ_LEN	(4)
+#define UUID_NODE_LEN		(12)
+// UUID format: https://tools.ietf.org/html/rfc4122
 iot_error_t validate_uuid_format(const char *str, size_t str_len)
 {
-	const char *ref_str = "42365732-c6db-4bc9-8945-2a7ca10d6f23";
 	char *ptr = (char*) str;
 
 	if (!str) {
 		return IOT_ERROR_INVALID_ARGS;
 	}
 
-	if (strlen(ref_str) != str_len) {
+	if (str_len != UUID_STRING_LENGTH) {
 		return IOT_ERROR_INVALID_ARGS;
 	}
 
-	if (!_ishex_len(ptr, 8)) {
+	if (!_ishex_len(ptr, UUID_TIME_LOW_LEN)) {
 		return IOT_ERROR_INVALID_ARGS;
 	}
-	ptr += 8;
+	ptr += UUID_TIME_LOW_LEN;
 	if (*ptr++ != '-') {
 		return IOT_ERROR_INVALID_ARGS;
 	}
 
-	if (!_ishex_len(ptr, 4)) {
+	if (!_ishex_len(ptr, UUID_TIME_MID_LEN)) {
 		return IOT_ERROR_INVALID_ARGS;
 	}
-	ptr += 4;
+	ptr += UUID_TIME_MID_LEN;
 	if (*ptr++ != '-') {
 		return IOT_ERROR_INVALID_ARGS;
 	}
 
 	if (*ptr < '1' || *ptr > '5') {
-		// rfc4122 defines version from 1 to 5
 		return IOT_ERROR_INVALID_ARGS;
 	}
 
-	if (!_ishex_len(++ptr, 3)) {
+	if (!_ishex_len(++ptr, UUID_TIME_HI_LEN)) {
 		return IOT_ERROR_INVALID_ARGS;
 	}
-	ptr += 3;
+	ptr += UUID_TIME_HI_LEN;
 	if (*ptr++ != '-') {
 		return IOT_ERROR_INVALID_ARGS;
 	}
 
-	if (!_ishex_len(ptr, 4)) {
+	if (!_ishex_len(ptr, UUID_CLOCK_SEQ_LEN)) {
 		return IOT_ERROR_INVALID_ARGS;
 	}
-	ptr += 4;
+	ptr += UUID_CLOCK_SEQ_LEN;
 	if (*ptr++ != '-') {
 		return IOT_ERROR_INVALID_ARGS;
 	}
 
-	if (!_ishex_len(ptr, 12)) {
+	if (!_ishex_len(ptr, UUID_NODE_LEN)) {
 		return IOT_ERROR_INVALID_ARGS;
 	}
 	return IOT_ERROR_NONE;
@@ -168,7 +173,6 @@ iot_error_t validate_uuid_format(const char *str, size_t str_len)
 
 iot_error_t iot_util_convert_str_uuid(const char* str, struct iot_uuid* uuid)
 {
-	const char *ref_str = "42365732-c6db-4bc9-8945-2a7ca10d6f23";
 	int i, j = 0, k = 1;
 	unsigned char c = 0;
 
@@ -182,7 +186,7 @@ iot_error_t iot_util_convert_str_uuid(const char* str, struct iot_uuid* uuid)
 		return IOT_ERROR_INVALID_ARGS;
 	}
 
-	for (i = 0; i < strlen(ref_str); i++) {
+	for (i = 0; i < UUID_STRING_LENGTH; i++) {
 		if (str[i] == '-') {
 			continue;
 		} else if (_isalpha(str[i])) {
