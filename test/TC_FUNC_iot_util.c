@@ -111,9 +111,10 @@ void TC_iot_util_convert_str_mac_invalid_parameters(void **state)
 void TC_iot_util_convert_str_uuid_success(void **state)
 {
     iot_error_t err;
-    const char *sample_uuid_lower = "c236f527-5d8d-4d0b-86f6-0add22717f0e";
-    const char *sample_uuid_upper = "C236F527-5d8D-4D0B-86F6-0ADD22717F0E";
-    struct iot_uuid sample_uuid = {
+    const char *uuid_random_type_lower = "c236f527-5d8d-4d0b-86f6-0add22717f0e";
+    const char *uuid_random_type_upper = "C236F527-5d8D-4D0B-86F6-0ADD22717F0E";
+    const char *uuid_timebased = "292aa580-7872-11ea-90f5-e81132336bba";
+    struct iot_uuid random_type_uuid = {
             .id[0] = 0xc2,
             .id[1] = 0x36,
             .id[2] = 0xf5,
@@ -131,33 +132,63 @@ void TC_iot_util_convert_str_uuid_success(void **state)
             .id[14] = 0x7f,
             .id[15] = 0x0e,
     };
+    struct iot_uuid timebased_uuid = {
+            .id[0] = 0x29,
+            .id[1] = 0x2a,
+            .id[2] = 0xa5,
+            .id[3] = 0x80,
+            .id[4] = 0x78,
+            .id[5] = 0x72,
+            .id[6] = 0x11,
+            .id[7] = 0xea,
+            .id[8] = 0x90,
+            .id[9] = 0xf5,
+            .id[10] = 0xe8,
+            .id[11] = 0x11,
+            .id[12] = 0x32,
+            .id[13] = 0x33,
+            .id[14] = 0x6b,
+            .id[15] = 0xba,
+    };
     struct iot_uuid uuid;
     UNUSED(state);
 
-    // Given: lower case uuid string
+    // Given: random type lower case uuid string
     memset(&uuid, '\0', sizeof(struct iot_uuid));
     // When
-    err = iot_util_convert_str_uuid(sample_uuid_lower, &uuid);
+    err = iot_util_convert_str_uuid(uuid_random_type_lower, &uuid);
     // Then
     assert_int_equal(err, IOT_ERROR_NONE);
-    assert_memory_equal(&uuid, &sample_uuid, sizeof(struct iot_uuid));
+    assert_memory_equal(&uuid, &random_type_uuid, sizeof(struct iot_uuid));
 
-    // Given: upper case uuid string
+    // Given: random type upper case uuid string
     memset(&uuid, '\0', sizeof(struct iot_uuid));
     // When
-    err = iot_util_convert_str_uuid(sample_uuid_upper, &uuid);
+    err = iot_util_convert_str_uuid(uuid_random_type_upper, &uuid);
     // Then
     assert_int_equal(err, IOT_ERROR_NONE);
-    assert_memory_equal(&uuid, &sample_uuid, sizeof(struct iot_uuid));
+    assert_memory_equal(&uuid, &random_type_uuid, sizeof(struct iot_uuid));
+
+    // Given: time based uuid string
+    memset(&uuid, '\0', sizeof(struct iot_uuid));
+    // When
+    err = iot_util_convert_str_uuid(uuid_timebased, &uuid);
+    // Then
+    assert_int_equal(err, IOT_ERROR_NONE);
+    assert_memory_equal(&uuid, &timebased_uuid, sizeof(struct iot_uuid));
 }
 
+#define MAX_INVALID_UUID_TEST_COUNT 15
 void TC_iot_util_convert_str_uuid_invalid_parameters(void **state)
 {
     iot_error_t err;
     const char *valid_uuid_str = "c236f527-5d8d-4d0b-86f6-0add22717f0e";
-    const char invalid_uuid_str[10][39] = {
+    const char invalid_uuid_str[MAX_INVALID_UUID_TEST_COUNT][39] = {
             "c236f527-5d8d-4d0b-86f6-0add22717f e", // space at middle
-            "c236f527_5d8d_4d0b_86f6_0add22717f0e", // invalid delimiter '_'
+            "c236f527_5d8d-4d0b-86f6-0add22717f0e", // invalid 1st delimiter '_'
+            "c236f527-5d8d_4d0b-86f6-0add22717f0e", // invalid 2nd delimiter '_'
+            "c236f527-5d8d-4d0b_86f6-0add22717f0e", // invalid 3rd delimiter '_'
+            "c236f527-5d8d-4d0b-86f6_0add22717f0e", // invalid 4th delimiter '_'
             "c236f527-5d8d-4d0b-86f6-0add2271", // short length
             "c236f527-5d8d-4d0b-86f6-0add22717f0e8", // long length
             "c236f527-5d8d-4d0b-86f6-0add22717f0z", // invalid character 'z'
@@ -166,6 +197,8 @@ void TC_iot_util_convert_str_uuid_invalid_parameters(void **state)
             "c236f52-75d8d-4d0b-86f6-0add22717f0e", // 7-5-4-4-12 format
             "c236f527-5d8-d4d0b-86f6-0add22717f0e", // 8-3-5-4-12 format
             "c236f527-5d8d-4d0-b86f6-0add22717f0e", // 8-4-3-5-12 format
+            "292aa580-7872-01ea-90f5-e81132336bba", // invalid version 0
+            "292aa580-7872-61ea-90f5-e81132336bba", // invalid version 6
     };
     struct iot_uuid uuid;
     UNUSED(state);
@@ -185,7 +218,7 @@ void TC_iot_util_convert_str_uuid_invalid_parameters(void **state)
     // Then
     assert_int_not_equal(err, IOT_ERROR_NONE);
 
-    for (int i = 0; i < 10; i++) {
+    for (int i = 0; i < MAX_INVALID_UUID_TEST_COUNT; i++) {
         // When: invalid uuid
         err = iot_util_convert_str_uuid(invalid_uuid_str[i], &uuid);
         // Then
