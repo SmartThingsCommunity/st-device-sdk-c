@@ -236,18 +236,14 @@ iot_error_t iot_bsp_wifi_set_mode(iot_wifi_conf *conf)
 			//esp_wifi_set_mode(WIFI_MODE_NULL);
 		break;
 		case IOT_WIFI_MODE_SCAN:
-			if (_iot_bsp_sta_mode() == 0) {
-				res = wifi_manager_set_mode(STA_MODE, NULL);
-				if (res != WIFI_MANAGER_SUCCESS) {
-					IOT_INFO(" Set STA mode Fail");
-					return IOT_ERROR_INIT_FAIL;
+			/*stdk first scan on sta mode, and then scan on softap mode.
+			for tizenrt, we only do the first scan, and reuse the result.*/
+			if (_iot_bsp_sta_mode() == 1) {
+					res = wifi_manager_scan_ap();
+					if (res != WIFI_MANAGER_SUCCESS) {
+					IOT_INFO(" scan Fail");
+					return IOT_ERROR_READ_FAIL;
 				}
-			}
-
-			res = wifi_manager_scan_ap();
-			if (res != WIFI_MANAGER_SUCCESS) {
-				IOT_INFO(" scan Fail");
-				return IOT_ERROR_READ_FAIL;
 			}
 		break;
 
