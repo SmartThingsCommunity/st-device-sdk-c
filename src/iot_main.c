@@ -778,16 +778,17 @@ static void _iot_main_task(struct iot_context *ctx)
 		}
 
 		if (curr_events & IOT_EVENT_BIT_CAPABILITY) {
+			final_msg.msg = NULL;
+			final_msg.msglen = 0;
+
 			if (iot_os_queue_receive(ctx->pub_queue,
 					&final_msg, 0) != IOT_OS_FALSE) {
 
 				if (ctx->curr_state < IOT_STATE_CLOUD_CONNECTING) {
-					IOT_WARN("MQTT already disconnected. reset all pub_queue");
-					iot_os_queue_reset(ctx->pub_queue);
+					IOT_WARN("MQTT already disconnected. publish event dropped!!");
+					IOT_WARN("Dropped paylod(size:%d):%s", final_msg.msglen, final_msg.msg);
 				} else {
 					err = _publish_event(ctx, &final_msg);
-					free(final_msg.msg);
-
 					if (err != IOT_ERROR_NONE) {
 						IOT_ERROR("failed publish event_data : %d", err);
 						if (err == IOT_ERROR_MQTT_PUBLISH_FAIL) {
@@ -802,12 +803,14 @@ static void _iot_main_task(struct iot_context *ctx)
 							err = iot_state_update(ctx, next_state, 0);
 						}
 					}
-
-					/* Set bit again to check whether the several cmds are already
-					 * stacked up in the queue.
-					 */
-					iot_os_eventgroup_set_bits(ctx->iot_events, IOT_EVENT_BIT_CAPABILITY);
 				}
+				if (final_msg.msg)
+					free(final_msg.msg);
+
+				/* Set bit again to check whether the several cmds are already
+				 * stacked up in the queue.
+				 */
+				iot_os_eventgroup_set_bits(ctx->iot_events, IOT_EVENT_BIT_CAPABILITY);
 			}
 		}
 
