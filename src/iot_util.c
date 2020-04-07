@@ -139,10 +139,15 @@ iot_error_t validate_uuid_format(const char *str, size_t str_len)
 		return IOT_ERROR_INVALID_ARGS;
 	}
 
-	if (!_ishex_len(ptr, 4)) {
+	if (*ptr < '1' || *ptr > '5') {
+		// rfc4122 defines version from 1 to 5
 		return IOT_ERROR_INVALID_ARGS;
 	}
-	ptr += 4;
+
+	if (!_ishex_len(++ptr, 3)) {
+		return IOT_ERROR_INVALID_ARGS;
+	}
+	ptr += 3;
 	if (*ptr++ != '-') {
 		return IOT_ERROR_INVALID_ARGS;
 	}
