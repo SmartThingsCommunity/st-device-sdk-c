@@ -124,6 +124,9 @@ typedef struct {
 	char *args_str[MAX_CAP_ARG];
 
 	iot_cap_val_t cmd_data[MAX_CAP_ARG];	/**< @brief Value of each arguments. */
+
+	int total_commands_num;		/**< @brief Total number of commands in a bunch of commands */
+	int order_of_command;		/**< @brief Order of this command in a bunch of commands */
 } iot_cap_cmd_data_t;
 
 /**
