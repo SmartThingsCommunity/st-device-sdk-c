@@ -146,6 +146,7 @@ void TC_STATIC_es_deviceinfo_handler_success(void **state);
 void TC_STATIC_es_keyinfo_handler_success(void **state);
 void TC_STATIC_es_keyinfo_handler_success_with_y2038(void **state);
 void TC_STATIC_es_wifiprovisioninginfo_handler_success(void **state);
+void TC_STATIC_es_wifiprovisioninginfo_handler_success_without_authtype(void **state);
 void TC_STATIC_es_crypto_cipher_gen_iv_success(void **state);
 void TC_STATIC_es_wifiscaninfo_handler_invalid_parameters(void **state);
 void TC_STATIC_es_wifiscaninfo_handler_success(void **state);
