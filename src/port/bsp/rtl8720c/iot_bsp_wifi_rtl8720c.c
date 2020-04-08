@@ -41,10 +41,10 @@ enum e_wifi_init_status {
 
 static enum e_wifi_init_status wifi_init_status = e_wifi_uninit;
 static rtw_mode_t rtw_mode = RTW_MODE_NONE;
-static rtw_result_t app_scan_result_handler(rtw_scan_handler_result_t* malloced_scan_result );
+static rtw_result_t app_scan_result_handler(rtw_scan_handler_result_t *malloced_scan_result);
 extern struct netif xnetif[NET_IF_NUM];
 
-static int iot_bsp_wifi_on(iot_wifi_mode_t mode)
+static int _iot_bsp_wifi_on(iot_wifi_mode_t mode)
 {
 	rtw_mode_t iot_wifi_rtw_mode_map[] = {
 		[IOT_WIFI_MODE_OFF] = RTW_MODE_NONE,
@@ -57,7 +57,7 @@ static int iot_bsp_wifi_on(iot_wifi_mode_t mode)
 	return wifi_on(rtw_mode);
 }
 
-static int iot_bsp_wifi_off()
+static int _iot_bsp_wifi_off()
 {
 	return wifi_off();
 }
@@ -103,7 +103,7 @@ iot_error_t iot_bsp_wifi_init()
 {
 	if (wifi_init_status == e_wifi_init) {
 		IOT_INFO("wifi is already initialized, returning");
-		return;
+		return IOT_ERROR_NONE;
 	}
 #if CONFIG_INIT_NET
 #if CONFIG_LWIP_LAYER
@@ -114,7 +114,7 @@ iot_error_t iot_bsp_wifi_init()
 #if CONFIG_WIFI_IND_USE_THREAD
 	wifi_manager_init();
 #endif
-	if(iot_bsp_wifi_on(IOT_WIFI_MODE_STATION) < 0){
+	if (_iot_bsp_wifi_on(IOT_WIFI_MODE_STATION) < 0) {
 		IOT_ERROR("wifi_on failed");
 		return IOT_ERROR_INIT_FAIL;
 	}
@@ -125,7 +125,7 @@ iot_error_t iot_bsp_wifi_init()
 }
 
 /*These code copy from at comand sample**/
-static int _find_ap_from_scan_buf(char*buf, int buflen, char *target_ssid, void *user_data)
+static int _find_ap_from_scan_buf(char *buf, int buflen, char *target_ssid, void *user_data)
 {
 	rtw_wifi_setting_t *pwifi = (rtw_wifi_setting_t *)user_data;
 	int plen = 0;
@@ -166,7 +166,7 @@ static int _find_ap_from_scan_buf(char*buf, int buflen, char *target_ssid, void 
 	return 0;
 }
 
-static int _get_ap_security_mode(IN char * ssid, OUT rtw_security_t *security_mode, OUT u8 * channel)
+static int _get_ap_security_mode(IN char *ssid, OUT rtw_security_t *security_mode, OUT u8 *channel)
 {
 	rtw_wifi_setting_t wifi;
 	u32 scan_buflen = 1000;
@@ -175,7 +175,7 @@ static int _get_ap_security_mode(IN char * ssid, OUT rtw_security_t *security_mo
 
 	IOT_INFO("_get_ap_security_mode");
 	if (wifi_scan_networks_with_ssid(_find_ap_from_scan_buf, (void*)&wifi, scan_buflen, ssid, strlen(ssid)) != RTW_SUCCESS) {
-		IOT_ERROR("Wifi scan failed!\n");
+		IOT_ERROR("Wifi scan failed!");
 		return 0;
 	}
 
@@ -185,7 +185,7 @@ static int _get_ap_security_mode(IN char * ssid, OUT rtw_security_t *security_mo
 		IOT_INFO("Wifi scan secruity mode %d channel %d\n", wifi.security_type, wifi.channel);
 		return 1;
 	}
-	IOT_INFO("Wifi scan could not search the ap with ssid %s, target ssid is: wifi.ssid %s!\n", ssid, wifi.ssid);
+	IOT_INFO("Wifi scan could not search the ap with ssid %s, target ssid is: wifi.ssid %s!", ssid, wifi.ssid);
 
 	return 0;
 }
@@ -226,13 +226,13 @@ iot_error_t iot_bsp_wifi_set_mode(iot_wifi_conf *conf)
 	switch (conf->mode) {
 	case IOT_WIFI_MODE_OFF:
 		if (rtw_mode != RTW_MODE_NONE) {
-			if (RTW_ERROR == iot_bsp_wifi_off()) {
+			if (RTW_ERROR == _iot_bsp_wifi_off()) {
 				ret = IOT_ERROR_CONN_OPERATE_FAIL;
 				goto out;
 			}
 			vTaskDelay(20);
 		}
-		if (RTW_ERROR == iot_bsp_wifi_on(IOT_WIFI_MODE_OFF)) {
+		if (RTW_ERROR == _iot_bsp_wifi_on(IOT_WIFI_MODE_OFF)) {
 			ret = IOT_ERROR_CONN_OPERATE_FAIL;
 			goto out;
 		}
@@ -240,21 +240,21 @@ iot_error_t iot_bsp_wifi_set_mode(iot_wifi_conf *conf)
 	break;
 	case IOT_WIFI_MODE_SCAN:
 		if (rtw_mode == RTW_MODE_NONE) {
-			IOT_ERROR("Scan could perform on both STA or SOFTAP mode, but current mode is NONE.\n");
+			IOT_ERROR("Scan could perform on both STA or SOFTAP mode, but current mode is NONE.");
 			ret = IOT_ERROR_CONN_OPERATE_FAIL;
 			goto out;
 		}
 	break;
 	case IOT_WIFI_MODE_STATION:
 		if (rtw_mode != RTW_MODE_STA) {
-			if (RTW_ERROR == iot_bsp_wifi_off()) {
+			if (RTW_ERROR == _iot_bsp_wifi_off()) {
 				ret = IOT_ERROR_CONN_OPERATE_FAIL;
 				goto out;
 			}
 			vTaskDelay(20);
 		}
 
-		if (RTW_ERROR == iot_bsp_wifi_on(IOT_WIFI_MODE_STATION)) {
+		if (RTW_ERROR == _iot_bsp_wifi_on(IOT_WIFI_MODE_STATION)) {
 				ret = IOT_ERROR_CONN_OPERATE_FAIL;
 				goto out;
 		}
@@ -265,7 +265,7 @@ iot_error_t iot_bsp_wifi_set_mode(iot_wifi_conf *conf)
 		for (int i = 0; i < 5; i++) {
 			if(0 !=	_get_ap_security_mode(wifi_config.ssid.val, &(wifi_config.security_type), &ap_channel))
 				break;
-			IOT_INFO("Connect failed, No. %d try!\n",i);
+			IOT_INFO("Connect failed, No. %d try!", i);
 		}
 
 		wifi_set_autoreconnect(1);
@@ -280,9 +280,9 @@ iot_error_t iot_bsp_wifi_set_mode(iot_wifi_conf *conf)
 				wifi_config.password, strlen(wifi_config.ssid.val),
 				strlen(wifi_config.password), wifi_config.key_id, NULL) == RTW_SUCCESS) {
 					LwIP_DHCP(0, DHCP_START);
-					int rssi=0;
+					int rssi = 0;
 					wifi_get_rssi(&rssi);
-					IOT_INFO("\n\rThe RSSI: %d\n",rssi);
+					IOT_INFO("The RSSI: %d", rssi);
 					break;
 			} else {
 				if (RTW_SECURITY_WEP_PSK == wifi_config.security_type
@@ -318,12 +318,12 @@ iot_error_t iot_bsp_wifi_set_mode(iot_wifi_conf *conf)
 		pnetif->flags |= NETIF_FLAG_IPSWITCH;
 #endif
 		///enable wifi ap mode
-		if (RTW_ERROR == iot_bsp_wifi_off()) {
+		if (RTW_ERROR == _iot_bsp_wifi_off()) {
 			ret = IOT_ERROR_CONN_OPERATE_FAIL;
 			goto out;
 		}
 		vTaskDelay(20);
-		if(iot_bsp_wifi_on(IOT_WIFI_MODE_SOFTAP) < 0) {
+		if(_iot_bsp_wifi_on(IOT_WIFI_MODE_SOFTAP) < 0) {
 			IOT_ERROR("wifi_on failed");
 			ret = IOT_ERROR_CONN_OPERATE_FAIL;
 			goto out;
@@ -332,22 +332,22 @@ iot_error_t iot_bsp_wifi_set_mode(iot_wifi_conf *conf)
 		wifi_set_autoreconnect(0);
 		int channel = 6;	//#define SOFTAP_CHANNEL 6
 		if (wifi_start_ap(wifi_config.ssid.val, wifi_config.security_type, wifi_config.password, strlen(wifi_config.ssid.val), strlen(wifi_config.password), channel) < 0) {
-			IOT_ERROR("\r[WLAN_SCENARIO_EXAMPLE] ERROR: wifi_start_ap failed");
+			IOT_ERROR("[WLAN_SCENARIO_EXAMPLE] ERROR: wifi_start_ap failed");
 			ret = IOT_ERROR_CONN_OPERATE_FAIL;
 			goto out;
 		}
 		while (1) {
 			char essid[33];
 
-			if (wext_get_ssid(WLAN0_NAME, (unsigned char *) essid) > 0) {
-				if (strcmp((const char *) essid, (const char *)wifi_config.ssid.val) == 0) {
-					IOT_INFO("\r%s started\r\n", wifi_config.ssid.val);
+			if (wext_get_ssid(WLAN0_NAME, (unsigned char *)essid) > 0) {
+				if (strcmp((const char *)essid, (const char *)wifi_config.ssid.val) == 0) {
+					IOT_INFO("%s started", wifi_config.ssid.val);
 					break;
 				}
 			}
 
 			if (timeout == 0) {
-				IOT_ERROR("\rERROR: Start AP timeout!");
+				IOT_ERROR("ERROR: Start AP timeout!");
 				ret = IOT_ERROR_CONN_OPERATE_FAIL;
 				break;
 			}
@@ -370,7 +370,7 @@ out:
 
 #define CONFIG_INIC_CMD_RSP 1
 
-static rtw_result_t app_scan_result_handler(rtw_scan_handler_result_t* malloced_scan_result )
+static rtw_result_t app_scan_result_handler(rtw_scan_handler_result_t *malloced_scan_result)
 {
 	IOT_DEBUG("++++++++++++++++++++++++++");
 	if (malloced_scan_result->scan_complete != RTW_TRUE) {
@@ -442,7 +442,8 @@ uint16_t iot_bsp_wifi_get_scan_result(iot_wifi_scan_result_t *scan_result)
 
 	struct wifi_scan_result inic_scan_buf;
 	rtw_init_sema(&(inic_scan_buf.scan_sema), 0);
-	if(inic_scan_buf.scan_sema == NULL) return RTW_ERROR;
+	if(inic_scan_buf.scan_sema == NULL)
+		return RTW_ERROR;
 
 	inic_scan_buf.scan_result = scan_result;
 	inic_scan_buf.len = 0;
@@ -451,7 +452,7 @@ uint16_t iot_bsp_wifi_get_scan_result(iot_wifi_scan_result_t *scan_result)
 		return IOT_ERROR_CONNECT_FAIL;
 	}
 	if (rtw_down_timeout_sema(&inic_scan_buf.scan_sema, SCAN_LONGEST_WAIT_TIME) == RTW_FALSE) {
-		printf("\rWPS scan done early!\r");
+		IOT_INFO("WPS scan done early!");
 	}
 	len = inic_scan_buf.len;
 	return len;
@@ -461,7 +462,7 @@ uint16_t iot_bsp_wifi_get_scan_result(iot_wifi_scan_result_t *scan_result)
 /*Note: sample: '0' -> 0x0, '1' -> 0x1, ...'a'->0xa,  'E' -> 0xE, 'F' -> 0xF*/
 static int transfer_ascii_to_hex(char c)
 {
-	if ((c >= '0') && (c <= '9') ) {
+	if ((c >= '0') && (c <= '9')) {
 		return c - '0';
 	} else if ((c >= 'a') && (c <= 'f')) {
 		return c - 'a' + 0xa;
