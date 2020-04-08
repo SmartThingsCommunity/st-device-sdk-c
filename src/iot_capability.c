@@ -422,7 +422,7 @@ int st_cap_attr_send(IOT_CAP_HANDLE *cap_handle,
 	struct iot_cap_handle *handle = (struct iot_cap_handle*)cap_handle;
 	iot_error_t err;
 
-	if (!handle || !evt_data || !evt_num) {
+	if (!handle || !handle->component || !handle->capability || !handle->ctx || !evt_data || !evt_num) {
 		IOT_ERROR("There is no handle or evt_data");
 		return IOT_ERROR_INVALID_ARGS;
 	}
@@ -689,7 +689,7 @@ void iot_cap_sub_cb(iot_cap_handle_list_t *cap_handle_list, char *payload)
 	JSON_H *cmditem = NULL;
 	char *raw_data = NULL;
 	iot_error_t err;
-	int k;
+	int i;
 	int arr_size = 0;
 
 	if (!cap_handle_list || !payload) {
@@ -739,23 +739,25 @@ void iot_cap_sub_cb(iot_cap_handle_list_t *cap_handle_list, char *payload)
 		goto out;
 	}
 
-	for (k = 0; k < arr_size; k++) {
+	for (i = 0; i < arr_size; i++) {
 		char *component_name = NULL;
 		char *capability_name = NULL;
 		char *command_name = NULL;
 		iot_cap_cmd_data_t cmd_data;
 
 		cmd_data.num_args = 0;
+		cmd_data.total_commands_num = arr_size;
+		cmd_data.order_of_command = i + 1;
 
-		cmditem = JSON_GET_ARRAY_ITEM(cap_cmds, k);
+		cmditem = JSON_GET_ARRAY_ITEM(cap_cmds, i);
 		if (!cmditem) {
-			IOT_ERROR("Cannot get %dth commands data", k);
+			IOT_ERROR("Cannot get %dth commands data", i);
 			continue;
 		}
 
 		err = _iot_parse_cmd_data(cmditem, &component_name, &capability_name, &command_name, &cmd_data);
 		if (err != IOT_ERROR_NONE) {
-			IOT_ERROR("Cannot parse %dth command data", k);
+			IOT_ERROR("Cannot parse %dth command data", i);
 		} else {
 			_iot_process_cmd(cap_handle_list, component_name, capability_name, command_name, &cmd_data);
 		}

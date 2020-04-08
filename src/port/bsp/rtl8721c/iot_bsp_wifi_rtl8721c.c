@@ -258,6 +258,7 @@ iot_error_t iot_bsp_wifi_set_mode(iot_wifi_conf *conf)
 			IOT_INFO("Connect failed, No. %d try!\n",i);
 		}
 
+		wifi_set_autoreconnect(1);
 		int keyindex = 0;
 		/*NOTE: keyindex is for web auth mode, in other mode keyindex will not take effect*/
 		/*Known issue: We checked in our AP, if keyindex >0,
@@ -288,14 +289,13 @@ iot_error_t iot_bsp_wifi_set_mode(iot_wifi_conf *conf)
 			}
 		}
 
-		wifi_set_autoreconnect(1);
-                time(&now);
-                localtime_r(&now, &timeinfo);
+		time(&now);
+		localtime_r(&now, &timeinfo);
 
-                if (timeinfo.tm_year < (2016 - 1900)) {
-                        IOT_INFO("Time is not set yet. Connecting to WiFi and getting time over NTP.");
-                        _obtain_time();
-                }
+		if (timeinfo.tm_year < (2016 - 1900)) {
+			IOT_INFO("Time is not set yet. Connecting to WiFi and getting time over NTP.");
+			_obtain_time();
+		}
 
 	break;
 	case IOT_WIFI_MODE_SOFTAP:
