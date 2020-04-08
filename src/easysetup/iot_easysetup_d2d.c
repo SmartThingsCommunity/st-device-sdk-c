@@ -1127,6 +1127,54 @@ out:
 }
 
 STATIC_FUNCTION
+iot_wifi_auth_mode_t _decide_wifi_auth_mode(const JSON_H *item, struct iot_wifi_prov_data *wifi_prov, const struct iot_context *ctx)
+{
+	iot_wifi_auth_mode_t auth_mode = IOT_WIFI_AUTH_WPA_WPA2_PSK;
+	int i;
+
+	if (!ctx || !wifi_prov) {
+		return IOT_WIFI_AUTH_WPA_WPA2_PSK;
+	}
+
+	if (item == NULL) {
+		IOT_INFO("no authType");
+		for (i = 0; i < ctx->scan_num; i++) {
+			if (!strcmp(wifi_prov->ssid, (char *)ctx->scan_result[i].ssid)) {
+				auth_mode = ctx->scan_result[i].authmode;
+				IOT_DEBUG("%s is type %d", wifi_prov->ssid, auth_mode);
+				break;
+			}
+		}
+		if (i == ctx->scan_num) {
+			if (strlen(wifi_prov->password) == 0) {
+				IOT_DEBUG("%s doesn't exist in scan list. So assume it as Open", wifi_prov->ssid);
+				auth_mode = IOT_WIFI_AUTH_OPEN;
+			} else {
+				IOT_DEBUG("%s doesn't exist in scan list. So assume it as WPA", wifi_prov->ssid);
+				auth_mode = IOT_WIFI_AUTH_WPA_WPA2_PSK;
+			}
+		}
+	} else {
+		for (i = 0; i < ctx->scan_num; i++) {
+			if (!strcmp(wifi_prov->ssid, (char *)ctx->scan_result[i].ssid)) {
+				if (item->valueint == ctx->scan_result[i].authmode) {
+					auth_mode = item->valueint;
+				} else {
+					auth_mode = ctx->scan_result[i].authmode;
+				}
+				break;
+			}
+		}
+		if (i == ctx->scan_num) {
+			auth_mode = item->valueint;
+		}
+		IOT_DEBUG("%s is type %d", wifi_prov->ssid, auth_mode);
+	}
+
+	return auth_mode;
+}
+
+STATIC_FUNCTION
 iot_error_t _es_wifi_prov_parse(struct iot_context *ctx, char *in_payload)
 {
 	struct iot_wifi_prov_data *wifi_prov = NULL;
@@ -1135,7 +1183,6 @@ iot_error_t _es_wifi_prov_parse(struct iot_context *ctx, char *in_payload)
 	JSON_H *root = NULL;
 	JSON_H *wifi_credential = NULL;
 	iot_error_t err = IOT_ERROR_NONE;
-	int i = 0;
 
 	root = JSON_PARSE(in_payload);
 	if (!root) {
@@ -1183,33 +1230,8 @@ iot_error_t _es_wifi_prov_parse(struct iot_context *ctx, char *in_payload)
 		goto wifi_parse_out;
 	}
 
-	if ((item = JSON_GET_OBJECT_ITEM(wifi_credential, "authType")) == NULL) {
-		IOT_INFO("no authType");
-		for (i = 0; i < ctx->scan_num; i++) {
-			if (!strcmp(wifi_prov->ssid, (char *)ctx->scan_result[i].ssid)) {
-				wifi_prov->security_type = ctx->scan_result[i].authmode;
-				IOT_DEBUG("%s is type %d", wifi_prov->ssid, wifi_prov->security_type);
-				break;
-			}
-		}
-		if (i == ctx->scan_num) {
-			IOT_DEBUG("%s doesn't exist in scan list. So assume it as WPA", wifi_prov->ssid);
-			wifi_prov->security_type = IOT_WIFI_AUTH_WPA_WPA2_PSK;
-		}
-	} else {
-		for (i = 0; i < ctx->scan_num; i++) {
-			if (!strcmp(wifi_prov->ssid, (char *)ctx->scan_result[i].ssid)) {
-				if (item->valueint == ctx->scan_result[i].authmode)
-					wifi_prov->security_type = item->valueint;
-				else
-					wifi_prov->security_type = ctx->scan_result[i].authmode;
-				break;
-			}
-		}
-		if (i == ctx->scan_num)
-			wifi_prov->security_type = item->valueint;
-		IOT_DEBUG("%s is type %d", wifi_prov->ssid, wifi_prov->security_type);
-	}
+	wifi_prov->security_type =
+		_decide_wifi_auth_mode(JSON_GET_OBJECT_ITEM(wifi_credential, "authType"), wifi_prov, ctx);
 
 	err = iot_nv_set_wifi_prov_data(wifi_prov);
 	if (err) {
