@@ -1377,7 +1377,7 @@ iot_error_t _es_wifiprovisioninginfo_handler(struct iot_context *ctx, char *in_p
 		goto out;
 	}
 
-	err = iot_random_uuid_from_mac(&uuid);
+	err = iot_get_random_uuid_from_mac(&uuid);
 	if (err) {
 		IOT_ERROR("To get uuid is failed (error : %d)", err);
 		err = IOT_ERROR_EASYSETUP_LOOKUPID_GENERATE_FAIL;

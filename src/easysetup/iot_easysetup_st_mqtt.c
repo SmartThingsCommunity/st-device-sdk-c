@@ -437,7 +437,7 @@ iot_error_t _iot_es_mqtt_connect(struct iot_context *ctx, st_mqtt_client target_
 	size_t root_cert_len;
 
 	/* Use mac based random client_id for GreatGate */
-	iot_ret = iot_random_uuid_from_mac(&iot_uuid);
+	iot_ret = iot_get_random_uuid_from_mac(&iot_uuid);
 	if (iot_ret != IOT_ERROR_NONE) {
 		IOT_ERROR("Cannot get mac based random uuid");
 		return iot_ret;

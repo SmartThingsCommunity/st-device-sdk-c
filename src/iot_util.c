@@ -265,44 +265,6 @@ iot_error_t iot_util_convert_uuid_str(struct iot_uuid* uuid, char* str, int max_
 	return IOT_ERROR_NONE;
 }
 
-iot_error_t iot_util_get_random_uuid(struct iot_uuid* uuid)
-{
-	unsigned char* p;
-	int i;
-
-	if (!uuid) {
-		IOT_ERROR("invalid args");
-		return IOT_ERROR_INVALID_ARGS;
-	}
-
-	p = (unsigned char *)uuid->id;
-
-	for (i = 0; i < 4; i++) {
-		unsigned int rand_value = iot_bsp_random();
-
-		memcpy(&p[i * 4], (unsigned char*)&rand_value, sizeof(unsigned int));
-	}
-
-	/* From RFC 4122
-	 * Set the two most significant bits of the
-	 * clock_seq_hi_and_reserved (8th octect) to
-	 * zero and one, respectively.
-	 */
-	p[8] &= 0x3f;
-	p[8] |= 0x80;
-
-	/* From RFC 4122
-	 * Set the four most significant bits of the
-	 * time_hi_and_version field (6th octect) to the
-	 * 4-bit version number from (0 1 0 0 => type 4)
-	 * Section 4.1.3.
-	 */
-	p[6] &= 0x0f;
-	p[6] |= 0x40;
-
-	return IOT_ERROR_NONE;
-}
-
 iot_error_t iot_util_convert_str_mac(char* str, struct iot_mac* mac)
 {
 	char* ref_addr = "a1:b2:c3:d4:e5:f6";

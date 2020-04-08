@@ -221,7 +221,7 @@ static char onboarding_profile_example[] = {
         "    ],\n"
         "    \"identityType\": \"ED25519\",\n"
         "    \"deviceIntegrationProfileKey\": {\n"
-        "      \"id\": \"bb000ddd-92a0-a2a3-46f0-b531f278af06\",\n"
+        "      \"id\": \"bb000ddd-92a0-42a3-86f0-b531f278af06\",\n"
         "      \"majorVersion\": 0,\n"
         "      \"minorVersion\": 1\n"
         "    }\n"
@@ -234,8 +234,8 @@ void TC_iot_api_onboarding_config_load_success(void **state)
     iot_error_t err;
     struct iot_devconf_prov_data devconf;
     struct iot_uuid target_id = {
-			.id = {0xbb, 0x00, 0x0d, 0xdd, 0x92, 0xa0, 0xa2, 0xa3,
-				0x46, 0xf0, 0xb5, 0x31, 0xf2, 0x78, 0xaf, 0x06}
+			.id = {0xbb, 0x00, 0x0d, 0xdd, 0x92, 0xa0, 0x42, 0xa3,
+				0x86, 0xf0, 0xb5, 0x31, 0xf2, 0x78, 0xaf, 0x06}
     };
     UNUSED(state);
 

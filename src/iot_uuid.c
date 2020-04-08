@@ -25,7 +25,7 @@
 #include "iot_bsp_random.h"
 #include "iot_debug.h"
 
-iot_error_t iot_random_uuid_from_mac(struct iot_uuid *uuid)
+iot_error_t iot_get_random_uuid_from_mac(struct iot_uuid *uuid)
 {
 	iot_error_t err;
 	struct timeval tv;
@@ -76,12 +76,29 @@ iot_error_t iot_random_uuid_from_mac(struct iot_uuid *uuid)
 
 	memcpy((void *)uuid, hash, sizeof(struct iot_uuid));
 
+	/* From RFC 4122
+	 * Set the two most significant bits of the
+	 * clock_seq_hi_and_reserved (8th octect) to
+	 * zero and one, respectively.
+	 */
+	uuid->id[8] &= 0x3f;
+	uuid->id[8] |= 0x80;
+
+	/* From RFC 4122
+	 * Set the four most significant bits of the
+	 * time_hi_and_version field (6th octect) to the
+	 * 4-bit version number from (0 1 0 0 => type 4)
+	 * Section 4.1.3.
+	 */
+	uuid->id[6] &= 0x0f;
+	uuid->id[6] |= 0x40;
+
 	free((void *)buf);
 
 	return IOT_ERROR_NONE;
 }
 
-iot_error_t iot_uuid_from_mac(struct iot_uuid *uuid)
+iot_error_t iot_get_uuid_from_mac(struct iot_uuid *uuid)
 {
 	iot_error_t err;
 	struct iot_mac mac;
@@ -123,7 +140,62 @@ iot_error_t iot_uuid_from_mac(struct iot_uuid *uuid)
 
 	memcpy((void *)uuid, hash, sizeof(struct iot_uuid));
 
+	/* From RFC 4122
+	 * Set the two most significant bits of the
+	 * clock_seq_hi_and_reserved (8th octect) to
+	 * zero and one, respectively.
+	 */
+	uuid->id[8] &= 0x3f;
+	uuid->id[8] |= 0x80;
+
+	/* From RFC 4122
+	 * Set the four most significant bits of the
+	 * time_hi_and_version field (6th octect) to the
+	 * 4-bit version number from (0 1 0 0 => type 4)
+	 * Section 4.1.3.
+	 */
+	uuid->id[6] &= 0x0f;
+	uuid->id[6] |= 0x40;
+
 	free((void *)buf);
+
+	return IOT_ERROR_NONE;
+}
+
+iot_error_t iot_get_random_uuid(struct iot_uuid* uuid)
+{
+	unsigned char* p;
+	int i;
+
+	if (!uuid) {
+		IOT_ERROR("invalid args");
+		return IOT_ERROR_INVALID_ARGS;
+	}
+
+	p = (unsigned char *)uuid->id;
+
+	for (i = 0; i < 4; i++) {
+		unsigned int rand_value = iot_bsp_random();
+
+		memcpy(&p[i * 4], (unsigned char*)&rand_value, sizeof(unsigned int));
+	}
+
+	/* From RFC 4122
+	 * Set the two most significant bits of the
+	 * clock_seq_hi_and_reserved (8th octect) to
+	 * zero and one, respectively.
+	 */
+	p[8] &= 0x3f;
+	p[8] |= 0x80;
+
+	/* From RFC 4122
+	 * Set the four most significant bits of the
+	 * time_hi_and_version field (6th octect) to the
+	 * 4-bit version number from (0 1 0 0 => type 4)
+	 * Section 4.1.3.
+	 */
+	p[6] &= 0x0f;
+	p[6] |= 0x40;
 
 	return IOT_ERROR_NONE;
 }
