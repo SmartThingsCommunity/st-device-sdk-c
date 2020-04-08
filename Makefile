@@ -68,11 +68,6 @@ endif
 LOCAL_CFLAGS := $(INCS)
 PREFIX := stdk_
 
-BILERPLATE_HEADER = src/include/certs/boilerplate.h
-ROOT_CA_FILE_LIST = $(wildcard src/certs/root_ca_*.pem)
-ROOT_CA_FILE = src/certs/root_ca.pem
-ROOT_CA_SOURCE = src/iot_root_ca.c
-SRCS	+= $(ROOT_CA_SOURCE)
 
 .PHONY: all clean
 all: prepare subdir $(TARGET)
@@ -89,36 +84,14 @@ subdir:
 		fi; \
 	done
 
-$(ROOT_CA_SOURCE):
-	@if [ -e $(ROOT_CA_FILE) ]; then \
-		rm $(ROOT_CA_FILE); \
-	fi
-	@cat $(ROOT_CA_FILE_LIST) >> $(ROOT_CA_FILE)
-	@if [ $$? != 0 ]; then \
-		exit 1; \
-	fi
-	@cat $(BILERPLATE_HEADER) > $(ROOT_CA_SOURCE)
-	@if [ $$? != 0 ]; then \
-		exit 1; \
-	fi
-	@xxd -i $(ROOT_CA_FILE) >> $(ROOT_CA_SOURCE)
-	@if [ $$? != 0 ]; then \
-		exit 1; \
-	fi
-	@sed -i.bak 's/src.*pem/st_root_ca/g' $(ROOT_CA_SOURCE)
-	@sed -i.bak 's/unsigned/const unsigned/g' $(ROOT_CA_SOURCE)
-	@rm -f $(ROOT_CA_SOURCE).bak
-	@rm -f $(ROOT_CA_FILE)
-
 clean:
 	@for dir in $(DEPS_DIRS); do \
 		$(MAKE) -C $$dir clean; \
 	done
-	@rm -f $(ROOT_CA_SOURCE)
 	@rm -rf $(BUILD_DIR)
 	@rm -rf $(OUTPUT_DIR)
 
-$(TARGET): $(OBJS) $(ROOT_CA_SOURCE)
+$(TARGET): $(OBJS)
 	@echo "  AR    $(BUILD_DIR)/$@"
 	@$(AR) -rcs $(BUILD_DIR)/$@ $(BUILD_DIR)/*.o
 	@$(MV) -f $(BUILD_DIR)/$(TARGET) $(OUTPUT_DIR)
