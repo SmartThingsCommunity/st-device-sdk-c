@@ -1,6 +1,6 @@
 /* ***************************************************************************
  *
- * Copyright 2019 Samsung Electronics All Rights Reserved.
+ * Copyright (c) 2019-2020 Samsung Electronics All Rights Reserved.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -25,6 +25,8 @@
 
 #include "iot_main.h"
 #include "iot_debug.h"
+
+#define IOT_MBEDTLS_READ_TIMEOUT_MS 30000
 
 static iot_error_t _iot_net_check_interface(iot_net_interface_t *net)
 {
@@ -185,6 +187,7 @@ static iot_error_t _iot_net_tls_connect(iot_net_interface_t *net)
 	mbedtls_ssl_conf_ca_chain(&net->context.conf, &net->context.cacert, NULL);
 	mbedtls_ssl_conf_rng(&net->context.conf, mbedtls_ctr_drbg_random,
 				&net->context.ctr_drbg);
+	mbedtls_ssl_conf_read_timeout(&net->context.conf, IOT_MBEDTLS_READ_TIMEOUT_MS);
 
 	ret = mbedtls_ssl_setup(&net->context.ssl, &net->context.conf);
 	if (ret) {
@@ -200,7 +203,7 @@ static iot_error_t _iot_net_tls_connect(iot_net_interface_t *net)
 
 	mbedtls_ssl_set_bio(&net->context.ssl,
 				&net->context.server_fd,
-				mbedtls_net_send, mbedtls_net_recv, NULL);
+				mbedtls_net_send, NULL, mbedtls_net_recv_timeout);
 
 	IOT_DEBUG("Performing the SSL/TLS handshake");
 
