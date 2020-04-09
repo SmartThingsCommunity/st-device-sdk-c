@@ -427,6 +427,9 @@ iot_error_t _es_wifiscaninfo_handler(struct iot_context *ctx, char **out_payload
 		array_obj = JSON_CREATE_OBJECT();
 		if (!array_obj) {
 			IOT_ERROR("json create failed");
+			if (array) {
+				JSON_DELETE(array);
+			}
 			err = IOT_ERROR_EASYSETUP_JSON_CREATE_ERROR;
 			goto out;
 		}
@@ -442,6 +445,9 @@ iot_error_t _es_wifiscaninfo_handler(struct iot_context *ctx, char **out_payload
 	if (!root) {
 		IOT_ERROR("json create failed");
 		err = IOT_ERROR_EASYSETUP_JSON_CREATE_ERROR;
+		if (array) {
+			JSON_DELETE(array);
+		}
 		goto out;
 	}
 	JSON_ADD_ITEM_TO_OBJECT(root, "wifiScanInfo", array);
@@ -1596,6 +1602,9 @@ static iot_error_t _es_log_get_dump_handler(struct iot_context *ctx, char **out_
 	if (!root) {
 		IOT_ERROR("json create failed");
 		err = IOT_ERROR_EASYSETUP_MEM_ALLOC_ERROR;
+		if (item) {
+			JSON_DELETE(item);
+		}
 		goto out;
 	}
 
