@@ -70,6 +70,7 @@ void TC_st_cap_attr_create_string_null_unit(void **state);
 void TC_st_cap_attr_create_string_with_unit(void **state);
 void TC_st_cap_attr_create_string_internal_failure(void **state);
 void TC_st_cap_attr_create_string_null_parameters(void **state);
+void TC_st_cap_attr_create_with_unit_and_data(void **state);
 void TC_st_cap_handle_init_invalid_argument(void **state);
 void TC_st_cap_handle_init_internal_failure(void **state);
 void TC_st_cap_handle_init_success(void **state);

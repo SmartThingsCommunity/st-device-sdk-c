@@ -59,6 +59,7 @@ int TEST_FUNC_iot_capability(void)
             cmocka_unit_test_setup_teardown(TC_st_cap_attr_create_string_with_unit, TC_iot_capability_setup, TC_iot_capability_teardown),
             cmocka_unit_test_setup_teardown(TC_st_cap_attr_create_string_internal_failure, TC_iot_capability_setup, TC_iot_capability_teardown),
             cmocka_unit_test_setup_teardown(TC_st_cap_attr_create_string_null_parameters, TC_iot_capability_setup, TC_iot_capability_teardown),
+            cmocka_unit_test_setup_teardown(TC_st_cap_attr_create_with_unit_and_data, TC_iot_capability_setup, TC_iot_capability_teardown),
             cmocka_unit_test_setup_teardown(TC_st_cap_handle_init_invalid_argument, TC_iot_capability_setup, TC_iot_capability_teardown),
             cmocka_unit_test_setup_teardown(TC_st_cap_handle_init_internal_failure, TC_iot_capability_setup, TC_iot_capability_teardown),
             cmocka_unit_test_setup_teardown(TC_st_cap_handle_init_success, TC_iot_capability_setup, TC_iot_capability_teardown),
