@@ -1329,28 +1329,33 @@ iot_error_t _es_cloud_prov_parse(char *in_payload)
 	}
 
 	IOT_INFO("brokerUrl: %s:%d", cloud_prov->broker_url, cloud_prov->broker_port);
-	IOT_DEBUG("locationId : %s", location_id_str);
-	IOT_DEBUG("roomId : %s", room_id_str);
 	IOT_INFO("deviceName : %s", cloud_prov->label);
 
 cloud_parse_out:
 	if (err) {
-		if (url.domain)
-			free(url.domain);
+		if (url.domain) {
+			iot_os_free(url.domain);
+		}
 	}
 
-	if (url.protocol)
-		free(url.protocol);
-	if (full_url)
-		free(full_url);
-	if (cloud_prov)
-		free(cloud_prov);
-	if (location_id_str)
-		free(location_id_str);
-	if (room_id_str)
-		free(room_id_str);
-	if (root)
+	if (url.protocol) {
+		iot_os_free(url.protocol);
+	}
+	if (full_url) {
+		iot_os_free(full_url);
+	}
+	if (cloud_prov) {
+		iot_os_free(cloud_prov);
+	}
+	if (location_id_str) {
+		iot_os_free(location_id_str);
+	}
+	if (room_id_str) {
+		iot_os_free(room_id_str);
+	}
+	if (root) {
 		JSON_DELETE(root);
+	}
 	return err;
 }
 
