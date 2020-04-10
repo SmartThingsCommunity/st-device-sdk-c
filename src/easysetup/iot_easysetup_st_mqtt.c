@@ -167,11 +167,12 @@ reg_sub_out:
 
 #if defined(STDK_IOT_CORE_SERIALIZE_CBOR)
 static void *_iot_es_mqtt_registration_cbor(struct iot_context *ctx,
-			char *location_id, char *room_id)
+			char *location_id, char *room_id, char *dip_id)
 {
 	struct iot_devconf_prov_data *devconf;
 	CborEncoder root = {0};
 	CborEncoder root_map = {0};
+	CborEncoder dip_key_map = {0};
 	uint8_t *buf;
 	uint8_t *tmp;
 	size_t buflen = 128;
@@ -226,6 +227,23 @@ retry:
 		cbor_encode_text_stringz(&root_map, room_id);
 	}
 
+	/* dip is optional values */
+	if (dip_id) {
+		cbor_encode_text_stringz(&root_map, "deviceIntegrationProfileKey");
+		cbor_encoder_create_map(&root_map, &dip_key_map, CborIndefiniteLength);
+
+		cbor_encode_text_stringz(&dip_key_map, "id");
+		cbor_encode_text_stringz(&dip_key_map, dip_id);
+
+		cbor_encode_text_stringz(&dip_key_map, "majorVersion");
+		cbor_encode_int(&dip_key_map, devconf->dip->dip_major_version);
+
+		cbor_encode_text_stringz(&dip_key_map, "minorVersion");
+		cbor_encode_int(&dip_key_map, devconf->dip->dip_minor_version);
+
+		cbor_encoder_close_container_checked(&root_map, &dip_key_map);
+	}
+
 	cbor_encoder_close_container_checked(&root, &root_map);
 
 	olen = cbor_encoder_get_buffer_size(&root, buf);
@@ -256,10 +274,11 @@ exit_failed:
 }
 #else /* !STDK_IOT_CORE_SERIALIZE_CBOR */
 static void *_iot_es_mqtt_registration_json(struct iot_context *ctx,
-			char *location_id, char *room_id)
+			char *location_id, char *room_id, char *dip_id)
 {
 	struct iot_devconf_prov_data *devconf;
 	JSON_H *root = NULL;
+	JSON_H *dip_key = NULL;
 	char *payload;
 
 	if (!ctx || !location_id) {
@@ -302,6 +321,28 @@ static void *_iot_es_mqtt_registration_json(struct iot_context *ctx,
 			JSON_CREATE_STRING(room_id));
 	}
 
+	/* dip is optional values */
+	if (dip_id) {
+		dip_key = JSON_CREATE_OBJECT();
+		if (!dip_key) {
+			IOT_WARN("Can't create dip_key obj");
+			goto exit_json_making;
+		}
+
+		JSON_ADD_ITEM_TO_OBJECT(dip_key, "id",
+			JSON_CREATE_STRING(dip_id));
+
+		JSON_ADD_NUMBER_TO_OBJECT(dip_key,
+			"majorVersion", devconf->dip->dip_major_version);
+
+		JSON_ADD_NUMBER_TO_OBJECT(dip_key,
+			"minorVersion", devconf->dip->dip_major_version);
+
+		JSON_ADD_ITEM_TO_OBJECT(root,
+			"deviceIntegrationProfileKey", dip_key);
+	}
+
+exit_json_making:
 	payload = JSON_PRINT(root);
 
 	JSON_DELETE(root);
@@ -319,6 +360,7 @@ iot_error_t _iot_es_mqtt_registration(struct iot_context *ctx, st_mqtt_client mq
 	char *room_id = NULL;
 	size_t str_id_len = 40;
 	char valid_id = 0;
+	char *dip_id = NULL;
 
 	if (!mqtt_ctx) {
 		IOT_ERROR("There is no iot_mqtt_ctx!!");
@@ -365,12 +407,32 @@ iot_error_t _iot_es_mqtt_registration(struct iot_context *ctx, st_mqtt_client mq
 		}
 	}
 
+	/* dip id is optional value */
+	if (ctx->devconf.dip) {
+		dip_id = (char *)malloc(str_id_len);
+		if (!dip_id) {
+			IOT_ERROR("malloc failed for DIP id");
+			iot_err = IOT_ERROR_MEM_ALLOC;
+			goto failed_regist;
+		}
+		memset(dip_id, 0, str_id_len);
+
+		iot_err = iot_util_convert_uuid_str(&ctx->devconf.dip->dip_id,
+					dip_id, str_id_len);
+		if (iot_err != IOT_ERROR_NONE) {
+			IOT_ERROR("%s error DIP_id convt (%d)", __func__, iot_err);
+			iot_err = IOT_ERROR_BAD_REQ;
+			goto failed_regist;
+		}
+	}
+
+
 #if defined(STDK_IOT_CORE_SERIALIZE_CBOR)
 	msg.payload = _iot_es_mqtt_registration_cbor(ctx,
-				location_id, room_id);
+				location_id, room_id, dip_id);
 #else
 	msg.payload = _iot_es_mqtt_registration_json(ctx,
-				location_id, room_id);
+				location_id, room_id, dip_id);
 #endif
 	if (!msg.payload) {
 		IOT_ERROR("Failed to make payload for MQTTpub");
@@ -397,6 +459,9 @@ iot_error_t _iot_es_mqtt_registration(struct iot_context *ctx, st_mqtt_client mq
 	}
 
 failed_regist:
+	if (dip_id)
+		free(dip_id);
+
 	if (location_id)
 		free(location_id);
 
