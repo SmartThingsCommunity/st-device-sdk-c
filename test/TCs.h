@@ -48,6 +48,7 @@ void TC_iot_get_time_in_ms_null_parmaeters(void **state);
 void TC_iot_get_time_in_ms_success(void **state);
 void TC_iot_get_time_in_sec_by_long_null_parameters(void **state);
 void TC_iot_get_time_in_sec_by_long_success(void **state);
+void TC_iot_easysetup_request_success(void **state);
 
 // TCs for iot_uuid.c
 void TC_iot_uuid_from_mac(void **state);

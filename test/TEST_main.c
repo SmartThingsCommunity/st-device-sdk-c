@@ -40,6 +40,7 @@ int TEST_FUNC_iot_api(void)
             cmocka_unit_test_setup_teardown(TC_iot_get_time_in_ms_success, TC_iot_api_memleak_detect_setup, TC_iot_api_memleak_detect_teardown),
             cmocka_unit_test_setup_teardown(TC_iot_get_time_in_sec_by_long_null_parameters, TC_iot_api_memleak_detect_setup, TC_iot_api_memleak_detect_teardown),
             cmocka_unit_test_setup_teardown(TC_iot_get_time_in_sec_by_long_success, TC_iot_api_memleak_detect_setup, TC_iot_api_memleak_detect_teardown),
+            cmocka_unit_test_setup_teardown(TC_iot_easysetup_request_success, TC_iot_api_memleak_detect_setup, TC_iot_api_memleak_detect_teardown),
     };
     return cmocka_run_group_tests_name("iot_api.c", tests, NULL, NULL);
 }
