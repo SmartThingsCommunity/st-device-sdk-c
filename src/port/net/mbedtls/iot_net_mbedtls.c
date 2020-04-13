@@ -253,7 +253,7 @@ static void _iot_net_tls_disconnect(iot_net_interface_t *net)
 static int _iot_net_tls_read(iot_net_interface_t *net,
 		unsigned char *buf, int len, iot_os_timer timer)
 {
-	ssize_t ret;
+	int recvLen = 0, ret = 0;
 
 	IOT_DEBUG("%d@%p", len, buf);
 
@@ -261,27 +261,30 @@ static int _iot_net_tls_read(iot_net_interface_t *net,
 		return 0;
 	}
 
-	ret = mbedtls_ssl_read(&net->context.ssl, buf, (size_t)len);
-	if (ret < 0) {
-		if (ret == MBEDTLS_ERR_SSL_PEER_CLOSE_NOTIFY) {
-			return 0;
+	mbedtls_ssl_conf_read_timeout(&net->context.conf, (uint32_t)iot_os_timer_left_ms(timer));
+
+	do {
+		ret = mbedtls_ssl_read(&net->context.ssl, buf, (size_t)len);
+
+		if(ret > 0) {
+			recvLen += ret;
+		} else {
+			if ((ret != MBEDTLS_ERR_SSL_WANT_READ) &&
+				(ret != MBEDTLS_ERR_SSL_WANT_WRITE) &&
+				(ret != MBEDTLS_ERR_SSL_TIMEOUT)) {
+				IOT_ERROR("mbedtls_ssl_read = -0x%04X", -ret);
+				return ret;
+			}
 		}
+	} while(recvLen < len && !iot_os_timer_isexpired(timer));
 
-		if ((ret != MBEDTLS_ERR_SSL_WANT_READ) &&
-		    (ret != MBEDTLS_ERR_SSL_WANT_WRITE)) {
-			IOT_ERROR("mbedtls_ssl_read = -0x%04X", -ret);
-		}
-
-		return ret;
-	}
-
-	return (int)ret;
+	return recvLen;
 }
 
 static int _iot_net_tls_write(iot_net_interface_t *net,
 		unsigned char *buf, int len, iot_os_timer timer)
 {
-	ssize_t ret;
+	int sentLen = 0, ret = 0;
 
 	IOT_DEBUG("%d@%p", len, buf);
 
@@ -289,17 +292,21 @@ static int _iot_net_tls_write(iot_net_interface_t *net,
 		return 0;
 	}
 
-	ret = mbedtls_ssl_write(&net->context.ssl, buf, (size_t)len);
-	if (ret < 0) {
-		if ((ret != MBEDTLS_ERR_SSL_WANT_READ) &&
-		    (ret != MBEDTLS_ERR_SSL_WANT_WRITE)) {
-			IOT_ERROR("mbedtls_ssl_write = -0x%04X\n", -ret);
+	do {
+		ret = mbedtls_ssl_write(&net->context.ssl, buf + sentLen, (size_t)len - sentLen);
+
+		if(ret > 0) {
+			sentLen += ret;
+		} else {
+			if ((ret != MBEDTLS_ERR_SSL_WANT_READ) &&
+				(ret != MBEDTLS_ERR_SSL_WANT_WRITE)) {
+				IOT_ERROR("mbedtls_ssl_write = -0x%04X\n", -ret);
+				return ret;
+			}
 		}
+	} while (sentLen < len && !iot_os_timer_isexpired(timer));
 
-		return ret;
-	}
-
-	return (int)ret;
+	return sentLen;
 }
 
 iot_error_t iot_net_init(iot_net_interface_t *net)
