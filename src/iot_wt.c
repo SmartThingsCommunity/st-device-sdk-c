@@ -632,8 +632,8 @@ static char * _iot_jwt_create_payload(void)
 	iot_error_t err;
 	JSON_H *object;
 	char *object_str;
-	char time_in_sec[16]; /* 1559347200 is '2019-06-01 00:00:00 UTC' */
-	char uuid_str[40];    /* 4066c24f-cd48-4e92-a538-362e74337c7f */
+	char time_in_sec[16] = {0, }; /* 1559347200 is '2019-06-01 00:00:00 UTC' */
+	char uuid_str[40] = {0, };    /* 4066c24f-cd48-4e92-a538-362e74337c7f */
 	struct iot_uuid uuid;
 
 	err = iot_get_time_in_sec(time_in_sec, sizeof(time_in_sec));

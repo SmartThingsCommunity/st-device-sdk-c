@@ -439,8 +439,14 @@ iot_error_t iot_get_time_in_sec(char *buf, size_t buf_len)
 	}
 
 	gettimeofday(&tv_now, NULL);
-	snprintf(buf, buf_len, "%ld", tv_now.tv_sec);
 
+	/* In systems with tv_sec declared as long long int, %ld cannot be used
+	 * as format specifier even if the value is within limit of long. Hence,
+	 * take the value of tv_sec in a long variable. */
+	long sec = (long)tv_now.tv_sec;
+
+	snprintf(buf, buf_len, "%ld", sec);
+	IOT_DEBUG("TIME BUFFER::::::%s\n", buf);
 	return IOT_ERROR_NONE;
 }
 
@@ -454,7 +460,12 @@ iot_error_t iot_get_time_in_sec_by_long(long *sec)
 	}
 
 	gettimeofday(&tv_now, NULL);
-	*sec = tv_now.tv_sec;
+
+	/* In systems with tv_sec declared as long long int, %ld cannot be used
+	 * as format specifier even if the value is within limit of long. Hence,
+	 * take the value of tv_sec in a long variable. */
+	long seconds = (long)tv_now.tv_sec;
+	*sec = seconds;
 
 	return IOT_ERROR_NONE;
 }
@@ -469,8 +480,16 @@ iot_error_t iot_get_time_in_ms(char *buf, size_t buf_len)
 	}
 
 	gettimeofday(&tv_now, NULL);
+
+	/* In systems with tv_sec declared as long long int, %ld cannot be used
+	 * as format specifier even if the value is within limit of long. Hence,
+	 * take the value of tv_sec in a long variable. */
+	long sec = (long)tv_now.tv_sec;
+	long ms = (long)tv_now.tv_usec;
+
 	snprintf(buf, buf_len, "%ld%03ld",
-		tv_now.tv_sec, (tv_now.tv_usec / 1000));
+			sec, (ms / 1000));
+	IOT_DEBUG("TIME BUFFER::::::%s\n", buf);
 
 	return IOT_ERROR_NONE;
 }
