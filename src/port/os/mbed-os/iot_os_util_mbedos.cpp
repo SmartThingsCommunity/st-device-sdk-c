@@ -60,7 +60,9 @@ iot_os_queue* iot_os_queue_create(int queue_length)
 
 int iot_os_queue_reset(iot_os_queue* queue_handle)
 {
-	//TODO: reset queue
+	MbedStdkQueue<void> *queue = (MbedStdkQueue<void> *)queue_handle;
+	IOT_WARN("Queue Reset | Handle %p", queue);
+	queue->queueReset();
 	return IOT_OS_TRUE;
 }
 

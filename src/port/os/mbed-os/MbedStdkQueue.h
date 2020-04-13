@@ -225,6 +225,19 @@ public:
         return event;
     }
 
+    osStatus queueReset(void)
+    {
+    	while (!empty()) {
+    		osEvent evt = get();
+    		if (evt.status == osEventMessage) {
+    			void *data = (void *)evt.value.p;
+    			free(data);
+    		}
+    	}
+
+    	return osOK;
+    }
+
 private:
     osMessageQueueId_t            _id;
     unsigned int 					queue_sz;
