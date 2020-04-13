@@ -176,4 +176,9 @@ void TC_st_mqtt_create_success(void** state);
 void TC_st_mqtt_connect_with_connack_rc(void** state);
 void TC_st_mqtt_disconnect_success(void** state);
 
+// TCs for iot_wt.c
+int TC_iot_wt_create_memleak_detect_setup(void **state);
+int TC_iot_wt_create_memleak_detect_teardown(void **state);
+void TC_iot_wt_create_null_parameters(void **state);
+
 #endif //ST_DEVICE_SDK_C_TCS_H
