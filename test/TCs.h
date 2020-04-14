@@ -48,6 +48,7 @@ void TC_iot_get_time_in_ms_null_parmaeters(void **state);
 void TC_iot_get_time_in_ms_success(void **state);
 void TC_iot_get_time_in_sec_by_long_null_parameters(void **state);
 void TC_iot_get_time_in_sec_by_long_success(void **state);
+void TC_iot_easysetup_request_success(void **state);
 
 // TCs for iot_uuid.c
 void TC_iot_uuid_from_mac(void **state);
@@ -70,6 +71,7 @@ void TC_st_cap_attr_create_string_null_unit(void **state);
 void TC_st_cap_attr_create_string_with_unit(void **state);
 void TC_st_cap_attr_create_string_internal_failure(void **state);
 void TC_st_cap_attr_create_string_null_parameters(void **state);
+void TC_st_cap_attr_create_with_unit_and_data(void **state);
 void TC_st_cap_handle_init_invalid_argument(void **state);
 void TC_st_cap_handle_init_internal_failure(void **state);
 void TC_st_cap_handle_init_success(void **state);
@@ -146,6 +148,7 @@ void TC_STATIC_es_deviceinfo_handler_success(void **state);
 void TC_STATIC_es_keyinfo_handler_success(void **state);
 void TC_STATIC_es_keyinfo_handler_success_with_y2038(void **state);
 void TC_STATIC_es_wifiprovisioninginfo_handler_success(void **state);
+void TC_STATIC_es_wifiprovisioninginfo_handler_success_without_authtype(void **state);
 void TC_STATIC_es_crypto_cipher_gen_iv_success(void **state);
 void TC_STATIC_es_wifiscaninfo_handler_invalid_parameters(void **state);
 void TC_STATIC_es_wifiscaninfo_handler_success(void **state);

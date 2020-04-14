@@ -414,6 +414,7 @@ struct test_wifi_provisioning_data {
 extern iot_error_t _es_wifiprovisioninginfo_handler(struct iot_context *ctx, char *in_payload, char **out_payload);
 
 // static functions for test
+static void _generate_wifi_scan_list(struct iot_context *context, uint16_t amount);
 static char* _generate_post_wifiprovisioninginfo_payload(iot_crypto_cipher_info_t *cipher, struct test_wifi_provisioning_data prov);
 static void assert_lookup_id(const char *payload, iot_crypto_cipher_info_t *cipher);
 static void assert_wifi_provisioning(struct iot_context *context, struct test_wifi_provisioning_data prov);
@@ -427,10 +428,10 @@ void TC_STATIC_es_wifiprovisioninginfo_handler_success(void **state)
     iot_crypto_cipher_info_t *server_cipher;
     unsigned char device_mac[IOT_WIFI_MAX_BSSID_LEN] = { 0xEE, 0xDD, 0xCC, 0xBB, 0xAA, 0x01 };
     struct test_wifi_provisioning_data wifi_prov = {
-            .ssid = "fakeSsid",
+            .ssid = "fakeSsid_05_XXXXXX",
             .password = "fakePassword",
-            .mac_address = "11:22:33:44:55:66",
-            .auth_type = IOT_WIFI_AUTH_WPA2_PSK,
+            .mac_address = "21:32:43:54:65:76",
+            .auth_type = IOT_WIFI_AUTH_WPA_WPA2_PSK,
             .broker_url = "https://test.domain.com:5676",
             .location_id = "123e4567-e89b-12d3-a456-426655440000",
             .room_id = "123e4567-e89b-12d3-a456-426655440000",
@@ -440,6 +441,7 @@ void TC_STATIC_es_wifiprovisioninginfo_handler_success(void **state)
     // Given
     context = (struct iot_context *)*state;
     context->es_crypto_cipher_info = _generate_device_cipher(NULL, 0);
+    _generate_wifi_scan_list(context, 5);
     server_cipher = _generate_server_cipher(context->es_crypto_cipher_info->iv, context->es_crypto_cipher_info->iv_len);
     in_payload = _generate_post_wifiprovisioninginfo_payload(server_cipher, wifi_prov);
     will_return(__wrap_iot_bsp_wifi_get_mac, cast_ptr_to_largest_integral_type(device_mac));
@@ -456,13 +458,65 @@ void TC_STATIC_es_wifiprovisioninginfo_handler_success(void **state)
     _free_cipher(server_cipher);
     free(out_payload);
     free(in_payload);
+    free(context->scan_result);
+}
 
+void TC_STATIC_es_wifiprovisioninginfo_handler_success_without_authtype(void **state)
+{
+    iot_error_t err;
+    char *out_payload = NULL;
+    char *in_payload = NULL;
+    struct iot_context *context;
+    iot_crypto_cipher_info_t *server_cipher;
+    unsigned char device_mac[IOT_WIFI_MAX_BSSID_LEN] = { 0xEE, 0xDD, 0xCC, 0xBB, 0xAA, 0x01 };
+    struct test_wifi_provisioning_data sent_wifi_prov = {
+            .ssid = "fakeSsid_05_XXXXXX",
+            .password = "fakePassword",
+            .mac_address = "21:32:43:54:65:76",
+            .auth_type = -1,
+            .broker_url = "https://test.domain.com:5676",
+            .location_id = "123e4567-e89b-12d3-a456-426655440000",
+            .room_id = "123e4567-e89b-12d3-a456-426655440000",
+            .device_name = "fakeDevice",
+    };
+
+    struct test_wifi_provisioning_data expected_wifi_prov = {
+            .ssid = "fakeSsid_05_XXXXXX",
+            .password = "fakePassword",
+            .mac_address = "21:32:43:54:65:76",
+            .auth_type = IOT_WIFI_AUTH_WPA_WPA2_PSK,
+            .broker_url = "https://test.domain.com:5676",
+            .location_id = "123e4567-e89b-12d3-a456-426655440000",
+            .room_id = "123e4567-e89b-12d3-a456-426655440000",
+            .device_name = "fakeDevice",
+    };
+
+    // Given
+    context = (struct iot_context *)*state;
+    context->es_crypto_cipher_info = _generate_device_cipher(NULL, 0);
+    _generate_wifi_scan_list(context, 5);
+    server_cipher = _generate_server_cipher(context->es_crypto_cipher_info->iv, context->es_crypto_cipher_info->iv_len);
+    in_payload = _generate_post_wifiprovisioninginfo_payload(server_cipher, sent_wifi_prov);
+    will_return(__wrap_iot_bsp_wifi_get_mac, cast_ptr_to_largest_integral_type(device_mac));
+    will_return(__wrap_iot_bsp_wifi_get_mac, IOT_ERROR_NONE);
+    // When
+    err = _es_wifiprovisioninginfo_handler(context, in_payload, &out_payload);
+    // Then
+    assert_int_equal(err, IOT_ERROR_NONE);
+    assert_non_null(out_payload);
+    assert_lookup_id(out_payload, server_cipher);
+    assert_wifi_provisioning(context, expected_wifi_prov);
+
+    // Local teardown
+    _free_cipher(server_cipher);
+    free(out_payload);
+    free(in_payload);
+    free(context->scan_result);
 }
 
 // Static function of STDK declared to test
 extern iot_error_t _es_wifiscaninfo_handler(struct iot_context *ctx, char **out_payload);
 
-static void _generate_wifi_scan_list(struct iot_context *context, uint16_t amount);
 static void assert_wifiscaninfo_payload(iot_crypto_cipher_info_t *cipher, char *payload, int num_of_scanlist);
 
 void TC_STATIC_es_wifiscaninfo_handler_invalid_parameters(void **state)
@@ -509,6 +563,7 @@ void TC_STATIC_es_wifiscaninfo_handler_success(void **state)
     // Local teardown
     _free_cipher(server_cipher);
     free(out_payload);
+    free(context->scan_result);
 }
 
 // Static function of STDK declared to test
@@ -1083,7 +1138,9 @@ static char* _generate_post_wifiprovisioninginfo_payload(iot_crypto_cipher_info_
     if (prov.mac_address) {
         JSON_ADD_ITEM_TO_OBJECT(wifi_credential, "macAddress", JSON_CREATE_STRING(prov.mac_address));
     }
-    JSON_ADD_ITEM_TO_OBJECT(wifi_credential, "authType", JSON_CREATE_NUMBER((double) prov.auth_type));
+    if (prov.auth_type >= 0) {
+        JSON_ADD_ITEM_TO_OBJECT(wifi_credential, "authType", JSON_CREATE_NUMBER((double) prov.auth_type));
+    }
     JSON_ADD_ITEM_TO_OBJECT(root, "wifiCredential", wifi_credential);
     if (prov.broker_url) {
         JSON_ADD_ITEM_TO_OBJECT(root, "brokerUrl", JSON_CREATE_STRING(prov.broker_url));

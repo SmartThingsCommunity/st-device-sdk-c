@@ -21,6 +21,8 @@
 #include <cmocka.h>
 #include <string.h>
 #include <iot_util.h>
+#include <iot_uuid.h>
+
 #define UNUSED(x) (void**)(x)
 
 void TC_iot_util_get_random_uuid_success(void **state)
@@ -34,13 +36,13 @@ void TC_iot_util_get_random_uuid_success(void **state)
     memset(&test_uuid_1, '\0', sizeof(struct iot_uuid));
     memset(&test_uuid_2, '\0', sizeof(struct iot_uuid));
     // When
-    err = iot_util_get_random_uuid(&test_uuid_1);
+    err = iot_get_random_uuid(&test_uuid_1);
     // Then: should success, shouldn't be memset-ed output
     assert_int_equal(err, IOT_ERROR_NONE);
     assert_memory_not_equal(&test_uuid_1, &test_uuid_2, sizeof(struct iot_uuid));
 
     // When
-    err = iot_util_get_random_uuid(&test_uuid_2);
+    err = iot_get_random_uuid(&test_uuid_2);
     // Then: shouldn't be same during multiple calling
     assert_int_equal(err, IOT_ERROR_NONE);
     assert_memory_not_equal(&test_uuid_1, &test_uuid_2, sizeof(struct iot_uuid));
@@ -52,7 +54,7 @@ void TC_iot_util_get_random_uuid_null_parameter(void **state)
     UNUSED(state);
 
     //When: null argument
-    err = iot_util_get_random_uuid(NULL);
+    err = iot_get_random_uuid(NULL);
     // Then
     assert_int_equal(err, IOT_ERROR_INVALID_ARGS);
 }

@@ -74,72 +74,6 @@ static iot_error_t _check_prov_data_validation(struct iot_device_prov_data *prov
 	return IOT_ERROR_NONE;
 }
 
-static iot_error_t _create_easysetup_resources(struct iot_context *ctx, iot_pin_t *pin_num)
-{
-	/* If PIN type used, iot_pin_t should be set */
-	if (ctx->devconf.ownership_validation_type & IOT_OVF_TYPE_PIN) {
-		if (!ctx->pin) {
-			if ((ctx->pin = malloc(sizeof(iot_pin_t))) == NULL) {
-				IOT_ERROR("failed to malloc for pin");
-				return IOT_ERROR_MEM_ALLOC;
-			}
-		}
-
-		if (pin_num)
-			memcpy(ctx->pin, pin_num, sizeof(iot_pin_t));
-		else
-			return IOT_ERROR_INVALID_ARGS;
-	}
-
-	if ((ctx->es_crypto_cipher_info = (iot_crypto_cipher_info_t *) malloc(sizeof(iot_crypto_cipher_info_t))) == NULL) {
-		IOT_ERROR("failed to malloc for cipher info");
-		if (ctx->pin) {
-			free(ctx->pin);
-			ctx->pin = NULL;
-		}
-
-		return IOT_ERROR_MEM_ALLOC;
-	} else {
-		memset(ctx->es_crypto_cipher_info, 0,sizeof(iot_crypto_cipher_info_t));
-	}
-
-	if (!ctx->easysetup_req_queue) {
-		ctx->easysetup_req_queue = iot_os_queue_create(1, sizeof(struct iot_easysetup_payload));
-		if (!ctx->easysetup_req_queue) {
-			IOT_ERROR("failed to create Queue for easysetup request\n");
-			free(ctx->es_crypto_cipher_info);
-			ctx->es_crypto_cipher_info = NULL;
-
-			if (ctx->pin) {
-				free(ctx->pin);
-				ctx->pin = NULL;
-			}
-			return IOT_ERROR_BAD_REQ;
-		}
-	}
-
-	if (!ctx->easysetup_resp_queue) {
-		ctx->easysetup_resp_queue = iot_os_queue_create(1, sizeof(struct iot_easysetup_payload));
-		if (!ctx->easysetup_resp_queue) {
-			IOT_ERROR("failed to create Queue for easysetup response\n");
-			iot_os_queue_delete(ctx->easysetup_req_queue);
-			ctx->easysetup_req_queue = NULL;
-
-			free(ctx->es_crypto_cipher_info);
-			ctx->es_crypto_cipher_info = NULL;
-
-			if (ctx->pin) {
-				free(ctx->pin);
-				ctx->pin = NULL;
-			}
-			return IOT_ERROR_BAD_REQ;
-		}
-	}
-
-	ctx->es_res_created = true;
-	return IOT_ERROR_NONE;
-}
-
 static void _delete_easysetup_resources_all(struct iot_context *ctx)
 {
 	ctx->es_res_created = false;
@@ -165,6 +99,61 @@ static void _delete_easysetup_resources_all(struct iot_context *ctx)
 		free(ctx->devconf.hashed_sn);
 		ctx->devconf.hashed_sn = NULL;
 	}
+}
+
+static iot_error_t _create_easysetup_resources(struct iot_context *ctx, iot_pin_t *pin_num)
+{
+	iot_error_t ret;
+
+	/* If PIN type used, iot_pin_t should be set */
+	if (ctx->devconf.ownership_validation_type & IOT_OVF_TYPE_PIN) {
+		if (!ctx->pin) {
+			if ((ctx->pin = malloc(sizeof(iot_pin_t))) == NULL) {
+				IOT_ERROR("failed to malloc for pin");
+				return IOT_ERROR_MEM_ALLOC;
+			}
+		}
+
+		if (pin_num) {
+			memcpy(ctx->pin, pin_num, sizeof(iot_pin_t));
+		} else {
+			ret = IOT_ERROR_INVALID_ARGS;
+			goto create_fail;
+		}
+	}
+
+	if ((ctx->es_crypto_cipher_info = (iot_crypto_cipher_info_t *) malloc(sizeof(iot_crypto_cipher_info_t))) == NULL) {
+		IOT_ERROR("failed to malloc for cipher info");
+		ret = IOT_ERROR_MEM_ALLOC;
+		goto create_fail;
+	} else {
+		memset(ctx->es_crypto_cipher_info, 0,sizeof(iot_crypto_cipher_info_t));
+	}
+
+	if (!ctx->easysetup_req_queue) {
+		ctx->easysetup_req_queue = iot_os_queue_create(1, sizeof(struct iot_easysetup_payload));
+		if (!ctx->easysetup_req_queue) {
+			IOT_ERROR("failed to create Queue for easysetup request\n");
+			ret = IOT_ERROR_BAD_REQ;
+			goto create_fail;
+		}
+	}
+
+	if (!ctx->easysetup_resp_queue) {
+		ctx->easysetup_resp_queue = iot_os_queue_create(1, sizeof(struct iot_easysetup_payload));
+		if (!ctx->easysetup_resp_queue) {
+			IOT_ERROR("failed to create Queue for easysetup response\n");
+			ret = IOT_ERROR_BAD_REQ;
+			goto create_fail;
+		}
+	}
+
+	ctx->es_res_created = true;
+	return IOT_ERROR_NONE;
+
+create_fail:
+	_delete_easysetup_resources_all(ctx);
+	return ret;
 }
 
 static void _do_update_timeout(struct iot_context *ctx, unsigned int needed_tout)
