@@ -1,6 +1,6 @@
 /* ***************************************************************************
  *
- * Copyright 2019 Samsung Electronics All Rights Reserved.
+ * Copyright (c) 2019-2020 Samsung Electronics All Rights Reserved.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -40,6 +40,34 @@ static int _isprint(char c)
 	if (c >= '!' && c <= '~')
 		return 1;
 	return 0;
+}
+
+static int _ishex(char c)
+{
+	if (c >= '0' && c <= '9') {
+		return 1;
+	}
+
+	if (c >= 'a' && c <= 'f') {
+		return 1;
+	}
+
+	if (c >= 'A' && c <= 'Z') {
+		return 1;
+	}
+
+	return 0;
+}
+
+static int _ishex_len(char *c, size_t len)
+{
+	for (int i = 0; i < len; i++, c++)
+	{
+		if (!_ishex(*c)) {
+			return 0;
+		}
+	}
+	return 1;
 }
 
 void iot_util_dump_mem(char *tag, uint8_t *buf, size_t len)
@@ -82,9 +110,69 @@ void iot_util_dump_mem(char *tag, uint8_t *buf, size_t len)
 	printf("\n");
 }
 
+#define UUID_STRING_LENGTH	(36)
+#define UUID_TIME_LOW_LEN	(8)
+#define UUID_TIME_MID_LEN	(4)
+#define UUID_TIME_HI_LEN	(3)
+#define UUID_CLOCK_SEQ_LEN	(4)
+#define UUID_NODE_LEN		(12)
+// UUID format: https://tools.ietf.org/html/rfc4122
+iot_error_t validate_uuid_format(const char *str, size_t str_len)
+{
+	char *ptr = (char*) str;
+
+	if (!str) {
+		return IOT_ERROR_INVALID_ARGS;
+	}
+
+	if (str_len != UUID_STRING_LENGTH) {
+		return IOT_ERROR_INVALID_ARGS;
+	}
+
+	if (!_ishex_len(ptr, UUID_TIME_LOW_LEN)) {
+		return IOT_ERROR_INVALID_ARGS;
+	}
+	ptr += UUID_TIME_LOW_LEN;
+	if (*ptr++ != '-') {
+		return IOT_ERROR_INVALID_ARGS;
+	}
+
+	if (!_ishex_len(ptr, UUID_TIME_MID_LEN)) {
+		return IOT_ERROR_INVALID_ARGS;
+	}
+	ptr += UUID_TIME_MID_LEN;
+	if (*ptr++ != '-') {
+		return IOT_ERROR_INVALID_ARGS;
+	}
+
+	if (*ptr < '1' || *ptr > '5') {
+		return IOT_ERROR_INVALID_ARGS;
+	}
+
+	if (!_ishex_len(++ptr, UUID_TIME_HI_LEN)) {
+		return IOT_ERROR_INVALID_ARGS;
+	}
+	ptr += UUID_TIME_HI_LEN;
+	if (*ptr++ != '-') {
+		return IOT_ERROR_INVALID_ARGS;
+	}
+
+	if (!_ishex_len(ptr, UUID_CLOCK_SEQ_LEN)) {
+		return IOT_ERROR_INVALID_ARGS;
+	}
+	ptr += UUID_CLOCK_SEQ_LEN;
+	if (*ptr++ != '-') {
+		return IOT_ERROR_INVALID_ARGS;
+	}
+
+	if (!_ishex_len(ptr, UUID_NODE_LEN)) {
+		return IOT_ERROR_INVALID_ARGS;
+	}
+	return IOT_ERROR_NONE;
+}
+
 iot_error_t iot_util_convert_str_uuid(const char* str, struct iot_uuid* uuid)
 {
-	const char *ref_str = "42365732-c6db-4bc9-8945-2a7ca10d6f23";
 	int i, j = 0, k = 1;
 	unsigned char c = 0;
 
@@ -93,12 +181,12 @@ iot_error_t iot_util_convert_str_uuid(const char* str, struct iot_uuid* uuid)
 		return IOT_ERROR_INVALID_ARGS;
 	}
 
-	if (strlen(str) != strlen(ref_str)) {
-		IOT_ERROR("Input is not a uuid string");
+	if (validate_uuid_format(str, strlen(str)) != IOT_ERROR_NONE) {
+		IOT_ERROR("Invalid uuid format");
 		return IOT_ERROR_INVALID_ARGS;
 	}
 
-	for (i = 0; i < strlen(ref_str); i++) {
+	for (i = 0; i < UUID_STRING_LENGTH; i++) {
 		if (str[i] == '-') {
 			continue;
 		} else if (_isalpha(str[i])) {
@@ -232,8 +320,12 @@ iot_error_t iot_util_convert_str_mac(char* str, struct iot_mac* mac)
 	}
 
 	for (i = 0; i < strlen(ref_addr); i++) {
-		if (str[i] == ':') {
-			continue;
+		if ((i % 3) == 2) {
+			if (str[i] == ':') {
+				continue;
+			} else {
+				return IOT_ERROR_INVALID_ARGS;
+			}
 		} else if (_isalpha(str[i])) {
 			switch (str[i]) {
 			case 65:
@@ -260,6 +352,8 @@ iot_error_t iot_util_convert_str_mac(char* str, struct iot_mac* mac)
 			case 102:
 				c |= 0x0f;
 				break;
+			default:
+				return IOT_ERROR_INVALID_ARGS;
 			}
 		} else {
 			c |= str[i] - 48;
@@ -294,7 +388,6 @@ iot_error_t iot_util_convert_mac_str(struct iot_mac* mac, char* str, int max_sz)
 		return IOT_ERROR_INVALID_ARGS;
 	}
 
-	/* dump random mac */
 	for (i = 0; i < 6; i++) {
 		wrt = sprintf(&str[written], "%02x", (unsigned char)mac->addr[i]);
 		written += wrt;

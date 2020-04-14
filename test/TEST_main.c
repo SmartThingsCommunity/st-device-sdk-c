@@ -33,6 +33,7 @@ int TEST_FUNC_iot_api(void)
             cmocka_unit_test_setup_teardown(TC_iot_api_onboarding_config_load_success, TC_iot_api_memleak_detect_setup, TC_iot_api_memleak_detect_teardown),
             cmocka_unit_test_setup_teardown(TC_iot_api_onboarding_config_load_internal_failure, TC_iot_api_memleak_detect_setup, TC_iot_api_memleak_detect_teardown),
             cmocka_unit_test_setup_teardown(TC_iot_api_onboarding_config_without_mnid, TC_iot_api_memleak_detect_setup, TC_iot_api_memleak_detect_teardown),
+            cmocka_unit_test_setup_teardown(TC_iot_api_onboarding_config_without_dip_id, TC_iot_api_memleak_detect_setup, TC_iot_api_memleak_detect_teardown),
             cmocka_unit_test_setup_teardown(TC_iot_get_time_in_sec_null_parameters, TC_iot_api_memleak_detect_setup, TC_iot_api_memleak_detect_teardown),
             cmocka_unit_test_setup_teardown(TC_iot_get_time_in_sec_success, TC_iot_api_memleak_detect_setup, TC_iot_api_memleak_detect_teardown),
             cmocka_unit_test_setup_teardown(TC_iot_get_time_in_ms_null_parmaeters, TC_iot_api_memleak_detect_setup, TC_iot_api_memleak_detect_teardown),
@@ -65,6 +66,8 @@ int TEST_FUNC_iot_capability(void)
             cmocka_unit_test_setup_teardown(TC_st_conn_set_noti_cb_success, TC_iot_capability_setup, TC_iot_capability_teardown),
             cmocka_unit_test_setup_teardown(TC_st_cap_cmd_set_cb_invalid_parameters, TC_iot_capability_setup, TC_iot_capability_teardown),
             cmocka_unit_test_setup_teardown(TC_st_cap_cmd_set_cb_success, TC_iot_capability_setup, TC_iot_capability_teardown),
+            cmocka_unit_test_setup_teardown(TC_st_cap_attr_send_success, TC_iot_capability_setup, TC_iot_capability_teardown),
+            cmocka_unit_test_setup_teardown(TC_st_cap_attr_send_invalid_parameter, TC_iot_capability_setup, TC_iot_capability_teardown),
     };
     return cmocka_run_group_tests_name("iot_capability.c", tests, NULL, NULL);
 }
@@ -124,7 +127,10 @@ int TEST_FUNC_iot_util(void)
             cmocka_unit_test(TC_iot_util_convert_str_mac_success),
             cmocka_unit_test(TC_iot_util_convert_str_mac_invalid_parameters),
             cmocka_unit_test(TC_iot_util_convert_str_uuid_success),
-            cmocka_unit_test(TC_iot_util_convert_str_uuid_null_parameters),
+            cmocka_unit_test(TC_iot_util_convert_str_uuid_invalid_parameters),
+            cmocka_unit_test(TC_iot_util_convert_channel_freq),
+            cmocka_unit_test(TC_iot_util_convert_mac_str_invalid_parameters),
+            cmocka_unit_test(TC_iot_util_convert_mac_str_success),
     };
     return cmocka_run_group_tests_name("iot_util.c", tests, NULL, NULL);
 }
@@ -145,7 +151,8 @@ int TEST_FUNC_iot_easysetup_d2d(void)
     const struct CMUnitTest tests[] = {
             cmocka_unit_test(TC_iot_easysetup_create_ssid_null_parameters),
             cmocka_unit_test_setup_teardown(TC_iot_easysetup_create_ssid_success, TC_iot_easysetup_d2d_setup, TC_iot_easysetup_d2d_teardown),
-            cmocka_unit_test(TC_iot_easysetup_request_handler_null_parameters),
+            cmocka_unit_test_setup_teardown(TC_iot_easysetup_request_handler_invalid_parameters, TC_iot_easysetup_d2d_setup, TC_iot_easysetup_d2d_teardown),
+            cmocka_unit_test_setup_teardown(TC_iot_easysetup_request_handler_step_deviceinfo, TC_iot_easysetup_d2d_setup, TC_iot_easysetup_d2d_teardown),
             cmocka_unit_test(TC_STATIC_es_deviceinfo_handler_null_parameter),
             cmocka_unit_test(TC_STATIC_es_crypto_cipher_gen_iv_success),
             cmocka_unit_test_setup_teardown(TC_STATIC_es_deviceinfo_handler_success, TC_iot_easysetup_d2d_setup, TC_iot_easysetup_d2d_teardown),
@@ -196,7 +203,7 @@ int TEST_FUNC_iot_mqtt_client()
 {
     const struct CMUnitTest tests[] = {
             cmocka_unit_test(TC_st_mqtt_create_success),
-            cmocka_unit_test(TC_st_mqtt_connect_success),
+            cmocka_unit_test(TC_st_mqtt_connect_with_connack_rc),
     };
     return cmocka_run_group_tests_name("iot_mqtt_client.c", tests, NULL, NULL);
 }

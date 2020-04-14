@@ -214,7 +214,7 @@ static void _do_status_report(struct iot_context *ctx,
 		}
 		break;
 
-	case IOT_STATE_PROV_CONFIRMING:
+	case IOT_STATE_PROV_CONFIRM:
 		if (ctx->curr_otm_feature == OVF_BIT_BUTTON) {
 			fn_stat = IOT_STATUS_NEED_INTERACT;
 			fn_stat_lv = IOT_STAT_LV_STAY;
@@ -444,9 +444,9 @@ static iot_error_t _do_iot_main_command(struct iot_context *ctx,
 
 					ctx->iot_reg_data.new_reged = true;
 					next_state = IOT_STATE_PROV_ENTER;
+				} else {
+					next_state = IOT_STATE_PROV_DONE;
 				}
-
-				next_state = IOT_STATE_PROV_DONE;
 			}
 
 			err = iot_state_update(ctx, next_state, state_opt);
@@ -778,16 +778,17 @@ static void _iot_main_task(struct iot_context *ctx)
 		}
 
 		if (curr_events & IOT_EVENT_BIT_CAPABILITY) {
+			final_msg.msg = NULL;
+			final_msg.msglen = 0;
+
 			if (iot_os_queue_receive(ctx->pub_queue,
 					&final_msg, 0) != IOT_OS_FALSE) {
 
 				if (ctx->curr_state < IOT_STATE_CLOUD_CONNECTING) {
-					IOT_WARN("MQTT already disconnected. reset all pub_queue");
-					iot_os_queue_reset(ctx->pub_queue);
+					IOT_WARN("MQTT already disconnected. publish event dropped!!");
+					IOT_WARN("Dropped paylod(size:%d):%s", final_msg.msglen, final_msg.msg);
 				} else {
 					err = _publish_event(ctx, &final_msg);
-					free(final_msg.msg);
-
 					if (err != IOT_ERROR_NONE) {
 						IOT_ERROR("failed publish event_data : %d", err);
 						if (err == IOT_ERROR_MQTT_PUBLISH_FAIL) {
@@ -802,12 +803,14 @@ static void _iot_main_task(struct iot_context *ctx)
 							err = iot_state_update(ctx, next_state, 0);
 						}
 					}
-
-					/* Set bit again to check whether the several cmds are already
-					 * stacked up in the queue.
-					 */
-					iot_os_eventgroup_set_bits(ctx->iot_events, IOT_EVENT_BIT_CAPABILITY);
 				}
+				if (final_msg.msg)
+					free(final_msg.msg);
+
+				/* Set bit again to check whether the several cmds are already
+				 * stacked up in the queue.
+				 */
+				iot_os_eventgroup_set_bits(ctx->iot_events, IOT_EVENT_BIT_CAPABILITY);
 			}
 		}
 
@@ -1050,11 +1053,11 @@ static iot_error_t _do_recovery(struct iot_context *ctx,
 
 	if (ctx->curr_state == fail_state) {
 		/* We assume that these are intentional timeout cases
-		 * when target didn't receive PROV_CONFIRMING, CLOUD_REGISTERED
+		 * when target didn't receive PROV_CONFIRM, CLOUD_REGISTERED
 		 */
 		switch (fail_state) {
 		case IOT_STATE_PROV_ENTER:
-		case IOT_STATE_PROV_CONFIRMING:
+		case IOT_STATE_PROV_CONFIRM:
 			IOT_ERROR("Failed process [%d] on time", fail_state);
 			if (ctx->scan_result) {
 				free(ctx->scan_result);
@@ -1113,7 +1116,7 @@ static iot_error_t _do_recovery(struct iot_context *ctx,
 		 */
 		switch (fail_state) {
 		case IOT_STATE_PROV_ENTER:
-		case IOT_STATE_PROV_CONFIRMING:
+		case IOT_STATE_PROV_CONFIRM:
 			IOT_ERROR("Failed to do process [%d] on time, retry",
 				fail_state);
 			if (ctx->scan_result) {
@@ -1211,8 +1214,8 @@ static iot_error_t _do_state_updating(struct iot_context *ctx,
 		iot_err = IOT_ERROR_NONE;
 		break;
 
-	case IOT_STATE_PROV_CONFIRMING:
-		IOT_INFO("the state changes to IOT_STATE_PROV_CONFIRMING");
+	case IOT_STATE_PROV_CONFIRM:
+		IOT_REMARK("the state changes to IOT_STATE_PROV_CONFIRM");
 		iot_err = IOT_ERROR_NONE;
 		break;
 
@@ -1235,6 +1238,7 @@ static iot_error_t _do_state_updating(struct iot_context *ctx,
 
 		iot_cmd = IOT_COMMAND_CLOUD_REGISTERING;
 		iot_err = iot_command_send(ctx, iot_cmd, NULL, 0);
+		IOT_REMARK("the state changes to IOT_STATE_CLOUD_REGISTERING");
 		break;
 
 	case IOT_STATE_CLOUD_CONNECTING:
@@ -1331,9 +1335,9 @@ int st_conn_start(IOT_CTX *iot_ctx, st_status_cb status_cb,
 		}
 
 		iot_os_eventgroup_wait_bits(ctx->usr_events,
-			(1 << IOT_STATE_PROV_CONFIRMING), true, false, IOT_OS_MAX_DELAY);
+			(1 << IOT_STATE_PROV_CONFIRM), true, false, IOT_OS_MAX_DELAY);
 
-		_do_status_report(ctx, IOT_STATE_PROV_CONFIRMING, false);
+		_do_status_report(ctx, IOT_STATE_PROV_CONFIRM, false);
 	}
 
 	IOT_INFO("%s done", __func__);

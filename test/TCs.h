@@ -24,7 +24,10 @@ void TC_iot_util_get_random_uuid_null_parameter(void **state);
 void TC_iot_util_convert_str_mac_success(void **state);
 void TC_iot_util_convert_str_mac_invalid_parameters(void **state);
 void TC_iot_util_convert_str_uuid_success(void **state);
-void TC_iot_util_convert_str_uuid_null_parameters(void **state);
+void TC_iot_util_convert_str_uuid_invalid_parameters(void **state);
+void TC_iot_util_convert_channel_freq(void **state);
+void TC_iot_util_convert_mac_str_invalid_parameters(void **state);
+void TC_iot_util_convert_mac_str_success(void **state);
 
 // TCs for iot_api.c
 int TC_iot_api_memleak_detect_setup(void **state);
@@ -38,6 +41,7 @@ void TC_iot_api_onboarding_config_load_template_parameters(void **state);
 void TC_iot_api_onboarding_config_load_success(void **state);
 void TC_iot_api_onboarding_config_load_internal_failure(void **state);
 void TC_iot_api_onboarding_config_without_mnid(void **state);
+void TC_iot_api_onboarding_config_without_dip_id(void **state);
 void TC_iot_get_time_in_sec_null_parameters(void **state);
 void TC_iot_get_time_in_sec_success(void **state);
 void TC_iot_get_time_in_ms_null_parmaeters(void **state);
@@ -73,6 +77,8 @@ void TC_st_conn_set_noti_cb_null_parameters(void **state);
 void TC_st_conn_set_noti_cb_success(void **state);
 void TC_st_cap_cmd_set_cb_invalid_parameters(void **state);
 void TC_st_cap_cmd_set_cb_success(void **state);
+void TC_st_cap_attr_send_success(void **state);
+void TC_st_cap_attr_send_invalid_parameter(void **state);
 
 // TCs for iot_crypto.c
 int TC_iot_crypto_pk_setup(void **state);
@@ -133,7 +139,8 @@ int TC_iot_easysetup_d2d_setup(void **state);
 int TC_iot_easysetup_d2d_teardown(void **state);
 void TC_iot_easysetup_create_ssid_null_parameters(void **state);
 void TC_iot_easysetup_create_ssid_success(void **state);
-void TC_iot_easysetup_request_handler_null_parameters(void **state);
+void TC_iot_easysetup_request_handler_invalid_parameters(void **state);
+void TC_iot_easysetup_request_handler_step_deviceinfo(void **state);
 void TC_STATIC_es_deviceinfo_handler_null_parameter(void **state);
 void TC_STATIC_es_deviceinfo_handler_success(void **state);
 void TC_STATIC_es_keyinfo_handler_success(void **state);
@@ -163,6 +170,6 @@ void TC_st_conn_cleanup_success(void **state);
 
 // TCs for iot_mqtt_client.c
 void TC_st_mqtt_create_success(void** state);
-void TC_st_mqtt_connect_success(void** state);
+void TC_st_mqtt_connect_with_connack_rc(void** state);
 
 #endif //ST_DEVICE_SDK_C_TCS_H

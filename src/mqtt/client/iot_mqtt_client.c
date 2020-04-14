@@ -608,6 +608,35 @@ int waitfor(MQTTClient *c, int packet_type, iot_os_timer timer)
 	return rc;
 }
 
+static int _convert_return_code(int mqtt_rc)
+{
+	int rc;
+	switch (mqtt_rc) {
+	case MQTT_CONNECTION_ACCEPTED:
+		rc = 0;
+		break;
+	case MQTT_UNNACCEPTABLE_PROTOCOL:
+		rc = E_ST_MQTT_UNNACCEPTABLE_PROTOCOL;
+		break;
+	case MQTT_SERVER_UNAVAILABLE:
+		rc = E_ST_MQTT_SERVER_UNAVAILABLE;
+		break;
+	case MQTT_CLIENTID_REJECTED:
+		rc = E_ST_MQTT_CLIENTID_REJECTED;
+		break;
+	case MQTT_BAD_USERNAME_OR_PASSWORD:
+		rc = E_ST_MQTT_BAD_USERNAME_OR_PASSWORD;
+		break;
+	case MQTT_NOT_AUTHORIZED:
+		rc = E_ST_MQTT_NOT_AUTHORIZED;
+		break;
+	default:
+		rc = E_ST_MQTT_FAILURE;
+		break;
+	}
+	return rc;
+}
+
 int MQTTConnectWithResults(st_mqtt_client client, st_mqtt_broker_info_t *broker, st_mqtt_connect_data *connect_data,
 									 MQTTConnackData *data)
 {
@@ -708,14 +737,8 @@ int MQTTConnectWithResults(st_mqtt_client client, st_mqtt_broker_info_t *broker,
 		data->sessionPresent = 0;
 
 		if (MQTTDeserialize_connack(&data->sessionPresent, &data->rc, c->readbuf, c->readbuf_size) == 1) {
-			switch (data->rc) {
-			case MQTT_UNNACCEPTABLE_PROTOCOL : rc = E_ST_MQTT_UNNACCEPTABLE_PROTOCOL; break;
-			case MQTT_SERVER_UNAVAILABLE : rc = E_ST_MQTT_SERVER_UNAVAILABLE; break;
-			case MQTT_CLIENTID_REJECTED : rc = E_ST_MQTT_CLIENTID_REJECTED; break;
-			case MQTT_BAD_USERNAME_OR_PASSWORD : rc = E_ST_MQTT_BAD_USERNAME_OR_PASSWORD; break;
-			case MQTT_NOT_AUTHORIZED : rc = E_ST_MQTT_NOT_AUTHORIZED; break;
-			}
-		} else {
+			rc = _convert_return_code(data->rc);
+        } else {
 			rc = E_ST_MQTT_FAILURE;
 		}
 		free(c->readbuf);

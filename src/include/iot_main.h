@@ -56,7 +56,6 @@ enum iot_command_type {
 
 	IOT_COMMAND_NETWORK_MODE,
 	IOT_COMMAND_CHECK_PROV_STATUS,
-	IOT_COMMAND_SELF_CLEANUP,
 
 	IOT_COMMAND_CHECK_CLOUD_STATE,
 	IOT_COMMAND_CLOUD_REGISTERING,
@@ -66,6 +65,7 @@ enum iot_command_type {
 	IOT_COMMAND_NOTIFICATION_RECEIVED,
 
 	IOT_COMMAND_TYPE_MAX, /* MAX : under 32 */
+	IOT_COMMAND_SELF_CLEANUP,
 	IOT_COMMNAD_STATE_UPDATE,
 };
 
@@ -95,7 +95,7 @@ typedef enum iot_state_type {
 
 	IOT_STATE_PROV_ENTER,
 	IOT_STATE_PROV_CONN_MOBILE,
-	IOT_STATE_PROV_CONFIRMING,
+	IOT_STATE_PROV_CONFIRM,
 	IOT_STATE_PROV_DONE,
 
 	IOT_STATE_CLOUD_DISCONNECTED,
@@ -139,6 +139,15 @@ struct iot_cloud_prov_data {
 };
 
 /**
+ * @brief Contains "Device Integration Profile" data
+ */
+struct iot_dip_data {
+	struct iot_uuid dip_id;		/**< @brief Device Integration Profile ID */
+	int dip_major_version;		/**< @brief DIP's major version */
+	int dip_minor_version;		/**< @brief DIP's minor version */
+};
+
+/**
  * @brief Contains "device configuration" data
  */
 struct iot_devconf_prov_data {
@@ -150,6 +159,7 @@ struct iot_devconf_prov_data {
 	unsigned int ownership_validation_type;	/**< @brief onboarding process validation type, JUSTWORKS, BUTTON, PIN, QR */
 	iot_crypto_pk_type_t pk_type;	/**< @brief Authentication type, determined in devworks */
 	char *hashed_sn;				/**< @brief hashed serial, self-generating values during onboarding process */
+	struct iot_dip_data *dip;		/**< @brief Device Integration Profile data, determined in devworks, optional */
 };
 
 /**

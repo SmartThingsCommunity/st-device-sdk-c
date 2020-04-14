@@ -88,6 +88,8 @@ void iot_os_thread_delete(iot_os_thread thread_handle)
 		pthread_t *pid_h = (pthread_t *)thread_handle;
 		pthread_cancel(*pid_h);
 		free(pid_h);
+	} else {
+		pthread_cancel(pthread_self());
 	}
 }
 
