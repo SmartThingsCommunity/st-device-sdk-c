@@ -1111,6 +1111,66 @@ exit:
 #endif
 }
 
+iot_error_t iot_nv_get_misc_info(char** misc_info, size_t* len)
+{
+	HIT();
+	IOT_WARN_CHECK((misc_info == NULL || len == NULL), IOT_ERROR_INVALID_ARGS, "Invalid args 'NULL'");
+	/*
+	 * Todo :
+	 * IOT_NVD_MISC_INFO
+	 */
+	iot_error_t ret;
+	const int DATA_SIZE = IOT_NVD_MAX_DATA_LEN + 1;
+	unsigned int size;
+	char* data = NULL;
+	char* new_buff = NULL;
+
+	data = malloc(sizeof(char) * DATA_SIZE);
+	IOT_WARN_CHECK(data == NULL, IOT_ERROR_NV_DATA_ERROR, "memory alloc fail");
+
+	ret = _iot_nv_read_data(iot_bsp_nv_get_data_path(IOT_NVD_MISC_INFO), data, DATA_SIZE);
+	if (ret != IOT_ERROR_NONE) {
+		IOT_DEBUG("read failed");
+		ret = IOT_ERROR_NV_DATA_ERROR;
+		goto exit;
+	}
+
+	size = strlen(data);
+	new_buff = (char*)malloc(size + 1);
+	if (new_buff == NULL) {
+		IOT_WARN("failed to malloc for new_buff");
+		ret = IOT_ERROR_NV_DATA_ERROR;
+		goto exit;
+	}
+
+	memcpy(new_buff, data, size);
+	new_buff[size] = '\0';
+
+	*misc_info = new_buff;
+	*len = size;
+
+exit:
+	free(data);
+
+	return ret;
+}
+
+iot_error_t iot_nv_set_misc_info(const char* misc_info)
+{
+	HIT();
+	IOT_WARN_CHECK(misc_info == NULL, IOT_ERROR_INVALID_ARGS, "Invalid args 'NULL'");
+	/*
+	 * Todo :
+	 * IOT_NVD_MISC_INFO
+	 */
+	iot_error_t ret;
+
+	ret = _iot_nv_write_data(iot_bsp_nv_get_data_path(IOT_NVD_MISC_INFO), misc_info, strlen(misc_info));
+	IOT_DEBUG_CHECK(ret != IOT_ERROR_NONE, IOT_ERROR_NV_DATA_ERROR, "write fail");
+
+	return ret;
+}
+
 iot_error_t iot_nv_erase(iot_nvd_t nv_type)
 {
 	HIT();
