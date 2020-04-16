@@ -19,6 +19,9 @@
 #ifndef _IOT_UUID_H_
 #define _IOT_UUID_H_
 
+#include <iot_error.h>
+#include <iot_main.h>
+
 #ifdef __cplusplus
 extern "C" {
 #endif
@@ -29,7 +32,7 @@ extern "C" {
  * @param[out]	uuid		created random uuid
  * @return	IOT_ERROR_NONE on success
  */
-iot_error_t iot_random_uuid_from_mac(struct iot_uuid *uuid);
+iot_error_t iot_get_random_uuid_from_mac(struct iot_uuid *uuid);
 
 /**
  * @brief	Change mac to uuid
@@ -37,7 +40,15 @@ iot_error_t iot_random_uuid_from_mac(struct iot_uuid *uuid);
  * @param[out]	uuid		created uuid
  * @return	IOT_ERROR_NONE on success
  */
-iot_error_t iot_uuid_from_mac(struct iot_uuid *uuid);
+iot_error_t iot_get_uuid_from_mac(struct iot_uuid *uuid);
+
+/**
+ * @brief	To get random uuid based on iot_uuid struct
+ * @details	This function tries to make random iot_uuid values
+ * @param[in]	uuid	allocated iot_uuid struct pointer to get random iot_uuid value
+ * @return	return IOT_ERROR_NONE on success, or iot_error_t errors if it fails
+ */
+iot_error_t iot_get_random_uuid(struct iot_uuid* uuid);
 
 #ifdef __cplusplus
 }

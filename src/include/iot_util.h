@@ -81,15 +81,6 @@ iot_error_t iot_util_convert_str_uuid(const char* str, struct iot_uuid* uuid);
 iot_error_t iot_util_convert_uuid_str(struct iot_uuid* uuid, char* str, int max_sz);
 
 /**
- * @brief	To get random uuid based on iot_uuid struct
- * @details	This function tries to make random iot_uuid values
- * @param[in]	uuid	allocated iot_uuid struct pointer to get random iot_uuid value
- * @return	return IOT_ERROR_NONE on success, or iot_error_t errors if it fails
- */
-iot_error_t iot_util_get_random_uuid(struct iot_uuid* uuid);
-
-
-/**
  * @brief	To convert WIFI mac string into iot_mac struct value
  * @details	This function tries to convert from the string to iot_mac struct value
  * @param[in]	str	WIFI mac string pointer such as 'xx:xx:xx:xx:xx:xx'

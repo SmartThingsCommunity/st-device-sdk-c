@@ -260,6 +260,31 @@ void TC_st_cap_attr_create_string_null_parameters(void **state)
     assert_null(event);
 }
 
+void TC_st_cap_attr_create_with_unit_and_data(void **state)
+{
+    IOT_EVENT* event;
+    iot_cap_evt_data_t* event_data = NULL;
+    iot_cap_val_t fakeValue;
+    UNUSED(*state);
+
+    fakeValue.type = IOT_CAP_VAL_TYPE_NUMBER;
+    fakeValue.number = 4;
+    // When: correct parameters are passed.
+    event = st_cap_attr_create("fakeAttribute", &fakeValue, "fakeUnit", "{\"method\":\"fake\"}");
+    // Then: return proper event data.
+    event_data = (iot_cap_evt_data_t*) event;
+    assert_non_null(event_data);
+    assert_string_equal(event_data->evt_type, "fakeAttribute");
+    assert_int_equal(event_data->evt_value.type, IOT_CAP_VAL_TYPE_NUMBER);
+    assert_int_equal(event_data->evt_value.number, 4);
+    assert_int_equal(event_data->evt_unit.type, IOT_CAP_UNIT_TYPE_STRING);
+    assert_string_equal(event_data->evt_unit.string, "fakeUnit");
+    assert_string_equal(event_data->evt_value_data, "{\"method\":\"fake\"}");
+
+    // Teardown
+    st_cap_attr_free(event);
+}
+
 void test_cap_init_callback(IOT_CAP_HANDLE *handle, void *usr_data)
 {
     assert_non_null(handle);

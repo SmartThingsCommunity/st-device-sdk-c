@@ -166,7 +166,7 @@ static CborError _iot_cbor_value_to_json(CborValue *it, char *out, size_t *olen)
 			val_dbl = -val_dbl - 1;
 		}
 
-		c += sprintf(out + c, "%.0f", val_dbl);
+		c += sprintf(out + c, "%d", (int)val_dbl);
 
 		break;
 	case CborDoubleType:
@@ -219,7 +219,7 @@ iot_error_t iot_serialize_cbor2json(uint8_t *cbor, size_t cborlen, char **json, 
 		return IOT_ERROR_CBOR_PARSE;
 	}
 
-	len = cborlen * 4 / 3;
+	len = cborlen * 2;
 	buf = (char *)malloc(len);
 	if (!buf) {
 		IOT_ERROR("malloc failed for json");

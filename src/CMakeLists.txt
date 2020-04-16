@@ -30,26 +30,6 @@ if(CMAKE_C_COMPILER_ID STREQUAL "GNU" AND CMAKE_BUILD_TYPE MATCHES UnitTest)
     endforeach()
 endif()
 
-set(BOILERPLATE_HEADER include/certs/boilerplate.h)
-file(GLOB ROOT_CA_FILE_LIST "certs/root_ca_*.pem")
-set(ROOT_CA_FILE certs/root_ca.pem)
-set(ROOT_CA_SOURCE iot_root_ca.c)
-add_custom_command(
-        PRE_BUILD
-        OUTPUT ${CMAKE_CURRENT_SOURCE_DIR}/${ROOT_CA_SOURCE}
-        COMMENT "Generating root certiciate"
-        WORKING_DIRECTORY ${CMAKE_CURRENT_SOURCE_DIR}
-        COMMAND sh -c \"if [ -e ${ROOT_CA_FILE} ] \; then rm ${ROOT_CA_FILE} \; fi \;\"
-        COMMAND sh -c \"cat ${ROOT_CA_FILE_LIST} >> ${ROOT_CA_FILE}\"
-        COMMAND sh -c \"cat ${BOILERPLATE_HEADER} > ${ROOT_CA_SOURCE}\"
-        COMMAND sh -c \"xxd -i ${ROOT_CA_FILE} >> ${ROOT_CA_SOURCE}\"
-        COMMAND sh -c \"sed -i.bak 's/cert.*_pem/st_root_ca/g' ${ROOT_CA_SOURCE}\"
-        COMMAND sh -c \"sed -i.bak 's/unsigned/const unsigned/g' ${ROOT_CA_SOURCE}\"
-        COMMAND sh -c \"rm -f ${ROOT_CA_SOURCE}.bak\"
-        COMMAND sh -c \"rm -f ${ROOT_CA_FILE}\"
-        BYPRODUCTS ${CMAKE_CURRENT_SOURCE_DIR}/${ROOT_CA_SOURCE}
-)
-
 add_library(iotcore
         iot_api.c
         iot_crypto.c
@@ -59,7 +39,7 @@ add_library(iotcore
         iot_nv_data.c
         iot_util.c
         iot_uuid.c
-        ${ROOT_CA_SOURCE}
+        iot_root_ca.c
         )
 
 target_link_libraries(iotcore

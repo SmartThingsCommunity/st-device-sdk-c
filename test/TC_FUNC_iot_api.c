@@ -221,7 +221,7 @@ static char onboarding_profile_example[] = {
         "    ],\n"
         "    \"identityType\": \"ED25519\",\n"
         "    \"deviceIntegrationProfileKey\": {\n"
-        "      \"id\": \"bb000ddd-92a0-a2a3-46f0-b531f278af06\",\n"
+        "      \"id\": \"bb000ddd-92a0-42a3-86f0-b531f278af06\",\n"
         "      \"majorVersion\": 0,\n"
         "      \"minorVersion\": 1\n"
         "    }\n"
@@ -234,8 +234,8 @@ void TC_iot_api_onboarding_config_load_success(void **state)
     iot_error_t err;
     struct iot_devconf_prov_data devconf;
     struct iot_uuid target_id = {
-			.id = {0xbb, 0x00, 0x0d, 0xdd, 0x92, 0xa0, 0xa2, 0xa3,
-				0x46, 0xf0, 0xb5, 0x31, 0xf2, 0x78, 0xaf, 0x06}
+			.id = {0xbb, 0x00, 0x0d, 0xdd, 0x92, 0xa0, 0x42, 0xa3,
+				0x86, 0xf0, 0xb5, 0x31, 0xf2, 0x78, 0xaf, 0x06}
     };
     UNUSED(state);
 
@@ -437,4 +437,40 @@ void TC_iot_get_time_in_sec_by_long_success(void **state)
     // Then: return success
     assert_int_equal(err, IOT_ERROR_NONE);
     assert_true(seconds > 0);
+}
+
+void TC_iot_easysetup_request_success(void **state)
+{
+    iot_error_t err;
+    int os_ret;
+    struct iot_context *context;
+    const char *test_payload = "{ message: \"\" }";
+    struct iot_easysetup_payload received_payload;
+    unsigned int easysetup_event = 0;
+    UNUSED(state);
+
+    // Given
+    context = (struct iot_context*) calloc(1, sizeof(struct iot_context));
+    assert_non_null(context);
+    context->easysetup_req_queue = iot_os_queue_create(1, sizeof(struct iot_easysetup_payload));
+    assert_non_null(context->easysetup_req_queue);
+    context->iot_events = iot_os_eventgroup_create();
+    assert_non_null(context->iot_events);
+
+    // When
+    err = iot_easysetup_request(context, IOT_EASYSETUP_STEP_DEVICEINFO, test_payload);
+
+    // Then
+    assert_int_equal(err, IOT_ERROR_NONE);
+    easysetup_event = iot_os_eventgroup_wait_bits(context->iot_events,
+            IOT_EVENT_BIT_EASYSETUP_REQ, true, false, IOT_MAIN_TASK_CYCLE);
+    assert_int_not_equal(easysetup_event, 0);
+    os_ret = iot_os_queue_receive(context->easysetup_req_queue, &received_payload, 0);
+    assert_int_equal(os_ret, IOT_OS_TRUE);
+    assert_string_equal(received_payload.payload, test_payload);
+
+    // Teardown
+    iot_os_queue_delete(context->easysetup_req_queue);
+    iot_os_eventgroup_delete(context->iot_events);
+    free(context);
 }
