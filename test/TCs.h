@@ -174,5 +174,6 @@ void TC_st_conn_cleanup_success(void **state);
 // TCs for iot_mqtt_client.c
 void TC_st_mqtt_create_success(void** state);
 void TC_st_mqtt_connect_with_connack_rc(void** state);
+void TC_st_mqtt_disconnect_success(void** state);
 
 #endif //ST_DEVICE_SDK_C_TCS_H

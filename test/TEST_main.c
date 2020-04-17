@@ -207,6 +207,7 @@ int TEST_FUNC_iot_mqtt_client()
     const struct CMUnitTest tests[] = {
             cmocka_unit_test(TC_st_mqtt_create_success),
             cmocka_unit_test(TC_st_mqtt_connect_with_connack_rc),
+            cmocka_unit_test(TC_st_mqtt_disconnect_success),
     };
     return cmocka_run_group_tests_name("iot_mqtt_client.c", tests, NULL, NULL);
 }
