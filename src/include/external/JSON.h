@@ -110,6 +110,10 @@ static inline bool JSON_IS_ARRAY(const JSON_H * const item) {
     return cJSON_IsArray(item);
 }
 
+static inline void JSON_REPLACE_ITEM_IN_OBJ_CASESENS(JSON_H *obj, const char *string, JSON_H *newitem) {
+	cJSON_ReplaceItemInObjectCaseSensitive(obj, string, newitem);
+}
+
 #else
 typedef void JSON_H;
 JSON_H *JSON_CREATE_OBJECT(void);
@@ -133,6 +137,7 @@ bool JSON_IS_STRING(const JSON_H * const item);
 bool JSON_IS_NUMBER(const JSON_H * const item);
 bool JSON_IS_OBJECT(const JSON_H * const item);
 bool JSON_IS_ARRAY(const JSON_H * const item);
+void JSON_REPLACE_ITEM_IN_OBJ_CASESENS(JSON_H *obj, const char *string, JSON_H *newitem);
 #endif
 
 
