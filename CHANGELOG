@@ -1,5 +1,33 @@
 # HISTORY
 
+## 1.1.10 :  Changes until v1.1.10
+
+New Improvements or features:
+
+ - Added initial 'device-integration-profile-key' parsing codes on iot-main
+ - To set UTC time from the mobile for SNTP
+ - Use static iot_root_ca.c (do not make it on building process)
+ - Set & add the timeout period & function(default) for mbed TLS handshake process
+ - Add more JSON wrapper functions and use them in iot_capability.c
+ - Embed cmocka-1.1.5 internally for unit test
+
+Enhancements or amendments:
+
+ - Update & change DIP handling codes for CBOR based operation
+ - Refactoring wifi auth mode decision on easysetup process
+ - TC update & add some checking codes for parameter hardness on iot_tuil, iot_capability, iot_easysetup
+ - Update wifi related logic for scan-process & thread cancellation codes
+ - Support commands number and order information in cmd data structure
+ - Easysetup: code clean up & refactoring decode and decrypt part
+ - Update D2D process : to change the request uri to create the dump, to skip the error status update for D2D cmd
+ - Refactor iot_main : command status management, use unsigend value for bitwise operation
+
+Bug fixed:
+
+ - Fix wifi connection failed issue by auto-reconnecting on RTL
+ - Changed main event-msg handling to prevent memory-leak condition
+ - Code cleanup & fixed : iot_api.c, iot_nv_data.c, iot_net
+
 ## 1.1.0 :  Changes for version 1.1.0
 
  * Need to use over the Mobile's SmartThings Apps v1.7.43 (for Android)
