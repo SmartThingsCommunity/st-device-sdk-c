@@ -97,9 +97,9 @@ typedef enum {
 
 typedef struct _mqtt_operation_block {
 	mqtt_operation_type type;
-	union data {
-		struct _publish_data { st_mqtt_msg *msg; };
-	};
+	union {
+		struct { st_mqtt_msg *msg; } _publish_data;
+	} data;
 } mqtt_operation_block;
 
 /** MQTT Connect - send an MQTT connect packet down the network and wait for a Connack
