@@ -48,9 +48,18 @@ typedef struct {
  * @details	This function parse give url protocol, domain, port number parts
  * @param[in]	url		null-terminated url string like "https://example.sample.com:1234"
  * @param[out]	output	parsed output with url_parse_t type
- * @return		return IOT_ERROR_NONE on success, or iot_error_t errors if it fails
+ * @return	return IOT_ERROR_NONE on success, or iot_error_t errors if it fails
  */
 iot_error_t iot_util_url_parse(char *url, url_parse_t *output);
+
+/**
+ * @brief	validate uuid string format
+ * @details	This function validate given string meets uuid string format.
+ * @param[in]	str	null-terminated uuid string
+ * @param[in]	strlen	string length of str
+ * @return	return IOT_ERROR_NONE on uuid format, IOT_ERROR_INVALID_ARGS on invalid format
+ */
+iot_error_t validate_uuid_format(const char *str, size_t str_len);
 
 /**
  * @brief	uuid type string to iot_uuid struct converting function for st-iot-core
@@ -70,15 +79,6 @@ iot_error_t iot_util_convert_str_uuid(const char* str, struct iot_uuid* uuid);
  * @return	return IOT_ERROR_NONE on success, or iot_error_t errors if it fails
  */
 iot_error_t iot_util_convert_uuid_str(struct iot_uuid* uuid, char* str, int max_sz);
-
-/**
- * @brief	To get random uuid based on iot_uuid struct
- * @details	This function tries to make random iot_uuid values
- * @param[in]	uuid	allocated iot_uuid struct pointer to get random iot_uuid value
- * @return	return IOT_ERROR_NONE on success, or iot_error_t errors if it fails
- */
-iot_error_t iot_util_get_random_uuid(struct iot_uuid* uuid);
-
 
 /**
  * @brief	To convert WIFI mac string into iot_mac struct value

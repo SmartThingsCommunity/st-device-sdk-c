@@ -60,7 +60,7 @@ int st_mqtt_create(st_mqtt_client *client, unsigned int command_timeout_ms)
 	int rc = E_ST_MQTT_FAILURE;
 	iot_error_t iot_err;
 
-	*client = malloc(sizeof(MQTTClient));
+	*client = iot_os_malloc(sizeof(MQTTClient));
 	if (*client == NULL) {
 		IOT_ERROR("buf malloc fail");
 		goto error_handle;
@@ -79,7 +79,7 @@ int st_mqtt_create(st_mqtt_client *client, unsigned int command_timeout_ms)
 		c->command_timeout_ms = DEFAULT_COMMNAD_TIMEOUT;
 	}
 
-	c->net = malloc(sizeof(iot_net_interface_t));
+	c->net = iot_os_malloc(sizeof(iot_net_interface_t));
 	if (c->net == NULL) {
 		IOT_ERROR("buf malloc fail");
 		goto error_handle;
@@ -129,7 +129,7 @@ error_handle:
 			iot_os_timer_destroy(&c->ping_wait);
 		if (c->mutex.sem)
 			iot_os_mutex_destroy(&c->mutex);
-		free(c);
+		iot_os_free(c);
 		*client = NULL;
 	}
 	return rc;
@@ -171,7 +171,7 @@ void st_mqtt_destroy(st_mqtt_client client)
 	if (c->isconnected) {
 		_iot_mqtt_close_session(c);
 	}
-	free(c->net);
+	iot_os_free(c->net);
 
 	iot_os_timer_destroy(&c->last_sent);
 	iot_os_timer_destroy(&c->last_received);
@@ -179,7 +179,7 @@ void st_mqtt_destroy(st_mqtt_client client)
 	iot_os_mutex_unlock(&c->mutex);
 
 	iot_os_mutex_destroy(&c->mutex);
-	free(c);
+	iot_os_free(c);
 }
 
 static int decodePacket(MQTTClient *c, int *value, iot_os_timer timer)
@@ -608,6 +608,35 @@ int waitfor(MQTTClient *c, int packet_type, iot_os_timer timer)
 	return rc;
 }
 
+static int _convert_return_code(int mqtt_rc)
+{
+	int rc;
+	switch (mqtt_rc) {
+	case MQTT_CONNECTION_ACCEPTED:
+		rc = 0;
+		break;
+	case MQTT_UNNACCEPTABLE_PROTOCOL:
+		rc = E_ST_MQTT_UNNACCEPTABLE_PROTOCOL;
+		break;
+	case MQTT_SERVER_UNAVAILABLE:
+		rc = E_ST_MQTT_SERVER_UNAVAILABLE;
+		break;
+	case MQTT_CLIENTID_REJECTED:
+		rc = E_ST_MQTT_CLIENTID_REJECTED;
+		break;
+	case MQTT_BAD_USERNAME_OR_PASSWORD:
+		rc = E_ST_MQTT_BAD_USERNAME_OR_PASSWORD;
+		break;
+	case MQTT_NOT_AUTHORIZED:
+		rc = E_ST_MQTT_NOT_AUTHORIZED;
+		break;
+	default:
+		rc = E_ST_MQTT_FAILURE;
+		break;
+	}
+	return rc;
+}
+
 int MQTTConnectWithResults(st_mqtt_client client, st_mqtt_broker_info_t *broker, st_mqtt_connect_data *connect_data,
 									 MQTTConnackData *data)
 {
@@ -708,14 +737,8 @@ int MQTTConnectWithResults(st_mqtt_client client, st_mqtt_broker_info_t *broker,
 		data->sessionPresent = 0;
 
 		if (MQTTDeserialize_connack(&data->sessionPresent, &data->rc, c->readbuf, c->readbuf_size) == 1) {
-			switch (data->rc) {
-			case MQTT_UNNACCEPTABLE_PROTOCOL : rc = E_ST_MQTT_UNNACCEPTABLE_PROTOCOL; break;
-			case MQTT_SERVER_UNAVAILABLE : rc = E_ST_MQTT_SERVER_UNAVAILABLE; break;
-			case MQTT_CLIENTID_REJECTED : rc = E_ST_MQTT_CLIENTID_REJECTED; break;
-			case MQTT_BAD_USERNAME_OR_PASSWORD : rc = E_ST_MQTT_BAD_USERNAME_OR_PASSWORD; break;
-			case MQTT_NOT_AUTHORIZED : rc = E_ST_MQTT_NOT_AUTHORIZED; break;
-			}
-		} else {
+			rc = _convert_return_code(data->rc);
+        } else {
 			rc = E_ST_MQTT_FAILURE;
 		}
 		free(c->readbuf);

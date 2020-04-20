@@ -30,11 +30,11 @@
 #define IOT_WIFI_PROV_SSID_LEN		(31 + 1)
 #define IOT_WIFI_PROV_PASSWORD_LEN 	(63 + 1)
 
-#define IOT_EVENT_BIT_COMMAND		(1 << 0)
-#define IOT_EVENT_BIT_CAPABILITY	(1 << 1)
-#define IOT_EVENT_BIT_EASYSETUP_REQ	(1 << 2)
-#define IOT_EVENT_BIT_EASYSETUP_RESP	(1 << 3)
-#define IOT_EVENT_BIT_EASYSETUP_CONFIRM	(1 << 4)
+#define IOT_EVENT_BIT_COMMAND		(1u << 0u)
+#define IOT_EVENT_BIT_CAPABILITY	(1u << 1u)
+#define IOT_EVENT_BIT_EASYSETUP_REQ	(1u << 2u)
+#define IOT_EVENT_BIT_EASYSETUP_RESP	(1u << 3u)
+#define IOT_EVENT_BIT_EASYSETUP_CONFIRM	(1u << 4u)
 #define IOT_EVENT_BIT_ALL	(IOT_EVENT_BIT_COMMAND | IOT_EVENT_BIT_CAPABILITY | IOT_EVENT_BIT_EASYSETUP_REQ)
 
 #define IOT_MAIN_TASK_CYCLE			100
@@ -56,7 +56,6 @@ enum iot_command_type {
 
 	IOT_COMMAND_NETWORK_MODE,
 	IOT_COMMAND_CHECK_PROV_STATUS,
-	IOT_COMMAND_SELF_CLEANUP,
 
 	IOT_COMMAND_CHECK_CLOUD_STATE,
 	IOT_COMMAND_CLOUD_REGISTERING,
@@ -66,7 +65,8 @@ enum iot_command_type {
 	IOT_COMMAND_NOTIFICATION_RECEIVED,
 
 	IOT_COMMAND_TYPE_MAX, /* MAX : under 32 */
-	IOT_CMD_STATE_HANDLE,
+	IOT_COMMAND_SELF_CLEANUP,
+	IOT_COMMNAD_STATE_UPDATE,
 };
 
 enum iot_easysetup_step {
@@ -95,7 +95,7 @@ typedef enum iot_state_type {
 
 	IOT_STATE_PROV_ENTER,
 	IOT_STATE_PROV_CONN_MOBILE,
-	IOT_STATE_PROV_CONFIRMING,
+	IOT_STATE_PROV_CONFIRM,
 	IOT_STATE_PROV_DONE,
 
 	IOT_STATE_CLOUD_DISCONNECTED,
@@ -139,6 +139,15 @@ struct iot_cloud_prov_data {
 };
 
 /**
+ * @brief Contains "Device Integration Profile" data
+ */
+struct iot_dip_data {
+	struct iot_uuid dip_id;		/**< @brief Device Integration Profile ID */
+	int dip_major_version;		/**< @brief DIP's major version */
+	int dip_minor_version;		/**< @brief DIP's minor version */
+};
+
+/**
  * @brief Contains "device configuration" data
  */
 struct iot_devconf_prov_data {
@@ -150,6 +159,7 @@ struct iot_devconf_prov_data {
 	unsigned int ownership_validation_type;	/**< @brief onboarding process validation type, JUSTWORKS, BUTTON, PIN, QR */
 	iot_crypto_pk_type_t pk_type;	/**< @brief Authentication type, determined in devworks */
 	char *hashed_sn;				/**< @brief hashed serial, self-generating values during onboarding process */
+	struct iot_dip_data *dip;		/**< @brief Device Integration Profile data, determined in devworks, optional */
 };
 
 /**
@@ -255,6 +265,8 @@ struct iot_context {
 	unsigned int cmd_err;						/**< @brief current command handling error checking value */
 	unsigned int cmd_status;					/**< @brief current command status */
 	uint16_t cmd_count[IOT_COMMAND_TYPE_MAX];	/**< @brief current queued command counts */
+
+	iot_os_thread main_thread; /**< @brief iot main task thread */
 };
 
 #endif /* _IOT_MAIN_H_ */

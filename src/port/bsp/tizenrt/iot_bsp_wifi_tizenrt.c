@@ -236,18 +236,14 @@ iot_error_t iot_bsp_wifi_set_mode(iot_wifi_conf *conf)
 			//esp_wifi_set_mode(WIFI_MODE_NULL);
 		break;
 		case IOT_WIFI_MODE_SCAN:
-			if (_iot_bsp_sta_mode() == 0) {
-				res = wifi_manager_set_mode(STA_MODE, NULL);
-				if (res != WIFI_MANAGER_SUCCESS) {
-					IOT_INFO(" Set STA mode Fail");
-					return IOT_ERROR_INIT_FAIL;
+			/*stdk first scan on sta mode, and then scan on softap mode.
+			for tizenrt, we only do the first scan, and reuse the result.*/
+			if (_iot_bsp_sta_mode() == 1) {
+					res = wifi_manager_scan_ap();
+					if (res != WIFI_MANAGER_SUCCESS) {
+						IOT_ERROR("wifi_manager_scan_ap fail");
+						return IOT_ERROR_CONN_OPERATE_FAIL;
 				}
-			}
-
-			res = wifi_manager_scan_ap();
-			if (res != WIFI_MANAGER_SUCCESS) {
-				IOT_INFO(" scan Fail");
-				return IOT_ERROR_READ_FAIL;
 			}
 		break;
 
@@ -256,7 +252,7 @@ iot_error_t iot_bsp_wifi_set_mode(iot_wifi_conf *conf)
 				res = wifi_manager_set_mode(STA_MODE, NULL);
 				if (res != WIFI_MANAGER_SUCCESS) {
 					IOT_INFO(" Set STA mode Fail");
-					return IOT_ERROR_INIT_FAIL;
+					return IOT_ERROR_CONN_OPERATE_FAIL;
 				}
 			}
 
@@ -287,7 +283,7 @@ iot_error_t iot_bsp_wifi_set_mode(iot_wifi_conf *conf)
 			res = wifi_manager_connect_ap(&apconfig);
 			if (res != WIFI_MANAGER_SUCCESS) {
 				IOT_INFO(" AP connect failed");
-				return IOT_ERROR_INIT_FAIL;
+				return IOT_ERROR_CONN_CONNECT_FAIL;
 			}
 
 			/* Wait for DHCP connection */
@@ -317,7 +313,7 @@ iot_error_t iot_bsp_wifi_set_mode(iot_wifi_conf *conf)
 		break;
 		default:
 			IOT_ERROR("iot bsp wifi can't support this mode = %d", conf->mode);
-			return IOT_ERROR_INIT_FAIL;
+			return IOT_ERROR_CONN_OPERATE_FAIL;
 	}
 
 	return IOT_ERROR_NONE;
@@ -361,7 +357,7 @@ iot_error_t iot_bsp_wifi_get_mac(struct iot_mac *wifi_mac)
 #endif
 		if (ret != 0) {
 			IOT_INFO("Get info failed");
-			return IOT_ERROR_READ_FAIL;
+			return IOT_ERROR_CONN_OPERATE_FAIL;
 		}
 
 		strncpy((char *)wifi_mac->addr, (const char *)info.mac_address, 6);

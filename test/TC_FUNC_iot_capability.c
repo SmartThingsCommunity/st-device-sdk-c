@@ -23,6 +23,8 @@
 #include <st_dev.h>
 #include <string.h>
 #include <iot_capability.h>
+#include <iot_internal.h>
+#include <external/JSON.h>
 #include "TC_MOCK_functions.h"
 
 #define UNUSED(x) (void*)(x)
@@ -256,6 +258,31 @@ void TC_st_cap_attr_create_string_null_parameters(void **state)
     event = st_cap_attr_create_string(NULL, NULL, NULL);
     // Then: return null
     assert_null(event);
+}
+
+void TC_st_cap_attr_create_with_unit_and_data(void **state)
+{
+    IOT_EVENT* event;
+    iot_cap_evt_data_t* event_data = NULL;
+    iot_cap_val_t fakeValue;
+    UNUSED(*state);
+
+    fakeValue.type = IOT_CAP_VAL_TYPE_NUMBER;
+    fakeValue.number = 4;
+    // When: correct parameters are passed.
+    event = st_cap_attr_create("fakeAttribute", &fakeValue, "fakeUnit", "{\"method\":\"fake\"}");
+    // Then: return proper event data.
+    event_data = (iot_cap_evt_data_t*) event;
+    assert_non_null(event_data);
+    assert_string_equal(event_data->evt_type, "fakeAttribute");
+    assert_int_equal(event_data->evt_value.type, IOT_CAP_VAL_TYPE_NUMBER);
+    assert_int_equal(event_data->evt_value.number, 4);
+    assert_int_equal(event_data->evt_unit.type, IOT_CAP_UNIT_TYPE_STRING);
+    assert_string_equal(event_data->evt_unit.string, "fakeUnit");
+    assert_string_equal(event_data->evt_value_data, "{\"method\":\"fake\"}");
+
+    // Teardown
+    st_cap_attr_free(event);
 }
 
 void test_cap_init_callback(IOT_CAP_HANDLE *handle, void *usr_data)
@@ -500,6 +527,7 @@ void TC_st_cap_cmd_set_cb_invalid_parameters(void **state)
     struct iot_cap_handle *internal_handle;
     IOT_CAP_HANDLE* handle;
     char *user_data;
+    UNUSED(state);
 
     // When: all null
     ret = st_cap_cmd_set_cb(NULL, NULL, NULL, NULL);
@@ -550,6 +578,7 @@ void TC_st_cap_cmd_set_cb_success(void **state)
     struct iot_cap_handle *internal_handle;
     IOT_CAP_HANDLE* handle;
     char *user_data;
+    UNUSED(state);
 
     // Given
     internal_handle = (struct iot_cap_handle*) malloc(sizeof(struct iot_cap_handle));
@@ -572,4 +601,176 @@ void TC_st_cap_cmd_set_cb_success(void **state)
     iot_os_free(internal_handle->cmd_list->command);
     iot_os_free(internal_handle->cmd_list);
     free(internal_handle);
+}
+
+static void assert_st_cap_attr_send(char *message, char *expected_component, char *expected_capability,
+                                IOT_EVENT *expected_event, int expected_sequence_number)
+{
+    JSON_H *root;
+    JSON_H *event_array;
+    iot_cap_evt_data_t* internal_event = (iot_cap_evt_data_t*) expected_event;
+    assert_non_null(message);
+
+    root = JSON_PARSE(message);
+    assert_non_null(root);
+
+    event_array = JSON_GET_OBJECT_ITEM(root, "deviceEvents");
+    assert_non_null(event_array);
+    for (int i = 0; i < JSON_GET_ARRAY_SIZE(event_array); i++) {
+        JSON_H *event;
+        JSON_H *item;
+
+        event = JSON_GET_ARRAY_ITEM(event_array, i);
+        assert_non_null(event);
+
+        item = JSON_GET_OBJECT_ITEM(event, "component");
+        assert_non_null(item);
+        assert_string_equal(JSON_GET_STRING_VALUE(item), expected_component);
+
+        item = JSON_GET_OBJECT_ITEM(event, "capability");
+        assert_non_null(item);
+        assert_string_equal(JSON_GET_STRING_VALUE(item), expected_capability);
+
+        item = JSON_GET_OBJECT_ITEM(event, "attribute");
+        assert_non_null(item);
+        assert_string_equal(JSON_GET_STRING_VALUE(item), internal_event->evt_type);
+
+        item = JSON_GET_OBJECT_ITEM(event, "value");
+        assert_non_null(item);
+        switch (internal_event->evt_value.type)
+        {
+            case IOT_CAP_VAL_TYPE_INTEGER:
+                assert_int_equal(item->valueint, internal_event->evt_value.integer);
+                break;
+            case IOT_CAP_VAL_TYPE_NUMBER:
+                assert_int_equal(item->valuedouble, internal_event->evt_value.number);
+                break;
+            case IOT_CAP_VAL_TYPE_STRING:
+                assert_string_equal(JSON_GET_STRING_VALUE(item), internal_event->evt_value.string);
+                break;
+            case IOT_CAP_VAL_TYPE_INT_OR_NUM:
+            case IOT_CAP_VAL_TYPE_STR_ARRAY:
+            case IOT_CAP_VAL_TYPE_JSON_OBJECT:
+                // TODO: validate value for these type
+                break;
+            default:
+                assert_false(1);
+                break;
+        }
+
+        if (internal_event->evt_unit.type == IOT_CAP_UNIT_TYPE_STRING) {
+            item = JSON_GET_OBJECT_ITEM(event, "unit");
+            assert_non_null(item);
+            assert_string_equal(JSON_GET_STRING_VALUE(item), internal_event->evt_unit.string);
+        }
+
+        item = JSON_GET_OBJECT_ITEM(event, "providerData");
+        assert_non_null(item);
+        assert_int_equal(JSON_GET_OBJECT_ITEM(item, "sequenceNumber")->valueint, expected_sequence_number);
+    }
+
+    JSON_DELETE(root);
+}
+
+void TC_st_cap_attr_send_success(void **state)
+{
+    int sequence_number;
+    IOT_CTX *context;
+    IOT_CAP_HANDLE* cap_handle;
+    IOT_EVENT* event;
+    struct iot_cap_handle *internal_handle;
+    struct iot_context *internal_context;
+    iot_cap_msg_t final_msg;
+    UNUSED(state);
+
+    // Given
+    internal_context = (struct iot_context*) malloc(sizeof(struct iot_context));
+    assert_non_null(internal_context);
+    memset(internal_context, '\0', sizeof(struct iot_context));
+    context = (IOT_CTX*) internal_context;
+    internal_context->curr_state = IOT_STATE_CLOUD_CONNECTED;
+    internal_context->pub_queue = iot_os_queue_create(IOT_PUB_QUEUE_LENGTH, sizeof(iot_cap_msg_t));
+    internal_context->iot_events = iot_os_eventgroup_create();
+    cap_handle = st_cap_handle_init(context, "main", "testCap", test_cap_init_callback, NULL);
+    assert_non_null(cap_handle);
+    event = st_cap_attr_create_int("testAttr", 10, "testUnit");
+    assert_non_null(event);
+    // When
+    sequence_number = st_cap_attr_send(cap_handle, 1, &event);
+    // Then
+    assert_true(sequence_number > 0);
+    assert_int_equal(iot_os_queue_receive(internal_context->pub_queue, &final_msg, 0), IOT_OS_TRUE);
+    assert_st_cap_attr_send(final_msg.msg, "main", "testCap", event, sequence_number);
+    // Teardown
+    free(final_msg.msg);
+    st_cap_attr_free(event);
+    internal_handle = (struct iot_cap_handle*) cap_handle;
+    if (internal_handle->capability) {
+        iot_os_free((void*)internal_handle->capability);
+    }
+    if (internal_handle->component) {
+        iot_os_free((void*)internal_handle->component);
+    }
+    if (internal_context->cap_handle_list->next) {
+        iot_os_free(internal_context->cap_handle_list->next);
+    }
+    if (internal_context->cap_handle_list) {
+        iot_os_free(internal_context->cap_handle_list);
+    }
+    iot_os_free(cap_handle);
+    iot_os_eventgroup_delete(internal_context->iot_events);
+    iot_os_queue_delete(internal_context->pub_queue);
+    free(context);
+}
+
+void TC_st_cap_attr_send_invalid_parameter(void **state)
+{
+    int sequence_number;
+    IOT_CAP_HANDLE* cap_handle;
+    IOT_EVENT* event;
+    struct iot_cap_handle *internal_handle;
+    struct iot_context *internal_context;
+    UNUSED(state);
+
+    // Given: cap_handle, event null
+    cap_handle = NULL;
+    event = NULL;
+    // When
+    sequence_number = st_cap_attr_send(cap_handle, 1, &event);
+    // Then
+    assert_true(sequence_number < 0);
+
+    // Given: empty cap_handle
+    internal_handle = (struct iot_cap_handle*) malloc(sizeof(struct iot_cap_handle));
+    memset(internal_handle, '\0', sizeof(struct iot_cap_handle));
+    cap_handle = (IOT_CAP_HANDLE*) internal_handle;
+    event = st_cap_attr_create_int("testAttr", 100, "testUnit");
+    // When
+    sequence_number = st_cap_attr_send(cap_handle, 1, &event);
+    // Then
+    assert_true(sequence_number < 0);
+    // Teardown
+    st_cap_attr_free(event);
+    free(internal_handle);
+
+    // Given: invalid context state
+    internal_handle = (struct iot_cap_handle*) malloc(sizeof(struct iot_cap_handle));
+    memset(internal_handle, '\0', sizeof(struct iot_cap_handle));
+    internal_handle->component = strdup("main");
+    internal_handle->capability = strdup("testCaps");
+    cap_handle = (IOT_CAP_HANDLE*) internal_handle;
+    internal_context = (struct iot_context*) malloc(sizeof(struct iot_context));
+    internal_handle->ctx = internal_context;
+    internal_context->curr_state = IOT_STATE_CLOUD_REGISTERING;
+    event = st_cap_attr_create_int("testAttr", 100, "testUnit");
+    // When
+    sequence_number = st_cap_attr_send(cap_handle, 1, &event);
+    // Then
+    assert_true(sequence_number < 0);
+    // Teardown
+    st_cap_attr_free(event);
+    free((void*)internal_handle->capability);
+    free((void*)internal_handle->component);
+    free(internal_handle);
+    free(internal_context);
 }
