@@ -54,6 +54,8 @@ const char *iot_bsp_nv_get_data_path(iot_nvd_t nv_type)
 		return "/mnt/Label";
 	case IOT_NVD_DEVICE_ID:
 		return "/mnt/DeviceID";
+	case IOT_NVD_MISC_INFO:
+		return "/mnt/MiscInfo";
 
 	/* stored in stnv partition (manufacturer data),romfs based */
 	case IOT_NVD_PRIVATE_KEY:
