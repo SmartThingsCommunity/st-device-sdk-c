@@ -1,6 +1,6 @@
 /* ***************************************************************************
  *
- * Copyright 2019 Samsung Electronics All Rights Reserved.
+ * Copyright (c) 2019-2020 Samsung Electronics All Rights Reserved.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -147,6 +147,8 @@ static esp_err_t event_handler(void *ctx, system_event_t *event)
 
 iot_error_t iot_bsp_wifi_init()
 {
+	esp_err_t esp_ret;
+
 	IOT_INFO("[esp8266] iot_bsp_wifi_init");
 
 	if(WIFI_INITIALIZED)
@@ -155,12 +157,30 @@ iot_error_t iot_bsp_wifi_init()
 	wifi_event_group = xEventGroupCreate();
 
 	tcpip_adapter_init();
-	ESP_ERROR_CHECK(esp_event_loop_init(event_handler, NULL));
+	esp_ret = esp_event_loop_init(event_handler, NULL);
+	if(esp_ret != ESP_OK) {
+		IOT_ERROR("esp_event_loop_init failed err=[%d]", esp_ret);
+		return IOT_ERROR_INIT_FAIL;
+	}
 
 	wifi_init_config_t cfg = WIFI_INIT_CONFIG_DEFAULT();
-	ESP_ERROR_CHECK(esp_wifi_init(&cfg));
-	ESP_ERROR_CHECK(esp_wifi_set_storage(WIFI_STORAGE_RAM));
-	ESP_ERROR_CHECK(esp_wifi_set_mode(WIFI_MODE_NULL));
+	esp_ret = esp_wifi_init(&cfg);
+	if(esp_ret != ESP_OK) {
+		IOT_ERROR("esp_wifi_init failed err=[%d]", esp_ret);
+		return IOT_ERROR_INIT_FAIL;
+	}
+
+	esp_ret = esp_wifi_set_storage(WIFI_STORAGE_RAM);
+	if(esp_ret != ESP_OK) {
+		IOT_ERROR("esp_wifi_set_storage failed err=[%d]", esp_ret);
+		return IOT_ERROR_INIT_FAIL;
+	}
+
+	esp_ret = esp_wifi_set_mode(WIFI_MODE_NULL);
+	if(esp_ret != ESP_OK) {
+		IOT_ERROR("esp_wifi_set_mode failed err=[%d]", esp_ret);
+		return IOT_ERROR_INIT_FAIL;
+	}
 
 	WIFI_INITIALIZED = true;
 	IOT_INFO("[esp8266] iot_bsp_wifi_init done");
@@ -176,6 +196,7 @@ iot_error_t iot_bsp_wifi_set_mode(iot_wifi_conf *conf)
 	struct tm timeinfo;
 	wifi_mode_t mode = WIFI_MODE_NULL;
 	EventBits_t uxBits = 0;
+	esp_err_t esp_ret;
 
 	memset(&wifi_config, 0x0, sizeof(wifi_config_t));
 
@@ -183,35 +204,51 @@ iot_error_t iot_bsp_wifi_set_mode(iot_wifi_conf *conf)
 
 	switch(conf->mode) {
 	case IOT_WIFI_MODE_OFF:
-		ESP_ERROR_CHECK(esp_wifi_set_mode(WIFI_MODE_NULL));
+
+		esp_ret = esp_wifi_set_mode(WIFI_MODE_NULL);
+		if(esp_ret != ESP_OK) {
+			IOT_ERROR("esp_wifi_set_mode failed err=[%d]", esp_ret);
+			return IOT_ERROR_CONN_OPERATE_FAIL;
+		}
 		break;
 
 	case IOT_WIFI_MODE_SCAN:
+		esp_ret = esp_wifi_get_mode(&mode);
+		if(esp_ret != ESP_OK) {
+			IOT_ERROR("esp_wifi_get_mode failed err=[%d]", esp_ret);
+			return IOT_ERROR_CONN_OPERATE_FAIL;
+		}
 
-		ESP_ERROR_CHECK(esp_wifi_set_mode(WIFI_MODE_STA) );
-		ESP_ERROR_CHECK(esp_wifi_set_config(ESP_IF_WIFI_STA, &wifi_config));
-		ESP_ERROR_CHECK(esp_wifi_start() );
+		if(mode == WIFI_MODE_NULL) {
+			ESP_ERROR_CHECK(esp_wifi_set_mode(WIFI_MODE_STA));
+			ESP_ERROR_CHECK(esp_wifi_set_config(ESP_IF_WIFI_STA, &wifi_config));
+			ESP_ERROR_CHECK(esp_wifi_start());
 
-		uxBits = xEventGroupWaitBits(wifi_event_group, WIFI_STA_START_BIT,
+			uxBits = xEventGroupWaitBits(wifi_event_group, WIFI_STA_START_BIT,
 			true, false, IOT_WIFI_CMD_TIMEOUT);
 
-		if(uxBits & WIFI_STA_START_BIT) {
-			IOT_INFO("WiFi Station Started");
+			if(uxBits & WIFI_STA_START_BIT) {
+				IOT_INFO("WiFi Station Started");
+			}
+			else {
+				IOT_ERROR("WIFI_STA_START_BIT event timeout");
+				return IOT_ERROR_CONN_OPERATE_FAIL;
+			}
 		}
-		else {
-			IOT_ERROR("WIFI_STA_START_BIT event timeout");
-			return IOT_ERROR_TIMEOUT;
-		}
-
 		break;
 
 	case IOT_WIFI_MODE_STATION:
 
-		esp_wifi_get_mode(&mode);
+		esp_ret = esp_wifi_get_mode(&mode);
+		if(esp_ret != ESP_OK) {
+			IOT_ERROR("esp_wifi_get_mode failed err=[%d]", esp_ret);
+			return IOT_ERROR_CONN_OPERATE_FAIL;
+		}
 
-		if(mode == WIFI_MODE_AP) {
+		/*AP connection is not allowed in WIFI_MODE_APSTA and WIFI_MODE_AP*/
+		if(mode == WIFI_MODE_AP || mode == WIFI_MODE_APSTA) {
 			IOT_INFO("[esp8266] current mode=%d need to call esp_wifi_stop", mode);
-			ESP_ERROR_CHECK(esp_wifi_stop() );
+			ESP_ERROR_CHECK(esp_wifi_stop());
 
 			uxBits = xEventGroupWaitBits(wifi_event_group, WIFI_AP_STOP_BIT,
 					true, false, IOT_WIFI_CMD_TIMEOUT);
@@ -222,7 +259,7 @@ iot_error_t iot_bsp_wifi_set_mode(iot_wifi_conf *conf)
 			}
 			else {
 				IOT_ERROR("WIFI_AP_STOP_BIT event Timeout");
-				return IOT_ERROR_TIMEOUT;
+				return IOT_ERROR_CONN_OPERATE_FAIL;
 			}
 		}
 
@@ -246,9 +283,9 @@ iot_error_t iot_bsp_wifi_set_mode(iot_wifi_conf *conf)
 					wifi_config.sta.bssid[3], wifi_config.sta.bssid[4], wifi_config.sta.bssid[5]);
 		}
 
-		ESP_ERROR_CHECK(esp_wifi_set_mode(WIFI_MODE_STA) );
-		ESP_ERROR_CHECK(esp_wifi_set_config(ESP_IF_WIFI_STA, &wifi_config) );
-		ESP_ERROR_CHECK(esp_wifi_start() );
+		ESP_ERROR_CHECK(esp_wifi_set_mode(WIFI_MODE_STA));
+		ESP_ERROR_CHECK(esp_wifi_set_config(ESP_IF_WIFI_STA, &wifi_config));
+		ESP_ERROR_CHECK(esp_wifi_start());
 
 		IOT_INFO("connect to ap SSID:%s", wifi_config.sta.ssid);
 
@@ -259,8 +296,8 @@ iot_error_t iot_bsp_wifi_set_mode(iot_wifi_conf *conf)
 		}
 		else {
 				IOT_ERROR("WIFI_STA_CONNECT_BIT event Timeout");
-				esp_wifi_stop();
-				return IOT_ERROR_TIMEOUT;
+				ESP_ERROR_CHECK(esp_wifi_stop());
+				return IOT_ERROR_CONN_CONNECT_FAIL;
 		}
 
 		time(&now);
@@ -293,7 +330,7 @@ iot_error_t iot_bsp_wifi_set_mode(iot_wifi_conf *conf)
 		else{
 			wifi_config.ap.authmode = WIFI_AUTH_WPA_WPA2_PSK;
 		}
-		ESP_ERROR_CHECK(esp_wifi_set_mode(WIFI_MODE_AP));
+		ESP_ERROR_CHECK(esp_wifi_set_mode(WIFI_MODE_APSTA));
 		ESP_ERROR_CHECK(esp_wifi_set_config(ESP_IF_WIFI_AP, &wifi_config));
 		ESP_ERROR_CHECK(esp_wifi_start());
 
@@ -308,14 +345,14 @@ iot_error_t iot_bsp_wifi_set_mode(iot_wifi_conf *conf)
 		}
 		else {
 				IOT_ERROR("WIFI_AP_START_BIT event Timeout");
-				return IOT_ERROR_TIMEOUT;
+				return IOT_ERROR_CONN_OPERATE_FAIL;
 		}
 
 		break;
 
 	default:
 		IOT_ERROR("esp8266 cannot support this mode = %d", conf->mode);
-		return IOT_ERROR_BAD_REQ;
+		return IOT_ERROR_CONN_OPERATE_FAIL;
 	}
 
 	return IOT_ERROR_NONE;
@@ -341,6 +378,8 @@ uint16_t iot_bsp_wifi_get_scan_result(iot_wifi_scan_result_t *scan_result)
 				IOT_ERROR("failed to malloc for wifi_ap_record_t");
 				return 0;
 			}
+			/*need to initialize the scan buffer before updating*/
+			memset(scan_result, 0x0, (IOT_WIFI_MAX_SCAN_RESULT * sizeof(iot_wifi_scan_result_t)));
 
 			if(esp_wifi_scan_get_ap_records(&ap_num, ap_list) == ESP_OK){
 				for(i=0; i<ap_num; i++)	{
@@ -363,7 +402,6 @@ uint16_t iot_bsp_wifi_get_scan_result(iot_wifi_scan_result_t *scan_result)
 	} else {
 		IOT_INFO("failed to get esp_wifi_scan_get_ap_num");
 		ap_num = 0;
-		scan_result = NULL;
 	}
 
 	return ap_num;
@@ -371,13 +409,12 @@ uint16_t iot_bsp_wifi_get_scan_result(iot_wifi_scan_result_t *scan_result)
 
 iot_error_t iot_bsp_wifi_get_mac(struct iot_mac *wifi_mac)
 {
-	iot_error_t ret;
+	esp_err_t esp_ret;
 
-	ret = esp_wifi_get_mac(ESP_IF_WIFI_STA, wifi_mac->addr);
-
-	if(ret != ESP_OK){
-		IOT_ERROR("failed to read wifi mac address : %d", ret);
-		return IOT_ERROR_READ_FAIL;
+	esp_ret = esp_wifi_get_mac(ESP_IF_WIFI_STA, wifi_mac->addr);
+	if(esp_ret != ESP_OK){
+		IOT_ERROR("failed to read wifi mac address : %d", esp_ret);
+		return IOT_ERROR_CONN_OPERATE_FAIL;
 	}
 
 	return IOT_ERROR_NONE;

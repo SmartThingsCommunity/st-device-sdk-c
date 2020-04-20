@@ -145,12 +145,12 @@ static void es_tcp_task(void *pvParameters)
 				IOT_DEBUG("payload : %s", payload);
 
 				if (!strcmp(method,  "GET"))
-					http_packet_handle(uri, &tx_buffer, payload, GET);
+					http_packet_handle(uri, &tx_buffer, payload, D2D_GET);
 				else if (!strcmp(method,  "POST"))
-					http_packet_handle(uri, &tx_buffer, payload, POST);
+					http_packet_handle(uri, &tx_buffer, payload, D2D_POST);
 				else {
 					IOT_ERROR("not support type");
-					http_packet_handle("ERROR", &tx_buffer, payload, ERROR);
+					http_packet_handle("ERROR", &tx_buffer, payload, D2D_ERROR);
 				}
 
 				if (!tx_buffer) {

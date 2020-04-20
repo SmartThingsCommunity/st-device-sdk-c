@@ -153,10 +153,12 @@ fail_status_update:
 	if (err) {
 		iot_error_t err1;
 		ref_step = 0;
-		err1 = iot_state_update(ctx, IOT_STATE_CHANGE_FAILED, ctx->curr_state);
-		if (err1) {
-			IOT_ERROR("cannot update state to failed (%d)", err1);
-			err = IOT_ERROR_EASYSETUP_INTERNAL_SERVER_ERROR;
+		if (cur_step >= IOT_EASYSETUP_STEP_LOG_SYSTEMINFO) {
+			err1 = iot_state_update(ctx, IOT_STATE_CHANGE_FAILED, ctx->curr_state);
+			if (err1) {
+				IOT_ERROR("cannot update state to failed (%d)", err1);
+				err = IOT_ERROR_EASYSETUP_INTERNAL_SERVER_ERROR;
+			}
 		}
 	}
 
@@ -252,10 +254,12 @@ iot_error_t _iot_easysetup_gen_post_payload(struct iot_context *ctx, const char 
 	if (err) {
 		iot_error_t err1;
 		ref_step = 0;
-		err1 = iot_state_update(ctx, IOT_STATE_CHANGE_FAILED, ctx->curr_state);
-		if (err1) {
-			IOT_ERROR("cannot update state to failed (%d)", err1);
-			err = IOT_ERROR_EASYSETUP_INTERNAL_SERVER_ERROR;
+		if (cur_step >= IOT_EASYSETUP_STEP_LOG_SYSTEMINFO) {
+			err1 = iot_state_update(ctx, IOT_STATE_CHANGE_FAILED, ctx->curr_state);
+			if (err1) {
+				IOT_ERROR("cannot update state to failed (%d)", err1);
+				err = IOT_ERROR_EASYSETUP_INTERNAL_SERVER_ERROR;
+			}
 		}
 	} else {
 		iot_error_t err1;
@@ -295,7 +299,7 @@ static void http_msg_handler(const char* uri, char **buffer, enum cgi_type type,
 	cJSON *item = NULL;
 	iot_error_t err = IOT_ERROR_NONE;
 
-	if (type == POST) {
+	if (type == D2D_POST) {
 			err = _iot_easysetup_gen_post_payload(context, uri, data_buf, &payload);
 			if (!err) {
 				buffer_len = strlen(payload) + strlen(http_status_200) + strlen(http_header) + 9;
@@ -312,7 +316,7 @@ static void http_msg_handler(const char* uri, char **buffer, enum cgi_type type,
 			} else {
 				IOT_INFO("%s not ok", uri);
 			}
-	} else if (type == GET) {
+	} else if (type == D2D_GET) {
 		err = _iot_easysetup_gen_get_payload(context, uri, &payload);
 		if (!err) {
 			buffer_len = strlen(payload) + strlen(http_status_200) + strlen(http_header) + 9;
@@ -341,7 +345,6 @@ static void http_msg_handler(const char* uri, char **buffer, enum cgi_type type,
 			goto cgi_out;
 		}
 		cJSON_AddItemToObject(item, "code", cJSON_CreateNumber((double) err));
-		cJSON_AddItemToObject(item, "message", cJSON_CreateString(""));
 		root = cJSON_CreateObject();
 		if (!root) {
 			IOT_ERROR("json create failed");
@@ -384,18 +387,18 @@ void http_packet_handle(const char *name, char **buf, char *payload, enum cgi_ty
 	bool msg_processed = false;
 	int i;
 
-	if (type == GET) {
+	if (type == D2D_GET) {
 		for (i = 0; i < ARRAY_SIZE(get_cgi_cmds) ; i++) {
 			if (!strcmp(name,  get_cgi_cmds[i])) {
-					http_msg_handler(name, buf, GET, payload);
+					http_msg_handler(name, buf, D2D_GET, payload);
 				msg_processed = true;
 				break;
 			}
 		}
-	} else if (type == POST) {
+	} else if (type == D2D_POST) {
 		for (i = 0; i < ARRAY_SIZE(post_cgi_cmds) ; i++) {
 			if (!strcmp(name,  post_cgi_cmds[i])) {
-				http_msg_handler(name, buf, POST, payload);
+				http_msg_handler(name, buf, D2D_POST, payload);
 				msg_processed = true;
 				break;
 			}
@@ -404,13 +407,14 @@ void http_packet_handle(const char *name, char **buf, char *payload, enum cgi_ty
 
 	if (!msg_processed) {
 		IOT_WARN("not supported uri <%s>", name);
-		http_msg_handler(name, buf, ERROR, payload);
+		http_msg_handler(name, buf, D2D_ERROR, payload);
 	}
 }
 
 iot_error_t iot_easysetup_init(struct iot_context *ctx)
 {
 	ENTER();
+	IOT_REMARK("IOT_STATE_PROV_ES_START");
 	if (!ctx)
 		return IOT_ERROR_INVALID_ARGS;
 
@@ -428,7 +432,7 @@ iot_error_t iot_easysetup_init(struct iot_context *ctx)
 	log_len = 0;
 	dump_enable= true;
 #endif
-	IOT_INFO("es_httpd_init done");
+	IOT_REMARK("IOT_STATE_PROV_ES_INIT_DONE");
 
 	return IOT_ERROR_NONE;
 }
@@ -441,16 +445,17 @@ void iot_easysetup_deinit(struct iot_context *ctx)
 
 	es_tcp_deinit();
 
-	if (ctx->es_crypto_cipher_info->iv) {
-		free(ctx->es_crypto_cipher_info->iv);
-		ctx->es_crypto_cipher_info->iv = NULL;
-	}
+	if (ctx->es_crypto_cipher_info) {
+		if (ctx->es_crypto_cipher_info->iv) {
+			free(ctx->es_crypto_cipher_info->iv);
+			ctx->es_crypto_cipher_info->iv = NULL;
+		}
 
-	if (ctx->es_crypto_cipher_info->key) {
-		free(ctx->es_crypto_cipher_info->key);
-		ctx->es_crypto_cipher_info->key = NULL;
+		if (ctx->es_crypto_cipher_info->key) {
+			free(ctx->es_crypto_cipher_info->key);
+			ctx->es_crypto_cipher_info->key = NULL;
+		}
 	}
-
 #if defined(CONFIG_STDK_IOT_CORE_EASYSETUP_HTTP_LOG_SUPPORT)
 	if (log_buffer) {
 		dump_enable = false;
@@ -458,5 +463,5 @@ void iot_easysetup_deinit(struct iot_context *ctx)
 		log_buffer = NULL;
 	}
 #endif
-	IOT_INFO("es_httpd_deinit done");
+	IOT_REMARK("IOT_STATE_PROV_ES_DONE");
 }

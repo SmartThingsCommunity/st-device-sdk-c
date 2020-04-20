@@ -156,7 +156,12 @@ static char onboarding_profile_template[] = {
         "      \"PIN\",\n"
         "      \"QR\"\n"
         "    ],\n"
-        "    \"identityType\": \"ED25519_or_CERTIFICATE\"\n"
+        "    \"identityType\": \"ED25519_or_CERTIFICATE\",\n"
+        "    \"deviceIntegrationProfileKey\": {\n"
+        "      \"id\": \"DIP_ID\",\n"
+        "      \"majorVersion\": 9999,\n"
+        "      \"minorVersion\": 9999\n"
+        "    }\n"
         "  }\n"
         "}"
 };
@@ -214,7 +219,12 @@ static char onboarding_profile_example[] = {
         "      \"PIN\",\n"
         "      \"QR\"\n"
         "    ],\n"
-        "    \"identityType\": \"ED25519\"\n"
+        "    \"identityType\": \"ED25519\",\n"
+        "    \"deviceIntegrationProfileKey\": {\n"
+        "      \"id\": \"bb000ddd-92a0-42a3-86f0-b531f278af06\",\n"
+        "      \"majorVersion\": 0,\n"
+        "      \"minorVersion\": 1\n"
+        "    }\n"
         "  }\n"
         "}"
 };
@@ -223,6 +233,10 @@ void TC_iot_api_onboarding_config_load_success(void **state)
 {
     iot_error_t err;
     struct iot_devconf_prov_data devconf;
+    struct iot_uuid target_id = {
+			.id = {0xbb, 0x00, 0x0d, 0xdd, 0x92, 0xa0, 0x42, 0xa3,
+				0x86, 0xf0, 0xb5, 0x31, 0xf2, 0x78, 0xaf, 0x06}
+    };
     UNUSED(state);
 
     // When: valid parameters
@@ -238,6 +252,7 @@ void TC_iot_api_onboarding_config_load_success(void **state)
     assert_true((unsigned)devconf.ownership_validation_type & (unsigned)IOT_OVF_TYPE_JUSTWORKS);
     assert_true((unsigned)devconf.ownership_validation_type & (unsigned)IOT_OVF_TYPE_PIN);
     assert_true((unsigned)devconf.ownership_validation_type & (unsigned)IOT_OVF_TYPE_QR);
+    assert_memory_equal(&target_id, &devconf.dip->dip_id, sizeof(struct iot_uuid));
 
     // Local teardown
     iot_api_onboarding_config_mem_free(&devconf);
@@ -249,7 +264,7 @@ void TC_iot_api_onboarding_config_load_internal_failure(void **state)
     struct iot_devconf_prov_data devconf;
     UNUSED(state);
 
-    for (unsigned int i = 0; i < 6; i++) {
+    for (unsigned int i = 0; i < 7; i++) {
         // Given: i-th malloc failure
         memset(&devconf, '\0', sizeof(struct iot_devconf_prov_data));
         do_not_use_mock_iot_os_malloc_failure();
@@ -279,7 +294,12 @@ static char onboarding_profile_without_mnid[] = {
         "      \"PIN\",\n"
         "      \"QR\"\n"
         "    ],\n"
-        "    \"identityType\": \"ED25519\"\n"
+        "    \"identityType\": \"ED25519\",\n"
+        "    \"deviceIntegrationProfileKey\": {\n"
+        "      \"id\": \"bb000ddd-92a0-a2a3-46f0-b531f278af06\",\n"
+        "      \"majorVersion\": 0,\n"
+        "      \"minorVersion\": 1\n"
+        "    }\n"
         "  }\n"
         "}"
 };
@@ -294,6 +314,46 @@ void TC_iot_api_onboarding_config_without_mnid(void **state)
     memset(&devconf, '\0', sizeof(struct iot_devconf_prov_data));
     // When: malformed parameters
     err = iot_api_onboarding_config_load(onboarding_profile_without_mnid, sizeof(onboarding_profile_without_mnid), &devconf);
+    // Then: returns fail
+    assert_int_not_equal(err, IOT_ERROR_NONE);
+
+    // Local teardown
+    iot_api_onboarding_config_mem_free(&devconf);
+}
+
+static char onboarding_profile_without_dip_id[] = {
+        "{\n"
+        "  \"onboardingConfig\": {\n"
+        "    \"deviceOnboardingId\": \"STDK\",\n"
+        "    \"mnId\": \"fTST\",\n"
+        "    \"setupId\": \"001\",\n"
+        "    \"vid\": \"STDK_BULB_0001\",\n"
+        "    \"deviceTypeId\": \"Switch\",\n"
+        "    \"ownershipValidationTypes\": [\n"
+        "      \"JUSTWORKS\",\n"
+        "      \"BUTTON\",\n"
+        "      \"PIN\",\n"
+        "      \"QR\"\n"
+        "    ],\n"
+        "    \"identityType\": \"ED25519\",\n"
+        "    \"deviceIntegrationProfileKey\": {\n"
+        "      \"majorVersion\": 0,\n"
+        "      \"minorVersion\": 1\n"
+        "    }\n"
+        "  }\n"
+        "}"
+};
+
+void TC_iot_api_onboarding_config_without_dip_id(void **state)
+{
+    iot_error_t err;
+    struct iot_devconf_prov_data devconf;
+    UNUSED(state);
+
+    // Given
+    memset(&devconf, '\0', sizeof(struct iot_devconf_prov_data));
+    // When: malformed parameters
+    err = iot_api_onboarding_config_load(onboarding_profile_without_dip_id, sizeof(onboarding_profile_without_dip_id), &devconf);
     // Then: returns fail
     assert_int_not_equal(err, IOT_ERROR_NONE);
 
@@ -377,4 +437,40 @@ void TC_iot_get_time_in_sec_by_long_success(void **state)
     // Then: return success
     assert_int_equal(err, IOT_ERROR_NONE);
     assert_true(seconds > 0);
+}
+
+void TC_iot_easysetup_request_success(void **state)
+{
+    iot_error_t err;
+    int os_ret;
+    struct iot_context *context;
+    const char *test_payload = "{ message: \"\" }";
+    struct iot_easysetup_payload received_payload;
+    unsigned int easysetup_event = 0;
+    UNUSED(state);
+
+    // Given
+    context = (struct iot_context*) calloc(1, sizeof(struct iot_context));
+    assert_non_null(context);
+    context->easysetup_req_queue = iot_os_queue_create(1, sizeof(struct iot_easysetup_payload));
+    assert_non_null(context->easysetup_req_queue);
+    context->iot_events = iot_os_eventgroup_create();
+    assert_non_null(context->iot_events);
+
+    // When
+    err = iot_easysetup_request(context, IOT_EASYSETUP_STEP_DEVICEINFO, test_payload);
+
+    // Then
+    assert_int_equal(err, IOT_ERROR_NONE);
+    easysetup_event = iot_os_eventgroup_wait_bits(context->iot_events,
+            IOT_EVENT_BIT_EASYSETUP_REQ, true, false, IOT_MAIN_TASK_CYCLE);
+    assert_int_not_equal(easysetup_event, 0);
+    os_ret = iot_os_queue_receive(context->easysetup_req_queue, &received_payload, 0);
+    assert_int_equal(os_ret, IOT_OS_TRUE);
+    assert_string_equal(received_payload.payload, test_payload);
+
+    // Teardown
+    iot_os_queue_delete(context->easysetup_req_queue);
+    iot_os_eventgroup_delete(context->iot_events);
+    free(context);
 }

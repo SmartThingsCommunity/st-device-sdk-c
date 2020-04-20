@@ -24,9 +24,9 @@ extern "C" {
 #endif
 
 enum cgi_type {
-	GET= 0,
-	POST,
-	ERROR,
+	D2D_GET= 0,
+	D2D_POST,
+	D2D_ERROR,
 };
 
 void http_packet_handle(const char *name, char **buf, char *payload, enum cgi_type type);

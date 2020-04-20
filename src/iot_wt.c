@@ -26,6 +26,7 @@
 #include "iot_crypto.h"
 #include "iot_wt.h"
 #include "iot_util.h"
+#include "iot_uuid.h"
 
 static char * _iot_wt_alloc_b64_buffer(size_t plain_len, size_t *out_len)
 {
@@ -203,9 +204,9 @@ static iot_error_t _iot_cwt_create_payload(
 		return err;
 	}
 
-	err = iot_util_get_random_uuid(&uuid);
+	err = iot_get_random_uuid(&uuid);
 	if (err) {
-		IOT_ERROR("iot_util_get_random_uuid returned error : %d", err);
+		IOT_ERROR("iot_get_random_uuid returned error : %d", err);
 		return err;
 	}
 
@@ -642,9 +643,9 @@ static char * _iot_jwt_create_payload(void)
 		return NULL;
 	}
 
-	err = iot_util_get_random_uuid(&uuid);
+	err = iot_get_random_uuid(&uuid);
 	if (err) {
-		IOT_ERROR("iot_util_get_random_uuid returned error : %d", err);
+		IOT_ERROR("iot_get_random_uuid returned error : %d", err);
 		return NULL;
 	}
 
