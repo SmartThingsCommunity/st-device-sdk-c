@@ -28,6 +28,18 @@
 
 #define IOT_MBEDTLS_READ_TIMEOUT_MS 30000
 
+#ifdef CONFIG_MBEDTLS_DEBUG
+static void _iot_net_mbedtls_debug(void *ctx, int level, const char *file, int line,
+					const char *str)
+{
+	const char *filename;
+
+	filename = strrchr(file, '/') ? strrchr(file, '/') + 1 : file;
+
+	IOT_INFO("%s:%04d: |%d| %s", filename, line, level, str);
+}
+#endif
+
 static iot_error_t _iot_net_check_interface(iot_net_interface_t *net)
 {
 	if (net == NULL) {
@@ -188,6 +200,11 @@ static iot_error_t _iot_net_tls_connect(iot_net_interface_t *net)
 	mbedtls_ssl_conf_rng(&net->context.conf, mbedtls_ctr_drbg_random,
 				&net->context.ctr_drbg);
 	mbedtls_ssl_conf_read_timeout(&net->context.conf, IOT_MBEDTLS_READ_TIMEOUT_MS);
+
+#ifdef CONFIG_MBEDTLS_DEBUG
+	mbedtls_ssl_conf_dbg(&net->context.conf, _iot_net_mbedtls_debug, NULL);
+	mbedtls_debug_set_threshold(CONFIG_MBEDTLS_DEBUG_LEVEL);
+#endif
 
 	ret = mbedtls_ssl_setup(&net->context.ssl, &net->context.conf);
 	if (ret) {
