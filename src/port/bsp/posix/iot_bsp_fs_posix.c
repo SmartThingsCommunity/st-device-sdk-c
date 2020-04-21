@@ -73,7 +73,7 @@ iot_error_t iot_bsp_fs_open_from_stnv(const char* filename, iot_bsp_fs_handle_t*
 
 iot_error_t iot_bsp_fs_read(iot_bsp_fs_handle_t handle, char* buffer, unsigned int length)
 {
-	if (access(filename, F_OK) == -1) {
+	if (access(handle.filename, F_OK) == -1) {
 		IOT_DEBUG("file does not exist");
 		return IOT_ERROR_FS_NO_FILE;
 	}
