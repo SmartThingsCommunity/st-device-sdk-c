@@ -406,7 +406,7 @@ iot_error_t iot_api_onboarding_config_load(unsigned char *onboarding_config,
 		iot_err = iot_util_convert_str_uuid(JSON_GET_STRING_VALUE(item),
 						&new_dip->dip_id);
 		if (iot_err != IOT_ERROR_NONE) {
-			IOT_ERROR("Can't convert uuid (str:%s)", JSON_GET_STRING_VALUE(item));
+			IOT_ERROR("Can't convert uuid for dip_id(%d)", iot_err);
 			goto load_out;
 		}
 
@@ -762,13 +762,55 @@ iot_error_t iot_device_cleanup(struct iot_context *ctx)
 	return iot_err;
 }
 
+static iot_error_t _get_dip_from_json(JSON_H *json, struct iot_dip_data *dip)
+{
+	struct iot_dip_data curr_dip;
+	JSON_H *sub_item = NULL;
+	JSON_H *item = NULL;
+	iot_error_t iot_err;
+
+	sub_item = JSON_GET_OBJECT_ITEM(json, "dip");
+	if (sub_item == NULL) {
+		IOT_ERROR("There is no dip in misc_info");
+		return IOT_ERROR_BAD_REQ;
+	}
+
+	item = JSON_GET_OBJECT_ITEM(sub_item, "id");
+	if (item == NULL) {
+		IOT_ERROR("There is no id in dip");
+		return IOT_ERROR_BAD_REQ;
+	}
+
+	iot_err = iot_util_convert_str_uuid(JSON_GET_STRING_VALUE(item),
+				&curr_dip.dip_id);
+	if (iot_err != IOT_ERROR_NONE) {
+		IOT_ERROR("Can't convert str to uuid(%d)", iot_err);
+		return iot_err;
+	}
+
+	item = JSON_GET_OBJECT_ITEM(sub_item, "maj");
+	if (item == NULL) {
+		IOT_ERROR("There is no major-version in dip");
+		return IOT_ERROR_BAD_REQ;
+	}
+	curr_dip.dip_major_version = item->valueint;
+
+	item = JSON_GET_OBJECT_ITEM(sub_item, "min");
+	if (item == NULL) {
+		curr_dip.dip_minor_version = 0;
+	} else {
+		curr_dip.dip_minor_version = item->valueint;
+	}
+
+	memcpy(dip, &curr_dip, sizeof(curr_dip));
+	return iot_err;
+}
+
 iot_error_t iot_misc_info_load(iot_misc_info_t type, void *out_data)
 {
 	char *misc_info = NULL;
 	size_t misc_info_len = 0;
 	JSON_H *json = NULL;
-	JSON_H *item = NULL;
-	JSON_H *sub_item = NULL;
 	iot_error_t iot_err = IOT_ERROR_NONE;
 
 	if (!out_data) {
@@ -793,48 +835,8 @@ iot_error_t iot_misc_info_load(iot_misc_info_t type, void *out_data)
 
 	switch (type) {
 	case IOT_MISC_INFO_DIP:
-	{
-		struct iot_dip_data old_dip;
-
-		sub_item = JSON_GET_OBJECT_ITEM(json, "dip");
-		if (sub_item == NULL) {
-			IOT_ERROR("There is no dip in misc_info");
-			iot_err = IOT_ERROR_BAD_REQ;
-			break;
-		}
-
-		item = JSON_GET_OBJECT_ITEM(sub_item, "id");
-		if (item == NULL) {
-			IOT_ERROR("There is no id in dip");
-			iot_err = IOT_ERROR_BAD_REQ;
-			break;
-		}
-
-		iot_err = iot_util_convert_str_uuid(JSON_GET_STRING_VALUE(item),
-					&old_dip.dip_id);
-		if (iot_err != IOT_ERROR_NONE) {
-			IOT_ERROR("Can't convert str to uuid(%d)", iot_err);
-			break;
-		}
-
-		item = JSON_GET_OBJECT_ITEM(sub_item, "maj");
-		if (item == NULL) {
-			IOT_ERROR("There is no major-version in dip");
-			iot_err = IOT_ERROR_BAD_REQ;
-			break;
-		}
-		old_dip.dip_major_version = item->valueint;
-
-		item = JSON_GET_OBJECT_ITEM(sub_item, "min");
-		if (item == NULL) {
-			old_dip.dip_minor_version = 0;
-		} else {
-			old_dip.dip_minor_version = item->valueint;
-		}
-
-		memcpy(out_data, &old_dip, sizeof(old_dip));
+		iot_err = _get_dip_from_json(json, (struct iot_dip_data *)out_data);
 		break;
-	}
 
 	default:
 		IOT_ERROR("Unsupported type(%d)", type);
@@ -852,15 +854,69 @@ misc_info_load_out:
 	return iot_err;
 }
 
+static iot_error_t _set_dip_to_json(JSON_H *json, struct iot_dip_data *new_dip)
+{
+	JSON_H *sub_item = NULL;
+	JSON_H *item = NULL;
+	iot_error_t iot_err;
+	char dip_id_str[40];
+
+	sub_item = JSON_CREATE_OBJECT();
+	if (sub_item == NULL) {
+		IOT_ERROR("Can't make new obj for dip");
+		return IOT_ERROR_MEM_ALLOC;
+	}
+
+	iot_err = iot_util_convert_uuid_str(&new_dip->dip_id,
+				dip_id_str, sizeof(dip_id_str));
+	if (iot_err != IOT_ERROR_NONE) {
+		IOT_ERROR("Can't convert uuid to str(%d)", iot_err);
+		JSON_DELETE(sub_item);
+		return iot_err;
+	}
+
+	item = JSON_CREATE_STRING(dip_id_str);
+	if (item == NULL) {
+		IOT_ERROR("Can't make new string for dip's id");
+		JSON_DELETE(sub_item);
+		return IOT_ERROR_MEM_ALLOC;
+	}
+	JSON_ADD_ITEM_TO_OBJECT(sub_item, "id", item);
+
+	item = JSON_CREATE_NUMBER(new_dip->dip_major_version);
+	if (item == NULL) {
+		IOT_ERROR("Can't make new item for dip's major version");
+		JSON_DELETE(sub_item);
+		return IOT_ERROR_MEM_ALLOC;
+	}
+	JSON_ADD_ITEM_TO_OBJECT(sub_item, "maj", item);
+
+	if (new_dip->dip_minor_version != 0) {
+		item = JSON_CREATE_NUMBER(new_dip->dip_minor_version);
+		if (item == NULL) {
+			IOT_ERROR("Can't make new item for dip's minor version");
+			JSON_DELETE(sub_item);
+			return IOT_ERROR_MEM_ALLOC;
+		}
+		JSON_ADD_ITEM_TO_OBJECT(sub_item, "min", item);
+	}
+
+	if (JSON_GET_OBJECT_ITEM(json, "dip") == NULL) {
+		IOT_DEBUG("There is no dip in misc_info");
+		JSON_ADD_ITEM_TO_OBJECT(json, "dip", sub_item);
+	} else {
+		JSON_REPLACE_ITEM_IN_OBJ_CASESENS(json, "dip", sub_item);
+	}
+
+	return iot_err;
+}
+
 iot_error_t iot_misc_info_store(iot_misc_info_t type, const void *in_data)
 {
 	char *old_misc_info = NULL;
 	size_t old_misc_info_len = 0;
 	char *new_misc_info = NULL;
 	JSON_H *json = NULL;
-	JSON_H *item = NULL;
-	JSON_H *new_item = NULL;
-	JSON_H *sub_item = NULL;
 	iot_error_t iot_err = IOT_ERROR_NONE;
 
 	if (!in_data) {
@@ -886,86 +942,8 @@ iot_error_t iot_misc_info_store(iot_misc_info_t type, const void *in_data)
 
 	switch (type) {
 	case IOT_MISC_INFO_DIP:
-	{
-		struct iot_dip_data *new_dip;
-		char dip_id_str[40];
-
-		new_dip = (struct iot_dip_data *)in_data;
-		sub_item = JSON_GET_OBJECT_ITEM(json, "dip");
-		if (sub_item == NULL) {
-			IOT_DEBUG("There is no dip in misc_info");
-			sub_item = JSON_CREATE_OBJECT();
-			if (sub_item == NULL) {
-				IOT_ERROR("Can't make new obj for dip");
-				iot_err = IOT_ERROR_MEM_ALLOC;
-				break;
-			}
-			JSON_ADD_ITEM_TO_OBJECT(json, "dip", sub_item);
-		}
-
-		iot_err = iot_util_convert_uuid_str(&new_dip->dip_id,
-					dip_id_str, sizeof(dip_id_str));
-		if (iot_err != IOT_ERROR_NONE) {
-			IOT_ERROR("Can't convert uuid to str(%d)", iot_err);
-			break;
-		}
-
-		new_item = JSON_CREATE_STRING(dip_id_str);
-		if (new_item == NULL) {
-			IOT_ERROR("Can't make new string for dip's id");
-			iot_err = IOT_ERROR_MEM_ALLOC;
-			break;
-		}
-
-		item = JSON_GET_OBJECT_ITEM(sub_item, "id");
-		if (item == NULL) {
-			IOT_DEBUG("There is no ids in dip");
-			JSON_ADD_ITEM_TO_OBJECT(sub_item, "id", new_item);
-		} else {
-			JSON_REPLACE_ITEM_IN_OBJ_CASESENS(sub_item, "id", new_item);
-		}
-
-		new_item = JSON_CREATE_NUMBER(new_dip->dip_major_version);
-		if (new_item == NULL) {
-			IOT_ERROR("Can't make new item for dip's major version");
-			iot_err = IOT_ERROR_MEM_ALLOC;
-			break;
-		}
-
-		item = JSON_GET_OBJECT_ITEM(sub_item, "maj");
-		if (item == NULL) {
-			IOT_DEBUG("There is no major version in dip");
-			JSON_ADD_ITEM_TO_OBJECT(sub_item, "maj", new_item);
-		} else {
-			JSON_REPLACE_ITEM_IN_OBJ_CASESENS(sub_item, "maj", new_item);
-		}
-
-		new_item = NULL;
-		if (new_dip->dip_minor_version != 0) {
-			new_item = JSON_CREATE_NUMBER(new_dip->dip_minor_version);
-			if (new_item == NULL) {
-				IOT_ERROR("Can't make new item for dip's minor version");
-				iot_err = IOT_ERROR_MEM_ALLOC;
-				break;
-			}
-		}
-
-		/* minor version value is optional */
-		item = JSON_GET_OBJECT_ITEM(sub_item, "min");
-		if ((item == NULL) && (new_item != NULL)) {
-			/* Old is 0 but new has value, add new */
-			IOT_INFO("There is no minor version in dip");
-			JSON_ADD_ITEM_TO_OBJECT(sub_item, "min", new_item);
-		} else if ((item != NULL) && (new_item != NULL)) {
-			/* Old had value and new also has, update new */
-			JSON_REPLACE_ITEM_IN_OBJ_CASESENS(sub_item, "min", new_item);
-		} else if ((item != NULL) && (new_item == NULL)) {
-			/* Old had value but new is 0, just remove old */
-			JSON_DELETE(item);
-		}
-
+		iot_err = _set_dip_to_json(json, (struct iot_dip_data *)in_data);
 		break;
-	}
 
 	default:
 		IOT_ERROR("Unsupported type(%d)", type);
