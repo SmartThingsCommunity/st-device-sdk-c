@@ -106,9 +106,12 @@ int TEST_FUNC_iot_crypto(void)
 int TEST_FUNC_iot_nv_data(void)
 {
     const struct CMUnitTest tests[] = {
+            cmocka_unit_test_setup_teardown(TC_iot_nv_get_wifi_prov_data_success, TC_iot_nv_data_setup, TC_iot_nv_data_teardown),
+            cmocka_unit_test_setup_teardown(TC_iot_nv_get_wifi_prov_data_null_parameters, TC_iot_nv_data_setup, TC_iot_nv_data_teardown),
             cmocka_unit_test_setup_teardown(TC_iot_nv_get_root_certificate_success, TC_iot_nv_data_setup, TC_iot_nv_data_teardown),
             cmocka_unit_test_setup_teardown(TC_iot_nv_get_root_certificate_null_parameters, TC_iot_nv_data_setup, TC_iot_nv_data_teardown),
             cmocka_unit_test_setup_teardown(TC_iot_nv_get_root_certificate_internal_failure, TC_iot_nv_data_setup, TC_iot_nv_data_teardown),
+            cmocka_unit_test_setup_teardown(TC_iot_nv_get_client_certificate_null_parameters, TC_iot_nv_data_setup, TC_iot_nv_data_teardown),
             cmocka_unit_test_setup_teardown(TC_iot_nv_get_public_key_success, TC_iot_nv_data_setup, TC_iot_nv_data_teardown),
             cmocka_unit_test_setup_teardown(TC_iot_nv_get_public_key_null_parameters, TC_iot_nv_data_setup, TC_iot_nv_data_teardown),
             cmocka_unit_test_setup_teardown(TC_iot_nv_get_serial_number_success, TC_iot_nv_data_setup, TC_iot_nv_data_teardown),
