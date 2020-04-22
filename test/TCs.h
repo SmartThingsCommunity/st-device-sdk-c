@@ -117,9 +117,12 @@ void TC_iot_crypto_base64_buffer_size(void **state);
 // TCs for iot_nv_data.c
 int TC_iot_nv_data_setup(void **state);
 int TC_iot_nv_data_teardown(void **state);
+void TC_iot_nv_get_wifi_prov_data_success(void **state);
+void TC_iot_nv_get_wifi_prov_data_null_parameters(void **state);
 void TC_iot_nv_get_root_certificate_success(void **state);
 void TC_iot_nv_get_root_certificate_null_parameters(void **state);
 void TC_iot_nv_get_root_certificate_internal_failure(void **state);
+void TC_iot_nv_get_client_certificate_null_parameters(void **state);
 void TC_iot_nv_get_public_key_success(void **state);
 void TC_iot_nv_get_public_key_null_parameters(void **state);
 void TC_iot_nv_get_serial_number_success(void **state);
@@ -174,5 +177,11 @@ void TC_st_conn_cleanup_success(void **state);
 // TCs for iot_mqtt_client.c
 void TC_st_mqtt_create_success(void** state);
 void TC_st_mqtt_connect_with_connack_rc(void** state);
+void TC_st_mqtt_disconnect_success(void** state);
+
+// TCs for iot_wt.c
+int TC_iot_wt_create_memleak_detect_setup(void **state);
+int TC_iot_wt_create_memleak_detect_teardown(void **state);
+void TC_iot_wt_create_null_parameters(void **state);
 
 #endif //ST_DEVICE_SDK_C_TCS_H

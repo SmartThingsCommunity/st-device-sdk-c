@@ -73,6 +73,11 @@ iot_error_t iot_bsp_fs_open_from_stnv(const char* filename, iot_bsp_fs_handle_t*
 
 iot_error_t iot_bsp_fs_read(iot_bsp_fs_handle_t handle, char* buffer, unsigned int length)
 {
+	if (access(handle.filename, F_OK) == -1) {
+		IOT_DEBUG("file does not exist");
+		return IOT_ERROR_FS_NO_FILE;
+	}
+	
 	char* data = malloc(length + 1);
 	ssize_t size = read(handle.fd, data, length);
 	IOT_DEBUG_CHECK(size < 0, IOT_ERROR_FS_READ_FAIL, "read fail [%s]", strerror(errno));
