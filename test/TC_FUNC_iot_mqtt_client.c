@@ -86,6 +86,8 @@ static void _st_mqtt_connect_test_with_parameter(unsigned char give_rc, int expe
     set_mock_net_read_buffer_pointer(2, 2, 2);
 
     will_return_count(_iot_net_mock_read, mock_read_buffer, 3);
+    expect_any(_iot_net_mock_write, len);
+    expect_any(_iot_net_mock_write, buf);
 
     // When
     err = st_mqtt_connect(client, &broker_info, &conn_data);
@@ -114,4 +116,32 @@ void TC_st_mqtt_connect_with_connack_rc(void** state)
     _st_mqtt_connect_test_with_parameter(0x04, E_ST_MQTT_BAD_USERNAME_OR_PASSWORD); //Connection Refused, bad user name or password
     _st_mqtt_connect_test_with_parameter(0x05, E_ST_MQTT_NOT_AUTHORIZED); //Connection Refused, not authorized
     _st_mqtt_connect_test_with_parameter(0x06, E_ST_MQTT_FAILURE); //Reserved for future use
+}
+
+void TC_st_mqtt_disconnect_success(void** state)
+{
+    int err;
+    iot_error_t iot_err;
+    st_mqtt_client client;
+    MQTTClient *c;
+    // https://docs.solace.com/MQTT-311-Prtl-Conformance-Spec/MQTT%20Control%20Packets.htm#_Toc430864954
+    char mqtt_disconnect_packet[2] = { 0xe0, 0x00 };
+    UNUSED(state);
+
+    // Given
+    err = st_mqtt_create(&client, IOT_DEFAULT_TIMEOUT);
+    assert_return_code(err, 0);
+    c = (MQTTClient*) client;
+    c->isconnected = 1;
+    iot_err = iot_net_init(c->net);
+    assert_int_equal(iot_err, IOT_ERROR_NONE);
+    expect_value(_iot_net_mock_write, len, 2);
+    expect_memory(_iot_net_mock_write, buf, mqtt_disconnect_packet, sizeof(mqtt_disconnect_packet));
+    // When
+    err = st_mqtt_disconnect(client);
+    // Then
+    assert_return_code(err, 0);
+
+    // Teardown
+    st_mqtt_destroy(client);
 }
