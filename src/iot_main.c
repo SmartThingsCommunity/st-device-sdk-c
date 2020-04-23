@@ -33,6 +33,7 @@
 
 #define NEXT_STATE_TIMEOUT_MS	(100000)
 #define EASYSETUP_TIMEOUT_MS	(300000) /* 5 min */
+#define REGISTRATION_TIMEOUT_MS	(900000) /* 15 min */
 #define RECOVER_TRY_MAX			(5)
 
 static int rcv_try_cnt;
@@ -1225,6 +1226,7 @@ static iot_error_t _do_state_updating(struct iot_context *ctx,
 		if (ctx->es_res_created)
 			_delete_easysetup_resources_all(ctx);
 
+		*timeout_ms = REGISTRATION_TIMEOUT_MS;
 		iot_cmd = IOT_COMMAND_CLOUD_REGISTERING;
 		iot_err = iot_command_send(ctx, iot_cmd, NULL, 0);
 		IOT_REMARK("the state changes to IOT_STATE_CLOUD_REGISTERING");
