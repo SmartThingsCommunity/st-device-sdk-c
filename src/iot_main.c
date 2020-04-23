@@ -289,7 +289,7 @@ static iot_error_t _do_iot_main_command(struct iot_context *ctx,
 		cmd->cmd_type, ctx->curr_state, ctx->req_state);
 
 	/* Some State has to queue several commands sequentially
-	 * But sometiems next command queuing or next process can make error
+	 * But sometimes next command queuing or next process can make error
 	 * after the first command queued successfully.
 	 * So to prevent the first command handling after error occurred,
 	 * added command skipping coroutine
@@ -320,7 +320,7 @@ static iot_error_t _do_iot_main_command(struct iot_context *ctx,
 					_do_update_timeout(ctx, needed_tout);
 				}
 
-				/* Call user sdie state update callback */
+				/* Call the user's status_cb function if it's available */
 				if (ctx->status_cb)
 					_do_status_report(ctx, state_data->iot_state, false);
 			}
