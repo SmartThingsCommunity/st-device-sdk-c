@@ -163,6 +163,7 @@ void TC_STATIC_es_confirminfo_handler_button(void **state);
 void TC_STATIC_es_confirm_handler_success(void** state);
 void TC_STATIC_es_confirm_handler_invalid_pin(void** state);
 void TC_STATIC_es_confirm_handler_non_pin_otm(void** state);
+void TC_STATIC_es_confirm_handler_invalid_json_payload(void** state);
 void TC_STATIC_es_setupcomplete_handler_success(void** state);
 
 // TCs for iot_main.c
