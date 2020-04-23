@@ -397,6 +397,7 @@ iot_error_t iot_api_onboarding_config_load(unsigned char *onboarding_config,
 			iot_err = IOT_ERROR_MEM_ALLOC;
 			goto load_out;
 		}
+		memset(new_dip, 0, sizeof(struct iot_dip_data));
 
 		item = JSON_GET_OBJECT_ITEM(dip, "id");
 		if (!item) {
@@ -420,13 +421,11 @@ iot_error_t iot_api_onboarding_config_load(unsigned char *onboarding_config,
 		}
 		new_dip->dip_major_version = item->valueint;
 
+		/* minorVersion is optional, default 0 */
 		item = JSON_GET_OBJECT_ITEM(dip, "minorVersion");
-		if (!item) {
-			IOT_ERROR("Can't get minorVersion (NULL)");
-			iot_err = IOT_ERROR_UNINITIALIZED;
-			goto load_out;
+		if (item) {
+			new_dip->dip_minor_version = item->valueint;
 		}
-		new_dip->dip_minor_version = item->valueint;
 	}
 
 	devconf->device_onboarding_id = device_onboarding_id;

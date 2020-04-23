@@ -66,13 +66,16 @@ static void mqtt_reg_sub_cb(st_mqtt_msg *md, void *userData)
 	JSON_H *svr_did = NULL;
 	JSON_H *event = NULL;
 	JSON_H *cur_time = NULL;
+	JSON_H *dip_key = NULL;
+	JSON_H *dip_item = NULL;
 	char time_str[11] = {0,};
 	char *svr_did_str = NULL;
 	enum iot_command_type iot_cmd;
+	struct iot_dip_data *reged_dip = NULL;
+	iot_error_t err;
 
 	/*parsing mqtt_payload*/
 #if defined(STDK_IOT_CORE_SERIALIZE_CBOR)
-	iot_error_t err;
 	char *payload_json = NULL;
 	size_t payload_json_len = 0;
 
@@ -132,6 +135,51 @@ static void mqtt_reg_sub_cb(st_mqtt_msg *md, void *userData)
 			IOT_ERROR("event type %s is not defined", event->valuestring);
 			goto reg_sub_out;
 		}
+	}
+
+	/* dip_key is optional values */
+	dip_key =JSON_GET_OBJECT_ITEM(json, "deviceIntegrationProfileKey");
+	if (dip_key != NULL) {
+		reged_dip = iot_os_malloc(sizeof(struct iot_dip_data));
+		if (!reged_dip) {
+			IOT_ERROR("Can't alloc iot_dip_data!!");
+			goto reg_sub_out;
+		}
+		memset(reged_dip, 0, sizeof(struct iot_dip_data));
+
+		dip_item = JSON_GET_OBJECT_ITEM(dip_key, "id");
+		if (!dip_item) {
+			IOT_ERROR("Can't find id for dip_key!!");
+			iot_os_free(reged_dip);
+			goto reg_sub_out;
+		}
+
+		err = iot_util_convert_str_uuid(JSON_GET_STRING_VALUE(dip_item),
+				&reged_dip->dip_id);
+		if (err != IOT_ERROR_NONE) {
+			IOT_ERROR("Can't convert str to uuid(%d)", err);
+			iot_os_free(reged_dip);
+			goto reg_sub_out;
+		}
+
+		dip_item = JSON_GET_OBJECT_ITEM(dip_key, "majorVersion");
+		if (!dip_item) {
+			IOT_ERROR("Can't find majorVersion for dip_key!!");
+			iot_os_free(reged_dip);
+			goto reg_sub_out;
+		}
+		reged_dip->dip_major_version = dip_item->valueint;
+
+		/* minorVersion is optional, default 0 */
+		dip_item = JSON_GET_OBJECT_ITEM(dip_key, "minorVersion");
+		if (dip_item) {
+			reged_dip->dip_minor_version = dip_item->valueint;
+		}
+
+		if (reged_data->dip)
+			iot_os_free(reged_data->dip);
+
+		reged_data->dip = reged_dip;
 	}
 
 	svr_did = JSON_GET_OBJECT_ITEM(json, "deviceId");

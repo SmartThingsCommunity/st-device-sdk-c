@@ -30,6 +30,7 @@
 #include "iot_os_util.h"
 #include "iot_util.h"
 #include "iot_bsp_system.h"
+#include "iot_uuid.h"
 
 #if defined(CONFIG_STDK_IOT_CORE_LOG_FILE)
 #include "iot_log_file.h"
@@ -278,6 +279,71 @@ static void _clear_cmd_status(struct iot_context *ctx, enum iot_command_type cmd
 	}
 }
 
+static iot_error_t _check_stored_dip(struct iot_dip_data *chk_dip, bool *is_diff)
+{
+	iot_error_t err = IOT_ERROR_NONE;
+	struct iot_dip_data old_dip;
+	int idx;
+
+	if (chk_dip == NULL)
+		return IOT_ERROR_INVALID_ARGS;
+
+	err = iot_misc_info_load(IOT_MISC_INFO_DIP, (void *)&old_dip);
+	if (err != IOT_ERROR_NONE) {
+		IOT_ERROR("Store DIP failed!! (%d)", err);
+		return err;
+	}
+
+	*is_diff = true;
+
+	for (idx = 0; idx < 16; idx++) {
+		if (chk_dip->dip_id.id[idx] != old_dip.dip_id.id[idx]) {
+			return IOT_ERROR_NONE;
+		}
+	}
+
+	if (chk_dip->dip_major_version != old_dip.dip_major_version) {
+		return IOT_ERROR_NONE;
+	}
+
+	if (chk_dip->dip_minor_version != old_dip.dip_minor_version) {
+		return IOT_ERROR_NONE;
+	}
+
+	*is_diff = false;
+
+	return IOT_ERROR_NONE;
+}
+
+static iot_error_t _alloc_lookup_id(char **lookup_id)
+{
+	iot_error_t err = IOT_ERROR_NONE;
+	char *new_lookup_id = NULL;
+	struct iot_uuid uuid;
+
+	err = iot_get_random_uuid_from_mac(&uuid);
+	if (err) {
+		IOT_ERROR("To get uuid is failed (%d)", err);
+		return err;
+	}
+
+	new_lookup_id = (char *)iot_os_malloc(40);
+	if (new_lookup_id == NULL) {
+		IOT_ERROR("can't malloc for new lookup_id");
+		return IOT_ERROR_MEM_ALLOC;
+	}
+
+	err = iot_util_convert_uuid_str(&uuid, new_lookup_id, 40);
+	if (err) {
+		IOT_ERROR("Failed to convert uuid to str (%d)", err);
+		iot_os_free(new_lookup_id);
+		return err;
+	}
+
+	*lookup_id = new_lookup_id;
+	return err;
+}
+
 static iot_error_t _do_iot_main_command(struct iot_context *ctx,
 	struct iot_command *cmd)
 {
@@ -290,6 +356,7 @@ static iot_error_t _do_iot_main_command(struct iot_context *ctx,
 	struct iot_state_data *state_data;
 	unsigned int needed_tout = 0;
 	iot_noti_data_t *noti = NULL;
+	bool is_diff_dip = false;
 
 	IOT_INFO("curr_main_cmd:%d, curr_main_state:%d/%d",
 		cmd->cmd_type, ctx->curr_state, ctx->req_state);
@@ -491,8 +558,35 @@ static iot_error_t _do_iot_main_command(struct iot_context *ctx,
 							ctx->iot_reg_data.deviceId, str_len);
 					}
 
-					ctx->iot_reg_data.updated = true;
-					next_state = IOT_STATE_CLOUD_CONNECTING;
+					if (ctx->devconf.dip) {
+						err = _check_stored_dip(ctx->devconf.dip, &is_diff_dip);
+						if (err != IOT_ERROR_NONE) {
+							IOT_ERROR("Failed to check stored DIP(%d)", err);
+							is_diff_dip = true;
+						}
+					} else {
+						is_diff_dip = false;
+					}
+
+					if (is_diff_dip) {
+						if (ctx->lookup_id != NULL) {
+							iot_os_free(ctx->lookup_id);
+							ctx->lookup_id = NULL;
+						}
+
+						err = _alloc_lookup_id(&ctx->lookup_id);
+						if (err != IOT_ERROR_NONE) {
+							IOT_ERROR("Failed to alloc new lookup_id(%d)", err);
+							is_diff_dip = false;
+						}
+					}
+
+					if (is_diff_dip) {
+						next_state = IOT_STATE_CLOUD_REGISTERING;
+					} else {
+						ctx->iot_reg_data.updated = true;
+						next_state = IOT_STATE_CLOUD_CONNECTING;
+					}
 
 					free(usr_id);
 				}
@@ -538,6 +632,16 @@ static iot_error_t _do_iot_main_command(struct iot_context *ctx,
 				IOT_ERROR("failed to _iot_es_disconnect for registration\n");
 
 			if (ctx->iot_reg_data.updated) {
+				if (ctx->iot_reg_data.dip) {
+					err = iot_misc_info_store(IOT_MISC_INFO_DIP,
+							(const void *)ctx->iot_reg_data.dip);
+					if (err != IOT_ERROR_NONE)
+						IOT_ERROR("Store DIP failed!! (%d)", err);
+
+					iot_os_free(ctx->iot_reg_data.dip);
+					ctx->iot_reg_data.dip = NULL;
+				}
+
 				err = iot_nv_set_device_id(ctx->iot_reg_data.deviceId);
 				if (err != IOT_ERROR_NONE)
 					IOT_ERROR("Set deviceId failed!! (%d)", err);
