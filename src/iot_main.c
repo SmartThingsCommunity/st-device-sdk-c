@@ -278,40 +278,37 @@ static void _clear_cmd_status(struct iot_context *ctx, enum iot_command_type cmd
 	}
 }
 
-static iot_error_t _check_stored_dip(struct iot_dip_data *chk_dip, bool *is_diff)
+static bool _unlikely_with_stored_dip(struct iot_dip_data *chk_dip)
 {
 	iot_error_t err = IOT_ERROR_NONE;
 	struct iot_dip_data old_dip;
 	int idx;
 
-	if (chk_dip == NULL)
-		return IOT_ERROR_INVALID_ARGS;
+	if (chk_dip == NULL) {
+		return true;
+	}
 
 	err = iot_misc_info_load(IOT_MISC_INFO_DIP, (void *)&old_dip);
 	if (err != IOT_ERROR_NONE) {
-		IOT_ERROR("Store DIP failed!! (%d)", err);
-		return err;
+		IOT_ERROR("failed to load stored DIP!! (%d)", err);
+		return true;
 	}
-
-	*is_diff = true;
 
 	for (idx = 0; idx < 16; idx++) {
 		if (chk_dip->dip_id.id[idx] != old_dip.dip_id.id[idx]) {
-			return IOT_ERROR_NONE;
+			return true;
 		}
 	}
 
 	if (chk_dip->dip_major_version != old_dip.dip_major_version) {
-		return IOT_ERROR_NONE;
+		return true;
 	}
 
 	if (chk_dip->dip_minor_version != old_dip.dip_minor_version) {
-		return IOT_ERROR_NONE;
+		return true;
 	}
 
-	*is_diff = false;
-
-	return IOT_ERROR_NONE;
+	return false;
 }
 
 static iot_error_t _do_iot_main_command(struct iot_context *ctx,
@@ -529,11 +526,7 @@ static iot_error_t _do_iot_main_command(struct iot_context *ctx,
 					}
 
 					if (ctx->devconf.dip) {
-						err = _check_stored_dip(ctx->devconf.dip, &is_diff_dip);
-						if (err != IOT_ERROR_NONE) {
-							IOT_ERROR("Failed to check stored DIP(%d)", err);
-							is_diff_dip = true;
-						}
+						is_diff_dip = _unlikely_with_stored_dip(ctx->devconf.dip);
 					} else {
 						is_diff_dip = false;
 					}
