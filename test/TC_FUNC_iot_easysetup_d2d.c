@@ -766,6 +766,9 @@ void TC_STATIC_es_confirminfo_handler_button(void **state)
 // Static function of STDK declared to test
 extern iot_error_t _es_confirm_handler(struct iot_context *ctx, char *in_payload, char **out_payload);
 
+static char *_generate_none_container_payload();
+static char *_generate_plain_message_payload();
+static char *_generate_wrong_container_payload();
 static char *_generate_invalid_json_payload(iot_crypto_cipher_info_t *cipher);
 static char *_generate_confirm_payload(iot_crypto_cipher_info_t *cipher, char *pin_str);
 
@@ -894,10 +897,18 @@ void TC_STATIC_es_confirm_handler_non_pin_otm(void** state)
     _free_cipher(server_cipher);
 }
 
-void TC_STATIC_es_confirm_handler_invalid_json_payload(void** state)
+enum {
+    INVALID_PAYLOAD_INVALID_JSON_AT_CONTAINER,
+    INVALID_PAYLOAD_PLAIN_MESSAGE_AT_CONTAINER,
+    INVALID_PAYLOAD_WRONG_CONTAINER,
+    INVALID_PAYLOAD_NONE_CONTAINER,
+    INVALID_PAYLOAD_MAX
+};
+
+void TC_STATIC_es_confirm_handler_invalid_payload(void** state)
 {
     iot_error_t err;
-    char *in_payload;
+    char *in_payload[INVALID_PAYLOAD_MAX];
     char *out_payload;
     struct iot_context *context;
     iot_crypto_cipher_info_t *server_cipher;
@@ -907,8 +918,6 @@ void TC_STATIC_es_confirm_handler_invalid_json_payload(void** state)
     context = (struct iot_context *)*state;
     context->es_crypto_cipher_info = _generate_device_cipher(NULL, 0);
     server_cipher = _generate_server_cipher(context->es_crypto_cipher_info->iv, context->es_crypto_cipher_info->iv_len);
-    in_payload = _generate_invalid_json_payload(server_cipher);
-    out_payload = NULL;
     context->curr_otm_feature = OVF_BIT_PIN;
     context->devconf.ownership_validation_type = IOT_OVF_TYPE_PIN; // forced overwriting
     context->pin = malloc(sizeof(iot_pin_t));
@@ -916,18 +925,26 @@ void TC_STATIC_es_confirm_handler_invalid_json_payload(void** state)
     memcpy(context->pin->pin, pin_for_test, strlen(pin_for_test));
     context->cmd_queue = iot_os_queue_create(IOT_QUEUE_LENGTH, sizeof(struct iot_command));
     context->iot_events = iot_os_eventgroup_create();
-
-    // When
-    err = _es_confirm_handler(context, in_payload, &out_payload);
-    // Then
-    assert_int_equal(err, IOT_ERROR_EASYSETUP_INVALID_REQUEST);
-    assert_null(out_payload); // out_payload untouched
+    out_payload = NULL;
+    in_payload[INVALID_PAYLOAD_INVALID_JSON_AT_CONTAINER] = _generate_invalid_json_payload(server_cipher);
+    in_payload[INVALID_PAYLOAD_PLAIN_MESSAGE_AT_CONTAINER] = _generate_plain_message_payload();
+    in_payload[INVALID_PAYLOAD_NONE_CONTAINER] = _generate_none_container_payload();
+    in_payload[INVALID_PAYLOAD_WRONG_CONTAINER] = _generate_wrong_container_payload();
+    for (int i = 0; i < INVALID_PAYLOAD_MAX; i++) {
+        // When
+        err = _es_confirm_handler(context, in_payload[i], &out_payload);
+        // Then
+        assert_int_not_equal(err, IOT_ERROR_NONE);
+        assert_null(out_payload); // out_payload untouched
+    }
 
     // Teardown
     iot_os_eventgroup_delete(context->iot_events);
     iot_os_queue_delete(context->cmd_queue);
     free(context->pin);
-    free(in_payload);
+    for (int i = 0; i < INVALID_PAYLOAD_MAX; i++) {
+        free(in_payload[i]);
+    }
     _free_cipher(server_cipher);
 }
 
@@ -953,6 +970,21 @@ void TC_STATIC_es_setupcomplete_handler_success(void** state)
     // Teardown
     free(out_payload);
     _free_cipher(server_cipher);
+}
+
+static char *_generate_none_container_payload()
+{
+    return strdup("This is not json");
+}
+
+static char *_generate_plain_message_payload()
+{
+    return strdup("{ \"message\" : \"This is not encoded message\" }");
+}
+
+static char *_generate_wrong_container_payload()
+{
+    return strdup("{ \"key\" : \"value\" }");
 }
 
 static char *_generate_invalid_json_payload(iot_crypto_cipher_info_t *cipher)
