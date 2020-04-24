@@ -31,7 +31,6 @@
 #include "iot_crypto.h"
 #include "iot_os_util.h"
 #include "iot_bsp_system.h"
-#include "iot_uuid.h"
 
 #include "JSON.h"
 #if defined(STDK_IOT_CORE_SERIALIZE_CBOR)
@@ -547,31 +546,17 @@ iot_error_t _iot_es_mqtt_connect(struct iot_context *ctx, st_mqtt_client target_
 	int ret;
 	iot_error_t iot_ret = IOT_ERROR_NONE;
 	bool reboot;
-	struct iot_uuid iot_uuid;
 	char *client_id = NULL;
 	struct iot_cloud_prov_data *cloud_prov;
 	char *root_cert = NULL;
 	size_t root_cert_len;
 
 	/* Use mac based random client_id for GreatGate */
-	iot_ret = iot_get_random_uuid_from_mac(&iot_uuid);
-	if (iot_ret != IOT_ERROR_NONE) {
-		IOT_ERROR("Cannot get mac based random uuid");
-		return iot_ret;
-	}
-
-	client_id = (char *)malloc(40);
-	if (!client_id) {
-		IOT_ERROR("Cannot malloc for client_id");
+	client_id = iot_alloc_random_id();
+	if (client_id == NULL) {
+		IOT_ERROR("Cannot allocate random_id for client_id");
 		return IOT_ERROR_MEM_ALLOC;
 	}
-
-	iot_ret = iot_util_convert_uuid_str(&iot_uuid, client_id, 40);
-	if (iot_ret != IOT_ERROR_NONE) {
-		IOT_ERROR("Cannot convert str for client_id");
-		goto done_mqtt_connect;
-	}
-
 
 	cloud_prov = &ctx->prov_data.cloud;
 	if (!cloud_prov->broker_url) {

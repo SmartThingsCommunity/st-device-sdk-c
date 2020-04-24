@@ -28,6 +28,7 @@
 #include "iot_nv_data.h"
 #include "iot_os_util.h"
 #include "iot_util.h"
+#include "iot_uuid.h"
 
 #include "JSON.h"
 
@@ -976,6 +977,34 @@ misc_info_store_out:
 		JSON_DELETE(json);
 
 	return iot_err;
+}
+
+char *iot_alloc_random_id(void)
+{
+	iot_error_t err = IOT_ERROR_NONE;
+	char *new_random_id = NULL;
+	struct iot_uuid uuid;
+
+	err = iot_get_random_uuid_from_mac(&uuid);
+	if (err) {
+		IOT_ERROR("To get uuid is failed (%d)", err);
+		return NULL;
+	}
+
+	new_random_id = (char *)iot_os_malloc(40);
+	if (new_random_id == NULL) {
+		IOT_ERROR("can't malloc for new lookup_id");
+		return NULL;
+	}
+
+	err = iot_util_convert_uuid_str(&uuid, new_random_id, 40);
+	if (err) {
+		IOT_ERROR("Failed to convert uuid to str (%d)", err);
+		iot_os_free(new_random_id);
+		return NULL;
+	}
+
+	return new_random_id;
 }
 
 /**************************************************************

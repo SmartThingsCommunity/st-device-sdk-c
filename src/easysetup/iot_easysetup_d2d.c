@@ -26,7 +26,6 @@
 #include "iot_internal.h"
 #include "iot_nv_data.h"
 #include "iot_util.h"
-#include "iot_uuid.h"
 #include "iot_debug.h"
 
 #define HASH_SIZE (4)
@@ -1369,14 +1368,12 @@ cloud_parse_out:
 STATIC_FUNCTION
 iot_error_t _es_wifiprovisioninginfo_handler(struct iot_context *ctx, char *in_payload, char **out_payload)
 {
-	struct iot_uuid uuid;
 	char *plain_msg = NULL;
 	char *final_msg = NULL;
 	char *enc_msg = NULL;
 	char *recv_msg = NULL;
 	char *dec_msg = NULL;
 	JSON_H *root = NULL;
-	int uuid_len = 40;
 	iot_error_t err = IOT_ERROR_NONE;
 
 	root = JSON_PARSE(in_payload);
@@ -1411,18 +1408,14 @@ iot_error_t _es_wifiprovisioninginfo_handler(struct iot_context *ctx, char *in_p
 		goto out;
 	}
 
-	err = iot_get_random_uuid_from_mac(&uuid);
-	if (err) {
-		IOT_ERROR("To get uuid is failed (error : %d)", err);
-		err = IOT_ERROR_EASYSETUP_LOOKUPID_GENERATE_FAIL;
-		goto out;
+	if (ctx->lookup_id != NULL) {
+		iot_os_free(ctx->lookup_id);
+		ctx->lookup_id = NULL;
 	}
 
-	ctx->lookup_id = (char *) malloc(uuid_len);
-
-	err = iot_util_convert_uuid_str(&uuid, ctx->lookup_id, uuid_len);
-	if (err) {
-		IOT_ERROR("Failed to convert uuid to str (error : %d)", err);
+	ctx->lookup_id = iot_alloc_random_id();
+	if (ctx->lookup_id == NULL) {
+		IOT_ERROR("failed to allocate new lookup_id");
 		err = IOT_ERROR_EASYSETUP_LOOKUPID_GENERATE_FAIL;
 		goto out;
 	}

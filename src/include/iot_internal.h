@@ -340,5 +340,12 @@ iot_error_t iot_misc_info_load(iot_misc_info_t type, void *out_data);
  */
 iot_error_t iot_misc_info_store(iot_misc_info_t type, const void *in_data);
 
+/**
+ * @brief	Allocate random_id string based on uuid style
+ * @details	this function tries to allocate new generated random_id string
+ * @return	Pointer of generated uuid style string buffer
+ */
+char *iot_alloc_random_id(void);
+
 #endif /* _IOT_INTERNAL_H_ */
 

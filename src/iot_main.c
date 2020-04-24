@@ -30,7 +30,6 @@
 #include "iot_os_util.h"
 #include "iot_util.h"
 #include "iot_bsp_system.h"
-#include "iot_uuid.h"
 
 #if defined(CONFIG_STDK_IOT_CORE_LOG_FILE)
 #include "iot_log_file.h"
@@ -315,35 +314,6 @@ static iot_error_t _check_stored_dip(struct iot_dip_data *chk_dip, bool *is_diff
 	return IOT_ERROR_NONE;
 }
 
-static iot_error_t _alloc_lookup_id(char **lookup_id)
-{
-	iot_error_t err = IOT_ERROR_NONE;
-	char *new_lookup_id = NULL;
-	struct iot_uuid uuid;
-
-	err = iot_get_random_uuid_from_mac(&uuid);
-	if (err) {
-		IOT_ERROR("To get uuid is failed (%d)", err);
-		return err;
-	}
-
-	new_lookup_id = (char *)iot_os_malloc(40);
-	if (new_lookup_id == NULL) {
-		IOT_ERROR("can't malloc for new lookup_id");
-		return IOT_ERROR_MEM_ALLOC;
-	}
-
-	err = iot_util_convert_uuid_str(&uuid, new_lookup_id, 40);
-	if (err) {
-		IOT_ERROR("Failed to convert uuid to str (%d)", err);
-		iot_os_free(new_lookup_id);
-		return err;
-	}
-
-	*lookup_id = new_lookup_id;
-	return err;
-}
-
 static iot_error_t _do_iot_main_command(struct iot_context *ctx,
 	struct iot_command *cmd)
 {
@@ -574,9 +544,9 @@ static iot_error_t _do_iot_main_command(struct iot_context *ctx,
 							ctx->lookup_id = NULL;
 						}
 
-						err = _alloc_lookup_id(&ctx->lookup_id);
-						if (err != IOT_ERROR_NONE) {
-							IOT_ERROR("Failed to alloc new lookup_id(%d)", err);
+						ctx->lookup_id = iot_alloc_random_id();
+						if (ctx->lookup_id == NULL) {
+							IOT_ERROR("Failed to alloc new lookup_id");
 							is_diff_dip = false;
 						}
 					}
