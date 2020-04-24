@@ -111,6 +111,10 @@ IOT_EVENT* st_cap_attr_create(const char *attribute,
 
 	evt_data->evt_type = iot_os_strdup(attribute);
 	switch (value->type) {
+	case IOT_CAP_VAL_TYPE_BOOLEAN:
+		evt_data->evt_value.type = IOT_CAP_VAL_TYPE_BOOLEAN;
+		evt_data->evt_value.boolean = value->boolean;
+		break;
 	case IOT_CAP_VAL_TYPE_INTEGER:
 		evt_data->evt_value.type = IOT_CAP_VAL_TYPE_INTEGER;
 		evt_data->evt_value.integer = value->integer;
@@ -740,7 +744,19 @@ static iot_error_t _iot_parse_cmd_data(JSON_H* cmditem, char** component,
 
 	if (subitem != NULL) {
 		for (int i = 0; i < arr_size; i++) {
-			if (JSON_IS_NUMBER(subitem)) {
+			if (JSON_IS_BOOL(subitem)) {
+				cmd_data->args_str[num_args] = NULL;
+				cmd_data->cmd_data[num_args].type = IOT_CAP_VAL_TYPE_BOOLEAN;
+				if (JSON_IS_TRUE(subitem)) {
+					IOT_DEBUG("[%d] True", num_args);
+					cmd_data->cmd_data[num_args].boolean = true;
+				} else {
+					IOT_DEBUG("[%d] False", num_args);
+					cmd_data->cmd_data[num_args].boolean = false;
+				}
+				num_args++;
+			}
+			else if (JSON_IS_NUMBER(subitem)) {
 				IOT_DEBUG("[%d] %d | %f", num_args, subitem->valueint, subitem->valuedouble);
 				cmd_data->args_str[num_args] = NULL;
 				cmd_data->cmd_data[num_args].type = IOT_CAP_VAL_TYPE_INT_OR_NUM;
@@ -942,7 +958,9 @@ static iot_error_t _iot_make_evt_data_json(const char* component, const char* ca
 		JSON_ADD_STRING_TO_OBJECT(evt_item, "attribute", evt_data_arr[i]->evt_type);
 
 		/* value */
-		if (evt_data_arr[i]->evt_value.type == IOT_CAP_VAL_TYPE_INTEGER) {
+		if (evt_data_arr[i]->evt_value.type == IOT_CAP_VAL_TYPE_BOOLEAN) {
+			JSON_ADD_BOOL_TO_OBJECT(evt_item, "value", evt_data_arr[i]->evt_value.boolean);
+		} else if (evt_data_arr[i]->evt_value.type == IOT_CAP_VAL_TYPE_INTEGER) {
 			JSON_ADD_NUMBER_TO_OBJECT(evt_item, "value", evt_data_arr[i]->evt_value.integer);
 		} else if (evt_data_arr[i]->evt_value.type == IOT_CAP_VAL_TYPE_NUMBER) {
 			JSON_ADD_NUMBER_TO_OBJECT(evt_item, "value", evt_data_arr[i]->evt_value.number);

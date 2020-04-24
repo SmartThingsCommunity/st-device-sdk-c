@@ -46,6 +46,10 @@ static inline void JSON_ADD_STRING_TO_OBJECT(JSON_H * const obj, const char * co
     cJSON_AddStringToObject(obj, name, string);
 }
 
+static inline void JSON_ADD_BOOL_TO_OBJECT(JSON_H * const obj, const char * const name, const bool boolean) {
+	cJSON_AddBoolToObject(obj, name, boolean);
+}
+
 static inline JSON_H *JSON_CREATE_STRING(const char *string) {
     return cJSON_CreateString(string);
 }
@@ -110,6 +114,18 @@ static inline bool JSON_IS_ARRAY(const JSON_H * const item) {
     return cJSON_IsArray(item);
 }
 
+static inline bool JSON_IS_BOOL(const JSON_H * const item) {
+    return cJSON_IsBool(item);
+}
+
+static inline bool JSON_IS_TRUE(const JSON_H * const item) {
+    return cJSON_IsTrue(item);
+}
+
+static inline bool JSON_IS_FALSE(const JSON_H * const item) {
+    return cJSON_IsFalse(item);
+}
+
 static inline void JSON_REPLACE_ITEM_IN_OBJ_CASESENS(JSON_H *obj, const char *string, JSON_H *newitem) {
 	cJSON_ReplaceItemInObjectCaseSensitive(obj, string, newitem);
 }
@@ -121,6 +137,7 @@ JSON_H *JSON_GET_OBJECT_ITEM(const JSON_H * const obj, const char * const string
 void JSON_ADD_ITEM_TO_OBJECT(JSON_H *obj, const char *string, JSON_H *item);
 void JSON_ADD_NUMBER_TO_OBJECT(JSON_H * const obj, const char * const name, const double number);
 void JSON_ADD_STRING_TO_OBJECT(JSON_H * const obj, const char * const name, const char * const string);
+void JSON_ADD_BOOL_TO_OBJECT(JSON_H * const obj, const char * const name, const bool boolean);
 JSON_H *JSON_CREATE_STRING(const char *string);
 JSON_H *JSON_CREATE_STRING_ARRAY(const char **strings, int count);
 char *JSON_PRINT(const JSON_H *item);
@@ -137,6 +154,9 @@ bool JSON_IS_STRING(const JSON_H * const item);
 bool JSON_IS_NUMBER(const JSON_H * const item);
 bool JSON_IS_OBJECT(const JSON_H * const item);
 bool JSON_IS_ARRAY(const JSON_H * const item);
+bool JSON_IS_BOOL(const JSON_H * const item);
+bool JSON_IS_TRUE(const JSON_H * const item);
+bool JSON_IS_FALSE(const JSON_H * const item);
 void JSON_REPLACE_ITEM_IN_OBJ_CASESENS(JSON_H *obj, const char *string, JSON_H *newitem);
 #endif
 
