@@ -75,17 +75,17 @@ static iot_error_t _check_prov_data_validation(struct iot_device_prov_data *prov
 	return IOT_ERROR_NONE;
 }
 
-static void _delete_easysetup_resources_all(struct iot_context *ctx)
+STATIC_FUNCTION
+void _delete_easysetup_resources_all(struct iot_context *ctx)
 {
 	ctx->es_res_created = false;
 
 	if (ctx->pin) {
-		// if device connected to cloud successfully. We don't need pin anymore
-		free(ctx->pin);
+		iot_os_free(ctx->pin);
 		ctx->pin = NULL;
 	}
 	if (ctx->es_crypto_cipher_info) {
-		free(ctx->es_crypto_cipher_info);
+		iot_os_free(ctx->es_crypto_cipher_info);
 		ctx->es_crypto_cipher_info = NULL;
 	}
 	if (ctx->easysetup_req_queue) {
@@ -97,19 +97,20 @@ static void _delete_easysetup_resources_all(struct iot_context *ctx)
 		ctx->easysetup_resp_queue = NULL;
 	}
 	if (ctx->devconf.hashed_sn) {
-		free(ctx->devconf.hashed_sn);
+		iot_os_free(ctx->devconf.hashed_sn);
 		ctx->devconf.hashed_sn = NULL;
 	}
 }
 
-static iot_error_t _create_easysetup_resources(struct iot_context *ctx, iot_pin_t *pin_num)
+STATIC_FUNCTION
+iot_error_t _create_easysetup_resources(struct iot_context *ctx, iot_pin_t *pin_num)
 {
 	iot_error_t ret;
 
 	/* If PIN type used, iot_pin_t should be set */
 	if (ctx->devconf.ownership_validation_type & IOT_OVF_TYPE_PIN) {
 		if (!ctx->pin) {
-			if ((ctx->pin = malloc(sizeof(iot_pin_t))) == NULL) {
+			if ((ctx->pin = iot_os_malloc(sizeof(iot_pin_t))) == NULL) {
 				IOT_ERROR("failed to malloc for pin");
 				return IOT_ERROR_MEM_ALLOC;
 			}
@@ -123,12 +124,12 @@ static iot_error_t _create_easysetup_resources(struct iot_context *ctx, iot_pin_
 		}
 	}
 
-	if ((ctx->es_crypto_cipher_info = (iot_crypto_cipher_info_t *) malloc(sizeof(iot_crypto_cipher_info_t))) == NULL) {
+	if ((ctx->es_crypto_cipher_info = (iot_crypto_cipher_info_t *) iot_os_malloc(sizeof(iot_crypto_cipher_info_t))) == NULL) {
 		IOT_ERROR("failed to malloc for cipher info");
 		ret = IOT_ERROR_MEM_ALLOC;
 		goto create_fail;
 	} else {
-		memset(ctx->es_crypto_cipher_info, 0,sizeof(iot_crypto_cipher_info_t));
+		memset(ctx->es_crypto_cipher_info, 0, sizeof(iot_crypto_cipher_info_t));
 	}
 
 	if (!ctx->easysetup_req_queue) {

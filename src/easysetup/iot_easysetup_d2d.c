@@ -320,11 +320,12 @@ iot_error_t iot_easysetup_create_ssid(struct iot_devconf_prov_data *devconf, cha
 	memcpy(ssid, ssid_build, ssid_len < strlen(ssid_build) ? ssid_len : strlen(ssid_build));
 out:
 	if (err && devconf->hashed_sn) {
-		free(devconf->hashed_sn);
+		iot_os_free(devconf->hashed_sn);
 		devconf->hashed_sn = NULL;
 	}
-	if (serial)
-		free(serial);
+	if (serial) {
+		iot_os_free(serial);
+	}
 	return err;
 }
 

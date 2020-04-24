@@ -718,10 +718,12 @@ load_out:
 		}
 	}
 
-	if (root)
+	if (root) {
 		JSON_DELETE(root);
-	if (data)
-		free(data);
+	}
+	if (data) {
+		iot_os_free(data);
+	}
 
 	return iot_err;
 }
