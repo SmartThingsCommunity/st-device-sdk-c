@@ -31,6 +31,10 @@
 #include "iot_util.h"
 #include "iot_bsp_system.h"
 
+#if defined(CONFIG_STDK_IOT_CORE_LOG_FILE)
+#include "iot_log_file.h"
+#endif
+
 #define NEXT_STATE_TIMEOUT_MS	(100000)
 #define EASYSETUP_TIMEOUT_MS	(300000) /* 5 min */
 #define REGISTRATION_TIMEOUT_MS	(900000) /* 15 min */
@@ -889,6 +893,15 @@ IOT_CTX* st_conn_init(unsigned char *onboarding_config, unsigned int onboarding_
 		goto error_main_bsp_init;
 	}
 
+#if defined(CONFIG_STDK_IOT_CORE_LOG_FILE)
+	/* Initialize logging task */
+	iot_err = iot_log_file_init();
+	if (iot_err != IOT_ERROR_NONE) {
+		IOT_ERROR("log file init fail");
+		goto error_main_log_file_init;
+	}
+#endif
+
 	// Initialize device profile & device info
 	devconf_prov = &(ctx->devconf);
 	iot_err = iot_api_onboarding_config_load(onboarding_config, onboarding_config_len, devconf_prov);
@@ -980,6 +993,9 @@ error_main_init_cmd_q:
 error_main_load_device_info:
 	iot_api_onboarding_config_mem_free(devconf_prov);
 
+#if defined(CONFIG_STDK_IOT_CORE_LOG_FILE)
+error_main_log_file_init:
+#endif
 error_main_load_onboarding_config:
 	iot_nv_deinit();
 
