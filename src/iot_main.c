@@ -461,8 +461,9 @@ static iot_error_t _do_iot_main_command(struct iot_context *ctx,
 			if (err != IOT_ERROR_NONE) {
 				IOT_WARN("There are no prov data in NV\n");
 				err = iot_nv_erase(IOT_NVD_DEVICE_ID);
-				if ((err != IOT_ERROR_NONE) && (err != IOT_ERROR_NV_DATA_NOT_EXIST))
+				if ((err != IOT_ERROR_NONE) && (err != IOT_ERROR_NV_DATA_NOT_EXIST)) {
 					IOT_ERROR("Can't remove deviceId for new registraiton");
+				}
 
 				ctx->iot_reg_data.new_reged = true;
 				next_state = IOT_STATE_PROV_ENTER;
@@ -471,8 +472,9 @@ static iot_error_t _do_iot_main_command(struct iot_context *ctx,
 				if (err != IOT_ERROR_NONE) {
 					IOT_WARN("There are no valid prov data in NV\n");
 					err = iot_nv_erase(IOT_NVD_DEVICE_ID);
-					if ((err != IOT_ERROR_NONE) && (err != IOT_ERROR_NV_DATA_NOT_EXIST))
+					if ((err != IOT_ERROR_NONE) && (err != IOT_ERROR_NV_DATA_NOT_EXIST)) {
 						IOT_ERROR("Can't remove deviceId for new registraiton");
+					}
 
 					ctx->iot_reg_data.new_reged = true;
 					next_state = IOT_STATE_PROV_ENTER;
@@ -595,8 +597,9 @@ static iot_error_t _do_iot_main_command(struct iot_context *ctx,
 			break;
 
 		case IOT_COMMAND_CLOUD_REGISTERED:
-			if (iot_es_disconnect(ctx, IOT_CONNECT_TYPE_REGISTRATION) != IOT_ERROR_NONE)
+			if (iot_es_disconnect(ctx, IOT_CONNECT_TYPE_REGISTRATION) != IOT_ERROR_NONE) {
 				IOT_ERROR("failed to _iot_es_disconnect for registration\n");
+			}
 
 			if (ctx->iot_reg_data.updated) {
 				if (ctx->iot_reg_data.dip) {
@@ -610,8 +613,9 @@ static iot_error_t _do_iot_main_command(struct iot_context *ctx,
 				}
 
 				err = iot_nv_set_device_id(ctx->iot_reg_data.deviceId);
-				if (err != IOT_ERROR_NONE)
+				if (err != IOT_ERROR_NONE) {
 					IOT_ERROR("Set deviceId failed!! (%d)", err);
+				}
 			} else {
 				IOT_ERROR("Rgistration data updated failed!!");
 				err = IOT_ERROR_REG_UPDATED;
@@ -746,9 +750,10 @@ static void _do_cmd_tout_check(struct iot_context *ctx)
 			IOT_WARN("New state changing timeout");
 			next_state = IOT_STATE_CHANGE_FAILED;
 			if (iot_state_update(ctx, next_state, ctx->req_state)
-					!= IOT_ERROR_NONE)
+					!= IOT_ERROR_NONE) {
 				IOT_ERROR("Failed state error updated (%d/%d)",
 					ctx->curr_state, ctx->req_state);
+			}
 		} else if (!ctx->cmd_status) {
 			/* All command processes are done for req_state */
 			if (!ctx->cmd_err) {
@@ -833,8 +838,9 @@ static void _iot_main_task(struct iot_context *ctx)
 				if (cmd.param)
 					free(cmd.param);
 
-				if (err != IOT_ERROR_NONE)
+				if (err != IOT_ERROR_NONE) {
 					IOT_ERROR("failed handle cmd (%d): %d\n", cmd.cmd_type, err);
+				}
 
 				/* Set bit again to check whether the several cmds are already
 				 * stacked up in the queue.
@@ -889,8 +895,9 @@ static void _iot_main_task(struct iot_context *ctx)
 				IOT_DEBUG("request step: %d\n", easysetup_req.step);
 
 				err = iot_easysetup_request_handler(ctx, easysetup_req);
-				if (err != IOT_ERROR_NONE)
+				if (err != IOT_ERROR_NONE) {
 					IOT_ERROR("failed handle easysetup request step %d: %d\n", easysetup_req.step, err);
+				}
 
 				/* Set bit again to check whether the several cmds are already
 				 * stacked up in the queue.
@@ -1233,9 +1240,10 @@ static iot_error_t _do_recovery(struct iot_context *ctx,
 				fail_state);
 			iot_err = iot_state_update(ctx,
 						IOT_STATE_CLOUD_DISCONNECTED, 0);
-			if (iot_err != IOT_ERROR_NONE)
+			if (iot_err != IOT_ERROR_NONE) {
 				IOT_ERROR("Can't update Disconnected state(%d)",
 					iot_err);
+			}
 
 			IOT_WARN("Self retry/recovery it again\n");
 			iot_err = iot_state_update(ctx, fail_state, 0);

@@ -123,8 +123,9 @@ static void mqtt_reg_sub_cb(st_mqtt_msg *md, void *userData)
 			iot_bsp_system_set_time_in_sec(time_str);
 
 			iot_cmd = IOT_COMMAND_CLOUD_REGISTERING;
-			if (iot_command_send(ctx, iot_cmd, NULL, 0) != IOT_ERROR_NONE)
+			if (iot_command_send(ctx, iot_cmd, NULL, 0) != IOT_ERROR_NONE) {
 				IOT_ERROR("Cannot send cloud registering cmd!!");
+			}
 		} else if (!strncmp(event->valuestring, "error", 5)) {
 			bool reboot;
 			reboot = true;
@@ -197,8 +198,9 @@ static void mqtt_reg_sub_cb(st_mqtt_msg *md, void *userData)
 		reged_data->new_reged = false;
 
 		iot_cmd = IOT_COMMAND_CLOUD_REGISTERED;
-		if (iot_command_send(ctx, iot_cmd, NULL, 0) != IOT_ERROR_NONE)
+		if (iot_command_send(ctx, iot_cmd, NULL, 0) != IOT_ERROR_NONE) {
 			IOT_ERROR("Cannot send cloud registered cmd!!");
+		}
 	}
 
 reg_sub_out:
@@ -346,11 +348,12 @@ static void *_iot_es_mqtt_registration_json(struct iot_context *ctx,
 		JSON_CREATE_STRING(location_id));
 
 	/* label is optional value */
-	if (ctx->prov_data.cloud.label)
+	if (ctx->prov_data.cloud.label) {
 		JSON_ADD_ITEM_TO_OBJECT(root, "label",
 			JSON_CREATE_STRING(ctx->prov_data.cloud.label));
-	else
+	} else {
 		IOT_WARN("There is no label for registration");
+	}
 
 	JSON_ADD_ITEM_TO_OBJECT(root, "mnId",
 		JSON_CREATE_STRING(devconf->mnid));
@@ -534,8 +537,9 @@ void _iot_es_mqtt_disconnect(struct iot_context *ctx, st_mqtt_client target_cli)
 	 * even if it returns errors
 	 */
 	ret = st_mqtt_disconnect(target_cli);
-	if (ret)
+	if (ret) {
 		IOT_WARN("Disconnect error(%d)", ret);
+	}
 }
 
 iot_error_t _iot_es_mqtt_connect(struct iot_context *ctx, st_mqtt_client target_cli,
@@ -627,13 +631,14 @@ iot_error_t _iot_es_mqtt_connect(struct iot_context *ctx, st_mqtt_client target_
 	}
 
 #if defined(STDK_MQTT_TASK)
-        if ((ret = st_mqtt_starttask(target_cli)) < 0) {
-            IOT_ERROR("Returned code from start tasks is %d", ret);
-			st_mqtt_disconnect(target_cli);
-			iot_ret = IOT_ERROR_MQTT_CONNECT_FAIL;
-			goto done_mqtt_connect;
-		} else
-			IOT_INFO("Use MQTTStartTask");
+	if ((ret = st_mqtt_starttask(target_cli)) < 0) {
+		IOT_ERROR("Returned code from start tasks is %d", ret);
+		st_mqtt_disconnect(target_cli);
+		iot_ret = IOT_ERROR_MQTT_CONNECT_FAIL;
+		goto done_mqtt_connect;
+	} else {
+		IOT_INFO("Use MQTTStartTask");
+	}
 #endif
 
 done_mqtt_connect:
