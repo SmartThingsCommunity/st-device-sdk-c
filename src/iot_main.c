@@ -387,6 +387,7 @@ static iot_error_t _do_iot_main_command(struct iot_context *ctx,
 							next_state, state_opt);
 				} else {
 					IOT_WARN("Duplicated error handling, skip updating!!");
+					err = IOT_ERROR_DUPLICATED_CMD;
 				}
 				break;
 			}
@@ -402,6 +403,7 @@ static iot_error_t _do_iot_main_command(struct iot_context *ctx,
 							next_state, state_opt);
 				} else {
 					IOT_WARN("Duplicated error handling, skip updating!!");
+					err = IOT_ERROR_DUPLICATED_CMD;
 				}
 				break;
 			}
@@ -443,6 +445,7 @@ static iot_error_t _do_iot_main_command(struct iot_context *ctx,
 								next_state, state_opt);
 						} else {
 							IOT_WARN("Duplicated error handling, skip updating!!");
+							err = IOT_ERROR_DUPLICATED_CMD;
 						}
 					}
 				}
@@ -584,6 +587,7 @@ static iot_error_t _do_iot_main_command(struct iot_context *ctx,
 							next_state, state_opt);
 				} else {
 					IOT_WARN("Duplicated error handling, skip updating!!");
+					err = IOT_ERROR_DUPLICATED_CMD;
 				}
 			}
 
@@ -710,10 +714,10 @@ static iot_error_t _do_iot_main_command(struct iot_context *ctx,
 	}
 
 out_do_cmd:
-	if (err != IOT_ERROR_NONE) {
-		IOT_ERROR("failed to handle cmd: %d\n", cmd->cmd_type);
-	} else {
+	if (err == IOT_ERROR_NONE || err == IOT_ERROR_DUPLICATED_CMD) {
 		_clear_cmd_status(ctx, cmd->cmd_type);
+	} else {
+		IOT_ERROR("failed to handle cmd: %d\n", cmd->cmd_type);
 	}
 
 	return err;
