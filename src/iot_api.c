@@ -236,8 +236,10 @@ iot_error_t iot_api_onboarding_config_load(unsigned char *onboarding_config,
 	iot_crypto_pk_type_t pk_type;
 	size_t str_len = 0;
 	int i;
-	char *current_name = NULL;
 	struct iot_dip_data *new_dip = NULL;
+#if defined(CONFIG_STDK_IOT_CORE_LOG_LEVEL_ERROR)
+	char *current_name = NULL;
+#endif
 
 	if (!onboarding_config || !devconf || onboarding_config_len == 0)
 		return IOT_ERROR_INVALID_ARGS;
@@ -253,7 +255,9 @@ iot_error_t iot_api_onboarding_config_load(unsigned char *onboarding_config,
 	root = JSON_PARSE((char *)data);
 	config = JSON_GET_OBJECT_ITEM(root, name_onboardingConfig);
 	if (!config) {
+#if defined(CONFIG_STDK_IOT_CORE_LOG_LEVEL_ERROR)
 		current_name = (char *)name_onboardingConfig;
+#endif
 		iot_err = IOT_ERROR_UNINITIALIZED;
 		goto load_out;
 	}
@@ -261,13 +265,17 @@ iot_error_t iot_api_onboarding_config_load(unsigned char *onboarding_config,
 	/* device_onboarding_id */
 	item = JSON_GET_OBJECT_ITEM(config, name_deviceOnboardingId);
 	if (!item) {
+#if defined(CONFIG_STDK_IOT_CORE_LOG_LEVEL_ERROR)
 		current_name = (char *)name_deviceOnboardingId;
+#endif
 		iot_err = IOT_ERROR_UNINITIALIZED;
 		goto load_out;
 	}
 	str_len = strlen(JSON_GET_STRING_VALUE(item));
 	if (str_len > 13) {
+#if defined(CONFIG_STDK_IOT_CORE_LOG_LEVEL_ERROR)
 		current_name = (char *)name_deviceOnboardingId;
+#endif
 		iot_err = IOT_ERROR_UNINITIALIZED;
 		goto load_out;
 	}
@@ -282,7 +290,9 @@ iot_error_t iot_api_onboarding_config_load(unsigned char *onboarding_config,
 	/* mnid */
 	item = JSON_GET_OBJECT_ITEM(config, name_mnId);
 	if (!item || !strcmp(JSON_GET_STRING_VALUE(item), "MNID")) {
+#if defined(CONFIG_STDK_IOT_CORE_LOG_LEVEL_ERROR)
 		current_name = (char *)name_mnId;
+#endif
 		iot_err = IOT_ERROR_UNINITIALIZED;
 		goto load_out;
 	}
@@ -298,7 +308,9 @@ iot_error_t iot_api_onboarding_config_load(unsigned char *onboarding_config,
 	/* setup_id */
 	item = JSON_GET_OBJECT_ITEM(config, name_setupId);
 	if (!item) {
+#if defined(CONFIG_STDK_IOT_CORE_LOG_LEVEL_ERROR)
 		current_name = (char *)name_setupId;
+#endif
 		iot_err = IOT_ERROR_UNINITIALIZED;
 		goto load_out;
 	}
@@ -314,7 +326,9 @@ iot_error_t iot_api_onboarding_config_load(unsigned char *onboarding_config,
 	/* vid */
 	item = JSON_GET_OBJECT_ITEM(config, name_vid);
 	if (!item) {
+#if defined(CONFIG_STDK_IOT_CORE_LOG_LEVEL_ERROR)
 		current_name = (char *)name_vid;
+#endif
 		iot_err = IOT_ERROR_UNINITIALIZED;
 		goto load_out;
 	}
@@ -330,7 +344,9 @@ iot_error_t iot_api_onboarding_config_load(unsigned char *onboarding_config,
 	/* device_type_id */
 	item = JSON_GET_OBJECT_ITEM(config, name_deviceTypeId);
 	if (!item || !strcmp(JSON_GET_STRING_VALUE(item), "TYPE")) {
+#if defined(CONFIG_STDK_IOT_CORE_LOG_LEVEL_ERROR)
 		current_name = (char *)name_deviceTypeId;
+#endif
 		iot_err = IOT_ERROR_UNINITIALIZED;
 		goto load_out;
 	}
@@ -346,7 +362,9 @@ iot_error_t iot_api_onboarding_config_load(unsigned char *onboarding_config,
 	/* ownership validation type */
 	item = JSON_GET_OBJECT_ITEM(config, name_ownershipValidationTypes);
 	if (!item) {
+#if defined(CONFIG_STDK_IOT_CORE_LOG_LEVEL_ERROR)
 		current_name = (char *)name_ownershipValidationTypes;
+#endif
 		iot_err = IOT_ERROR_UNINITIALIZED;
 		goto load_out;
 	}
@@ -363,7 +381,9 @@ iot_error_t iot_api_onboarding_config_load(unsigned char *onboarding_config,
 				ownership_validation_type |= (unsigned int) IOT_OVF_TYPE_QR;
 			else {
 				IOT_ERROR("Unknown validation type: %s", JSON_GET_STRING_VALUE(ovf));
+#if defined(CONFIG_STDK_IOT_CORE_LOG_LEVEL_ERROR)
 				current_name = (char *)name_ownershipValidationTypes;
+#endif
 				iot_err = IOT_ERROR_UNINITIALIZED;
 				goto load_out;
 			}
@@ -372,7 +392,9 @@ iot_error_t iot_api_onboarding_config_load(unsigned char *onboarding_config,
 	if (ownership_validation_type == 0)
 	{
 		IOT_ERROR("No ownership validation type selected");
+#if defined(CONFIG_STDK_IOT_CORE_LOG_LEVEL_ERROR)
 		current_name = (char *)name_ownershipValidationTypes;
+#endif
 		iot_err = IOT_ERROR_UNINITIALIZED;
 		goto load_out;
 	}
@@ -384,7 +406,9 @@ iot_error_t iot_api_onboarding_config_load(unsigned char *onboarding_config,
 	} else if (!strcmp(JSON_GET_STRING_VALUE(item), "CERTIFICATE")) {
 		pk_type = IOT_CRYPTO_PK_RSA;
 	} else {
+#if defined(CONFIG_STDK_IOT_CORE_LOG_LEVEL_ERROR)
 		current_name = (char *)name_identityType;
+#endif
 		iot_err = IOT_ERROR_UNINITIALIZED;
 		goto load_out;
 	}
@@ -392,7 +416,9 @@ iot_error_t iot_api_onboarding_config_load(unsigned char *onboarding_config,
 	/* Device Integration Profile, optional */
 	dip = JSON_GET_OBJECT_ITEM(config, name_deviceIntegrationProfileId);
 	if (dip) {
+#if defined(CONFIG_STDK_IOT_CORE_LOG_LEVEL_ERROR)
 		current_name = (char *)name_deviceIntegrationProfileId;
+#endif
 		new_dip = iot_os_malloc(sizeof(struct iot_dip_data));
 		if (!new_dip) {
 			iot_err = IOT_ERROR_MEM_ALLOC;
@@ -563,8 +589,9 @@ iot_error_t iot_api_device_info_load(unsigned char *device_info,
 	char *firmware_version = NULL;
 	char *data = NULL;
 	size_t str_len = 0;
+#if defined(CONFIG_STDK_IOT_CORE_LOG_LEVEL_ERROR)
 	char *current_name = NULL;
-
+#endif
 
 	if (!device_info || !info || device_info_len == 0)
 		return IOT_ERROR_INVALID_ARGS;
@@ -580,7 +607,9 @@ iot_error_t iot_api_device_info_load(unsigned char *device_info,
 	root = JSON_PARSE((char *)data);
 	profile = JSON_GET_OBJECT_ITEM(root, name_deviceInfo);
 	if (!profile) {
+#if defined(CONFIG_STDK_IOT_CORE_LOG_LEVEL_ERROR)
 		current_name = (char *)name_deviceInfo;
+#endif
 		iot_err = IOT_ERROR_UNINITIALIZED;
 		goto load_out;
 	}
@@ -588,7 +617,9 @@ iot_error_t iot_api_device_info_load(unsigned char *device_info,
 	/* version */
 	item = JSON_GET_OBJECT_ITEM(profile, name_version);
 	if (!item) {
+#if defined(CONFIG_STDK_IOT_CORE_LOG_LEVEL_ERROR)
 		current_name = (char *)name_version;
+#endif
 		iot_err = IOT_ERROR_UNINITIALIZED;
 		goto load_out;
 	}
@@ -660,7 +691,9 @@ iot_error_t iot_api_read_device_identity(unsigned char* nv_prof,
 	char *data = NULL;
 	char *object_data = NULL;
 	size_t str_len = 0;
+#if defined(CONFIG_STDK_IOT_CORE_LOG_LEVEL_ERROR)
 	char *current_name = NULL;
+#endif
 
 	if (!nv_prof || !nv_data || nv_prof_len == 0)
 		return IOT_ERROR_INVALID_ARGS;
@@ -676,14 +709,18 @@ iot_error_t iot_api_read_device_identity(unsigned char* nv_prof,
 	root = JSON_PARSE((char *)data);
 	profile = JSON_GET_OBJECT_ITEM(root, name_deviceInfo);
 	if (!profile) {
+#if defined(CONFIG_STDK_IOT_CORE_LOG_LEVEL_ERROR)
 		current_name = (char*)name_deviceInfo;
+#endif
 		iot_err = IOT_ERROR_UNINITIALIZED;
 		goto load_out;
 	}
 
 	item = JSON_GET_OBJECT_ITEM(profile, object);
 	if (!item || !strcmp(JSON_GET_STRING_VALUE(item), object)) {
+#if defined(CONFIG_STDK_IOT_CORE_LOG_LEVEL_ERROR)
 		current_name = (char *)object;
+#endif
 		iot_err = IOT_ERROR_UNINITIALIZED;
 		goto load_out;
 	}
