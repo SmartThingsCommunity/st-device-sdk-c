@@ -27,6 +27,8 @@
 #include "iot_net.h"
 #include "iot_mqtt.h"
 
+#define IOT_UUID_BYTES				(16)
+
 #define IOT_WIFI_PROV_SSID_LEN		(31 + 1)
 #define IOT_WIFI_PROV_PASSWORD_LEN 	(63 + 1)
 
@@ -114,7 +116,7 @@ enum iot_state_opt {
  * @brief Contains "uuid" data
  */
 struct iot_uuid {
-	unsigned char id[16];	/**< @brief actual uuid values, 16 octet */
+	unsigned char id[IOT_UUID_BYTES];	/**< @brief actual uuid values, 16 octet */
 };
 
 /**

@@ -979,6 +979,8 @@ misc_info_store_out:
 	return iot_err;
 }
 
+#define UUID_FULL_STR_LENGTH	(37)	/* sizeof '4066c24f-cd48-4e92-a538-362e74337c7f\0' */
+
 char *iot_alloc_random_id(void)
 {
 	iot_error_t err = IOT_ERROR_NONE;
@@ -991,13 +993,14 @@ char *iot_alloc_random_id(void)
 		return NULL;
 	}
 
-	new_random_id = (char *)iot_os_malloc(40);
+	new_random_id = (char *)iot_os_malloc(UUID_FULL_STR_LENGTH);
 	if (new_random_id == NULL) {
 		IOT_ERROR("can't malloc for new lookup_id");
 		return NULL;
 	}
 
-	err = iot_util_convert_uuid_str(&uuid, new_random_id, 40);
+	err = iot_util_convert_uuid_str(&uuid, new_random_id,
+			UUID_FULL_STR_LENGTH);
 	if (err) {
 		IOT_ERROR("Failed to convert uuid to str (%d)", err);
 		iot_os_free(new_random_id);

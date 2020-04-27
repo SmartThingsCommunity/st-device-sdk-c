@@ -294,7 +294,7 @@ static bool _unlikely_with_stored_dip(struct iot_dip_data *chk_dip)
 		return true;
 	}
 
-	for (idx = 0; idx < 16; idx++) {
+	for (idx = 0; idx < IOT_UUID_BYTES; idx++) {
 		if (chk_dip->dip_id.id[idx] != old_dip.dip_id.id[idx]) {
 			return true;
 		}
