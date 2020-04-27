@@ -532,14 +532,14 @@ static iot_error_t _do_iot_main_command(struct iot_context *ctx,
 					}
 
 					if (is_diff_dip) {
-						if (ctx->lookup_id != NULL) {
-							iot_os_free(ctx->lookup_id);
-							ctx->lookup_id = NULL;
+						if (ctx->lookup_id == NULL) {
+							ctx->lookup_id = iot_os_malloc(IOT_REG_UUID_STR_LEN + 1);
 						}
 
-						ctx->lookup_id = iot_alloc_random_id();
-						if (ctx->lookup_id == NULL) {
-							IOT_ERROR("Failed to alloc new lookup_id");
+						err = iot_get_random_id_str(ctx->lookup_id,
+								(IOT_REG_UUID_STR_LEN + 1));
+						if (err != IOT_ERROR_NONE) {
+							IOT_ERROR("Failed to get new lookup_id(%d)", err);
 							is_diff_dip = false;
 						}
 					}

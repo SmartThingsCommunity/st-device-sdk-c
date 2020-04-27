@@ -1408,14 +1408,14 @@ iot_error_t _es_wifiprovisioninginfo_handler(struct iot_context *ctx, char *in_p
 		goto out;
 	}
 
-	if (ctx->lookup_id != NULL) {
-		iot_os_free(ctx->lookup_id);
-		ctx->lookup_id = NULL;
+	if (ctx->lookup_id == NULL) {
+		ctx->lookup_id = iot_os_malloc(IOT_REG_UUID_STR_LEN + 1);
 	}
 
-	ctx->lookup_id = iot_alloc_random_id();
-	if (ctx->lookup_id == NULL) {
-		IOT_ERROR("failed to allocate new lookup_id");
+	err = iot_get_random_id_str(ctx->lookup_id,
+			(IOT_REG_UUID_STR_LEN + 1));
+	if (err != IOT_ERROR_NONE) {
+		IOT_ERROR("failed to get new lookup_id(%d)", err);
 		err = IOT_ERROR_EASYSETUP_LOOKUPID_GENERATE_FAIL;
 		goto out;
 	}

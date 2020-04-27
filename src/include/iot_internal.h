@@ -341,11 +341,13 @@ iot_error_t iot_misc_info_load(iot_misc_info_t type, void *out_data);
 iot_error_t iot_misc_info_store(iot_misc_info_t type, const void *in_data);
 
 /**
- * @brief	Allocate random_id string based on uuid style
- * @details	this function tries to allocate new generated random_id string
- * @return	Pointer of generated uuid style string buffer
+ * @brief	get random_id string based on uuid style
+ * @details	this function tries to get new generated random_id string
+ * @param[in]	str	allocated memory pointer for random_id string
+ * @param[in]	max_sz	max size of allocated memory pointer
+ * @retval	IOT_ERROR_NONE                  success.
  */
-char *iot_alloc_random_id(void);
+iot_error_t iot_get_random_id_str(char *str, int max_sz);
 
 #endif /* _IOT_INTERNAL_H_ */
 

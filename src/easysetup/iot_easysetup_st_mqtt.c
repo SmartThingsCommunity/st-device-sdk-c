@@ -546,16 +546,16 @@ iot_error_t _iot_es_mqtt_connect(struct iot_context *ctx, st_mqtt_client target_
 	int ret;
 	iot_error_t iot_ret = IOT_ERROR_NONE;
 	bool reboot;
-	char *client_id = NULL;
+	char client_id[IOT_REG_UUID_STR_LEN + 1] = {0, };
 	struct iot_cloud_prov_data *cloud_prov;
 	char *root_cert = NULL;
 	size_t root_cert_len;
 
 	/* Use mac based random client_id for GreatGate */
-	client_id = iot_alloc_random_id();
-	if (client_id == NULL) {
-		IOT_ERROR("Cannot allocate random_id for client_id");
-		return IOT_ERROR_MEM_ALLOC;
+	iot_ret = iot_get_random_id_str(client_id, sizeof(client_id));
+	if (iot_ret != IOT_ERROR_NONE) {
+		IOT_ERROR("Cannot get random_id for client_id");
+		return iot_ret;
 	}
 
 	cloud_prov = &ctx->prov_data.cloud;
@@ -640,7 +640,6 @@ done_mqtt_connect:
 	if (root_cert)
 		free((void *)root_cert);
 
-	free(client_id);
 	return iot_ret;
 }
 

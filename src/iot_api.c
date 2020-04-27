@@ -979,35 +979,28 @@ misc_info_store_out:
 	return iot_err;
 }
 
-#define UUID_FULL_STR_LENGTH	(37)	/* sizeof '4066c24f-cd48-4e92-a538-362e74337c7f\0' */
-
-char *iot_alloc_random_id(void)
+iot_error_t iot_get_random_id_str(char *str, int max_sz)
 {
 	iot_error_t err = IOT_ERROR_NONE;
-	char *new_random_id = NULL;
 	struct iot_uuid uuid;
 
+	if (str == NULL) {
+		IOT_ERROR("There is no string arg");
+		return IOT_ERROR_INVALID_ARGS;
+	}
+
 	err = iot_get_random_uuid_from_mac(&uuid);
-	if (err) {
+	if (err != IOT_ERROR_NONE) {
 		IOT_ERROR("To get uuid is failed (%d)", err);
-		return NULL;
+		return err;
 	}
 
-	new_random_id = (char *)iot_os_malloc(UUID_FULL_STR_LENGTH);
-	if (new_random_id == NULL) {
-		IOT_ERROR("can't malloc for new lookup_id");
-		return NULL;
-	}
-
-	err = iot_util_convert_uuid_str(&uuid, new_random_id,
-			UUID_FULL_STR_LENGTH);
-	if (err) {
+	err = iot_util_convert_uuid_str(&uuid, str, max_sz);
+	if (err != IOT_ERROR_NONE) {
 		IOT_ERROR("Failed to convert uuid to str (%d)", err);
-		iot_os_free(new_random_id);
-		return NULL;
 	}
 
-	return new_random_id;
+	return err;
 }
 
 /**************************************************************
