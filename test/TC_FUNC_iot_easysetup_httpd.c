@@ -141,77 +141,44 @@ void assert_error_response(char *buffer, int expected_error_code, int expected_h
     assert_int_equal(expected_error_code, code_item->valueint);
 }
 
-void TC_iot_easysetup_httpd_get_invalid_uri(void **state)
+enum {
+    REQ_GET_INVALID_URI,
+    REQ_POST_INVALID_URI,
+    REQ_INVALID_METHOD,
+    REQ_MAX,
+};
+
+void TC_iot_easysetup_httpd_invalid_request(void **state)
 {
     int sock;
     ssize_t len;
+    char *request_message[REQ_MAX];
     char recv_buffer[1024] = {0, };
+    char *get_request_message = "GET /invaliduri HTTP/1.1\r\nContent-Length: 0\r\n";
+    char *post_request_message = "POST /invaliduri HTTP/1.1\r\nContent-Type: application/json\r\nContent-Length: 18 \r\n\r\n{\"message\":\"invalid\"}";
+    char *invalid_method_message = "INVAL /deviceinfo HTTP/1.1\r\nContent-Length: 0\r\n";
 
     // Given
-    const char *get_request_message = "GET /invaliduri HTTP/1.1\r\nContent-Length: 0\r\n";
-    memset(recv_buffer, '\0', sizeof(recv_buffer));
-    sock = _connect_to_server("127.0.0.1");
+    request_message[REQ_GET_INVALID_URI] = get_request_message;
+    request_message[REQ_POST_INVALID_URI] = post_request_message;
+    request_message[REQ_INVALID_METHOD] = invalid_method_message;
 
-    // When: send GET message to invalid URI
-    len = send(sock, get_request_message, strlen(get_request_message), 0);
-    // Then
-    assert_int_equal(len, strlen(get_request_message));
+    for (int i = 0; i < REQ_MAX; i++) {
+        // Given
+        memset(recv_buffer, '\0', sizeof(recv_buffer));
+        sock = _connect_to_server("127.0.0.1");
 
-    // When: recv response
-    len = recv(sock, recv_buffer, sizeof(recv_buffer), 0);
-    // Then
-    assert_true(len > 0);
-    assert_error_response(recv_buffer, -401, 400);
+        // When: send GET message to invalid URI
+        len = send(sock, request_message[i], strlen(request_message[i]), 0);
+        // Then
+        assert_int_equal(len, strlen(request_message[i]));
 
-    close(sock);
-}
+        // When: recv response
+        len = recv(sock, recv_buffer, sizeof(recv_buffer), 0);
+        // Then
+        assert_true(len > 0);
+        assert_error_response(recv_buffer, -401, 400);
 
-void TC_iot_easysetup_httpd_post_invalid_uri(void **state)
-{
-    int sock;
-    ssize_t len;
-    char recv_buffer[1024] = {0, };
-
-    // Given
-    const char *post_request_message = "POST /invaliduri HTTP/1.1\r\nContent-Type: application/json\r\nContent-Length: 18 \r\n\r\n{\"message\":\"invalid\"}";
-    memset(recv_buffer, '\0', sizeof(recv_buffer));
-    sock = _connect_to_server("127.0.0.1");
-
-    // When: send POST message to invalid URI
-    len = send(sock, post_request_message, strlen(post_request_message), 0);
-    // Then
-    assert_int_equal(len, strlen(post_request_message));
-
-    // When: recv response
-    len = recv(sock, recv_buffer, sizeof(recv_buffer), 0);
-    // Then
-    assert_true(len > 0);
-    assert_error_response(recv_buffer, -401, 400);
-
-    close(sock);
-}
-
-void TC_iot_easysetup_httpd_invalid_method(void **state)
-{
-    int sock;
-    ssize_t len;
-    char recv_buffer[1024] = {0, };
-
-    // Given
-    const char *invalid_method_message = "INVAL /deviceinfo HTTP/1.1\r\nContent-Length: 0\r\n";
-    memset(recv_buffer, '\0', sizeof(recv_buffer));
-    sock = _connect_to_server("127.0.0.1");
-
-    // When: send POST message to invalid URI
-    len = send(sock, invalid_method_message, strlen(invalid_method_message), 0);
-    // Then
-    assert_int_equal(len, strlen(invalid_method_message));
-
-    // When: recv response
-    len = recv(sock, recv_buffer, sizeof(recv_buffer), 0);
-    // Then
-    assert_true(len > 0);
-    assert_error_response(recv_buffer, -401, 400);
-
-    close(sock);
+        close(sock);
+    }
 }
