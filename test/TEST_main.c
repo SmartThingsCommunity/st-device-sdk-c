@@ -225,6 +225,15 @@ int TEST_FUNC_iot_wt(void)
     return cmocka_run_group_tests_name("iot_wt.c", tests, NULL, NULL);
 }
 
+int TEST_FUNC_iot_easysetup_httpd(void)
+{
+    const struct CMUnitTest tests[] = {
+            cmocka_unit_test(TC_iot_easysetup_httpd_get_invalid_uri),
+            cmocka_unit_test(TC_iot_easysetup_httpd_post_invalid_uri),
+    };
+    return cmocka_run_group_tests_name("iot_easysetup_tcp_httpd.c", tests, TC_iot_easysetup_httpd_group_setup, TC_iot_easysetup_httpd_group_teardown);
+}
+
 int main(void) {
     int err = 0;
 
@@ -239,6 +248,7 @@ int main(void) {
     err += TEST_FUNC_iot_main();
     err += TEST_FUNC_iot_mqtt_client();
     err += TEST_FUNC_iot_wt();
+    err += TEST_FUNC_iot_easysetup_httpd();
 
     return err;
 }
