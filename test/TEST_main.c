@@ -230,6 +230,7 @@ int TEST_FUNC_iot_easysetup_httpd(void)
     const struct CMUnitTest tests[] = {
             cmocka_unit_test(TC_iot_easysetup_httpd_get_invalid_uri),
             cmocka_unit_test(TC_iot_easysetup_httpd_post_invalid_uri),
+            cmocka_unit_test(TC_iot_easysetup_httpd_invalid_method),
     };
     return cmocka_run_group_tests_name("iot_easysetup_tcp_httpd.c", tests, TC_iot_easysetup_httpd_group_setup, TC_iot_easysetup_httpd_group_teardown);
 }

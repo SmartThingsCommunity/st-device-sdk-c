@@ -191,5 +191,6 @@ int TC_iot_easysetup_httpd_group_setup(void **state);
 int TC_iot_easysetup_httpd_group_teardown(void **state);
 void TC_iot_easysetup_httpd_get_invalid_uri(void **state);
 void TC_iot_easysetup_httpd_post_invalid_uri(void **state);
+void TC_iot_easysetup_httpd_invalid_method(void **state);
 
 #endif //ST_DEVICE_SDK_C_TCS_H

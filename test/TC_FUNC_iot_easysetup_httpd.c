@@ -77,6 +77,7 @@ static int _connect_to_server(char *server_addr)
 
     return sock;
 }
+
 typedef struct { char *name, *value; } header_t;
 
 static void _parse_http_resonse(char* rx_buffer, int *out_res_code, char **body_ptr)
@@ -180,6 +181,31 @@ void TC_iot_easysetup_httpd_post_invalid_uri(void **state)
     len = send(sock, post_request_message, strlen(post_request_message), 0);
     // Then
     assert_int_equal(len, strlen(post_request_message));
+
+    // When: recv response
+    len = recv(sock, recv_buffer, sizeof(recv_buffer), 0);
+    // Then
+    assert_true(len > 0);
+    assert_error_response(recv_buffer, -401, 400);
+
+    close(sock);
+}
+
+void TC_iot_easysetup_httpd_invalid_method(void **state)
+{
+    int sock;
+    ssize_t len;
+    char recv_buffer[1024] = {0, };
+
+    // Given
+    const char *invalid_method_message = "INVAL /deviceinfo HTTP/1.1\r\nContent-Length: 0\r\n";
+    memset(recv_buffer, '\0', sizeof(recv_buffer));
+    sock = _connect_to_server("127.0.0.1");
+
+    // When: send POST message to invalid URI
+    len = send(sock, invalid_method_message, strlen(invalid_method_message), 0);
+    // Then
+    assert_int_equal(len, strlen(invalid_method_message));
 
     // When: recv response
     len = recv(sock, recv_buffer, sizeof(recv_buffer), 0);
