@@ -26,6 +26,7 @@
 #include <iot_internal.h>
 #include <iot_nv_data.h>
 #include <iot_easysetup.h>
+#include <iot_util.h>
 #include "TC_MOCK_functions.h"
 
 #define UNUSED(x) (void**)(x)
@@ -333,4 +334,60 @@ void TC_do_status_report(void** state)
     }
 
     free(context);
+}
+
+extern iot_error_t _check_prov_data_validation(struct iot_device_prov_data *prov_data);
+
+struct _prov_test_data {
+    iot_error_t expected;
+    char *ssid;
+    char *url;
+    int num;
+    unsigned char id[IOT_UUID_BYTES];
+};
+
+static struct iot_device_prov_data *_generate_test_prov_data(struct _prov_test_data data)
+{
+    struct iot_device_prov_data *prov_data;
+    struct iot_wifi_prov_data *wifi_prov;
+    struct iot_cloud_prov_data *cloud_prov;
+
+    prov_data = (struct iot_device_prov_data *) calloc(1, sizeof(struct iot_device_prov_data));
+    assert_non_null(prov_data);
+    wifi_prov = &prov_data->wifi;
+    cloud_prov = &prov_data->cloud;
+    if (data.ssid) {
+        strncpy(wifi_prov->ssid, data.ssid, sizeof(wifi_prov->ssid) -  1);
+    }
+    if (data.url) {
+        cloud_prov->broker_url = strdup(data.url);
+    }
+
+    cloud_prov->broker_port = data.num;
+    memcpy(&cloud_prov->location_id.id, &data.id, IOT_UUID_BYTES);
+
+    return prov_data;
+}
+
+void TC_check_prov_data_validation(void **state)
+{
+    iot_error_t err;
+    struct _prov_test_data test_set[] = {
+            { IOT_ERROR_NONE, "TestSsid", "test.domain.com", 443, { 0x80, 0x10, 0xF0, 0xE6, 0x50, 0x69, 0x12, 0x20, 0x04, 0x01, 0x00, 0x12, 0xB4, 0x10, 0x99, 0x77}},
+            { IOT_ERROR_INVALID_ARGS, NULL, "test.domain.com", 443, { 0x80, 0x10, 0xF0, 0xE6, 0x50, 0x69, 0x12, 0x20, 0x04, 0x01, 0x00, 0x12, 0xB4, 0x10, 0x99, 0x77}},
+            { IOT_ERROR_INVALID_ARGS, "TestSsid", NULL, 443, { 0x80, 0x10, 0xF0, 0xE6, 0x50, 0x69, 0x12, 0x20, 0x04, 0x01, 0x00, 0x12, 0xB4, 0x10, 0x99, 0x77}},
+            { IOT_ERROR_INVALID_ARGS, "TestSsid", "test.domain.com", -5, { 0x80, 0x10, 0xF0, 0xE6, 0x50, 0x69, 0x12, 0x20, 0x04, 0x01, 0x00, 0x12, 0xB4, 0x10, 0x99, 0x77}},
+            { IOT_ERROR_INVALID_ARGS, "TestSsid", "test.domain.com", 443, { 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00}},
+    };
+
+    for (int i = 0; i < sizeof(test_set)/sizeof(struct _prov_test_data); i++) {
+        // Given
+        struct iot_device_prov_data *prov_data = _generate_test_prov_data(test_set[i]);
+        // When
+        err = _check_prov_data_validation(prov_data);
+        // Then
+        assert_int_equal(err, test_set[i].expected);
+        // Teardown
+        free(prov_data);
+    }
 }
