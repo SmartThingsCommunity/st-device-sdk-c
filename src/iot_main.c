@@ -168,7 +168,8 @@ static void _do_update_timeout(struct iot_context *ctx, unsigned int needed_tout
 	iot_os_timer_count_ms(ctx->state_timer, needed_tout);
 }
 
-static void _do_status_report(struct iot_context *ctx,
+STATIC_FUNCTION
+void _do_status_report(struct iot_context *ctx,
 	iot_state_t target_state, bool is_final)
 {
 	iot_status_t fn_stat = 0;

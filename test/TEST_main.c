@@ -203,6 +203,7 @@ int TEST_FUNC_iot_main()
             cmocka_unit_test(TC_st_conn_cleanup_invalid_parameters),
             cmocka_unit_test(TC_st_conn_cleanup_success),
             cmocka_unit_test(TC_easysetup_resources_create_delete_success),
+            cmocka_unit_test(TC_do_status_report),
     };
     return cmocka_run_group_tests_name("iot_main.c", tests, NULL, NULL);
 }

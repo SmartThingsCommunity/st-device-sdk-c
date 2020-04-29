@@ -21,6 +21,7 @@
 #include <cmocka.h>
 #include <st_dev.h>
 #include <string.h>
+#include <stdbool.h>
 #include <iot_main.h>
 #include <iot_internal.h>
 #include <iot_nv_data.h>
@@ -280,4 +281,56 @@ void TC_easysetup_resources_create_delete_success(void** state)
     assert_false(context->es_res_created);
 
     set_mock_detect_memory_leak(false);
+}
+
+extern void _do_status_report(struct iot_context *ctx, iot_state_t target_state, bool is_final);
+
+struct _test_status_values {
+    unsigned int reported_stat;
+    iot_state_t target_state;
+    bool is_final;
+    iot_status_t cb_iot_status;
+    iot_stat_lv_t cb_stat_lv;
+};
+
+void test_status_cb(iot_status_t iot_status, iot_stat_lv_t stat_lv, void *usr_data)
+{
+    check_expected(iot_status);
+    check_expected(stat_lv);
+}
+
+void TC_do_status_report(void** state)
+{
+    struct iot_context *context;
+    struct _test_status_values test_set[] = {
+            { IOT_STATUS_IDLE | (IOT_STAT_LV_STAY << 8), IOT_STATE_CHANGE_FAILED, false, IOT_STATUS_IDLE, IOT_STAT_LV_FAIL },
+            { IOT_STATUS_CONNECTING | (IOT_STAT_LV_START << 8), IOT_STATE_CHANGE_FAILED, false, IOT_STATUS_CONNECTING, IOT_STAT_LV_FAIL },
+            { 0, IOT_STATE_INITIALIZED, false, IOT_STATUS_IDLE, IOT_STAT_LV_STAY },
+            { 0, IOT_STATE_PROV_ENTER, true, IOT_STATUS_PROVISIONING, IOT_STAT_LV_START },
+            { 0, IOT_STATE_PROV_CONN_MOBILE, false, IOT_STATUS_PROVISIONING, IOT_STAT_LV_CONN },
+            { 0, IOT_STATE_PROV_CONFIRM, true, IOT_STATUS_NEED_INTERACT, IOT_STAT_LV_STAY },
+            { 0, IOT_STATE_PROV_DONE, false, IOT_STATUS_PROVISIONING, IOT_STAT_LV_DONE },
+            { 0, IOT_STATE_CLOUD_REGISTERING, false, IOT_STATUS_CONNECTING, IOT_STAT_LV_START },
+            { 0, IOT_STATE_CLOUD_CONNECTING, false, IOT_STATUS_CONNECTING, IOT_STAT_LV_START },
+            { 0, IOT_STATE_CLOUD_CONNECTED, false, IOT_STATUS_CONNECTING, IOT_STAT_LV_DONE },
+            { 0, IOT_STATE_CLOUD_DISCONNECTED, false, IOT_STATUS_IDLE, IOT_STAT_LV_STAY },
+    };
+    UNUSED(state);
+
+    // Given
+    context = (struct iot_context *) calloc(1, sizeof(struct iot_context));
+    context->status_cb = test_status_cb;
+    context->status_maps = IOT_STATUS_ALL;
+    context->curr_otm_feature = OVF_BIT_BUTTON;
+
+    for (int i = 0; i < sizeof(test_set)/sizeof(struct _test_status_values); i++) {
+        // Given
+        context->reported_stat = test_set[i].reported_stat;
+        expect_value(test_status_cb, iot_status, test_set[i].cb_iot_status);
+        expect_value(test_status_cb, stat_lv, test_set[i].cb_stat_lv);
+        // When & Then
+        _do_status_report(context, test_set[i].target_state, test_set[i].is_final);
+    }
+
+    free(context);
 }

@@ -175,6 +175,7 @@ void TC_st_conn_init_success(void **state);
 void TC_st_conn_cleanup_invalid_parameters(void **state);
 void TC_st_conn_cleanup_success(void **state);
 void TC_easysetup_resources_create_delete_success(void** state);
+void TC_do_status_report(void** state);
 
 // TCs for iot_mqtt_client.c
 void TC_st_mqtt_create_success(void** state);
