@@ -67,6 +67,7 @@ typedef struct {
 	char ssid[IOT_WIFI_MAX_SSID_LEN+1];		/**< @brief wifi SSID string */
 	char pass[IOT_WIFI_MAX_PASS_LEN+1];		/**< @brief wifi password string */
 	uint8_t bssid[IOT_WIFI_MAX_BSSID_LEN];	/**< @brief wifi mac address */
+	iot_wifi_auth_mode_t authmode;			/**< @brief wifi authentication mode for station and softap*/
 } iot_wifi_conf;
 
 /**
