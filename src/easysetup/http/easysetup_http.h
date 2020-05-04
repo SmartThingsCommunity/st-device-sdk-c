@@ -16,8 +16,8 @@
  *
  ****************************************************************************/
 
-#ifndef _ES_HTTP_H_
-#define _ES_HTTP_H_
+#ifndef _EASYSETUP_HTTP_H_
+#define _EASYSETUP_HTTP_H_
 
 #ifdef __cplusplus
 extern "C" {
@@ -39,4 +39,4 @@ void es_http_deinit(void);
 }
 #endif
 
-#endif /* _ES_HTTP_H_ */
+#endif /* _EASYSETUP_HTTP_H_ */
