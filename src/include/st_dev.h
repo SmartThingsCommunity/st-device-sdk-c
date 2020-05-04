@@ -74,7 +74,8 @@ typedef enum iot_cap_val_type {
 	IOT_CAP_VAL_TYPE_INT_OR_NUM,	/**< @brief For integer or float number. */
 	IOT_CAP_VAL_TYPE_STRING,		/**< @brief For NULL-terminated string. */
 	IOT_CAP_VAL_TYPE_STR_ARRAY,		/**< @brief For array of NULL-terminated strings. */
-	IOT_CAP_VAL_TYPE_JSON_OBJECT	/**< @brief For json object */
+	IOT_CAP_VAL_TYPE_JSON_OBJECT,	/**< @brief For json object. */
+	IOT_CAP_VAL_TYPE_BOOLEAN		/**< @brief For boolean. */
 } iot_cap_val_type_t;
 
 /**
@@ -98,6 +99,7 @@ typedef struct {
 		char *string;	/**< @brief NULL-terminated string. */
 		char **strings; /**< @brief Array of NULL-terminated strings. */
 		char *json_object; /**< @brief Json object payload strings */
+		bool boolean; /**< @brief boolean */
 	};
 } iot_cap_val_t;
 

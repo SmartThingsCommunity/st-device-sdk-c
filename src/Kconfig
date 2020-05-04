@@ -72,6 +72,42 @@ config STDK_IOT_CORE_SUPPORT_STNV_PARTITION
     help
        If this option is enabled, STDK will use STNV partition data for easysetup.
 
+config STDK_IOT_CORE_LOG_FILE
+    bool "File logging system"
+    default n
+    depends on STDK_IOT_CORE
+    help
+       If this option is enable, STDK will save iot log to flash memory
+
+config STDK_IOT_CORE_LOG_FILE_ADDR
+    hex "Start address of a log file on flash memory"
+    default 0x1F4000
+    depends on STDK_IOT_CORE_LOG_FILE
+    help
+       Configuration start address of flash memory that logging system will use.
+	If you set wrong address, log system will overwrite the data on wrong address.
+
+config STDK_IOT_CORE_LOG_FILE_SIZE
+    hex "Size of Log file"
+    default 0xC000
+    depends on STDK_IOT_CORE_LOG_FILE
+    help
+       Configuration log file size
+
+config STDK_IOT_CORE_LOG_FILE_RAM_BUF_SIZE
+    int "Ram buffer size"
+    default 1024
+    depends on STDK_IOT_CORE_LOG_FILE
+    help
+       Configuration ram buffer size that is releasted to amount logs to save at a time.
+
+config STDK_IOT_CORE_LOG_FILE_FLASH_SECTOR_SIZE
+    int "Flash sector size (Byte)"
+    default 4096
+    depends on STDK_IOT_CORE_LOG_FILE
+    help
+       Configuration flash sector size for logging system
+
 choice STDK_IOT_CORE_BSP_SUPPORT
     prompt "BSP Support"
     default STDK_IOT_CORE_BSP_SUPPORT_ESP8266

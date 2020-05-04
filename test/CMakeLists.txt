@@ -37,7 +37,7 @@ if(ENABLE_STDK_TEST)
                    TC_FUNC_iot_main.c
                    TC_FUNC_iot_mqtt_client.c
                    TC_FUNC_iot_wt.c
-                   )
+                   TC_FUNC_iot_easysetup_httpd.c)
 
     target_link_libraries(stdk_test
                           PRIVATE

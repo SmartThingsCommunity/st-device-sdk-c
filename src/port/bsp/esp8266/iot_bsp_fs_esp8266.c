@@ -29,6 +29,8 @@
 #define STDK_NV_DATA_PARTITION "stnv"
 #define STDK_NV_DATA_NAMESPACE "stdk"
 
+#if defined(CONFIG_STDK_IOT_CORE_LOG_LEVEL_WARN) || defined(CONFIG_STDK_IOT_CORE_LOG_LEVEL_DEBUG)\
+	|| defined(CONFIG_STDK_IOT_CORE_LOG_LEVEL_ERROR)
 static const char* _get_error_string(esp_err_t err) {
 
 	switch(err) {
@@ -60,6 +62,7 @@ static const char* _get_error_string(esp_err_t err) {
 		return "Unknown";
 	}
 }
+#endif
 
 #if defined(CONFIG_STDK_IOT_CORE_FS_SW_ENCRYPTION)
 struct fs_migration {

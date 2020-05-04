@@ -390,7 +390,7 @@ void http_packet_handle(const char *name, char **buf, char *payload, enum cgi_ty
 	if (type == D2D_GET) {
 		for (i = 0; i < ARRAY_SIZE(get_cgi_cmds) ; i++) {
 			if (!strcmp(name,  get_cgi_cmds[i])) {
-					http_msg_handler(name, buf, D2D_GET, payload);
+				http_msg_handler(name, buf, D2D_GET, payload);
 				msg_processed = true;
 				break;
 			}
