@@ -18,7 +18,7 @@
 
 #include <string.h>
 #include "cJSON.h"
-#include "es_tcp_httpd.h"
+#include "easysetup_http.h"
 #include "iot_main.h"
 #include "iot_internal.h"
 #include "iot_debug.h"
@@ -420,7 +420,7 @@ iot_error_t iot_easysetup_init(struct iot_context *ctx)
 
 	context = ctx;
 
-	es_tcp_init();
+	es_http_init();
 	ref_step = 0;
 
 #if defined(CONFIG_STDK_IOT_CORE_EASYSETUP_HTTP_LOG_SUPPORT)
@@ -443,7 +443,7 @@ void iot_easysetup_deinit(struct iot_context *ctx)
 	if (!ctx)
 		return;
 
-	es_tcp_deinit();
+	es_http_deinit();
 
 	if (ctx->es_crypto_cipher_info) {
 		if (ctx->es_crypto_cipher_info->iv) {
