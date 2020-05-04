@@ -26,6 +26,7 @@
 #include "mbedtls/ctr_drbg.h"
 #include "mbedtls/certs.h"
 #include "mbedtls/x509.h"
+#include "mbedtls/debug.h"
 
 #ifdef __cplusplus
 extern "C" {

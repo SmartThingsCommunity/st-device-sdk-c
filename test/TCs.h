@@ -117,9 +117,12 @@ void TC_iot_crypto_base64_buffer_size(void **state);
 // TCs for iot_nv_data.c
 int TC_iot_nv_data_setup(void **state);
 int TC_iot_nv_data_teardown(void **state);
+void TC_iot_nv_get_wifi_prov_data_success(void **state);
+void TC_iot_nv_get_wifi_prov_data_null_parameters(void **state);
 void TC_iot_nv_get_root_certificate_success(void **state);
 void TC_iot_nv_get_root_certificate_null_parameters(void **state);
 void TC_iot_nv_get_root_certificate_internal_failure(void **state);
+void TC_iot_nv_get_client_certificate_null_parameters(void **state);
 void TC_iot_nv_get_public_key_success(void **state);
 void TC_iot_nv_get_public_key_null_parameters(void **state);
 void TC_iot_nv_get_serial_number_success(void **state);
@@ -160,6 +163,7 @@ void TC_STATIC_es_confirminfo_handler_button(void **state);
 void TC_STATIC_es_confirm_handler_success(void** state);
 void TC_STATIC_es_confirm_handler_invalid_pin(void** state);
 void TC_STATIC_es_confirm_handler_non_pin_otm(void** state);
+void TC_STATIC_es_confirm_handler_invalid_payload(void** state);
 void TC_STATIC_es_setupcomplete_handler_success(void** state);
 
 // TCs for iot_main.c
@@ -170,9 +174,21 @@ void TC_st_conn_init_wrong_device_info(void **state);
 void TC_st_conn_init_success(void **state);
 void TC_st_conn_cleanup_invalid_parameters(void **state);
 void TC_st_conn_cleanup_success(void **state);
+void TC_easysetup_resources_create_delete_success(void** state);
 
 // TCs for iot_mqtt_client.c
 void TC_st_mqtt_create_success(void** state);
 void TC_st_mqtt_connect_with_connack_rc(void** state);
+void TC_st_mqtt_disconnect_success(void** state);
+
+// TCs for iot_wt.c
+int TC_iot_wt_create_memleak_detect_setup(void **state);
+int TC_iot_wt_create_memleak_detect_teardown(void **state);
+void TC_iot_wt_create_null_parameters(void **state);
+
+// TCs for iot_easysetup_httpd
+int TC_iot_easysetup_httpd_group_setup(void **state);
+int TC_iot_easysetup_httpd_group_teardown(void **state);
+void TC_iot_easysetup_httpd_invalid_request(void **state);
 
 #endif //ST_DEVICE_SDK_C_TCS_H

@@ -91,6 +91,17 @@ typedef struct MQTTClient {
 	iot_os_thread thread;
 } MQTTClient;
 
+typedef enum {
+	MQTT_OPERATION_PUBLISH,
+} mqtt_operation_type;
+
+typedef struct _mqtt_operation_block {
+	mqtt_operation_type type;
+	union {
+		struct { st_mqtt_msg *msg; } _publish_data;
+	} data;
+} mqtt_operation_block;
+
 /** MQTT Connect - send an MQTT connect packet down the network and wait for a Connack
  *  @param options - connect options
  *  @return success code

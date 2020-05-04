@@ -37,6 +37,7 @@ typedef enum iot_error_t {
 	IOT_ERROR_UNINITIALIZED = -5,
 	IOT_ERROR_MEM_ALLOC = -6,
 	IOT_ERROR_TIMEOUT = -7,
+	IOT_ERROR_DUPLICATED_CMD = -8,
 
 	/* registration error */
 	IOT_ERROR_REG_UPDATED = -10,

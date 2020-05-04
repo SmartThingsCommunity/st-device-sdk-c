@@ -31,7 +31,6 @@
 #include "iot_crypto.h"
 #include "iot_os_util.h"
 #include "iot_bsp_system.h"
-#include "iot_uuid.h"
 
 #include "JSON.h"
 #if defined(STDK_IOT_CORE_SERIALIZE_CBOR)
@@ -66,13 +65,16 @@ static void mqtt_reg_sub_cb(st_mqtt_msg *md, void *userData)
 	JSON_H *svr_did = NULL;
 	JSON_H *event = NULL;
 	JSON_H *cur_time = NULL;
+	JSON_H *dip_key = NULL;
+	JSON_H *dip_item = NULL;
 	char time_str[11] = {0,};
 	char *svr_did_str = NULL;
 	enum iot_command_type iot_cmd;
+	struct iot_dip_data *reged_dip = NULL;
+	iot_error_t err;
 
 	/*parsing mqtt_payload*/
 #if defined(STDK_IOT_CORE_SERIALIZE_CBOR)
-	iot_error_t err;
 	char *payload_json = NULL;
 	size_t payload_json_len = 0;
 
@@ -121,8 +123,9 @@ static void mqtt_reg_sub_cb(st_mqtt_msg *md, void *userData)
 			iot_bsp_system_set_time_in_sec(time_str);
 
 			iot_cmd = IOT_COMMAND_CLOUD_REGISTERING;
-			if (iot_command_send(ctx, iot_cmd, NULL, 0) != IOT_ERROR_NONE)
+			if (iot_command_send(ctx, iot_cmd, NULL, 0) != IOT_ERROR_NONE) {
 				IOT_ERROR("Cannot send cloud registering cmd!!");
+			}
 		} else if (!strncmp(event->valuestring, "error", 5)) {
 			bool reboot;
 			reboot = true;
@@ -132,6 +135,51 @@ static void mqtt_reg_sub_cb(st_mqtt_msg *md, void *userData)
 			IOT_ERROR("event type %s is not defined", event->valuestring);
 			goto reg_sub_out;
 		}
+	}
+
+	/* dip_key is optional values */
+	dip_key =JSON_GET_OBJECT_ITEM(json, "deviceIntegrationProfileKey");
+	if (dip_key != NULL) {
+		reged_dip = iot_os_malloc(sizeof(struct iot_dip_data));
+		if (!reged_dip) {
+			IOT_ERROR("Can't alloc iot_dip_data!!");
+			goto reg_sub_out;
+		}
+		memset(reged_dip, 0, sizeof(struct iot_dip_data));
+
+		dip_item = JSON_GET_OBJECT_ITEM(dip_key, "id");
+		if (!dip_item) {
+			IOT_ERROR("Can't find id for dip_key!!");
+			iot_os_free(reged_dip);
+			goto reg_sub_out;
+		}
+
+		err = iot_util_convert_str_uuid(JSON_GET_STRING_VALUE(dip_item),
+				&reged_dip->dip_id);
+		if (err != IOT_ERROR_NONE) {
+			IOT_ERROR("Can't convert str to uuid(%d)", err);
+			iot_os_free(reged_dip);
+			goto reg_sub_out;
+		}
+
+		dip_item = JSON_GET_OBJECT_ITEM(dip_key, "majorVersion");
+		if (!dip_item) {
+			IOT_ERROR("Can't find majorVersion for dip_key!!");
+			iot_os_free(reged_dip);
+			goto reg_sub_out;
+		}
+		reged_dip->dip_major_version = dip_item->valueint;
+
+		/* minorVersion is optional, default 0 */
+		dip_item = JSON_GET_OBJECT_ITEM(dip_key, "minorVersion");
+		if (dip_item) {
+			reged_dip->dip_minor_version = dip_item->valueint;
+		}
+
+		if (reged_data->dip)
+			iot_os_free(reged_data->dip);
+
+		reged_data->dip = reged_dip;
 	}
 
 	svr_did = JSON_GET_OBJECT_ITEM(json, "deviceId");
@@ -150,8 +198,9 @@ static void mqtt_reg_sub_cb(st_mqtt_msg *md, void *userData)
 		reged_data->new_reged = false;
 
 		iot_cmd = IOT_COMMAND_CLOUD_REGISTERED;
-		if (iot_command_send(ctx, iot_cmd, NULL, 0) != IOT_ERROR_NONE)
+		if (iot_command_send(ctx, iot_cmd, NULL, 0) != IOT_ERROR_NONE) {
 			IOT_ERROR("Cannot send cloud registered cmd!!");
+		}
 	}
 
 reg_sub_out:
@@ -299,11 +348,12 @@ static void *_iot_es_mqtt_registration_json(struct iot_context *ctx,
 		JSON_CREATE_STRING(location_id));
 
 	/* label is optional value */
-	if (ctx->prov_data.cloud.label)
+	if (ctx->prov_data.cloud.label) {
 		JSON_ADD_ITEM_TO_OBJECT(root, "label",
 			JSON_CREATE_STRING(ctx->prov_data.cloud.label));
-	else
+	} else {
 		IOT_WARN("There is no label for registration");
+	}
 
 	JSON_ADD_ITEM_TO_OBJECT(root, "mnId",
 		JSON_CREATE_STRING(devconf->mnid));
@@ -487,8 +537,9 @@ void _iot_es_mqtt_disconnect(struct iot_context *ctx, st_mqtt_client target_cli)
 	 * even if it returns errors
 	 */
 	ret = st_mqtt_disconnect(target_cli);
-	if (ret)
+	if (ret) {
 		IOT_WARN("Disconnect error(%d)", ret);
+	}
 }
 
 iot_error_t _iot_es_mqtt_connect(struct iot_context *ctx, st_mqtt_client target_cli,
@@ -499,31 +550,17 @@ iot_error_t _iot_es_mqtt_connect(struct iot_context *ctx, st_mqtt_client target_
 	int ret;
 	iot_error_t iot_ret = IOT_ERROR_NONE;
 	bool reboot;
-	struct iot_uuid iot_uuid;
-	char *client_id = NULL;
+	char client_id[IOT_REG_UUID_STR_LEN + 1] = {0, };
 	struct iot_cloud_prov_data *cloud_prov;
 	char *root_cert = NULL;
 	size_t root_cert_len;
 
 	/* Use mac based random client_id for GreatGate */
-	iot_ret = iot_get_random_uuid_from_mac(&iot_uuid);
+	iot_ret = iot_get_random_id_str(client_id, sizeof(client_id));
 	if (iot_ret != IOT_ERROR_NONE) {
-		IOT_ERROR("Cannot get mac based random uuid");
+		IOT_ERROR("Cannot get random_id for client_id");
 		return iot_ret;
 	}
-
-	client_id = (char *)malloc(40);
-	if (!client_id) {
-		IOT_ERROR("Cannot malloc for client_id");
-		return IOT_ERROR_MEM_ALLOC;
-	}
-
-	iot_ret = iot_util_convert_uuid_str(&iot_uuid, client_id, 40);
-	if (iot_ret != IOT_ERROR_NONE) {
-		IOT_ERROR("Cannot convert str for client_id");
-		goto done_mqtt_connect;
-	}
-
 
 	cloud_prov = &ctx->prov_data.cloud;
 	if (!cloud_prov->broker_url) {
@@ -594,20 +631,20 @@ iot_error_t _iot_es_mqtt_connect(struct iot_context *ctx, st_mqtt_client target_
 	}
 
 #if defined(STDK_MQTT_TASK)
-        if ((ret = st_mqtt_starttask(target_cli)) < 0) {
-            IOT_ERROR("Returned code from start tasks is %d", ret);
-			st_mqtt_disconnect(target_cli);
-			iot_ret = IOT_ERROR_MQTT_CONNECT_FAIL;
-			goto done_mqtt_connect;
-		} else
-			IOT_INFO("Use MQTTStartTask");
+	if ((ret = st_mqtt_starttask(target_cli)) < 0) {
+		IOT_ERROR("Returned code from start tasks is %d", ret);
+		st_mqtt_disconnect(target_cli);
+		iot_ret = IOT_ERROR_MQTT_CONNECT_FAIL;
+		goto done_mqtt_connect;
+	} else {
+		IOT_INFO("Use MQTTStartTask");
+	}
 #endif
 
 done_mqtt_connect:
 	if (root_cert)
 		free((void *)root_cert);
 
-	free(client_id);
 	return iot_ret;
 }
 
