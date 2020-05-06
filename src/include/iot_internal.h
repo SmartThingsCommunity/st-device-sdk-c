@@ -53,6 +53,13 @@
 #define IOT_DEFAULT_TIMEOUT 		12000	/* milli-seconds */
 #define IOT_MQTT_KEEPALIVE_INTERVAL	120		/* seconds */
 
+/**
+ * @brief Contains a enumeration values for types of iot_misc_info.
+ */
+typedef enum {
+	IOT_MISC_INFO_DIP = 0,	/**< @brief For Device Integration Profile information */
+} iot_misc_info_t;
+
 /* Core */
 /**
  * @brief	send command to iot main task
@@ -312,6 +319,35 @@ iot_error_t iot_get_time_in_sec_by_long(long *sec);
  * @retval	IOT_ERROR_NONE                  success.
  */
 iot_error_t iot_get_time_in_ms(char *buf, size_t buf_len);
+
+/**
+ * @brief	load each type value from iot_misc_info data
+ * @details	this function tries to load each type value in iot_misc_info data
+ * @param[in]	type	type of iot_misc_info to load its value
+ * @param[out]	out_data	A pointer to data structure to load <br>
+ * 		each type of iot_misc_info value from iot_misc_info data
+ * @retval	IOT_ERROR_NONE                  success.
+ */
+iot_error_t iot_misc_info_load(iot_misc_info_t type, void *out_data);
+
+/**
+ * @brief	store each type value to iot_misc_info data
+ * @details	this function tries to store each type value in iot_misc_info data
+ * @param[in]	type	type of iot_misc_info to load its value
+ * @param[in]	in_data		A pointer to data structure to store <br>
+ * 		each type of iot_misc_info value to iot_misc_info data
+ * @retval	IOT_ERROR_NONE                  success.
+ */
+iot_error_t iot_misc_info_store(iot_misc_info_t type, const void *in_data);
+
+/**
+ * @brief	get random_id string based on uuid style
+ * @details	this function tries to get new generated random_id string
+ * @param[in]	str	allocated memory pointer for random_id string
+ * @param[in]	max_sz	max size of allocated memory pointer
+ * @retval	IOT_ERROR_NONE                  success.
+ */
+iot_error_t iot_get_random_id_str(char *str, int max_sz);
 
 #endif /* _IOT_INTERNAL_H_ */
 

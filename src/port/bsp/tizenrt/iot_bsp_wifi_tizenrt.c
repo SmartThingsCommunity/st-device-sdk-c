@@ -131,7 +131,6 @@ void bsp_wm_sta_connected(wifi_manager_result_e res)
 
 void bsp_wm_sta_disconnected(wifi_manager_disconnect_e disconn)
 {
-	sleep(2);
 	IOT_INFO(" T%d --> %s", getpid(), __FUNCTION__);
 }
 

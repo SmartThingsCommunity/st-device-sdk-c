@@ -24,6 +24,7 @@
 #include <iot_main.h>
 #include <iot_internal.h>
 #include <iot_nv_data.h>
+#include <iot_easysetup.h>
 #include "TC_MOCK_functions.h"
 
 #define UNUSED(x) (void**)(x)
@@ -242,4 +243,41 @@ void TC_st_conn_cleanup_success(void **state)
     iot_os_queue_delete(internal_context->cmd_queue);
     iot_os_eventgroup_delete(internal_context->iot_events);
     free(internal_context);
+}
+
+extern iot_error_t _create_easysetup_resources(struct iot_context *ctx, iot_pin_t *pin_num);
+extern void _delete_easysetup_resources_all(struct iot_context *ctx);
+
+void TC_easysetup_resources_create_delete_success(void** state)
+{
+    iot_error_t err;
+    struct iot_context *context;
+    UNUSED(state);
+
+    set_mock_detect_memory_leak(true);
+    // Given: pin type context
+    iot_pin_t pin = { .pin = { 0x01, 0x02, 0x03, 0x04, 0x05, 0x06, 0x07, 0x08 } };
+    context = (struct iot_context *) calloc(1, sizeof(struct iot_context));
+    context->devconf.ownership_validation_type = IOT_OVF_TYPE_PIN;
+
+    // When: create resource
+    err = _create_easysetup_resources(context, &pin);
+    // Then: success and has proper resources
+    assert_int_equal(err, IOT_ERROR_NONE);
+    assert_memory_equal(&pin.pin, context->pin, sizeof(iot_pin_t));
+    assert_non_null(context->es_crypto_cipher_info);
+    assert_non_null(context->easysetup_req_queue);
+    assert_non_null(context->easysetup_resp_queue);
+    assert_true(context->es_res_created);
+
+    // When: delete resource
+    _delete_easysetup_resources_all(context);
+    // Then: verify deletion
+    assert_null(context->pin);
+    assert_null(context->es_crypto_cipher_info);
+    assert_null(context->easysetup_req_queue);
+    assert_null(context->easysetup_resp_queue);
+    assert_false(context->es_res_created);
+
+    set_mock_detect_memory_leak(false);
 }

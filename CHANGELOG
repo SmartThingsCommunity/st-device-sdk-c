@@ -1,5 +1,28 @@
 # HISTORY
 
+## 1.1.12 :  Changes until v1.1.12
+
+New Improvements or features:
+
+ - Introduce new internal APIs to handle iot_misc_info data
+ - Implement NV(flash) based logging feature - STDK_IOT_CORE_LOG_FILE
+
+Enhancements or amendments:
+
+ - Update TC for iot-core, bsp, mqtt related internal codes
+ - Increase registration process timeout until 15 min.
+ - Support BOOLEAN data type in Capability handling API
+ - Added Wi-Fi auth type to support various BSP
+ - Add log handler for tls
+
+Bug fixed:
+
+ - Fixed status updating fail during recovery
+ - Fixed some typo errors at the comments
+ - Fixed build error for POSIX
+ - Remove useless sleep for wifi disconnection on bsp/tizenrt
+ - Changed to use timer during tls_read and tls_write on mbedtls net-interface
+
 ## 1.1.10 :  Changes until v1.1.10
 
 New Improvements or features:

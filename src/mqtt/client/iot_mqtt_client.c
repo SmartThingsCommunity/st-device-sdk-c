@@ -997,8 +997,9 @@ int st_mqtt_publish(st_mqtt_client client, st_mqtt_msg *msg)
 	int retry = 0;
 	do {
 		iot_os_timer_count_ms(timer, c->command_timeout_ms);
-		if (retry)
+		if (retry) {
 			IOT_WARN("mqtt publish retry(%d)", retry);
+		}
 		retry++;
 #if defined(MQTT_PUB_NOCOPY)
 		/* First, send MQTT Connect header */

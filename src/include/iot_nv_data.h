@@ -49,6 +49,7 @@ typedef enum {
 	/* cloud prov data */
 
 	IOT_NVD_DEVICE_ID,
+	IOT_NVD_MISC_INFO,
 
 	/* stored in stnv partition (manufacturer data) */
 	IOT_NVD_PRIVATE_KEY,
@@ -246,6 +247,29 @@ iot_error_t iot_nv_get_device_id(char** device_id, size_t* len);
  * @retval IOT_ERROR_NV_DATA_ERROR Set nv data failed.
  */
 iot_error_t iot_nv_set_device_id(const char* device_id);
+
+/**
+ * @brief Get a miscellaneous info from the nv file-system.
+ *
+ * @param[out] misc_info A pointer to data array to store the miscellaneous info from the nv file-system.
+ * @param[out] len The length of the nv data.
+ * @retval IOT_ERROR_NONE Get nv data successful.
+ * @retval IOT_ERROR_INVALID_ARGS Invalid argument.
+ * @retval IOT_ERROR_NV_DATA_ERROR Get nv data failed.
+ *
+ * @warning The caller is always responsible to free the allocated pointer after using the data.
+ */
+iot_error_t iot_nv_get_misc_info(char** misc_info, size_t* len);
+
+/**
+ * @brief Set a miscellaneous info to the nv file-system.
+ *
+ * @param[in] misc_info The string of miscellaneous info from iot-core.
+ * @retval IOT_ERROR_NONE Set nv data successful.
+ * @retval IOT_ERROR_INVALID_ARGS Invalid argument.
+ * @retval IOT_ERROR_NV_DATA_ERROR Set nv data failed.
+ */
+iot_error_t iot_nv_set_misc_info(const char* misc_info);
 
 /**
  * @brief Get a serial number from the nv file-system.
