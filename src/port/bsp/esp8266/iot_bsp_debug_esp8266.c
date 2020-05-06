@@ -18,6 +18,7 @@
 
 #include <stdio.h>
 #include <stdlib.h>
+#include <string.h>
 #include <esp_log.h>
 #include <esp_system.h>
 #include <esp_heap_caps.h>
@@ -46,7 +47,7 @@ void iot_bsp_debug(iot_debug_level_t level, const char* tag, const char* fmt, ..
 #endif
 
 #if defined(CONFIG_STDK_IOT_CORE_LOG_FILE)
-	iot_log_file_store(buf);
+	iot_log_file_store((const char *)buf, strlen(buf));
 #endif
 
 	if (level == IOT_DEBUG_LEVEL_ERROR) {
