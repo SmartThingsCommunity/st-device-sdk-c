@@ -1016,7 +1016,7 @@ misc_info_store_out:
 	return iot_err;
 }
 
-iot_error_t iot_get_random_id_str(char *str, int max_sz)
+iot_error_t iot_get_random_id_str(char *str, size_t max_sz)
 {
 	iot_error_t err = IOT_ERROR_NONE;
 	struct iot_uuid uuid;

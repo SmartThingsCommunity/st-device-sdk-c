@@ -585,7 +585,7 @@ iot_error_t iot_nv_set_cloud_prov_data(struct iot_cloud_prov_data* cloud_prov)
 	 */
 	iot_error_t ret;
 	const int DATA_SIZE = (IOT_NVD_MAX_DATA_LEN / 2) + 1;
-	unsigned int size;
+	size_t size;
 	int state;
 	char* data = NULL;
 	char valid_id;
