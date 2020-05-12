@@ -774,3 +774,48 @@ void TC_st_cap_attr_send_invalid_parameter(void **state)
     free(internal_handle);
     free(internal_context);
 }
+
+bool test_cap_sub_switch_on_called;
+static void test_cap_sub_switch_on(IOT_CAP_HANDLE *HANDLE,
+                          iot_cap_cmd_data_t *cmd_data, void *usr_data)
+{
+    struct iot_cap_handle *handle = (struct iot_cap_handle *)HANDLE;
+    test_cap_sub_switch_on_called = true;
+
+    assert_string_equal(handle->capability, "switch");
+    assert_string_equal(handle->component, "main");
+    assert_string_equal(handle->cmd_list->command->cmd_type, "on");
+    assert_int_equal(cmd_data->num_args, 0);
+}
+
+void TC_iot_cap_sub_cb_success(void **state)
+{
+    // Given: typical payload and handle lists
+    iot_cap_handle_list_t cap_handle_list;
+    char *payload = "{\"commands\":[{\"component\":\"main\",\"capability\":\"switch\",\"command\":\"on\",\"arguments\":[]}]}";
+
+    cap_handle_list.next = NULL;
+    cap_handle_list.handle = malloc(sizeof(struct iot_cap_handle));
+
+    cap_handle_list.handle->capability = "switch";
+    cap_handle_list.handle->component = "main";
+    cap_handle_list.handle->ctx = NULL;
+    cap_handle_list.handle->init_cb = NULL;
+    cap_handle_list.handle->init_usr_data = NULL;
+    cap_handle_list.handle->cmd_list = malloc(sizeof(struct iot_cap_cmd_set_list));
+
+    cap_handle_list.handle->cmd_list->next = NULL;
+    cap_handle_list.handle->cmd_list->command = malloc(sizeof(struct iot_cap_cmd_set));
+
+    cap_handle_list.handle->cmd_list->command->cmd_type = "on";
+    cap_handle_list.handle->cmd_list->command->cmd_cb = test_cap_sub_switch_on;
+    cap_handle_list.handle->cmd_list->command->usr_data = NULL;
+    // When
+    iot_cap_sub_cb(&cap_handle_list, payload);
+    // Then
+    assert_true(test_cap_sub_switch_on_called);
+    // Teardown
+    free(cap_handle_list.handle->cmd_list->command);
+    free(cap_handle_list.handle->cmd_list);
+    free(cap_handle_list.handle);
+}

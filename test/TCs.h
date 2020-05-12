@@ -87,6 +87,7 @@ void TC_st_cap_cmd_set_cb_invalid_parameters(void **state);
 void TC_st_cap_cmd_set_cb_success(void **state);
 void TC_st_cap_attr_send_success(void **state);
 void TC_st_cap_attr_send_invalid_parameter(void **state);
+void TC_iot_cap_sub_cb_success(void **state);
 
 // TCs for iot_crypto.c
 int TC_iot_crypto_pk_setup(void **state);
