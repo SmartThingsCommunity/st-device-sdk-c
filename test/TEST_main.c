@@ -226,6 +226,19 @@ int TEST_FUNC_iot_mqtt_client()
     return cmocka_run_group_tests_name("iot_mqtt_client.c", tests, NULL, NULL);
 }
 
+int TEST_FUNC_iot_security_common(void)
+{
+    const struct CMUnitTest tests[] = {
+            cmocka_unit_test(TC_iot_security_init_malloc_failure),
+            cmocka_unit_test(TC_iot_security_init_success),
+            cmocka_unit_test(TC_iot_security_deinit_null_parameters),
+            cmocka_unit_test(TC_iot_security_deinit_success),
+            cmocka_unit_test(TC_iot_security_check_context_null_parameters),
+            cmocka_unit_test(TC_iot_security_check_context_success),
+    };
+    return cmocka_run_group_tests_name("iot_security_common.c", tests, NULL, NULL);
+}
+
 int TEST_FUNC_iot_wt(void)
 {
     const struct CMUnitTest tests[] = {
@@ -255,6 +268,7 @@ int main(void) {
     err += TEST_FUNC_iot_easysetup_crypto();
     err += TEST_FUNC_iot_main();
     err += TEST_FUNC_iot_mqtt_client();
+    err += TEST_FUNC_iot_security_common();
     err += TEST_FUNC_iot_wt();
     err += TEST_FUNC_iot_easysetup_httpd();
 

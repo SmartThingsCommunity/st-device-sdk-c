@@ -192,6 +192,14 @@ void TC_st_mqtt_connect_with_connack_rc(void** state);
 void TC_st_mqtt_disconnect_success(void** state);
 void TC_st_mqtt_publish_success(void** state);
 
+// TCs for iot_security_common.c
+void TC_iot_security_init_malloc_failure(void **state);
+void TC_iot_security_init_success(void **state);
+void TC_iot_security_deinit_null_parameters(void **state);
+void TC_iot_security_deinit_success(void **state);
+void TC_iot_security_check_context_null_parameters(void **state);
+void TC_iot_security_check_context_success(void **state);
+
 // TCs for iot_wt.c
 int TC_iot_wt_create_memleak_detect_setup(void **state);
 int TC_iot_wt_create_memleak_detect_teardown(void **state);
