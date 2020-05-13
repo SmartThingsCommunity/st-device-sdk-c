@@ -233,7 +233,7 @@ iot_error_t iot_util_convert_str_uuid(const char* str, struct iot_uuid* uuid)
 	return IOT_ERROR_NONE;
 }
 
-iot_error_t iot_util_convert_uuid_str(struct iot_uuid* uuid, char* str, int max_sz)
+iot_error_t iot_util_convert_uuid_str(struct iot_uuid* uuid, char* str, size_t max_sz)
 {
 	char* ref_id = "42365732-c6db-4bc9-8945-2a7ca10d6f23";
 	int i, written = 0, wrt;

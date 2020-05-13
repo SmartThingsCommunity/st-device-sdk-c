@@ -24,6 +24,7 @@
 #include "iot_debug.h"
 #include "iot_bsp_debug.h"
 
+#include <stdlib.h>
 #include <stdio.h>
 #include <string.h>
 
@@ -125,10 +126,11 @@ iot_error_t iot_log_file_init(void);
 
 /**
  * @brief Store log data to log file.
- * 
+ * @param[in] log_data a pointer to the log data to store
+ * @param[in] log_size the size of log data pointed by log_data in bytes
  * @return The length of the stored data. -1 is failure.
  */
-int iot_log_file_store(char *log_data);
+int iot_log_file_store(const char *log_data, size_t log_size);
 
 /**
  * @brief Log file synchronize with ram log data.

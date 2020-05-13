@@ -41,6 +41,10 @@ int TEST_FUNC_iot_api(void)
             cmocka_unit_test_setup_teardown(TC_iot_get_time_in_sec_by_long_null_parameters, TC_iot_api_memleak_detect_setup, TC_iot_api_memleak_detect_teardown),
             cmocka_unit_test_setup_teardown(TC_iot_get_time_in_sec_by_long_success, TC_iot_api_memleak_detect_setup, TC_iot_api_memleak_detect_teardown),
             cmocka_unit_test_setup_teardown(TC_iot_easysetup_request_success, TC_iot_api_memleak_detect_setup, TC_iot_api_memleak_detect_teardown),
+            cmocka_unit_test_setup_teardown(TC_iot_misc_info_load_invalid_parameters, TC_iot_misc_info_dip_setup, TC_iot_misc_info_dip_teardown),
+            cmocka_unit_test_setup_teardown(TC_iot_misc_info_load_sucess, TC_iot_misc_info_dip_setup, TC_iot_misc_info_dip_teardown),
+            cmocka_unit_test_setup_teardown(TC_iot_misc_info_store_invalid_parameters, TC_iot_api_memleak_detect_setup, TC_iot_api_memleak_detect_teardown),
+            cmocka_unit_test_setup_teardown(TC_iot_misc_info_store_sucess, TC_iot_misc_info_dip_setup, TC_iot_misc_info_dip_teardown),
     };
     return cmocka_run_group_tests_name("iot_api.c", tests, NULL, NULL);
 }
@@ -70,6 +74,8 @@ int TEST_FUNC_iot_capability(void)
             cmocka_unit_test_setup_teardown(TC_st_cap_cmd_set_cb_success, TC_iot_capability_setup, TC_iot_capability_teardown),
             cmocka_unit_test_setup_teardown(TC_st_cap_attr_send_success, TC_iot_capability_setup, TC_iot_capability_teardown),
             cmocka_unit_test_setup_teardown(TC_st_cap_attr_send_invalid_parameter, TC_iot_capability_setup, TC_iot_capability_teardown),
+            cmocka_unit_test_setup_teardown(TC_iot_cap_sub_cb_success, TC_iot_capability_setup, TC_iot_capability_teardown),
+            cmocka_unit_test_setup_teardown(TC_iot_noti_sub_cb_rate_limit_reached_success, TC_iot_capability_setup, TC_iot_capability_teardown),
     };
     return cmocka_run_group_tests_name("iot_capability.c", tests, NULL, NULL);
 }
@@ -203,6 +209,8 @@ int TEST_FUNC_iot_main()
             cmocka_unit_test(TC_st_conn_cleanup_invalid_parameters),
             cmocka_unit_test(TC_st_conn_cleanup_success),
             cmocka_unit_test(TC_easysetup_resources_create_delete_success),
+            cmocka_unit_test(TC_do_status_report),
+            cmocka_unit_test(TC_check_prov_data_validation),
     };
     return cmocka_run_group_tests_name("iot_main.c", tests, NULL, NULL);
 }
