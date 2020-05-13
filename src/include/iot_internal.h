@@ -347,7 +347,7 @@ iot_error_t iot_misc_info_store(iot_misc_info_t type, const void *in_data);
  * @param[in]	max_sz	max size of allocated memory pointer
  * @retval	IOT_ERROR_NONE                  success.
  */
-iot_error_t iot_get_random_id_str(char *str, int max_sz);
+iot_error_t iot_get_random_id_str(char *str, size_t max_sz);
 
 #endif /* _IOT_INTERNAL_H_ */
 

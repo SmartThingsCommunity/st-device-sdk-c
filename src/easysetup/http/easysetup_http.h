@@ -16,8 +16,8 @@
  *
  ****************************************************************************/
 
-#ifndef _TCP_HTTPD_H_
-#define _TCP_HTTPD_H_
+#ifndef _EASYSETUP_HTTP_H_
+#define _EASYSETUP_HTTP_H_
 
 #ifdef __cplusplus
 extern "C" {
@@ -31,12 +31,12 @@ enum cgi_type {
 
 void http_packet_handle(const char *name, char **buf, char *payload, enum cgi_type type);
 
-void es_tcp_init(void);
+void es_http_init(void);
 
-void es_tcp_deinit(void);
+void es_http_deinit(void);
 
 #ifdef __cplusplus
 }
 #endif
 
-#endif /* _TCP_HTTPD_H_ */
+#endif /* _EASYSETUP_HTTP_H_ */

@@ -18,9 +18,26 @@
 
 #if defined(CONFIG_STDK_IOT_CORE_LOG_FILE)
 #include <stdio.h>
+#include <sys/time.h>
 #include "iot_log_file.h"
 
 struct iot_log_file_ctx *log_ctx;
+
+void iot_dump_log(iot_debug_level_t level, dump_log_id_t log_id, int arg1, int arg2)
+{
+	int log[4] = {0,};
+
+	struct timeval time;
+	gettimeofday(&time, NULL);
+
+	log[0] = ((level & 0xf) << 28) | (log_id & 0xffff);
+	log[1] = time.tv_sec;
+	log[2] = arg1;
+	log[3] = arg2;
+
+	//TODO : save log to file
+	printf("%08x %08x %08x %08x\n" , log[0], log[1], log[2], log[3]);
+}
 
 static unsigned int _iot_log_file_buf_free_size(void)
 {
@@ -87,9 +104,8 @@ static bool _iot_log_file_is_opening(void)
 	return ret;
 }
 
-int iot_log_file_store(char *log_data)
+int iot_log_file_store(const char *log_data, size_t log_size)
 {
-	unsigned int max_size_of_string = IOT_LOG_FILE_MAX_STRING_SIZE;
 	unsigned int iot_log_file_cnt = 0, iot_log_file_free_size = 0;
 
 	if (log_ctx == NULL) {
@@ -102,8 +118,13 @@ int iot_log_file_store(char *log_data)
 		return -1;
 	}
 
-	while ((*log_data) != 0 && iot_log_file_cnt < max_size_of_string)
-	{
+	if (log_size >= IOT_LOG_FILE_MAX_STRING_SIZE) {
+		IOT_LOG_FILE_ERROR("Exceed log buf size! %s, log_size:%zu\n",
+			__FUNCTION__, log_size);
+		return -1;
+	}
+
+	while (iot_log_file_cnt < log_size)	{
 		_iot_log_file_store_char(*(log_data++));
 		iot_log_file_cnt++;
 	}

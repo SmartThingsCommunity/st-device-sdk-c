@@ -689,17 +689,17 @@ void iot_cap_sub_cb(iot_cap_handle_list_t *cap_handle_list, char *payload)
 		}
 
 		if (component_name != NULL) {
-			free(component_name);
+			iot_os_free(component_name);
 			component_name = NULL;
 		}
 
 		if (capability_name != NULL) {
-			free(capability_name);
+			iot_os_free(capability_name);
 			capability_name = NULL;
 		}
 
 		if (command_name != NULL) {
-			free(command_name);
+			iot_os_free(command_name);
 			command_name = NULL;
 		}
 	}

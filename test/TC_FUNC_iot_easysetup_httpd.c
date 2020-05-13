@@ -28,18 +28,18 @@
 #include <arpa/inet.h>
 #include <external/JSON.h>
 #include <stdlib.h>
-#include "../src/easysetup/http/es_tcp_httpd.h"
+#include "../src/easysetup/http/easysetup_http.h"
 
 int TC_iot_easysetup_httpd_group_setup(void **state)
 {
-    es_tcp_init();
+    es_http_init();
     usleep(100);
     return 0;
 }
 
 int TC_iot_easysetup_httpd_group_teardown(void **state)
 {
-    es_tcp_deinit();
+    es_http_deinit();
     return 0;
 }
 

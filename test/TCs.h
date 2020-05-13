@@ -49,6 +49,12 @@ void TC_iot_get_time_in_ms_success(void **state);
 void TC_iot_get_time_in_sec_by_long_null_parameters(void **state);
 void TC_iot_get_time_in_sec_by_long_success(void **state);
 void TC_iot_easysetup_request_success(void **state);
+void TC_iot_misc_info_load_invalid_parameters(void **state);
+int TC_iot_misc_info_dip_setup(void **state);
+int TC_iot_misc_info_dip_teardown(void **state);
+void TC_iot_misc_info_load_sucess(void **state);
+void TC_iot_misc_info_store_invalid_parameters(void **state);
+void TC_iot_misc_info_store_sucess(void **state);
 
 // TCs for iot_uuid.c
 void TC_iot_uuid_from_mac(void **state);
@@ -81,6 +87,8 @@ void TC_st_cap_cmd_set_cb_invalid_parameters(void **state);
 void TC_st_cap_cmd_set_cb_success(void **state);
 void TC_st_cap_attr_send_success(void **state);
 void TC_st_cap_attr_send_invalid_parameter(void **state);
+void TC_iot_cap_sub_cb_success(void **state);
+void TC_iot_noti_sub_cb_rate_limit_reached_success(void **state);
 
 // TCs for iot_crypto.c
 int TC_iot_crypto_pk_setup(void **state);
@@ -175,6 +183,8 @@ void TC_st_conn_init_success(void **state);
 void TC_st_conn_cleanup_invalid_parameters(void **state);
 void TC_st_conn_cleanup_success(void **state);
 void TC_easysetup_resources_create_delete_success(void** state);
+void TC_do_status_report(void** state);
+void TC_check_prov_data_validation(void **state);
 
 // TCs for iot_mqtt_client.c
 void TC_st_mqtt_create_success(void** state);
