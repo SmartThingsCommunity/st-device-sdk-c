@@ -409,6 +409,11 @@ void *iot_os_calloc(size_t nmemb, size_t size)
     return calloc(nmemb, size);
 }
 
+char *iot_os_realloc(void *ptr, size_t size)
+{
+    return realloc(ptr, size);
+}
+
 void iot_os_free(void *ptr)
 {
     return free(ptr);

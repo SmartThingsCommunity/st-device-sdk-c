@@ -375,6 +375,18 @@ void *iot_os_malloc(size_t size);
 void *iot_os_calloc(size_t nmemb, size_t size);
 
 /**
+ * @brief	change allocated memory size
+ *
+ * This function changes the size of the memory block pointed to by ptr to size bytes.
+ * If the new size is larger than the old size, the added memory will not be initialized.
+ *
+ * @param[in] ptr a pointer of memory to change
+ * @param[in] size a bytes of memory to change
+ *
+ */
+char *iot_os_realloc(void *ptr, size_t size);
+
+/**
  * @brief	free memory
  *
  * frees the memory space pointed to by ptr,
@@ -399,6 +411,7 @@ char *iot_os_strdup(const char *src);
 #include <string.h>
 static inline void *iot_os_malloc(size_t size) { return malloc(size); }
 static inline void *iot_os_calloc(size_t nmemb, size_t size) { return calloc(nmemb, size); }
+static inline void *iot_os_realloc(void *ptr, size_t size) { return realloc(ptr, size); }
 static inline void iot_os_free(void *ptr) { return free(ptr); }
 static inline char *iot_os_strdup(const char *src) { return strdup(src); }
 #endif
