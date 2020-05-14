@@ -24,6 +24,105 @@
 #include "iot_debug.h"
 #include "iot_mqtt_client.h"
 
+static void _iot_mqtt_chunk_destroy(iot_mqtt_packet_chunk_t *chunk)
+{
+	if (chunk && chunk->chunk_data)
+		iot_os_free(chunk->chunk_data);
+}
+
+// Will be used.
+static int _iot_mqtt_queue_push(iot_mqtt_packet_chunk_queue_t *queue, iot_mqtt_packet_chunk_t *chunk)
+{
+	if((iot_os_mutex_lock(&queue->lock)))
+		return -1;
+	if(queue->being_destroyed) {
+		iot_os_mutex_unlock(&queue->lock);
+		return -1;
+	}
+
+	if (queue->head == NULL || queue->tail == NULL) {
+		queue->head = queue->tail = chunk;
+	} else {
+		queue->tail->next = chunk;
+		queue->tail = chunk;
+	}
+
+	iot_os_mutex_unlock(&queue->lock);
+
+	return 0;
+}
+
+// Will be used.
+static iot_mqtt_packet_chunk_t* _iot_mqtt_queue_pop(iot_mqtt_packet_chunk_queue_t *queue)
+{
+	iot_mqtt_packet_chunk_t *chunk = NULL;
+
+	if((iot_os_mutex_lock(&queue->lock)))
+		return NULL;
+	if(queue->being_destroyed) {
+		iot_os_mutex_unlock(&queue->lock);
+		return NULL;
+	}
+
+	if (queue->head == NULL || queue->tail == NULL) {
+		chunk = NULL;
+	} else if (queue->head == queue->tail) {
+		chunk = queue->head;
+		queue->head = queue->tail = NULL;
+	} else {
+		chunk = queue->head;
+		queue->head = queue->head->next;
+		chunk->next = NULL;
+	}
+
+	iot_os_mutex_unlock(&queue->lock);
+
+	return chunk;
+}
+
+static int _iot_mqtt_queue_init(iot_mqtt_packet_chunk_queue_t *queue)
+{
+	iot_os_mutex_init(&queue->lock);
+	if (queue->lock.sem == NULL) {
+		IOT_ERROR("fail to init queue lock");
+		return -1;
+	}
+	queue->head = NULL;
+	queue->tail = NULL;
+	queue->being_destroyed = 0;
+
+	return 0;
+}
+
+static void _iot_mqtt_queue_destroy(iot_mqtt_packet_chunk_queue_t *queue)
+{
+	if (queue->lock.sem == NULL)
+		return;
+
+	// Try acqure lock. if it is destroyed already, return
+	while((iot_os_mutex_lock(&queue->lock))) {
+		if (queue->lock.sem == NULL)
+			return;
+	}
+	if(queue->being_destroyed) {
+		iot_os_mutex_unlock(&queue->lock);
+		return;
+	}
+	iot_mqtt_packet_chunk_t *iterator = queue->head, *tmp;
+	while (iterator) {
+		tmp = iterator;
+		iterator = iterator->next;
+		_iot_mqtt_chunk_destroy(tmp);
+		iot_os_free(tmp);
+	}
+	queue->head = queue->tail = NULL;
+	queue->being_destroyed = 1;
+	iot_os_mutex_unlock(&queue->lock);
+
+	iot_os_mutex_destroy(&queue->lock);
+	queue->lock.sem = NULL;
+}
+
 static int getNextPacketId(MQTTClient *c)
 {
 	return c->next_packetid = (c->next_packetid == MAX_PACKET_ID) ? 1 : c->next_packetid + 1;
@@ -115,6 +214,25 @@ int st_mqtt_create(st_mqtt_client *client, unsigned int command_timeout_ms)
 		goto error_handle;
 	}
 	c->thread = NULL;
+	iot_os_mutex_init(&c->write_lock);
+	if (c->write_lock.sem == NULL) {
+		IOT_ERROR("fail to init write_lock");
+		goto error_handle;
+	}
+	iot_os_mutex_init(&c->read_lock);
+	if (c->read_lock.sem == NULL) {
+		IOT_ERROR("fail to init read_lock");
+		goto error_handle;
+	}
+	if ((_iot_mqtt_queue_init(&c->write_pending_queue))) {
+		goto error_handle;
+	}
+	if ((_iot_mqtt_queue_init(&c->write_completed_queue))) {
+		goto error_handle;
+	}
+	if ((_iot_mqtt_queue_init(&c->read_completed_queue))) {
+		goto error_handle;
+	}
 
 	return 0;
 error_handle:
@@ -129,6 +247,13 @@ error_handle:
 			iot_os_timer_destroy(&c->ping_wait);
 		if (c->mutex.sem)
 			iot_os_mutex_destroy(&c->mutex);
+		if (c->write_lock.sem)
+			iot_os_mutex_destroy(&c->write_lock);
+		if (c->read_lock.sem)
+			iot_os_mutex_destroy(&c->read_lock);
+		_iot_mqtt_queue_destroy(&c->write_pending_queue);
+		_iot_mqtt_queue_destroy(&c->write_completed_queue);
+		_iot_mqtt_queue_destroy(&c->read_completed_queue);
 		iot_os_free(c);
 		*client = NULL;
 	}
@@ -179,6 +304,11 @@ void st_mqtt_destroy(st_mqtt_client client)
 	iot_os_mutex_unlock(&c->mutex);
 
 	iot_os_mutex_destroy(&c->mutex);
+	iot_os_mutex_destroy(&c->write_lock);
+	iot_os_mutex_destroy(&c->read_lock);
+	_iot_mqtt_queue_destroy(&c->write_pending_queue);
+	_iot_mqtt_queue_destroy(&c->write_completed_queue);
+	_iot_mqtt_queue_destroy(&c->read_completed_queue);
 	iot_os_free(c);
 }
 

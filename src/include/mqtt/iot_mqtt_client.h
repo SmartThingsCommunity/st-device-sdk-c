@@ -76,7 +76,7 @@ enum {
 typedef struct iot_mqtt_packet_chunk {
 	int packet_type;
 	unsigned int packet_id;
-	char *chunk_data;
+	unsigned char *chunk_data;
 	size_t chunk_size;
 	size_t current_chunk_pos;
 	unsigned int chunk_id;
@@ -86,6 +86,7 @@ typedef struct iot_mqtt_packet_chunk {
 
 typedef struct iot_mqtt_packet_chunk_queue {
 	iot_os_mutex lock;
+	unsigned char being_destroyed;
 	struct iot_mqtt_packet_chunk *head;
 	struct iot_mqtt_packet_chunk *tail;
 } iot_mqtt_packet_chunk_queue_t;
