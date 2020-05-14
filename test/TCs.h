@@ -54,7 +54,7 @@ int TC_iot_misc_info_dip_setup(void **state);
 int TC_iot_misc_info_dip_teardown(void **state);
 void TC_iot_misc_info_load_success(void **state);
 void TC_iot_misc_info_store_invalid_parameters(void **state);
-void TC_iot_misc_info_store_sucess(void **state);
+void TC_iot_misc_info_store_success(void **state);
 
 // TCs for iot_uuid.c
 void TC_iot_uuid_from_mac(void **state);

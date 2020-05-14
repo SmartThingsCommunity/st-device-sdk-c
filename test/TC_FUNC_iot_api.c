@@ -578,7 +578,7 @@ void TC_iot_misc_info_store_invalid_parameters(void **state) {
     assert_int_not_equal(err, IOT_ERROR_NONE);
 }
 
-void TC_iot_misc_info_store_sucess(void **state) {
+void TC_iot_misc_info_store_success(void **state) {
     iot_error_t err;
     char *new_dip_str;
     size_t str_len;
