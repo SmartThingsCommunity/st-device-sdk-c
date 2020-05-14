@@ -540,7 +540,7 @@ void TC_iot_misc_info_load_invalid_parameters(void **state) {
     assert_int_not_equal(err, IOT_ERROR_NONE);
 }
 
-void TC_iot_misc_info_load_sucess(void **state) {
+void TC_iot_misc_info_load_success(void **state) {
     iot_error_t err;
     struct iot_dip_data load_dip;
     UNUSED(state);

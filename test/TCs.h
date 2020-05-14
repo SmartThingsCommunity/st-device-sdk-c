@@ -52,7 +52,7 @@ void TC_iot_easysetup_request_success(void **state);
 void TC_iot_misc_info_load_invalid_parameters(void **state);
 int TC_iot_misc_info_dip_setup(void **state);
 int TC_iot_misc_info_dip_teardown(void **state);
-void TC_iot_misc_info_load_sucess(void **state);
+void TC_iot_misc_info_load_success(void **state);
 void TC_iot_misc_info_store_invalid_parameters(void **state);
 void TC_iot_misc_info_store_sucess(void **state);
 
