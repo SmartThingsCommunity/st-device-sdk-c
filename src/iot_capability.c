@@ -1032,6 +1032,11 @@ static iot_error_t _iot_make_evt_data(const char* component, const char* capabil
 #endif
 }
 
+int iot_cap_get_sqnum(void)
+{
+	return sqnum;
+}
+
 void iot_cap_call_init_cb(iot_cap_handle_list_t *cap_handle_list)
 {
 	struct iot_cap_handle *handle = NULL;
