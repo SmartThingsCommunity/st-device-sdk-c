@@ -52,7 +52,7 @@ iot_error_t _iot_nv_read_data(const char* path, char* data, size_t size)
 	ret = iot_bsp_fs_open(path, FS_READONLY, &handle);
 	IOT_DEBUG_CHECK(ret != IOT_ERROR_NONE, IOT_ERROR_NV_DATA_ERROR, "file open fail");
 
-	ret = iot_bsp_fs_read(handle, data, size);
+	ret = iot_bsp_fs_read(handle, data, &size);
 	if (ret != IOT_ERROR_NONE) {
 		if (ret == IOT_ERROR_FS_NO_FILE) {
 			IOT_DEBUG("file does not exist");
@@ -80,7 +80,7 @@ iot_error_t _iot_nv_read_data_from_stnv(const char* path, char* data, unsigned i
 	ret = iot_bsp_fs_open_from_stnv(path, &handle);
 	IOT_DEBUG_CHECK(ret != IOT_ERROR_NONE, IOT_ERROR_NV_DATA_ERROR, "file open fail");
 
-	ret = iot_bsp_fs_read(handle, data, size);
+	ret = iot_bsp_fs_read(handle, data, &size);
 	if (ret != IOT_ERROR_NONE) {
 		if (ret == IOT_ERROR_FS_NO_FILE) {
 			IOT_DEBUG("file does not exist");
