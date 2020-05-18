@@ -101,8 +101,9 @@ nv_item_table_s nv_table[MAX_NV_ITEM_CNT] = {
 	{0xc96f1bc, 2049, NULL},   // PrivateKey
 	{0x2860e24, 2049, NULL},   // PublicKey
 	{0x4bf15, 37, NULL},   // PKType
-	{0x3fdd2, 2049, NULL},  // CACert
+	{0x82cac2, 2049, NULL},  // RootCert
 	{0x1a7aa8, 2049, NULL},   // SubCert
+	{0xaf0205e, 2049, NULL},   // DeviceCert
 	{0x164c23, 37, NULL},   // ClaimID
 	{0x2887a54, 37, NULL},   // SerialNum
 	/* stored in stnv partition (manufacturer data) */
