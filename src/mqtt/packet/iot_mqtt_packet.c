@@ -56,7 +56,6 @@ int MQTTPacket_decode(int (*getcharfn)(unsigned char*, int), int* value)
 	unsigned char c;
 	int multiplier = 1;
 	int len = 0;
-#define MAX_NO_OF_REMAINING_LENGTH_BYTES 4
 
 	FUNC_ENTRY;
 	*value = 0;
@@ -64,7 +63,7 @@ int MQTTPacket_decode(int (*getcharfn)(unsigned char*, int), int* value)
 	{
 		int rc = MQTTPACKET_READ_ERROR;
 
-		if (++len > MAX_NO_OF_REMAINING_LENGTH_BYTES)
+		if (++len > MAX_NUM_OF_REMAINING_LENGTH_BYTES)
 		{
 			rc = MQTTPACKET_READ_ERROR;	/* bad data */
 			goto exit;
@@ -333,7 +332,7 @@ static int MQTTPacket_decodenb(MQTTTransport *trp)
 	}
 	do {
 		int frc;
-		if (trp->len >= MAX_NO_OF_REMAINING_LENGTH_BYTES)
+		if (trp->len >= MAX_NUM_OF_REMAINING_LENGTH_BYTES)
 			goto exit;
 		if ((frc=(*trp->getfn)(trp->sck, &c, 1)) == -1)
 			goto exit;
@@ -430,4 +429,37 @@ const char* MQTTPacket_msgTypesToString(enum msgTypes msgType)
 		case DISCONNECT: return "DISCONNECT";
 		default: return NULL;
 	}
+}
+
+unsigned int MQTTPacket_getPacketId(unsigned char *buf)
+{
+	int packet_type = (buf[0] & 0xf0) >> 4;
+	int qos = (buf[0] & 0x06) >> 1;
+	int rem_size = 0;
+	unsigned int packet_id = 0;
+
+	switch (packet_type) {
+		case PUBLISH:
+			if (qos == 0)
+				break;
+			buf++;
+			buf += MQTTPacket_decodeBuf(buf, &rem_size);
+			buf += readInt(&buf);
+			packet_id = readInt(&buf);
+			break;
+		case PUBACK:
+		case PUBREC:
+		case PUBREL:
+		case PUBCOMP:
+		case SUBSCRIBE:
+		case SUBACK:
+		case UNSUBSCRIBE:
+		case UNSUBACK:
+			buf++;
+			buf += MQTTPacket_decodeBuf(buf, &rem_size);
+			packet_id += readInt(&buf);
+			break;
+	}
+
+	return packet_id;
 }

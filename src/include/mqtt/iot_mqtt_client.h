@@ -76,11 +76,16 @@ enum {
 typedef struct iot_mqtt_packet_chunk {
 	int packet_type;
 	unsigned int packet_id;
+
 	unsigned char *chunk_data;
 	size_t chunk_size;
 	size_t current_chunk_pos;
+	unsigned char chunk_first_byte;
+	unsigned char chunk_rem_size_bytes[MAX_NUM_OF_REMAINING_LENGTH_BYTES];
+	size_t chunk_rem_size_length;
 	unsigned int chunk_id;
 	int chunk_state;
+
 	struct iot_mqtt_packet_chunk *next;
 } iot_mqtt_packet_chunk_t;
 
