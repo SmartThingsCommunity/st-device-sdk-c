@@ -51,6 +51,49 @@ static int _iot_mqtt_queue_push(iot_mqtt_packet_chunk_queue_t *queue, iot_mqtt_p
 	return 0;
 }
 
+static iot_mqtt_packet_chunk_t* _iot_mqtt_queue_pop_by_type_and_id(iot_mqtt_packet_chunk_queue_t *queue,
+								int packet_type, unsigned int packet_id)
+{
+	iot_mqtt_packet_chunk_t *chunk = NULL, *iterator = NULL;
+
+	if((iot_os_mutex_lock(&queue->lock)))
+		return NULL;
+	if(queue->being_destroyed) {
+		iot_os_mutex_unlock(&queue->lock);
+		return NULL;
+	}
+
+	if (queue->head == NULL || queue->tail == NULL) {
+		chunk = NULL;
+	} else if (queue->head == queue->tail) {
+		if (queue->head->packet_type == packet_type && queue->head->packet_id == packet_id) {
+			chunk = queue->head;
+			queue->head = queue->tail = NULL;
+		}
+	} else {
+		if (queue->head->packet_type == packet_type && queue->head->packet_id == packet_id) {
+			chunk = queue->head;
+			queue->head = queue->head->next;
+			chunk->next = NULL;
+		} else {
+			iterator = queue->head;
+			while (iterator->next) {
+				if (iterator->next->packet_type == packet_type && iterator->next->packet_id == packet_id) {
+					chunk = iterator->next;
+					iterator->next = iterator->next->next;
+					chunk->next = NULL;
+					break;
+				}
+				iterator = iterator->next;
+			}
+		}
+	}
+
+	iot_os_mutex_unlock(&queue->lock);
+
+	return chunk;
+}
+
 static iot_mqtt_packet_chunk_t* _iot_mqtt_queue_pop(iot_mqtt_packet_chunk_queue_t *queue)
 {
 	iot_mqtt_packet_chunk_t *chunk = NULL;
