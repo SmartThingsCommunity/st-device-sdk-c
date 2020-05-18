@@ -149,9 +149,9 @@ For additional information about API parameters, please refer to the [API docume
 | iot_error_t iot_bsp_fs_deinit  (  )                          | Deinitialize a file system.                                  |
 | iot_error_t iot_bsp_fs_init  (  )                            | Initialize a file system. <br/>This function initialize the file-system of the device. You must call this function before using file-management function (open, read, write, etc.) |
 | iot_error_t iot_bsp_fs_open  ( const char *  filename, iot_bsp_fs_open_mode_t  mode,    iot_bsp_fs_handle_t *  handle ) | Open a file.                                                 |
-| iot_error_t iot_bsp_fs_read  ( iot_bsp_fs_handle_t  handle, char *  buffer,   unsigned int  length ) | Read a file.                                                 |
+| iot_error_t iot_bsp_fs_read  ( iot_bsp_fs_handle_t  handle, char *  buffer,   size_t * length ) | Read a file.                                                 |
 | iot_error_t iot_bsp_fs_remove  ( const char *  filename )    | Remove a file.                                               |
-| iot_error_t iot_bsp_fs_write  ( iot_bsp_fs_handle_t  handle, const char *  data, unsigned int  length ) | Write a file.                                                |
+| iot_error_t iot_bsp_fs_write  ( iot_bsp_fs_handle_t  handle, const char *  data, size_t  length ) | Write a file.                                                |
 
 #### Non-volatile storage
 
