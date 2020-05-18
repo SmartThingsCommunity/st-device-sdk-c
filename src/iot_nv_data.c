@@ -40,7 +40,7 @@ static unsigned char *device_nv_info;
 static size_t device_nv_info_len;
 static const char name_privateKey[] = "privateKey";
 static const char name_publicKey[] = "publicKey";
-static const char name_subCert[] = "subCert";
+static const char name_deviceCert[] = "deviceCert";
 static const char name_serialNumber[] = "serialNumber";
 #endif
 
@@ -903,7 +903,7 @@ iot_error_t iot_nv_get_client_certificate(char** cert, size_t* len)
 	IOT_WARN_CHECK((cert == NULL || len == NULL), IOT_ERROR_INVALID_ARGS, "Invalid args 'NULL'");
 	/*
 	 * Todo :
-	 * IOT_NVD_SUB_CERT
+	 * IOT_NVD_DEVICE_CERT
 	 */
 #if !defined(CONFIG_STDK_IOT_CORE_SUPPORT_STNV_PARTITION)
 	iot_error_t ret = IOT_ERROR_NONE;
@@ -911,7 +911,7 @@ iot_error_t iot_nv_get_client_certificate(char** cert, size_t* len)
 	char* data = NULL;
 	char* new_buff = NULL;
 
-	ret = iot_api_read_device_identity(device_nv_info, device_nv_info_len, name_subCert, &data);
+	ret = iot_api_read_device_identity(device_nv_info, device_nv_info_len, name_deviceCert, &data);
 	if (ret != IOT_ERROR_NONE) {
 		IOT_DEBUG("read failed");
 		ret = IOT_ERROR_NV_DATA_ERROR;
@@ -946,7 +946,7 @@ exit:
 	data = malloc(sizeof(char) * DATA_SIZE);
 	IOT_WARN_CHECK(data == NULL, IOT_ERROR_NV_DATA_ERROR, "memory alloc fail");
 
-	ret = _iot_nv_read_data_from_stnv(iot_bsp_nv_get_data_path(IOT_NVD_SUB_CERT), data, DATA_SIZE);
+	ret = _iot_nv_read_data_from_stnv(iot_bsp_nv_get_data_path(IOT_NVD_DEVICE_CERT), data, DATA_SIZE);
 	if (ret != IOT_ERROR_NONE) {
 		IOT_DEBUG("read failed");
 		ret = IOT_ERROR_NV_DATA_ERROR;

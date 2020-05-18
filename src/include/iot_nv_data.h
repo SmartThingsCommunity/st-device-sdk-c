@@ -54,8 +54,9 @@ typedef enum {
 	/* stored in stnv partition (manufacturer data) */
 	IOT_NVD_PRIVATE_KEY,
 	IOT_NVD_PUBLIC_KEY,
-	IOT_NVD_CA_CERT,
-	IOT_NVD_SUB_CERT,
+	IOT_NVD_ROOT_CA_CERT,
+	IOT_NVD_SUB_CA_CERT,
+	IOT_NVD_DEVICE_CERT,
 	IOT_NVD_SERIAL_NUM,
 	/* stored in stnv partition (manufacturer data) */
 
