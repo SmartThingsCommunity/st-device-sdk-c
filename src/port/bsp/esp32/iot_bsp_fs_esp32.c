@@ -144,7 +144,7 @@ iot_error_t iot_bsp_fs_read(iot_bsp_fs_handle_t handle, char* buffer, size_t *le
 		return IOT_ERROR_FS_READ_FAIL;
 	}
 
-	if (*length <= required_size) {
+	if (*length < required_size) {
 		IOT_ERROR("length is not enough (%d < %d)", *length, required_size);
 		free(data);
 		return IOT_ERROR_FS_READ_FAIL;
