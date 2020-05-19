@@ -68,6 +68,17 @@ typedef struct iot_security_context {
 iot_error_t iot_security_check_context_is_valid(iot_security_context_t *context);
 
 /**
+ * @brief	Check the function lists of backend by reference to the security context
+ * @details	Check the function lists of backend context is valid or null
+ * @param[in]	context reference to the security context
+ * @retval	IOT_ERROR_NONE functions lists of backend context is valid
+ * @retval	IOT_ERROR_SECURITY_CONTEXT_NULL security context is invalid
+ * @retval	IOT_ERROR_SECURITY_BE_CONTEXT_NULL backend context is invalid
+ * @retval	IOT_ERROR_SECURITY_BE_FUNCS_ENTRY_NULL function lists of backend context is invalid
+ */
+iot_error_t iot_security_check_backend_funcs_entry_is_valid(iot_security_context_t *context);
+
+/**
  * @brief	Initialize a security context
  * @details	Create a context for sub system and init the backend module
  * @return	a pointer to the created security context or null if failed to create

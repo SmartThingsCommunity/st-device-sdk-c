@@ -32,6 +32,23 @@ iot_error_t iot_security_check_context_is_valid(iot_security_context_t *context)
 	return IOT_ERROR_NONE;
 }
 
+iot_error_t iot_security_check_backend_funcs_entry_is_valid(iot_security_context_t *context)
+{
+	if (!context) {
+		return IOT_ERROR_SECURITY_CONTEXT_NULL;
+	}
+
+	if (!context->be_context) {
+		return IOT_ERROR_SECURITY_BE_CONTEXT_NULL;
+	}
+
+	if (!context->be_context->fn) {
+		return IOT_ERROR_SECURITY_BE_FUNCS_ENTRY_NULL;
+	}
+
+	return IOT_ERROR_NONE;
+}
+
 iot_security_context_t *iot_security_init(void)
 {
 	iot_security_context_t *context;
