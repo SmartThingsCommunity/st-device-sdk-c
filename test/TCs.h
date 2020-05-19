@@ -200,6 +200,21 @@ void TC_iot_security_deinit_success(void **state);
 void TC_iot_security_check_context_is_valid_null_parameters(void **state);
 void TC_iot_security_check_context_is_valid_success(void **state);
 
+// TCs for iot_security_be_bsp.c
+void TC_STATIC_iot_security_be_bsp_fs_storage_id2target_invalid_parameters(void **state);
+void TC_STATIC_iot_security_be_bsp_fs_storage_id2target_success(void **state);
+void TC_STATIC_iot_security_be_bsp_fs_storage_id2filename_invalid_parameters(void **state);
+void TC_STATIC_iot_security_be_bsp_fs_storage_id2filename_success(void **state);
+void TC_iot_security_be_bsp_fs_load_malloc_failure(void **state);
+void TC_iot_security_be_bsp_fs_load_invalid_parameters(void **state);
+void TC_iot_security_be_bsp_fs_load_success(void **state);
+void TC_iot_security_be_bsp_fs_store_invalid_parameters(void **state);
+void TC_iot_security_be_bsp_fs_store_success(void **state);
+void TC_iot_security_be_bsp_fs_remove_invalid_parameters(void **state);
+void TC_iot_security_be_bsp_fs_remove_success(void **state);
+void TC_iot_security_be_bsp_init_null_parameters(void **state);
+void TC_iot_security_be_bsp_init_success(void **state);
+
 // TCs for iot_wt.c
 int TC_iot_wt_create_memleak_detect_setup(void **state);
 int TC_iot_wt_create_memleak_detect_teardown(void **state);
