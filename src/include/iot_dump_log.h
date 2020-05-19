@@ -27,6 +27,7 @@ extern "C" {
 
 typedef enum {
 	IOT_DUMP_MAIN_BASE = 0x0000,
+	IOT_DUMP_MAIN_COMMAND = 0x0001,
 	IOT_DUMP_MQTT_BASE = 0x0100,
 	IOT_DUMP_MQTT_CREATE_SUCCESS = 0x0101,	/* arg1: command_timeout_ms */
 	IOT_DUMP_MQTT_CREATE_FAIL = 0x0102, /* arg1: return code(rc) */
