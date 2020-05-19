@@ -241,7 +241,7 @@ unsigned int iot_os_eventgroup_clear_bits(iot_os_eventgroup* eventgroup_handle,
  * @param[out] mutex	handle of mutex created by this function
  *
  * @return
- *	IOT_ERROR_NONE : success
+ *	IOT_OS_TRUE : success
  *	otherwise : fail
  */
 int iot_os_mutex_init(iot_os_mutex* mutex);
@@ -254,7 +254,7 @@ int iot_os_mutex_init(iot_os_mutex* mutex);
  * @param[in] mutex	handle of mutex
  *
  * @return
- *	IOT_ERROR_NONE : success
+ *	IOT_OS_TRUE : success
  *	otherwise : fail
  */
 int iot_os_mutex_lock(iot_os_mutex* mutex);
@@ -267,7 +267,7 @@ int iot_os_mutex_lock(iot_os_mutex* mutex);
  * @param[in] mutex	handle of mutex
  *
  * @return
- *	IOT_ERROR_NONE : success
+ *	IOT_OS_TRUE : success
  *	otherwise : fail
  */
 int iot_os_mutex_unlock(iot_os_mutex* mutex);

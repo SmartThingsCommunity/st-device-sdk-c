@@ -32,7 +32,7 @@ static void _iot_mqtt_chunk_destroy(iot_mqtt_packet_chunk_t *chunk)
 
 static int _iot_mqtt_queue_push(iot_mqtt_packet_chunk_queue_t *queue, iot_mqtt_packet_chunk_t *chunk)
 {
-	if((iot_os_mutex_lock(&queue->lock)))
+	if((iot_os_mutex_lock(&queue->lock)) != IOT_OS_TRUE)
 		return -1;
 	if(queue->being_destroyed) {
 		iot_os_mutex_unlock(&queue->lock);
@@ -55,7 +55,7 @@ static iot_mqtt_packet_chunk_t* _iot_mqtt_queue_pop(iot_mqtt_packet_chunk_queue_
 {
 	iot_mqtt_packet_chunk_t *chunk = NULL;
 
-	if((iot_os_mutex_lock(&queue->lock)))
+	if((iot_os_mutex_lock(&queue->lock)) != IOT_OS_TRUE)
 		return NULL;
 	if(queue->being_destroyed) {
 		iot_os_mutex_unlock(&queue->lock);
@@ -98,7 +98,7 @@ static void _iot_mqtt_queue_destroy(iot_mqtt_packet_chunk_queue_t *queue)
 		return;
 
 	// Try acqure lock. if it is destroyed already, return
-	while((iot_os_mutex_lock(&queue->lock))) {
+	while((iot_os_mutex_lock(&queue->lock)) != IOT_OS_TRUE) {
 		if (queue->lock.sem == NULL)
 			return;
 	}
@@ -126,7 +126,7 @@ static int _iot_mqtt_run_write_stream(MQTTClient *client, iot_os_timer timer)
 	int rc = 0, written = 0;
 	iot_mqtt_packet_chunk_t *w_chunk = NULL;
 
-	if((iot_os_mutex_lock(&client->write_lock))) {
+	if((iot_os_mutex_lock(&client->write_lock)) != IOT_OS_TRUE) {
 		return 0;
 	}
 	if(!client->isconnected) {
@@ -178,7 +178,7 @@ static int _iot_mqtt_run_read_stream(MQTTClient *client, iot_os_timer timer)
 	int rc = 0 , read = 0;
 	iot_mqtt_packet_chunk_t *w_chunk = NULL;
 
-	if((iot_os_mutex_lock(&client->read_lock))) {
+	if((iot_os_mutex_lock(&client->read_lock)) != IOT_OS_TRUE) {
 		return 0;
 	}
 	if(!client->isconnected) {
