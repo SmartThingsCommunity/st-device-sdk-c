@@ -95,7 +95,7 @@ void TC_iot_security_check_context_null_parameters(void **state)
 	iot_error_t err;
 
 	// When: context is null
-	err = iot_security_check_context(NULL);
+	err = iot_security_check_context_is_null(NULL);
 	// Then
 	assert_int_equal(err, IOT_ERROR_SECURITY_CONTEXT_NULL);
 }
@@ -111,7 +111,7 @@ void TC_iot_security_check_context_success(void **state)
 	context = iot_security_init();
 	assert_non_null(context);
 	// When
-	err = iot_security_check_context(context);
+	err = iot_security_check_context_is_null(context);
 	// Then
 	assert_int_equal(err, IOT_ERROR_NONE);
 	// Teardown
