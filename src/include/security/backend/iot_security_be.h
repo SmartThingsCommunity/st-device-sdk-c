@@ -19,6 +19,8 @@
 #ifndef _IOT_SECURITY_BE_COMMON_H_
 #define _IOT_SECURITY_BE_COMMON_H_
 
+#include "security/backend/iot_security_be_bsp.h"
+
 #ifdef __cplusplus
 extern "C" {
 #endif
@@ -27,16 +29,20 @@ typedef struct iot_security_be_funcs {
 
 } iot_security_be_funcs_t;
 
-typedef struct iot_security_be_context {
+struct iot_security_be_context {
 	/**
 	 * @brief string name to know this
-	 * */
+	 */
 	const char *name;
 	/**
 	 * @brief a pointer to a function lists
-	 * */
+	 */
 	const iot_security_be_funcs_t *fn;
-} iot_security_be_context_t;
+	/**
+	 * @brief a pointer to a function lists for bsp layer
+	 */
+	const iot_security_be_bsp_funcs_t *bsp_fn;
+};
 
 /**
  * @brief	Initialize a security backend context
