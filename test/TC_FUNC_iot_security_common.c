@@ -90,7 +90,7 @@ void TC_iot_security_deinit_success(void **state)
 	set_mock_detect_memory_leak(false);
 }
 
-void TC_iot_security_check_context_null_parameters(void **state)
+void TC_iot_security_check_context_is_null_null_parameters(void **state)
 {
 	iot_error_t err;
 
@@ -100,7 +100,7 @@ void TC_iot_security_check_context_null_parameters(void **state)
 	assert_int_equal(err, IOT_ERROR_SECURITY_CONTEXT_NULL);
 }
 
-void TC_iot_security_check_context_success(void **state)
+void TC_iot_security_check_context_is_null_success(void **state)
 {
 	iot_error_t err;
 	iot_security_context_t *context;
