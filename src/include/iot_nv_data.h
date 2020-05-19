@@ -31,8 +31,10 @@ extern "C" {
  * @brief internal nv data codes.
  */
 typedef enum {
+	IOT_NVD_UNKNOWN = 0,
+
 	/* wifi prov data */
-	IOT_NVD_WIFI_PROV_STATUS = 0,
+	IOT_NVD_WIFI_PROV_STATUS,
 	IOT_NVD_AP_SSID,
 	IOT_NVD_AP_PASS,
 	IOT_NVD_AP_BSSID,
@@ -52,7 +54,8 @@ typedef enum {
 	IOT_NVD_MISC_INFO,
 
 	/* stored in stnv partition (manufacturer data) */
-	IOT_NVD_PRIVATE_KEY,
+	IOT_NVD_FACTORY,
+	IOT_NVD_PRIVATE_KEY = IOT_NVD_FACTORY,
 	IOT_NVD_PUBLIC_KEY,
 	IOT_NVD_ROOT_CA_CERT,
 	IOT_NVD_SUB_CA_CERT,
