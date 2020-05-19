@@ -120,3 +120,48 @@ void TC_iot_security_check_context_is_valid_success(void **state)
 
 	set_mock_detect_memory_leak(false);
 }
+
+void TC_iot_security_check_backend_funcs_entry_is_valid_failure(void **state)
+{
+	iot_error_t err;
+	iot_security_context_t context = { 0 };
+	iot_security_be_context_t be_context = { 0 };
+
+	// When: context is null
+	err = iot_security_check_backend_funcs_entry_is_valid(NULL);
+	// Then
+	assert_int_equal(err, IOT_ERROR_SECURITY_CONTEXT_NULL);
+
+	// When: be context is null
+	err = iot_security_check_backend_funcs_entry_is_valid(&context);
+	// Then
+	assert_int_equal(err, IOT_ERROR_SECURITY_BE_CONTEXT_NULL);
+
+	// Given: be funcs is null
+	context.be_context = &be_context;
+	// When
+	err = iot_security_check_backend_funcs_entry_is_valid(&context);
+	// Then
+	assert_int_equal(err, IOT_ERROR_SECURITY_BE_FUNCS_ENTRY_NULL);
+}
+
+void TC_iot_security_check_backend_funcs_entry_is_valid_success(void **state)
+{
+	iot_error_t err;
+	iot_security_context_t *context;
+
+	set_mock_detect_memory_leak(true);
+
+	// Given
+	context = iot_security_init();
+	assert_non_null(context);
+	// When
+	err = iot_security_check_backend_funcs_entry_is_valid(context);
+	// Then
+	assert_int_equal(err, IOT_ERROR_NONE);
+	// Teardown
+	err = iot_security_deinit(context);
+	assert_int_equal(err, IOT_ERROR_NONE);
+
+	set_mock_detect_memory_leak(false);
+}

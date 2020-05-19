@@ -235,6 +235,8 @@ int TEST_FUNC_iot_security_common(void)
             cmocka_unit_test(TC_iot_security_deinit_success),
             cmocka_unit_test(TC_iot_security_check_context_is_valid_null_parameters),
             cmocka_unit_test(TC_iot_security_check_context_is_valid_success),
+            cmocka_unit_test(TC_iot_security_check_backend_funcs_entry_is_valid_failure),
+            cmocka_unit_test(TC_iot_security_check_backend_funcs_entry_is_valid_success),
     };
     return cmocka_run_group_tests_name("iot_security_common.c", tests, NULL, NULL);
 }

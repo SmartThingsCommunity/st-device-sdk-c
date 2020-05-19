@@ -199,6 +199,8 @@ void TC_iot_security_deinit_null_parameters(void **state);
 void TC_iot_security_deinit_success(void **state);
 void TC_iot_security_check_context_is_valid_null_parameters(void **state);
 void TC_iot_security_check_context_is_valid_success(void **state);
+void TC_iot_security_check_backend_funcs_entry_is_valid_failure(void **state);
+void TC_iot_security_check_backend_funcs_entry_is_valid_success(void **state);
 
 // TCs for iot_security_be_bsp.c
 void TC_STATIC_iot_security_be_bsp_fs_storage_id2target_invalid_parameters(void **state);
