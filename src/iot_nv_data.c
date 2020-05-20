@@ -28,6 +28,7 @@
 #if !defined(CONFIG_STDK_IOT_CORE_SUPPORT_STNV_PARTITION)
 #include "iot_internal.h"
 #endif
+#include "security/iot_security_storage.h"
 
 #define IOT_NVD_MAX_DATA_LEN (2048)
 #define IOT_NVD_MAX_ID_LEN (36) // Device/Location/Profile ID, SSID, SN
@@ -1243,3 +1244,52 @@ iot_error_t iot_nv_erase(iot_nvd_t nv_type)
 
 	return IOT_ERROR_NONE;
 }
+
+#if !defined(CONFIG_STDK_IOT_CORE_SUPPORT_STNV_PARTITION)
+iot_error_t iot_nv_get_data_from_device_info(iot_nvd_t nv_id, iot_security_buffer_t *output_buf)
+{
+	iot_error_t err;
+	const char *di_name;
+	char *data = NULL;
+
+	IOT_DEBUG("nv id = %d", nv_id);
+
+	if (!output_buf) {
+		IOT_ERROR("output buffer is null");
+		return IOT_ERROR_INVALID_ARGS;
+	}
+
+	memset(output_buf, 0, sizeof(iot_security_buffer_t));
+
+	switch (nv_id) {
+	case IOT_NVD_PRIVATE_KEY:
+		di_name = name_privateKey;
+		break;
+	case IOT_NVD_PUBLIC_KEY:
+		di_name = name_publicKey;
+		break;
+	case IOT_NVD_DEVICE_CERT:
+		di_name = name_deviceCert;
+		break;
+	case IOT_NVD_SERIAL_NUM:
+		di_name = name_serialNumber;
+		break;
+	default:
+		IOT_ERROR("'%s' is not a device info nv");
+		return IOT_ERROR_NV_DATA_ERROR;
+	}
+
+	err = iot_api_read_device_identity(device_nv_info, device_nv_info_len, di_name, &data);
+	if (err) {
+		IOT_ERROR("iot_api_read_device_identity = %d", err);
+		return err;
+	}
+
+	if (data) {
+		output_buf->p = (unsigned char *)data;
+		output_buf->len = strlen(data);
+	}
+
+	return IOT_ERROR_NONE;
+}
+#endif

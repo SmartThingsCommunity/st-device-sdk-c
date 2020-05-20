@@ -21,6 +21,7 @@
 
 #include "iot_error.h"
 #include "iot_main.h"
+#include "security/iot_security_common.h"
 
 #ifdef __cplusplus
 extern "C" {
@@ -299,6 +300,21 @@ iot_error_t iot_nv_get_serial_number(char** sn, size_t* len);
  * @retval IOT_ERROR_NV_DATA_NOT_EXIST NV data does not exist.
  */
 iot_error_t iot_nv_erase(iot_nvd_t nv_type);
+
+#if !defined(CONFIG_STDK_IOT_CORE_SUPPORT_STNV_PARTITION)
+/**
+ * @brief Get nv data from device info
+ *
+ * @param[in] nv_id The type of nv data
+ * @param[out] output_buf a pointer to the security buffer of data
+ * @retval IOT_ERROR_NONE success
+ * @retval IOT_ERROR_INVALID_ARGS input parameter is invalid
+ * @retval IOT_ERROR_MEM_ALLOC memory allocation for data is failed
+ * @retval IOT_ERROR_UNINITIALIZED device info does not initialized
+ * @retval IOT_ERROR_NV_DATA_ERROR nv_id is invalid to get data from device info
+ */
+iot_error_t iot_nv_get_data_from_device_info(iot_nvd_t nv_id, iot_security_buffer_t *output_buf);
+#endif
 
 #ifdef __cplusplus
 }
