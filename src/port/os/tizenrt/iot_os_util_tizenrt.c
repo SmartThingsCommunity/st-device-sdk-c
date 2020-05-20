@@ -180,14 +180,14 @@ static void *recursive_mutex_create_wrapper(void)
 int iot_os_mutex_init(iot_os_mutex *mutex)
 {
     if (!mutex) {
-        return IOT_ERROR_INVALID_ARGS;
+        return IOT_OS_FALSE;
     }
 
     mutex->sem = recursive_mutex_create_wrapper();
     if (!mutex->sem) {
-        return IOT_ERROR_MEM_ALLOC;
+        return IOT_OS_FALSE;
     }
-    return IOT_ERROR_NONE;
+    return IOT_OS_TRUE;
 }
 
 int iot_os_mutex_lock(iot_os_mutex *mutex)
@@ -195,14 +195,14 @@ int iot_os_mutex_lock(iot_os_mutex *mutex)
     int ret;
 
     if (!mutex) {
-        return IOT_ERROR_INVALID_ARGS;
+        return IOT_OS_FALSE;
     }
 
     ret = pthread_mutex_lock((pthread_mutex_t *)mutex->sem);
     if (!ret) {
-        ret = IOT_ERROR_NONE;
+        ret = IOT_OS_TRUE;
     } else {
-        ret = IOT_ERROR_BAD_REQ;
+        ret = IOT_OS_FALSE;
     }
 
     return ret;
@@ -213,14 +213,14 @@ int iot_os_mutex_unlock(iot_os_mutex *mutex)
     int ret;
 
     if (!mutex) {
-        return IOT_ERROR_INVALID_ARGS;
+        return IOT_OS_FALSE;
     }
 
     ret = pthread_mutex_unlock((pthread_mutex_t *)mutex->sem);
     if (!ret) {
-        ret = IOT_ERROR_NONE;
+        ret = IOT_OS_TRUE;
     } else {
-        ret = IOT_ERROR_BAD_REQ;
+        ret = IOT_OS_FALSE;
     }
 
     return ret;

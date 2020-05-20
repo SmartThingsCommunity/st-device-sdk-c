@@ -122,7 +122,7 @@ iot_error_t iot_bsp_fs_open_from_stnv(const char* filename, iot_bsp_fs_handle_t*
 }
 #endif
 
-iot_error_t iot_bsp_fs_read(iot_bsp_fs_handle_t handle, char* buffer, unsigned int length)
+iot_error_t iot_bsp_fs_read(iot_bsp_fs_handle_t handle, char* buffer, size_t *length)
 {
 	esp_err_t ret;
 	size_t required_size;
@@ -144,7 +144,14 @@ iot_error_t iot_bsp_fs_read(iot_bsp_fs_handle_t handle, char* buffer, unsigned i
 		return IOT_ERROR_FS_READ_FAIL;
 	}
 
-	memcpy(buffer, data, length);
+	if (*length < required_size) {
+		IOT_ERROR("length is not enough (%d < %d)", *length, required_size);
+		free(data);
+		return IOT_ERROR_FS_READ_FAIL;
+	} else {
+		memcpy(buffer, data, required_size);
+		*length = required_size;
+	}
 
 	free(data);
 

@@ -344,12 +344,14 @@ int st_cap_attr_send(IOT_CAP_HANDLE *cap_handle,
 	iot_error_t err;
 
 	if (!handle || !handle->component || !handle->capability || !handle->ctx || !evt_data || !evt_num) {
+		IOT_DUMP(IOT_DEBUG_LEVEL_ERROR, IOT_DUMP_CAPABILITY_SEND_EVENT_NO_DATA_ERROR, 0, 0);
 		IOT_ERROR("There is no handle or evt_data");
 		return IOT_ERROR_INVALID_ARGS;
 	}
 
 	ctx = handle->ctx;
 	if (ctx->curr_state < IOT_STATE_CLOUD_CONNECTING) {
+		IOT_DUMP(IOT_DEBUG_LEVEL_ERROR, IOT_DUMP_CAPABILITY_SEND_EVENT_NO_CONNECT_ERROR, ctx->curr_state, 0);
 		IOT_ERROR("Target has not connected to server yet!!");
 		return IOT_ERROR_BAD_REQ;
 	}
@@ -366,11 +368,13 @@ int st_cap_attr_send(IOT_CAP_HANDLE *cap_handle,
 
 	ret = iot_os_queue_send(ctx->pub_queue, &final_msg, 0);
 	if (ret != IOT_OS_TRUE) {
+		IOT_DUMP(IOT_DEBUG_LEVEL_ERROR, IOT_DUMP_CAPABILITY_SEND_EVENT_QUEUE_FAIL_ERROR, ret, 0);
 		IOT_WARN("Cannot put the paylod into pub_queue");
 		free(final_msg.msg);
 
 		return IOT_ERROR_BAD_REQ;
 	} else {
+		IOT_DUMP(IOT_DEBUG_LEVEL_INFO, IOT_DUMP_CAPABILITY_SEND_EVENT_SUCCESS, evt_num, 0);
 		iot_os_eventgroup_set_bits(ctx->iot_events,
 			IOT_EVENT_BIT_CAPABILITY);
 
@@ -432,6 +436,7 @@ static iot_error_t _iot_parse_noti_data(void *data, iot_noti_data_t *noti_data)
 			err = IOT_ERROR_BAD_REQ;
 			break;
 		}
+		IOT_DUMP(IOT_DEBUG_LEVEL_INFO, IOT_DUMP_CAPABILITY_DEVICE_DELETED_RECEIVED, 0, 0);
 
 		noti_data->type = _IOT_NOTI_TYPE_DEV_DELETED;
 		break;
@@ -456,6 +461,7 @@ static iot_error_t _iot_parse_noti_data(void *data, iot_noti_data_t *noti_data)
 		snprintf(time_str, sizeof(time_str), "%d", item->valueint);
 		IOT_INFO("Set SNTP with current time %s", time_str);
 		iot_bsp_system_set_time_in_sec(time_str);
+		IOT_DUMP(IOT_DEBUG_LEVEL_INFO, IOT_DUMP_CAPABILITY_EXPIRED_JWT_RECEIVED, item->valueint, 0);
 		break;
 
 	case 'r':	/* rate.limit.reached */
@@ -499,6 +505,7 @@ static iot_error_t _iot_parse_noti_data(void *data, iot_noti_data_t *noti_data)
 			goto out_noti_parse;
 		}
 		noti_data->raw.rate_limit.sequenceNumber = item->valueint;
+		IOT_DUMP(IOT_DEBUG_LEVEL_INFO, IOT_DUMP_CAPABILITY_RATE_LIMIT_RECEIVED, noti_data->raw.rate_limit.sequenceNumber, 0);
 		break;
 	case 'q':	/* quota.reached */
 		if (noti_str_len != 13) {
@@ -525,6 +532,7 @@ static iot_error_t _iot_parse_noti_data(void *data, iot_noti_data_t *noti_data)
 			goto out_noti_parse;
 		}
 		noti_data->raw.quota.limit = item->valueint;
+		IOT_DUMP(IOT_DEBUG_LEVEL_INFO, IOT_DUMP_CAPABILITY_QUOTA_LIMIT_RECEIVED, noti_data->raw.quota.used, noti_data->raw.quota.limit);
 		break;
 	}
 
@@ -549,6 +557,7 @@ void iot_noti_sub_cb(struct iot_context *ctx, char *payload)
 
 	memset(&noti_data, 0, sizeof(iot_noti_data_t));
 
+	IOT_DUMP(IOT_DEBUG_LEVEL_INFO, IOT_DUMP_CAPABILITY_NOTI_RECEIVED, 0, 0);
 	err = _iot_parse_noti_data((void *)payload, &noti_data);
 	if (err != IOT_ERROR_NONE) {
 		IOT_ERROR("Cannot parse notification data");
@@ -600,6 +609,7 @@ static iot_error_t _iot_process_cmd(iot_cap_handle_list_t *cap_handle_list, char
 		return IOT_ERROR_BAD_REQ;
 	}
 
+	IOT_DUMP(IOT_DEBUG_LEVEL_INFO, IOT_DUMP_CAPABILITY_COMMAND_SUCCEED, 0, 0);
 	return IOT_ERROR_NONE;
 }
 
@@ -654,6 +664,7 @@ void iot_cap_sub_cb(iot_cap_handle_list_t *cap_handle_list, char *payload)
 
 	arr_size = JSON_GET_ARRAY_SIZE(cap_cmds);
 	IOT_DEBUG("cap_cmds arr_size=%d", arr_size);
+	IOT_DUMP(IOT_DEBUG_LEVEL_INFO, IOT_DUMP_CAPABILITY_COMMANDS_RECEIVED, arr_size, 0);
 
 	if (arr_size == 0) {
 		IOT_ERROR("There are no commands data");
@@ -676,6 +687,7 @@ void iot_cap_sub_cb(iot_cap_handle_list_t *cap_handle_list, char *payload)
 			continue;
 		}
 
+		IOT_DUMP(IOT_DEBUG_LEVEL_INFO, IOT_DUMP_CAPABILITY_PROCESS_COMMAND, i + 1, 0);
 		err = _iot_parse_cmd_data(cmditem, &component_name, &capability_name, &command_name, &cmd_data);
 		if (err != IOT_ERROR_NONE) {
 			IOT_ERROR("Cannot parse %dth command data", i);
@@ -1030,6 +1042,11 @@ static iot_error_t _iot_make_evt_data(const char* component, const char* capabil
 #else
 	return _iot_make_evt_data_json(component, capability, arr_size, evt_data_arr, msg);
 #endif
+}
+
+int iot_cap_get_sqnum(void)
+{
+	return sqnum;
 }
 
 void iot_cap_call_init_cb(iot_cap_handle_list_t *cap_handle_list)
