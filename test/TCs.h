@@ -139,6 +139,8 @@ void TC_iot_nv_get_device_id_null_parameters(void **state);
 void TC_iot_nv_set_device_id_null_parameter(void **state);
 void TC_iot_nv_get_set_erase_device_id_success(void **state);
 void TC_iot_nv_erase_internal_failure(void** state);
+void TC_iot_nv_get_data_from_device_info_failure(void** state);
+void TC_iot_nv_get_data_from_device_info_success(void** state);
 
 // TCs for iot_easysetup_crypto.c
 int TC_iot_easysetup_crypto_setup(void **state);
