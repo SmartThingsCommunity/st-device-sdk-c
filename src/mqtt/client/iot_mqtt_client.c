@@ -343,6 +343,7 @@ static int sendPacket(MQTTClient *c, unsigned char *buf, int length, iot_os_time
 		iot_os_timer_count_ms(c->last_sent, c->keepAliveInterval * 1000); // record the fact that we have successfully sent the packet
 		rc = 0;
 	} else {
+		IOT_DUMP(IOT_DEBUG_LEVEL_ERROR, IOT_DUMP_MQTT_SEND_FAIL, rc, 0);
 		rc = E_ST_MQTT_FAILURE;
 	}
 
@@ -431,6 +432,7 @@ int st_mqtt_create(st_mqtt_client *client, unsigned int command_timeout_ms)
 		goto error_handle;
 	}
 
+	IOT_DUMP(IOT_DEBUG_LEVEL_INFO, IOT_DUMP_MQTT_CREATE_SUCCESS, command_timeout_ms, 0);
 	return 0;
 error_handle:
 	if (c) {
@@ -454,6 +456,7 @@ error_handle:
 		iot_os_free(c);
 		*client = NULL;
 	}
+	IOT_DUMP(IOT_DEBUG_LEVEL_ERROR, IOT_DUMP_MQTT_CREATE_FAIL, rc, 0);
 	return rc;
 }
 
@@ -507,6 +510,7 @@ void st_mqtt_destroy(st_mqtt_client client)
 	_iot_mqtt_queue_destroy(&c->write_completed_queue);
 	_iot_mqtt_queue_destroy(&c->read_completed_queue);
 	iot_os_free(c);
+	IOT_DUMP(IOT_DEBUG_LEVEL_INFO, IOT_DUMP_MQTT_DESTROY, 0, 0);
 }
 
 static int decodePacket(MQTTClient *c, int *value, iot_os_timer timer)
@@ -666,6 +670,7 @@ int keepalive(MQTTClient *c)
 	}
 
 	if (c->ping_outstanding && iot_os_timer_isexpired(c->ping_wait) && c->ping_retry_count >= MQTT_PING_RETRY) {
+		IOT_DUMP(IOT_DEBUG_LEVEL_ERROR, IOT_DUMP_MQTT_PING_FAIL, 0, 0);
 		IOT_WARN("mqtt didn't get PINGRESP");
 		rc = E_ST_MQTT_FAILURE; /* PINGRESP not received in keepalive interval */
 	/* Send ping request when there is no ping response up to 3 times or ping period expired */
@@ -796,6 +801,8 @@ int cycle(MQTTClient *c, iot_os_timer timer)
 exit:
 	if (!rc) {
 		rc = packet_type;
+	} else {
+		IOT_DUMP(IOT_DEBUG_LEVEL_ERROR, IOT_DUMP_MQTT_CYCLE_FAIL, rc, packet_type);
 	}
 
 	return rc;
@@ -975,6 +982,10 @@ int MQTTConnectWithResults(st_mqtt_client client, st_mqtt_broker_info_t *broker,
 	unsigned char *pbuf = NULL;
 
 	iot_os_mutex_lock(&c->mutex);
+	if (client == NULL || broker == NULL || connect_data == NULL) {
+		IOT_ERROR("Invalid arguments");
+		goto exit;
+	}
 
 	if (c->isconnected) { /* don't send connect packet again if we are already connected */
 		goto exit;
@@ -1009,6 +1020,7 @@ int MQTTConnectWithResults(st_mqtt_client client, st_mqtt_broker_info_t *broker,
 	} while ((iot_err != IOT_ERROR_NONE) && connect_retry);
 
 	if (iot_err != IOT_ERROR_NONE) {
+		IOT_DUMP(IOT_DEBUG_LEVEL_ERROR, IOT_DUMP_MQTT_CONNECT_NETWORK_FAIL, 0, 0);
 		IOT_ERROR("MQTT net connection failed");
 		goto exit;
 	}
@@ -1091,6 +1103,7 @@ exit_with_netcon:
 exit:
 	iot_os_mutex_unlock(&c->mutex);
 
+	IOT_DUMP(IOT_DEBUG_LEVEL_INFO, IOT_DUMP_MQTT_CONNECT_RESULT, rc, connect_data->alive_interval);
 	return rc;
 }
 
@@ -1213,6 +1226,7 @@ exit:
 
 	iot_os_mutex_unlock(&c->mutex);
 
+	IOT_DUMP(IOT_DEBUG_LEVEL_INFO, IOT_DUMP_MQTT_SUBSCRIBE, rc, 0);
 	return rc;
 }
 
@@ -1287,6 +1301,7 @@ exit:
 
 	iot_os_mutex_unlock(&c->mutex);
 
+	IOT_DUMP(IOT_DEBUG_LEVEL_INFO, IOT_DUMP_MQTT_UNSUBSCRIBE, rc, 0);
 	return rc;
 }
 
@@ -1405,6 +1420,7 @@ exit:
 
 	iot_os_mutex_unlock(&c->mutex);
 
+	IOT_DUMP(IOT_DEBUG_LEVEL_INFO, IOT_DUMP_MQTT_PUBLISH, rc, msg_id);
 	return rc;
 }
 
@@ -1445,5 +1461,6 @@ exit:
 
 	iot_os_mutex_unlock(&c->mutex);
 
+	IOT_DUMP(IOT_DEBUG_LEVEL_INFO, IOT_DUMP_MQTT_DISCONNECT, rc, 0);
 	return rc;
 }
