@@ -53,7 +53,11 @@ iot_security_context_t *iot_security_init(void)
 {
 	iot_security_context_t *context;
 	iot_security_be_context_t *be_context;
+#if defined(CONFIG_STDK_IOT_CORE_SUPPORT_STNV_PARTITION)
 	external_nv_callback external_nv_cb = NULL;
+#else
+	external_nv_callback external_nv_cb = iot_nv_get_data_from_device_info;
+#endif
 
 	context = (iot_security_context_t *)iot_os_malloc(sizeof(iot_security_context_t));
 	if (!context) {
