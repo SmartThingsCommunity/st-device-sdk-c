@@ -152,7 +152,7 @@ const iot_security_be_funcs_t iot_security_be_software_funcs = {
 	.storage_remove = _iot_security_be_software_storage_remove,
 };
 
-iot_security_be_context_t *iot_security_be_init(void)
+iot_security_be_context_t *iot_security_be_init(external_nv_callback external_nv_cb)
 {
 	iot_error_t err;
 	iot_security_be_context_t *be_context;
@@ -167,6 +167,7 @@ iot_security_be_context_t *iot_security_be_init(void)
 
 	be_context->name = "software";
 	be_context->fn = &iot_security_be_software_funcs;
+	be_context->external_device_info_cb = external_nv_cb;
 
 	err = iot_security_be_bsp_init(be_context);
 	if (err) {

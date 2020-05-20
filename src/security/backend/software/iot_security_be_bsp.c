@@ -43,7 +43,11 @@ iot_security_storage_target_t _iot_security_be_bsp_fs_storage_id2target(iot_secu
 	}
 
 	if (storage_id < IOT_NVD_MAX) {
+#if defined(CONFIG_STDK_IOT_CORE_SUPPORT_STNV_PARTITION)
 		return IOT_SECURITY_STORAGE_TARGET_FACTORY;
+#else
+		return IOT_SECURITY_STORAGE_TARGET_DI;
+#endif
 	}
 
 	return IOT_SECURITY_STORAGE_TARGET_UNKNOWN;
@@ -189,6 +193,11 @@ iot_error_t _iot_security_be_bsp_fs_load(iot_security_be_context_t *be_context, 
 	case IOT_SECURITY_STORAGE_TARGET_NV:
 	case IOT_SECURITY_STORAGE_TARGET_FACTORY:
 		return _iot_security_be_bsp_fs_load_from_nv(storage_id, output_buf);
+	case IOT_SECURITY_STORAGE_TARGET_DI:
+		if (!be_context->external_device_info_cb) {
+			return IOT_ERROR_SECURITY_BE_EXTERNAL_NULL;
+		}
+		return be_context->external_device_info_cb(storage_id, output_buf);
 	default:
 		IOT_ERROR("cannot found target for id = %d", storage_id);
 		return IOT_ERROR_SECURITY_FS_UNKNOWN_TARGET;
@@ -248,6 +257,9 @@ iot_error_t _iot_security_be_bsp_fs_store(iot_security_be_context_t *be_context,
 	case IOT_SECURITY_STORAGE_TARGET_FACTORY:
 		IOT_ERROR("cannot update factory nv for id = %d", storage_id);
 		return IOT_ERROR_SECURITY_FS_INVALID_TARGET;
+	case IOT_SECURITY_STORAGE_TARGET_DI:
+		IOT_ERROR("cannot update device info nv for id = %d", storage_id);
+		return IOT_ERROR_SECURITY_FS_INVALID_TARGET;
 	default:
 		IOT_ERROR("cannot found target for id = %d", storage_id);
 		return IOT_ERROR_SECURITY_FS_UNKNOWN_TARGET;
@@ -292,6 +304,9 @@ iot_error_t _iot_security_be_bsp_fs_remove(iot_security_be_context_t *be_context
 		return _iot_security_be_bsp_fs_remove_from_nv(storage_id);
 	case IOT_SECURITY_STORAGE_TARGET_FACTORY:
 		IOT_ERROR("cannot remove factory nv for id = %d", storage_id);
+		return IOT_ERROR_SECURITY_FS_INVALID_TARGET;
+	case IOT_SECURITY_STORAGE_TARGET_DI:
+		IOT_ERROR("cannot remove device info nv for id = %d", storage_id);
 		return IOT_ERROR_SECURITY_FS_INVALID_TARGET;
 	default:
 		IOT_ERROR("cannot found target for id = %d", storage_id);

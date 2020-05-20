@@ -53,6 +53,7 @@ iot_security_context_t *iot_security_init(void)
 {
 	iot_security_context_t *context;
 	iot_security_be_context_t *be_context;
+	external_nv_callback external_nv_cb = NULL;
 
 	context = (iot_security_context_t *)iot_os_malloc(sizeof(iot_security_context_t));
 	if (!context) {
@@ -62,7 +63,7 @@ iot_security_context_t *iot_security_init(void)
 
 	memset(context, 0, sizeof(iot_security_context_t));
 
-	be_context = iot_security_be_init();
+	be_context = iot_security_be_init(external_nv_cb);
 	if (!be_context) {
 		IOT_ERROR("failed to malloc for backend context");
 		iot_os_free(context);
