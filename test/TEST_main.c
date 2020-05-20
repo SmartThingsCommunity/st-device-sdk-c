@@ -241,6 +241,30 @@ int TEST_FUNC_iot_security_common(void)
     return cmocka_run_group_tests_name("iot_security_common.c", tests, NULL, NULL);
 }
 
+int TEST_FUNC_iot_security_storage(void)
+{
+    const struct CMUnitTest tests[] = {
+            cmocka_unit_test_setup_teardown(TC_iot_security_storage_init_malloc_failure, TC_iot_security_storage_init_setup, TC_iot_security_storage_init_teardown),
+            cmocka_unit_test_setup_teardown(TC_iot_security_storage_init_null_parameters, TC_iot_security_storage_init_setup, TC_iot_security_storage_init_teardown),
+            cmocka_unit_test_setup_teardown(TC_iot_security_storage_init_success, TC_iot_security_storage_init_setup, TC_iot_security_storage_init_teardown),
+            cmocka_unit_test_setup_teardown(TC_iot_security_storage_deinit_null_parameters, TC_iot_security_storage_init_setup, TC_iot_security_storage_init_teardown),
+            cmocka_unit_test_setup_teardown(TC_iot_security_storage_deinit_success, TC_iot_security_storage_init_setup, TC_iot_security_storage_init_teardown),
+            cmocka_unit_test_setup_teardown(TC_iot_security_storage_read_malloc_failure, TC_iot_security_storage_setup, TC_iot_security_storage_teardown),
+            cmocka_unit_test_setup_teardown(TC_iot_security_storage_read_null_parameters, TC_iot_security_storage_setup, TC_iot_security_storage_teardown),
+            cmocka_unit_test_setup_teardown(TC_iot_security_storage_read_invalid_parameters, TC_iot_security_storage_setup, TC_iot_security_storage_teardown),
+            cmocka_unit_test_setup_teardown(TC_iot_security_storage_read_failure, TC_iot_security_storage_init_setup, TC_iot_security_storage_init_teardown),
+            cmocka_unit_test_setup_teardown(TC_iot_security_storage_read_success, TC_iot_security_storage_setup, TC_iot_security_storage_teardown),
+            cmocka_unit_test_setup_teardown(TC_iot_security_storage_write_null_parameters, TC_iot_security_storage_setup, TC_iot_security_storage_teardown),
+            cmocka_unit_test_setup_teardown(TC_iot_security_storage_write_invalid_parameters, TC_iot_security_storage_setup, TC_iot_security_storage_teardown),
+            cmocka_unit_test_setup_teardown(TC_iot_security_storage_write_failure, TC_iot_security_storage_setup, TC_iot_security_storage_teardown),
+            cmocka_unit_test_setup_teardown(TC_iot_security_storage_write_success, TC_iot_security_storage_setup, TC_iot_security_storage_teardown),
+            cmocka_unit_test_setup_teardown(TC_iot_security_storage_remove_null_parameters, TC_iot_security_storage_setup, TC_iot_security_storage_teardown),
+            cmocka_unit_test_setup_teardown(TC_iot_security_storage_remove_invalid_parameters, TC_iot_security_storage_setup, TC_iot_security_storage_teardown),
+            cmocka_unit_test_setup_teardown(TC_iot_security_storage_remove_failure, TC_iot_security_storage_setup, TC_iot_security_storage_teardown),
+            cmocka_unit_test_setup_teardown(TC_iot_security_storage_remove_success, TC_iot_security_storage_setup, TC_iot_security_storage_teardown),
+    };
+    return cmocka_run_group_tests_name("iot_security_storage.c", tests, NULL, NULL);
+}
 
 #if CONFIG_STDK_IOT_CORE_SECURITY_BACKEND == SOFTWARE
 int TEST_FUNC_iot_security_software_be_bsp(void)
@@ -294,6 +318,7 @@ int main(void) {
     err += TEST_FUNC_iot_main();
     err += TEST_FUNC_iot_mqtt_client();
     err += TEST_FUNC_iot_security_common();
+    err += TEST_FUNC_iot_security_storage();
 #if defined(CONFIG_STDK_IOT_CORE_SECURITY_BACKEND_SOFTWARE)
     err += TEST_FUNC_iot_security_software_be_bsp();
 #endif

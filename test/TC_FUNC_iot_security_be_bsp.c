@@ -128,6 +128,16 @@ void TC_iot_security_be_bsp_fs_load_malloc_failure(void **state)
 	iot_security_be_context_t be_context;
 	iot_security_storage_id_t id;
 	iot_security_buffer_t buf;
+	const char *room_id = "1cd8e3f2-0c88-4298-90e3-cd9b35a82140";
+
+	// Given: prepare room id
+	id = IOT_NVD_ROOM_ID;
+	buf.p = (unsigned char *)room_id;
+	buf.len = strlen(room_id) + 1;
+	// When
+	err = _iot_security_be_bsp_fs_store(NULL, id, &buf);
+	// Then
+	assert_int_equal(err, IOT_ERROR_NONE);
 
 	// Given: malloc failure
 	do_not_use_mock_iot_os_malloc_failure();

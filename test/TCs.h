@@ -202,6 +202,30 @@ void TC_iot_security_check_context_is_valid_success(void **state);
 void TC_iot_security_check_backend_funcs_entry_is_valid_failure(void **state);
 void TC_iot_security_check_backend_funcs_entry_is_valid_success(void **state);
 
+// TCs for iot_security_storage.c
+int TC_iot_security_storage_init_setup(void **state);
+int TC_iot_security_storage_init_teardown(void **state);
+int TC_iot_security_storage_setup(void **state);
+int TC_iot_security_storage_teardown(void **state);
+void TC_iot_security_storage_init_malloc_failure(void **state);
+void TC_iot_security_storage_init_null_parameters(void **state);
+void TC_iot_security_storage_init_success(void **state);
+void TC_iot_security_storage_deinit_null_parameters(void **state);
+void TC_iot_security_storage_deinit_success(void **state);
+void TC_iot_security_storage_read_malloc_failure(void **state);
+void TC_iot_security_storage_read_null_parameters(void **state);
+void TC_iot_security_storage_read_invalid_parameters(void **state);
+void TC_iot_security_storage_read_failure(void **state);
+void TC_iot_security_storage_read_success(void **state);
+void TC_iot_security_storage_write_null_parameters(void **state);
+void TC_iot_security_storage_write_invalid_parameters(void **state);
+void TC_iot_security_storage_write_failure(void **state);
+void TC_iot_security_storage_write_success(void **state);
+void TC_iot_security_storage_remove_null_parameters(void **state);
+void TC_iot_security_storage_remove_invalid_parameters(void **state);
+void TC_iot_security_storage_remove_failure(void **state);
+void TC_iot_security_storage_remove_success(void **state);
+
 // TCs for iot_security_be_bsp.c
 void TC_STATIC_iot_security_be_bsp_fs_storage_id2target_invalid_parameters(void **state);
 void TC_STATIC_iot_security_be_bsp_fs_storage_id2target_success(void **state);
