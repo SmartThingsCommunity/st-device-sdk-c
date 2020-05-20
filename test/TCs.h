@@ -228,6 +228,19 @@ void TC_iot_security_storage_remove_invalid_parameters(void **state);
 void TC_iot_security_storage_remove_failure(void **state);
 void TC_iot_security_storage_remove_success(void **state);
 
+// TCs for iot_security_helper.c
+void TC_iot_security_base64_buffer_size(void **state);
+void TC_iot_security_base64_invalid_parameter(void **state);
+void TC_iot_security_base64_decode_failure(void **state);
+void TC_iot_security_base64_decode_urlsafe_failure(void **state);
+void TC_iot_security_base64_encode_success(void **state);
+void TC_iot_security_base64_decode_success(void **state);
+void TC_iot_security_base64_encode_urlsafe_success(void **state);
+void TC_iot_security_base64_decode_urlsafe_alloc_failure(void **state);
+void TC_iot_security_base64_decode_urlsafe_success(void **state);
+void TC_iot_security_sha256_failure(void **state);
+void TC_iot_security_sha256_success(void **state);
+
 // TCs for iot_security_helper_ed25519.c
 void TC_iot_security_ed25519_convert_pubkey_null_parameters(void **state);
 void TC_iot_security_ed25519_convert_seckey_null_parameters(void **state);
