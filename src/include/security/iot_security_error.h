@@ -1,6 +1,6 @@
 /* ***************************************************************************
  *
- * Copyright 2019 Samsung Electronics All Rights Reserved.
+ * Copyright (c) 2020 Samsung Electronics All Rights Reserved.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -16,20 +16,11 @@
  *
  ****************************************************************************/
 
-#ifndef _ST_DEV_VERSION_H_
-#define _ST_DEV_VERSION_H_
+#ifndef _IOT_SECURITY_ERROR_H_
+#define _IOT_SECURITY_ERROR_H_
 
-/* major: api incompatible */
-#define VER_MAJOR	(1)
+#define IOT_ERROR_SECURITY_INIT                 (IOT_ERROR_SECURITY_BASE - 1)
+#define IOT_ERROR_SECURITY_DEINIT               (IOT_ERROR_SECURITY_BASE - 2)
+#define IOT_ERROR_SECURITY_CONTEXT_NULL         (IOT_ERROR_SECURITY_BASE - 3)
 
-/* minor: feature added. keep api backward compatibility */
-#define VER_MINOR	(1)
-
-/* patch: bug fix */
-#define VER_PATCH	(14)
-
-/* External Macro for Apps, refer to linux's version.h */
-#define STDK_VERSION(a,b,c)	(((a) << 16) + ((b) << 8) + (c))
-#define STDK_VERSION_CODE	(STDK_VERSION(VER_MAJOR,VER_MINOR,VER_PATCH))
-
-#endif /* _ST_DEV_VERSION_H_ */
+#endif /* _IOT_SECURITY_ERROR_H_ */

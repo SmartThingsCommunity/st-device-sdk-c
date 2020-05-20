@@ -975,7 +975,13 @@ IOT_CTX* st_conn_init(unsigned char *onboarding_config, unsigned int onboarding_
 
 #if defined(CONFIG_STDK_IOT_CORE_LOG_FILE)
 	/* Initialize logging task */
-	iot_err = iot_log_file_init();
+#if defined(CONFIG_STDK_IOT_CORE_LOG_FILE_RAM_ONLY)
+	iot_err = iot_log_file_init(RAM_ONLY);
+#elif defined(CONFIG_STDK_IOT_CORE_LOG_FILE_FLASH_WITH_RAM)
+	iot_err = iot_log_file_init(FLASH_WITH_RAM);
+#else
+#error "Need to choice STDK_IOT_CORE_LOG_FILE_TYPE first"
+#endif
 	if (iot_err != IOT_ERROR_NONE) {
 		IOT_ERROR("log file init fail");
 		goto error_main_log_file_init;

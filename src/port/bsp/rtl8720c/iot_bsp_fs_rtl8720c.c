@@ -102,8 +102,9 @@ nv_item_table_s nv_table[MAX_NV_ITEM_CNT] = {
 	{0xc96f1bc, 2049, NULL},   // PrivateKey
 	{0x2860e24, 2049, NULL},   // PublicKey
 	{0x4bf15, 37, NULL},   // PKType
-	{0x3fdd2, 2049, NULL},  // CACert
+	{0x82cac2, 2049, NULL},  // RootCert
 	{0x1a7aa8, 2049, NULL},   // SubCert
+	{0xaf0205e, 2049, NULL},   // DeviceCert
 	{0x164c23, 37, NULL},   // ClaimID
 	{0x2887a54, 37, NULL},   // SerialNum
 	/* stored in stnv partition (manufacturer data) */
@@ -440,20 +441,20 @@ iot_error_t iot_bsp_fs_open_from_stnv(const char* filename, iot_bsp_fs_handle_t*
 	return iot_bsp_fs_open(filename, FS_READONLY, handle);
 }
 
-iot_error_t iot_bsp_fs_read(iot_bsp_fs_handle_t handle, char *buffer, unsigned int length)
+iot_error_t iot_bsp_fs_read(iot_bsp_fs_handle_t handle, char *buffer, size_t *length)
 {
 	int ret;
 
 	if (!buffer || length <= 0 || length > STDK_NV_SECTOR_SIZE)
 		return IOT_ERROR_FS_READ_FAIL;
-	ret = nv_storage_read(handle.filename, buffer, length);
+	ret = nv_storage_read(handle.filename, buffer, *length);
 	IOT_ERROR_CHECK(ret == OP_FAIL, IOT_ERROR_FS_READ_FAIL, "nvs read fail ");
 	IOT_ERROR_CHECK(ret == IOT_ERROR_FS_NO_FILE, IOT_ERROR_FS_NO_FILE, "nvs no file");
 
 	return IOT_ERROR_NONE;
 }
 
-iot_error_t iot_bsp_fs_write(iot_bsp_fs_handle_t handle, const char *data, unsigned int length)
+iot_error_t iot_bsp_fs_write(iot_bsp_fs_handle_t handle, const char *data, size_t length)
 {
 	int ret;
 

@@ -46,10 +46,6 @@ void iot_bsp_debug(iot_debug_level_t level, const char* tag, const char* fmt, ..
 	iot_debug_save_log(buf);
 #endif
 
-#if defined(CONFIG_STDK_IOT_CORE_LOG_FILE)
-	iot_log_file_store((const char *)buf, strlen(buf));
-#endif
-
 	if (level == IOT_DEBUG_LEVEL_ERROR) {
 		ESP_LOGE(tag, buf);
 	} else if (level == IOT_DEBUG_LEVEL_WARN) {

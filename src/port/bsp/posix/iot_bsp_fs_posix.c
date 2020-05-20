@@ -71,28 +71,30 @@ iot_error_t iot_bsp_fs_open_from_stnv(const char* filename, iot_bsp_fs_handle_t*
 	}
 }
 
-iot_error_t iot_bsp_fs_read(iot_bsp_fs_handle_t handle, char* buffer, unsigned int length)
+iot_error_t iot_bsp_fs_read(iot_bsp_fs_handle_t handle, char* buffer, size_t *length)
 {
 	if (access(handle.filename, F_OK) == -1) {
 		IOT_DEBUG("file does not exist");
 		return IOT_ERROR_FS_NO_FILE;
 	}
-	
-	char* data = malloc(length + 1);
-	ssize_t size = read(handle.fd, data, length);
+
+	char* data = malloc(*length + 1);
+	ssize_t size = read(handle.fd, data, *length);
 	IOT_DEBUG_CHECK(size < 0, IOT_ERROR_FS_READ_FAIL, "read fail [%s]", strerror(errno));
 
-	memcpy(buffer, data, length);
-	if (size < length) {
+	memcpy(buffer, data, size);
+	if (size < *length) {
 		buffer[size] = '\0';
 	}
+
+	*length = size;
 
 	free(data);
 
 	return IOT_ERROR_NONE;
 }
 
-iot_error_t iot_bsp_fs_write(iot_bsp_fs_handle_t handle, const char* data, unsigned int length)
+iot_error_t iot_bsp_fs_write(iot_bsp_fs_handle_t handle, const char* data, size_t length)
 {
 	ssize_t size = write(handle.fd, data, length);
 	IOT_DEBUG_CHECK(size != length, IOT_ERROR_FS_WRITE_FAIL, "write fail [%s]", strerror(errno));

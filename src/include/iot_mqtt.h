@@ -94,6 +94,7 @@ enum {
 	E_ST_MQTT_CLIENTID_REJECTED = -6,				/* MQTT connection client id not allowed by server */
 	E_ST_MQTT_BAD_USERNAME_OR_PASSWORD = -7,		/* MQTT connection username or password is malformed */
 	E_ST_MQTT_NOT_AUTHORIZED = -8,					/* MQTT client is not authorized to connect */
+	E_ST_MQTT_NETWORK_ERROR = -9,					/* MQTT network error */
 };
 
 /**

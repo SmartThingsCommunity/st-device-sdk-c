@@ -52,9 +52,9 @@ void TC_iot_easysetup_request_success(void **state);
 void TC_iot_misc_info_load_invalid_parameters(void **state);
 int TC_iot_misc_info_dip_setup(void **state);
 int TC_iot_misc_info_dip_teardown(void **state);
-void TC_iot_misc_info_load_sucess(void **state);
+void TC_iot_misc_info_load_success(void **state);
 void TC_iot_misc_info_store_invalid_parameters(void **state);
-void TC_iot_misc_info_store_sucess(void **state);
+void TC_iot_misc_info_store_success(void **state);
 
 // TCs for iot_uuid.c
 void TC_iot_uuid_from_mac(void **state);
@@ -190,6 +190,15 @@ void TC_check_prov_data_validation(void **state);
 void TC_st_mqtt_create_success(void** state);
 void TC_st_mqtt_connect_with_connack_rc(void** state);
 void TC_st_mqtt_disconnect_success(void** state);
+void TC_st_mqtt_publish_success(void** state);
+
+// TCs for iot_security_common.c
+void TC_iot_security_init_malloc_failure(void **state);
+void TC_iot_security_init_success(void **state);
+void TC_iot_security_deinit_null_parameters(void **state);
+void TC_iot_security_deinit_success(void **state);
+void TC_iot_security_check_context_is_null_null_parameters(void **state);
+void TC_iot_security_check_context_is_null_success(void **state);
 
 // TCs for iot_wt.c
 int TC_iot_wt_create_memleak_detect_setup(void **state);

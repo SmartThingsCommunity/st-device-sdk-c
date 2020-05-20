@@ -85,6 +85,7 @@ typedef struct
 } MQTTString;
 
 #define MQTTString_initializer {NULL, {0, NULL}}
+#define MAX_NUM_OF_REMAINING_LENGTH_BYTES 4
 
 int MQTTstrlen(MQTTString mqttstring);
 
@@ -126,6 +127,8 @@ typedef struct {
 int MQTTPacket_readnb(unsigned char* buf, int buflen, MQTTTransport *trp);
 
 const char* MQTTPacket_msgTypesToString(enum msgTypes);
+
+unsigned int MQTTPacket_getPacketId(unsigned char *buf);
 
 #ifdef __cplusplus /* If this is a C++ compiler, use C linkage */
 }
