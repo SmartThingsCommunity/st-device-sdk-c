@@ -28,6 +28,7 @@ extern "C" {
 #endif
 
 #define IOT_SECURITY_ED25519_LEN                crypto_sign_PUBLICKEYBYTES
+#define IOT_SECURITY_SHA256_LEN                 32
 
 typedef struct iot_security_storage_params iot_security_storage_params_t;
 typedef struct iot_security_be_context iot_security_be_context_t;
