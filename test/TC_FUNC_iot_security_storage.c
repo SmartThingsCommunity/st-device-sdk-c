@@ -78,6 +78,13 @@ int TC_iot_security_storage_setup(void **state)
 
 	set_mock_detect_memory_leak(true);
 
+#if !defined(CONFIG_STDK_IOT_CORE_SUPPORT_STNV_PARTITION)
+	err = iot_nv_init((unsigned char *)sample_device_info, strlen(sample_device_info));
+#else
+	err = iot_nv_init(NULL, 0);
+#endif
+	assert_int_equal(err, IOT_ERROR_NONE);
+
 	context = iot_security_init();
 	assert_non_null(context);
 
@@ -336,6 +343,20 @@ void TC_iot_security_storage_read_success(void **state)
 	sample_buf.len = strlen(sample);
 	err = iot_security_storage_write(context, storage_id, &sample_buf);
 	assert_int_equal(err, IOT_ERROR_NONE);
+	// When
+	err = iot_security_storage_read(context, storage_id, &buf);
+	// Then
+	assert_int_equal(err, IOT_ERROR_NONE);
+	assert_non_null(buf.p);
+	assert_int_equal(buf.len, sample_buf.len);
+	assert_memory_equal(buf.p, sample_buf.p, sample_buf.len);
+	// Teardown
+	iot_os_free(buf.p);
+
+	// Given: id of factory nv
+	storage_id = IOT_NVD_PUBLIC_KEY;
+	sample_buf.p = (unsigned char *)TEST_SECURITY_STORAGE_PUBLIC_KEY;
+	sample_buf.len = strlen(sample_buf.p);
 	// When
 	err = iot_security_storage_read(context, storage_id, &buf);
 	// Then
