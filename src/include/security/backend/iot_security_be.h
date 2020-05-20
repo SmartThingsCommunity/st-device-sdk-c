@@ -26,7 +26,26 @@ extern "C" {
 #endif
 
 typedef struct iot_security_be_funcs {
-
+	/**
+	 * @brief a pointer to a function to initialize a secure storage
+	 */
+	iot_error_t (*storage_init)(iot_security_context_t *);
+	/**
+	 * @brief a pointer to a function to deinitialize secure storage
+	 */
+	iot_error_t (*storage_deinit)(iot_security_context_t *);
+	/**
+	 * @brief a pointer to a function to read data from secure storage
+	 */
+	iot_error_t (*storage_read)(iot_security_context_t *, iot_security_buffer_t *);
+	/**
+	 * @brief a pointer to a function to write data into secure storage
+	 */
+	iot_error_t (*storage_write)(iot_security_context_t *, iot_security_buffer_t *);
+	/**
+	 * @brief a pointer to a function to remove data from secure storage
+	 */
+	iot_error_t (*storage_remove)(iot_security_context_t *);
 } iot_security_be_funcs_t;
 
 struct iot_security_be_context {
