@@ -1,4 +1,5 @@
 add_subdirectory(backend)
+add_subdirectory(helper)
 
 target_sources(iotcore
 	PRIVATE

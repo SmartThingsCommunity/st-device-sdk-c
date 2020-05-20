@@ -20,11 +20,14 @@
 #define _IOT_SECURITY_COMMON_H_
 
 #include <stdbool.h>
+#include <sodium.h>
 #include "iot_security_error.h"
 
 #ifdef __cplusplus
 extern "C" {
 #endif
+
+#define IOT_SECURITY_ED25519_LEN                crypto_sign_PUBLICKEYBYTES
 
 typedef struct iot_security_storage_params iot_security_storage_params_t;
 typedef struct iot_security_be_context iot_security_be_context_t;
