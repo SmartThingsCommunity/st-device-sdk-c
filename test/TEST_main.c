@@ -268,6 +268,17 @@ int TEST_FUNC_iot_security_storage(void)
     return cmocka_run_group_tests_name("iot_security_storage.c", tests, NULL, NULL);
 }
 
+int TEST_FUNC_iot_security_helper_ed25519(void)
+{
+    const struct CMUnitTest tests[] = {
+            cmocka_unit_test(TC_iot_security_ed25519_convert_pubkey_null_parameters),
+            cmocka_unit_test(TC_iot_security_ed25519_convert_pubkey_success),
+            cmocka_unit_test(TC_iot_security_ed25519_convert_seckey_null_parameters),
+            cmocka_unit_test(TC_iot_security_ed25519_convert_seckey_success),
+    };
+    return cmocka_run_group_tests_name("iot_security_helper_ed25519.c", tests, NULL, NULL);
+}
+
 #if CONFIG_STDK_IOT_CORE_SECURITY_BACKEND == SOFTWARE
 int TEST_FUNC_iot_security_software_be_bsp(void)
 {
@@ -322,6 +333,7 @@ int main(void) {
     err += TEST_FUNC_iot_mqtt_client();
     err += TEST_FUNC_iot_security_common();
     err += TEST_FUNC_iot_security_storage();
+    err += TEST_FUNC_iot_security_helper_ed25519();
 #if defined(CONFIG_STDK_IOT_CORE_SECURITY_BACKEND_SOFTWARE)
     err += TEST_FUNC_iot_security_software_be_bsp();
 #endif

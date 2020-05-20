@@ -228,6 +228,12 @@ void TC_iot_security_storage_remove_invalid_parameters(void **state);
 void TC_iot_security_storage_remove_failure(void **state);
 void TC_iot_security_storage_remove_success(void **state);
 
+// TCs for iot_security_helper_ed25519.c
+void TC_iot_security_ed25519_convert_pubkey_null_parameters(void **state);
+void TC_iot_security_ed25519_convert_seckey_null_parameters(void **state);
+void TC_iot_security_ed25519_convert_pubkey_success(void **state);
+void TC_iot_security_ed25519_convert_seckey_success(void **state);
+
 // TCs for iot_security_be_bsp.c
 void TC_STATIC_iot_security_be_bsp_fs_storage_id2target_invalid_parameters(void **state);
 void TC_STATIC_iot_security_be_bsp_fs_storage_id2target_success(void **state);
