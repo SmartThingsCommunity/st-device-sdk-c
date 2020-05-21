@@ -65,7 +65,7 @@ typedef struct iot_security_context {
  * @retval	IOT_ERROR_NONE security context is valid
  * @retval	IOT_ERROR_SECURITY_CONTEXT_NULL security context is invalid
  */
-iot_error_t iot_security_check_context_is_null(iot_security_context_t *context);
+iot_error_t iot_security_check_context_is_valid(iot_security_context_t *context);
 
 /**
  * @brief	Initialize a security context

@@ -23,7 +23,7 @@
 #include "security/iot_security_common.h"
 #include "security/backend/iot_security_be.h"
 
-iot_error_t iot_security_check_context_is_null(iot_security_context_t *context)
+iot_error_t iot_security_check_context_is_valid(iot_security_context_t *context)
 {
 	if (!context) {
 		return IOT_ERROR_SECURITY_CONTEXT_NULL;
@@ -61,7 +61,7 @@ iot_error_t iot_security_deinit(iot_security_context_t *context)
 {
 	iot_error_t err;
 
-	err = iot_security_check_context_is_null(context);
+	err = iot_security_check_context_is_valid(context);
 	if (err) {
 		return err;
 	}

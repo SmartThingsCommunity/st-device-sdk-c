@@ -197,8 +197,8 @@ void TC_iot_security_init_malloc_failure(void **state);
 void TC_iot_security_init_success(void **state);
 void TC_iot_security_deinit_null_parameters(void **state);
 void TC_iot_security_deinit_success(void **state);
-void TC_iot_security_check_context_is_null_null_parameters(void **state);
-void TC_iot_security_check_context_is_null_success(void **state);
+void TC_iot_security_check_context_is_valid_null_parameters(void **state);
+void TC_iot_security_check_context_is_valid_success(void **state);
 
 // TCs for iot_wt.c
 int TC_iot_wt_create_memleak_detect_setup(void **state);
