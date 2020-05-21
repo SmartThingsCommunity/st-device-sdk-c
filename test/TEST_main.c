@@ -243,6 +243,32 @@ int TEST_FUNC_iot_security_common(void)
     return cmocka_run_group_tests_name("iot_security_common.c", tests, NULL, NULL);
 }
 
+int TEST_FUNC_iot_security_crypto(void)
+{
+    const struct CMUnitTest tests[] = {
+            cmocka_unit_test_setup_teardown(TC_iot_security_cipher_init_null_parameters, TC_iot_security_cipher_init_setup, TC_iot_security_cipher_init_teardown),
+            cmocka_unit_test_setup_teardown(TC_iot_security_cipher_init_malloc_failure, TC_iot_security_cipher_init_setup, TC_iot_security_cipher_init_teardown),
+            cmocka_unit_test_setup_teardown(TC_iot_security_cipher_init_success, TC_iot_security_cipher_init_setup, TC_iot_security_cipher_teardown),
+            cmocka_unit_test_setup_teardown(TC_iot_security_cipher_deinit_null_parameters, TC_iot_security_cipher_setup, TC_iot_security_cipher_init_teardown),
+            cmocka_unit_test_setup_teardown(TC_iot_security_cipher_deinit_success, TC_iot_security_cipher_setup, TC_iot_security_cipher_init_teardown),
+            cmocka_unit_test(TC_iot_security_cipher_get_align_size_failure),
+            cmocka_unit_test(TC_iot_security_cipher_get_align_size_success),
+            cmocka_unit_test_setup_teardown(TC_iot_security_cipher_set_params_invalid_parameters, TC_iot_security_cipher_setup, TC_iot_security_cipher_teardown),
+            cmocka_unit_test_setup_teardown(TC_iot_security_cipher_set_params_null_parameters, TC_iot_security_cipher_setup, TC_iot_security_cipher_teardown),
+            cmocka_unit_test_setup_teardown(TC_iot_security_cipher_set_params_success, TC_iot_security_cipher_setup, TC_iot_security_cipher_teardown),
+            cmocka_unit_test_setup_teardown(TC_iot_security_cipher_aes_encrypt_invalid_parameters, TC_iot_security_cipher_setup, TC_iot_security_cipher_teardown),
+            cmocka_unit_test_setup_teardown(TC_iot_security_cipher_aes_encrypt_null_parameters, TC_iot_security_cipher_setup, TC_iot_security_cipher_teardown),
+            cmocka_unit_test_setup_teardown(TC_iot_security_cipher_aes_encrypt_malloc_failure, TC_iot_security_cipher_setup, TC_iot_security_cipher_teardown),
+            cmocka_unit_test_setup_teardown(TC_iot_security_cipher_aes_encrypt_failure, TC_iot_security_cipher_init_setup, TC_iot_security_cipher_init_teardown),
+            cmocka_unit_test_setup_teardown(TC_iot_security_cipher_aes_decrypt_invalid_parameters, TC_iot_security_cipher_setup, TC_iot_security_cipher_teardown),
+            cmocka_unit_test_setup_teardown(TC_iot_security_cipher_aes_decrypt_null_parameters, TC_iot_security_cipher_setup, TC_iot_security_cipher_teardown),
+            cmocka_unit_test_setup_teardown(TC_iot_security_cipher_aes_decrypt_malloc_failure, TC_iot_security_cipher_setup, TC_iot_security_cipher_teardown),
+            cmocka_unit_test_setup_teardown(TC_iot_security_cipher_aes_decrypt_failure, TC_iot_security_cipher_init_setup, TC_iot_security_cipher_init_teardown),
+            cmocka_unit_test_setup_teardown(TC_iot_security_cipher_aes_success, TC_iot_security_cipher_setup, TC_iot_security_cipher_teardown),
+    };
+    return cmocka_run_group_tests_name("iot_security_crypto.c", tests, NULL, NULL);
+}
+
 int TEST_FUNC_iot_security_storage(void)
 {
     const struct CMUnitTest tests[] = {
@@ -350,6 +376,7 @@ int main(void) {
     err += TEST_FUNC_iot_main();
     err += TEST_FUNC_iot_mqtt_client();
     err += TEST_FUNC_iot_security_common();
+    err += TEST_FUNC_iot_security_crypto();
     err += TEST_FUNC_iot_security_storage();
     err += TEST_FUNC_iot_security_helper();
     err += TEST_FUNC_iot_security_helper_ed25519();
