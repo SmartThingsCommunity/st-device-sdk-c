@@ -28,8 +28,14 @@ extern "C" {
 #endif
 
 #define IOT_SECURITY_ED25519_LEN                crypto_sign_PUBLICKEYBYTES
+#define IOT_SECURITY_SECRET_LEN                 32
+#define IOT_SECURITY_IV_LEN                     16
 #define IOT_SECURITY_SHA256_LEN                 32
 
+typedef enum iot_security_key_type iot_security_key_type_t;
+typedef enum iot_security_cipher_mode iot_security_cipher_mode_t;
+
+typedef struct iot_security_cipher_params iot_security_cipher_params_t;
 typedef struct iot_security_storage_params iot_security_storage_params_t;
 typedef struct iot_security_be_context iot_security_be_context_t;
 
@@ -43,6 +49,7 @@ typedef unsigned int security_handle;
  */
 typedef enum iot_security_sub_system {
 	IOT_SECURITY_SUB_NONE    = 0,
+	IOT_SECURITY_SUB_CIPHER  = (1 << 1),
 	IOT_SECURITY_SUB_STORAGE = (1 << 4),
 } iot_security_sub_system_t;
 
@@ -61,7 +68,8 @@ typedef struct iot_security_context {
 	security_handle handle;                         /**< @brief handle of context */
 	iot_security_sub_system_t sub_system;           /**< @brief flag to know whether the sub system has been initialized */
 
-	iot_security_storage_params_t *storage_params; /**< @brief contains parameter for storage system */
+	iot_security_cipher_params_t *cipher_params;    /**< @brief contains parameter for cipher system */
+	iot_security_storage_params_t *storage_params;  /**< @brief contains parameter for storage system */
 
 	iot_security_be_context_t *be_context;          /**< @brief reference to the backend context */
 } iot_security_context_t;

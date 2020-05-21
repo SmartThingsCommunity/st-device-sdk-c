@@ -27,6 +27,27 @@ extern "C" {
 
 typedef struct iot_security_be_funcs {
 	/**
+	 * @brief a pointer to a function to initialize a cipher module
+	 */
+	iot_error_t (*cipher_init)(iot_security_context_t *);
+	/**
+	 * @brief a pointer to a function to deinitialize cipher module
+	 */
+	iot_error_t (*cipher_deinit)(iot_security_context_t *);
+	/**
+	 * @brief a pointer to a function to set the params for cipher operation
+	 */
+	iot_error_t (*cipher_set_params)(iot_security_context_t *, iot_security_cipher_params_t *);
+	/**
+	 * @brief a pointer to a function to encrypt based on AES
+	 */
+	iot_error_t (*cipher_aes_encrypt)(iot_security_context_t *, iot_security_buffer_t *, iot_security_buffer_t *);
+	/**
+	 * @brief a pointer to a function to decrypt based on AES
+	 */
+	iot_error_t (*cipher_aes_decrypt)(iot_security_context_t *, iot_security_buffer_t *, iot_security_buffer_t *);
+
+	/**
 	 * @brief a pointer to a function to initialize a secure storage
 	 */
 	iot_error_t (*storage_init)(iot_security_context_t *);
