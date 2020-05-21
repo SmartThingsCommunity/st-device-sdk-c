@@ -192,10 +192,18 @@ iot_error_t iot_nv_erase_prov_data()
 	const char* status = "NONE";
 
 	ret = _iot_nv_write_data(iot_bsp_nv_get_data_path(IOT_NVD_WIFI_PROV_STATUS), status, strlen(status));
-	IOT_DEBUG_CHECK(ret != IOT_ERROR_NONE, IOT_ERROR_NV_DATA_ERROR, "Wifi Prov Status : write fail");
+	if (ret != IOT_ERROR_NONE) {
+		IOT_DEBUG("Wifi Prov Status : write fail");
+		IOT_DUMP(IOT_DEBUG_LEVEL_DEBUG, IOT_DUMP_NV_DATA_WRITE_FAIL, IOT_NVD_WIFI_PROV_STATUS, __LINE__);
+		return IOT_ERROR_NV_DATA_ERROR;
+	}
 
 	ret = _iot_nv_write_data(iot_bsp_nv_get_data_path(IOT_NVD_CLOUD_PROV_STATUS), status, strlen(status));
-	IOT_DEBUG_CHECK(ret != IOT_ERROR_NONE, IOT_ERROR_NV_DATA_ERROR, "Cloud Prov Status : write fail");
+	if (ret != IOT_ERROR_NONE) {
+		IOT_DEBUG("Cloud Prov Status : write fail");
+		IOT_DUMP(IOT_DEBUG_LEVEL_DEBUG, IOT_DUMP_NV_DATA_WRITE_FAIL, IOT_NVD_CLOUD_PROV_STATUS, __LINE__);
+		return IOT_ERROR_NV_DATA_ERROR;
+	}
 
 	return IOT_ERROR_NONE;
 }
@@ -224,6 +232,7 @@ iot_error_t iot_nv_get_wifi_prov_data(struct iot_wifi_prov_data* wifi_prov)
 	ret = _iot_nv_read_data(iot_bsp_nv_get_data_path(IOT_NVD_WIFI_PROV_STATUS), data, DATA_SIZE);
 	if (ret != IOT_ERROR_NONE) {
 		IOT_DEBUG("Wifi Prov Status : read failed");
+		IOT_DUMP(IOT_DEBUG_LEVEL_DEBUG, IOT_DUMP_NV_DATA_READ_FAIL, IOT_NVD_WIFI_PROV_STATUS, __LINE__);
 		ret = IOT_ERROR_NV_DATA_ERROR;
 		goto exit;
 	}
@@ -247,6 +256,7 @@ iot_error_t iot_nv_get_wifi_prov_data(struct iot_wifi_prov_data* wifi_prov)
 		ret = IOT_ERROR_NONE;
 	} else {
 		IOT_DEBUG("AP SSID : read failed");
+		IOT_DUMP(IOT_DEBUG_LEVEL_DEBUG, IOT_DUMP_NV_DATA_READ_FAIL, IOT_NVD_AP_SSID, __LINE__);
 		ret = IOT_ERROR_NV_DATA_ERROR;
 		goto exit;
 	}
@@ -264,6 +274,7 @@ iot_error_t iot_nv_get_wifi_prov_data(struct iot_wifi_prov_data* wifi_prov)
 		ret = IOT_ERROR_NONE;
 	} else {
 		IOT_DEBUG("AP PW : read failed");
+		IOT_DUMP(IOT_DEBUG_LEVEL_DEBUG, IOT_DUMP_NV_DATA_READ_FAIL, IOT_NVD_AP_PASS, __LINE__);
 		ret = IOT_ERROR_NV_DATA_ERROR;
 		goto exit;
 	}
@@ -281,6 +292,7 @@ iot_error_t iot_nv_get_wifi_prov_data(struct iot_wifi_prov_data* wifi_prov)
 		ret = IOT_ERROR_NONE;
 	} else {
 		IOT_DEBUG("AP BSSID : read failed");
+		IOT_DUMP(IOT_DEBUG_LEVEL_DEBUG, IOT_DUMP_NV_DATA_READ_FAIL, IOT_NVD_AP_BSSID, __LINE__);
 		ret = IOT_ERROR_NV_DATA_ERROR;
 		goto exit;
 	}
@@ -294,6 +306,7 @@ iot_error_t iot_nv_get_wifi_prov_data(struct iot_wifi_prov_data* wifi_prov)
 		ret = IOT_ERROR_NONE;
 	} else {
 		IOT_DEBUG("Auth Type : read failed");
+		IOT_DUMP(IOT_DEBUG_LEVEL_DEBUG, IOT_DUMP_NV_DATA_READ_FAIL, IOT_NVD_AP_AUTH_TYPE, __LINE__);
 		ret = IOT_ERROR_NV_DATA_ERROR;
 		goto exit;
 	}
@@ -333,6 +346,7 @@ iot_error_t iot_nv_set_wifi_prov_data(struct iot_wifi_prov_data* wifi_prov)
 	ret = _iot_nv_write_data(iot_bsp_nv_get_data_path(IOT_NVD_WIFI_PROV_STATUS), data, size);
 	if (ret != IOT_ERROR_NONE) {
 		IOT_DEBUG("Wifi Prov Status : write failed");
+		IOT_DUMP(IOT_DEBUG_LEVEL_DEBUG, IOT_DUMP_NV_DATA_WRITE_FAIL, IOT_NVD_WIFI_PROV_STATUS, __LINE__);
 		ret = IOT_ERROR_NV_DATA_ERROR;
 		goto exit;
 	}
@@ -348,6 +362,7 @@ iot_error_t iot_nv_set_wifi_prov_data(struct iot_wifi_prov_data* wifi_prov)
 		ret = _iot_nv_write_data(iot_bsp_nv_get_data_path(IOT_NVD_AP_SSID), data, size);
 		if (ret != IOT_ERROR_NONE) {
 			IOT_DEBUG("AP SSID : write failed");
+			IOT_DUMP(IOT_DEBUG_LEVEL_DEBUG, IOT_DUMP_NV_DATA_WRITE_FAIL, IOT_NVD_AP_SSID, __LINE__);
 			ret = IOT_ERROR_NV_DATA_ERROR;
 			goto exit;
 		}
@@ -364,6 +379,7 @@ iot_error_t iot_nv_set_wifi_prov_data(struct iot_wifi_prov_data* wifi_prov)
 		ret = _iot_nv_write_data(iot_bsp_nv_get_data_path(IOT_NVD_AP_PASS), data, size);
 		if (ret != IOT_ERROR_NONE) {
 			IOT_DEBUG("AP PASS : write failed");
+			IOT_DUMP(IOT_DEBUG_LEVEL_DEBUG, IOT_DUMP_NV_DATA_WRITE_FAIL, IOT_NVD_AP_PASS, __LINE__);
 			ret = IOT_ERROR_NV_DATA_ERROR;
 			goto exit;
 		}
@@ -380,6 +396,7 @@ iot_error_t iot_nv_set_wifi_prov_data(struct iot_wifi_prov_data* wifi_prov)
 		ret = _iot_nv_write_data(iot_bsp_nv_get_data_path(IOT_NVD_AP_BSSID), data, size);
 		if (ret != IOT_ERROR_NONE) {
 			IOT_DEBUG("AP BSSID : write failed");
+			IOT_DUMP(IOT_DEBUG_LEVEL_DEBUG, IOT_DUMP_NV_DATA_WRITE_FAIL, IOT_NVD_AP_BSSID, __LINE__);
 			ret = IOT_ERROR_NV_DATA_ERROR;
 			goto exit;
 		}
@@ -402,6 +419,7 @@ iot_error_t iot_nv_set_wifi_prov_data(struct iot_wifi_prov_data* wifi_prov)
 		ret = _iot_nv_write_data(iot_bsp_nv_get_data_path(IOT_NVD_AP_AUTH_TYPE), data, size);
 		if (ret != IOT_ERROR_NONE) {
 			IOT_DEBUG("Auth Type : write failed");
+			IOT_DUMP(IOT_DEBUG_LEVEL_DEBUG, IOT_DUMP_NV_DATA_WRITE_FAIL, IOT_NVD_AP_AUTH_TYPE, __LINE__);
 			ret = IOT_ERROR_NV_DATA_ERROR;
 			goto exit;
 		}
@@ -415,6 +433,7 @@ iot_error_t iot_nv_set_wifi_prov_data(struct iot_wifi_prov_data* wifi_prov)
 	ret = _iot_nv_write_data(iot_bsp_nv_get_data_path(IOT_NVD_WIFI_PROV_STATUS), data, size);
 	if (ret != IOT_ERROR_NONE) {
 		IOT_DEBUG("Wifi Prov Status : write failed");
+		IOT_DUMP(IOT_DEBUG_LEVEL_DEBUG, IOT_DUMP_NV_DATA_WRITE_FAIL, IOT_NVD_WIFI_PROV_STATUS, __LINE__);
 		ret = IOT_ERROR_NV_DATA_ERROR;
 		goto exit;
 	}
@@ -451,6 +470,7 @@ iot_error_t iot_nv_get_cloud_prov_data(struct iot_cloud_prov_data* cloud_prov)
 	ret = _iot_nv_read_data(iot_bsp_nv_get_data_path(IOT_NVD_CLOUD_PROV_STATUS), data, DATA_SIZE);
 	if (ret != IOT_ERROR_NONE) {
 		IOT_DEBUG("Cloud Prov Status : read failed");
+		IOT_DUMP(IOT_DEBUG_LEVEL_DEBUG, IOT_DUMP_NV_DATA_READ_FAIL, IOT_NVD_CLOUD_PROV_STATUS, __LINE__);
 		ret = IOT_ERROR_NV_DATA_ERROR;
 		goto exit;
 	}
@@ -481,6 +501,7 @@ iot_error_t iot_nv_get_cloud_prov_data(struct iot_cloud_prov_data* cloud_prov)
 		ret = IOT_ERROR_NONE;
 	} else {
 		IOT_DEBUG("Server Url : read fail");
+		IOT_DUMP(IOT_DEBUG_LEVEL_DEBUG, IOT_DUMP_NV_DATA_READ_FAIL, IOT_NVD_SERVER_URL, __LINE__);
 		ret = IOT_ERROR_NV_DATA_ERROR;
 		goto exit;
 	}
@@ -494,6 +515,7 @@ iot_error_t iot_nv_get_cloud_prov_data(struct iot_cloud_prov_data* cloud_prov)
 		ret = IOT_ERROR_NONE;
 	} else {
 		IOT_DEBUG("Server Port : read failed");
+		IOT_DUMP(IOT_DEBUG_LEVEL_DEBUG, IOT_DUMP_NV_DATA_READ_FAIL, IOT_NVD_SERVER_PORT, __LINE__);
 		ret = IOT_ERROR_NV_DATA_ERROR;
 		goto exit;
 	}
@@ -514,6 +536,7 @@ iot_error_t iot_nv_get_cloud_prov_data(struct iot_cloud_prov_data* cloud_prov)
 		ret = IOT_ERROR_NONE;
 	} else {
 		IOT_DEBUG("Location ID : read failed");
+		IOT_DUMP(IOT_DEBUG_LEVEL_DEBUG, IOT_DUMP_NV_DATA_READ_FAIL, IOT_NVD_LOCATION_ID, __LINE__);
 		ret = IOT_ERROR_NV_DATA_ERROR;
 		goto exit;
 	}
@@ -534,6 +557,7 @@ iot_error_t iot_nv_get_cloud_prov_data(struct iot_cloud_prov_data* cloud_prov)
 		ret = IOT_ERROR_NONE;
 	} else {
 		IOT_DEBUG("Room ID : read failed");
+		IOT_DUMP(IOT_DEBUG_LEVEL_DEBUG, IOT_DUMP_NV_DATA_READ_FAIL, IOT_NVD_ROOM_ID, __LINE__);
 		ret = IOT_ERROR_NV_DATA_ERROR;
 		goto exit;
 	}
@@ -560,6 +584,7 @@ iot_error_t iot_nv_get_cloud_prov_data(struct iot_cloud_prov_data* cloud_prov)
 		ret = IOT_ERROR_NONE;
 	} else {
 		IOT_DEBUG("Label : read failed");
+		IOT_DUMP(IOT_DEBUG_LEVEL_DEBUG, IOT_DUMP_NV_DATA_READ_FAIL, IOT_NVD_LABEL, __LINE__);
 		ret = IOT_ERROR_NV_DATA_ERROR;
 		goto exit;
 	}
@@ -601,6 +626,7 @@ iot_error_t iot_nv_set_cloud_prov_data(struct iot_cloud_prov_data* cloud_prov)
 	ret = _iot_nv_write_data(iot_bsp_nv_get_data_path(IOT_NVD_CLOUD_PROV_STATUS), data, size);
 	if (ret != IOT_ERROR_NONE) {
 		IOT_DEBUG("Cloud Prov Status : write failed");
+		IOT_DUMP(IOT_DEBUG_LEVEL_DEBUG, IOT_DUMP_NV_DATA_WRITE_FAIL, IOT_NVD_CLOUD_PROV_STATUS, __LINE__);
 		ret = IOT_ERROR_NV_DATA_ERROR;
 		goto exit;
 	}
@@ -614,6 +640,7 @@ iot_error_t iot_nv_set_cloud_prov_data(struct iot_cloud_prov_data* cloud_prov)
 		ret = _iot_nv_write_data(iot_bsp_nv_get_data_path(IOT_NVD_SERVER_URL), cloud_prov->broker_url, size);
 		if (ret != IOT_ERROR_NONE) {
 			IOT_DEBUG("Server Url : write failed");
+			IOT_DUMP(IOT_DEBUG_LEVEL_DEBUG, IOT_DUMP_NV_DATA_WRITE_FAIL, IOT_NVD_SERVER_URL, __LINE__);
 			ret = IOT_ERROR_NV_DATA_ERROR;
 			goto exit;
 		}
@@ -633,6 +660,7 @@ iot_error_t iot_nv_set_cloud_prov_data(struct iot_cloud_prov_data* cloud_prov)
 	ret = _iot_nv_write_data(iot_bsp_nv_get_data_path(IOT_NVD_SERVER_PORT), data, size);
 	if (ret != IOT_ERROR_NONE) {
 		IOT_DEBUG("Server Port : write failed");
+		IOT_DUMP(IOT_DEBUG_LEVEL_DEBUG, IOT_DUMP_NV_DATA_WRITE_FAIL, IOT_NVD_SERVER_PORT, __LINE__);
 		ret = IOT_ERROR_NV_DATA_ERROR;
 		goto exit;
 	}
@@ -656,6 +684,7 @@ iot_error_t iot_nv_set_cloud_prov_data(struct iot_cloud_prov_data* cloud_prov)
 		ret = _iot_nv_write_data(iot_bsp_nv_get_data_path(IOT_NVD_LOCATION_ID), data, size);
 		if (ret != IOT_ERROR_NONE) {
 			IOT_DEBUG("Location ID : write failed");
+			IOT_DUMP(IOT_DEBUG_LEVEL_DEBUG, IOT_DUMP_NV_DATA_WRITE_FAIL, IOT_NVD_LOCATION_ID, __LINE__);
 			ret = IOT_ERROR_NV_DATA_ERROR;
 			goto exit;
 		}
@@ -682,6 +711,7 @@ iot_error_t iot_nv_set_cloud_prov_data(struct iot_cloud_prov_data* cloud_prov)
 		ret = _iot_nv_write_data(iot_bsp_nv_get_data_path(IOT_NVD_ROOM_ID), data, size);
 		if (ret != IOT_ERROR_NONE) {
 			IOT_DEBUG("Room ID : write failed");
+			IOT_DUMP(IOT_DEBUG_LEVEL_DEBUG, IOT_DUMP_NV_DATA_WRITE_FAIL, IOT_NVD_ROOM_ID, __LINE__);
 			ret = IOT_ERROR_NV_DATA_ERROR;
 			goto exit;
 		}
@@ -697,6 +727,7 @@ iot_error_t iot_nv_set_cloud_prov_data(struct iot_cloud_prov_data* cloud_prov)
 		ret = _iot_nv_write_data(iot_bsp_nv_get_data_path(IOT_NVD_LABEL), cloud_prov->label, size);
 		if (ret != IOT_ERROR_NONE) {
 			IOT_DEBUG("Label : write failed");
+			IOT_DUMP(IOT_DEBUG_LEVEL_DEBUG, IOT_DUMP_NV_DATA_WRITE_FAIL, IOT_NVD_LABEL, __LINE__);
 			ret = IOT_ERROR_NV_DATA_ERROR;
 			goto exit;
 		}
@@ -710,6 +741,7 @@ iot_error_t iot_nv_set_cloud_prov_data(struct iot_cloud_prov_data* cloud_prov)
 	ret = _iot_nv_write_data(iot_bsp_nv_get_data_path(IOT_NVD_CLOUD_PROV_STATUS), data, size);
 	if (ret != IOT_ERROR_NONE) {
 		IOT_DEBUG("Cloud Prov Status : write failed");
+		IOT_DUMP(IOT_DEBUG_LEVEL_DEBUG, IOT_DUMP_NV_DATA_WRITE_FAIL, IOT_NVD_CLOUD_PROV_STATUS, __LINE__);
 		ret = IOT_ERROR_NV_DATA_ERROR;
 		goto exit;
 	}
@@ -737,6 +769,7 @@ iot_error_t iot_nv_get_private_key(char** key, size_t* len)
 	ret = iot_api_read_device_identity(device_nv_info, device_nv_info_len, name_privateKey, &data);
 	if (ret != IOT_ERROR_NONE) {
 		IOT_DEBUG("read failed");
+		IOT_DUMP(IOT_DEBUG_LEVEL_DEBUG, IOT_DUMP_NV_DATA_READ_FAIL, IOT_NVD_PRIVATE_KEY, __LINE__);
 		ret = IOT_ERROR_NV_DATA_ERROR;
 		goto exit;
 	}
@@ -772,6 +805,7 @@ exit:
 	ret = _iot_nv_read_data_from_stnv(iot_bsp_nv_get_data_path(IOT_NVD_PRIVATE_KEY), data, DATA_SIZE);
 	if (ret != IOT_ERROR_NONE) {
 		IOT_DEBUG("read fail");
+		IOT_DUMP(IOT_DEBUG_LEVEL_DEBUG, IOT_DUMP_NV_DATA_READ_FAIL, IOT_NVD_PRIVATE_KEY, __LINE__);
 		ret = IOT_ERROR_NV_DATA_ERROR;
 		goto exit;
 	}
@@ -814,6 +848,7 @@ iot_error_t iot_nv_get_public_key(char** key, size_t* len)
 	ret = iot_api_read_device_identity(device_nv_info, device_nv_info_len, name_publicKey, &data);
 	if (ret != IOT_ERROR_NONE) {
 		IOT_DEBUG("read failed");
+		IOT_DUMP(IOT_DEBUG_LEVEL_DEBUG, IOT_DUMP_NV_DATA_READ_FAIL, IOT_NVD_PUBLIC_KEY, __LINE__);
 		ret = IOT_ERROR_NV_DATA_ERROR;
 		goto exit;
 	}
@@ -849,6 +884,7 @@ exit:
 	ret = _iot_nv_read_data_from_stnv(iot_bsp_nv_get_data_path(IOT_NVD_PUBLIC_KEY), data, DATA_SIZE);
 	if (ret != IOT_ERROR_NONE) {
 		IOT_DEBUG("read failed");
+		IOT_DUMP(IOT_DEBUG_LEVEL_DEBUG, IOT_DUMP_NV_DATA_READ_FAIL, IOT_NVD_PUBLIC_KEY, __LINE__);
 		ret = IOT_ERROR_NV_DATA_ERROR;
 		goto exit;
 	}
@@ -914,6 +950,7 @@ iot_error_t iot_nv_get_client_certificate(char** cert, size_t* len)
 	ret = iot_api_read_device_identity(device_nv_info, device_nv_info_len, name_deviceCert, &data);
 	if (ret != IOT_ERROR_NONE) {
 		IOT_DEBUG("read failed");
+		IOT_DUMP(IOT_DEBUG_LEVEL_DEBUG, IOT_DUMP_NV_DATA_READ_FAIL, IOT_NVD_DEVICE_CERT, __LINE__);
 		ret = IOT_ERROR_NV_DATA_ERROR;
 		goto exit;
 	}
@@ -949,6 +986,7 @@ exit:
 	ret = _iot_nv_read_data_from_stnv(iot_bsp_nv_get_data_path(IOT_NVD_DEVICE_CERT), data, DATA_SIZE);
 	if (ret != IOT_ERROR_NONE) {
 		IOT_DEBUG("read failed");
+		IOT_DUMP(IOT_DEBUG_LEVEL_DEBUG, IOT_DUMP_NV_DATA_READ_FAIL, IOT_NVD_DEVICE_CERT, __LINE__);
 		ret = IOT_ERROR_NV_DATA_ERROR;
 		goto exit;
 	}
@@ -994,6 +1032,7 @@ iot_error_t iot_nv_get_device_id(char** device_id, size_t* len)
 	ret = _iot_nv_read_data(iot_bsp_nv_get_data_path(IOT_NVD_DEVICE_ID), data, DATA_SIZE);
 	if (ret != IOT_ERROR_NONE) {
 		IOT_DEBUG("read failed");
+		IOT_DUMP(IOT_DEBUG_LEVEL_DEBUG, IOT_DUMP_NV_DATA_READ_FAIL, IOT_NVD_DEVICE_ID, __LINE__);
 		ret = IOT_ERROR_NV_DATA_ERROR;
 		goto exit;
 	}
@@ -1029,7 +1068,11 @@ iot_error_t iot_nv_set_device_id(const char* device_id)
 	iot_error_t ret;
 
 	ret = _iot_nv_write_data(iot_bsp_nv_get_data_path(IOT_NVD_DEVICE_ID), device_id, strlen(device_id));
-	IOT_DEBUG_CHECK(ret != IOT_ERROR_NONE, IOT_ERROR_NV_DATA_ERROR, "write fail");
+	if (ret != IOT_ERROR_NONE) {
+		IOT_DEBUG("write fail");
+		IOT_DUMP(IOT_DEBUG_LEVEL_DEBUG, IOT_DUMP_NV_DATA_WRITE_FAIL, IOT_NVD_DEVICE_ID, __LINE__);
+		ret = IOT_ERROR_NV_DATA_ERROR;
+	}
 
 	return ret;
 }
@@ -1051,6 +1094,7 @@ iot_error_t iot_nv_get_serial_number(char** sn, size_t* len)
 	ret = iot_api_read_device_identity(device_nv_info, device_nv_info_len, name_serialNumber, &data);
 	if (ret != IOT_ERROR_NONE) {
 		IOT_DEBUG("read failed");
+		IOT_DUMP(IOT_DEBUG_LEVEL_DEBUG, IOT_DUMP_NV_DATA_READ_FAIL, IOT_NVD_SERIAL_NUM, __LINE__);
 		ret = IOT_ERROR_NV_DATA_ERROR;
 		goto exit;
 	}
@@ -1086,6 +1130,7 @@ exit:
 	ret = _iot_nv_read_data_from_stnv(iot_bsp_nv_get_data_path(IOT_NVD_SERIAL_NUM), data, DATA_SIZE);
 	if (ret != IOT_ERROR_NONE) {
 		IOT_DEBUG("read failed");
+		IOT_DUMP(IOT_DEBUG_LEVEL_DEBUG, IOT_DUMP_NV_DATA_READ_FAIL, IOT_NVD_SERIAL_NUM, __LINE__);
 		ret = IOT_ERROR_NV_DATA_ERROR;
 		goto exit;
 	}
@@ -1131,6 +1176,7 @@ iot_error_t iot_nv_get_misc_info(char** misc_info, size_t* len)
 	ret = _iot_nv_read_data(iot_bsp_nv_get_data_path(IOT_NVD_MISC_INFO), data, DATA_SIZE);
 	if (ret != IOT_ERROR_NONE) {
 		IOT_DEBUG("read failed");
+		IOT_DUMP(IOT_DEBUG_LEVEL_DEBUG, IOT_DUMP_NV_DATA_READ_FAIL, IOT_NVD_MISC_INFO, __LINE__);
 		ret = IOT_ERROR_NV_DATA_ERROR;
 		goto exit;
 	}
@@ -1166,7 +1212,11 @@ iot_error_t iot_nv_set_misc_info(const char* misc_info)
 	iot_error_t ret;
 
 	ret = _iot_nv_write_data(iot_bsp_nv_get_data_path(IOT_NVD_MISC_INFO), misc_info, strlen(misc_info));
-	IOT_DEBUG_CHECK(ret != IOT_ERROR_NONE, IOT_ERROR_NV_DATA_ERROR, "write fail");
+	if (ret != IOT_ERROR_NONE) {
+		IOT_DEBUG("write fail");
+		IOT_DUMP(IOT_DEBUG_LEVEL_DEBUG, IOT_DUMP_NV_DATA_WRITE_FAIL, IOT_NVD_MISC_INFO, __LINE__);
+		ret = IOT_ERROR_NV_DATA_ERROR;
+	}
 
 	return ret;
 }
@@ -1182,9 +1232,11 @@ iot_error_t iot_nv_erase(iot_nvd_t nv_type)
 	if (ret != IOT_ERROR_NONE) {
 		if (ret == IOT_ERROR_FS_NO_FILE) {
 			IOT_DEBUG("file does not exist");
+			IOT_DUMP(IOT_DEBUG_LEVEL_DEBUG, IOT_DUMP_NV_DATA_NOT_EXIST, nv_type, __LINE__);
 			return IOT_ERROR_NV_DATA_NOT_EXIST;
 		} else {
 			IOT_DEBUG("file remove failed");
+			IOT_DUMP(IOT_DEBUG_LEVEL_DEBUG, IOT_DUMP_NV_DATA_ERASE_FAIL, nv_type, __LINE__);
 			return IOT_ERROR_NV_DATA_ERROR;
 		}
 	}
