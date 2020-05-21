@@ -23,7 +23,27 @@
 extern "C" {
 #endif
 
-#define DUMP_LOG_VERSION 0
+#define MAGIC_NUMBER (0x57D1C109)
+
+struct iot_dump_header {
+    int magic_number;
+    int log_version;
+    int dump_state_size;
+    int dummy;
+};
+
+struct iot_dump_state {
+    int stdk_version_code;
+    int clock_time;
+    int sequence_number;
+    int dummy;
+    char os_name[16];
+    char os_version[16];
+    char bsp_name[16];
+    char bsp_version[16];
+};
+
+#define IOT_DUMP_LOG_VERSION 0
 
 typedef enum {
 	IOT_DUMP_MAIN_BASE = 0x0000,
@@ -69,5 +89,12 @@ typedef enum {
 	IOT_DUMP_EXAMPLE_HELLO_WORLD = 0xff01,
 	IOT_DUMP_EXAMPLE_COMMENT = 0xff02, /* decoder copies comment to output */
 } dump_log_id_t;
+
+/* create all_log_dump
+ * @param all_log_dump_size - size of created all_log_dump
+ * @return pointer of 'all log dump'
+ * @warning must free returned pointer after using it.
+ */
+char* iot_dump_create_all_log_dump(int all_log_dump_size);
 
 #endif /* _IOT_DUMP_LOG_H_ */
