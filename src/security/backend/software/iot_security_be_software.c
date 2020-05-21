@@ -41,6 +41,27 @@ iot_error_t _iot_security_be_check_context_and_params_is_valid(iot_security_cont
 	return IOT_ERROR_NONE;
 }
 
+static inline void _iot_security_be_software_buffer_free(iot_security_buffer_t *buffer)
+{
+	if (buffer) {
+		if (buffer->p && buffer->len) {
+			memset(buffer->p, 0, buffer->len);
+			iot_os_free(buffer->p);
+		}
+		memset(buffer, 0, sizeof(iot_security_buffer_t));
+	}
+}
+
+static inline void _iot_security_be_software_buffer_wipe(const iot_security_buffer_t *input_buf, size_t wiped_len)
+{
+	if (input_buf->len < wiped_len) {
+		int i;
+		for (i = input_buf->len; i < wiped_len; i++) {
+			input_buf->p[i] = 0;
+		}
+	}
+}
+
 STATIC_FUNCTION
 iot_error_t _iot_security_be_software_bsp_fs_load(iot_security_context_t *context, iot_security_storage_id_t storage_id, iot_security_buffer_t *output_buf)
 {
