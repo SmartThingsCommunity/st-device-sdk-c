@@ -229,6 +229,26 @@ void TC_iot_security_cipher_aes_decrypt_malloc_failure(void **state);
 void TC_iot_security_cipher_aes_decrypt_failure(void **state);
 void TC_iot_security_cipher_aes_success(void **state);
 
+// TCs for iot_security_manager.c
+int TC_iot_security_manager_setup(void **state);
+int TC_iot_security_manager_teardown(void **state);
+void TC_iot_security_manager_init_null_parameters(void **state);
+void TC_iot_security_manager_init_success(void **state);
+void TC_iot_security_manager_deinit_null_parameters(void **state);
+void TC_iot_security_manager_deinit_success(void **state);
+void TC_iot_security_manager_set_key_null_parameters(void **state);
+void TC_iot_security_manager_set_key_invalid_parameters(void **state);
+void TC_iot_security_manager_set_key_alloc_failure(void **state);
+void TC_iot_security_manager_set_key_success(void **state);
+void TC_iot_security_manager_get_key_null_parameters(void **state);
+void TC_iot_security_manager_get_key_invalid_parameters(void **state);
+void TC_iot_security_manager_get_key_alloc_failure(void **state);
+void TC_iot_security_manager_get_key_success(void **state);
+void TC_iot_security_manager_get_certificate_null_parameters(void **state);
+void TC_iot_security_manager_get_certificate_invalid_parameters(void **state);
+void TC_iot_security_manager_get_certificate_alloc_failure(void **state);
+void TC_iot_security_manager_get_certificate_success(void **state);
+
 // TCs for iot_security_storage.c
 int TC_iot_security_storage_init_setup(void **state);
 int TC_iot_security_storage_init_teardown(void **state);

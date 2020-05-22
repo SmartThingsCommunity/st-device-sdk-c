@@ -43,6 +43,7 @@ if(ENABLE_STDK_TEST)
                    TC_FUNC_iot_mqtt_client.c
                    TC_FUNC_iot_security_common.c
                    TC_FUNC_iot_security_crypto.c
+                   TC_FUNC_iot_security_manager.c
                    TC_FUNC_iot_security_storage.c
                    TC_FUNC_iot_security_helper.c
                    TC_FUNC_iot_security_helper_ed25519.c
