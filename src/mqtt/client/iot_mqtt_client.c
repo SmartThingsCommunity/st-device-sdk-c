@@ -203,10 +203,10 @@ static int _iot_mqtt_run_write_stream(MQTTClient *client, iot_os_timer timer)
 			client->current_writing_chunk = NULL;
 			if (w_chunk->chunk_state == PACKET_CHUNK_WRITE_PENDING) {
 				w_chunk->chunk_state = PACKET_CHUNK_WRITE_COMPLETED;
-				_iot_mqtt_queue_push(&client->write_completed_queue, w_chunk);
 			} else if (w_chunk->chunk_state == PACKET_CHUNK_SYNC_WRITE_PENDING) {
-				w_chunk->chunk_state = PACKET_CHUNK_WRITE_COMPLETED;
+				w_chunk->chunk_state = PACKET_CHUNK_SYNC_WRITE_COMPLETED;
 			}
+			_iot_mqtt_queue_push(&client->write_completed_queue, w_chunk);
 		}
 	}
 
@@ -318,6 +318,161 @@ exit:
 	iot_os_mutex_unlock(&client->read_lock);
 
 	return read;
+}
+
+static void _iot_mqtt_process_received_ack(MQTTClient *client, iot_mqtt_packet_chunk_t *chunk)
+{
+	iot_mqtt_packet_chunk_t *tmp = NULL;
+
+	if (chunk->packet_type == CONNACK) {
+		tmp = _iot_mqtt_queue_pop_by_type_and_id(&client->write_completed_queue, CONNECT, 0);
+	} else if (chunk->packet_type == PUBACK) {
+		tmp = _iot_mqtt_queue_pop_by_type_and_id(&client->write_completed_queue, PUBLISH, chunk->packet_id);
+	} else if (chunk->packet_type == SUBACK) {
+		tmp = _iot_mqtt_queue_pop_by_type_and_id(&client->write_completed_queue, SUBSCRIBE, chunk->packet_id);
+	} else if (chunk->packet_type == UNSUBACK) {
+		tmp = _iot_mqtt_queue_pop_by_type_and_id(&client->write_completed_queue, UNSUBSCRIBE, chunk->packet_id);
+	} else if (chunk->packet_type == PUBCOMP) {
+		tmp = _iot_mqtt_queue_pop_by_type_and_id(&client->write_completed_queue, PUBREL, chunk->packet_id);
+	} else if (chunk->packet_type == PINGRESP) {
+		tmp = _iot_mqtt_queue_pop_by_type_and_id(&client->write_completed_queue, PINGREQ, 0);
+	} else {
+		return;
+	}
+
+	if (tmp != NULL) {
+		if (tmp->chunk_state == PACKET_CHUNK_SYNC_WRITE_COMPLETED) {
+			tmp->chunk_state = PACKET_CHUNK_ACKNOWLEDGED;
+		} else {
+			/* TODO implement async complete user call back here */
+			_iot_mqtt_chunk_destroy(tmp);
+			iot_os_free(tmp);
+		}
+	} else {
+		IOT_ERROR("There is no ack packet matched");
+	}
+}
+
+int deliverMessage(MQTTClient *c, st_mqtt_msg *message);
+static void _iot_mqtt_process_received_publish(MQTTClient *client, iot_mqtt_packet_chunk_t *chunk)
+{
+	MQTTString topicName;
+	st_mqtt_msg msg;
+	int qos;
+	unsigned char dup;
+	unsigned short id;
+	msg.payloadlen = 0;
+
+	// Process publish message
+	if (MQTTDeserialize_publish(&dup, &qos, &msg.retained, &id, &topicName,
+						(unsigned char **)&msg.payload, (int *)&msg.payloadlen, chunk->chunk_data, chunk->chunk_size) != 1) {
+		IOT_ERROR("deserialize publish failed");
+		return;
+	}
+	msg.qos = qos;
+	msg.topic = topicName.lenstring.data;
+	msg.topiclen = topicName.lenstring.len;
+	deliverMessage(client, &msg);
+
+	// Send Ack back
+	if (msg.qos != st_mqtt_qos0) {
+		iot_mqtt_packet_chunk_t *puback;
+		puback = iot_os_malloc(sizeof(iot_mqtt_packet_chunk_t));
+		if (puback == NULL) {
+			IOT_ERROR("chunk malloc fail");
+			return;
+		}
+		memset(puback, '\0', sizeof(iot_mqtt_packet_chunk_t));
+
+		puback->chunk_size = 4;
+		puback->chunk_data = iot_os_malloc(puback->chunk_size);
+		puback->chunk_id = id;
+		if (puback->chunk_data == NULL) {
+			IOT_ERROR("chunk data malloc fail");
+			iot_os_free(puback);
+			return;
+		}
+		if (msg.qos == st_mqtt_qos1) {
+			puback->packet_type = PUBACK;
+			MQTTSerialize_ack(puback->chunk_data, puback->chunk_size, PUBACK, 0, id);
+		} else if (msg.qos == st_mqtt_qos2) {
+			puback->packet_type = PUBREC;
+			MQTTSerialize_ack(puback->chunk_data, puback->chunk_size, PUBREC, 0, id);
+		}
+		puback->chunk_state = PACKET_CHUNK_WRITE_PENDING;
+		_iot_mqtt_queue_push(&client->write_pending_queue, puback);
+	}
+}
+
+static void _iot_mqtt_process_received_pubrec_pubrel(MQTTClient *client, iot_mqtt_packet_chunk_t *chunk)
+{
+	iot_mqtt_packet_chunk_t *tmp = NULL;
+
+	if (chunk->packet_type == PUBREC) {
+		tmp = _iot_mqtt_queue_pop_by_type_and_id(&client->write_completed_queue, PUBLISH, chunk->packet_id);
+	} else if (chunk->packet_type == PUBREL) {
+		tmp = _iot_mqtt_queue_pop_by_type_and_id(&client->write_completed_queue, PUBREC, chunk->packet_id);
+	} else {
+		return;
+	}
+
+	// Recycling packet
+	if (tmp != NULL) {
+		iot_os_free(tmp->chunk_data);
+		tmp->chunk_data = NULL;
+
+		tmp->chunk_size = 4;
+		tmp->current_chunk_pos = 0;
+		tmp->chunk_data = iot_os_malloc(tmp->chunk_size);
+		if (tmp->chunk_data == NULL) {
+			IOT_ERROR("chunk data malloc fail");
+			_iot_mqtt_chunk_destroy(tmp);
+			iot_os_free(tmp);
+			return;
+		}
+		if (tmp->packet_type == PUBLISH) {
+			tmp->packet_type = PUBREL;
+			MQTTSerialize_ack(tmp->chunk_data, tmp->chunk_size, PUBREL, 0, tmp->packet_id);
+		} else if (tmp->packet_type == PUBREC) {
+			tmp->packet_type = PUBCOMP;
+			MQTTSerialize_ack(tmp->chunk_data, tmp->chunk_size, PUBCOMP, 0, tmp->packet_id);
+		}
+		if (tmp->chunk_state == PACKET_CHUNK_SYNC_WRITE_COMPLETED) {
+			tmp->chunk_state = PACKET_CHUNK_SYNC_WRITE_PENDING;
+		} else {
+			tmp->chunk_state = PACKET_CHUNK_WRITE_PENDING;
+		}
+		_iot_mqtt_queue_push(&client->write_pending_queue, tmp);
+	} else {
+		IOT_ERROR("There is no ack packet matched");
+	}
+}
+
+static void _iot_mqtt_process_post_read(MQTTClient *client, iot_os_timer timer)
+{
+	iot_mqtt_packet_chunk_t *w_chunk = NULL;
+
+	while (!iot_os_timer_isexpired(timer) && (w_chunk = _iot_mqtt_queue_pop(&client->read_completed_queue))) {
+		switch (w_chunk->packet_type) {
+			case CONNACK:
+			case PUBACK:
+			case SUBACK:
+			case UNSUBACK:
+			case PUBCOMP:
+			case PINGRESP:
+				_iot_mqtt_process_received_ack(client, w_chunk);
+				break;
+			case PUBLISH:
+				_iot_mqtt_process_received_publish(client, w_chunk);
+				break;
+			case PUBREC:
+			case PUBREL:
+				_iot_mqtt_process_received_pubrec_pubrel(client, w_chunk);
+				break;
+		}
+		_iot_mqtt_chunk_destroy(w_chunk);
+		iot_os_free(w_chunk);
+	}
 }
 
 static int getNextPacketId(MQTTClient *c)
