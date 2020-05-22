@@ -246,6 +246,25 @@ int TEST_FUNC_iot_security_common(void)
 int TEST_FUNC_iot_security_crypto(void)
 {
     const struct CMUnitTest tests[] = {
+            // pk
+            cmocka_unit_test_setup_teardown(TC_iot_security_pk_init_null_parameters, TC_iot_security_pk_init_setup, TC_iot_security_pk_init_teardown),
+            cmocka_unit_test_setup_teardown(TC_iot_security_pk_init_malloc_failure, TC_iot_security_pk_init_setup, TC_iot_security_pk_init_teardown),
+            cmocka_unit_test_setup_teardown(TC_iot_security_pk_init_success, TC_iot_security_pk_init_setup, TC_iot_security_pk_init_teardown),
+            cmocka_unit_test_setup_teardown(TC_iot_security_pk_deinit_null_parameters, TC_iot_security_pk_setup, TC_iot_security_pk_teardown),
+            cmocka_unit_test_setup_teardown(TC_iot_security_pk_deinit_success, TC_iot_security_pk_init_setup, TC_iot_security_pk_init_teardown),
+            cmocka_unit_test(TC_iot_security_pk_get_signature_len_failure),
+            cmocka_unit_test(TC_iot_security_pk_get_signature_len_success),
+            cmocka_unit_test_setup_teardown(TC_iot_security_pk_get_key_type_failure, TC_iot_security_pk_init_setup, TC_iot_security_pk_init_teardown),
+            cmocka_unit_test_setup_teardown(TC_iot_security_pk_get_key_type_success, TC_iot_security_pk_setup, TC_iot_security_pk_teardown),
+            cmocka_unit_test_setup_teardown(TC_iot_security_pk_sign_invalid_parameters, TC_iot_security_pk_setup, TC_iot_security_pk_teardown),
+            cmocka_unit_test_setup_teardown(TC_iot_security_pk_sign_null_parameters, TC_iot_security_pk_setup, TC_iot_security_pk_teardown),
+            cmocka_unit_test_setup_teardown(TC_iot_security_pk_sign_malloc_failure, TC_iot_security_pk_setup, TC_iot_security_pk_teardown),
+            cmocka_unit_test_setup_teardown(TC_iot_security_pk_sign_failure, TC_iot_security_pk_init_setup, TC_iot_security_pk_init_teardown),
+            cmocka_unit_test_setup_teardown(TC_iot_security_pk_verify_invalid_parameters, TC_iot_security_pk_setup, TC_iot_security_pk_teardown),
+            cmocka_unit_test_setup_teardown(TC_iot_security_pk_verify_null_parameters, TC_iot_security_pk_setup, TC_iot_security_pk_teardown),
+            cmocka_unit_test_setup_teardown(TC_iot_security_pk_verify_failure, TC_iot_security_pk_init_setup, TC_iot_security_pk_init_teardown),
+            cmocka_unit_test_setup_teardown(TC_iot_security_pk_success, TC_iot_security_pk_setup, TC_iot_security_pk_teardown),
+            // cipher
             cmocka_unit_test_setup_teardown(TC_iot_security_cipher_init_null_parameters, TC_iot_security_cipher_init_setup, TC_iot_security_cipher_init_teardown),
             cmocka_unit_test_setup_teardown(TC_iot_security_cipher_init_malloc_failure, TC_iot_security_cipher_init_setup, TC_iot_security_cipher_init_teardown),
             cmocka_unit_test_setup_teardown(TC_iot_security_cipher_init_success, TC_iot_security_cipher_init_setup, TC_iot_security_cipher_teardown),

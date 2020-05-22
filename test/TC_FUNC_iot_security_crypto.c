@@ -29,6 +29,497 @@
 
 #include "TC_MOCK_functions.h"
 
+static char sample_device_info[] = {
+	"{\n"
+	"\t\"deviceInfo\": {\n"
+	"\t\t\"firmwareVersion\": \"testFirmwareVersion\",\n"
+	"\t\t\"privateKey\": \"y04i7Pme6rJTkLBPngQoZfEI5KEAyE70A9xOhoX8uTI=\",\n"
+	"\t\t\"publicKey\": \"Sh4cBHRnPuEFyinaVuEd+mE5IQTkwPHmbOrgD3fwPsw=\",\n"
+	"\t\t\"serialNumber\": \"STDKtestc77078cc\"\n"
+	"\t}\n"
+	"}"
+};
+
+int TC_iot_security_pk_init_setup(void **state)
+{
+	iot_error_t err;
+	iot_security_context_t *context;
+
+	set_mock_detect_memory_leak(true);
+
+#if !defined(CONFIG_STDK_IOT_CORE_SUPPORT_STNV_PARTITION)
+	err = iot_nv_init((unsigned char *)sample_device_info, strlen(sample_device_info));
+#else
+	err = iot_nv_init(NULL, 0);
+#endif
+	assert_int_equal(err, IOT_ERROR_NONE);
+
+	context = iot_security_init();
+	assert_non_null(context);
+
+	*state = context;
+
+	return 0;
+}
+
+int TC_iot_security_pk_init_teardown(void **state)
+{
+	iot_error_t err;
+	iot_security_context_t *context;
+
+	context = (iot_security_context_t *)*state;
+	assert_non_null(context);
+
+	err = iot_security_deinit(context);
+	assert_int_equal(err, IOT_ERROR_NONE);
+
+	set_mock_detect_memory_leak(false);
+
+	return 0;
+}
+
+int TC_iot_security_pk_setup(void **state)
+{
+	iot_error_t err;
+	iot_security_context_t *context;
+
+	set_mock_detect_memory_leak(true);
+
+#if !defined(CONFIG_STDK_IOT_CORE_SUPPORT_STNV_PARTITION)
+	err = iot_nv_init((unsigned char *)sample_device_info, strlen(sample_device_info));
+#else
+	err = iot_nv_init(NULL, 0);
+#endif
+	assert_int_equal(err, IOT_ERROR_NONE);
+
+	context = iot_security_init();
+	assert_non_null(context);
+
+	err = iot_security_pk_init(context);
+	assert_int_equal(err, IOT_ERROR_NONE);
+
+	*state = context;
+
+	return 0;
+}
+
+int TC_iot_security_pk_teardown(void **state)
+{
+	iot_error_t err;
+	iot_security_context_t *context;
+
+	context = (iot_security_context_t *)*state;
+	assert_non_null(context);
+
+	err = iot_security_pk_deinit(context);
+	assert_int_equal(err, IOT_ERROR_NONE);
+
+	err = iot_security_deinit(context);
+	assert_int_equal(err, IOT_ERROR_NONE);
+
+	set_mock_detect_memory_leak(false);
+
+	return 0;
+}
+
+void TC_iot_security_pk_init_null_parameters(void **state)
+{
+	iot_error_t err;
+
+	// When
+	err = iot_security_pk_init(NULL);
+	// Then
+	assert_int_not_equal(err, IOT_ERROR_NONE);
+}
+
+void TC_iot_security_pk_init_malloc_failure(void **state)
+{
+	iot_error_t err;
+	iot_security_context_t *context;
+
+	context = (iot_security_context_t *)*state;
+	assert_non_null(context);
+
+	do_not_use_mock_iot_os_malloc_failure();
+
+	// Given
+	set_mock_iot_os_malloc_failure_with_index(0);
+	// When
+	err = iot_security_pk_init(context);
+	// Then
+	assert_int_equal(err, IOT_ERROR_MEM_ALLOC);
+
+	// Local teardown
+	do_not_use_mock_iot_os_malloc_failure();
+}
+
+void TC_iot_security_pk_init_success(void **state)
+{
+	iot_error_t err;
+	iot_security_context_t *context;
+
+	context = (iot_security_context_t *)*state;
+	assert_non_null(context);
+
+	// When
+	err = iot_security_pk_init(context);
+	// Then
+	assert_int_equal(err, IOT_ERROR_NONE);
+	// Teardown
+	err = iot_security_pk_deinit(context);
+	assert_int_equal(err, IOT_ERROR_NONE);
+}
+
+void TC_iot_security_pk_deinit_null_parameters(void **state)
+{
+	iot_error_t err;
+	iot_security_context_t *context;
+
+	context = (iot_security_context_t *)*state;
+	assert_non_null(context);
+
+	// When
+	err = iot_security_pk_deinit(NULL);
+	// Then
+	assert_int_not_equal(err, IOT_ERROR_NONE);
+}
+
+void TC_iot_security_pk_deinit_success(void **state)
+{
+	iot_error_t err;
+	iot_security_context_t *context;
+
+	context = (iot_security_context_t *)*state;
+	assert_non_null(context);
+
+	// Given
+	err = iot_security_pk_init(context);
+	assert_int_equal(err, IOT_ERROR_NONE);
+	// When
+	err = iot_security_pk_deinit(context);
+	// Then
+	assert_int_equal(err, IOT_ERROR_NONE);
+}
+
+void TC_iot_security_pk_get_signature_len_failure(void **state)
+{
+	iot_security_key_type_t pk_type;
+	size_t sig_len;
+
+	// Given
+	pk_type = IOT_SECURITY_KEY_TYPE_UNKNOWN;
+	// When
+	sig_len = iot_security_pk_get_signature_len(pk_type);
+	// Then
+	assert_int_equal((int)sig_len, IOT_SECURITY_SIGNATURE_UNKNOWN_LEN);
+}
+
+void TC_iot_security_pk_get_signature_len_success(void **state)
+{
+	iot_security_key_type_t pk_type;
+	size_t sig_len;
+
+	// Given
+	pk_type = IOT_SECURITY_KEY_TYPE_RSA2048;
+	// When
+	sig_len = iot_security_pk_get_signature_len(pk_type);
+	// Then
+	assert_int_equal((int)sig_len, IOT_SECURITY_SIGNATURE_RSA2048_LEN);
+
+	// Given
+	pk_type = IOT_SECURITY_KEY_TYPE_ED25519;
+	// When
+	sig_len = iot_security_pk_get_signature_len(pk_type);
+	// Then
+	assert_int_equal((int)sig_len, IOT_SECURITY_SIGNATURE_ED25519_LEN);
+}
+
+void TC_iot_security_pk_get_key_type_failure(void **state)
+{
+	iot_error_t err;
+	iot_security_context_t *context;
+	iot_security_key_type_t key_type;
+
+	context = (iot_security_context_t *)*state;
+	assert_non_null(context);
+
+	// When: get key type without pk_init
+	err = iot_security_pk_get_key_type(context, &key_type);
+	// Then
+	assert_int_equal(err, IOT_ERROR_SECURITY_PK_KEY_TYPE);
+}
+
+void TC_iot_security_pk_get_key_type_success(void **state)
+{
+	iot_error_t err;
+	iot_security_context_t *context;
+	iot_security_key_type_t key_type;
+
+	context = (iot_security_context_t *)*state;
+	assert_non_null(context);
+
+	// When
+	err = iot_security_pk_get_key_type(context, &key_type);
+	// Then
+	assert_int_equal(err, IOT_ERROR_NONE);
+}
+
+void TC_iot_security_pk_sign_invalid_parameters(void **state)
+{
+	iot_error_t err;
+	iot_security_context_t *context;
+	iot_security_buffer_t msg_buf = { 0 };
+	iot_security_buffer_t sig_buf = { 0 };
+	unsigned char buf[256];
+
+	context = (iot_security_context_t *)*state;
+	assert_non_null(context);
+
+	// Given
+	msg_buf.p = NULL;
+	msg_buf.len = sizeof(buf);
+	// When
+	err = iot_security_pk_sign(context, &msg_buf, &sig_buf);
+	// Then
+	assert_int_not_equal(err, IOT_ERROR_NONE);
+
+	// Given
+	msg_buf.p = buf;
+	msg_buf.len = 0;
+	// When
+	err = iot_security_pk_sign(context, &msg_buf, &sig_buf);
+	// Then
+	assert_int_not_equal(err, IOT_ERROR_NONE);
+}
+
+void TC_iot_security_pk_sign_null_parameters(void **state)
+{
+	iot_error_t err;
+	iot_security_context_t *context;
+	iot_security_buffer_t msg_buf = { 0 };
+	iot_security_buffer_t sig_buf = { 0 };
+	unsigned char msg[256];
+
+	context = (iot_security_context_t *)*state;
+	assert_non_null(context);
+
+	// When
+	err = iot_security_pk_sign(NULL, NULL, NULL);
+	// Then
+	assert_int_not_equal(err, IOT_ERROR_NONE);
+
+	// When
+	err = iot_security_pk_sign(NULL, &msg_buf, &sig_buf);
+	// Then
+	assert_int_not_equal(err, IOT_ERROR_NONE);
+
+	// When
+	err = iot_security_pk_sign(context, NULL, &sig_buf);
+	// Then
+	assert_int_not_equal(err, IOT_ERROR_NONE);
+
+	// Given
+	msg_buf.p = msg;
+	msg_buf.len = sizeof(msg);
+	// When
+	err = iot_security_pk_sign(context, &msg_buf, NULL);
+	// Then
+	assert_int_not_equal(err, IOT_ERROR_NONE);
+}
+
+void TC_iot_security_pk_sign_malloc_failure(void **state)
+{
+	iot_error_t err;
+	iot_security_context_t *context;
+	iot_security_buffer_t msg_buf = { 0 };
+	iot_security_buffer_t sig_buf = { 0 };
+	int i;
+
+	context = (iot_security_context_t *)*state;
+	assert_non_null(context);
+
+	// Given: message buffer
+	msg_buf.len = 256;
+	msg_buf.p = (unsigned char *)iot_os_malloc(msg_buf.len);
+	assert_non_null(msg_buf.p);
+	for (i = 0; i < msg_buf.len; i++) {
+		msg_buf.p[i] = (unsigned char)iot_bsp_random();
+	}
+
+	for (int i = 0; i < 1; i++) {
+		// Given: i-th malloc failure
+		do_not_use_mock_iot_os_malloc_failure();
+		set_mock_iot_os_malloc_failure_with_index(i);
+		// When
+		err = iot_security_pk_sign(context, &msg_buf, &sig_buf);
+		// Then
+		assert_int_not_equal(err, IOT_ERROR_NONE);
+	}
+
+	// Local teardown
+	iot_os_free(msg_buf.p);
+}
+
+void TC_iot_security_pk_sign_failure(void **state)
+{
+	iot_error_t err;
+	iot_security_context_t *context;
+	iot_security_buffer_t msg_buf = { 0 };
+	iot_security_buffer_t sig_buf = { 0 };
+
+	context = (iot_security_context_t *)*state;
+	assert_non_null(context);
+
+	// When: sign without pk_init
+	err = iot_security_pk_sign(context, &msg_buf, &sig_buf);
+	// Then
+	assert_int_not_equal(err, IOT_ERROR_NONE);
+}
+
+void TC_iot_security_pk_verify_invalid_parameters(void **state)
+{
+	iot_error_t err;
+	iot_security_context_t *context;
+	iot_security_buffer_t msg_buf = { 0 };
+	iot_security_buffer_t sig_buf = { 0 };
+	iot_security_buffer_t msg_buf_backup;
+	iot_security_buffer_t sig_buf_backup;
+	unsigned char buf[256];
+
+	context = (iot_security_context_t *)*state;
+	assert_non_null(context);
+
+	// Given: valid signature
+	msg_buf.p = buf;
+	msg_buf.len = sizeof(buf);
+	err = iot_security_pk_sign(context, &msg_buf, &sig_buf);
+	assert_int_equal(err, IOT_ERROR_NONE);
+
+	msg_buf_backup = msg_buf;
+	sig_buf_backup = sig_buf;
+
+	// Given
+	msg_buf = msg_buf_backup;
+	msg_buf.p = NULL;
+	// When
+	err = iot_security_pk_verify(context, &msg_buf, &sig_buf);
+	// Then
+	assert_int_not_equal(err, IOT_ERROR_NONE);
+
+	// Given
+	msg_buf = msg_buf_backup;
+	msg_buf.len = 0;
+	// When
+	err = iot_security_pk_verify(context, &msg_buf, &sig_buf);
+	// Then
+	assert_int_not_equal(err, IOT_ERROR_NONE);
+
+	// Given
+	sig_buf = sig_buf_backup;
+	sig_buf.p = NULL;
+	// When
+	err = iot_security_pk_verify(context, &msg_buf, &sig_buf);
+	// Then
+	assert_int_not_equal(err, IOT_ERROR_NONE);
+
+	// Given
+	sig_buf = sig_buf_backup;
+	sig_buf.len = 0;
+	// When
+	err = iot_security_pk_verify(context, &msg_buf, &sig_buf);
+	// Then
+	assert_int_not_equal(err, IOT_ERROR_NONE);
+
+	// Local teardown
+	iot_os_free(sig_buf.p);
+}
+
+void TC_iot_security_pk_verify_null_parameters(void **state)
+{
+	iot_error_t err;
+	iot_security_context_t *context;
+	iot_security_buffer_t msg_buf = { 0 };
+	iot_security_buffer_t sig_buf = { 0 };
+	unsigned char msg[256];
+
+	context = (iot_security_context_t *)*state;
+	assert_non_null(context);
+
+	// When
+	err = iot_security_pk_verify(NULL, NULL, NULL);
+	// Then
+	assert_int_not_equal(err, IOT_ERROR_NONE);
+
+	// When
+	err = iot_security_pk_verify(NULL, &msg_buf, &sig_buf);
+	// Then
+	assert_int_not_equal(err, IOT_ERROR_NONE);
+
+	// When
+	err = iot_security_pk_verify(context, NULL, &sig_buf);
+	// Then
+	assert_int_not_equal(err, IOT_ERROR_NONE);
+
+	// Given: valid input data
+	msg_buf.p = msg;
+	msg_buf.len = sizeof(msg);
+	// When
+	err = iot_security_pk_verify(context, &msg_buf, NULL);
+	// Then
+	assert_int_not_equal(err, IOT_ERROR_NONE);
+}
+
+void TC_iot_security_pk_verify_failure(void **state)
+{
+	iot_error_t err;
+	iot_security_context_t *context;
+	iot_security_buffer_t msg_buf = { 0 };
+	iot_security_buffer_t sig_buf = { 0 };
+
+	context = (iot_security_context_t *)*state;
+	assert_non_null(context);
+
+	// When: verity without pk_init
+	err = iot_security_pk_verify(context, &msg_buf, &sig_buf);
+	// Then
+	assert_int_not_equal(err, IOT_ERROR_NONE);
+}
+
+void TC_iot_security_pk_success(void **state)
+{
+	iot_error_t err;
+	iot_security_context_t *context;
+	iot_security_buffer_t msg_buf = { 0 };
+	iot_security_buffer_t sig_buf = { 0 };
+	int i;
+
+	context = (iot_security_context_t *)*state;
+	assert_non_null(context);
+
+	// Given: message buffer
+	msg_buf.len = 256;
+	msg_buf.p = (unsigned char *)iot_os_malloc(msg_buf.len);
+	assert_non_null(msg_buf.p);
+	for (i = 0; i < msg_buf.len; i++) {
+		msg_buf.p[i] = (unsigned char)iot_bsp_random();
+	}
+	// When
+	err = iot_security_pk_sign(context, &msg_buf, &sig_buf);
+	// Then
+	assert_int_equal(err, IOT_ERROR_NONE);
+	assert_non_null(sig_buf.p);
+	assert_int_not_equal(sig_buf.len, 0);
+
+	// When
+	err = iot_security_pk_verify(context, &msg_buf, &sig_buf);
+	// Then
+	assert_int_equal(err, IOT_ERROR_NONE);
+
+	// Local teardown
+	iot_os_free(msg_buf.p);
+	iot_os_free(sig_buf.p);
+}
+
 int TC_iot_security_cipher_init_setup(void **state)
 {
 	iot_security_context_t *context;

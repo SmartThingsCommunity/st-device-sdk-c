@@ -205,6 +205,28 @@ void TC_iot_security_check_backend_funcs_entry_is_valid_failure(void **state);
 void TC_iot_security_check_backend_funcs_entry_is_valid_success(void **state);
 
 // TCs for iot_security_crypto.c
+int TC_iot_security_pk_init_setup(void **state);
+int TC_iot_security_pk_init_teardown(void **state);
+int TC_iot_security_pk_setup(void **state);
+int TC_iot_security_pk_teardown(void **state);
+void TC_iot_security_pk_init_null_parameters(void **state);
+void TC_iot_security_pk_init_malloc_failure(void **state);
+void TC_iot_security_pk_init_success(void **state);
+void TC_iot_security_pk_deinit_null_parameters(void **state);
+void TC_iot_security_pk_deinit_success(void **state);
+void TC_iot_security_pk_get_signature_len_failure(void **state);
+void TC_iot_security_pk_get_signature_len_success(void **state);
+void TC_iot_security_pk_get_key_type_failure(void **state);
+void TC_iot_security_pk_get_key_type_success(void **state);
+void TC_iot_security_pk_sign_invalid_parameters(void **state);
+void TC_iot_security_pk_sign_null_parameters(void **state);
+void TC_iot_security_pk_sign_malloc_failure(void **state);
+void TC_iot_security_pk_sign_failure(void **state);
+void TC_iot_security_pk_verify_invalid_parameters(void **state);
+void TC_iot_security_pk_verify_null_parameters(void **state);
+void TC_iot_security_pk_verify_failure(void **state);
+void TC_iot_security_pk_success(void **state);
+
 int TC_iot_security_cipher_init_setup(void **state);
 int TC_iot_security_cipher_init_teardown(void **state);
 int TC_iot_security_cipher_setup(void **state);
