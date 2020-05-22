@@ -34,6 +34,13 @@ iot_error_t _iot_security_be_check_context_and_params_is_valid(iot_security_cont
 		return IOT_ERROR_SECURITY_CONTEXT_NULL;
 	}
 
+	if (sub_system & IOT_SECURITY_SUB_PK) {
+		if (!context->pk_params) {
+			IOT_ERROR("pk params is null");
+			return IOT_ERROR_SECURITY_PK_PARAMS_NULL;
+		}
+	}
+
 	if (sub_system & IOT_SECURITY_SUB_CIPHER) {
 		if (!context->cipher_params) {
 			IOT_ERROR("cipher params is null");
@@ -185,6 +192,307 @@ iot_error_t _iot_security_be_software_bsp_fs_load(iot_security_context_t *contex
 
 	return IOT_ERROR_NONE;
 };
+
+#if defined(CONFIG_STDK_IOT_CORE_CRYPTO_SUPPORT_ED25519)
+STATIC_FUNCTION
+iot_error_t _iot_security_be_software_pk_load_ed25519_key(iot_security_context_t *context, iot_security_key_id_t key_id, iot_security_buffer_t *output_buf)
+{
+	iot_error_t err;
+	iot_security_storage_id_t storage_id;
+	iot_security_buffer_t key_b64_buf = { 0 };
+	iot_security_buffer_t key_buf = { 0 };
+	size_t olen;
+
+	err = _iot_security_be_check_context_and_params_is_valid(context, IOT_SECURITY_SUB_PK);
+	if (err) {
+		return err;
+	}
+
+	if (!output_buf) {
+		IOT_ERROR("output buffer is null");
+		return IOT_ERROR_INVALID_ARGS;
+	}
+
+	storage_id = _iot_security_be_software_id_key2storage(key_id);
+	if (storage_id == IOT_NVD_UNKNOWN) {
+		return IOT_ERROR_SECURITY_KEY_INVALID_ID;
+	}
+
+	err = _iot_security_be_software_bsp_fs_load(context, storage_id, &key_b64_buf);
+	if (err) {
+		return err;
+	}
+
+	key_buf.len = IOT_SECURITY_ED25519_LEN;
+	key_buf.p = (unsigned char *) iot_os_malloc(key_buf.len);
+	if (!key_buf.p) {
+		IOT_ERROR("failed to malloc for key_buf");
+		_iot_security_be_software_buffer_free(&key_b64_buf);
+		return IOT_ERROR_MEM_ALLOC;
+	}
+
+	err = iot_security_base64_decode(key_b64_buf.p, key_b64_buf.len, key_buf.p, key_buf.len, &olen);
+	if (err) {
+		_iot_security_be_software_buffer_free(&key_b64_buf);
+		_iot_security_be_software_buffer_free(&key_buf);
+		return err;
+	}
+
+	if (olen != key_buf.len) {
+		_iot_security_be_software_buffer_free(&key_b64_buf);
+		_iot_security_be_software_buffer_free(&key_buf);
+		return IOT_ERROR_SECURITY_PK_KEY_LEN;
+	}
+
+	*output_buf = key_buf;
+
+	IOT_DEBUG("key '%d' is loaded %d@%p", key_id, (int)output_buf->len, output_buf->p);
+
+	_iot_security_be_software_buffer_free(&key_b64_buf);
+
+	return err;
+}
+
+STATIC_FUNCTION
+iot_error_t _iot_security_be_software_pk_load_ed25519(iot_security_context_t *context)
+{
+	iot_error_t err;
+	iot_security_buffer_t seckey = { 0 };
+	iot_security_buffer_t pubkey = { 0 };
+
+	err = _iot_security_be_software_pk_load_ed25519_key(context, IOT_SECURITY_KEY_ID_DEVICE_PRIVATE, &seckey);
+	if (err) {
+		return err;
+	}
+
+	err = _iot_security_be_software_pk_load_ed25519_key(context, IOT_SECURITY_KEY_ID_DEVICE_PUBLIC, &pubkey);
+	if (err) {
+		return err;
+	}
+
+	context->pk_params->type = IOT_SECURITY_KEY_TYPE_ED25519;
+	context->pk_params->seckey = seckey;
+	context->pk_params->pubkey = pubkey;
+
+	return IOT_ERROR_NONE;
+}
+#endif
+
+STATIC_FUNCTION
+iot_error_t _iot_security_be_software_pk_load_key(iot_security_context_t *context)
+{
+#if defined(CONFIG_STDK_IOT_CORE_CRYPTO_SUPPORT_ED25519)
+	return _iot_security_be_software_pk_load_ed25519(context);
+#else
+	IOT_ERROR("not implemented");
+	return IOT_ERROR_SECURITY_NOT_IMPLEMENTED;
+#endif
+}
+
+STATIC_FUNCTION
+iot_error_t _iot_security_be_software_pk_init(iot_security_context_t *context)
+{
+	iot_error_t err;
+
+	if (!context) {
+		return IOT_ERROR_SECURITY_CONTEXT_NULL;
+	}
+
+	err = _iot_security_be_software_pk_load_key(context);
+	if (err) {
+		return err;
+	}
+
+	return IOT_ERROR_NONE;
+}
+
+STATIC_FUNCTION
+iot_error_t _iot_security_be_software_pk_deinit(iot_security_context_t *context)
+{
+	iot_error_t err;
+	iot_security_pk_params_t *pk_params;
+
+	err = _iot_security_be_check_context_and_params_is_valid(context, IOT_SECURITY_SUB_PK);
+	if (err) {
+		return err;
+	}
+
+	pk_params = context->pk_params;
+
+	if (pk_params->pubkey.p) {
+		_iot_security_be_software_buffer_free(&pk_params->pubkey);
+	}
+
+	if (pk_params->seckey.p) {
+		_iot_security_be_software_buffer_free(&pk_params->seckey);
+	}
+
+	return IOT_ERROR_NONE;
+}
+
+STATIC_FUNCTION
+iot_error_t _iot_security_be_software_pk_get_key_type(iot_security_context_t *context, iot_security_key_type_t *key_type)
+{
+	iot_error_t err;
+
+	err = _iot_security_be_check_context_and_params_is_valid(context, IOT_SECURITY_SUB_PK);
+	if (err) {
+		return err;
+	}
+
+	*key_type = context->pk_params->type;
+
+	IOT_DEBUG("type = %d", *key_type);
+
+	return IOT_ERROR_NONE;
+}
+
+#if defined(CONFIG_STDK_IOT_CORE_CRYPTO_SUPPORT_ED25519)
+STATIC_FUNCTION
+iot_error_t _iot_security_be_software_pk_sign_ed25519(iot_security_context_t *context, iot_security_buffer_t *input_buf, iot_security_buffer_t *sig_buf)
+{
+	iot_error_t err;
+	iot_security_pk_params_t *pk_params;
+	unsigned char skpk[crypto_sign_SECRETKEYBYTES];
+	unsigned long long olen;
+	size_t ed25519_len = IOT_SECURITY_ED25519_LEN;
+	int ret;
+
+	err = _iot_security_be_check_context_and_params_is_valid(context, IOT_SECURITY_SUB_PK);
+	if (err) {
+		return err;
+	}
+
+	if (!input_buf || !input_buf->p || (input_buf->len == 0)) {
+		IOT_ERROR("input buffer is invalid");
+		return IOT_ERROR_INVALID_ARGS;
+	}
+
+	if (!sig_buf) {
+		IOT_ERROR("sig buffer is null");
+		return IOT_ERROR_INVALID_ARGS;
+	}
+
+	pk_params = context->pk_params;
+
+	if (!pk_params->pubkey.p || (pk_params->pubkey.len != ed25519_len)) {
+		IOT_ERROR("pubkey is invalid with %d@%p", (int)pk_params->pubkey.len, pk_params->pubkey.p);
+		return IOT_ERROR_SECURITY_PK_INVALID_PUBKEY;
+	}
+
+	if (!pk_params->seckey.p || (pk_params->seckey.len != ed25519_len)) {
+		IOT_ERROR("seckey is invalid with %d@%p", (int)pk_params->seckey.len, pk_params->seckey.p);
+		return IOT_ERROR_SECURITY_PK_INVALID_SECKEY;
+	}
+
+	IOT_DEBUG("input:  %3d@%p", (int)input_buf->len, input_buf->p);
+	IOT_DEBUG("seckey: %3d@%p", (int)pk_params->seckey.len, pk_params->seckey.p);
+	IOT_DEBUG("pubkey: %3d@%p", (int)pk_params->pubkey.len, pk_params->pubkey.p);
+
+	memcpy(skpk, pk_params->seckey.p, pk_params->seckey.len);
+	memcpy(skpk + ed25519_len, pk_params->pubkey.p, pk_params->pubkey.len);
+
+	sig_buf->len = iot_security_pk_get_signature_len(pk_params->type);
+	sig_buf->p = (unsigned char *)iot_os_malloc(sig_buf->len);
+	if (!sig_buf->p) {
+		IOT_ERROR("failed to malloc for sig");
+		return IOT_ERROR_MEM_ALLOC;
+	}
+
+	ret = crypto_sign_detached(sig_buf->p, &olen, input_buf->p, input_buf->len, skpk);
+	if (ret) {
+		IOT_ERROR("crypto_sign_detached = %d", ret);
+		_iot_security_be_software_buffer_free(sig_buf);
+		return IOT_ERROR_SECURITY_PK_SIGN;
+	}
+
+	if ((size_t)olen != sig_buf->len) {
+		IOT_ERROR("signature length mismatch (%d != %d)", (int)olen, (int)sig_buf->len);
+		_iot_security_be_software_buffer_free(sig_buf);
+		return IOT_ERROR_SECURITY_PK_KEY_LEN;
+	}
+
+	IOT_DEBUG("sig:    %3d@%p", (int)sig_buf->len, sig_buf->p);
+
+	return IOT_ERROR_NONE;
+}
+
+#if defined(CONFIG_STDK_IOT_CORE_CRYPTO_SUPPORT_VERIFY)
+STATIC_FUNCTION
+iot_error_t _iot_security_be_software_pk_verify_ed25519(iot_security_context_t *context, iot_security_buffer_t *input_buf, iot_security_buffer_t *sig_buf)
+{
+	iot_error_t err;
+	iot_security_pk_params_t *pk_params;
+	size_t key_len = IOT_SECURITY_ED25519_LEN;
+	int ret;
+
+	err = _iot_security_be_check_context_and_params_is_valid(context, IOT_SECURITY_SUB_PK);
+	if (err) {
+		return err;
+	}
+
+	if (!input_buf || !input_buf->p || (input_buf->len == 0)) {
+		IOT_ERROR("input buffer is invalid");
+		return IOT_ERROR_INVALID_ARGS;
+	}
+
+	if (!sig_buf || !sig_buf->p || (sig_buf->len == 0)) {
+		IOT_ERROR("sig buffer is invalid");
+		return IOT_ERROR_INVALID_ARGS;
+	}
+
+	pk_params = context->pk_params;
+
+	if (!pk_params->pubkey.p || (pk_params->pubkey.len == 0)) {
+		IOT_ERROR("pubkey is invalid");
+		return IOT_ERROR_SECURITY_PK_INVALID_PUBKEY;
+	}
+
+	IOT_DEBUG("input:  %3d@%p", (int)input_buf->len, input_buf->p);
+	IOT_DEBUG("sig:    %3d@%p", (int)sig_buf->len, sig_buf->p);
+	IOT_DEBUG("pubkey: %3d@%p", (int)pk_params->pubkey.len, pk_params->pubkey);
+
+	if (pk_params->pubkey.len != key_len) {
+		IOT_ERROR("pubkey len '%d' is not '%d'", (int)pk_params->pubkey.len, (int)key_len);
+		return IOT_ERROR_SECURITY_PK_KEY_LEN;
+	}
+
+	ret = crypto_sign_verify_detached(sig_buf->p, input_buf->p, input_buf->len, pk_params->pubkey.p);
+	if (ret) {
+		IOT_ERROR("crypto_sign_verify_detached = %d\n", ret);
+		return IOT_ERROR_SECURITY_PK_VERIFY;
+	}
+
+	IOT_DEBUG("sign verify success");
+
+	return IOT_ERROR_NONE;
+}
+#endif /* CONFIG_STDK_IOT_CORE_CRYPTO_SUPPORT_VERIFY */
+#endif /* CONFIG_STDK_IOT_CORE_CRYPTO_SUPPORT_ED25519 */
+
+STATIC_FUNCTION
+iot_error_t _iot_security_be_software_pk_sign(iot_security_context_t *context, iot_security_buffer_t *input_buf, iot_security_buffer_t *sig_buf)
+{
+#if defined(CONFIG_STDK_IOT_CORE_CRYPTO_SUPPORT_ED25519)
+	return _iot_security_be_software_pk_sign_ed25519(context, input_buf, sig_buf);
+#else
+	IOT_ERROR("not implemented");
+	return IOT_ERROR_SECURITY_NOT_IMPLEMENTED;
+#endif
+}
+
+#if defined(CONFIG_STDK_IOT_CORE_CRYPTO_SUPPORT_VERIFY)
+STATIC_FUNCTION
+iot_error_t _iot_security_be_software_pk_verify(iot_security_context_t *context, iot_security_buffer_t *input_buf, iot_security_buffer_t *sig_buf)
+{
+#if defined(CONFIG_STDK_IOT_CORE_CRYPTO_SUPPORT_ED25519)
+	return _iot_security_be_software_pk_verify_ed25519(context, input_buf, sig_buf);
+#else
+	IOT_ERROR("not implemented");
+	return IOT_ERROR_SECURITY_NOT_IMPLEMENTED;
+#endif
+}
+#endif /* CONFIG_STDK_IOT_CORE_CRYPTO_SUPPORT_VERIFY */
 
 STATIC_FUNCTION
 iot_error_t _iot_security_be_software_cipher_deinit(iot_security_context_t *context)
@@ -617,6 +925,17 @@ iot_error_t _iot_security_be_software_storage_remove(iot_security_context_t *con
 }
 
 const iot_security_be_funcs_t iot_security_be_software_funcs = {
+	.pk_init = _iot_security_be_software_pk_init,
+	.pk_deinit = _iot_security_be_software_pk_deinit,
+	.pk_set_params = NULL,
+	.pk_get_key_type = _iot_security_be_software_pk_get_key_type,
+	.pk_sign = _iot_security_be_software_pk_sign,
+#if defined(CONFIG_STDK_IOT_CORE_CRYPTO_SUPPORT_VERIFY)
+	.pk_verify = _iot_security_be_software_pk_verify,
+#else
+	.pk_verify = NULL,
+#endif
+
 	.cipher_init = NULL,
 	.cipher_deinit = _iot_security_be_software_cipher_deinit,
 	.cipher_set_params = _iot_security_be_software_cipher_set_params,

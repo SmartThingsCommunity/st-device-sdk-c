@@ -32,6 +32,10 @@ extern "C" {
 #define IOT_SECURITY_IV_LEN                     16
 #define IOT_SECURITY_SHA256_LEN                 32
 
+#define IOT_SECURITY_SIGNATURE_ED25519_LEN      64
+#define IOT_SECURITY_SIGNATURE_RSA2048_LEN      256
+#define IOT_SECURITY_SIGNATURE_UNKNOWN_LEN      0
+
 typedef enum iot_security_key_type iot_security_key_type_t;
 typedef enum iot_security_cipher_mode iot_security_cipher_mode_t;
 typedef enum iot_security_key_id iot_security_key_id_t;
@@ -53,6 +57,7 @@ typedef unsigned int security_handle;
  */
 typedef enum iot_security_sub_system {
 	IOT_SECURITY_SUB_NONE    = 0,
+	IOT_SECURITY_SUB_PK      = (1 << 0),
 	IOT_SECURITY_SUB_CIPHER  = (1 << 1),
 	IOT_SECURITY_SUB_MANAGER = (1 << 3),
 	IOT_SECURITY_SUB_STORAGE = (1 << 4),
@@ -73,6 +78,7 @@ typedef struct iot_security_context {
 	security_handle handle;                         /**< @brief handle of context */
 	iot_security_sub_system_t sub_system;           /**< @brief flag to know whether the sub system has been initialized */
 
+	iot_security_pk_params_t *pk_params;            /**< @brief contains parameter for pk system */
 	iot_security_cipher_params_t *cipher_params;    /**< @brief contains parameter for cipher system */
 	iot_security_storage_params_t *storage_params;  /**< @brief contains parameter for storage system */
 

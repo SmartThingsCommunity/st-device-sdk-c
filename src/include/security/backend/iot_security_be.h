@@ -27,6 +27,30 @@ extern "C" {
 
 typedef struct iot_security_be_funcs {
 	/**
+	 * @brief a pointer to a function to initialize a pubkey crypto module
+	 */
+	iot_error_t (*pk_init)(iot_security_context_t *);
+	/**
+	 * @brief a pointer to a function to deinitialize pubkey crypto module
+	 */
+	iot_error_t (*pk_deinit)(iot_security_context_t *);
+	/**
+	 * @brief a pointer to a function to set the params for pubkey crypto
+	 */
+	iot_error_t (*pk_set_params)(iot_security_context_t *, iot_security_pk_params_t *);
+	/**
+	 * @brief a pointer to a function to get the key type
+	 */
+	iot_error_t (*pk_get_key_type)(iot_security_context_t *, iot_security_key_type_t *);
+	/**
+	 * @brief a pointer to a function to create a signature
+	 */
+	iot_error_t (*pk_sign)(iot_security_context_t *, iot_security_buffer_t *, iot_security_buffer_t *);
+	/**
+	 * @brief a pointer to a function to verify a signature
+	 */
+	iot_error_t (*pk_verify)(iot_security_context_t *, iot_security_buffer_t *, iot_security_buffer_t *);
+	/**
 	 * @brief a pointer to a function to initialize a cipher module
 	 */
 	iot_error_t (*cipher_init)(iot_security_context_t *);

@@ -38,6 +38,8 @@ enum iot_security_cipher_mode {
  */
 enum iot_security_key_type {
 	IOT_SECURITY_KEY_TYPE_UNKNOWN = 0,
+	IOT_SECURITY_KEY_TYPE_ED25519,
+	IOT_SECURITY_KEY_TYPE_RSA2048,
 	IOT_SECURITY_KEY_TYPE_AES256 = 3,       /* must be 3 because referenced in ss.lib */
 	IOT_SECURITY_KEY_TYPE_MAX,
 };
@@ -59,6 +61,81 @@ struct iot_security_cipher_params {
 	iot_security_buffer_t key;              /** @brief a pointer to a shared key buffer structure */
 	iot_security_buffer_t iv;               /** @brief a pointer to a IV buffer for AES cipher structure */
 };
+
+/**
+ * @brief	Initialize a pubkey module in crypto sub system
+ * @details	Create a required parameter holder for pubkey module and init the backend module
+ * @retval	IOT_ERROR_NONE success
+ * @retval	IOT_ERROR_MEM_ALLOC not enough heap memory
+ * @retval	IOT_ERROR_SECURITY_CONTEXT_NULL security context parameter is null
+ * @retval	IOT_ERROR_SECURITY_PK_INIT failed to init the pubkey in backend
+ */
+iot_error_t iot_security_pk_init(iot_security_context_t *context);
+
+/**
+ * @brief	De-initialize a pubkey module in crypto sub system
+ * @details	De-initialize the initialized pubkey module and free the parameter holder
+ * @retval	IOT_ERROR_NONE success
+ * @retval	IOT_ERROR_SECURITY_CONTEXT_NULL security context parameter is null
+ * @retval	IOT_ERROR_SECURITY_PK_DEINIT failed to de-init the pubkey in backend
+ */
+iot_error_t iot_security_pk_deinit(iot_security_context_t *context);
+
+/**
+ * @brief	Get a signature size
+ * @param[in]	pk_type a type of signature algorithm
+ * @retval	return a signature size of current context's signature algorithm
+ */
+size_t iot_security_pk_get_signature_len(iot_security_key_type_t pk_type);
+
+/**
+ * @brief	Get a algorithm type of key
+ * @param[in]	context reference to the security context
+ * @param[out]	key_type a type of key algorithm
+ * @retval	IOT_ERROR_NONE success
+ * @retval	IOT_ERROR_INVALID_ARGS input parameter is invalid
+ * @retval	IOT_ERROR_SECURITY_PK_KEY_TYPE pubkey system does not initialized
+ */
+iot_error_t iot_security_pk_get_key_type(iot_security_context_t *context, iot_security_key_type_t *key_type);
+
+/**
+ * @brief	Calculate a signature
+ * @details	Calculate a signature with input_buf then return the signature to sig_buf
+ * @param[in]	context reference to the security context
+ * @param[in]	input_buf a pointer to a buffer to data for signature
+ * @param[out]	sig_buf a pointer to a buffer to store the signature
+ * @retval	IOT_ERROR_NONE success
+ * @retval	IOT_ERROR_INVALID_ARGS input parameter is invalid
+ * @retval	IOT_ERROR_MEM_ALLOC not enough heap memory
+ * @retval	IOT_ERROR_SECURITY_CONTEXT_NULL security context is null
+ * @retval	IOT_ERROR_SECURITY_BE_CONTEXT_NULL backend context is null
+ * @retval	IOT_ERROR_SECURITY_BE_FUNC_NULL a pointer to a read function of backend is null
+ * @retval	IOT_ERROR_SECURITY_PK_PARAMS_NULL pubkey parameter is null or has invalid data
+ * @retval	IOT_ERROR_SECURITY_PK_INVALID_PUBKEY the public key used to sign is invalid
+ * @retval	IOT_ERROR_SECURITY_PK_INVALID_SECKEY the private key used to sign is invalid
+ * @retval	IOT_ERROR_SECURITY_PK_SIGN failed to calculate a signature
+ * @retval	IOT_ERROR_SECURITY_PK_KEY_LEN a size of signature is not a expected size
+ */
+iot_error_t iot_security_pk_sign(iot_security_context_t *context, iot_security_buffer_t *input_buf, iot_security_buffer_t *sig_buf);
+
+/**
+ * @brief	Verify the signature
+ * @details	Verify the signature for input_buf with sig_buf
+ * @param[in]	context reference to the security context
+ * @param[in]	input_buf a pointer to a buffer to data for signature
+ * @param[out]	sig_buf a pointer to a buffer to the signature
+ * @retval	IOT_ERROR_NONE success
+ * @retval	IOT_ERROR_INVALID_ARGS input parameter is invalid
+ * @retval	IOT_ERROR_MEM_ALLOC not enough heap memory
+ * @retval	IOT_ERROR_SECURITY_CONTEXT_NULL security context is null
+ * @retval	IOT_ERROR_SECURITY_BE_CONTEXT_NULL backend context is null
+ * @retval	IOT_ERROR_SECURITY_BE_FUNC_NULL a pointer to a read function of backend is null
+ * @retval	IOT_ERROR_SECURITY_PK_PARAMS_NULL pubkey parameter is null or has invalid data
+ * @retval	IOT_ERROR_SECURITY_PK_INVALID_PUBKEY the public key used for verify is invalid
+ * @retval	IOT_ERROR_SECURITY_PK_KEY_LEN a size of signature is not a expected size
+ * @retval	IOT_ERROR_SECURITY_PK_VERIFY the signature is mismatch
+ */
+iot_error_t iot_security_pk_verify(iot_security_context_t *context, iot_security_buffer_t *input_buf, iot_security_buffer_t *sig_buf);
 
 /**
  * @brief	Initialize a cipher module in crypto sub system
