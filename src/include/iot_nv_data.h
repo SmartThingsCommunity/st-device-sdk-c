@@ -299,6 +299,19 @@ iot_error_t iot_nv_get_serial_number(char** sn, size_t* len);
  */
 iot_error_t iot_nv_erase(iot_nvd_t nv_type);
 
+/**
+ * @brief Get a certificate from code
+ *
+ * @details A some certificates are hard corded in static variable
+ * @param[in] cert_id a identity of certificate
+ * @param[out] output_buf a pointer to the security buffer of certificate
+ * @retval IOT_ERROR_NONE success
+ * @retval IOT_ERROR_INVALID_ARGS output_buf is invalid
+ * @retval IOT_ERROR_MEM_ALLOC memory allocation for certificate is failed
+ * @retval IOT_ERROR_NV_DATA_ERROR cert_id is not a static NV.
+ */
+iot_error_t iot_nv_get_static_certificate(iot_security_cert_id_t cert_id, iot_security_buffer_t *output_buf);
+
 #if !defined(CONFIG_STDK_IOT_CORE_SUPPORT_STNV_PARTITION)
 /**
  * @brief Get nv data from device info

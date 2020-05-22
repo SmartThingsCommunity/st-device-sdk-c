@@ -34,6 +34,7 @@ extern "C" {
 
 typedef enum iot_security_key_type iot_security_key_type_t;
 typedef enum iot_security_cipher_mode iot_security_cipher_mode_t;
+typedef enum iot_security_cert_id iot_security_cert_id_t;
 
 typedef struct iot_security_cipher_params iot_security_cipher_params_t;
 typedef struct iot_security_storage_params iot_security_storage_params_t;

@@ -28,6 +28,7 @@
 #if !defined(CONFIG_STDK_IOT_CORE_SUPPORT_STNV_PARTITION)
 #include "iot_internal.h"
 #endif
+#include "security/iot_security_manager.h"
 #include "security/iot_security_storage.h"
 
 #define IOT_NVD_MAX_DATA_LEN (2048)
@@ -1144,6 +1145,44 @@ iot_error_t iot_nv_erase(iot_nvd_t nv_type)
 			return IOT_ERROR_NV_DATA_ERROR;
 		}
 	}
+
+	return IOT_ERROR_NONE;
+}
+
+iot_error_t iot_nv_get_static_certificate(iot_security_cert_id_t cert_id, iot_security_buffer_t *output_buf)
+{
+	unsigned char *data = NULL;
+	unsigned char *cert;
+	unsigned int cert_len;
+
+	IOT_DEBUG("cert id = %d", cert_id);
+
+	if (!output_buf) {
+		IOT_ERROR("output buf is null");
+		return IOT_ERROR_INVALID_ARGS;
+	}
+
+	switch (cert_id) {
+	case IOT_SECURITY_CERT_ID_ROOT_CA:
+		cert = st_root_ca;
+		cert_len = st_root_ca_len;
+		break;
+	default:
+		IOT_ERROR("'%s' is not a supported static certificate");
+		return IOT_ERROR_NV_DATA_ERROR;
+	}
+
+	data = (unsigned char *)iot_os_malloc(cert_len + 1);
+	if (!data) {
+		IOT_ERROR("failed to malloc for static nv");
+		return IOT_ERROR_MEM_ALLOC;
+	}
+
+	memcpy(data, cert, cert_len);
+	data[cert_len] = '\0';
+
+	output_buf->p = data;
+	output_buf->len = cert_len;
 
 	return IOT_ERROR_NONE;
 }
