@@ -47,7 +47,7 @@ static struct iot_dump_state* _iot_dump_create_dump_state()
     strncpy(dump_state->bsp_name, "esp8266", sizeof(dump_state->bsp_name));
     strncpy(dump_state->bsp_version, "UNKNOWN", sizeof(dump_state->bsp_version));
 
-	return dump_state;
+    return dump_state;
 }
 
 static struct iot_dump_header* _iot_dump_create_header()
@@ -114,8 +114,8 @@ char* iot_dump_create_all_log_dump(int all_log_dump_size)
 
 void iot_dump_log(iot_debug_level_t level, dump_log_id_t log_id, int arg1, int arg2)
 {
-	int msg[4] = {0,};
-	struct timeval time;
+    int msg[4] = {0,};
+    struct timeval time;
 
 #ifndef CONFIG_STDK_IOT_CORE_LOG_LEVEL_ERROR
     if (level == IOT_DEBUG_LEVEL_ERROR) return;
@@ -130,12 +130,12 @@ void iot_dump_log(iot_debug_level_t level, dump_log_id_t log_id, int arg1, int a
     if (level == IOT_DEBUG_LEVEL_DEBUG) return;
 #endif
 
-	gettimeofday(&time, NULL);
+    gettimeofday(&time, NULL);
 
-	msg[0] = ((level & 0xf) << 28) | (log_id & 0xffff);
-	msg[1] = time.tv_sec;
-	msg[2] = arg1;
-	msg[3] = arg2;
+    msg[0] = ((level & 0xf) << 28) | (log_id & 0xffff);
+    msg[1] = time.tv_sec;
+    msg[2] = arg1;
+    msg[3] = arg2;
 
     printf("%08x %08x %08x %08x\n" , msg[0], msg[1], msg[2], msg[3]);
     iot_log_file_store((const char *)msg, sizeof(msg));
