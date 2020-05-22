@@ -70,7 +70,11 @@ void TC_STATIC_iot_security_be_bsp_fs_storage_id2target_success(void **state)
 	// When
 	target = _iot_security_be_bsp_fs_storage_id2target(id);
 	// Then
+#if defined(CONFIG_STDK_IOT_CORE_SUPPORT_STNV_PARTITION)
 	assert_int_equal(target, IOT_SECURITY_STORAGE_TARGET_FACTORY);
+#else
+	assert_int_equal(target, IOT_SECURITY_STORAGE_TARGET_DI);
+#endif
 }
 
 void TC_STATIC_iot_security_be_bsp_fs_storage_id2filename_invalid_parameters(void **state)
