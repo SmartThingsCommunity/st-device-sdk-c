@@ -72,6 +72,23 @@ typedef struct iot_security_be_funcs {
 	iot_error_t (*cipher_aes_decrypt)(iot_security_context_t *, iot_security_buffer_t *, iot_security_buffer_t *);
 
 	/**
+	 * @brief a pointer to a function to initialize a ecdh module
+	 */
+	iot_error_t (*ecdh_init)(iot_security_context_t *);
+	/**
+	 * @brief a pointer to a function to deinitialize ecdh module
+	 */
+	iot_error_t (*ecdh_deinit)(iot_security_context_t *);
+	/**
+	 * @brief a pointer to a function to set the params for ecdh
+	 */
+	iot_error_t (*ecdh_set_params)(iot_security_context_t *, iot_security_ecdh_params_t *);
+	/**
+	 * @brief a pointer to a function to compute shared secret between party
+	 */
+	iot_error_t (*ecdh_compute_shared_secret)(iot_security_context_t *, iot_security_buffer_t *);
+
+	/**
 	 * @brief a pointer to a function to initialize a manager module
 	 */
 	iot_error_t (*manager_init)(iot_security_context_t *);

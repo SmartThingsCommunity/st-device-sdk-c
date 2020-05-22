@@ -44,6 +44,7 @@ typedef enum iot_security_cert_id iot_security_cert_id_t;
 typedef struct iot_security_pk_params iot_security_pk_params_t;
 typedef struct iot_security_cipher_params iot_security_cipher_params_t;
 typedef struct iot_security_key_params iot_security_key_params_t;
+typedef struct iot_security_ecdh_params iot_security_ecdh_params_t;
 typedef struct iot_security_storage_params iot_security_storage_params_t;
 typedef struct iot_security_be_context iot_security_be_context_t;
 
@@ -59,6 +60,7 @@ typedef enum iot_security_sub_system {
 	IOT_SECURITY_SUB_NONE    = 0,
 	IOT_SECURITY_SUB_PK      = (1 << 0),
 	IOT_SECURITY_SUB_CIPHER  = (1 << 1),
+	IOT_SECURITY_SUB_ECDH    = (1 << 2),
 	IOT_SECURITY_SUB_MANAGER = (1 << 3),
 	IOT_SECURITY_SUB_STORAGE = (1 << 4),
 } iot_security_sub_system_t;
@@ -80,6 +82,7 @@ typedef struct iot_security_context {
 
 	iot_security_pk_params_t *pk_params;            /**< @brief contains parameter for pk system */
 	iot_security_cipher_params_t *cipher_params;    /**< @brief contains parameter for cipher system */
+	iot_security_ecdh_params_t *ecdh_params;        /**< @brief contains parameter for ecdh system */
 	iot_security_storage_params_t *storage_params;  /**< @brief contains parameter for storage system */
 
 	iot_security_be_context_t *be_context;          /**< @brief reference to the backend context */
