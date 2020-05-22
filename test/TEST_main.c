@@ -288,6 +288,25 @@ int TEST_FUNC_iot_security_crypto(void)
     return cmocka_run_group_tests_name("iot_security_crypto.c", tests, NULL, NULL);
 }
 
+int TEST_FUNC_iot_security_ecdh(void)
+{
+    const struct CMUnitTest tests[] = {
+            cmocka_unit_test(TC_iot_security_ecdh_init_null_parameters),
+            cmocka_unit_test_setup_teardown(TC_iot_security_ecdh_init_malloc_failure, TC_iot_security_ecdh_init_setup, TC_iot_security_ecdh_init_teardown),
+            cmocka_unit_test_setup_teardown(TC_iot_security_ecdh_init_success, TC_iot_security_ecdh_init_setup, TC_iot_security_ecdh_init_teardown),
+            cmocka_unit_test_setup_teardown(TC_iot_security_ecdh_set_params_null_parameters, TC_iot_security_ecdh_setup, TC_iot_security_ecdh_teardown),
+            cmocka_unit_test_setup_teardown(TC_iot_security_ecdh_set_params_invalid_parameters, TC_iot_security_ecdh_setup, TC_iot_security_ecdh_teardown),
+            cmocka_unit_test_setup_teardown(TC_iot_security_ecdh_set_params_success, TC_iot_security_ecdh_setup, TC_iot_security_ecdh_teardown),
+            cmocka_unit_test_setup_teardown(TC_iot_security_ecdh_compute_shared_secret_null_parameters, TC_iot_security_ecdh_setup, TC_iot_security_ecdh_teardown),
+            cmocka_unit_test_setup_teardown(TC_iot_security_ecdh_compute_shared_secret_malloc_failure, TC_iot_security_ecdh_setup, TC_iot_security_ecdh_teardown),
+            cmocka_unit_test_setup_teardown(TC_iot_security_ecdh_compute_shared_secret_failure, TC_iot_security_ecdh_init_setup, TC_iot_security_ecdh_init_teardown),
+            cmocka_unit_test_setup_teardown(TC_iot_security_ecdh_compute_shared_secret_success, TC_iot_security_ecdh_setup, TC_iot_security_ecdh_teardown),
+            cmocka_unit_test_setup_teardown(TC_iot_security_ecdh_and_dynamic_cipher, TC_iot_security_ecdh_setup, TC_iot_security_ecdh_teardown),
+            cmocka_unit_test_setup_teardown(TC_iot_security_ecdh_and_static_cipher, TC_iot_security_ecdh_setup, TC_iot_security_ecdh_teardown),
+    };
+    return cmocka_run_group_tests_name("iot_security_ecdh.c", tests, NULL, NULL);
+}
+
 int TEST_FUNC_iot_security_manager(void)
 {
     const struct CMUnitTest tests[] = {
@@ -424,6 +443,7 @@ int main(void) {
     err += TEST_FUNC_iot_mqtt_client();
     err += TEST_FUNC_iot_security_common();
     err += TEST_FUNC_iot_security_crypto();
+    err += TEST_FUNC_iot_security_ecdh();
     err += TEST_FUNC_iot_security_storage();
     err += TEST_FUNC_iot_security_manager();
     err += TEST_FUNC_iot_security_helper();

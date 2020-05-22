@@ -251,6 +251,24 @@ void TC_iot_security_cipher_aes_decrypt_malloc_failure(void **state);
 void TC_iot_security_cipher_aes_decrypt_failure(void **state);
 void TC_iot_security_cipher_aes_success(void **state);
 
+// TCs for iot_security_ecdh.c
+int TC_iot_security_ecdh_init_setup(void **state);
+int TC_iot_security_ecdh_init_teardown(void **state);
+int TC_iot_security_ecdh_setup(void **state);
+int TC_iot_security_ecdh_teardown(void **state);
+void TC_iot_security_ecdh_init_null_parameters(void **state);
+void TC_iot_security_ecdh_init_malloc_failure(void **state);
+void TC_iot_security_ecdh_init_success(void **state);
+void TC_iot_security_ecdh_set_params_null_parameters(void **state);
+void TC_iot_security_ecdh_set_params_invalid_parameters(void **state);
+void TC_iot_security_ecdh_set_params_success(void **state);
+void TC_iot_security_ecdh_compute_shared_secret_null_parameters(void **state);
+void TC_iot_security_ecdh_compute_shared_secret_failure(void **state);
+void TC_iot_security_ecdh_compute_shared_secret_malloc_failure(void **state);
+void TC_iot_security_ecdh_compute_shared_secret_success(void **state);
+void TC_iot_security_ecdh_and_dynamic_cipher(void **state);
+void TC_iot_security_ecdh_and_static_cipher(void **state);
+
 // TCs for iot_security_manager.c
 int TC_iot_security_manager_setup(void **state);
 int TC_iot_security_manager_teardown(void **state);
