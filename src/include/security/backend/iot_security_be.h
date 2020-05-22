@@ -48,6 +48,27 @@ typedef struct iot_security_be_funcs {
 	iot_error_t (*cipher_aes_decrypt)(iot_security_context_t *, iot_security_buffer_t *, iot_security_buffer_t *);
 
 	/**
+	 * @brief a pointer to a function to initialize a manager module
+	 */
+	iot_error_t (*manager_init)(iot_security_context_t *);
+	/**
+	 * @brief a pointer to a function to deinitialize a manager module
+	 */
+	iot_error_t (*manager_deinit)(iot_security_context_t *);
+	/**
+	 * @brief a pointer to a function to get the security key
+	 */
+	iot_error_t (*manager_get_key)(iot_security_context_t *, iot_security_key_id_t, iot_security_buffer_t *);
+	/**
+	 * @brief a pointer to a function to set the security key
+	 */
+	iot_error_t (*manager_set_key)(iot_security_context_t *, iot_security_key_params_t *);
+	/**
+	 * @brief a pointer to a function to get the certificate
+	 */
+	iot_error_t (*manager_get_certificate)(iot_security_context_t *, iot_security_cert_id_t, iot_security_buffer_t *);
+
+	/**
 	 * @brief a pointer to a function to initialize a secure storage
 	 */
 	iot_error_t (*storage_init)(iot_security_context_t *);

@@ -21,6 +21,7 @@
 #include "iot_main.h"
 #include "iot_debug.h"
 #include "security/iot_security_crypto.h"
+#include "security/iot_security_manager.h"
 #include "security/iot_security_storage.h"
 #include "security/iot_security_helper.h"
 #include "security/backend/iot_security_be.h"
@@ -69,6 +70,92 @@ static inline void _iot_security_be_software_buffer_wipe(const iot_security_buff
 			input_buf->p[i] = 0;
 		}
 	}
+}
+
+typedef struct iot_security_be_key2storage_id_map {
+	iot_security_key_id_t key_id;
+	iot_security_storage_id_t storage_id;
+} iot_security_be_key2storage_id_map_t;
+
+static const iot_security_be_key2storage_id_map_t key2storage_id_map[] = {
+	{ IOT_SECURITY_KEY_ID_DEVICE_PUBLIC, IOT_NVD_PUBLIC_KEY },
+	{ IOT_SECURITY_KEY_ID_DEVICE_PRIVATE, IOT_NVD_PRIVATE_KEY },
+	{ IOT_SECURITY_KEY_ID_SHARED_SECRET, IOT_NVD_UNKNOWN }
+};
+
+static inline iot_security_storage_id_t _iot_security_be_software_id_key2storage(iot_security_key_id_t key_id)
+{
+	iot_security_storage_id_t storage_id;
+	const iot_security_be_key2storage_id_map_t *k2s_id_map_list = key2storage_id_map;
+	int c2s_id_map_list_len = sizeof(key2storage_id_map) / sizeof(key2storage_id_map[0]);
+	int i;
+
+	IOT_DEBUG("key id = %d", key_id);
+
+	for (i = 0; i < c2s_id_map_list_len; i++) {
+		if (key_id == k2s_id_map_list[i].key_id) {
+			storage_id = k2s_id_map_list[i].storage_id;
+			IOT_DEBUG("storage id = %d", storage_id);
+			return storage_id;
+		}
+	}
+
+	IOT_ERROR("'%d' is not a supported key id", key_id);
+
+	return IOT_NVD_UNKNOWN;
+}
+
+typedef struct iot_security_be_cert2storage_id_map {
+	iot_security_cert_id_t cert_id;
+	iot_security_storage_id_t storage_id;
+} iot_security_be_cert2storage_id_map_t;
+
+static const iot_security_be_cert2storage_id_map_t cert2storage_id_map[] = {
+	{ IOT_SECURITY_CERT_ID_ROOT_CA, IOT_NVD_ROOT_CA_CERT },
+	{ IOT_SECURITY_CERT_ID_SUB_CA,  IOT_NVD_SUB_CA_CERT },
+	{ IOT_SECURITY_CERT_ID_DEVICE,  IOT_NVD_DEVICE_CERT },
+};
+
+static inline iot_security_storage_id_t _iot_security_be_software_id_cert2storage(iot_security_cert_id_t cert_id)
+{
+	iot_security_storage_id_t storage_id;
+	const iot_security_be_cert2storage_id_map_t *c2s_id_map_list = cert2storage_id_map;
+	int c2s_id_map_list_len = sizeof(cert2storage_id_map) / sizeof(cert2storage_id_map[0]);
+	int i;
+
+	IOT_DEBUG("cert id = %d", cert_id);
+
+	for (i = 0; i < c2s_id_map_list_len; i++) {
+		if (cert_id == c2s_id_map_list[i].cert_id) {
+			storage_id = c2s_id_map_list[i].storage_id;
+			IOT_DEBUG("storage id = %d", storage_id);
+			return storage_id;
+		}
+	}
+
+	IOT_ERROR("'%d' is not a supported cert id", cert_id);
+
+	return IOT_NVD_UNKNOWN;
+}
+
+static const iot_security_storage_id_t no_exposed_storage_id_list[] = {
+		IOT_NVD_PRIVATE_KEY,
+};
+
+STATIC_FUNCTION
+iot_error_t _iot_security_be_software_id_check_permission(iot_security_storage_id_t id)
+{
+	int no_exposed_list_len = sizeof(no_exposed_storage_id_list) / sizeof(no_exposed_storage_id_list[0]);
+	int i;
+
+	for (i = 0; i < no_exposed_list_len; i++) {
+		if (id == no_exposed_storage_id_list[i]) {
+			IOT_ERROR("'%d' cannot be exposed to apps", id);
+			return IOT_ERROR_SECURITY_KEY_NO_PERMISSION;
+		}
+	}
+
+	return IOT_ERROR_NONE;
 }
 
 STATIC_FUNCTION
@@ -350,6 +437,111 @@ iot_error_t _iot_security_be_software_cipher_aes_decrypt(iot_security_context_t 
 }
 
 STATIC_FUNCTION
+iot_error_t _iot_security_be_software_manager_set_key(iot_security_context_t *context, iot_security_key_params_t *key_params)
+{
+	iot_error_t err;
+
+	err = _iot_security_be_check_context_and_params_is_valid(context, IOT_SECURITY_SUB_CIPHER);
+	if (err) {
+		return err;
+	}
+
+	if (!key_params) {
+		IOT_ERROR("key params is null");
+		return IOT_ERROR_INVALID_ARGS;
+	}
+
+	if (key_params->key_id == IOT_SECURITY_KEY_ID_SHARED_SECRET) {
+		iot_security_cipher_params_t *cipher_params = context->cipher_params;
+		iot_security_cipher_params_t *cipher_set_params = &key_params->params.cipher;
+
+		if (cipher_set_params->key.p && cipher_set_params->key.len) {
+			cipher_params->key = cipher_set_params->key;
+		}
+
+		if (cipher_set_params->iv.p && cipher_set_params->iv.len) {
+			cipher_params->iv = cipher_set_params->iv;
+		}
+	} else {
+		IOT_ERROR("cannot set key for key index '%d'", key_params->key_id);
+		return IOT_ERROR_SECURITY_KEY_INVALID_ID;
+	}
+
+	return err;
+}
+
+STATIC_FUNCTION
+iot_error_t _iot_security_be_software_manager_get_key(iot_security_context_t *context, iot_security_key_id_t key_id, iot_security_buffer_t *key_buf)
+{
+	iot_error_t err;
+	iot_security_storage_id_t storage_id;
+
+	err = _iot_security_be_check_context_and_params_is_valid(context, IOT_SECURITY_SUB_NONE);
+	if (err) {
+		return err;
+	}
+
+	storage_id = _iot_security_be_software_id_key2storage(key_id);
+
+	err = _iot_security_be_software_id_check_permission(storage_id);
+	if (err) {
+		return err;
+	}
+
+	if (key_id == IOT_SECURITY_KEY_ID_SHARED_SECRET) {
+		if (!context->cipher_params) {
+			IOT_ERROR("cipher params is null");
+			return IOT_ERROR_INVALID_ARGS;
+		}
+
+		if (!context->cipher_params->key.p || (context->cipher_params->key.len == 0)) {
+			IOT_ERROR("shared secret not yet set");
+			return IOT_ERROR_SECURITY_KEY_NOT_FOUND;
+		}
+
+		key_buf->len = context->cipher_params->key.len;
+		key_buf->p = (unsigned char *)iot_os_malloc(key_buf->len);
+		if (!key_buf->p) {
+			IOT_ERROR("failed to malloc for getting key");
+			key_buf->len = 0;
+			return IOT_ERROR_MEM_ALLOC;
+		}
+		memcpy(key_buf->p, context->cipher_params->key.p, key_buf->len);
+	} else {
+		err = _iot_security_be_software_bsp_fs_load(context, storage_id, key_buf);
+		if (err) {
+			return err;
+		}
+	}
+
+	return err;
+}
+
+STATIC_FUNCTION
+iot_error_t _iot_security_be_software_manager_get_certificate(iot_security_context_t *context, iot_security_cert_id_t cert_id, iot_security_buffer_t *cert_buf)
+{
+	iot_error_t err;
+	iot_security_storage_id_t storage_id;
+
+	err = _iot_security_be_check_context_and_params_is_valid(context, IOT_SECURITY_SUB_NONE);
+	if (err) {
+		return err;
+	}
+
+	storage_id = _iot_security_be_software_id_cert2storage(cert_id);
+	if (storage_id == IOT_NVD_UNKNOWN) {
+		return IOT_ERROR_SECURITY_CERT_INVALID_ID;
+	}
+
+	err = _iot_security_be_software_bsp_fs_load(context, storage_id, cert_buf);
+	if (err) {
+		return err;
+	}
+
+	return err;
+}
+
+STATIC_FUNCTION
 iot_error_t _iot_security_be_software_storage_read(iot_security_context_t *context, iot_security_buffer_t *data_buf)
 {
 	iot_error_t err;
@@ -430,6 +622,12 @@ const iot_security_be_funcs_t iot_security_be_software_funcs = {
 	.cipher_set_params = _iot_security_be_software_cipher_set_params,
 	.cipher_aes_encrypt = _iot_security_be_software_cipher_aes_encrypt,
 	.cipher_aes_decrypt = _iot_security_be_software_cipher_aes_decrypt,
+
+	.manager_init = NULL,
+	.manager_deinit = NULL,
+	.manager_set_key = _iot_security_be_software_manager_set_key,
+	.manager_get_key = _iot_security_be_software_manager_get_key,
+	.manager_get_certificate = _iot_security_be_software_manager_get_certificate,
 
 	.storage_init = NULL,
 	.storage_deinit = NULL,

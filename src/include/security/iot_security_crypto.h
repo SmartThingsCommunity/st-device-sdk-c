@@ -43,6 +43,15 @@ enum iot_security_key_type {
 };
 
 /**
+ * @brief Contains information of public key pair
+ */
+struct iot_security_pk_params {
+	iot_security_key_type_t type;           /** @brief type of key pair */
+	iot_security_buffer_t pubkey;           /** @brief public key buffer structure of key pair */
+	iot_security_buffer_t seckey;           /** @brief private key buffer structure of key pair  */
+};
+
+/**
  * @brief Contains cipher information
  */
 struct iot_security_cipher_params {
