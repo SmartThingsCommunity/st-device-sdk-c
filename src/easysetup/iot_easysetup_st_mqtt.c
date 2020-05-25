@@ -616,7 +616,7 @@ iot_error_t _iot_es_mqtt_connect(struct iot_context *ctx, st_mqtt_client target_
 		goto done_mqtt_connect;
 	}
 
-	iot_ret = iot_nv_get_root_certificate(&root_cert, &root_cert_len);
+	iot_ret = iot_nv_get_certificate(IOT_SECURITY_CERT_ID_ROOT_CA, &root_cert, &root_cert_len);
 	if (iot_ret != IOT_ERROR_NONE) {
 		IOT_ERROR("failed to get root cert");
 		goto done_mqtt_connect;
