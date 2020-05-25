@@ -23,6 +23,7 @@
 #include "iot_internal.h"
 
 #include "iot_os_util.h"
+#include "iot_bsp_system.h"
 #include "iot_log_file.h"
 
 static struct iot_dump_state* _iot_dump_create_dump_state()
@@ -41,11 +42,10 @@ static struct iot_dump_state* _iot_dump_create_dump_state()
     dump_state->stdk_version_code = STDK_VERSION_CODE;
     dump_state->clock_time = clock();
     dump_state->sequence_number = iot_cap_get_sqnum();
-    //TODO : replace hard coded string
-    strncpy(dump_state->os_name, "FreeRTOS", sizeof(dump_state->os_name));
-    strncpy(dump_state->os_version, "v10.0.1", sizeof(dump_state->os_version));
-    strncpy(dump_state->bsp_name, "esp8266", sizeof(dump_state->bsp_name));
-    strncpy(dump_state->bsp_version, "UNKNOWN", sizeof(dump_state->bsp_version));
+    strncpy(dump_state->os_name, iot_os_get_os_name(), sizeof(dump_state->os_name));
+    strncpy(dump_state->os_version, iot_os_get_os_version_string(), sizeof(dump_state->os_version));
+    strncpy(dump_state->bsp_name, iot_bsp_get_bsp_name(), sizeof(dump_state->bsp_name));
+    strncpy(dump_state->bsp_version, iot_bsp_get_bsp_version_string(), sizeof(dump_state->bsp_version));
 
     return dump_state;
 }
