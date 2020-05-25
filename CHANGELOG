@@ -1,5 +1,26 @@
 # HISTORY
 
+## 1.1.14 :  Changes until v1.1.14
+
+New Improvements or features:
+
+ - Introduce new security system to support Security Level 3 & added TC for security
+ - Add dump log function & dump log id list for group id based logging
+ - Implement MQTT write/read stream functions based on chunk queue.
+
+Enhancements or amendments:
+
+ - Changed nv definition name for certificate : NV port layer definition & naming changed
+ - Change to return the read size : FS port layer - iot_bsp_fs_read/write() function changed
+ - Refactoring iot_log_file part for RAM-only supporting
+ - Do not turn off the wifi if network access failed : only for ESP related WIFI/BSP parts
+ - Added & updated Unit TC case for iot_os_xxx/iot_capability/iot_api/iot_mqtt_client/iot_main
+
+Bug fixed:
+
+ - Fixed wrong input length checking for 'bsp/esp32/fs'
+ - fixed wrong json length calculation for 'example'
+
 ## 1.1.12 :  Changes until v1.1.12
 
 New Improvements or features:
