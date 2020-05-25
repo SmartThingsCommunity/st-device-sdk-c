@@ -116,5 +116,5 @@ void TC_iot_wt_create_null_parameters(void **state)
 	if (pk_info.seckey)
 		free((void *)pk_info.seckey);
 	if(wt_data)
-		free(wt_data);
+		iot_os_free(wt_data);
 }

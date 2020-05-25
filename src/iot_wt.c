@@ -36,7 +36,7 @@ static char * _iot_wt_alloc_b64_buffer(size_t plain_len, size_t *out_len)
 
 	b64_len = IOT_SECURITY_B64_ENCODE_LEN(plain_len);
 
-	b64_buf = (char *)malloc(b64_len);
+	b64_buf = (char *)iot_os_malloc(b64_len);
 	if (!b64_buf) {
 		IOT_ERROR("malloc failed for base64 token");
 		return NULL;
@@ -114,7 +114,7 @@ static iot_error_t _iot_cwt_create_protected(
 retry:
 	buflen += 32;
 
-	cborbuf = (unsigned char *)malloc(buflen);
+	cborbuf = (unsigned char *)iot_os_malloc(buflen);
 	if (cborbuf == NULL) {
 		IOT_ERROR("failed to malloc for cwt");
 		return IOT_ERROR_MEM_ALLOC;
@@ -135,7 +135,7 @@ retry:
 		break;
 	default:
 		IOT_ERROR("'%d' not yet supported", pk_type);
-		free(cborbuf);
+		iot_os_free(cborbuf);
 		return IOT_ERROR_WEBTOKEN_FAIL;
 	}
 
@@ -151,7 +151,7 @@ retry:
 	} else {
 		IOT_ERROR("allocated size is not enough (%d < %d)",
 				(int)buflen, (int)olen);
-		free(cborbuf);
+		iot_os_free(cborbuf);
 		if (buflen < IOT_CBOR_MAX_BUF_LEN) {
 			goto retry;
 		} else {
@@ -214,7 +214,7 @@ static iot_error_t _iot_cwt_create_payload(
 retry:
 	buflen += 128;
 
-	cborbuf = (unsigned char *)malloc(buflen);
+	cborbuf = (unsigned char *)iot_os_malloc(buflen);
 	if (cborbuf == NULL) {
 		IOT_ERROR("failed to malloc for cwt");
 		return IOT_ERROR_MEM_ALLOC;
@@ -250,7 +250,7 @@ retry:
 	} else {
 		IOT_ERROR("allocated size is not enough (%d < %d)",
 				(int)buflen, (int)olen);
-		free(cborbuf);
+		iot_os_free(cborbuf);
 		if (buflen < IOT_CBOR_MAX_BUF_LEN) {
 			goto retry;
 		} else {
@@ -294,9 +294,9 @@ static iot_error_t _iot_cwt_create_signature(
 		return IOT_ERROR_INVALID_ARGS;
 	}
 
-	sigbuf = (unsigned char *)malloc(IOT_CRYPTO_SIGNATURE_LEN);
+	sigbuf = (unsigned char *)iot_os_malloc(IOT_CRYPTO_SIGNATURE_LEN);
 	if (!sigbuf) {
-		IOT_ERROR("malloc failed for cwt");
+		IOT_ERROR("failed to malloc for cwt");
 		return IOT_ERROR_MEM_ALLOC;
 	}
 
@@ -309,7 +309,7 @@ static iot_error_t _iot_cwt_create_signature(
 retry:
 	buflen += 128;
 
-	cborbuf = (unsigned char *)malloc(buflen);
+	cborbuf = (unsigned char *)iot_os_malloc(buflen);
 	if (cborbuf == NULL) {
 		IOT_ERROR("failed to malloc for cwt");
 		goto exit_pk;
@@ -338,7 +338,7 @@ retry:
 	} else {
 		IOT_ERROR("allocated size is not enough (%d < %d)",
 				(int)buflen, (int)olen);
-		free(cborbuf);
+		iot_os_free(cborbuf);
 		if (buflen < IOT_CBOR_MAX_BUF_LEN) {
 			goto retry;
 		} else {
@@ -352,7 +352,7 @@ retry:
 		goto exit_cborbuf;
 	}
 
-	free(cborbuf);
+	iot_os_free(cborbuf);
 	iot_crypto_pk_free(&pk_ctx);
 
 	*sig = sigbuf;
@@ -361,11 +361,11 @@ retry:
 	return IOT_ERROR_NONE;
 
 exit_cborbuf:
-	free(cborbuf);
+	iot_os_free(cborbuf);
 exit_pk:
 	iot_crypto_pk_free(&pk_ctx);
 exit_sig:
-	free(sigbuf);
+	iot_os_free(sigbuf);
 
 	return err;
 }
@@ -397,7 +397,7 @@ static iot_error_t _iot_cwt_create(char **token, const char *sn, iot_crypto_pk_i
 retry:
 	buflen += 128;
 
-	cborbuf = (unsigned char *)malloc(buflen);
+	cborbuf = (unsigned char *)iot_os_malloc(buflen);
 	if (cborbuf == NULL) {
 		IOT_ERROR("failed to malloc for cbor");
 		return IOT_ERROR_MEM_ALLOC;
@@ -460,7 +460,7 @@ retry:
 	} else {
 		IOT_ERROR("allocated size is not enough (%d < %d)",
 				(int)buflen, (int)olen);
-		free(cborbuf);
+		iot_os_free(cborbuf);
 		if (buflen < IOT_CBOR_MAX_BUF_LEN) {
 			goto retry;
 		} else {
@@ -477,7 +477,7 @@ retry:
 	err = iot_security_base64_encode(cborbuf, cbor_len, (unsigned char *)cborbuf_b64, b64_len, &olen);
 	if (err) {
 		IOT_ERROR("iot_security_base64_encode returned error : %d", err);
-		free(cborbuf_b64);
+		iot_os_free(cborbuf_b64);
 		goto exit_failed;
 	}
 
@@ -488,16 +488,16 @@ retry:
 	err = IOT_ERROR_NONE;
 
 exit_failed:
-	free(cborbuf);
+	iot_os_free(cborbuf);
 exit_signature:
-	free(signature);
+	iot_os_free(signature);
 exit_payload:
-	free(payload);
+	iot_os_free(payload);
 exit_unprotected:
 exit_protected:
-	free(protected);
+	iot_os_free(protected);
 exit_cborbuf:
-	free(cborbuf);
+	iot_os_free(cborbuf);
 
 	return err;
 }
@@ -622,7 +622,7 @@ static iot_error_t _iot_jwt_create_b64h(char **buf, size_t *out_len,
 	goto exit_hdr;
 
 exit_b64_buf:
-	free(b64_buf);
+	iot_os_free(b64_buf);
 exit_hdr:
 	free(hdr);
 exit:
@@ -712,7 +712,7 @@ static iot_error_t _iot_jwt_create_b64p(char **buf, size_t *out_len)
 	goto exit_payload;
 
 exit_b64_buf:
-	free(b64_buf);
+	iot_os_free(b64_buf);
 exit_payload:
 	free(payload);
 exit:
@@ -730,7 +730,7 @@ static iot_error_t _iot_jwt_create_b64s(char **buf, size_t *out_len,
 	size_t sig_len;
 	size_t b64_len;
 
-	sig = (char *)malloc(IOT_CRYPTO_SIGNATURE_LEN);
+	sig = (char *)iot_os_malloc(IOT_CRYPTO_SIGNATURE_LEN);
 	if (!sig) {
 		IOT_ERROR("malloc returned NULL");
 		err = IOT_ERROR_MEM_ALLOC;
@@ -770,9 +770,9 @@ static iot_error_t _iot_jwt_create_b64s(char **buf, size_t *out_len,
 	goto exit_sig;
 
 exit_b64_buf:
-	free(b64_buf);
+	iot_os_free(b64_buf);
 exit_sig:
-	free(sig);
+	iot_os_free(sig);
 exit:
 	return err;
 }
@@ -814,7 +814,7 @@ static iot_error_t _iot_jwt_create(char **token, const char *sn, iot_crypto_pk_i
 
 	token_len = b64h_len + b64p_len + IOT_SECURITY_B64_ENCODE_LEN(IOT_CRYPTO_SIGNATURE_LEN) + 3;
 
-	tmp = (char *)malloc(token_len);
+	tmp = (char *)iot_os_malloc(token_len);
 	if (tmp == NULL) {
 		IOT_ERROR("malloc returned NULL");
 		err = IOT_ERROR_MEM_ALLOC;
@@ -834,7 +834,7 @@ static iot_error_t _iot_jwt_create(char **token, const char *sn, iot_crypto_pk_i
 	err = _iot_jwt_create_b64s(&b64s, &b64s_len, tmp, written, pk_info);
 	if (err) {
 		IOT_ERROR("_iot_jwt_create_b64s returned error : %d", err);
-		free(tmp);
+		iot_os_free(tmp);
 		goto exit_payload;
 	}
 
@@ -854,11 +854,11 @@ static iot_error_t _iot_jwt_create(char **token, const char *sn, iot_crypto_pk_i
 	goto exit_signature;
 
 exit_signature:
-	free(b64s);
+	iot_os_free(b64s);
 exit_payload:
-	free(b64p);
+	iot_os_free(b64p);
 exit_header:
-	free(b64h);
+	iot_os_free(b64h);
 exit:
 	return err;
 }
