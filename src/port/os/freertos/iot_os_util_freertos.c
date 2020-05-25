@@ -107,15 +107,15 @@ unsigned int iot_os_eventgroup_clear_bits(iot_os_eventgroup* eventgroup_handle,
 int iot_os_mutex_init(iot_os_mutex* mutex)
 {
 	if (!mutex) {
-		return IOT_ERROR_INVALID_ARGS;
+		return IOT_OS_FALSE;
 	}
 
 	mutex->sem = xSemaphoreCreateMutex();
 
 	if (!mutex->sem) {
-		return IOT_ERROR_MEM_ALLOC;
+		return IOT_OS_FALSE;
 	}
-	return IOT_ERROR_NONE;
+	return IOT_OS_TRUE;
 }
 
 int iot_os_mutex_lock(iot_os_mutex* mutex)
@@ -123,15 +123,15 @@ int iot_os_mutex_lock(iot_os_mutex* mutex)
 	int ret;
 
 	if (!mutex) {
-		return IOT_ERROR_INVALID_ARGS;
+		return IOT_OS_FALSE;
 	}
 
 	ret = xSemaphoreTake(mutex->sem, portMAX_DELAY);
 
 	if (ret == pdTRUE) {
-		ret = IOT_ERROR_NONE;
+		ret = IOT_OS_TRUE;
 	} else {
-		ret = IOT_ERROR_BAD_REQ;
+		ret = IOT_OS_FALSE;
 	}
 
 	return ret;
@@ -142,15 +142,15 @@ int iot_os_mutex_unlock(iot_os_mutex* mutex)
 	int ret;
 
 	if (!mutex) {
-		return IOT_ERROR_INVALID_ARGS;
+		return IOT_OS_FALSE;
 	}
 
 	ret = xSemaphoreGive(mutex->sem);
 
 	if (ret == pdTRUE) {
-		ret = IOT_ERROR_NONE;
+		ret = IOT_OS_TRUE;
 	} else {
-		ret = IOT_ERROR_BAD_REQ;
+		ret = IOT_OS_FALSE;
 	}
 
 	return ret;

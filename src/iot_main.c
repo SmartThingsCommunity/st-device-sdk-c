@@ -46,7 +46,8 @@ static iot_state_t rcv_fail_state;
 static iot_error_t _do_state_updating(struct iot_context *ctx,
 		iot_state_t new_state, int opt, unsigned int *timeout_ms);
 
-static iot_error_t _check_prov_data_validation(struct iot_device_prov_data *prov_data)
+STATIC_FUNCTION
+iot_error_t _check_prov_data_validation(struct iot_device_prov_data *prov_data)
 {
 	struct iot_wifi_prov_data *wifi = &(prov_data->wifi);
 	struct iot_cloud_prov_data *cloud = &(prov_data->cloud);
@@ -168,7 +169,8 @@ static void _do_update_timeout(struct iot_context *ctx, unsigned int needed_tout
 	iot_os_timer_count_ms(ctx->state_timer, needed_tout);
 }
 
-static void _do_status_report(struct iot_context *ctx,
+STATIC_FUNCTION
+void _do_status_report(struct iot_context *ctx,
 	iot_state_t target_state, bool is_final)
 {
 	iot_status_t fn_stat = 0;
@@ -973,7 +975,13 @@ IOT_CTX* st_conn_init(unsigned char *onboarding_config, unsigned int onboarding_
 
 #if defined(CONFIG_STDK_IOT_CORE_LOG_FILE)
 	/* Initialize logging task */
-	iot_err = iot_log_file_init();
+#if defined(CONFIG_STDK_IOT_CORE_LOG_FILE_RAM_ONLY)
+	iot_err = iot_log_file_init(RAM_ONLY);
+#elif defined(CONFIG_STDK_IOT_CORE_LOG_FILE_FLASH_WITH_RAM)
+	iot_err = iot_log_file_init(FLASH_WITH_RAM);
+#else
+#error "Need to choice STDK_IOT_CORE_LOG_FILE_TYPE first"
+#endif
 	if (iot_err != IOT_ERROR_NONE) {
 		IOT_ERROR("log file init fail");
 		goto error_main_log_file_init;

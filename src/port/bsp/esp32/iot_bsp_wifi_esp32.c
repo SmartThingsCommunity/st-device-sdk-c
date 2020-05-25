@@ -296,7 +296,6 @@ iot_error_t iot_bsp_wifi_set_mode(iot_wifi_conf *conf)
 		}
 		else {
 				IOT_ERROR("WIFI_STA_CONNECT_BIT event Timeout");
-				ESP_ERROR_CHECK(esp_wifi_stop());
 				return IOT_ERROR_CONN_CONNECT_FAIL;
 		}
 

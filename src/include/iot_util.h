@@ -78,7 +78,7 @@ iot_error_t iot_util_convert_str_uuid(const char* str, struct iot_uuid* uuid);
  * @param[in]	max_sz	max size of allocated memory pointer
  * @return	return IOT_ERROR_NONE on success, or iot_error_t errors if it fails
  */
-iot_error_t iot_util_convert_uuid_str(struct iot_uuid* uuid, char* str, int max_sz);
+iot_error_t iot_util_convert_uuid_str(struct iot_uuid* uuid, char* str, size_t max_sz);
 
 /**
  * @brief	To convert WIFI mac string into iot_mac struct value

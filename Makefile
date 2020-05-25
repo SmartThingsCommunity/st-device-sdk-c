@@ -11,6 +11,7 @@ else
 NET_DIR = src/port/net/openssl
 endif
 CRYPTO_DIR = src/crypto
+SECURITY_DIR = src/security
 EASYSETUP_DIR = src/easysetup
 MQTT_DIR = src/mqtt
 BUILD_DIR = $(TOPDIR)/build
@@ -21,6 +22,7 @@ CFLAGS	:= -std=c99 -D_GNU_SOURCE
 CFLAGS	+= $(CFLAGS_CONFIG)
 
 INCS	:= -I/usr/include -Isrc/include -Isrc/include/mqtt -Isrc/include/os -Isrc/include/bsp -Isrc/include/external -I$(NET_DIR)
+INCS	+= -Isrc/include/security
 INCS	+= -I$(CBOR_DIR)
 
 SRCS	:= $(wildcard src/*.c)
@@ -34,6 +36,11 @@ SRCS	+= $(EASYSETUP_DIR)/iot_easysetup_st_mqtt.c \
 			$(wildcard $(EASYSETUP_DIR)/posix_testing/*.c)
 SRCS	+= $(wildcard $(MQTT_DIR)/client/*.c)
 SRCS	+= $(wildcard $(MQTT_DIR)/packet/*.c)
+SRCS	+= $(wildcard $(SECURITY_DIR)/*.c)
+ifneq ($(findstring, "CONFIG_STDK_IOT_CORE_SECURITY_BACKEND_SOFTWARE", $(CFLAGS_CONFIG)), '')
+SRCS	+= $(wildcard $(SECURITY_DIR)/backend/software/*.c)
+endif
+
 
 OBJS	= $(SRCS:%.c=%.o)
 TARGET	= libiotcore.a

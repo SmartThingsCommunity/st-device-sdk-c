@@ -292,6 +292,12 @@ void iot_noti_sub_cb(struct iot_context *ctx, char *payload);
  */
 void iot_cap_call_init_cb(iot_cap_handle_list_t *cap_handle_list);
 
+/**
+ * @brief get sequence number
+ * @details this function return sequence number
+ */
+int iot_cap_get_sqnum(void);
+
 /* For universal purpose */
 /**
  * @brief	get time data by sec
@@ -347,7 +353,7 @@ iot_error_t iot_misc_info_store(iot_misc_info_t type, const void *in_data);
  * @param[in]	max_sz	max size of allocated memory pointer
  * @retval	IOT_ERROR_NONE                  success.
  */
-iot_error_t iot_get_random_id_str(char *str, int max_sz);
+iot_error_t iot_get_random_id_str(char *str, size_t max_sz);
 
 #endif /* _IOT_INTERNAL_H_ */
 
