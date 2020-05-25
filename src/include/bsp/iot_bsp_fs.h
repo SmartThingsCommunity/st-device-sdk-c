@@ -89,12 +89,12 @@ iot_error_t iot_bsp_fs_open_from_stnv(const char* filename, iot_bsp_fs_handle_t*
  *
  * @param[in] handle  This is iot_bsp_fs_handle_t handle from iot_bsp_fs_open().
  * @param[out] buffer A pointer to buffer array to store the read data from the file.
- * @param[in] length The size of buffer.
+ * @param[in] length The size of buffer and this will be set to the actual length of the value read
  * @retval IOT_ERROR_NONE File read successful.
  * @retval IOT_ERROR_FS_READ_FAIL File read failed.
  * @retval IOT_ERROR_FS_NO_FILE No file.
  */
-iot_error_t iot_bsp_fs_read(iot_bsp_fs_handle_t handle, char* buffer, unsigned int length);
+iot_error_t iot_bsp_fs_read(iot_bsp_fs_handle_t handle, char* buffer, size_t *length);
 
 /**
  * @brief Write a file
@@ -105,7 +105,7 @@ iot_error_t iot_bsp_fs_read(iot_bsp_fs_handle_t handle, char* buffer, unsigned i
  * @retval IOT_ERROR_NONE File write successful.
  * @retval IOT_ERROR_FS_WRITE_FAIL File write failed.
  */
-iot_error_t iot_bsp_fs_write(iot_bsp_fs_handle_t handle, const char* data, unsigned int length);
+iot_error_t iot_bsp_fs_write(iot_bsp_fs_handle_t handle, const char* data, size_t length);
 
 /**
  * @brief Close a file

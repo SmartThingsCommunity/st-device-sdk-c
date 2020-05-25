@@ -64,6 +64,38 @@ typedef struct MQTTSubackData {
 	int granted_qos;
 } MQTTSubackData;
 
+enum {
+	PACKET_CHUNK_INIT,
+	PACKET_CHUNK_WRITE_PENDING,
+	PACKET_CHUNK_SYNC_WRITE_PENDING,
+	PACKET_CHUNK_WRITE_COMPLETED,
+	PACKET_CHUNK_READ_COMPLETED,
+};
+
+// Owner of packet chunk can be creator or caller of pop_queue()
+typedef struct iot_mqtt_packet_chunk {
+	int packet_type;
+	unsigned int packet_id;
+
+	unsigned char *chunk_data;
+	size_t chunk_size;
+	size_t current_chunk_pos;
+	unsigned char chunk_first_byte;
+	unsigned char chunk_rem_size_bytes[MAX_NUM_OF_REMAINING_LENGTH_BYTES];
+	size_t chunk_rem_size_length;
+	unsigned int chunk_id;
+	int chunk_state;
+
+	struct iot_mqtt_packet_chunk *next;
+} iot_mqtt_packet_chunk_t;
+
+typedef struct iot_mqtt_packet_chunk_queue {
+	iot_os_mutex lock;
+	unsigned char being_destroyed;
+	struct iot_mqtt_packet_chunk *head;
+	struct iot_mqtt_packet_chunk *tail;
+} iot_mqtt_packet_chunk_queue_t;
+
 typedef struct MQTTClient {
 	unsigned int next_packetid,
 			command_timeout_ms;
@@ -89,18 +121,16 @@ typedef struct MQTTClient {
 
 	iot_os_mutex mutex;
 	iot_os_thread thread;
+
+	iot_os_mutex write_lock;
+	struct iot_mqtt_packet_chunk *current_writing_chunk;
+	iot_os_mutex read_lock;
+	struct iot_mqtt_packet_chunk *current_reading_chunk;
+
+	iot_mqtt_packet_chunk_queue_t write_pending_queue;
+	iot_mqtt_packet_chunk_queue_t write_completed_queue;
+	iot_mqtt_packet_chunk_queue_t read_completed_queue;
 } MQTTClient;
-
-typedef enum {
-	MQTT_OPERATION_PUBLISH,
-} mqtt_operation_type;
-
-typedef struct _mqtt_operation_block {
-	mqtt_operation_type type;
-	union {
-		struct { st_mqtt_msg *msg; } _publish_data;
-	} data;
-} mqtt_operation_block;
 
 /** MQTT Connect - send an MQTT connect packet down the network and wait for a Connack
  *  @param options - connect options

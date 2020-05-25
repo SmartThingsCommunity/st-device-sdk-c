@@ -290,7 +290,7 @@ int iot_os_mutex_init(iot_os_mutex* mutex)
 	pthread_mutex_init(mutex_p, NULL);
 	mutex->sem = mutex_p;
 
-	return iot_os_true;
+	return IOT_OS_TRUE;
 }
 
 int iot_os_mutex_lock(iot_os_mutex* mutex)
@@ -299,7 +299,7 @@ int iot_os_mutex_lock(iot_os_mutex* mutex)
 
 	pthread_mutex_lock(mutex_p);
 
-	return iot_os_true;
+	return IOT_OS_TRUE;
 }
 
 int iot_os_mutex_unlock(iot_os_mutex* mutex)
@@ -308,7 +308,7 @@ int iot_os_mutex_unlock(iot_os_mutex* mutex)
 
 	pthread_mutex_unlock(mutex_p);
 
-	return iot_os_true;
+	return IOT_OS_TRUE;
 }
 
 void iot_os_mutex_destroy(iot_os_mutex* mutex)
@@ -407,6 +407,11 @@ void *iot_os_malloc(size_t size)
 void *iot_os_calloc(size_t nmemb, size_t size)
 {
     return calloc(nmemb, size);
+}
+
+char *iot_os_realloc(void *ptr, size_t size)
+{
+    return realloc(ptr, size);
 }
 
 void iot_os_free(void *ptr)
