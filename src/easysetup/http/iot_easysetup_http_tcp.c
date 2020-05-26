@@ -40,8 +40,9 @@ static void es_tcp_task(void *pvParameters)
 	char *payload = NULL;
 	char rx_buffer[RX_BUFFER_MAX];
 	int addr_family, ip_protocol, listen_sock, sock, ret, len, type, cmd;
-	iot_error_t type_err = IOT_ERROR_NONE;
+	iot_error_t err = IOT_ERROR_NONE;
 	struct sockaddr_in sourceAddr;
+	size_t content_len;
 	uint addrLen;
 
 	while (1) {
@@ -58,20 +59,21 @@ static void es_tcp_task(void *pvParameters)
 			break;
 		}
 
-		err = bind(listen_sock, (struct sockaddr *)&destAddr, sizeof(destAddr));
-		if (err != 0) {
+		ret = bind(listen_sock, (struct sockaddr *)&destAddr, sizeof(destAddr));
+		if (ret != 0) {
 			IOT_ERROR("Socket unable to bind: errno %d", errno);
 			break;
 		}
 
-		err = listen(listen_sock, 1);
-		if (err != 0) {
+		ret = listen(listen_sock, 1);
+		if (ret != 0) {
 			IOT_ERROR("Error occurred during listen: errno %d", errno);
 			break;
 		}
 
 		while (1) {
 			addrLen = sizeof(sourceAddr);
+			content_len = 0;
 
 			sock = accept(listen_sock, (struct sockaddr *)&sourceAddr, &addrLen);
 			if (sock < 0) {
@@ -94,10 +96,21 @@ static void es_tcp_task(void *pvParameters)
 			else {
 				rx_buffer[len] = '\0';
 
-				type_err = es_msg_parser(rx_buffer, &payload, &cmd, &type);
-				if(type_err == IOT_ERROR_INVALID_ARGS)
-					http_msg_handler(cmd, &tx_buffer, D2D_ERROR, payload);
+				err = es_msg_parser(rx_buffer, &payload, &cmd, &type, &content_len);
 
+				if ((err == IOT_ERROR_NONE) && (content_len > strlen((char *)payload)))
+				{
+					memset(rx_buffer, '\0', sizeof(rx_buffer));
+					len = recv(sock, rx_buffer, sizeof(rx_buffer) - 1, 0);
+					if (len < 0) {
+						IOT_ERROR("recv failed: errno %d", errno);
+						break;
+					}
+					payload = rx_buffer;
+				}
+
+				if(err == IOT_ERROR_INVALID_ARGS)
+					http_msg_handler(cmd, &tx_buffer, D2D_ERROR, payload);
 				else
 					http_msg_handler(cmd, &tx_buffer, type, payload);
 
@@ -109,9 +122,9 @@ static void es_tcp_task(void *pvParameters)
 				len = strlen((char *)tx_buffer);
 				tx_buffer[len] = 0;
 
-				err = send(sock, tx_buffer, len, 0);
-				if (err < 0) {
-					IOT_ERROR("Error occured during sending: errno %d", err);
+				ret = send(sock, tx_buffer, len, 0);
+				if (ret < 0) {
+					IOT_ERROR("Error is occurred during sending: errno %d", ret);
 					break;
 				}
 				if (tx_buffer) {
