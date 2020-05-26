@@ -64,12 +64,11 @@ typedef struct MQTTSubackData {
 	int granted_qos;
 } MQTTSubackData;
 
-enum {
+enum packet_chunk_state {
 	PACKET_CHUNK_INIT,
 	PACKET_CHUNK_WRITE_PENDING,
-	PACKET_CHUNK_SYNC_WRITE_PENDING,
 	PACKET_CHUNK_WRITE_COMPLETED,
-	PACKET_CHUNK_SYNC_WRITE_COMPLETED,
+	PACKET_CHUNK_ACK_PENDING,
 	PACKET_CHUNK_READ_COMPLETED,
 	PACKET_CHUNK_ACKNOWLEDGED,
 	PACKET_CHUNK_TIMEOUT,
@@ -79,6 +78,7 @@ enum {
 typedef struct iot_mqtt_packet_chunk {
 	int packet_type;
 	unsigned int packet_id;
+	int qos;
 
 	unsigned char *chunk_data;
 	size_t chunk_size;
@@ -91,6 +91,8 @@ typedef struct iot_mqtt_packet_chunk {
 
 	iot_os_timer expiry_time;
 	int retry_count;
+
+	unsigned char is_owned;
 
 	struct iot_mqtt_packet_chunk *next;
 } iot_mqtt_packet_chunk_t;
@@ -136,7 +138,7 @@ typedef struct MQTTClient {
 	struct iot_mqtt_packet_chunk *current_reading_chunk;
 
 	iot_mqtt_packet_chunk_queue_t write_pending_queue;
-	iot_mqtt_packet_chunk_queue_t write_completed_queue;
+	iot_mqtt_packet_chunk_queue_t ack_pending_queue;
 	iot_mqtt_packet_chunk_queue_t read_completed_queue;
 } MQTTClient;
 
