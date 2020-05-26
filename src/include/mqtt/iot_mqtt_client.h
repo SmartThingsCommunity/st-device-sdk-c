@@ -72,6 +72,7 @@ enum {
 	PACKET_CHUNK_SYNC_WRITE_COMPLETED,
 	PACKET_CHUNK_READ_COMPLETED,
 	PACKET_CHUNK_ACKNOWLEDGED,
+	PACKET_CHUNK_TIMEOUT,
 };
 
 // Owner of packet chunk can be creator or caller of pop_queue()
@@ -87,6 +88,9 @@ typedef struct iot_mqtt_packet_chunk {
 	size_t chunk_rem_size_length;
 	unsigned int chunk_id;
 	int chunk_state;
+
+	iot_os_timer expiry_time;
+	int retry_count;
 
 	struct iot_mqtt_packet_chunk *next;
 } iot_mqtt_packet_chunk_t;
@@ -123,6 +127,8 @@ typedef struct MQTTClient {
 
 	iot_os_mutex mutex;
 	iot_os_thread thread;
+
+	struct iot_mqtt_packet_chunk *ping_packet;
 
 	iot_os_mutex write_lock;
 	struct iot_mqtt_packet_chunk *current_writing_chunk;

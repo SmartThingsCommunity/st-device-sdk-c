@@ -26,8 +26,48 @@
 
 static void _iot_mqtt_chunk_destroy(iot_mqtt_packet_chunk_t *chunk)
 {
-	if (chunk && chunk->chunk_data)
+	if (chunk && chunk->chunk_data) {
 		iot_os_free(chunk->chunk_data);
+	}
+
+	if (chunk && chunk->expiry_time) {
+		iot_os_timer_destroy(&chunk->expiry_time);
+	}
+
+	if (chunk) {
+		iot_os_free(chunk);
+	}
+}
+
+static iot_mqtt_packet_chunk_t * _iot_mqtt_chunk_create(size_t chunk_size)
+{
+	iot_mqtt_packet_chunk_t *chunk = NULL;
+	iot_error_t iot_err;
+
+	chunk = iot_os_malloc(sizeof(iot_mqtt_packet_chunk_t));
+	if (chunk == NULL) {
+		IOT_ERROR("chunk malloc fail");
+		return NULL;
+	}
+	memset(chunk, '\0', sizeof(iot_mqtt_packet_chunk_t));
+
+	chunk->chunk_data = iot_os_malloc(chunk_size);
+	if (chunk->chunk_data == NULL) {
+		IOT_ERROR("chunk data malloc fail");
+		iot_os_free(chunk);
+		return NULL;
+	}
+	chunk->chunk_size = chunk_size;
+
+	iot_err = iot_os_timer_init(&chunk->expiry_time);
+	if (iot_err) {
+		IOT_ERROR("fail to init chunk expiry");
+		iot_os_free(chunk->chunk_data);
+		iot_os_free(chunk);
+		return NULL;
+	}
+
+	return chunk;
 }
 
 static int _iot_mqtt_queue_push(iot_mqtt_packet_chunk_queue_t *queue, iot_mqtt_packet_chunk_t *chunk)
@@ -154,7 +194,6 @@ static void _iot_mqtt_queue_destroy(iot_mqtt_packet_chunk_queue_t *queue)
 		tmp = iterator;
 		iterator = iterator->next;
 		_iot_mqtt_chunk_destroy(tmp);
-		iot_os_free(tmp);
 	}
 	queue->head = queue->tail = NULL;
 	queue->being_destroyed = 1;
@@ -205,6 +244,9 @@ static int _iot_mqtt_run_write_stream(MQTTClient *client, iot_os_timer timer)
 				w_chunk->chunk_state = PACKET_CHUNK_WRITE_COMPLETED;
 			} else if (w_chunk->chunk_state == PACKET_CHUNK_SYNC_WRITE_PENDING) {
 				w_chunk->chunk_state = PACKET_CHUNK_SYNC_WRITE_COMPLETED;
+			}
+			if (w_chunk->expiry_time) {
+				iot_os_timer_count_ms(w_chunk->expiry_time, client->command_timeout_ms);
 			}
 			_iot_mqtt_queue_push(&client->write_completed_queue, w_chunk);
 		}
@@ -346,7 +388,6 @@ static void _iot_mqtt_process_received_ack(MQTTClient *client, iot_mqtt_packet_c
 		} else {
 			/* TODO implement async complete user call back here */
 			_iot_mqtt_chunk_destroy(tmp);
-			iot_os_free(tmp);
 		}
 	} else {
 		IOT_ERROR("There is no ack packet matched");
@@ -377,21 +418,13 @@ static void _iot_mqtt_process_received_publish(MQTTClient *client, iot_mqtt_pack
 	// Send Ack back
 	if (msg.qos != st_mqtt_qos0) {
 		iot_mqtt_packet_chunk_t *puback;
-		puback = iot_os_malloc(sizeof(iot_mqtt_packet_chunk_t));
+		puback = _iot_mqtt_chunk_create(MQTT_ACK_PACKET_SIZE);
 		if (puback == NULL) {
 			IOT_ERROR("chunk malloc fail");
 			return;
 		}
-		memset(puback, '\0', sizeof(iot_mqtt_packet_chunk_t));
 
-		puback->chunk_size = 4;
-		puback->chunk_data = iot_os_malloc(puback->chunk_size);
 		puback->chunk_id = id;
-		if (puback->chunk_data == NULL) {
-			IOT_ERROR("chunk data malloc fail");
-			iot_os_free(puback);
-			return;
-		}
 		if (msg.qos == st_mqtt_qos1) {
 			puback->packet_type = PUBACK;
 			MQTTSerialize_ack(puback->chunk_data, puback->chunk_size, PUBACK, 0, id);
@@ -421,13 +454,12 @@ static void _iot_mqtt_process_received_pubrec_pubrel(MQTTClient *client, iot_mqt
 		iot_os_free(tmp->chunk_data);
 		tmp->chunk_data = NULL;
 
-		tmp->chunk_size = 4;
+		tmp->chunk_size = MQTT_ACK_PACKET_SIZE;
 		tmp->current_chunk_pos = 0;
 		tmp->chunk_data = iot_os_malloc(tmp->chunk_size);
 		if (tmp->chunk_data == NULL) {
 			IOT_ERROR("chunk data malloc fail");
 			_iot_mqtt_chunk_destroy(tmp);
-			iot_os_free(tmp);
 			return;
 		}
 		if (tmp->packet_type == PUBLISH) {
@@ -471,7 +503,6 @@ static void _iot_mqtt_process_post_read(MQTTClient *client, iot_os_timer timer)
 				break;
 		}
 		_iot_mqtt_chunk_destroy(w_chunk);
-		iot_os_free(w_chunk);
 	}
 }
 
@@ -586,6 +617,11 @@ int st_mqtt_create(st_mqtt_client *client, unsigned int command_timeout_ms)
 	if ((_iot_mqtt_queue_init(&c->read_completed_queue))) {
 		goto error_handle;
 	}
+	if ((c->ping_packet = _iot_mqtt_chunk_create(MQTT_PINGREQ_PACKET_SIZE)) == NULL) {
+		goto error_handle;
+	}
+	MQTTSerialize_pingreq(c->ping_packet->chunk_data, MQTT_PINGREQ_PACKET_SIZE);
+	c->ping_packet->packet_type = PINGREQ;
 
 	IOT_DUMP(IOT_DEBUG_LEVEL_INFO, IOT_DUMP_MQTT_CREATE_SUCCESS, command_timeout_ms, 0);
 	return 0;
@@ -608,6 +644,9 @@ error_handle:
 		_iot_mqtt_queue_destroy(&c->write_pending_queue);
 		_iot_mqtt_queue_destroy(&c->write_completed_queue);
 		_iot_mqtt_queue_destroy(&c->read_completed_queue);
+		if (c->ping_packet) {
+			_iot_mqtt_chunk_destroy(c->ping_packet);
+		}
 		iot_os_free(c);
 		*client = NULL;
 	}
@@ -664,6 +703,9 @@ void st_mqtt_destroy(st_mqtt_client client)
 	_iot_mqtt_queue_destroy(&c->write_pending_queue);
 	_iot_mqtt_queue_destroy(&c->write_completed_queue);
 	_iot_mqtt_queue_destroy(&c->read_completed_queue);
+	if (c->ping_packet) {
+		_iot_mqtt_chunk_destroy(c->ping_packet);
+	}
 	iot_os_free(c);
 	IOT_DUMP(IOT_DEBUG_LEVEL_INFO, IOT_DUMP_MQTT_DESTROY, 0, 0);
 }
@@ -813,6 +855,28 @@ int deliverMessage(MQTTClient *c, st_mqtt_msg *message)
 	return rc;
 }
 
+static int _iot_mqtt_check_alive(MQTTClient *client)
+{
+	if (iot_os_timer_isexpired(client->last_sent) || iot_os_timer_isexpired(client->last_received)) {
+		switch (client->ping_packet->chunk_state) {
+			case PACKET_CHUNK_ACKNOWLEDGED :
+			case PACKET_CHUNK_INIT :
+				client->ping_packet->chunk_state = PACKET_CHUNK_SYNC_WRITE_PENDING;
+				client->ping_packet->current_chunk_pos = 0;
+				client->ping_packet->retry_count = 0;
+				_iot_mqtt_queue_push(&client->write_pending_queue, client->ping_packet);
+				break;
+			case PACKET_CHUNK_TIMEOUT:
+				client->ping_packet->chunk_state = PACKET_CHUNK_INIT;
+				IOT_WARN("mqtt didn't get PINGRESP");
+				return -1;
+			default:
+				break;
+		}
+	}
+
+	return 0;
+}
 
 int keepalive(MQTTClient *c)
 {
