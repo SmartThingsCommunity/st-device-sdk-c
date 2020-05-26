@@ -108,6 +108,6 @@ typedef enum {
  * @return pointer of 'all log dump'
  * @warning must free returned pointer after using it.
  */
-char* iot_dump_create_all_log_dump(int all_log_dump_size);
+char* iot_dump_create_all_log_dump(int all_log_dump_size, int need_base64);
 
 #endif /* _IOT_DUMP_LOG_H_ */
