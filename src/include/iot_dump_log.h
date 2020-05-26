@@ -82,6 +82,19 @@ typedef enum {
 	IOT_DUMP_NV_DATA_WRITE_FAIL = 0x602,
 	IOT_DUMP_NV_DATA_ERASE_FAIL = 0x603,
 	IOT_DUMP_NV_DATA_NOT_EXIST = 0x604,
+	IOT_DUMP_BSP_WIFI_BASE = 0x0700,
+	IOT_DUMP_BSP_WIFI_INIT_SUCCESS = 0x0701,
+	IOT_DUMP_BSP_WIFI_INIT_FAIL = 0x0702, /* arg1: return code(rc), arg2: line number */
+	IOT_DUMP_BSP_WIFI_SETMODE = 0x0703, /* arg1: configuration mode(conf->mode) */
+	IOT_DUMP_BSP_WIFI_SETMODE_FAIL = 0x0704, /* arg1: configuration mode(conf->mode),  arg2: return code(rc) */
+	IOT_DUMP_BSP_WIFI_CONNECT_SUCCESS = 0x0705,
+	IOT_DUMP_BSP_WIFI_CONNECT_FAIL = 0x0706, /* arg1: connect timeout, arg2: line number*/
+	IOT_DUMP_BSP_WIFI_SNTP_SUCCESS = 0x0707, /* arg1: current time,  arg2: retry count */
+	IOT_DUMP_BSP_WIFI_SNTP_FAIL = 0x0708, /* arg1: retry count,  arg2: max retry */
+	IOT_DUMP_BSP_WIFI_TIMEOUT = 0x0709, /* arg1: wifi mode, arg2: line number*/
+	IOT_DUMP_BSP_WIFI_ERROR = 0x070A, /* arg1: wifi mode, arg2: line number*/
+	IOT_DUMP_BSP_WIFI_EVENT_AUTH = 0x070B, /* arg1: rssi*/
+	IOT_DUMP_BSP_WIFI_EVENT_DEAUTH = 0x070C, /* arg1: deauth reason*/
 
 	IOT_DUMP_BSP_BASE = 0x1000,
 
