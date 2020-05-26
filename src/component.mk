@@ -61,11 +61,6 @@ else
 COMPONENT_SRCDIRS += crypto/ss
 endif
 
-ifeq ($(CONFIG_STDK_IOT_CORE_SECURITY_BACKEND_SOFTWARE),y)
-COMPONENT_SRCDIRS += security
-COMPONENT_SRCDIRS += security/backend/software
-endif
-
 COMPONENT_SRCDIRS += easysetup
 
 ifdef CONFIG_STDK_IOT_CORE_EASYSETUP_HTTP
