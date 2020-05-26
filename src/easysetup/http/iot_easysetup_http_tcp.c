@@ -1,31 +1,20 @@
-/******************************************************************
+/* ***************************************************************************
  *
- * MIT License
+ * Copyright 2020 Samsung Electronics All Rights Reserved.
  *
- * Copyright (c) 2019 Aleksey Kurepin
- * Copyright (c) 2020 Samsung Electronics All Rights Reserved.
+ * Licensed under the Apache License, Version 2.0 (the "License");
+ * you may not use this file except in compliance with the License.
+ * You may obtain a copy of the License at
  *
- * Permission is hereby granted, free of charge, to any person obtaining a copy
- * of this software and associated documentation files (the "Software"), to deal
- * in the Software without restriction, including without limitation the rights
- * to use, copy, modify, merge, publish, distribute, sublicense, and/or sell
- * copies of the Software, and to permit persons to whom the Software is
- * furnished to do so, subject to the following conditions:
+ * http://www.apache.org/licenses/LICENSE-2.0
  *
- * The above copyright notice and this permission notice shall be included in all
- * copies or substantial portions of the Software.
+ * Unless required by applicable law or agreed to in writing,
+ * software distributed under the License is distributed on an
+ * "AS IS" BASIS, WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND,
+ * either express or implied. See the License for the specific
+ * language governing permissions and limitations under the License.
  *
- * THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR
- * IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY,
- * FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL THE
- * AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER
- * LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM,
- * OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
- * SOFTWARE.
- *
- * http message parser has come from Pico HTTP Server (https://github.com/foxweb/pico)
- *
- ******************************************************************/
+ ****************************************************************************/
 
 #include <string.h>
 #include <sys/socket.h>
@@ -42,22 +31,16 @@
 #define PORT 8888
 #define RX_BUFFER_MAX    1024
 
-typedef struct { char *name, *value; } header_t;
-
-static header_t reqhdr[17] = {{"\0", "\0"}};
 static char *tx_buffer = NULL;
 
-// Client request
-char *method, // "GET" or "POST"
-	*uri,     // "/index.html" things before '?'
-	*qs,      // "a=1&b=2"     things after  '?'
-	*prot;    // "HTTP/1.1"
+static iot_os_thread es_tcp_task_handle = NULL;
 
 static void es_tcp_task(void *pvParameters)
 {
 	char *payload = NULL;
 	char rx_buffer[RX_BUFFER_MAX];
-	int addr_family, ip_protocol, listen_sock, sock, err, len;
+	int addr_family, ip_protocol, listen_sock, sock, ret, len, type, cmd;
+	iot_error_t type_err = IOT_ERROR_NONE;
 	struct sockaddr_in sourceAddr;
 	uint addrLen;
 
@@ -99,7 +82,6 @@ static void es_tcp_task(void *pvParameters)
 			memset(rx_buffer, '\0', sizeof(rx_buffer));
 
 			len = recv(sock, rx_buffer, sizeof(rx_buffer) - 1, 0);
-			IOT_DEBUG("rx_buffer : %s", rx_buffer);
 
 			if (len < 0) {
 				IOT_ERROR("recv failed: errno %d", errno);
@@ -112,46 +94,12 @@ static void es_tcp_task(void *pvParameters)
 			else {
 				rx_buffer[len] = '\0';
 
-				method = strtok(rx_buffer, " \t\r\n");
-				uri = strtok(NULL, " \t");
-				prot = strtok(NULL, " \t\r\n");
+				type_err = es_msg_parser(rx_buffer, &payload, &cmd, &type);
+				if(type_err == IOT_ERROR_INVALID_ARGS)
+					http_msg_handler(cmd, &tx_buffer, D2D_ERROR, payload);
 
-				header_t *h = reqhdr;
-				char *t = NULL;
-
-				while (h < reqhdr + 16) {
-				  char *k, *v;
-
-				  k = strtok(NULL, "\r\n: \t");
-				  if (!k)
-					break;
-
-				  v = strtok(NULL, "\r\n");
-				  while (*v && *v == ' ')
-					v++;
-
-				  h->name = k;
-				  h->value = v;
-				  h++;
-
-				  t = v + 1 + strlen(v);
-
-				  if (t[1] == '\r' && t[2] == '\n')
-					break;
-				}
-
-				t++;
-				payload = t;
-				IOT_DEBUG("payload : %s", payload);
-
-				if (!strcmp(method,  "GET"))
-					http_packet_handle(uri, &tx_buffer, payload, D2D_GET);
-				else if (!strcmp(method,  "POST"))
-					http_packet_handle(uri, &tx_buffer, payload, D2D_POST);
-				else {
-					IOT_ERROR("not support type");
-					http_packet_handle("ERROR", &tx_buffer, payload, D2D_ERROR);
-				}
+				else
+					http_msg_handler(cmd, &tx_buffer, type, payload);
 
 				if (!tx_buffer) {
 					IOT_ERROR("tx_buffer is NULL");
@@ -179,10 +127,10 @@ static void es_tcp_task(void *pvParameters)
 			close(sock);
 		}
 	}
+	/*set es_tcp_task_handle to null, prevent dulicate delete in es_tcp_deinit*/
+	es_tcp_task_handle = NULL;
 	iot_os_thread_delete(NULL);
 }
-
-static iot_os_thread es_tcp_task_handle = NULL;
 
 void es_http_init(void)
 {
