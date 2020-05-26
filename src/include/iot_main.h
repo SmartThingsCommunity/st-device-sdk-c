@@ -66,8 +66,8 @@ enum iot_command_type {
 
 	IOT_COMMAND_NOTIFICATION_RECEIVED,
 
-	IOT_COMMAND_TYPE_MAX, /* MAX : under 32 */
 	IOT_COMMAND_SELF_CLEANUP,
+	IOT_COMMAND_TYPE_MAX = IOT_COMMAND_SELF_CLEANUP, /* MAX : under 32 */
 	IOT_COMMNAD_STATE_UPDATE,
 };
 
@@ -268,7 +268,7 @@ struct iot_context {
 
 	unsigned int cmd_err;						/**< @brief current command handling error checking value */
 	unsigned int cmd_status;					/**< @brief current command status */
-	uint16_t cmd_count[IOT_COMMAND_TYPE_MAX];	/**< @brief current queued command counts */
+	uint16_t cmd_count[IOT_COMMAND_TYPE_MAX+1];	/**< @brief current queued command counts */
 
 	iot_os_thread main_thread; /**< @brief iot main task thread */
 };
