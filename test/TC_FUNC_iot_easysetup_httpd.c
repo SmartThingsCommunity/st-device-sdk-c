@@ -222,7 +222,7 @@ void TC_iot_easysetup_httpd_invalid_request(void **state)
     }
 }
 
-void assert_device_info_response(const char* buffer)
+void assert_device_info_response(char* buffer)
 {
     JSON_H *root;
     JSON_H *item;
@@ -253,7 +253,7 @@ void TC_iot_easysetup_httpd_deviceinfo_success(void **state)
     iot_error_t err;
     struct iot_easysetup_payload easysetup_req;
     char recv_buffer[1024] = {0, };
-    char *request_message = "GET /deviceinfo HTTP/1.1\r\n\r\n";
+    char *request_message = "GET /deviceinfo HTTP/1.1\r\nConnection: keep-alive\r\n";
 
     // Given
     memset(recv_buffer, '\0', sizeof(recv_buffer));
@@ -261,6 +261,7 @@ void TC_iot_easysetup_httpd_deviceinfo_success(void **state)
 
     // When: send request
     len = send(sock, request_message, strlen(request_message), 0);
+    // Then
     assert_int_equal(len, strlen(request_message));
 
     // Given
