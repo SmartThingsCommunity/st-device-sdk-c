@@ -288,19 +288,19 @@ void http_msg_handler(int cmd, char **buffer, enum cgi_type type, char* data_buf
 
 	if (type == D2D_POST) {
 		err = _iot_easysetup_gen_post_payload(context, cmd, data_buf, &payload);
-			if (!err) {
-				buffer_len = strlen(payload) + strlen(http_status_200) + strlen(http_header) + 9;
-				buf = malloc(buffer_len);
-				if (!buf) {
-					IOT_ERROR("failed to malloc buffer for the post msg");
-					goto cgi_out;
-				}
-				snprintf(buf, buffer_len, "%s%s%4d\r\n\r\n%s",
-						http_status_200, http_header, (int)strlen(payload), payload);
-			IOT_INFO("post cmd[%d] ok", cmd);
-			} else {
-			IOT_INFO("post cmd[%d] not ok", cmd);
+		if (!err) {
+			buffer_len = strlen(payload) + strlen(http_status_200) + strlen(http_header) + 9;
+			buf = malloc(buffer_len);
+			if (!buf) {
+				IOT_ERROR("failed to malloc buffer for the post msg");
+				goto cgi_out;
 			}
+			snprintf(buf, buffer_len, "%s%s%4d\r\n\r\n%s",
+					http_status_200, http_header, (int)strlen(payload), payload);
+			IOT_INFO("post cmd[%d] ok", cmd);
+		} else {
+			IOT_INFO("post cmd[%d] not ok", cmd);
+		}
 	} else if (type == D2D_GET) {
 		err = _iot_easysetup_gen_get_payload(context, cmd, &payload);
 		if (!err) {
