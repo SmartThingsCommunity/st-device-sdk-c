@@ -87,30 +87,27 @@ char *iot_debug_get_log(void)
  * @return	iot_error_t
  * @retval	IOT_ERROR_NONE		success
  */
-iot_error_t _iot_easysetup_gen_get_payload(struct iot_context *ctx, const char *cmd, char **out_payload)
+iot_error_t _iot_easysetup_gen_get_payload(struct iot_context *ctx, int cmd, char **out_payload)
 {
 	iot_error_t err = IOT_ERROR_NONE;
 	struct iot_easysetup_payload response;
 	int cur_step;
 
-	if (!strcmp(cmd, IOT_ES_URI_GET_DEVICEINFO)) {
-		cur_step = IOT_EASYSETUP_STEP_DEVICEINFO;
+	if (cmd == IOT_EASYSETUP_INVALID_STEP) {
+		IOT_ERROR("Invalid command %d", cmd);
+		err = IOT_ERROR_EASYSETUP_INVALID_CMD;
+		goto get_exit;
+	}
+
+	cur_step = cmd;
+
+	if (cur_step == IOT_EASYSETUP_STEP_DEVICEINFO) {
 		err = iot_state_update(ctx, IOT_STATE_PROV_CONN_MOBILE, 0);
 		if (err != IOT_ERROR_NONE) {
 			IOT_ERROR("failed handle cmd (%d): %d", IOT_STATE_PROV_CONN_MOBILE, err);
 			err = IOT_ERROR_EASYSETUP_INTERNAL_SERVER_ERROR;
 			goto fail_status_update;
 		}
-	} else if (!strcmp(cmd, IOT_ES_URI_GET_WIFISCANINFO)) {
-		cur_step = IOT_EASYSETUP_STEP_WIFISCANINFO;
-	} else if (!strcmp(cmd, IOT_ES_URI_GET_LOGS_SYSTEMINFO)) {
-		cur_step = IOT_EASYSETUP_STEP_LOG_SYSTEMINFO;
-	} else if (!strcmp(cmd, IOT_ES_URI_GET_LOGS_DUMP)) {
-		cur_step = IOT_EASYSETUP_STEP_LOG_GET_DUMP;
-	} else {
-		err = IOT_ERROR_EASYSETUP_INVALID_CMD;
-		IOT_ERROR("Invalid command %s", cmd);
-		goto get_exit;
 	}
 
 	if ((cur_step != ref_step) && (cur_step < IOT_EASYSETUP_STEP_LOG_SYSTEMINFO)) {
@@ -118,7 +115,7 @@ iot_error_t _iot_easysetup_gen_get_payload(struct iot_context *ctx, const char *
 			ref_step = IOT_EASYSETUP_STEP_WIFISCANINFO;
 		} else {
 			err = IOT_ERROR_EASYSETUP_INVALID_CMD;
-			IOT_ERROR("Invalid command step %s", cmd);
+			IOT_ERROR("Invalid command step %d", cmd);
 			goto get_exit;
 		}
 	}
@@ -132,7 +129,7 @@ iot_error_t _iot_easysetup_gen_get_payload(struct iot_context *ctx, const char *
 		err = IOT_ERROR_EASYSETUP_INTERNAL_SERVER_ERROR;
 		goto get_exit;
 	}
-	IOT_INFO("waiting.. response for [%s]", cmd);
+	IOT_INFO("waiting.. response for [%d]", cmd);
 	iot_os_eventgroup_wait_bits(ctx->iot_events,
 			IOT_EVENT_BIT_EASYSETUP_RESP, true, false, IOT_OS_MAX_DELAY);
 	err = iot_os_queue_receive(ctx->easysetup_resp_queue, &response, 0);
@@ -176,7 +173,7 @@ get_exit:
  * @return		iot_error_t
  * @retval		IOT_ERROR_NONE		success
  */
-iot_error_t _iot_easysetup_gen_post_payload(struct iot_context *ctx, const char *cmd, char *in_payload, char **out_payload)
+iot_error_t _iot_easysetup_gen_post_payload(struct iot_context *ctx, int cmd, char *in_payload, char **out_payload)
 {
 	iot_error_t err = IOT_ERROR_NONE;
 	struct iot_easysetup_payload response;
@@ -186,36 +183,26 @@ iot_error_t _iot_easysetup_gen_post_payload(struct iot_context *ctx, const char 
 	if (!in_payload)
 		return IOT_ERROR_EASYSETUP_INVALID_REQUEST;
 
-	if (!strcmp(cmd, IOT_ES_URI_POST_KEYINFO)) {
-		cur_step = IOT_EASYSETUP_STEP_KEYINFO;
-	} else if (!strcmp(cmd, IOT_ES_URI_POST_CONFIRMINFO)) {
-		cur_step = IOT_EASYSETUP_STEP_CONFIRMINFO;
-	} else if (!strcmp(cmd, IOT_ES_URI_POST_CONFIRM)) {
-		cur_step = IOT_EASYSETUP_STEP_CONFIRM;
-	} else if (!strcmp(cmd, IOT_ES_URI_POST_WIFIPROVISIONINGINFO)) {
-		cur_step = IOT_EASYSETUP_STEP_WIFIPROVIONINGINFO;
-	} else if (!strcmp(cmd, IOT_ES_URI_POST_SETUPCOMPLETE)) {
-		cur_step = IOT_EASYSETUP_STEP_SETUPCOMPLETE;
-	} else if (!strcmp(cmd, IOT_ES_URI_POST_LOGS)) {
-		cur_step = IOT_EASYSETUP_STEP_LOG_CREATE_DUMP;
-	} else {
+	if (cmd == IOT_EASYSETUP_INVALID_STEP) {
+		IOT_ERROR("Invalid command %d", cmd);
 		err = IOT_ERROR_EASYSETUP_INVALID_CMD;
-		IOT_ERROR("Invalid command %s", cmd);
 		goto post_exit;
 	}
+
+	cur_step = cmd;
 
 	if ((cur_step != ref_step) && (cur_step < IOT_EASYSETUP_STEP_LOG_SYSTEMINFO)) {
 		if (cur_step == IOT_EASYSETUP_STEP_WIFIPROVIONINGINFO) {
 		   if ((ref_step == IOT_EASYSETUP_STEP_CONFIRM) || (ref_step == IOT_EASYSETUP_STEP_CONFIRMINFO))
 			   ref_step = IOT_EASYSETUP_STEP_WIFIPROVIONINGINFO;
 		   else {
-			   err = IOT_ERROR_EASYSETUP_INVALID_CMD;
-			   IOT_ERROR("Invalid command step %s", cmd);
+			   err = IOT_ERROR_EASYSETUP_INVALID_SEQUENCE;
+			   IOT_ERROR("Invalid command sequence %d", cmd);
 			   goto post_exit;
 		   }
 		} else {
-			err = IOT_ERROR_EASYSETUP_INVALID_CMD;
-			IOT_ERROR("Invalid command step %s", cmd);
+			err = IOT_ERROR_EASYSETUP_INVALID_SEQUENCE;
+			IOT_ERROR("Invalid command sequence %d", cmd);
 			goto post_exit;
 		}
 	}
@@ -228,7 +215,7 @@ iot_error_t _iot_easysetup_gen_post_payload(struct iot_context *ctx, const char 
 		IOT_ERROR("easysetup request failed %d (%d)", cur_step, err);
 		goto post_exit;
 	}
-	IOT_INFO("waiting.. response for [%s]", cmd);
+	IOT_INFO("waiting.. response for [%d]", cmd);
 
 	for( ; ; ) {
 		curr_event = iot_os_eventgroup_wait_bits(ctx->iot_events,
@@ -289,7 +276,7 @@ static inline bool _is_400_error(iot_error_t err)
 		return false;
 }
 
-static void http_msg_handler(const char* uri, char **buffer, enum cgi_type type, char* data_buf)
+void http_msg_handler(int cmd, char **buffer, enum cgi_type type, char* data_buf)
 {
 	unsigned int buffer_len;
 	char *buf = NULL;
@@ -300,24 +287,22 @@ static void http_msg_handler(const char* uri, char **buffer, enum cgi_type type,
 	iot_error_t err = IOT_ERROR_NONE;
 
 	if (type == D2D_POST) {
-			err = _iot_easysetup_gen_post_payload(context, uri, data_buf, &payload);
-			if (!err) {
-				buffer_len = strlen(payload) + strlen(http_status_200) + strlen(http_header) + 9;
-				buf = malloc(buffer_len);
-				if (!buf) {
-					IOT_ERROR("failed to malloc buffer for the post msg");
-					goto cgi_out;
-				}
-				snprintf(buf, buffer_len, "%s%s%4d\r\n\r\n%s",
-						http_status_200, http_header, (int)strlen(payload), payload);
-				IOT_INFO("%s ok", uri);
-			} else if (err == IOT_ERROR_EASYSETUP_INVALID_CMD) {
+		err = _iot_easysetup_gen_post_payload(context, cmd, data_buf, &payload);
+		if (!err) {
+			buffer_len = strlen(payload) + strlen(http_status_200) + strlen(http_header) + 9;
+			buf = malloc(buffer_len);
+			if (!buf) {
+				IOT_ERROR("failed to malloc buffer for the post msg");
 				goto cgi_out;
-			} else {
-				IOT_INFO("%s not ok", uri);
 			}
+			snprintf(buf, buffer_len, "%s%s%4d\r\n\r\n%s",
+					http_status_200, http_header, (int)strlen(payload), payload);
+			IOT_INFO("post cmd[%d] ok", cmd);
+		} else {
+			IOT_INFO("post cmd[%d] not ok", cmd);
+		}
 	} else if (type == D2D_GET) {
-		err = _iot_easysetup_gen_get_payload(context, uri, &payload);
+		err = _iot_easysetup_gen_get_payload(context, cmd, &payload);
 		if (!err) {
 			buffer_len = strlen(payload) + strlen(http_status_200) + strlen(http_header) + 9;
 			buf = malloc(buffer_len);
@@ -327,11 +312,9 @@ static void http_msg_handler(const char* uri, char **buffer, enum cgi_type type,
 			}
 			snprintf(buf, buffer_len, "%s%s%4d\r\n\r\n%s",
 						http_status_200, http_header, (int)strlen(payload), payload);
-			IOT_INFO("%s ok", uri);
-		} else if (err == IOT_ERROR_EASYSETUP_INVALID_CMD) {
-			goto cgi_out;
+			IOT_INFO("get cmd[%d] ok", cmd);
 		} else {
-			IOT_INFO("%s not ok", uri);
+			IOT_INFO("get cmd[%d] not ok", cmd);
 		}
 	} else {
 		IOT_ERROR("Not supported curl message type : %d", type);
@@ -380,35 +363,6 @@ cgi_out:
 		free(payload);
 	if (ptr)
 		free(ptr);
-}
-
-void http_packet_handle(const char *name, char **buf, char *payload, enum cgi_type type)
-{
-	bool msg_processed = false;
-	int i;
-
-	if (type == D2D_GET) {
-		for (i = 0; i < ARRAY_SIZE(get_cgi_cmds) ; i++) {
-			if (!strcmp(name,  get_cgi_cmds[i])) {
-				http_msg_handler(name, buf, D2D_GET, payload);
-				msg_processed = true;
-				break;
-			}
-		}
-	} else if (type == D2D_POST) {
-		for (i = 0; i < ARRAY_SIZE(post_cgi_cmds) ; i++) {
-			if (!strcmp(name,  post_cgi_cmds[i])) {
-				http_msg_handler(name, buf, D2D_POST, payload);
-				msg_processed = true;
-				break;
-			}
-		}
-	}
-
-	if (!msg_processed) {
-		IOT_WARN("not supported uri <%s>", name);
-		http_msg_handler(name, buf, D2D_ERROR, payload);
-	}
 }
 
 iot_error_t iot_easysetup_init(struct iot_context *ctx)
