@@ -35,17 +35,30 @@ static char *tx_buffer = NULL;
 
 static iot_os_thread es_tcp_task_handle = NULL;
 
+static int listen_sock = -1;
+static int deinit_processing = 0;
+
+static void _clear_listen_socket(void)
+{
+	if (listen_sock != -1) {
+		IOT_INFO("Shutting down listen socket");
+		shutdown(listen_sock, SHUT_RD);
+		close(listen_sock);
+		listen_sock = -1;
+	}
+}
+
 static void es_tcp_task(void *pvParameters)
 {
 	char *payload = NULL;
 	char rx_buffer[RX_BUFFER_MAX];
-	int addr_family, ip_protocol, listen_sock, sock, ret, len, type, cmd;
+	int addr_family, ip_protocol, sock, ret, len, type, cmd;
 	iot_error_t err = IOT_ERROR_NONE;
 	struct sockaddr_in sourceAddr;
 	size_t content_len;
 	uint addrLen;
 
-	while (1) {
+	while (!deinit_processing) {
 		struct sockaddr_in destAddr;
 		destAddr.sin_addr.s_addr = htonl(INADDR_ANY);
 		destAddr.sin_family = AF_INET;
@@ -131,6 +144,10 @@ static void es_tcp_task(void *pvParameters)
 					free(tx_buffer);
 					tx_buffer = NULL;
 				}
+				//Transfer finished in this loop, sock resources should be clean.
+				shutdown(sock, SHUT_RD);
+				close(sock);
+				sock = -1;
 			}
 		}
 
@@ -139,7 +156,16 @@ static void es_tcp_task(void *pvParameters)
 			shutdown(sock, SHUT_RD);
 			close(sock);
 		}
+		//sock resources should be clean
+		if (!deinit_processing) {
+			_clear_listen_socket();
+		}
 	}
+
+	if (!deinit_processing) {
+		_clear_listen_socket();
+	}
+
 	/*set es_tcp_task_handle to null, prevent dulicate delete in es_tcp_deinit*/
 	es_tcp_task_handle = NULL;
 	iot_os_thread_delete(NULL);
@@ -153,6 +179,10 @@ void es_http_init(void)
 
 void es_http_deinit(void)
 {
+	deinit_processing = 1;
+	//sock resources should be clean
+	_clear_listen_socket();
+
 	if (es_tcp_task_handle) {
 		iot_os_thread_delete(es_tcp_task_handle);
 		es_tcp_task_handle = NULL;
@@ -163,6 +193,7 @@ void es_http_deinit(void)
 		tx_buffer = NULL;
 	}
 
-	IOT_INFO("http tcp deinit!!");
+	deinit_processing = 0;
+	IOT_INFO("http tcp deinit complete!");
 }
 
