@@ -566,6 +566,31 @@ void iot_api_device_info_mem_free(struct iot_device_info *device_info)
 		iot_os_free(device_info->firmware_version);
 		device_info->firmware_version = NULL;
 	}
+
+	if (device_info->model_number) {
+		iot_os_free(device_info->model_number);
+		device_info->firmware_version = NULL;
+	}
+
+	if (device_info->product_number) {
+		iot_os_free(device_info->product_number);
+		device_info->firmware_version = NULL;
+	}
+
+	if (device_info->marketing_name) {
+		iot_os_free(device_info->marketing_name);
+		device_info->firmware_version = NULL;
+	}
+
+	if (device_info->manufacturer_name) {
+		iot_os_free(device_info->manufacturer_name);
+		device_info->firmware_version = NULL;
+	}
+
+	if (device_info->manufacturer_code) {
+		iot_os_free(device_info->manufacturer_code);
+		device_info->firmware_version = NULL;
+	}
 }
 
 static void _dump_device_info(struct iot_device_info *info)
@@ -574,10 +599,20 @@ static void _dump_device_info(struct iot_device_info *info)
 		return;
 
 	IOT_INFO("firmware_version: %s", info->firmware_version);
+	IOT_INFO("model_number: %s", info->model_number);
+	IOT_INFO("product_number: %s", info->product_number);
+	IOT_INFO("marketing_name: %s", info->marketing_name);
+	IOT_INFO("manufacturer_name: %s", info->manufacturer_name);
+	IOT_INFO("manufacturer_code: %s", info->manufacturer_code);
 }
 
 static const char name_deviceInfo[] = "deviceInfo";
 static const char name_version[] = "firmwareVersion";
+static const char name_model_number[] = "modelNumber";
+static const char name_product_number[] = "productNumber";
+static const char name_marketing[] = "marketingName";
+static const char name_manufacturer[] = "manufacturerName";
+static const char name_manufacturer_code[] = "manufacturerCode";
 
 iot_error_t iot_api_device_info_load(unsigned char *device_info,
 		unsigned int device_info_len, struct iot_device_info *info)
@@ -587,6 +622,11 @@ iot_error_t iot_api_device_info_load(unsigned char *device_info,
 	JSON_H *profile = NULL;
 	JSON_H *item = NULL;
 	char *firmware_version = NULL;
+	char *model_number = NULL;
+	char *product_number = NULL;
+	char *marketing_name = NULL;
+	char *manufacturer_name = NULL;
+	char *manufacturer_code = NULL;
 	char *data = NULL;
 	size_t str_len = 0;
 #if defined(CONFIG_STDK_IOT_CORE_LOG_LEVEL_ERROR)
@@ -634,6 +674,91 @@ iot_error_t iot_api_device_info_load(unsigned char *device_info,
 
 	info->firmware_version = firmware_version;
 
+	/* name_model_number */
+	item = JSON_GET_OBJECT_ITEM(profile, name_model_number);
+	if (!item) {
+		iot_err = IOT_ERROR_UNINITIALIZED;
+		goto load_out;
+	}
+	str_len = strlen(JSON_GET_STRING_VALUE(item));
+	model_number = iot_os_malloc(str_len + 1);
+	if (!model_number) {
+		iot_err = IOT_ERROR_MEM_ALLOC;
+		goto load_out;
+	}
+	strncpy(model_number, JSON_GET_STRING_VALUE(item), str_len);
+	model_number[str_len] = '\0';
+
+	info->model_number = model_number;
+
+	/* name_product_number */
+	item = JSON_GET_OBJECT_ITEM(profile, name_product_number);
+	if (!item) {
+		iot_err = IOT_ERROR_UNINITIALIZED;
+		goto load_out;
+	}
+	str_len = strlen(JSON_GET_STRING_VALUE(item));
+	product_number = iot_os_malloc(str_len + 1);
+	if (!product_number) {
+		iot_err = IOT_ERROR_MEM_ALLOC;
+		goto load_out;
+	}
+	strncpy(product_number, JSON_GET_STRING_VALUE(item), str_len);
+	product_number[str_len] = '\0';
+
+	info->product_number = product_number;
+
+	/* name_marketing */
+	item = JSON_GET_OBJECT_ITEM(profile, name_marketing);
+	if (!item) {
+		iot_err = IOT_ERROR_UNINITIALIZED;
+		goto load_out;
+	}
+	str_len = strlen(JSON_GET_STRING_VALUE(item));
+	marketing_name = iot_os_malloc(str_len + 1);
+	if (!marketing_name) {
+		iot_err = IOT_ERROR_MEM_ALLOC;
+		goto load_out;
+	}
+	strncpy(marketing_name, JSON_GET_STRING_VALUE(item), str_len);
+	marketing_name[str_len] = '\0';
+
+	info->marketing_name = marketing_name;
+
+	/* name_manufacturer */
+	item = JSON_GET_OBJECT_ITEM(profile, name_manufacturer);
+	if (!item) {
+		iot_err = IOT_ERROR_UNINITIALIZED;
+		goto load_out;
+	}
+	str_len = strlen(JSON_GET_STRING_VALUE(item));
+	manufacturer_name = iot_os_malloc(str_len + 1);
+	if (!manufacturer_name) {
+		iot_err = IOT_ERROR_MEM_ALLOC;
+		goto load_out;
+	}
+	strncpy(manufacturer_name, JSON_GET_STRING_VALUE(item), str_len);
+	manufacturer_name[str_len] = '\0';
+
+	info->manufacturer_name = manufacturer_name;
+
+	/* manufacturerCode */
+	item = JSON_GET_OBJECT_ITEM(profile, name_manufacturer_code);
+	if (!item) {
+		iot_err = IOT_ERROR_UNINITIALIZED;
+		goto load_out;
+	}
+	str_len = strlen(JSON_GET_STRING_VALUE(item));
+	manufacturer_code = iot_os_malloc(str_len + 1);
+	if (!manufacturer_code) {
+		iot_err = IOT_ERROR_MEM_ALLOC;
+		goto load_out;
+	}
+	strncpy(manufacturer_code, JSON_GET_STRING_VALUE(item), str_len);
+	manufacturer_code[str_len] = '\0';
+
+	info->manufacturer_code = manufacturer_code;
+
 	if (root)
 		JSON_DELETE(root);
 
@@ -660,6 +785,17 @@ load_out:
 	}
 	if (firmware_version)
 		iot_os_free(firmware_version);
+	if (manufacturer_code)
+		iot_os_free(manufacturer_code);
+	if (product_number)
+		iot_os_free(product_number);
+	if (marketing_name)
+		iot_os_free(marketing_name);
+	if (model_number)
+		iot_os_free(model_number);
+	if (manufacturer_name)
+		iot_os_free(manufacturer_name);
+
 	if (root)
 		JSON_DELETE(root);
 	if (data)

@@ -207,6 +207,11 @@ struct iot_registered_data {
  */
 struct iot_device_info {
 	char *firmware_version;		/**< @brief device's binary/firmware version */
+	char *model_number;			/**< @brief device's model number */
+	char *product_number;			/**< @brief device's product number */
+	char *marketing_name;			/**< @brief device's marketing name */
+	char *manufacturer_name;		/**< @brief device's manaufacturer name */
+	char *manufacturer_code;		/**< @brief device's manaufacturer code */
 };
 
 /**
