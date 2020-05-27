@@ -20,26 +20,65 @@
 #include <setjmp.h>
 #include <cmocka.h>
 #include <stdio.h>
+#include <stdlib.h>
 #include <string.h>
 #include <sys/socket.h>
 #include <errno.h>
 #include <unistd.h>
 #include <netinet/in.h>
 #include <arpa/inet.h>
+#include <iot_main.h>
 #include <external/JSON.h>
-#include <stdlib.h>
+#include <iot_crypto.h>
+#include <iot_easysetup.h>
+#include <iot_internal.h>
+
 #include "../src/easysetup/http/easysetup_http.h"
 
 int TC_iot_easysetup_httpd_group_setup(void **state)
 {
-    es_http_init();
+    struct iot_context *context;
+    iot_error_t err;
+
+    context = (struct iot_context *) malloc((sizeof(struct iot_context)));
+    assert_non_null(context);
+    memset(context, '\0', sizeof(struct iot_context));
+
+    context->es_crypto_cipher_info = (iot_crypto_cipher_info_t *) malloc(sizeof(iot_crypto_cipher_info_t));
+    assert_non_null(context->es_crypto_cipher_info);
+    memset(context->es_crypto_cipher_info, '\0', sizeof(iot_crypto_cipher_info_t));
+
+    context->iot_events = iot_os_eventgroup_create();
+    assert_non_null(context->iot_events);
+    context->cmd_queue = iot_os_queue_create(IOT_QUEUE_LENGTH, sizeof(struct iot_command));
+    assert_non_null(context->cmd_queue);
+    context->easysetup_req_queue = iot_os_queue_create(1, sizeof(struct iot_easysetup_payload));
+    assert_non_null(context->easysetup_req_queue);
+    context->easysetup_resp_queue = iot_os_queue_create(1, sizeof(struct iot_easysetup_payload));
+    assert_non_null(context->easysetup_resp_queue);
+
+    err = iot_easysetup_init(context);
+    assert_int_equal(err, IOT_ERROR_NONE);
     usleep(100);
+
+    *state = context;
+
     return 0;
 }
 
 int TC_iot_easysetup_httpd_group_teardown(void **state)
 {
-    es_http_deinit();
+    struct iot_context *context = (struct iot_context *)*state;
+
+    iot_easysetup_deinit(context);
+
+    iot_os_queue_delete(context->easysetup_resp_queue);
+    iot_os_queue_delete(context->easysetup_req_queue);
+    iot_os_queue_delete(context->cmd_queue);
+    iot_os_eventgroup_delete(context->iot_events);
+    free(context->es_crypto_cipher_info);
+    free(context);
+
     return 0;
 }
 
@@ -181,4 +220,65 @@ void TC_iot_easysetup_httpd_invalid_request(void **state)
 
         close(sock);
     }
+}
+
+void assert_device_info_response(const char* buffer)
+{
+    JSON_H *root;
+    JSON_H *item;
+    int code;
+    char *body;
+
+    assert_non_null(buffer);
+    _parse_http_resonse(buffer, &code, &body);
+    assert_int_equal(code, 200);
+    root = JSON_PARSE(body);
+    assert_non_null(root);
+    item = JSON_GET_OBJECT_ITEM(root, "protocolVersion");
+    assert_non_null(item);
+    assert_true(JSON_IS_STRING(item));
+    item = JSON_GET_OBJECT_ITEM(root, "wifiSupportFrequency");
+    assert_non_null(item);
+    assert_true(JSON_IS_NUMBER(item));
+    item = JSON_GET_OBJECT_ITEM(root, "iv");
+    assert_non_null(item);
+    assert_true(JSON_IS_STRING(item));
+}
+
+void TC_iot_easysetup_httpd_deviceinfo_success(void **state)
+{
+    int sock;
+    ssize_t len;
+    struct iot_context *context = (struct iot_context *)*state;
+    iot_error_t err;
+    struct iot_easysetup_payload easysetup_req;
+    char recv_buffer[1024] = {0, };
+    char *request_message = "GET /deviceinfo HTTP/1.1\r\n\r\n";
+
+    // Given
+    memset(recv_buffer, '\0', sizeof(recv_buffer));
+    sock = _connect_to_server("127.0.0.1");
+
+    // When: send request
+    len = send(sock, request_message, strlen(request_message), 0);
+    assert_int_equal(len, strlen(request_message));
+
+    // Given
+    iot_os_eventgroup_wait_bits(context->iot_events,
+                                IOT_EVENT_BIT_EASYSETUP_REQ, true, false, IOT_OS_MAX_DELAY);
+    easysetup_req.payload = NULL;
+    easysetup_req.err = IOT_ERROR_NONE;
+    if (iot_os_queue_receive(context->easysetup_req_queue, &easysetup_req, 0) == IOT_OS_FALSE) {
+        assert_true(1);
+    }
+    err = iot_easysetup_request_handler(context, easysetup_req);
+    assert_int_equal(err, IOT_ERROR_NONE);
+
+    // When: recv response
+    len = recv(sock, recv_buffer, sizeof(recv_buffer), 0);
+    // Then
+    assert_true(len > 0);
+    assert_device_info_response(recv_buffer);
+
+    close(sock);
 }
