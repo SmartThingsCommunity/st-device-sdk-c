@@ -174,6 +174,8 @@ For additional information about API parameters, please refer to the [API docume
 | void iot_bsp_system_poweroff  (  )                           | Shutdown system.           |
 | void iot_bsp_system_reboot  (  )                             | Restart system.            |
 | iot_error_t iot_bsp_system_set_time_in_sec  ( const char *  time_in_sec ) | Set system time in second. |
+| const char *iot_bsp_get_bsp_name  (  )                       | Get bsp name.              |
+| const char *iot_bsp_get_bsp_version_string  (  )             | Get bsp version string.    |
 
 #### Wi-Fi
 
@@ -234,3 +236,5 @@ These APIs are related to operating system.
 | void iot_os_timer_init  ( iot_os_timer *  timer )            | This function will init timer struct                         |
 | char iot_os_timer_isexpired  ( iot_os_timer  timer )         | This function will check if timer is expired                 |
 | unsigned int iot_os_timer_left_ms  ( iot_os_timer  timer )   | This function will return remaining time in ms unit          |
+| const char *iot_os_get_os_name  ( )                          | This function will return name of os                         |
+| const char *iot_os_get_os_version_string  ( )                | This function will return version string of os               |
