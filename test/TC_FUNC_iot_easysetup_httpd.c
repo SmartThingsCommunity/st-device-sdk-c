@@ -178,6 +178,7 @@ void assert_error_response(char *buffer, int expected_error_code, int expected_h
     code_item = JSON_GET_OBJECT_ITEM(err_item, "code");
     assert_non_null(code_item);
     assert_int_equal(expected_error_code, code_item->valueint);
+    JSON_DELETE(root);
 }
 
 enum {
@@ -243,6 +244,7 @@ void assert_device_info_response(char* buffer)
     item = JSON_GET_OBJECT_ITEM(root, "iv");
     assert_non_null(item);
     assert_true(JSON_IS_STRING(item));
+    JSON_DELETE(root);
 }
 
 void TC_iot_easysetup_httpd_deviceinfo_success(void **state)
