@@ -17,6 +17,7 @@
  ****************************************************************************/
 
 #include <stdio.h>
+#include <time.h>
 #include <sys/time.h>
 #include "iot_debug.h"
 #include "st_dev_version.h"
