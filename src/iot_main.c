@@ -777,7 +777,7 @@ out_do_cmd:
 
 static void _do_cmd_tout_check(struct iot_context *ctx)
 {
-	unsigned int remained_tout;
+	char is_expired;
 	iot_state_t next_state;
 
 	/* If the iot-core is stayed in IOT_STATE_UNKNOWN,
@@ -789,12 +789,12 @@ static void _do_cmd_tout_check(struct iot_context *ctx)
 
 	/* If device comes to connected_state, we don't need timeout checking */
 	if (ctx->curr_state == IOT_STATE_CLOUD_CONNECTED)
-		remained_tout = IOT_OS_MAX_DELAY;
+		is_expired = 0;
 	else
-		remained_tout = iot_os_timer_left_ms(ctx->state_timer);
+		is_expired = iot_os_timer_isexpired(ctx->state_timer);
 
-	if ((ctx->curr_state != ctx->req_state) || !remained_tout) {
-		if (!remained_tout && !ctx->cmd_err) {
+	if ((ctx->curr_state != ctx->req_state) || is_expired) {
+		if (is_expired && !ctx->cmd_err) {
 			IOT_WARN("New state changing timeout");
 			IOT_DUMP_MAIN(WARN, BASE, 0x8BADF00D);
 
