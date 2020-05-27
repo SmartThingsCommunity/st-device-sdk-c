@@ -26,7 +26,6 @@
 #include "iot_internal.h"
 #include "iot_nv_data.h"
 #include "iot_util.h"
-#include "iot_uuid.h"
 #include "iot_debug.h"
 
 #define HASH_SIZE (4)
@@ -320,11 +319,12 @@ iot_error_t iot_easysetup_create_ssid(struct iot_devconf_prov_data *devconf, cha
 	memcpy(ssid, ssid_build, ssid_len < strlen(ssid_build) ? ssid_len : strlen(ssid_build));
 out:
 	if (err && devconf->hashed_sn) {
-		free(devconf->hashed_sn);
+		iot_os_free(devconf->hashed_sn);
 		devconf->hashed_sn = NULL;
 	}
-	if (serial)
-		free(serial);
+	if (serial) {
+		iot_os_free(serial);
+	}
 	return err;
 }
 
@@ -427,6 +427,9 @@ iot_error_t _es_wifiscaninfo_handler(struct iot_context *ctx, char **out_payload
 		array_obj = JSON_CREATE_OBJECT();
 		if (!array_obj) {
 			IOT_ERROR("json create failed");
+			if (array) {
+				JSON_DELETE(array);
+			}
 			err = IOT_ERROR_EASYSETUP_JSON_CREATE_ERROR;
 			goto out;
 		}
@@ -442,6 +445,9 @@ iot_error_t _es_wifiscaninfo_handler(struct iot_context *ctx, char **out_payload
 	if (!root) {
 		IOT_ERROR("json create failed");
 		err = IOT_ERROR_EASYSETUP_JSON_CREATE_ERROR;
+		if (array) {
+			JSON_DELETE(array);
+		}
 		goto out;
 	}
 	JSON_ADD_ITEM_TO_OBJECT(root, "wifiScanInfo", array);
@@ -1127,6 +1133,54 @@ out:
 }
 
 STATIC_FUNCTION
+iot_wifi_auth_mode_t _decide_wifi_auth_mode(const JSON_H *item, struct iot_wifi_prov_data *wifi_prov, const struct iot_context *ctx)
+{
+	iot_wifi_auth_mode_t auth_mode = IOT_WIFI_AUTH_WPA_WPA2_PSK;
+	int i;
+
+	if (!ctx || !wifi_prov) {
+		return IOT_WIFI_AUTH_WPA_WPA2_PSK;
+	}
+
+	if (item == NULL) {
+		IOT_INFO("no authType");
+		for (i = 0; i < ctx->scan_num; i++) {
+			if (!strcmp(wifi_prov->ssid, (char *)ctx->scan_result[i].ssid)) {
+				auth_mode = ctx->scan_result[i].authmode;
+				IOT_DEBUG("%s is type %d", wifi_prov->ssid, auth_mode);
+				break;
+			}
+		}
+		if (i == ctx->scan_num) {
+			if (strlen(wifi_prov->password) == 0) {
+				IOT_DEBUG("%s doesn't exist in scan list. So assume it as Open", wifi_prov->ssid);
+				auth_mode = IOT_WIFI_AUTH_OPEN;
+			} else {
+				IOT_DEBUG("%s doesn't exist in scan list. So assume it as WPA", wifi_prov->ssid);
+				auth_mode = IOT_WIFI_AUTH_WPA_WPA2_PSK;
+			}
+		}
+	} else {
+		for (i = 0; i < ctx->scan_num; i++) {
+			if (!strcmp(wifi_prov->ssid, (char *)ctx->scan_result[i].ssid)) {
+				if (item->valueint == ctx->scan_result[i].authmode) {
+					auth_mode = item->valueint;
+				} else {
+					auth_mode = ctx->scan_result[i].authmode;
+				}
+				break;
+			}
+		}
+		if (i == ctx->scan_num) {
+			auth_mode = item->valueint;
+		}
+		IOT_DEBUG("%s is type %d", wifi_prov->ssid, auth_mode);
+	}
+
+	return auth_mode;
+}
+
+STATIC_FUNCTION
 iot_error_t _es_wifi_prov_parse(struct iot_context *ctx, char *in_payload)
 {
 	struct iot_wifi_prov_data *wifi_prov = NULL;
@@ -1135,7 +1189,6 @@ iot_error_t _es_wifi_prov_parse(struct iot_context *ctx, char *in_payload)
 	JSON_H *root = NULL;
 	JSON_H *wifi_credential = NULL;
 	iot_error_t err = IOT_ERROR_NONE;
-	int i = 0;
 
 	root = JSON_PARSE(in_payload);
 	if (!root) {
@@ -1183,33 +1236,8 @@ iot_error_t _es_wifi_prov_parse(struct iot_context *ctx, char *in_payload)
 		goto wifi_parse_out;
 	}
 
-	if ((item = JSON_GET_OBJECT_ITEM(wifi_credential, "authType")) == NULL) {
-		IOT_INFO("no authType");
-		for (i = 0; i < ctx->scan_num; i++) {
-			if (!strcmp(wifi_prov->ssid, (char *)ctx->scan_result[i].ssid)) {
-				wifi_prov->security_type = ctx->scan_result[i].authmode;
-				IOT_DEBUG("%s is type %d", wifi_prov->ssid, wifi_prov->security_type);
-				break;
-			}
-		}
-		if (i == ctx->scan_num) {
-			IOT_DEBUG("%s doesn't exist in scan list. So assume it as WPA", wifi_prov->ssid);
-			wifi_prov->security_type = IOT_WIFI_AUTH_WPA_WPA2_PSK;
-		}
-	} else {
-		for (i = 0; i < ctx->scan_num; i++) {
-			if (!strcmp(wifi_prov->ssid, (char *)ctx->scan_result[i].ssid)) {
-				if (item->valueint == ctx->scan_result[i].authmode)
-					wifi_prov->security_type = item->valueint;
-				else
-					wifi_prov->security_type = ctx->scan_result[i].authmode;
-				break;
-			}
-		}
-		if (i == ctx->scan_num)
-			wifi_prov->security_type = item->valueint;
-		IOT_DEBUG("%s is type %d", wifi_prov->ssid, wifi_prov->security_type);
-	}
+	wifi_prov->security_type =
+		_decide_wifi_auth_mode(JSON_GET_OBJECT_ITEM(wifi_credential, "authType"), wifi_prov, ctx);
 
 	err = iot_nv_set_wifi_prov_data(wifi_prov);
 	if (err) {
@@ -1307,42 +1335,45 @@ iot_error_t _es_cloud_prov_parse(char *in_payload)
 	}
 
 	IOT_INFO("brokerUrl: %s:%d", cloud_prov->broker_url, cloud_prov->broker_port);
-	IOT_DEBUG("locationId : %s", location_id_str);
-	IOT_DEBUG("roomId : %s", room_id_str);
 	IOT_INFO("deviceName : %s", cloud_prov->label);
 
 cloud_parse_out:
 	if (err) {
-		if (url.domain)
-			free(url.domain);
+		if (url.domain) {
+			iot_os_free(url.domain);
+		}
 	}
 
-	if (url.protocol)
-		free(url.protocol);
-	if (full_url)
-		free(full_url);
-	if (cloud_prov)
-		free(cloud_prov);
-	if (location_id_str)
-		free(location_id_str);
-	if (room_id_str)
-		free(room_id_str);
-	if (root)
+	if (url.protocol) {
+		iot_os_free(url.protocol);
+	}
+	if (full_url) {
+		iot_os_free(full_url);
+	}
+	if (cloud_prov) {
+		iot_os_free(cloud_prov);
+	}
+	if (location_id_str) {
+		iot_os_free(location_id_str);
+	}
+	if (room_id_str) {
+		iot_os_free(room_id_str);
+	}
+	if (root) {
 		JSON_DELETE(root);
+	}
 	return err;
 }
 
 STATIC_FUNCTION
 iot_error_t _es_wifiprovisioninginfo_handler(struct iot_context *ctx, char *in_payload, char **out_payload)
 {
-	struct iot_uuid uuid;
 	char *plain_msg = NULL;
 	char *final_msg = NULL;
 	char *enc_msg = NULL;
 	char *recv_msg = NULL;
 	char *dec_msg = NULL;
 	JSON_H *root = NULL;
-	int uuid_len = 40;
 	iot_error_t err = IOT_ERROR_NONE;
 
 	root = JSON_PARSE(in_payload);
@@ -1377,18 +1408,14 @@ iot_error_t _es_wifiprovisioninginfo_handler(struct iot_context *ctx, char *in_p
 		goto out;
 	}
 
-	err = iot_get_random_uuid_from_mac(&uuid);
-	if (err) {
-		IOT_ERROR("To get uuid is failed (error : %d)", err);
-		err = IOT_ERROR_EASYSETUP_LOOKUPID_GENERATE_FAIL;
-		goto out;
+	if (ctx->lookup_id == NULL) {
+		ctx->lookup_id = iot_os_malloc(IOT_REG_UUID_STR_LEN + 1);
 	}
 
-	ctx->lookup_id = (char *) malloc(uuid_len);
-
-	err = iot_util_convert_uuid_str(&uuid, ctx->lookup_id, uuid_len);
-	if (err) {
-		IOT_ERROR("Failed to convert uuid to str (error : %d)", err);
+	err = iot_get_random_id_str(ctx->lookup_id,
+			(IOT_REG_UUID_STR_LEN + 1));
+	if (err != IOT_ERROR_NONE) {
+		IOT_ERROR("failed to get new lookup_id(%d)", err);
 		err = IOT_ERROR_EASYSETUP_LOOKUPID_GENERATE_FAIL;
 		goto out;
 	}
@@ -1569,6 +1596,9 @@ static iot_error_t _es_log_get_dump_handler(struct iot_context *ctx, char **out_
 	if (!root) {
 		IOT_ERROR("json create failed");
 		err = IOT_ERROR_EASYSETUP_MEM_ALLOC_ERROR;
+		if (item) {
+			JSON_DELETE(item);
+		}
 		goto out;
 	}
 

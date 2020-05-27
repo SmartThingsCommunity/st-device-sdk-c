@@ -86,6 +86,14 @@ void __wrap_iot_os_free(void* ptr)
         return free(ptr);
 }
 
+void *__wrap_iot_os_realloc(void* ptr, size_t size)
+{
+    if (_mock_detect_memory_leak)
+        return test_realloc(ptr, size);
+    else
+        return realloc(ptr, size);
+}
+
 void *__wrap_iot_os_strdup(const char *src)
 {
     if (_mock_detect_memory_leak) {

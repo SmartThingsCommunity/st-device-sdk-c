@@ -64,7 +64,7 @@ iot_error_t iot_bsp_fs_open_from_stnv(const char *filename, iot_bsp_fs_handle_t 
 	return iot_bsp_fs_open(filename, FS_READONLY, handle);
 }
 
-iot_error_t iot_bsp_fs_read(iot_bsp_fs_handle_t handle, char *buffer, unsigned int length)
+iot_error_t iot_bsp_fs_read(iot_bsp_fs_handle_t handle, char *buffer, size_t *length)
 {
 	int ret;
 	struct stat st;
@@ -82,6 +82,8 @@ iot_error_t iot_bsp_fs_read(iot_bsp_fs_handle_t handle, char *buffer, unsigned i
 	if (ret <= 0) {
 		return IOT_ERROR_FS_READ_FAIL;
 	}
+
+	*length = filelen;
 
 	return IOT_ERROR_NONE;
 }

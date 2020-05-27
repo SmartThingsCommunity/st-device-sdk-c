@@ -233,7 +233,7 @@ iot_error_t iot_util_convert_str_uuid(const char* str, struct iot_uuid* uuid)
 	return IOT_ERROR_NONE;
 }
 
-iot_error_t iot_util_convert_uuid_str(struct iot_uuid* uuid, char* str, int max_sz)
+iot_error_t iot_util_convert_uuid_str(struct iot_uuid* uuid, char* str, size_t max_sz)
 {
 	char* ref_id = "42365732-c6db-4bc9-8945-2a7ca10d6f23";
 	int i, written = 0, wrt;
@@ -405,12 +405,12 @@ iot_error_t iot_util_url_parse(char *url, url_parse_t *output)
 		return IOT_ERROR_INVALID_ARGS;
 
 	p_port = p2 + 1;
-	output->protocol = calloc(sizeof(char), p1 - url + 1);
+	output->protocol = iot_os_calloc(sizeof(char), p1 - url + 1);
 	if (!output->protocol)
 		return IOT_ERROR_MEM_ALLOC;
 	strncpy(output->protocol, url, p1 - url);
 
-	output->domain = calloc(sizeof(char), p2 - p_domain + 1);
+	output->domain = iot_os_calloc(sizeof(char), p2 - p_domain + 1);
 	if (!output->domain) {
 		free(output->protocol);
 		output->protocol = NULL;

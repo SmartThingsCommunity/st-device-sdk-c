@@ -31,6 +31,7 @@
 #include <errno.h>
 #include <sys/types.h>
 #include <tinyara/config.h>
+#include <tinyara/version.h>
 
 #include "iot_error.h"
 #include "iot_os_util.h"
@@ -176,18 +177,32 @@ static void *recursive_mutex_create_wrapper(void)
 	return (void *)mutex;
 }
 
+const char* iot_os_get_os_name()
+{
+       return "TizenRT";
+}
+
+const char* iot_os_get_os_version_string()
+{
+#ifdef CONFIG_VERSION_STRING
+       return CONFIG_VERSION_STRING;
+#else
+       return "";
+#endif
+}
+
 
 int iot_os_mutex_init(iot_os_mutex *mutex)
 {
     if (!mutex) {
-        return IOT_ERROR_INVALID_ARGS;
+        return IOT_OS_FALSE;
     }
 
     mutex->sem = recursive_mutex_create_wrapper();
     if (!mutex->sem) {
-        return IOT_ERROR_MEM_ALLOC;
+        return IOT_OS_FALSE;
     }
-    return IOT_ERROR_NONE;
+    return IOT_OS_TRUE;
 }
 
 int iot_os_mutex_lock(iot_os_mutex *mutex)
@@ -195,14 +210,14 @@ int iot_os_mutex_lock(iot_os_mutex *mutex)
     int ret;
 
     if (!mutex) {
-        return IOT_ERROR_INVALID_ARGS;
+        return IOT_OS_FALSE;
     }
 
     ret = pthread_mutex_lock((pthread_mutex_t *)mutex->sem);
     if (!ret) {
-        ret = IOT_ERROR_NONE;
+        ret = IOT_OS_TRUE;
     } else {
-        ret = IOT_ERROR_BAD_REQ;
+        ret = IOT_OS_FALSE;
     }
 
     return ret;
@@ -213,14 +228,14 @@ int iot_os_mutex_unlock(iot_os_mutex *mutex)
     int ret;
 
     if (!mutex) {
-        return IOT_ERROR_INVALID_ARGS;
+        return IOT_OS_FALSE;
     }
 
     ret = pthread_mutex_unlock((pthread_mutex_t *)mutex->sem);
     if (!ret) {
-        ret = IOT_ERROR_NONE;
+        ret = IOT_OS_TRUE;
     } else {
-        ret = IOT_ERROR_BAD_REQ;
+        ret = IOT_OS_FALSE;
     }
 
     return ret;

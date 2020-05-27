@@ -44,6 +44,21 @@ extern const unsigned int iot_os_max_delay;
 extern const unsigned int iot_os_true;
 extern const unsigned int iot_os_false;
 
+
+/*
+ * @brief get os name
+ * @return
+ *  return is string of os name
+ */
+const char* iot_os_get_os_name();
+
+/*
+ * @brief get os version string
+ * @return
+ *  return is string of os version
+ */
+const char* iot_os_get_os_version_string();
+
 /**
  * @brief	create and run thread
  *
@@ -241,7 +256,7 @@ unsigned int iot_os_eventgroup_clear_bits(iot_os_eventgroup* eventgroup_handle,
  * @param[out] mutex	handle of mutex created by this function
  *
  * @return
- *	IOT_ERROR_NONE : success
+ *	IOT_OS_TRUE : success
  *	otherwise : fail
  */
 int iot_os_mutex_init(iot_os_mutex* mutex);
@@ -254,7 +269,7 @@ int iot_os_mutex_init(iot_os_mutex* mutex);
  * @param[in] mutex	handle of mutex
  *
  * @return
- *	IOT_ERROR_NONE : success
+ *	IOT_OS_TRUE : success
  *	otherwise : fail
  */
 int iot_os_mutex_lock(iot_os_mutex* mutex);
@@ -267,7 +282,7 @@ int iot_os_mutex_lock(iot_os_mutex* mutex);
  * @param[in] mutex	handle of mutex
  *
  * @return
- *	IOT_ERROR_NONE : success
+ *	IOT_OS_TRUE : success
  *	otherwise : fail
  */
 int iot_os_mutex_unlock(iot_os_mutex* mutex);
@@ -375,6 +390,18 @@ void *iot_os_malloc(size_t size);
 void *iot_os_calloc(size_t nmemb, size_t size);
 
 /**
+ * @brief	change allocated memory size
+ *
+ * This function changes the size of the memory block pointed to by ptr to size bytes.
+ * If the new size is larger than the old size, the added memory will not be initialized.
+ *
+ * @param[in] ptr a pointer of memory to change
+ * @param[in] size a bytes of memory to change
+ *
+ */
+char *iot_os_realloc(void *ptr, size_t size);
+
+/**
  * @brief	free memory
  *
  * frees the memory space pointed to by ptr,
@@ -399,6 +426,7 @@ char *iot_os_strdup(const char *src);
 #include <string.h>
 static inline void *iot_os_malloc(size_t size) { return malloc(size); }
 static inline void *iot_os_calloc(size_t nmemb, size_t size) { return calloc(nmemb, size); }
+static inline void *iot_os_realloc(void *ptr, size_t size) { return realloc(ptr, size); }
 static inline void iot_os_free(void *ptr) { return free(ptr); }
 static inline char *iot_os_strdup(const char *src) { return strdup(src); }
 #endif

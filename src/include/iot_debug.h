@@ -23,6 +23,8 @@
 extern "C" {
 #endif
 
+#include "iot_dump_log.h"
+
 /**
  * @name iot_debug_level_t
  * @brief internal debug level.
@@ -48,11 +50,19 @@ typedef enum {
 #define COLOR_CYAN "\033[0;36m"
 #define COLOR_END "\033[0;m"
 
+extern void iot_dump_log(iot_debug_level_t level, dump_log_id_t log_id, int arg1, int arg2);
+
 extern void iot_bsp_debug(iot_debug_level_t level, const char* tag, const char* fmt, ...);
 extern void iot_bsp_debug_check_heap(const char* tag, const char* func, const int line, const char* fmt, ...);
 #if defined(CONFIG_STDK_IOT_CORE_EASYSETUP_HTTP_LOG_SUPPORT)
 extern void iot_debug_save_log(char* buf);
 extern char *iot_debug_get_log(void);
+#endif
+
+#if defined(CONFIG_STDK_IOT_CORE_LOG_FILE)
+#define IOT_DUMP(level, msg, arg1, arg2) iot_dump_log(level, msg, arg1, arg2)
+#else
+#define IOT_DUMP(level, msg, arg1, arg2)
 #endif
 /**
  * @brief Error level logging macro.

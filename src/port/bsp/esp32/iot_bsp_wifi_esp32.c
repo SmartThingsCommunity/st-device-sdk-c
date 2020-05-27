@@ -71,6 +71,7 @@ static void _obtain_time(void)
 
 	while (timeinfo.tm_year < (2016 - 1900) && ++retry < retry_count) {
 		IOT_INFO("Waiting for system time to be set... (%d/%d)", retry, retry_count);
+		IOT_DUMP(IOT_DEBUG_LEVEL_DEBUG, IOT_DUMP_BSP_WIFI_SNTP_FAIL, retry, retry_count);
 		IOT_DELAY(2000);
 		time(&now);
 		localtime_r(&now, &timeinfo);
@@ -78,6 +79,7 @@ static void _obtain_time(void)
 
 	if (retry < 10) {
 		IOT_INFO("[WIFI] system time updated by %ld", now);
+		IOT_DUMP(IOT_DEBUG_LEVEL_DEBUG, IOT_DUMP_BSP_WIFI_SNTP_SUCCESS, now, retry);
 	}
 }
 
@@ -99,6 +101,7 @@ static esp_err_t event_handler(void *ctx, system_event_t *event)
 
 	case SYSTEM_EVENT_STA_DISCONNECTED:
 		IOT_INFO("Disconnect reason : %d", event->event_info.disconnected.reason);
+		IOT_DUMP(IOT_DEBUG_LEVEL_ERROR, IOT_DUMP_BSP_WIFI_EVENT_DEAUTH, event->event_info.disconnected.reason, 0);
 		xEventGroupSetBits(wifi_event_group, WIFI_STA_DISCONNECT_BIT);
 		esp_wifi_connect();
 		xEventGroupClearBits(wifi_event_group, WIFI_STA_CONNECT_BIT);
@@ -108,6 +111,7 @@ static esp_err_t event_handler(void *ctx, system_event_t *event)
 		esp_wifi_sta_get_ap_info(&ap_info);
 		IOT_INFO("got ip:%s rssi:%ddBm",
 			ip4addr_ntoa(&event->event_info.got_ip.ip_info.ip), ap_info.rssi);
+		IOT_DUMP(IOT_DEBUG_LEVEL_ERROR, IOT_DUMP_BSP_WIFI_EVENT_AUTH, ap_info.rssi, 0);
 		xEventGroupSetBits(wifi_event_group, WIFI_STA_CONNECT_BIT);
 		xEventGroupClearBits(wifi_event_group, WIFI_STA_DISCONNECT_BIT);
 		break;
@@ -160,6 +164,7 @@ iot_error_t iot_bsp_wifi_init()
 	esp_ret = esp_event_loop_init(event_handler, NULL);
 	if(esp_ret != ESP_OK) {
 		IOT_ERROR("esp_event_loop_init failed err=[%d]", esp_ret);
+		IOT_DUMP(IOT_DEBUG_LEVEL_ERROR, IOT_DUMP_BSP_WIFI_INIT_FAIL, esp_ret, __LINE__);
 		return IOT_ERROR_INIT_FAIL;
 	}
 
@@ -167,23 +172,27 @@ iot_error_t iot_bsp_wifi_init()
 	esp_ret = esp_wifi_init(&cfg);
 	if(esp_ret != ESP_OK) {
 		IOT_ERROR("esp_wifi_init failed err=[%d]", esp_ret);
+		IOT_DUMP(IOT_DEBUG_LEVEL_ERROR, IOT_DUMP_BSP_WIFI_INIT_FAIL, esp_ret, __LINE__);
 		return IOT_ERROR_INIT_FAIL;
 	}
 
 	esp_ret = esp_wifi_set_storage(WIFI_STORAGE_RAM);
 	if(esp_ret != ESP_OK) {
 		IOT_ERROR("esp_wifi_set_storage failed err=[%d]", esp_ret);
+		IOT_DUMP(IOT_DEBUG_LEVEL_ERROR, IOT_DUMP_BSP_WIFI_INIT_FAIL, esp_ret, __LINE__);
 		return IOT_ERROR_INIT_FAIL;
 	}
 
 	esp_ret = esp_wifi_set_mode(WIFI_MODE_NULL);
 	if(esp_ret != ESP_OK) {
 		IOT_ERROR("esp_wifi_set_mode failed err=[%d]", esp_ret);
+		IOT_DUMP(IOT_DEBUG_LEVEL_ERROR, IOT_DUMP_BSP_WIFI_INIT_FAIL, esp_ret, __LINE__);
 		return IOT_ERROR_INIT_FAIL;
 	}
 
 	WIFI_INITIALIZED = true;
 	IOT_INFO("[esp32] iot_bsp_wifi_init done");
+	IOT_DUMP(IOT_DEBUG_LEVEL_DEBUG, IOT_DUMP_BSP_WIFI_INIT_SUCCESS, 0, 0);
 
 	return IOT_ERROR_NONE;
 }
@@ -201,6 +210,7 @@ iot_error_t iot_bsp_wifi_set_mode(iot_wifi_conf *conf)
 	memset(&wifi_config, 0x0, sizeof(wifi_config_t));
 
 	IOT_INFO("iot_bsp_wifi_set_mode = %d", conf->mode);
+	IOT_DUMP(IOT_DEBUG_LEVEL_DEBUG, IOT_DUMP_BSP_WIFI_SETMODE, conf->mode, 0);
 
 	switch(conf->mode) {
 	case IOT_WIFI_MODE_OFF:
@@ -208,6 +218,7 @@ iot_error_t iot_bsp_wifi_set_mode(iot_wifi_conf *conf)
 		esp_ret = esp_wifi_set_mode(WIFI_MODE_NULL);
 		if(esp_ret != ESP_OK) {
 			IOT_ERROR("esp_wifi_set_mode failed err=[%d]", esp_ret);
+			IOT_DUMP(IOT_DEBUG_LEVEL_ERROR, IOT_DUMP_BSP_WIFI_SETMODE_FAIL, conf->mode, esp_ret);
 			return IOT_ERROR_CONN_OPERATE_FAIL;
 		}
 		break;
@@ -216,6 +227,7 @@ iot_error_t iot_bsp_wifi_set_mode(iot_wifi_conf *conf)
 		esp_ret = esp_wifi_get_mode(&mode);
 		if(esp_ret != ESP_OK) {
 			IOT_ERROR("esp_wifi_get_mode failed err=[%d]", esp_ret);
+			IOT_DUMP(IOT_DEBUG_LEVEL_ERROR, IOT_DUMP_BSP_WIFI_SETMODE_FAIL, conf->mode, esp_ret);
 			return IOT_ERROR_CONN_OPERATE_FAIL;
 		}
 
@@ -232,6 +244,7 @@ iot_error_t iot_bsp_wifi_set_mode(iot_wifi_conf *conf)
 			}
 			else {
 				IOT_ERROR("WIFI_STA_START_BIT event timeout");
+				IOT_DUMP(IOT_DEBUG_LEVEL_ERROR, IOT_DUMP_BSP_WIFI_TIMEOUT, mode, __LINE__);
 				return IOT_ERROR_CONN_OPERATE_FAIL;
 			}
 		}
@@ -242,6 +255,7 @@ iot_error_t iot_bsp_wifi_set_mode(iot_wifi_conf *conf)
 		esp_ret = esp_wifi_get_mode(&mode);
 		if(esp_ret != ESP_OK) {
 			IOT_ERROR("esp_wifi_get_mode failed err=[%d]", esp_ret);
+			IOT_DUMP(IOT_DEBUG_LEVEL_ERROR, IOT_DUMP_BSP_WIFI_SETMODE_FAIL, conf->mode, esp_ret);
 			return IOT_ERROR_CONN_OPERATE_FAIL;
 		}
 
@@ -259,6 +273,7 @@ iot_error_t iot_bsp_wifi_set_mode(iot_wifi_conf *conf)
 			}
 			else {
 				IOT_ERROR("WIFI_AP_STOP_BIT event Timeout");
+				IOT_DUMP(IOT_DEBUG_LEVEL_ERROR, IOT_DUMP_BSP_WIFI_TIMEOUT, mode, __LINE__);
 				return IOT_ERROR_CONN_OPERATE_FAIL;
 			}
 		}
@@ -293,10 +308,11 @@ iot_error_t iot_bsp_wifi_set_mode(iot_wifi_conf *conf)
 				true, false, IOT_WIFI_CMD_TIMEOUT);
 		if((uxBits & WIFI_STA_CONNECT_BIT)) {
 			IOT_INFO("AP Connected");
+			IOT_DUMP(IOT_DEBUG_LEVEL_ERROR, IOT_DUMP_BSP_WIFI_CONNECT_SUCCESS, 0, 0);
 		}
 		else {
 				IOT_ERROR("WIFI_STA_CONNECT_BIT event Timeout");
-				ESP_ERROR_CHECK(esp_wifi_stop());
+				IOT_DUMP(IOT_DEBUG_LEVEL_ERROR, IOT_DUMP_BSP_WIFI_CONNECT_FAIL, IOT_WIFI_CMD_TIMEOUT, __LINE__);
 				return IOT_ERROR_CONN_CONNECT_FAIL;
 		}
 
@@ -345,6 +361,7 @@ iot_error_t iot_bsp_wifi_set_mode(iot_wifi_conf *conf)
 		}
 		else {
 				IOT_ERROR("WIFI_AP_START_BIT event Timeout");
+				IOT_DUMP(IOT_DEBUG_LEVEL_ERROR, IOT_DUMP_BSP_WIFI_TIMEOUT, conf->mode, __LINE__);
 				return IOT_ERROR_CONN_OPERATE_FAIL;
 		}
 
@@ -352,6 +369,7 @@ iot_error_t iot_bsp_wifi_set_mode(iot_wifi_conf *conf)
 
 	default:
 		IOT_ERROR("esp32 cannot support this mode = %d", conf->mode);
+		IOT_DUMP(IOT_DEBUG_LEVEL_ERROR, IOT_DUMP_BSP_WIFI_ERROR, conf->mode, __LINE__);
 		return IOT_ERROR_CONN_OPERATE_FAIL;
 	}
 
@@ -376,6 +394,7 @@ uint16_t iot_bsp_wifi_get_scan_result(iot_wifi_scan_result_t *scan_result)
 			ap_list = (wifi_ap_record_t *) malloc(ap_num * sizeof(wifi_ap_record_t));
 			if(!ap_list){
 				IOT_ERROR("failed to malloc for wifi_ap_record_t");
+				IOT_DUMP(IOT_DEBUG_LEVEL_ERROR, IOT_DUMP_BSP_WIFI_ERROR, 0, __LINE__);
 				return 0;
 			}
 			/*need to initialize the scan buffer before updating*/
@@ -401,6 +420,7 @@ uint16_t iot_bsp_wifi_get_scan_result(iot_wifi_scan_result_t *scan_result)
 		}
 	} else {
 		IOT_INFO("failed to get esp_wifi_scan_get_ap_num");
+		IOT_DUMP(IOT_DEBUG_LEVEL_ERROR, IOT_DUMP_BSP_WIFI_ERROR, 0, __LINE__);
 		ap_num = 0;
 	}
 
@@ -414,6 +434,7 @@ iot_error_t iot_bsp_wifi_get_mac(struct iot_mac *wifi_mac)
 	esp_ret = esp_wifi_get_mac(ESP_IF_WIFI_STA, wifi_mac->addr);
 	if(esp_ret != ESP_OK){
 		IOT_ERROR("failed to read wifi mac address : %d", esp_ret);
+		IOT_DUMP(IOT_DEBUG_LEVEL_ERROR, IOT_DUMP_BSP_WIFI_ERROR, 0, __LINE__);
 		return IOT_ERROR_CONN_OPERATE_FAIL;
 	}
 

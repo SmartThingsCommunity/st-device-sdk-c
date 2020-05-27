@@ -56,16 +56,20 @@ const char* iot_bsp_nv_get_data_path(iot_nvd_t nv_type)
 
 	case IOT_NVD_DEVICE_ID:
 		return "DeviceID";
+	case IOT_NVD_MISC_INFO:
+		return "MiscInfo";
 
 	/* stored in stnv partition (manufacturer data) */
 	case IOT_NVD_PRIVATE_KEY:
 		return "PrivateKey";
 	case IOT_NVD_PUBLIC_KEY:
 		return "PublicKey";
-	case IOT_NVD_CA_CERT:
-		return "CACert";
-	case IOT_NVD_SUB_CERT:
+	case IOT_NVD_ROOT_CA_CERT:
+		return "RootCert";
+	case IOT_NVD_SUB_CA_CERT:
 		return "SubCert";
+	case IOT_NVD_DEVICE_CERT:
+		return "DeviceCert";
 	case IOT_NVD_SERIAL_NUM:
 		return "SerialNum";
 		/* stored in stnv partition (manufacturer data) */

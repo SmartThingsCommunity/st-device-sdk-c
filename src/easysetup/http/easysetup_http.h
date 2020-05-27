@@ -16,12 +16,14 @@
  *
  ****************************************************************************/
 
-#ifndef _TCP_HTTPD_H_
-#define _TCP_HTTPD_H_
+#ifndef _EASYSETUP_HTTP_H_
+#define _EASYSETUP_HTTP_H_
 
 #ifdef __cplusplus
 extern "C" {
 #endif
+
+#include "iot_error.h"
 
 enum cgi_type {
 	D2D_GET= 0,
@@ -29,14 +31,16 @@ enum cgi_type {
 	D2D_ERROR,
 };
 
-void http_packet_handle(const char *name, char **buf, char *payload, enum cgi_type type);
+void http_msg_handler(int cmd, char **buffer, enum cgi_type type, char* data_buf);
 
-void es_tcp_init(void);
+iot_error_t es_msg_parser(char *rx_buffer, char **payload, int *cmd, int *type, size_t *content_len);
 
-void es_tcp_deinit(void);
+void es_http_init(void);
+
+void es_http_deinit(void);
 
 #ifdef __cplusplus
 }
 #endif
 
-#endif /* _TCP_HTTPD_H_ */
+#endif /* _EASYSETUP_HTTP_H_ */

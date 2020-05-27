@@ -19,6 +19,7 @@
 #ifndef _IOT_BSP_DEBUG_H_
 #define _IOT_BSP_DEBUG_H_
 
+#include <iot_error.h>
 #include <iot_debug.h>
 
 #ifdef __cplusplus
@@ -55,6 +56,51 @@ void iot_bsp_debug(iot_debug_level_t level, const char* tag, const char* fmt, ..
  * @param[in] fmt			user friendly string
  */
 void iot_bsp_debug_check_heap(const char* tag, const char* func, const int line, const char* fmt, ...);
+
+
+#if defined(CONFIG_STDK_IOT_CORE_LOG_FILE)
+/**
+ * @brief  Read data from flash
+ *
+ * This function read data from flash
+ *
+ * @param[in] src_addr		flash address to read
+ * @param[out] des_addr		ram destination address to copy
+ * @param[in] size			size to read
+
+ * @retval IOT_ERROR_NONE 		Reading data from flash was successful.
+ * @retval IOT_ERROR_READ_FAIL 	Read Error
+ */
+iot_error_t iot_log_read_flash (unsigned int src_addr, void *des_addr, unsigned int size);
+
+
+/**
+ * @brief  Write data to flash
+ *
+ * This function read data from flash
+ *
+ * @param[out] des_addr		flash destination address to write
+ * @param[in] src_addr		ram source address to copy
+ * @param[in] size			size to write
+
+ * @retval IOT_ERROR_NONE 		Writing data to flash was successful.
+ * @retval IOT_ERROR_WRITE_FAIL 	Write Error
+ */
+iot_error_t iot_log_write_flash (unsigned int des_addr, void *src_addr, unsigned int size);
+
+/**
+ * @brief  erase flash sector
+ *
+ * This function erase a sector of flash
+ *
+ * @param[in] sector_num	sector number
+
+ * @retval IOT_ERROR_NONE 		Erasing flash sector was successful.
+ * @retval IOT_ERROR_WRITE_FAIL 	Erase Error
+ */
+iot_error_t iot_log_erase_sector (unsigned int sector_num);
+#endif
+
 
 #ifdef __cplusplus
 }

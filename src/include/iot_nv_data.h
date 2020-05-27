@@ -21,6 +21,7 @@
 
 #include "iot_error.h"
 #include "iot_main.h"
+#include "security/iot_security_common.h"
 
 #ifdef __cplusplus
 extern "C" {
@@ -31,8 +32,10 @@ extern "C" {
  * @brief internal nv data codes.
  */
 typedef enum {
+	IOT_NVD_UNKNOWN = 0,
+
 	/* wifi prov data */
-	IOT_NVD_WIFI_PROV_STATUS = 0,
+	IOT_NVD_WIFI_PROV_STATUS,
 	IOT_NVD_AP_SSID,
 	IOT_NVD_AP_PASS,
 	IOT_NVD_AP_BSSID,
@@ -49,12 +52,15 @@ typedef enum {
 	/* cloud prov data */
 
 	IOT_NVD_DEVICE_ID,
+	IOT_NVD_MISC_INFO,
 
 	/* stored in stnv partition (manufacturer data) */
-	IOT_NVD_PRIVATE_KEY,
+	IOT_NVD_FACTORY,
+	IOT_NVD_PRIVATE_KEY = IOT_NVD_FACTORY,
 	IOT_NVD_PUBLIC_KEY,
-	IOT_NVD_CA_CERT,
-	IOT_NVD_SUB_CERT,
+	IOT_NVD_ROOT_CA_CERT,
+	IOT_NVD_SUB_CA_CERT,
+	IOT_NVD_DEVICE_CERT,
 	IOT_NVD_SERIAL_NUM,
 	/* stored in stnv partition (manufacturer data) */
 
@@ -248,6 +254,29 @@ iot_error_t iot_nv_get_device_id(char** device_id, size_t* len);
 iot_error_t iot_nv_set_device_id(const char* device_id);
 
 /**
+ * @brief Get a miscellaneous info from the nv file-system.
+ *
+ * @param[out] misc_info A pointer to data array to store the miscellaneous info from the nv file-system.
+ * @param[out] len The length of the nv data.
+ * @retval IOT_ERROR_NONE Get nv data successful.
+ * @retval IOT_ERROR_INVALID_ARGS Invalid argument.
+ * @retval IOT_ERROR_NV_DATA_ERROR Get nv data failed.
+ *
+ * @warning The caller is always responsible to free the allocated pointer after using the data.
+ */
+iot_error_t iot_nv_get_misc_info(char** misc_info, size_t* len);
+
+/**
+ * @brief Set a miscellaneous info to the nv file-system.
+ *
+ * @param[in] misc_info The string of miscellaneous info from iot-core.
+ * @retval IOT_ERROR_NONE Set nv data successful.
+ * @retval IOT_ERROR_INVALID_ARGS Invalid argument.
+ * @retval IOT_ERROR_NV_DATA_ERROR Set nv data failed.
+ */
+iot_error_t iot_nv_set_misc_info(const char* misc_info);
+
+/**
  * @brief Get a serial number from the nv file-system.
  *
  * @param[out] sn A pointer to data array to store the serial number from the nv file-system.
@@ -271,6 +300,21 @@ iot_error_t iot_nv_get_serial_number(char** sn, size_t* len);
  * @retval IOT_ERROR_NV_DATA_NOT_EXIST NV data does not exist.
  */
 iot_error_t iot_nv_erase(iot_nvd_t nv_type);
+
+#if !defined(CONFIG_STDK_IOT_CORE_SUPPORT_STNV_PARTITION)
+/**
+ * @brief Get nv data from device info
+ *
+ * @param[in] nv_id The type of nv data
+ * @param[out] output_buf a pointer to the security buffer of data
+ * @retval IOT_ERROR_NONE success
+ * @retval IOT_ERROR_INVALID_ARGS input parameter is invalid
+ * @retval IOT_ERROR_MEM_ALLOC memory allocation for data is failed
+ * @retval IOT_ERROR_UNINITIALIZED device info does not initialized
+ * @retval IOT_ERROR_NV_DATA_ERROR nv_id is invalid to get data from device info
+ */
+iot_error_t iot_nv_get_data_from_device_info(iot_nvd_t nv_id, iot_security_buffer_t *output_buf);
+#endif
 
 #ifdef __cplusplus
 }

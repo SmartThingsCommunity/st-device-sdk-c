@@ -24,6 +24,7 @@
 #include <iot_internal.h>
 #include <iot_os_util.h>
 #include <iot_easysetup.h>
+#include <iot_nv_data.h>
 #include <string.h>
 #include "TC_MOCK_functions.h"
 
@@ -437,4 +438,164 @@ void TC_iot_get_time_in_sec_by_long_success(void **state)
     // Then: return success
     assert_int_equal(err, IOT_ERROR_NONE);
     assert_true(seconds > 0);
+}
+
+void TC_iot_easysetup_request_success(void **state)
+{
+    iot_error_t err;
+    int os_ret;
+    struct iot_context *context;
+    const char *test_payload = "{ message: \"\" }";
+    struct iot_easysetup_payload received_payload;
+    unsigned int easysetup_event = 0;
+    UNUSED(state);
+
+    // Given
+    context = (struct iot_context*) calloc(1, sizeof(struct iot_context));
+    assert_non_null(context);
+    context->easysetup_req_queue = iot_os_queue_create(1, sizeof(struct iot_easysetup_payload));
+    assert_non_null(context->easysetup_req_queue);
+    context->iot_events = iot_os_eventgroup_create();
+    assert_non_null(context->iot_events);
+
+    // When
+    err = iot_easysetup_request(context, IOT_EASYSETUP_STEP_DEVICEINFO, test_payload);
+
+    // Then
+    assert_int_equal(err, IOT_ERROR_NONE);
+    easysetup_event = iot_os_eventgroup_wait_bits(context->iot_events,
+            IOT_EVENT_BIT_EASYSETUP_REQ, true, false, IOT_MAIN_TASK_CYCLE);
+    assert_int_not_equal(easysetup_event, 0);
+    os_ret = iot_os_queue_receive(context->easysetup_req_queue, &received_payload, 0);
+    assert_int_equal(os_ret, IOT_OS_TRUE);
+    assert_string_equal(received_payload.payload, test_payload);
+
+    // Teardown
+    iot_os_queue_delete(context->easysetup_req_queue);
+    iot_os_eventgroup_delete(context->iot_events);
+    free(context);
+}
+
+static char misc_info_dip_example[] = {
+    "{\"dip\":{\"id\":\"bb000ddd-92a0-42a3-86f0-b531f278af06\",\"maj\":0,\"min\":1}}"
+};
+
+static struct iot_dip_data dip_example = {
+    .dip_id.id = {0xbb, 0x00, 0x0d, 0xdd, 0x92, 0xa0, 0x42, 0xa3,
+                  0x86, 0xf0, 0xb5, 0x31, 0xf2, 0x78, 0xaf, 0x06},
+    .dip_major_version = 0,
+    .dip_minor_version = 1,
+};
+
+static char sample_device_info[] = {
+    "{\n"
+    "\t\"deviceInfo\": {\n"
+    "\t\t\"firmwareVersion\": \"testFirmwareVersion\",\n"
+    "\t\t\"privateKey\": \"ztqmQ24u86J9bpFLjaoMfwauUZwKLjUIGsnrDwwnDM8=\",\n"
+    "\t\t\"publicKey\": \"BKb7+m1Mo8OuMsodM91ohz/+rZKDc/otzUPSn4UkCUk=\",\n"
+    "\t\t\"serialNumber\": \"STDKtESt7968d226\"\n"
+    "\t}\n"
+    "}"
+};
+
+int TC_iot_misc_info_dip_setup(void **state)
+{
+    iot_error_t err;
+    UNUSED(state);
+
+#if !defined(CONFIG_STDK_IOT_CORE_SUPPORT_STNV_PARTITION)
+    err = iot_nv_init((unsigned char *)sample_device_info, strlen(sample_device_info));
+#else
+    err = iot_nv_init(NULL, 0);
+#endif
+    assert_int_equal(err, IOT_ERROR_NONE);
+
+    err = iot_nv_set_misc_info(misc_info_dip_example);
+    assert_int_equal(err, IOT_ERROR_NONE);
+    return 0;
+}
+
+int TC_iot_misc_info_dip_teardown(void **state) {
+    iot_error_t err;
+    UNUSED(state);
+
+    err = iot_nv_deinit();
+    assert_int_equal(err, IOT_ERROR_NONE);
+    return 0;
+}
+
+void TC_iot_misc_info_load_invalid_parameters(void **state) {
+    iot_error_t err;
+    struct iot_dip_data load_dip;
+    UNUSED(state);
+
+    // When: out_data is null
+    err = iot_misc_info_load(IOT_MISC_INFO_DIP, NULL);
+    // Then: returns error
+    assert_int_not_equal(err, IOT_ERROR_NONE);
+
+    // When: type is unsupported
+    err = iot_misc_info_load(-1, (void *)&load_dip);
+    // Then: returns error
+    assert_int_not_equal(err, IOT_ERROR_NONE);
+}
+
+void TC_iot_misc_info_load_success(void **state) {
+    iot_error_t err;
+    struct iot_dip_data load_dip;
+    UNUSED(state);
+
+    // When: valid parameter
+    err = iot_misc_info_load(IOT_MISC_INFO_DIP, (void *)&load_dip);
+    // Then: returns success
+    assert_int_equal(err, IOT_ERROR_NONE);
+    assert_memory_equal(&dip_example.dip_id, &load_dip.dip_id, sizeof(struct iot_uuid));
+    assert_int_equal(dip_example.dip_major_version, load_dip.dip_major_version);
+    assert_int_equal(dip_example.dip_minor_version, load_dip.dip_minor_version);
+
+    // Given: erase saved dip
+    err = iot_nv_erase(IOT_NVD_MISC_INFO);
+    assert_int_equal(err, IOT_ERROR_NONE);
+
+    // When: valid parameter
+    err = iot_misc_info_load(IOT_MISC_INFO_DIP, (void *)&load_dip);
+    // Then: returns error
+    assert_int_not_equal(err, IOT_ERROR_NONE);
+}
+
+void TC_iot_misc_info_store_invalid_parameters(void **state) {
+    iot_error_t err;
+    UNUSED(state);
+
+    // When: out_data is null
+    err = iot_misc_info_store(IOT_MISC_INFO_DIP, NULL);
+    // Then: returns error
+    assert_int_not_equal(err, IOT_ERROR_NONE);
+
+    // When: All parameters null
+    err = iot_misc_info_store(-1, (void *)&dip_example);
+    // Then: returns error
+    assert_int_not_equal(err, IOT_ERROR_NONE);
+}
+
+void TC_iot_misc_info_store_success(void **state) {
+    iot_error_t err;
+    char *new_dip_str;
+    size_t str_len;
+    UNUSED(state);
+
+    // Given: erase saved dip
+    err = iot_nv_erase(IOT_NVD_MISC_INFO);
+    assert_int_equal(err, IOT_ERROR_NONE);
+
+    // When: store new dip
+    err = iot_misc_info_store(IOT_MISC_INFO_DIP, (void *)&dip_example);
+    // Then: returns success
+    assert_int_equal(err, IOT_ERROR_NONE);
+
+    // When: get raw data from NV
+    err = iot_nv_get_misc_info(&new_dip_str, &str_len);
+    // Then: There are same data
+    assert_int_equal(err, IOT_ERROR_NONE);
+    assert_memory_equal(new_dip_str, misc_info_dip_example, sizeof(misc_info_dip_example));
 }

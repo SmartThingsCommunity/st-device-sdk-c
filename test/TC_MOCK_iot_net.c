@@ -84,8 +84,9 @@ static int _iot_net_mock_read(iot_net_interface_t *net, unsigned char *buf, int 
 static int _iot_net_mock_write(iot_net_interface_t *net, unsigned char *buf, int len, iot_os_timer timer)
 {
     UNUSED(net);
-    UNUSED(buf);
     UNUSED(timer);
+    check_expected_ptr(buf);
+    check_expected(len);
     return len;
 }
 

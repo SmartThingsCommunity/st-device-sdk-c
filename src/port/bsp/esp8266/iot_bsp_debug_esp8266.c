@@ -18,10 +18,19 @@
 
 #include <stdio.h>
 #include <stdlib.h>
+#include <string.h>
 #include <esp_log.h>
 #include <esp_system.h>
 #include <esp_heap_caps.h>
+#if defined(CONFIG_STDK_IOT_CORE_LOG_FILE)
+#include <esp_spi_flash.h>
+#endif
+
 #include "iot_bsp_debug.h"
+
+#if defined(CONFIG_STDK_IOT_CORE_LOG_FILE)
+#include "iot_log_file.h"
+#endif
 
 void iot_bsp_debug(iot_debug_level_t level, const char* tag, const char* fmt, ...)
 {
@@ -106,3 +115,59 @@ void iot_bsp_debug_check_heap(const char* tag, const char* func, const int line,
 		free(buf);
 	}
 }
+
+#if defined(CONFIG_STDK_IOT_CORE_LOG_FILE)
+iot_error_t iot_log_read_flash(unsigned int src_addr, void *des_addr, unsigned int size)
+{
+	iot_error_t iot_err = IOT_ERROR_NONE;
+	esp_err_t esp_err = ESP_OK;
+
+	IOT_LOG_FILE_DEBUG("[%s] src_addr=0x%x des_addr=0x%p size=0x%x\n", __FUNCTION__, src_addr, des_addr, size);
+
+	esp_err = spi_flash_read(src_addr, des_addr, size);
+	if (esp_err != IOT_ERROR_NONE) {
+		IOT_LOG_FILE_ERROR("%s IOT_ERROR_READ_FAIL\n", __FUNCTION__);
+		iot_err = IOT_ERROR_READ_FAIL;
+	}
+
+	IOT_LOG_FILE_DEBUG("[%s] end\n", __FUNCTION__);
+
+	return iot_err;
+}
+
+iot_error_t iot_log_write_flash(unsigned int des_addr, void *src_addr, unsigned int size)
+{
+	iot_error_t iot_err = IOT_ERROR_NONE;
+	esp_err_t esp_err = ESP_OK;
+
+	IOT_LOG_FILE_DEBUG("[%s] des_addr=0x%x src_addr=0x%p size=0x%x\n", __FUNCTION__, des_addr, src_addr, size);
+
+	esp_err = spi_flash_write(des_addr, src_addr, size);
+	if (esp_err != IOT_ERROR_NONE) {
+		IOT_LOG_FILE_ERROR("%s IOT_ERROR_WRITE_FAIL\n", __FUNCTION__);
+		iot_err = IOT_ERROR_WRITE_FAIL;
+	}
+
+	IOT_LOG_FILE_DEBUG("[%s] end\n", __FUNCTION__);
+
+	return iot_err;
+}
+
+iot_error_t iot_log_erase_sector(unsigned int sector_num)
+{
+	iot_error_t iot_err = IOT_ERROR_NONE;
+	esp_err_t esp_err = ESP_OK;
+
+	IOT_LOG_FILE_DEBUG("[%s] sector_num=%d\n", __FUNCTION__, sector_num);
+
+	esp_err = spi_flash_erase_sector(sector_num);
+	if (esp_err != IOT_ERROR_NONE) {
+		IOT_LOG_FILE_ERROR("%s _iot_log_erase_sector\n", __FUNCTION__);
+		iot_err = IOT_ERROR_BAD_REQ;
+	}
+
+	IOT_LOG_FILE_DEBUG("[%s] end\n", __FUNCTION__);
+
+	return iot_err;
+}
+#endif

@@ -35,6 +35,22 @@ const unsigned int iot_os_max_delay = 0xFFFFFFFF;
 const unsigned int iot_os_true = true;
 const unsigned int iot_os_false = false;
 
+const char* iot_os_get_os_name()
+{
+       return "POSIX";
+}
+
+#define _STR_HELPER(x) #x
+#define _STR(x) _STR_HELPER(x)
+const char* iot_os_get_os_version_string()
+{
+#ifdef _POSIX_VERSION
+       return _STR(_POSIX_VERSION);
+#else
+       return "";
+#endif
+}
+
 /* Thread */
 int iot_os_thread_create(void * thread_function, const char* name, int stack_size,
 		void* data, int priority, iot_os_thread* thread_handle)
@@ -290,7 +306,7 @@ int iot_os_mutex_init(iot_os_mutex* mutex)
 	pthread_mutex_init(mutex_p, NULL);
 	mutex->sem = mutex_p;
 
-	return iot_os_true;
+	return IOT_OS_TRUE;
 }
 
 int iot_os_mutex_lock(iot_os_mutex* mutex)
@@ -299,7 +315,7 @@ int iot_os_mutex_lock(iot_os_mutex* mutex)
 
 	pthread_mutex_lock(mutex_p);
 
-	return iot_os_true;
+	return IOT_OS_TRUE;
 }
 
 int iot_os_mutex_unlock(iot_os_mutex* mutex)
@@ -308,7 +324,7 @@ int iot_os_mutex_unlock(iot_os_mutex* mutex)
 
 	pthread_mutex_unlock(mutex_p);
 
-	return iot_os_true;
+	return IOT_OS_TRUE;
 }
 
 void iot_os_mutex_destroy(iot_os_mutex* mutex)
@@ -407,6 +423,11 @@ void *iot_os_malloc(size_t size)
 void *iot_os_calloc(size_t nmemb, size_t size)
 {
     return calloc(nmemb, size);
+}
+
+char *iot_os_realloc(void *ptr, size_t size)
+{
+    return realloc(ptr, size);
 }
 
 void iot_os_free(void *ptr)
