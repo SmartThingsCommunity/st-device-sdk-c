@@ -59,6 +59,7 @@ static void es_tcp_task(void *pvParameters)
 	uint addrLen;
 
 	while (!deinit_processing) {
+		int opt = 1;
 		struct sockaddr_in destAddr;
 		destAddr.sin_addr.s_addr = htonl(INADDR_ANY);
 		destAddr.sin_family = AF_INET;
@@ -71,6 +72,11 @@ static void es_tcp_task(void *pvParameters)
 			IOT_ERROR("Unable to create socket: errno %d", errno);
 			IOT_ES_DUMP(IOT_DEBUG_LEVEL_ERROR, IOT_DUMP_EASYSETUP_SOCKET_CREATE_FAIL, errno);
 			break;
+		}
+
+		ret = setsockopt(listen_sock, SOL_SOCKET, SO_REUSEADDR, &opt, sizeof(opt));
+		if (ret != 0) {
+			IOT_INFO("reuse socket isn't supported");
 		}
 
 		ret = bind(listen_sock, (struct sockaddr *)&destAddr, sizeof(destAddr));
@@ -93,8 +99,10 @@ static void es_tcp_task(void *pvParameters)
 
 			sock = accept(listen_sock, (struct sockaddr *)&sourceAddr, &addrLen);
 			if (sock < 0) {
-				IOT_ERROR("Unable to accept connection: errno %d", errno);
-				IOT_ES_DUMP(IOT_DEBUG_LEVEL_ERROR, IOT_DUMP_EASYSETUP_SOCKET_ACCEPT_FAIL, errno);
+				if (!deinit_processing) {
+					IOT_ERROR("Unable to accept connection: errno %d", errno);
+					IOT_ES_DUMP(IOT_DEBUG_LEVEL_ERROR, IOT_DUMP_EASYSETUP_SOCKET_ACCEPT_FAIL, errno);
+				}
 				break;
 			}
 
