@@ -327,7 +327,7 @@ void http_msg_handler(int cmd, char **buffer, enum cgi_type type, char* data_buf
 			IOT_ERROR("json create failed");
 			goto cgi_out;
 		}
-		cJSON_AddItemToObject(item, "code", cJSON_CreateNumber((double) err));
+		cJSON_AddItemToObject(item, "code", cJSON_CreateNumber((double) -(err)));
 		root = cJSON_CreateObject();
 		if (!root) {
 			IOT_ERROR("json create failed");
