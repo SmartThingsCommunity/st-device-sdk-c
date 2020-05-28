@@ -73,10 +73,10 @@ static struct iot_dump_header* _iot_dump_create_header()
 static int _iot_dump_copy_memory(void *dest, int dest_size, const void *src, int src_size,
         void *buf, int buf_size, int *remain_number, int need_base64)
 {
-    unsigned int out_len1 = 0;
-    unsigned int out_len2 = 0;
-    unsigned int copy_len1 = 0;
-    unsigned int copy_len2 = 0;
+    size_t out_len1 = 0;
+    size_t out_len2 = 0;
+    size_t copy_len1 = 0;
+    size_t copy_len2 = 0;
     int ret;
 
     if ((dest_size <= 0) || (src_size <= 0) || (buf_size < 3))
