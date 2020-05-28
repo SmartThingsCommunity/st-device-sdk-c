@@ -195,7 +195,7 @@ iot_error_t _decode_and_decrypt(iot_crypto_cipher_info_t *cipher, unsigned char 
 		IOT_ERROR("base64url decode error 0x%x", err);
 		IOT_ES_DUMP(IOT_DEBUG_LEVEL_ERROR, IOT_DUMP_EASYSETUP_BASE64_DECODE_ERROR, err);
 		err = IOT_ERROR_EASYSETUP_BASE64_DECODE_ERROR;
-		return err;
+		goto dec_fail;
 	}
 
 	// Decrypt
@@ -205,7 +205,7 @@ iot_error_t _decode_and_decrypt(iot_crypto_cipher_info_t *cipher, unsigned char 
 		IOT_ERROR("not enough memory");
 		IOT_ES_DUMP(IOT_DEBUG_LEVEL_ERROR, IOT_DUMP_EASYSETUP_MEM_ALLOC_ERROR, 0);
 		err = IOT_ERROR_EASYSETUP_MEM_ALLOC_ERROR;
-		return err;
+		goto dec_fail;
 	}
 	memset(plain_msg, '\0', plain_msg_buf_len);
 
