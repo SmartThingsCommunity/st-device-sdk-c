@@ -54,7 +54,7 @@ static inline void _iot_security_be_software_buffer_free(iot_security_buffer_t *
 
 static inline void _iot_security_be_software_buffer_wipe(const iot_security_buffer_t *input_buf, size_t wiped_len)
 {
-	if (input_buf->len < wiped_len) {
+	if (input_buf && (input_buf->len < wiped_len)) {
 		int i;
 		for (i = input_buf->len; i < wiped_len; i++) {
 			input_buf->p[i] = 0;
