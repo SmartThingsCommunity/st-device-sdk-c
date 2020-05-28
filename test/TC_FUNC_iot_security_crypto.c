@@ -29,6 +29,7 @@
 
 #include "TC_MOCK_functions.h"
 
+#if defined(CONFIG_STDK_IOT_CORE_CRYPTO_SUPPORT_ED25519)
 static char sample_device_info[] = {
 	"{\n"
 	"\t\"deviceInfo\": {\n"
@@ -39,6 +40,72 @@ static char sample_device_info[] = {
 	"\t}\n"
 	"}"
 };
+#elif defined(CONFIG_STDK_IOT_CORE_CRYPTO_SUPPORT_RSA)
+#define TEST_RSA_PRIVATE_KEY \
+"-----BEGIN RSA PRIVATE KEY-----\r\n" \
+"MIIEpAIBAAKCAQEA1/1kys9cGjIhdbQ96GeuVhC8AsTzxVHxGxLghS2UkLJ3lsbj\r\n" \
+"v1L1D24Re+Unn57I8Ib+QwfhdmFpD8UpBl2n7ndFOcf3VLpm59pQ29Fim1k8VLva\r\n" \
+"epLYDRGF27vf/5LgG4lg2o5HOFhUs5kTLs5LWplaJlCmFu3EyfBE7d5wcuxLAImF\r\n" \
+"UamlnIzVPo1HKsvO1h+pMiP8dAAiDnI/1Ul0lJjuLay4P1w6WgjtWqMvK8QTF7wQ\r\n" \
+"iGE9HWsMT/zC4Fs10ct3fnX7HAUV78mxjppTOWdrzeBEcqb7psRFPVQbsAu5q4Qx\r\n" \
+"7j3u9eM+TsNOdF2yd7LpSaJ1R1lYSf/tuxPXIQIDAQABAoIBAQCZiwQk/OYPpUWO\r\n" \
+"BDTiSxpvCnRtT4+v3UGWKoQ7iJyNhKFpKThsIVAeyPNa7RuO6HUWMBD+m9KWskba\r\n" \
+"tCEm6ltgNZ+bpODZda2D8vn6Wk5L+1LdNbHp4wv9tlA/Vb62U7ZHPRECLZTJpFmK\r\n" \
+"Vy6A3pxI6q1ggYKg2CRGHi0SIEg2GSATy/heFUbxaF4nwj4v6ju0YxFiGrd54VDb\r\n" \
+"1HkZZiV22rbPh1hdJeuU8C/pIsCfDjY5VQ7DUh07trZQ8BZWbfiNPRFpmB4mmTOg\r\n" \
+"F7JKuar6IWUD4uYvtt1qwgrnn/+YJlZShwwrJiJ+bAK+WRp/PF1IO1b+vh0fbXNw\r\n" \
+"Uepdzbd1AoGBAO9NWUouNKNR6rsv7xYSjhEjM2OipWNDvWqYKJzPDQw/7+sdD2Os\r\n" \
+"PkPbdbtRYx5DdeFB7QbQF69b+svssPRoi+IUhlE3VTlkoLp1jfGeQ6LUWvnK3OSF\r\n" \
+"/aReQKM3fON45Gxzem9dZ5P3hU3IFD++viHvlwbYn2bXpgNS0t+nnYvXAoGBAOcP\r\n" \
+"nf7TnmP96vMU1JdXmDdJJ1TsVzJyppCvHRiLKo+dCwJWlztOfXyrLvslbgPwzSmw\r\n" \
+"Vna4JScaAqrY4ka29IFjtLxM459PItitHTDUEVtGZAhZfeM/i7ChuehQnBrM9zri\r\n" \
+"H7xSkWLMe1pFz/YmrOAyyAVPtmX6Om9K69PFiJXHAoGBAMu2PuKlPu4hV/+NqKxT\r\n" \
+"k1kHbEHPPZepHOBXM4t5vxPEggrWLDmfcUn20txpRkWHDBx8MLjyAJepZ3Cdx23o\r\n" \
+"adxFuKn+vrAi96iDVhhvsAg3WlL23OA1KFz6V3AaVliWm22vSHTxQLF3rqUuQ/6X\r\n" \
+"8+eTvC95zQiRX6PIp/b5C2b1AoGACRigS6vhDGaunSsww1R7dZG3rqwvMpk43XFH\r\n" \
+"X/P6lPTFvi3Sfk80uXezvcdXcWhFa2K5xKqzK7rmZ/tpzQbe0UkvkEomm9rtsEIA\r\n" \
+"aC+xDzrSLVH4lr2lripvuymRO6zd/r9wKGXHu2/5WzBsY3BaVekp3quorpMPQdpd\r\n" \
+"NlUMb3kCgYB7o0KEvx3gGuAOqr7rkLduvq6KHt29mBr9+aGcxe54npiiTgMUQvuz\r\n" \
+"NaAMmtShsr5lcaTl/vrKSWFeRGVuzp92bhgHVKc12muBr7QfaOZfZfvZ8ht1PosT\r\n" \
+"Bw+wAUXFJuTmYky9uk5RBI5QiaKjS3jAs64oFcUihVcy3zTnVQmXTg==\r\n" \
+"-----END RSA PRIVATE KEY-----"
+
+#define TEST_RSA_CERTIFICATE \
+"-----BEGIN CERTIFICATE-----\r\n" \
+"MIID0jCCArqgAwIBAgIJAOmRaXeUY/lXMA0GCSqGSIb3DQEBCwUAMHMxCzAJBgNV\r\n" \
+"BAYTAktSMR8wHQYDVQQKDBZTbWFydFRoaW5ncyBEZXZpY2UgU0RLMRUwEwYDVQQL\r\n" \
+"DAxNUVRUIFJvb3QgQ0ExLDAqBgNVBAMMI1NtYXJ0VGhpbmdzIERldmljZSBTREsg\r\n" \
+"Um9vdCBDQSBURVNUMCAXDTIwMDMxOTA5MDkzMVoYDzIwNjAwMzA5MDkwOTMxWjBh\r\n" \
+"MQswCQYDVQQGEwJLUjEfMB0GA1UECgwWU21hcnRUaGluZ3MgRGV2aWNlIFNESzEU\r\n" \
+"MBIGA1UECwwLTVFUVCBEZXZpY2UxGzAZBgNVBAMMElNtYXJ0VGhpbmdzIERldmlj\r\n" \
+"ZTCCASIwDQYJKoZIhvcNAQEBBQADggEPADCCAQoCggEBANf9ZMrPXBoyIXW0Pehn\r\n" \
+"rlYQvALE88VR8RsS4IUtlJCyd5bG479S9Q9uEXvlJ5+eyPCG/kMH4XZhaQ/FKQZd\r\n" \
+"p+53RTnH91S6ZufaUNvRYptZPFS72nqS2A0Rhdu73/+S4BuJYNqORzhYVLOZEy7O\r\n" \
+"S1qZWiZQphbtxMnwRO3ecHLsSwCJhVGppZyM1T6NRyrLztYfqTIj/HQAIg5yP9VJ\r\n" \
+"dJSY7i2suD9cOloI7VqjLyvEExe8EIhhPR1rDE/8wuBbNdHLd351+xwFFe/JsY6a\r\n" \
+"Uzlna83gRHKm+6bERT1UG7ALuauEMe497vXjPk7DTnRdsney6UmidUdZWEn/7bsT\r\n" \
+"1yECAwEAAaN5MHcwCQYDVR0TBAIwADAfBgNVHSMEGDAWgBRNfBbpcuDMVV2TAU3w\r\n" \
+"tohHHkZEczAdBgNVHQ4EFgQU4dGfYxzu3k2Qu/ZwyCZWbzdg4P8wCwYDVR0PBAQD\r\n" \
+"AgXgMB0GA1UdJQQWMBQGCCsGAQUFBwMBBggrBgEFBQcDAjANBgkqhkiG9w0BAQsF\r\n" \
+"AAOCAQEAmMlYsf32MuuGtFQxSkgif1ahumBRRQIh6gIXzZ5FiPYzRmK/CkvluLl1\r\n" \
+"fOsXF9loWHfX78mqdZrYcnYkt6YNg5RIMk4Rg6GUHT8mb6+r9vWSkTcKC8VkVNak\r\n" \
+"BPRzWRVbVIur4BKZn7xL6CgizYL4WeseJUUBqxNLWg4aDelHYuhMCqQbnThmAv6Z\r\n" \
+"d2a9T9hzxJASoWA6cLDh3m6EMwjKPbEyMPEd4n1l2t7n2yc81DCNNtegz3QEsCMt\r\n" \
+"onE+w5kmmxSPX/5Jn1122IzX1nRXlFuhK1U6riQ/8SxxuiIm33OXh2gYmwtpQATY\r\n" \
+"SdxhWUDsV4MxNuDc5todC5xNMePMBQ==\r\n" \
+"-----END CERTIFICATE-----"
+
+static char sample_device_info[] = {
+	"{\n"
+	"\t\"deviceInfo\": {\n"
+	"\t\t\"firmwareVersion\": \"testFirmwareVersion\",\n"
+	"\t\t\"privateKey\": \"" TEST_RSA_PRIVATE_KEY """\",\n"
+	"\t\t\"deviceCert\": \"" TEST_RSA_CERTIFICATE "\",\n"
+	"\t\t\"serialNumber\": \"STDKtestc77078cc\"\n"
+	"\t}\n"
+	"}"
+};
+#endif
 
 int TC_iot_security_pk_init_setup(void **state)
 {
