@@ -16,7 +16,7 @@
  *
  ****************************************************************************/
 
-#include <stdio.h>
+#include <string.h>
 #include <time.h>
 #include <sys/time.h>
 #include "iot_debug.h"
@@ -33,7 +33,7 @@ static struct iot_dump_state* _iot_dump_create_dump_state()
 {
     struct iot_dump_state* dump_state;
 
-    printf("log version : %x\n", IOT_DUMP_LOG_VERSION);
+    IOT_INFO("log version : %x", IOT_DUMP_LOG_VERSION);
 
     dump_state = iot_os_malloc(sizeof(struct iot_dump_state));
     if (!dump_state) {
@@ -222,7 +222,7 @@ void iot_dump_log(iot_debug_level_t level, dump_log_id_t log_id, int arg1, int a
     msg[2] = arg1;
     msg[3] = arg2;
 
-    printf("%08x %08x %08x %08x\n" , msg[0], msg[1], msg[2], msg[3]);
+    IOT_DEBUG("LOG : %08x %08x %08x %08x" , msg[0], msg[1], msg[2], msg[3]);
 
     iot_log_file_store((const char *)msg, sizeof(msg));
 }
