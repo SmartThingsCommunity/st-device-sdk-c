@@ -337,6 +337,9 @@ void TC_iot_security_storage_read_success(void **state)
 	context = (iot_security_context_t *)*state;
 	assert_non_null(context);
 
+	// Given: cleanup sample file
+	iot_security_storage_remove(context, storage_id);
+
 	// Given: prepare sample file
 	sample_buf.p = (unsigned char *)sample;
 	sample_buf.len = strlen(sample);
