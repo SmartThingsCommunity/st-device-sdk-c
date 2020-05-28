@@ -69,18 +69,21 @@ static void es_tcp_task(void *pvParameters)
 		listen_sock = socket(addr_family, SOCK_STREAM, ip_protocol);
 		if (listen_sock < 0) {
 			IOT_ERROR("Unable to create socket: errno %d", errno);
+			IOT_ES_DUMP(IOT_DEBUG_LEVEL_ERROR, IOT_DUMP_EASYSETUP_SOCKET_CREATE_FAIL, errno);
 			break;
 		}
 
 		ret = bind(listen_sock, (struct sockaddr *)&destAddr, sizeof(destAddr));
 		if (ret != 0) {
 			IOT_ERROR("Socket unable to bind: errno %d", errno);
+			IOT_ES_DUMP(IOT_DEBUG_LEVEL_ERROR, IOT_DUMP_EASYSETUP_SOCKET_BIND_FAIL, errno);
 			break;
 		}
 
 		ret = listen(listen_sock, 1);
 		if (ret != 0) {
 			IOT_ERROR("Error occurred during listen: errno %d", errno);
+			IOT_ES_DUMP(IOT_DEBUG_LEVEL_ERROR, IOT_DUMP_EASYSETUP_SOCKET_LISTEN_FAIL, errno);
 			break;
 		}
 
@@ -91,6 +94,7 @@ static void es_tcp_task(void *pvParameters)
 			sock = accept(listen_sock, (struct sockaddr *)&sourceAddr, &addrLen);
 			if (sock < 0) {
 				IOT_ERROR("Unable to accept connection: errno %d", errno);
+				IOT_ES_DUMP(IOT_DEBUG_LEVEL_ERROR, IOT_DUMP_EASYSETUP_SOCKET_ACCEPT_FAIL, errno);
 				break;
 			}
 
@@ -100,10 +104,12 @@ static void es_tcp_task(void *pvParameters)
 
 			if (len < 0) {
 				IOT_ERROR("recv failed: errno %d", errno);
+				IOT_ES_DUMP(IOT_DEBUG_LEVEL_ERROR, IOT_DUMP_EASYSETUP_SOCKET_RECV_FAIL, errno);
 				break;
 			}
 			else if (len == 0) {
 				IOT_ERROR("Connection closed");
+				IOT_ES_DUMP(IOT_DEBUG_LEVEL_ERROR, IOT_DUMP_EASYSETUP_SOCKET_CON_CLOSE, 0);
 				break;
 			}
 			else {
@@ -117,6 +123,7 @@ static void es_tcp_task(void *pvParameters)
 					len = recv(sock, rx_buffer, sizeof(rx_buffer) - 1, 0);
 					if (len < 0) {
 						IOT_ERROR("recv failed: errno %d", errno);
+						IOT_ES_DUMP(IOT_DEBUG_LEVEL_ERROR, IOT_DUMP_EASYSETUP_SOCKET_RECV_FAIL, errno);
 						break;
 					}
 					payload = rx_buffer;
@@ -129,6 +136,7 @@ static void es_tcp_task(void *pvParameters)
 
 				if (!tx_buffer) {
 					IOT_ERROR("tx_buffer is NULL");
+					IOT_ES_DUMP(IOT_DEBUG_LEVEL_ERROR, IOT_DUMP_EASYSETUP_INTERNAL_SERVER_ERROR, 0);
 					break;
 				}
 
@@ -138,6 +146,7 @@ static void es_tcp_task(void *pvParameters)
 				ret = send(sock, tx_buffer, len, 0);
 				if (ret < 0) {
 					IOT_ERROR("Error is occurred during sending: errno %d", ret);
+					IOT_ES_DUMP(IOT_DEBUG_LEVEL_ERROR, IOT_DUMP_EASYSETUP_SOCKET_SEND_FAIL, ret);
 					break;
 				}
 				if (tx_buffer) {
@@ -153,6 +162,7 @@ static void es_tcp_task(void *pvParameters)
 
 		if (sock != -1) {
 			IOT_ERROR("Shutting down socket and restarting...");
+			IOT_ES_DUMP(IOT_DEBUG_LEVEL_ERROR, IOT_DUMP_EASYSETUP_SOCKET_SHUTDOWN, ret);
 			shutdown(sock, SHUT_RD);
 			close(sock);
 		}
@@ -174,11 +184,15 @@ static void es_tcp_task(void *pvParameters)
 void es_http_init(void)
 {
 	IOT_INFO("http tcp init!!");
+	IOT_ES_DUMP(IOT_DEBUG_LEVEL_INFO, IOT_DUMP_EASYSETUP_TCP_INIT, 0);
 	iot_os_thread_create(es_tcp_task, "es_tcp_task", (1024 * 4), NULL, 5, (iot_os_thread * const)(&es_tcp_task_handle));
+	IOT_ES_DUMP(IOT_DEBUG_LEVEL_INFO, IOT_DUMP_EASYSETUP_TCP_INIT, 1);
 }
 
 void es_http_deinit(void)
 {
+	IOT_ES_DUMP(IOT_DEBUG_LEVEL_INFO, IOT_DUMP_EASYSETUP_TCP_DEINIT, 0);
+
 	deinit_processing = 1;
 	//sock resources should be clean
 	_clear_listen_socket();
@@ -195,5 +209,6 @@ void es_http_deinit(void)
 
 	deinit_processing = 0;
 	IOT_INFO("http tcp deinit complete!");
+	IOT_ES_DUMP(IOT_DEBUG_LEVEL_INFO, IOT_DUMP_EASYSETUP_TCP_DEINIT, 1);
 }
 
