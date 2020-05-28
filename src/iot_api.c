@@ -174,10 +174,9 @@ iot_error_t iot_state_update(struct iot_context *ctx,
 
 	if ((new_state == IOT_STATE_PROV_CONFIRM)
 			&& (opt == IOT_STATE_OPT_NEED_INTERACT)) {
-		IOT_INFO("Trigger user_event with 0x%0x",
-				(1u << (unsigned)IOT_STATE_PROV_CONFIRM));
+		IOT_INFO("Trigger PROV_CONFIRM");
 		iot_os_eventgroup_set_bits(ctx->usr_events,
-				(1u << (unsigned)IOT_STATE_PROV_CONFIRM));
+			IOT_USR_INTERACT_BIT_PROV_CONFIRM);
 	}
 
 	state_data.iot_state = new_state;
@@ -917,8 +916,6 @@ iot_error_t iot_device_cleanup(struct iot_context *ctx)
 		free(ctx->lookup_id);
 		ctx->lookup_id = NULL;
 	}
-
-	ctx->curr_state = ctx->req_state = IOT_STATE_UNKNOWN;
 
 	return iot_err;
 }
