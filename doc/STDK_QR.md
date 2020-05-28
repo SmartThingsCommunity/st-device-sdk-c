@@ -17,4 +17,6 @@ The QR code includes the following three pieces of information, and the manufact
 
 ### How to create QR code
 The final QR code format is as follows. m is for mnid, s is for setupId and r is for serial number.
+```
 https://qr.samsungiots.com/?m=****&s=***&r=****************
+```
