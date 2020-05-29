@@ -35,6 +35,22 @@ const unsigned int iot_os_max_delay = 0xFFFFFFFF;
 const unsigned int iot_os_true = true;
 const unsigned int iot_os_false = false;
 
+const char* iot_os_get_os_name()
+{
+       return "POSIX";
+}
+
+#define _STR_HELPER(x) #x
+#define _STR(x) _STR_HELPER(x)
+const char* iot_os_get_os_version_string()
+{
+#ifdef _POSIX_VERSION
+       return _STR(_POSIX_VERSION);
+#else
+       return "";
+#endif
+}
+
 /* Thread */
 int iot_os_thread_create(void * thread_function, const char* name, int stack_size,
 		void* data, int priority, iot_os_thread* thread_handle)

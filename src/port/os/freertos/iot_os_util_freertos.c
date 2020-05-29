@@ -30,6 +30,16 @@ const unsigned int iot_os_max_delay = portMAX_DELAY;
 const unsigned int iot_os_true = pdTRUE;
 const unsigned int iot_os_false = pdFALSE;
 
+const char* iot_os_get_os_name()
+{
+       return "FreeRTOS";
+}
+
+const char* iot_os_get_os_version_string()
+{
+       return tskKERNEL_VERSION_NUMBER;
+}
+
 /* Thread */
 int iot_os_thread_create(void * thread_function, const char* name, int stack_size,
 		void* data, int priority, iot_os_thread* thread_handle)

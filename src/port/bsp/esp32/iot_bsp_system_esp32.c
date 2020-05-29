@@ -25,6 +25,16 @@
 #include "iot_bsp_system.h"
 #include "iot_debug.h"
 
+const char* iot_bsp_get_bsp_name()
+{
+       return "esp32";
+}
+
+const char* iot_bsp_get_bsp_version_string()
+{
+       return esp_get_idf_version();
+}
+
 void iot_bsp_system_reboot()
 {
 	esp_restart();

@@ -44,6 +44,21 @@ extern const unsigned int iot_os_max_delay;
 extern const unsigned int iot_os_true;
 extern const unsigned int iot_os_false;
 
+
+/*
+ * @brief get os name
+ * @return
+ *  return is string of os name
+ */
+const char* iot_os_get_os_name();
+
+/*
+ * @brief get os version string
+ * @return
+ *  return is string of os version
+ */
+const char* iot_os_get_os_version_string();
+
 /**
  * @brief	create and run thread
  *

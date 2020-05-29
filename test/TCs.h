@@ -139,6 +139,8 @@ void TC_iot_nv_get_device_id_null_parameters(void **state);
 void TC_iot_nv_set_device_id_null_parameter(void **state);
 void TC_iot_nv_get_set_erase_device_id_success(void **state);
 void TC_iot_nv_erase_internal_failure(void** state);
+void TC_iot_nv_get_data_from_device_info_failure(void** state);
+void TC_iot_nv_get_data_from_device_info_success(void** state);
 
 // TCs for iot_easysetup_crypto.c
 int TC_iot_easysetup_crypto_setup(void **state);
@@ -197,8 +199,68 @@ void TC_iot_security_init_malloc_failure(void **state);
 void TC_iot_security_init_success(void **state);
 void TC_iot_security_deinit_null_parameters(void **state);
 void TC_iot_security_deinit_success(void **state);
-void TC_iot_security_check_context_is_null_null_parameters(void **state);
-void TC_iot_security_check_context_is_null_success(void **state);
+void TC_iot_security_check_context_is_valid_null_parameters(void **state);
+void TC_iot_security_check_context_is_valid_success(void **state);
+void TC_iot_security_check_backend_funcs_entry_is_valid_failure(void **state);
+void TC_iot_security_check_backend_funcs_entry_is_valid_success(void **state);
+
+// TCs for iot_security_storage.c
+int TC_iot_security_storage_init_setup(void **state);
+int TC_iot_security_storage_init_teardown(void **state);
+int TC_iot_security_storage_setup(void **state);
+int TC_iot_security_storage_teardown(void **state);
+void TC_iot_security_storage_init_malloc_failure(void **state);
+void TC_iot_security_storage_init_null_parameters(void **state);
+void TC_iot_security_storage_init_success(void **state);
+void TC_iot_security_storage_deinit_null_parameters(void **state);
+void TC_iot_security_storage_deinit_success(void **state);
+void TC_iot_security_storage_read_malloc_failure(void **state);
+void TC_iot_security_storage_read_null_parameters(void **state);
+void TC_iot_security_storage_read_invalid_parameters(void **state);
+void TC_iot_security_storage_read_failure(void **state);
+void TC_iot_security_storage_read_success(void **state);
+void TC_iot_security_storage_write_null_parameters(void **state);
+void TC_iot_security_storage_write_invalid_parameters(void **state);
+void TC_iot_security_storage_write_failure(void **state);
+void TC_iot_security_storage_write_success(void **state);
+void TC_iot_security_storage_remove_null_parameters(void **state);
+void TC_iot_security_storage_remove_invalid_parameters(void **state);
+void TC_iot_security_storage_remove_failure(void **state);
+void TC_iot_security_storage_remove_success(void **state);
+
+// TCs for iot_security_helper.c
+void TC_iot_security_base64_buffer_size(void **state);
+void TC_iot_security_base64_invalid_parameter(void **state);
+void TC_iot_security_base64_decode_failure(void **state);
+void TC_iot_security_base64_decode_urlsafe_failure(void **state);
+void TC_iot_security_base64_encode_success(void **state);
+void TC_iot_security_base64_decode_success(void **state);
+void TC_iot_security_base64_encode_urlsafe_success(void **state);
+void TC_iot_security_base64_decode_urlsafe_alloc_failure(void **state);
+void TC_iot_security_base64_decode_urlsafe_success(void **state);
+void TC_iot_security_sha256_failure(void **state);
+void TC_iot_security_sha256_success(void **state);
+
+// TCs for iot_security_helper_ed25519.c
+void TC_iot_security_ed25519_convert_pubkey_null_parameters(void **state);
+void TC_iot_security_ed25519_convert_seckey_null_parameters(void **state);
+void TC_iot_security_ed25519_convert_pubkey_success(void **state);
+void TC_iot_security_ed25519_convert_seckey_success(void **state);
+
+// TCs for iot_security_be_bsp.c
+void TC_STATIC_iot_security_be_bsp_fs_storage_id2target_invalid_parameters(void **state);
+void TC_STATIC_iot_security_be_bsp_fs_storage_id2target_success(void **state);
+void TC_STATIC_iot_security_be_bsp_fs_storage_id2filename_invalid_parameters(void **state);
+void TC_STATIC_iot_security_be_bsp_fs_storage_id2filename_success(void **state);
+void TC_iot_security_be_bsp_fs_load_malloc_failure(void **state);
+void TC_iot_security_be_bsp_fs_load_invalid_parameters(void **state);
+void TC_iot_security_be_bsp_fs_load_success(void **state);
+void TC_iot_security_be_bsp_fs_store_invalid_parameters(void **state);
+void TC_iot_security_be_bsp_fs_store_success(void **state);
+void TC_iot_security_be_bsp_fs_remove_invalid_parameters(void **state);
+void TC_iot_security_be_bsp_fs_remove_success(void **state);
+void TC_iot_security_be_bsp_init_null_parameters(void **state);
+void TC_iot_security_be_bsp_init_success(void **state);
 
 // TCs for iot_wt.c
 int TC_iot_wt_create_memleak_detect_setup(void **state);
@@ -209,5 +271,6 @@ void TC_iot_wt_create_null_parameters(void **state);
 int TC_iot_easysetup_httpd_group_setup(void **state);
 int TC_iot_easysetup_httpd_group_teardown(void **state);
 void TC_iot_easysetup_httpd_invalid_request(void **state);
+void TC_iot_easysetup_httpd_deviceinfo_success(void **state);
 
 #endif //ST_DEVICE_SDK_C_TCS_H

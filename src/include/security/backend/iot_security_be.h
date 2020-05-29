@@ -19,31 +19,66 @@
 #ifndef _IOT_SECURITY_BE_COMMON_H_
 #define _IOT_SECURITY_BE_COMMON_H_
 
+#include "security/backend/iot_security_be_bsp.h"
+
 #ifdef __cplusplus
 extern "C" {
 #endif
 
 typedef struct iot_security_be_funcs {
-
+	/**
+	 * @brief a pointer to a function to initialize a secure storage
+	 */
+	iot_error_t (*storage_init)(iot_security_context_t *);
+	/**
+	 * @brief a pointer to a function to deinitialize secure storage
+	 */
+	iot_error_t (*storage_deinit)(iot_security_context_t *);
+	/**
+	 * @brief a pointer to a function to read data from secure storage
+	 */
+	iot_error_t (*storage_read)(iot_security_context_t *, iot_security_buffer_t *);
+	/**
+	 * @brief a pointer to a function to write data into secure storage
+	 */
+	iot_error_t (*storage_write)(iot_security_context_t *, iot_security_buffer_t *);
+	/**
+	 * @brief a pointer to a function to remove data from secure storage
+	 */
+	iot_error_t (*storage_remove)(iot_security_context_t *);
 } iot_security_be_funcs_t;
 
-typedef struct iot_security_be_context {
+/**
+ * @brief Callback function to get nv data from core
+ */
+typedef iot_error_t (*external_nv_callback)(iot_nvd_t nv_id, iot_security_buffer_t *output_buf);
+
+struct iot_security_be_context {
 	/**
 	 * @brief string name to know this
-	 * */
+	 */
 	const char *name;
 	/**
 	 * @brief a pointer to a function lists
-	 * */
+	 */
 	const iot_security_be_funcs_t *fn;
-} iot_security_be_context_t;
+	/**
+	 * @brief a pointer to a function lists for bsp layer
+	 */
+	const iot_security_be_bsp_funcs_t *bsp_fn;
+	/**
+	 * @brief a pointer to a function to get nv data from device info file
+	 */
+	external_nv_callback external_device_info_cb;
+};
 
 /**
  * @brief	Initialize a security backend context
  * @details	Create a backend context and set the backend module
+ * @param[in]	external_nv_cb a pointer to a function to get nv data from core
  * @return	a pointer to the created security context or null if failed to create
  */
-iot_security_be_context_t *iot_security_be_init(void);
+iot_security_be_context_t *iot_security_be_init(external_nv_callback external_nv_cb);
 
 /**
  * @brief	De-initialize a security backend context

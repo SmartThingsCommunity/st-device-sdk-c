@@ -185,12 +185,14 @@ static iot_error_t _iot_net_ssl_connect(iot_net_interface_t *n)
 	SSL_library_init();
 
 	if ((ipAddress = gethostbyname(n->connection.url)) == 0) {
+		IOT_ERROR("gethostbyname failed");
 		goto exit;
 	}
 
 	n->context.ctx = SSL_CTX_new(n->context.method);
 
 	if (!n->context.ctx) {
+		IOT_ERROR("SSL_CTX_new failed");
 		goto exit;
 	}
 #if defined(CONFIG_STDK_IOT_CORE_OS_SUPPORT_FREERTOS) || defined(CONFIG_STDK_IOT_CORE_OS_SUPPORT_TIZENRT)
@@ -198,6 +200,7 @@ static iot_error_t _iot_net_ssl_connect(iot_net_interface_t *n)
 		retVal = SSL_CTX_load_verify_buffer(n->context.ctx, n->connection.ca_cert, n->connection.ca_cert_len);
 
 		if (retVal != 1) {
+			IOT_ERROR("SSL_CTX_load_verify_buffer failed retVal (%d)", retVal);
 			goto exit1;
 		}
 	}
@@ -206,12 +209,14 @@ static iot_error_t _iot_net_ssl_connect(iot_net_interface_t *n)
 		retVal = SSL_CTX_use_certificate_ASN1(n->context.ctx, n->connection.ca_cert_len, n->connection.ca_cert);
 
 		if (!retVal) {
+			IOT_ERROR("SSL_CTX_use_certificate_ASN1 failed retVal (%d)", retVal);
 			goto exit1;
 		}
 
 		retVal = SSL_CTX_use_PrivateKey_ASN1(0, n->context.ctx, n->connection.key, n->connection.key_len);
 
 		if (!retVal) {
+			IOT_ERROR("SSL_CTX_use_PrivateKey_ASN1 failed retVal (%d)", retVal);
 			goto exit1;
 		}
 	}
@@ -227,23 +232,27 @@ static iot_error_t _iot_net_ssl_connect(iot_net_interface_t *n)
 	sAddr.sin_port = htons(n->connection.port);
 
 	if ((n->context.socket = socket(AF_INET, SOCK_STREAM, 0)) < 0) {
+		IOT_ERROR("socket create failed (%d) errno (%d)", n->context.socket, errno);
 		goto exit1;
 	}
 	setsockopt(n->context.socket, SOL_SOCKET, SO_RCVTIMEO, &sock_timeout, sizeof(sock_timeout));
 	setsockopt(n->context.socket, SOL_SOCKET, SO_SNDTIMEO, &sock_timeout, sizeof(sock_timeout));
 	if ((retVal = connect(n->context.socket, (struct sockaddr *)&sAddr, sizeof(sAddr))) < 0) {
+		IOT_ERROR("socket connect failed (socket:%d) retVal (%d) errno (%d)", n->context.socket, retVal, errno);
 		goto exit2;
 	}
 
 	n->context.ssl = SSL_new(n->context.ctx);
 
 	if (!n->context.ssl) {
+		IOT_ERROR("SSL_new failed");
 		goto exit2;
 	}
 
 	SSL_set_fd(n->context.ssl, n->context.socket);
 
 	if ((retVal = SSL_connect(n->context.ssl)) <= 0) {
+		IOT_ERROR("ssl connect failed retVal (%d)", retVal);
 		goto exit3;
 	} else {
 		retVal = IOT_ERROR_NONE;
