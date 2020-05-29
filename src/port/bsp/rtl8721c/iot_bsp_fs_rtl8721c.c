@@ -428,7 +428,7 @@ iot_error_t iot_bsp_fs_read(iot_bsp_fs_handle_t handle, char *buffer, size_t *le
 {
 	int ret;
 
-	if (!buffer || length <= 0 || length > STDK_NV_SECTOR_SIZE)
+	if (!buffer || *length <= 0 || *length > STDK_NV_SECTOR_SIZE)
 		return IOT_ERROR_FS_READ_FAIL;
 	ret = nv_storage_read(handle.filename, buffer, *length);
 	IOT_ERROR_CHECK(ret == OP_FAIL, IOT_ERROR_FS_READ_FAIL, "nvs read fail ");

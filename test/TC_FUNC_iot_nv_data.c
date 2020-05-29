@@ -32,12 +32,14 @@ typedef enum {
     DONE
 } wifi_status_cmd_t;
 
+#define SAMPLE_PUBLIC_KEY	"BKb7+m1Mo8OuMsodM91ohz/+rZKDc/otzUPSn4UkCUk="
+
 static char sample_device_info[] = {
         "{\n"
         "\t\"deviceInfo\": {\n"
         "\t\t\"firmwareVersion\": \"testFirmwareVersion\",\n"
         "\t\t\"privateKey\": \"ztqmQ24u86J9bpFLjaoMfwauUZwKLjUIGsnrDwwnDM8=\",\n"
-        "\t\t\"publicKey\": \"BKb7+m1Mo8OuMsodM91ohz/+rZKDc/otzUPSn4UkCUk=\",\n"
+        "\t\t\"publicKey\": \"" SAMPLE_PUBLIC_KEY "\",\n"
         "\t\t\"serialNumber\": \"STDKtESt7968d226\"\n"
         "\t}\n"
         "}"
@@ -400,6 +402,43 @@ void TC_iot_nv_erase_internal_failure(void** state)
     err = iot_nv_erase(IOT_NVD_DEVICE_ID);
     // Then
     assert_int_equal(err, IOT_ERROR_NV_DATA_NOT_EXIST);
+}
+
+void TC_iot_nv_get_data_from_device_info_failure(void** state)
+{
+	iot_error_t err;
+	iot_security_buffer_t buf;
+	iot_nvd_t nv_id;
+
+	// When: null
+	err = iot_nv_get_data_from_device_info(nv_id, NULL);
+	// Then
+	assert_int_equal(err, IOT_ERROR_INVALID_ARGS);
+
+	// Given: id not in device info
+	nv_id = IOT_NVD_ROOM_ID;
+	// When
+	err = iot_nv_get_data_from_device_info(nv_id, &buf);
+	// Then
+	assert_int_equal(err, IOT_ERROR_NV_DATA_ERROR);
+}
+
+void TC_iot_nv_get_data_from_device_info_success(void** state)
+{
+	iot_error_t err;
+	iot_nvd_t nv_id;
+	iot_security_buffer_t buf;
+	char *sample_public_key = SAMPLE_PUBLIC_KEY;
+
+	// Given
+	nv_id = IOT_NVD_PUBLIC_KEY;
+	// When
+	err = iot_nv_get_data_from_device_info(nv_id, &buf);
+	// Then
+	assert_int_equal(err, IOT_ERROR_NONE);
+	assert_non_null(buf.p);
+	assert_int_not_equal(buf.len, 0);
+	assert_memory_equal(buf.p, sample_public_key, strlen(sample_public_key));
 }
 
 #define SECURITY_TYPE_MAX 10

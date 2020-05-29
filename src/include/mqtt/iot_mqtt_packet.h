@@ -86,6 +86,8 @@ typedef struct
 
 #define MQTTString_initializer {NULL, {0, NULL}}
 #define MAX_NUM_OF_REMAINING_LENGTH_BYTES 4
+#define MQTT_ACK_PACKET_SIZE 4	/* header:1byte length:1byte packet-id:2bytes */
+#define MQTT_PINGREQ_PACKET_SIZE 2	/* header:1byte length:1byte */
 
 int MQTTstrlen(MQTTString mqttstring);
 

@@ -27,6 +27,15 @@
 #include <reent.h>
 #include <sys/time.h>
 
+const char* iot_bsp_get_bsp_name()
+{
+           return "rtl8721c";
+}
+
+const char* iot_bsp_get_bsp_version_string()
+{
+           return "";
+}
 
 static uint64_t s_boot_time;
 

@@ -24,22 +24,6 @@
 
 struct iot_log_file_ctx *log_ctx;
 
-void iot_dump_log(iot_debug_level_t level, dump_log_id_t log_id, int arg1, int arg2)
-{
-	int log[4] = {0,};
-
-	struct timeval time;
-	gettimeofday(&time, NULL);
-
-	log[0] = ((level & 0xf) << 28) | (log_id & 0xffff);
-	log[1] = time.tv_sec;
-	log[2] = arg1;
-	log[3] = arg2;
-
-	//TODO : save log to file
-	printf("%08x %08x %08x %08x\n" , log[0], log[1], log[2], log[3]);
-}
-
 #ifdef CONFIG_STDK_IOT_CORE_LOG_FILE_FLASH_WITH_RAM
 static unsigned int _iot_log_file_buf_free_size(void)
 {

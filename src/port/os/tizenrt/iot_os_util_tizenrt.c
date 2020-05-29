@@ -31,6 +31,7 @@
 #include <errno.h>
 #include <sys/types.h>
 #include <tinyara/config.h>
+#include <tinyara/version.h>
 
 #include "iot_error.h"
 #include "iot_os_util.h"
@@ -174,6 +175,20 @@ static void *recursive_mutex_create_wrapper(void)
 		return NULL;
 	}
 	return (void *)mutex;
+}
+
+const char* iot_os_get_os_name()
+{
+       return "TizenRT";
+}
+
+const char* iot_os_get_os_version_string()
+{
+#ifdef CONFIG_VERSION_STRING
+       return CONFIG_VERSION_STRING;
+#else
+       return "";
+#endif
 }
 
 
