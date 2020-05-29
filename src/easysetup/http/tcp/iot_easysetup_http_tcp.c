@@ -23,7 +23,7 @@
 #include <netinet/in.h>
 #include <unistd.h>
 #endif
-#include "easysetup_http.h"
+#include "../easysetup_http.h"
 #include "iot_os_util.h"
 #include "iot_debug.h"
 #include "iot_easysetup.h"

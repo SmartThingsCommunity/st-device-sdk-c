@@ -70,6 +70,8 @@ ifdef CONFIG_STDK_IOT_CORE_EASYSETUP_POSIX_TESTING
 COMPONENT_SRCDIRS += easysetup/posix_testing
 endif
 
+COMPONENT_SRCDIRS += easysetup/http/tcp
+
 CPPFLAGS += -include $(COMPONENT_PATH)/include/iot_common.h
 
 COMPONENT_SRCDIRS += mqtt/client mqtt/packet
