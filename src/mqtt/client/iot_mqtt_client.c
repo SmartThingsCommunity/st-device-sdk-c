@@ -252,10 +252,12 @@ static void _iot_mqtt_process_post_write(MQTTClient *client, iot_mqtt_packet_chu
 	}
 }
 
-static int _iot_mqtt_run_write_stream(MQTTClient *client, iot_os_timer timer)
+static int _iot_mqtt_run_write_stream(MQTTClient *client)
 {
 	int rc = 0, written = 0;
+	iot_error_t iot_err;
 	iot_mqtt_packet_chunk_t *w_chunk = NULL;
+	iot_os_timer expiry_timer = NULL;
 
 	if (client == NULL || client->magic != MQTT_CLIENT_STRUCT_MAGIC_NUMBER) {
 		return E_ST_MQTT_FAILURE;
@@ -264,42 +266,62 @@ static int _iot_mqtt_run_write_stream(MQTTClient *client, iot_os_timer timer)
 	if((iot_os_mutex_lock(&client->write_lock)) != IOT_OS_TRUE) {
 		return 0;
 	}
+
+	w_chunk = _iot_mqtt_queue_pop(&client->write_pending_queue);
+	if (w_chunk == NULL) {
+		goto exit;
+	} else {
+		iot_err = iot_os_timer_init(&expiry_timer);
+		if (iot_err) {
+			IOT_ERROR("fail to init timer");
+			written = E_ST_MQTT_BUFFER_OVERFLOW;
+			goto exit;
+		}
+		iot_os_timer_count_ms(expiry_timer, MQTT_WRITE_TIMEOUT);
+	}
+
 	if(!client->isconnected) {
 		written = E_ST_MQTT_DISCONNECTED;
 		goto exit;
 	}
 
-	while (!iot_os_timer_isexpired(timer)) {
-		if (client->current_writing_chunk == NULL) {
-			w_chunk = _iot_mqtt_queue_pop(&client->write_pending_queue);
-			if (w_chunk == NULL) {
-				goto exit;
-			} else {
-				client->current_writing_chunk = w_chunk;
-				client->current_write_pos = 0;
-			}
-		}
-		w_chunk = client->current_writing_chunk;
+	while (!iot_os_timer_isexpired(expiry_timer)) {
+		rc = client->net->write(client->net, &w_chunk->chunk_data[written],
+				w_chunk->chunk_size - written, expiry_timer);
 
-		rc = client->net->write(client->net, &w_chunk->chunk_data[client->current_write_pos],
-				w_chunk->chunk_size - client->current_write_pos, timer);
-		if (rc < 0) { // there was an error writing the data
+		if (rc > 0) {
+			written += rc;
+			iot_os_timer_count_ms(expiry_timer, MQTT_WRITE_TIMEOUT);
+		} else if (rc < 0) {
 			written = E_ST_MQTT_NETWORK_ERROR;
 			goto exit;
-		} else if (rc == 0) {
-			goto exit;
 		}
-		client->current_write_pos += rc;
-		written += rc;
 
-		if (client->current_write_pos == w_chunk->chunk_size) {
-			client->current_writing_chunk = NULL;
+		if (written == w_chunk->chunk_size) {
 			_iot_mqtt_process_post_write(client, w_chunk);
+			break;
 		}
+	}
+
+	if (written != w_chunk->chunk_size) {
+		written = E_ST_MQTT_NETWORK_ERROR;
+		goto exit;
 	}
 
 exit:
 	iot_os_mutex_unlock(&client->write_lock);
+
+	if (expiry_timer) {
+		iot_os_timer_destroy(&expiry_timer);
+	}
+
+	if (written < 0) {
+		w_chunk->chunk_state = PACKET_CHUNK_WRITE_FAIL;
+		w_chunk->return_code = written;
+		if (!w_chunk->have_owner) {
+			_iot_mqtt_queue_push(&client->user_event_callback_queue, w_chunk);
+		}
+	}
 
 	return written;
 }
@@ -424,10 +446,14 @@ static void _iot_mqtt_process_post_read(MQTTClient *client, iot_mqtt_packet_chun
 	}
 }
 
-static int _iot_mqtt_run_read_stream(MQTTClient *client, iot_os_timer timer)
+static int _iot_mqtt_run_read_stream(MQTTClient *client)
 {
 	int rc = 0 , read = 0;
 	iot_mqtt_packet_chunk_t *w_chunk = NULL;
+	iot_error_t iot_err;
+	iot_os_timer expiry_timer = NULL;
+	unsigned char packet_fixed_header[MAX_NUM_OF_REMAINING_LENGTH_BYTES + 1];
+	int rem_size = 0;
 
 	if (client == NULL || client->magic != MQTT_CLIENT_STRUCT_MAGIC_NUMBER) {
 		return E_ST_MQTT_FAILURE;
@@ -441,80 +467,86 @@ static int _iot_mqtt_run_read_stream(MQTTClient *client, iot_os_timer timer)
 		goto exit;
 	}
 
-	while(!iot_os_timer_isexpired(timer)) {
-		switch (client->current_read_pos) {
-			/* 1. read the header byte.  This has the packet type in it */
-			case 0:
-				rc = client->net->read(client->net, &client->reading_packet_fixed_header[0], 1, timer);
-				if (rc < 0) {
-					read = E_ST_MQTT_NETWORK_ERROR;
-					goto exit;
-				} else if (rc == 0) {
-					goto exit;
-				}
-				client->current_read_pos = 1;
-				read++;
-				break;
-			/* 2. read the remaining length.  This is variable in itself */
-			case 1:
-				do {
-					if (client->reading_packet_rem_size_length >= MAX_NUM_OF_REMAINING_LENGTH_BYTES) {
-						read = E_ST_MQTT_NETWORK_ERROR;
-						goto exit;
-					}
-					rc = client->net->read(client->net, &client->reading_packet_fixed_header[client->reading_packet_rem_size_length + 1], 1, timer);
-					if (rc < 0) {
-						read = E_ST_MQTT_NETWORK_ERROR;
-						goto exit;
-					} else if (rc == 0) {
-						goto exit;
-					}
-					client->reading_packet_rem_size_length++;
-					read++;
-				} while ((client->reading_packet_fixed_header[client->reading_packet_rem_size_length] & 128) != 0);
-				client->current_read_pos += client->reading_packet_rem_size_length;
-				break;
-			/* 3. read the rest of the buffer */
-			default:
-				if (client->current_reading_chunk == NULL) {
-					int rem_size = 0;
-					MQTTPacket_decodeBuf(&client->reading_packet_fixed_header[1], &rem_size);
-					client->current_reading_chunk = _iot_mqtt_chunk_create(1 + client->reading_packet_rem_size_length + rem_size);
-					if (client->current_reading_chunk == NULL) {
-						IOT_ERROR("chunk malloc fail");
-						read = E_ST_MQTT_BUFFER_OVERFLOW;
-						goto exit;
-					}
-					memcpy(client->current_reading_chunk->chunk_data, client->reading_packet_fixed_header, 1 + client->reading_packet_rem_size_length);
-				}
-				w_chunk = client->current_reading_chunk;
-
-				rc = client->net->read(client->net, w_chunk->chunk_data + client->current_read_pos,
-						w_chunk->chunk_size - client->current_read_pos, timer);
-				if (rc < 0) {
-					read = E_ST_MQTT_NETWORK_ERROR;
-					goto exit;
-				} else if (rc == 0) {
-					goto exit;
-				}
-				client->current_read_pos += rc;
-				read += rc;
-
-				if (client->current_read_pos == w_chunk->chunk_size) {
-					client->current_reading_chunk = NULL;
-					client->current_read_pos = 0;
-					w_chunk->chunk_state = PACKET_CHUNK_READ_COMPLETED;
-					w_chunk->packet_type = (w_chunk->chunk_data[0] & 0xf0) >> 4;
-					w_chunk->qos = (w_chunk->chunk_data[0] & 0x06) >> 1;
-					w_chunk->packet_id = MQTTPacket_getPacketId(w_chunk->chunk_data);
-					_iot_mqtt_process_post_read(client, w_chunk);
-				}
-				break;
+	rc = client->net->select(client->net, 0);
+	if (rc < 0) {
+		read = E_ST_MQTT_NETWORK_ERROR;
+		goto exit;
+	} else if (rc == 0) {
+		goto exit;
+	} else {
+		iot_err = iot_os_timer_init(&expiry_timer);
+		if (iot_err) {
+			IOT_ERROR("fail to init timer");
+			read = E_ST_MQTT_BUFFER_OVERFLOW;
+			goto exit;
 		}
+		iot_os_timer_count_ms(expiry_timer, MQTT_READ_TIMEOUT);
+	}
+
+	rc = client->net->read(client->net, &packet_fixed_header[0], 1, expiry_timer);
+	if (rc <= 0) {
+		read = E_ST_MQTT_NETWORK_ERROR;
+		goto exit;
+	}
+	read++;
+	do {
+		if (read - 1 >= MAX_NUM_OF_REMAINING_LENGTH_BYTES) {
+			read = E_ST_MQTT_NETWORK_ERROR;
+			goto exit;
+		}
+		rc = client->net->read(client->net, &packet_fixed_header[read], 1, expiry_timer);
+		if (rc <= 0) {
+			read = E_ST_MQTT_NETWORK_ERROR;
+			goto exit;
+		}
+		read++;
+	} while ((packet_fixed_header[read - 1] & 128) != 0);
+
+	MQTTPacket_decodeBuf(&packet_fixed_header[1], &rem_size);
+	w_chunk = _iot_mqtt_chunk_create(read + rem_size);
+	if (w_chunk) {
+		IOT_ERROR("chunk malloc fail");
+		read = E_ST_MQTT_BUFFER_OVERFLOW;
+		goto exit;
+	}
+	memcpy(w_chunk->chunk_data, packet_fixed_header, read);
+
+	while (!iot_os_timer_isexpired(expiry_timer)) {
+		rc = client->net->read(client->net, w_chunk->chunk_data + read,
+				w_chunk->chunk_size - read, expiry_timer);
+		if (rc < 0) {
+			read = E_ST_MQTT_NETWORK_ERROR;
+			goto exit;
+		} else {
+			read += rc;
+			iot_os_timer_count_ms(expiry_timer, MQTT_READ_TIMEOUT);
+		}
+
+		if (read == w_chunk->chunk_size) {
+			w_chunk->chunk_state = PACKET_CHUNK_READ_COMPLETED;
+			w_chunk->packet_type = (w_chunk->chunk_data[0] & 0xf0) >> 4;
+			w_chunk->qos = (w_chunk->chunk_data[0] & 0x06) >> 1;
+			w_chunk->packet_id = MQTTPacket_getPacketId(w_chunk->chunk_data);
+			_iot_mqtt_process_post_read(client, w_chunk);
+			break;
+		}
+	}
+
+	if (read != w_chunk->chunk_size) {
+		read = E_ST_MQTT_NETWORK_ERROR;
+		goto exit;
 	}
 
 exit:
 	iot_os_mutex_unlock(&client->read_lock);
+
+	if (expiry_timer) {
+		iot_os_timer_destroy(&expiry_timer);
+	}
+
+	if (read < 0 && w_chunk != NULL) {
+		_iot_mqtt_chunk_destroy(w_chunk);
+	}
 
 	return read;
 }
@@ -932,11 +964,11 @@ exit:
 	return rc;
 }
 
-static void _iot_mqtt_process_pending_packets(MQTTClient *client, iot_os_timer timer)
+static void _iot_mqtt_process_pending_packets(MQTTClient *client)
 {
 	iot_mqtt_packet_chunk_t *w_chunk = NULL;
 
-	while (!iot_os_timer_isexpired(timer)) {
+	while (1) {
 		if (client == NULL || client->magic != MQTT_CLIENT_STRUCT_MAGIC_NUMBER) {
 			return;
 		}
@@ -984,11 +1016,11 @@ static void _iot_mqtt_deliver_publish(MQTTClient *client, iot_mqtt_packet_chunk_
 	deliverMessage(client, &msg);
 }
 
-static void _iot_mqtt_process_user_callback(MQTTClient *client, iot_os_timer timer)
+static void _iot_mqtt_process_user_callback(MQTTClient *client)
 {
 	iot_mqtt_packet_chunk_t *w_chunk = NULL;
 
-	while (!iot_os_timer_isexpired(timer)) {
+	while (1) {
 		if (client == NULL || client->magic != MQTT_CLIENT_STRUCT_MAGIC_NUMBER) {
 			return;
 		}
@@ -996,19 +1028,40 @@ static void _iot_mqtt_process_user_callback(MQTTClient *client, iot_os_timer tim
 		if (w_chunk == NULL) {
 			return;
 		}
-		switch (w_chunk->packet_type) {
-			case PUBLISH:
-				if (w_chunk->chunk_state == PACKET_CHUNK_READ_COMPLETED) {
+		switch (w_chunk->chunk_state) {
+			case PACKET_CHUNK_TIMEOUT:
+			case PACKET_CHUNK_WRITE_FAIL:
+					/* TODO callback fail */
+			case PACKET_CHUNK_READ_COMPLETED:
+				if (w_chunk->packet_type == PUBLISH) {
 					_iot_mqtt_deliver_publish(client, w_chunk);
-				} else if (w_chunk->chunk_state == PACKET_CHUNK_TIMEOUT) {
-					/* TODO callback timeout */
 				}
-				break;
-			default:
+			default :
 				break;
 		}
 		_iot_mqtt_chunk_destroy(w_chunk);
 	}
+}
+
+static int _iot_mqtt_run_cycle(MQTTClient *client)
+{
+	int rc = 0;
+
+	rc = _iot_mqtt_run_write_stream(client);
+	if (rc < 0)
+		return rc;
+
+	rc = _iot_mqtt_run_read_stream(client);
+	if (rc < 0)
+		return rc;
+
+	_iot_mqtt_process_pending_packets(client);
+
+	rc = _iot_mqtt_check_alive(client);
+	if (rc < 0)
+		return rc;
+
+	return rc;
 }
 
 int cycle(MQTTClient *c, iot_os_timer timer)

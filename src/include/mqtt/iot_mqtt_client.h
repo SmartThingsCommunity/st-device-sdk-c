@@ -46,6 +46,8 @@ extern "C" {
 #define DEFAULT_COMMNAD_TIMEOUT 		30000
 #define MQTT_PUBLISH_RETRY 				3
 #define MQTT_PING_RETRY 				3
+#define MQTT_WRITE_TIMEOUT				10000	/* in ms*/
+#define MQTT_READ_TIMEOUT				10000	/* in ms*/
 
 #define MQTT_DISCONNECT_MAX_SIZE		5
 #define MQTT_PUBACK_MAX_SIZE			5
@@ -70,6 +72,7 @@ enum packet_chunk_state {
 	PACKET_CHUNK_INIT,
 	PACKET_CHUNK_WRITE_PENDING,
 	PACKET_CHUNK_WRITE_COMPLETED,
+	PACKET_CHUNK_WRITE_FAIL,
 	PACKET_CHUNK_ACK_PENDING,
 	PACKET_CHUNK_READ_COMPLETED,
 	PACKET_CHUNK_ACKNOWLEDGED,
@@ -91,6 +94,7 @@ typedef struct iot_mqtt_packet_chunk {
 	int retry_count;
 
 	unsigned char have_owner;
+	int return_code;
 
 	struct iot_mqtt_packet_chunk *next;
 } iot_mqtt_packet_chunk_t;
@@ -131,14 +135,7 @@ typedef struct MQTTClient {
 	struct iot_mqtt_packet_chunk *ping_packet;
 
 	iot_os_mutex write_lock;
-	struct iot_mqtt_packet_chunk *current_writing_chunk;
-	size_t current_write_pos;
 	iot_os_mutex read_lock;
-	struct iot_mqtt_packet_chunk *current_reading_chunk;
-	size_t current_read_pos;
-	unsigned char reading_packet_fixed_header[MAX_NUM_OF_REMAINING_LENGTH_BYTES + 1];
-	size_t reading_packet_rem_size_length;
-
 
 	iot_mqtt_packet_chunk_queue_t write_pending_queue;
 	iot_mqtt_packet_chunk_queue_t ack_pending_queue;
