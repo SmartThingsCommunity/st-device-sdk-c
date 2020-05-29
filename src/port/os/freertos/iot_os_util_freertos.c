@@ -195,8 +195,11 @@ unsigned int iot_os_timer_left_ms(iot_os_timer timer)
 {
 	Freertos_Timer *freertos_timer = timer;
 
-	xTaskCheckForTimeOut(&freertos_timer->xTimeOut, &freertos_timer->xTicksToWait); /* updates xTicksToWait to the number left */
-	return (freertos_timer->xTicksToWait <= 0) ? 0 : (freertos_timer->xTicksToWait * portTICK_PERIOD_MS);
+	if ((xTaskCheckForTimeOut(&freertos_timer->xTimeOut, &freertos_timer->xTicksToWait)) == pdTRUE) {
+		return 0;
+	}
+
+	return (freertos_timer->xTicksToWait * portTICK_PERIOD_MS);
 }
 
 char iot_os_timer_isexpired(iot_os_timer timer)
