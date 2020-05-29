@@ -19,6 +19,8 @@
 #ifndef _IOT_DUMP_LOG_H_
 #define _IOT_DUMP_LOG_H_
 
+#include "iot_main.h"
+
 #ifdef __cplusplus
 extern "C" {
 #endif
@@ -41,6 +43,9 @@ struct iot_dump_state {
     char os_version[16];
     char bsp_name[16];
     char bsp_version[16];
+    char firmware_version[16];
+    char model_number[16];
+    char manufacturer_name[16];
 };
 
 #define IOT_DUMP_LOG_VERSION 0
@@ -179,10 +184,11 @@ typedef enum {
 } dump_log_id_t;
 
 /* create all_log_dump
+ * @parm iot_ctx - iot_core context
  * @param all_log_dump_size - size of created all_log_dump
  * @return pointer of 'all log dump'
  * @warning must free returned pointer after using it.
  */
-char* iot_dump_create_all_log_dump(int all_log_dump_size, int need_base64);
+char* iot_dump_create_all_log_dump(struct iot_context *iot_ctx, int all_log_dump_size, int need_base64);
 
 #endif /* _IOT_DUMP_LOG_H_ */

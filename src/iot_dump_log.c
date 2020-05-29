@@ -29,7 +29,8 @@
 #ifdef CONFIG_STDK_IOT_CORE_LOG_FILE
 #include "iot_log_file.h"
 #endif
-static struct iot_dump_state* _iot_dump_create_dump_state()
+
+static struct iot_dump_state* _iot_dump_create_dump_state(struct iot_context *iot_ctx)
 {
     struct iot_dump_state* dump_state;
 
@@ -50,6 +51,20 @@ static struct iot_dump_state* _iot_dump_create_dump_state()
     strncpy(dump_state->bsp_name, iot_bsp_get_bsp_name(), sizeof(dump_state->bsp_name));
     strncpy(dump_state->bsp_version, iot_bsp_get_bsp_version_string(), sizeof(dump_state->bsp_version));
 
+    if (iot_ctx) {
+        if (iot_ctx->device_info.firmware_version) {
+            strncpy(dump_state->firmware_version, iot_ctx->device_info.firmware_version,
+                    sizeof(dump_state->firmware_version));
+        }
+        if (iot_ctx->device_info.model_number) {
+            strncpy(dump_state->model_number, iot_ctx->device_info.model_number,
+                    sizeof(dump_state->model_number));
+        }
+        if (iot_ctx->device_info.manufacturer_name) {
+            strncpy(dump_state->manufacturer_name, iot_ctx->device_info.manufacturer_name,
+                    sizeof(dump_state->manufacturer_name));
+        }
+    }
     return dump_state;
 }
 
@@ -110,7 +125,7 @@ static int _iot_dump_copy_memory(void *dest, int dest_size, const void *src, int
     return out_len1 + out_len2;
 }
 
-char* iot_dump_create_all_log_dump(int all_log_dump_size, int need_base64)
+char* iot_dump_create_all_log_dump(struct iot_context *iot_ctx, int all_log_dump_size, int need_base64)
 {
     char* all_log_dump;
     struct iot_dump_header* header;
@@ -139,7 +154,7 @@ char* iot_dump_create_all_log_dump(int all_log_dump_size, int need_base64)
     }
     curr_size += ret;
 
-    dump_state = _iot_dump_create_dump_state();
+    dump_state = _iot_dump_create_dump_state(iot_ctx);
     ret = _iot_dump_copy_memory(all_log_dump + curr_size, all_log_dump_size - curr_size,
                 dump_state, sizeof(struct iot_dump_state), temp_buf, sizeof(temp_buf), &remain_number, need_base64);
     iot_os_free(dump_state);
