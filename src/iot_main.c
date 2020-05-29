@@ -504,6 +504,10 @@ static iot_error_t _do_iot_main_command(struct iot_context *ctx,
 					ctx->iot_reg_data.new_reged = true;
 					next_state = IOT_STATE_PROV_ENTER;
 				} else {
+					/* Wakeup user interaction by provisioning done */
+					iot_os_eventgroup_set_bits(ctx->usr_events,
+						IOT_USR_INTERACT_BIT_PROV_DONE);
+
 					next_state = IOT_STATE_PROV_DONE;
 				}
 			}
@@ -1559,18 +1563,25 @@ int st_conn_start(IOT_CTX *iot_ctx, st_status_cb status_cb,
 		if (ctx->devconf.ownership_validation_type & IOT_OVF_TYPE_BUTTON) {
 			_do_status_report(ctx, IOT_STATE_PROV_CONFIRM, false);
 		}
+
+		iot_err = IOT_ERROR_NONE;
 	} else {
-		IOT_ERROR("Can't go to PROV_CONFIRM (0x%0x)", curr_events);
 		if (ctx->es_res_created) {
 			_delete_easysetup_resources_all(ctx);
 		}
-		return IOT_ERROR_TIMEOUT;
+
+		if (curr_events & IOT_USR_INTERACT_BIT_PROV_DONE) {
+			iot_err = IOT_ERROR_NONE;
+		} else {
+			IOT_ERROR("Can't go to PROV_CONFIRM (0x%0x)", curr_events);
+			iot_err = IOT_ERROR_TIMEOUT;
+		}
 	}
 
-	IOT_INFO("%s done", __func__);
-	IOT_DUMP_MAIN(INFO, BASE, 0);
+	IOT_INFO("%s done (%d)", __func__, iot_err);
+	IOT_DUMP_MAIN(INFO, BASE, iot_err);
 
-	return IOT_ERROR_NONE;
+	return iot_err;
 }
 
 int st_conn_cleanup(IOT_CTX *iot_ctx, bool reboot)
