@@ -209,7 +209,7 @@ int iot_os_mutex_lock(iot_os_mutex *mutex)
 {
     int ret;
 
-    if (!mutex) {
+    if (!mutex || !mutex->sem) {
         return IOT_OS_FALSE;
     }
 

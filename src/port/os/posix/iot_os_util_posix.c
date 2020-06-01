@@ -311,6 +311,10 @@ int iot_os_mutex_init(iot_os_mutex* mutex)
 
 int iot_os_mutex_lock(iot_os_mutex* mutex)
 {
+	if (!mutex || !mutex->sem) {
+		return IOT_OS_FALSE;
+	}
+
 	pthread_mutex_t* mutex_p = mutex->sem;
 
 	pthread_mutex_lock(mutex_p);
