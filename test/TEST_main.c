@@ -356,10 +356,10 @@ int TEST_FUNC_iot_wt(void)
 int TEST_FUNC_iot_easysetup_httpd(void)
 {
     const struct CMUnitTest tests[] = {
-            cmocka_unit_test(TC_iot_easysetup_httpd_invalid_request),
-            cmocka_unit_test(TC_iot_easysetup_httpd_deviceinfo_success),
+            cmocka_unit_test_setup_teardown(TC_iot_easysetup_httpd_invalid_request, TC_iot_easysetup_httpd_group_setup, TC_iot_easysetup_httpd_group_teardown),
+            cmocka_unit_test_setup_teardown(TC_iot_easysetup_httpd_deviceinfo_success, TC_iot_easysetup_httpd_group_setup, TC_iot_easysetup_httpd_group_teardown),
     };
-    return cmocka_run_group_tests_name("iot_easysetup_tcp_httpd.c", tests, TC_iot_easysetup_httpd_group_setup, TC_iot_easysetup_httpd_group_teardown);
+    return cmocka_run_group_tests_name("iot_easysetup_tcp_httpd.c", tests, NULL, NULL);
 }
 
 int main(void) {
