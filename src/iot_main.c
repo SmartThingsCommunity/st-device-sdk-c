@@ -1120,6 +1120,13 @@ IOT_CTX* st_conn_init(unsigned char *onboarding_config, unsigned int onboarding_
 	ctx->iot_reg_data.new_reged = false;
 	ctx->curr_state = ctx->req_state = IOT_STATE_UNKNOWN;
 
+	/* create mutext for user level st_conn_xxx APIs */
+	if (iot_os_mutex_init(&ctx->st_conn_lock) != IOT_OS_TRUE) {
+		IOT_ERROR("failed to init st_conn_lock\n");
+		IOT_DUMP_MAIN(ERROR, BASE, 0xDEADBEEF);
+		goto error_main_mutex_init;
+	}
+
 	/* create task */
 	if (iot_os_thread_create(_iot_main_task, IOT_TASK_NAME,
 			IOT_TASK_STACK_SIZE, (void *)ctx, IOT_TASK_PRIORITY,
@@ -1145,6 +1152,9 @@ IOT_CTX* st_conn_init(unsigned char *onboarding_config, unsigned int onboarding_
 	return (IOT_CTX*)ctx;
 
 error_main_task_init:
+	iot_os_mutex_destroy(&ctx->st_conn_lock);
+
+error_main_mutex_init:
 	iot_os_eventgroup_delete(ctx->iot_events);
 
 error_main_init_events:
@@ -1510,6 +1520,15 @@ int st_conn_start(IOT_CTX *iot_ctx, st_status_cb status_cb,
 	if (!ctx)
 		return IOT_ERROR_BAD_REQ;
 
+	iot_os_mutex_lock(&ctx->st_conn_lock);
+	if ((ctx->curr_state != IOT_STATE_UNKNOWN) || (ctx->req_state != IOT_STATE_UNKNOWN)) {
+		IOT_WARN("Can't start it, iot_main_task is already working(%d)", ctx->curr_state);
+		IOT_DUMP_MAIN(WARN, BASE, ctx->curr_state);
+
+		iot_err = IOT_ERROR_BAD_REQ;
+		goto end_st_conn_start;
+	}
+
 	if (ctx->es_res_created) {
 		IOT_WARN("Already easysetup resources are created!!");
 	} else {
@@ -1517,7 +1536,7 @@ int st_conn_start(IOT_CTX *iot_ctx, st_status_cb status_cb,
 		if (iot_err != IOT_ERROR_NONE) {
 			IOT_ERROR("failed to create easysetup resources(%d)", iot_err);
 			IOT_DUMP_MAIN(ERROR, BASE, iot_err);
-			return iot_err;
+			goto end_st_conn_start;
 		}
 	}
 
@@ -1543,7 +1562,7 @@ int st_conn_start(IOT_CTX *iot_ctx, st_status_cb status_cb,
 		}
 
 		_delete_easysetup_resources_all(ctx);
-		return iot_err;
+		goto end_st_conn_start;
 	}
 
 	if (ctx->devconf.ownership_validation_type & IOT_OVF_TYPE_BUTTON) {
@@ -1551,7 +1570,8 @@ int st_conn_start(IOT_CTX *iot_ctx, st_status_cb status_cb,
 			IOT_ERROR("There is no status_cb for otm");
 			IOT_DUMP_MAIN(ERROR, BASE, 0);
 			_delete_easysetup_resources_all(ctx);
-			return IOT_ERROR_BAD_REQ;
+			iot_err = IOT_ERROR_BAD_REQ;
+			goto end_st_conn_start;
 		}
 	}
 
@@ -1581,6 +1601,8 @@ int st_conn_start(IOT_CTX *iot_ctx, st_status_cb status_cb,
 	IOT_INFO("%s done (%d)", __func__, iot_err);
 	IOT_DUMP_MAIN(INFO, BASE, iot_err);
 
+end_st_conn_start:
+	iot_os_mutex_unlock(&ctx->st_conn_lock);
 	return iot_err;
 }
 

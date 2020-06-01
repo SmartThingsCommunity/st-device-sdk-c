@@ -281,6 +281,7 @@ struct iot_context {
 	uint16_t cmd_count[IOT_COMMAND_TYPE_MAX+1];	/**< @brief current queued command counts */
 
 	iot_os_thread main_thread; /**< @brief iot main task thread */
+	iot_os_mutex st_conn_lock; /**< @brief User level control API lock */
 };
 
 #endif /* _IOT_MAIN_H_ */
