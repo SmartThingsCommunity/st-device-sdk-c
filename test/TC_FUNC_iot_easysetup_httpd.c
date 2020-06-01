@@ -217,7 +217,7 @@ void TC_iot_easysetup_httpd_invalid_request(void **state)
         len = recv(sock, recv_buffer, sizeof(recv_buffer), 0);
         // Then
         assert_true(len > 0);
-        assert_error_response(recv_buffer, -401, 400);
+        assert_error_response(recv_buffer, 401, 400);
 
         close(sock);
     }
