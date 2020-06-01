@@ -92,7 +92,7 @@ static iot_mqtt_packet_chunk_t* _iot_mqtt_queue_pop_by_type_and_id(iot_mqtt_pack
 {
 	iot_mqtt_packet_chunk_t *chunk = NULL, *iterator = NULL;
 
-	if((iot_os_mutex_lock(&queue->lock)))
+	if((iot_os_mutex_lock(&queue->lock)) != IOT_OS_TRUE)
 		return NULL;
 
 	if (queue->head == NULL || queue->tail == NULL) {
@@ -130,7 +130,7 @@ static iot_mqtt_packet_chunk_t* _iot_mqtt_queue_pop_by_expiry(iot_mqtt_packet_ch
 {
 	iot_mqtt_packet_chunk_t *chunk = NULL, *iterator = NULL;
 
-	if((iot_os_mutex_lock(&queue->lock)))
+	if((iot_os_mutex_lock(&queue->lock)) != IOT_OS_TRUE)
 		return NULL;
 
 	if (queue->head == NULL || queue->tail == NULL) {
@@ -320,6 +320,15 @@ exit:
 		w_chunk->return_code = written;
 		if (!w_chunk->have_owner) {
 			_iot_mqtt_queue_push(&client->user_event_callback_queue, w_chunk);
+		}
+	}
+
+	if (written > 0) {
+		if (client != NULL && client->magic == MQTT_CLIENT_STRUCT_MAGIC_NUMBER) {
+			if((iot_os_mutex_lock(&client->client_manage_lock)) == IOT_OS_TRUE) {
+				iot_os_timer_count_ms(client->last_sent, client->keepAliveInterval * 1000);
+				iot_os_mutex_unlock(&client->client_manage_lock);
+			}
 		}
 	}
 
@@ -548,6 +557,15 @@ exit:
 		_iot_mqtt_chunk_destroy(w_chunk);
 	}
 
+	if (read > 0) {
+		if (client != NULL && client->magic == MQTT_CLIENT_STRUCT_MAGIC_NUMBER) {
+			if((iot_os_mutex_lock(&client->client_manage_lock)) == IOT_OS_TRUE) {
+				iot_os_timer_count_ms(client->last_received, client->keepAliveInterval * 1000);
+				iot_os_mutex_unlock(&client->client_manage_lock);
+			}
+		}
+	}
+
 	return read;
 }
 
@@ -643,6 +661,11 @@ int st_mqtt_create(st_mqtt_client *client, unsigned int command_timeout_ms)
 		IOT_ERROR("fail to init mutex");
 		goto error_handle;
 	}
+	iot_os_mutex_init(&c->client_manage_lock);
+	if (c->client_manage_lock.sem == NULL) {
+		IOT_ERROR("fail to init mutex");
+		goto error_handle;
+	}
 	c->thread = NULL;
 	iot_os_mutex_init(&c->write_lock);
 	if (c->write_lock.sem == NULL) {
@@ -684,6 +707,8 @@ error_handle:
 			iot_os_timer_destroy(&c->ping_wait);
 		if (c->mutex.sem)
 			iot_os_mutex_destroy(&c->mutex);
+		if (c->client_manage_lock.sem)
+			iot_os_mutex_destroy(&c->client_manage_lock);
 		if (c->write_lock.sem)
 			iot_os_mutex_destroy(&c->write_lock);
 		if (c->read_lock.sem)
@@ -747,6 +772,8 @@ void st_mqtt_destroy(st_mqtt_client client)
 	iot_os_mutex_destroy(&c->mutex);
 	iot_os_mutex_destroy(&c->write_lock);
 	iot_os_mutex_destroy(&c->read_lock);
+	iot_os_mutex_destroy(&c->client_manage_lock);
+	c->client_manage_lock.sem = NULL;
 	_iot_mqtt_queue_destroy(&c->write_pending_queue);
 	_iot_mqtt_queue_destroy(&c->ack_pending_queue);
 	_iot_mqtt_queue_destroy(&c->user_event_callback_queue);
@@ -905,6 +932,15 @@ int deliverMessage(MQTTClient *c, st_mqtt_msg *message)
 
 static int _iot_mqtt_check_alive(MQTTClient *client)
 {
+	int rc = 0;
+
+	if (client == NULL || client->magic != MQTT_CLIENT_STRUCT_MAGIC_NUMBER) {
+		return E_ST_MQTT_FAILURE;
+	}
+
+	if((iot_os_mutex_lock(&client->client_manage_lock)) != IOT_OS_TRUE) {
+		return E_ST_MQTT_FAILURE;
+	}
 	if (iot_os_timer_isexpired(client->last_sent) || iot_os_timer_isexpired(client->last_received)) {
 		switch (client->ping_packet->chunk_state) {
 			case PACKET_CHUNK_ACKNOWLEDGED :
@@ -916,13 +952,17 @@ static int _iot_mqtt_check_alive(MQTTClient *client)
 			case PACKET_CHUNK_TIMEOUT:
 				client->ping_packet->chunk_state = PACKET_CHUNK_INIT;
 				IOT_WARN("mqtt didn't get PINGRESP");
-				return -1;
+				rc = E_ST_MQTT_FAILURE;
+				goto exit;
 			default:
 				break;
 		}
 	}
 
-	return 0;
+exit:
+	iot_os_mutex_unlock(&client->client_manage_lock);
+
+	return rc;
 }
 
 int keepalive(MQTTClient *c)

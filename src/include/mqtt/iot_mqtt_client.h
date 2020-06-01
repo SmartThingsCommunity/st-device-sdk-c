@@ -130,6 +130,7 @@ typedef struct MQTTClient {
 	iot_os_timer last_sent, last_received, ping_wait;
 
 	iot_os_mutex mutex;
+	iot_os_mutex client_manage_lock;
 	iot_os_thread thread;
 
 	struct iot_mqtt_packet_chunk *ping_packet;
