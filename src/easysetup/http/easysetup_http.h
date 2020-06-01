@@ -33,7 +33,7 @@ enum cgi_type {
 
 void http_msg_handler(int cmd, char **buffer, enum cgi_type type, char* data_buf);
 
-iot_error_t es_msg_parser(char *rx_buffer, char **payload, int *cmd, int *type, size_t *content_len);
+iot_error_t es_msg_parser(char *rx_buffer, size_t rx_buffer_len, char **payload, int *cmd, int *type, size_t *content_len);
 
 void es_http_init(void);
 
