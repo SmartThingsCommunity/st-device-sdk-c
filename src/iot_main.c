@@ -433,7 +433,11 @@ static iot_error_t _do_iot_main_command(struct iot_context *ctx,
 			switch (conf->mode) {
 			case IOT_WIFI_MODE_OFF:
 			case IOT_WIFI_MODE_STATION:
-				iot_easysetup_deinit(ctx);
+				if (ctx->es_http_ready) {
+					ctx->es_http_ready = false;
+					iot_easysetup_deinit(ctx);
+				}
+
 				if (ctx->scan_result) {
 					free(ctx->scan_result);
 					ctx->scan_result = NULL;
@@ -472,6 +476,8 @@ static iot_error_t _do_iot_main_command(struct iot_context *ctx,
 							IOT_WARN("Duplicated error handling, skip updating!!");
 							err = IOT_ERROR_DUPLICATED_CMD;
 						}
+					} else {
+						ctx->es_http_ready = true;
 					}
 				}
 				break;
@@ -532,6 +538,11 @@ static iot_error_t _do_iot_main_command(struct iot_context *ctx,
 						 */
 						IOT_WARN("Some thing went wrong, got provisioning but no deviceId");
 						IOT_DUMP_MAIN(WARN, BASE, 0xC1EAC1EA);
+
+						if (ctx->es_http_ready) {
+							ctx->es_http_ready = false;
+							iot_easysetup_deinit(ctx);
+						}
 
 						if (ctx->es_res_created)
 							_delete_easysetup_resources_all(ctx);
@@ -753,6 +764,11 @@ static iot_error_t _do_iot_main_command(struct iot_context *ctx,
 			reboot = (bool *)cmd->param;
 
 			IOT_DUMP_MAIN(WARN, BASE, (int)*reboot);
+
+			if (ctx->es_http_ready) {
+				ctx->es_http_ready = false;
+				iot_easysetup_deinit(ctx);
+			}
 
 			if (ctx->es_res_created)
 				_delete_easysetup_resources_all(ctx);
@@ -1489,6 +1505,11 @@ static iot_error_t _do_state_updating(struct iot_context *ctx,
 		IOT_WARN("Iot-core task will be stopped, needed ext-triggering\n");
 		IOT_DUMP_MAIN(WARN, BASE, IOT_STATE_UNKNOWN);
 
+		if (ctx->es_http_ready) {
+			ctx->es_http_ready = false;
+			iot_easysetup_deinit(ctx);
+		}
+
 		if (ctx->es_res_created)
 			_delete_easysetup_resources_all(ctx);
 
@@ -1586,6 +1607,11 @@ int st_conn_start(IOT_CTX *iot_ctx, st_status_cb status_cb,
 
 		iot_err = IOT_ERROR_NONE;
 	} else {
+		if (ctx->es_http_ready) {
+			ctx->es_http_ready = false;
+			iot_easysetup_deinit(ctx);
+		}
+
 		if (ctx->es_res_created) {
 			_delete_easysetup_resources_all(ctx);
 		}
