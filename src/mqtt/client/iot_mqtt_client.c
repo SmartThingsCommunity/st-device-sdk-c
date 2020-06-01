@@ -635,7 +635,6 @@ int st_mqtt_create(st_mqtt_client *client, unsigned int command_timeout_ms)
 	c->readbuf = NULL;
 	c->readbuf_size = 0;
 	c->isconnected = 0;
-	c->cleansession = 0;
 	c->ping_outstanding = 0;
 	c->ping_retry_count = 0;
 	c->defaultMessageHandler = NULL;
@@ -726,18 +725,6 @@ error_handle:
 	return rc;
 }
 
-void MQTTCleanSession(MQTTClient *c)
-{
-	int i = 0;
-
-	for (i = 0; i < MAX_MESSAGE_HANDLERS; ++i) {
-		if (c->messageHandlers[i].topicFilter != NULL) {
-			free(c->messageHandlers[i].topicFilter);
-			c->messageHandlers[i].topicFilter = NULL;
-		}
-	}
-}
-
 static void _iot_mqtt_close_session(MQTTClient *c)
 {
 	IOT_WARN("mqtt close session");
@@ -747,9 +734,6 @@ static void _iot_mqtt_close_session(MQTTClient *c)
 	c->ping_retry_count = 0;
 	c->isconnected = 0;
 
-	if (c->cleansession) {
-		MQTTCleanSession(c);
-	}
 	if (c->net->disconnect != NULL)
 		c->net->disconnect(c->net);
 }
@@ -1376,8 +1360,7 @@ static int _convert_return_code(int mqtt_rc)
 	return rc;
 }
 
-int MQTTConnectWithResults(st_mqtt_client client, st_mqtt_broker_info_t *broker, st_mqtt_connect_data *connect_data,
-									 MQTTConnackData *data)
+int st_mqtt_connect(st_mqtt_client client, st_mqtt_broker_info_t *broker, st_mqtt_connect_data *connect_data)
 {
 	MQTTClient *c = client;
 	iot_os_timer connect_timer = NULL;
@@ -1455,7 +1438,6 @@ int MQTTConnectWithResults(st_mqtt_client client, st_mqtt_broker_info_t *broker,
 	options.cleansession = connect_data->cleansession;
 
 	c->keepAliveInterval = options.keepAliveInterval;
-	c->cleansession = options.cleansession;
 	iot_os_timer_count_ms(c->last_received, c->keepAliveInterval * 1000);
 
 	pbuf_size = MQTTSerialize_connect_size(&options);
@@ -1477,11 +1459,11 @@ int MQTTConnectWithResults(st_mqtt_client client, st_mqtt_broker_info_t *broker,
 
 	// this will be a blocking call, wait for the connack
 	if (waitfor(c, CONNACK, connect_timer) == CONNACK) {
-		data->rc = 0;
-		data->sessionPresent = 0;
+		unsigned char ack_rc = 0;
+		unsigned char sessionPresent = 0;
 
-		if (MQTTDeserialize_connack(&data->sessionPresent, &data->rc, c->readbuf, c->readbuf_size) == 1) {
-			rc = _convert_return_code(data->rc);
+		if (MQTTDeserialize_connack(&sessionPresent, &ack_rc, c->readbuf, c->readbuf_size) == 1) {
+			rc = _convert_return_code(ack_rc);
         } else {
 			rc = E_ST_MQTT_FAILURE;
 		}
@@ -1511,12 +1493,6 @@ exit:
 
 	IOT_DUMP(IOT_DEBUG_LEVEL_INFO, IOT_DUMP_MQTT_CONNECT_RESULT, rc, connect_data->alive_interval);
 	return rc;
-}
-
-int st_mqtt_connect(st_mqtt_client client, st_mqtt_broker_info_t *broker, st_mqtt_connect_data *connect_data)
-{
-	MQTTConnackData data;
-	return MQTTConnectWithResults(client, broker, connect_data, &data);
 }
 
 int MQTTSetMessageHandler(st_mqtt_client client, const char *topic, st_mqtt_msg_handler handler, void *user_data)
@@ -1561,8 +1537,7 @@ int MQTTSetMessageHandler(st_mqtt_client client, const char *topic, st_mqtt_msg_
 	return rc;
 }
 
-int MQTTSubscribeWithResults(st_mqtt_client client, const char *topic, int qos, st_mqtt_msg_handler handler,
-							MQTTSubackData *data, void *user_data)
+int st_mqtt_subscribe(st_mqtt_client client, const char *topic, int qos, st_mqtt_msg_handler handler, void *user_data)
 {
 	MQTTClient *c = client;
 	int rc = E_ST_MQTT_FAILURE;
@@ -1610,10 +1585,10 @@ int MQTTSubscribeWithResults(st_mqtt_client client, const char *topic, int qos, 
 	if (waitfor(c, SUBACK, timer) == SUBACK) {	  // wait for suback
 		int count = 0;
 		unsigned short mypacketid;
-		data->granted_qos = st_mqtt_qos0;
+		int ack_qos = 0;
 
-		if (MQTTDeserialize_suback(&mypacketid, 1, &count, (int *)&data->granted_qos, c->readbuf, c->readbuf_size) == 1) {
-			if (data->granted_qos != 0x80) {
+		if (MQTTDeserialize_suback(&mypacketid, 1, &count, (int *)&ack_qos, c->readbuf, c->readbuf_size) == 1) {
+			if (ack_qos != 0x80) {
 				rc = MQTTSetMessageHandler(client, topic, handler, user_data);
 			}
 		}
@@ -1634,12 +1609,6 @@ exit:
 
 	IOT_DUMP(IOT_DEBUG_LEVEL_INFO, IOT_DUMP_MQTT_SUBSCRIBE, rc, 0);
 	return rc;
-}
-
-int st_mqtt_subscribe(st_mqtt_client client, const char *topic, int qos, st_mqtt_msg_handler handler, void *user_data)
-{
-	MQTTSubackData data;
-	return MQTTSubscribeWithResults(client, topic, qos, handler, &data, user_data);
 }
 
 int st_mqtt_unsubscribe(st_mqtt_client client, const char *topic)
