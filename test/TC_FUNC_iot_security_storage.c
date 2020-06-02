@@ -193,7 +193,7 @@ typedef iot_error_t (*storage_rw_func)(iot_security_context_t *, iot_security_st
 static void TC_iot_security_storage_do_null_parameters(iot_security_context_t *context, storage_rw_func rw_func)
 {
 	iot_error_t err;
-	iot_security_storage_id_t storage_id = IOT_NVD_ROOM_ID;
+	iot_security_storage_id_t storage_id = IOT_NVD_DEVICE_ID;
 	iot_security_buffer_t buf = { 0 };
 
 	assert_non_null(context);
@@ -218,7 +218,7 @@ static void TC_iot_security_storage_do_null_parameters(iot_security_context_t *c
 static void TC_iot_security_storage_do_invalid_parameters(iot_security_context_t *context, storage_rw_func rw_func, char rw)
 {
 	iot_error_t err;
-	iot_security_storage_id_t storage_id = IOT_NVD_ROOM_ID;
+	iot_security_storage_id_t storage_id = IOT_NVD_DEVICE_ID;
 	iot_security_buffer_t buf = { 0 };
 	const char *sample = "1c83f234-9a53-11ea-b2e2-8f936ceb1180";
 
@@ -262,7 +262,7 @@ void TC_iot_security_storage_read_malloc_failure(void **state)
 {
 	iot_error_t err;
 	iot_security_context_t *context;
-	iot_security_storage_id_t storage_id = IOT_NVD_ROOM_ID;
+	iot_security_storage_id_t storage_id = IOT_NVD_DEVICE_ID;
 	iot_security_buffer_t buf = { 0 };
 	iot_security_buffer_t sample_buf = { 0 };
 	const char *sample = "1c83f234-9a53-11ea-b2e2-8f936ceb1180";
@@ -314,7 +314,7 @@ void TC_iot_security_storage_read_failure(void **state)
 {
 	iot_error_t err;
 	iot_security_context_t *context;
-	iot_security_storage_id_t storage_id = IOT_NVD_ROOM_ID;
+	iot_security_storage_id_t storage_id = IOT_NVD_DEVICE_ID;
 	iot_security_buffer_t buf = { 0 };
 
 	context = (iot_security_context_t *)*state;
@@ -330,7 +330,7 @@ void TC_iot_security_storage_read_success(void **state)
 {
 	iot_error_t err;
 	iot_security_context_t *context;
-	iot_security_storage_id_t storage_id = IOT_NVD_ROOM_ID;
+	iot_security_storage_id_t storage_id = IOT_NVD_DEVICE_ID;
 	iot_security_buffer_t buf = { 0 };
 	iot_security_buffer_t sample_buf = { 0 };
 	const char *sample = "1c83f234-9a53-11ea-b2e2-8f936ceb1180";
@@ -392,7 +392,7 @@ void TC_iot_security_storage_write_failure(void **state)
 {
 	iot_error_t err;
 	iot_security_context_t *context;
-	iot_security_storage_id_t storage_id = IOT_NVD_ROOM_ID;
+	iot_security_storage_id_t storage_id = IOT_NVD_DEVICE_ID;
 	iot_security_buffer_t sample_buf = { 0 };
 	const char *sample = "1c83f234-9a53-11ea-b2e2-8f936ceb1180";
 
@@ -425,7 +425,7 @@ void TC_iot_security_storage_write_success(void **state)
 {
 	iot_error_t err;
 	iot_security_context_t *context;
-	iot_security_storage_id_t storage_id = IOT_NVD_ROOM_ID;
+	iot_security_storage_id_t storage_id = IOT_NVD_DEVICE_ID;
 	iot_security_buffer_t sample_buf = { 0 };
 	const char *sample = "1c83f234-9a53-11ea-b2e2-8f936ceb1180";
 
@@ -445,7 +445,7 @@ void TC_iot_security_storage_remove_null_parameters(void **state)
 {
 	iot_error_t err;
 	iot_security_context_t *context;
-	iot_security_storage_id_t storage_id = IOT_NVD_ROOM_ID;
+	iot_security_storage_id_t storage_id = IOT_NVD_DEVICE_ID;
 
 	context = (iot_security_context_t *)*state;
 	assert_non_null(context);
@@ -477,7 +477,7 @@ void TC_iot_security_storage_remove_failure(void **state)
 {
 	iot_error_t err;
 	iot_security_context_t *context;
-	iot_security_storage_id_t storage_id = IOT_NVD_ROOM_ID;
+	iot_security_storage_id_t storage_id = IOT_NVD_DEVICE_ID;
 
 	context = (iot_security_context_t *)*state;
 	assert_non_null(context);
@@ -504,7 +504,7 @@ void TC_iot_security_storage_remove_success(void **state)
 {
 	iot_error_t err;
 	iot_security_context_t *context;
-	iot_security_storage_id_t storage_id = IOT_NVD_ROOM_ID;
+	iot_security_storage_id_t storage_id = IOT_NVD_DEVICE_ID;
 	iot_security_buffer_t sample_buf = { 0 };
 	const char *sample = "1c83f234-9a53-11ea-b2e2-8f936ceb1180";
 
