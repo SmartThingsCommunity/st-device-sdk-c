@@ -49,7 +49,7 @@ static bool is_header_content_length(char *header_key)
 	}
 
 	for (int i = 0; i < strlen(content_length_lower); i++) {
-		if (content_length_lower[i] != tolower(header_key[i])) {
+		if (content_length_lower[i] != (char)tolower((int)header_key[i])) {
 			return false;
 		}
 	}
