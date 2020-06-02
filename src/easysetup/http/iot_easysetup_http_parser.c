@@ -97,7 +97,7 @@ iot_error_t es_msg_parser(char *rx_buffer, size_t rx_buffer_len, char **payload,
 		h->name = k;
 		h->value = v;
 
-		if (!is_header_content_length(h->name)) {
+		if (is_header_content_length(h->name)) {
 			*content_len = atoi(h->value);
 		}
 
