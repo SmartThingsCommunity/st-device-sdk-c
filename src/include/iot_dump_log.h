@@ -277,4 +277,8 @@ typedef enum {
 	IOT_DUMP_EXAMPLE_COMMENT = 0xff02, /* decoder copies comment to output */
 } dump_log_id_t;
 
+#ifdef __cplusplus
+}
+#endif
+
 #endif /* _IOT_DUMP_LOG_H_ */
