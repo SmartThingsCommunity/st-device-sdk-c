@@ -35,6 +35,8 @@ if(ENABLE_STDK_TEST)
                    TC_FUNC_iot_capability.c
                    TC_FUNC_iot_crypto.c
                    TC_FUNC_iot_nv_data.c
+                   TC_UTIL_easysetup_common.h
+                   TC_UTIL_easysetup_common.c
                    TC_FUNC_iot_easysetup_d2d.c
                    TC_FUNC_iot_easysetup_crypto.c
                    TC_FUNC_iot_main.c
