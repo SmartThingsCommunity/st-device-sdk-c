@@ -142,16 +142,21 @@ unsigned int iot_os_eventgroup_wait_bits(iot_os_eventgroup *eventgroup_handle,
 	return event_group_wait_bits(eventgroup_handle, bits_to_wait_for, clear_on_exit, 0, VALIDATE_MSEC2TICK(wait_time_ms));
 }
 
-unsigned int iot_os_eventgroup_set_bits(iot_os_eventgroup *eventgroup_handle,
+int iot_os_eventgroup_set_bits(iot_os_eventgroup *eventgroup_handle,
 		const unsigned int bits_to_set)
 {
-	return event_group_set_bits(eventgroup_handle, bits_to_set);
+	if (event_group_set_bits(eventgroup_handle, bits_to_set) == -1) {
+	    return IOT_OS_FALSE;
+	} else {
+	    return IOT_OS_TRUE;
+	}
 }
 
-unsigned int iot_os_eventgroup_clear_bits(iot_os_eventgroup *eventgroup_handle,
+int iot_os_eventgroup_clear_bits(iot_os_eventgroup *eventgroup_handle,
 		const unsigned int bits_to_clear)
 {
-	return event_group_clear_bits(eventgroup_handle, bits_to_clear);
+	event_group_clear_bits(eventgroup_handle, bits_to_clear);
+	return IOT_OS_TRUE;
 }
 
 /* Mutex */

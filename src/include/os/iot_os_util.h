@@ -221,11 +221,10 @@ unsigned int iot_os_eventgroup_wait_bits(iot_os_eventgroup* eventgroup_handle,
  *	ex) use 0b100 will set only bit2
  *
  * @return
- *	return is bits of event after set bit/bits.
- *	if you set 'clear_on_exit' to IOT_OS_TRUE, it can be 0 because of other task waiting for bits
+ *	return IOT_OS_TRUE on success, IOT_OS_FALSE on failure
  *
  */
-unsigned int iot_os_eventgroup_set_bits(iot_os_eventgroup* eventgroup_handle,
+int iot_os_eventgroup_set_bits(iot_os_eventgroup* eventgroup_handle,
 	const unsigned int bits_to_set);
 /**
  * @brief	clear bit/bits of eventgroup
@@ -238,10 +237,10 @@ unsigned int iot_os_eventgroup_set_bits(iot_os_eventgroup* eventgroup_handle,
  *	ex) use 0b100 will clear only bit2
  *
  * @return
- *	return is bits of event BEFORE clear bit.
+ *	return IOT_OS_TRUE on success, IOT_OS_FALSE on failure
  *
  */
-unsigned int iot_os_eventgroup_clear_bits(iot_os_eventgroup* eventgroup_handle,
+int iot_os_eventgroup_clear_bits(iot_os_eventgroup* eventgroup_handle,
 	const unsigned int bits_to_clear);
 
 
