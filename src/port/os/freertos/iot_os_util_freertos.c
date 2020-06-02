@@ -95,10 +95,9 @@ void iot_os_eventgroup_delete(iot_os_eventgroup* eventgroup_handle)
 }
 
 unsigned int iot_os_eventgroup_wait_bits(iot_os_eventgroup* eventgroup_handle,
-		const unsigned int bits_to_wait_for, const int clear_on_exit,
-		const int wait_for_all_bits, const unsigned int wait_time_ms)
+		const unsigned int bits_to_wait_for, const int clear_on_exit, const unsigned int wait_time_ms)
 {
-	return xEventGroupWaitBits(eventgroup_handle, bits_to_wait_for, clear_on_exit, wait_for_all_bits, wait_time_ms);
+	return xEventGroupWaitBits(eventgroup_handle, bits_to_wait_for, clear_on_exit, false, wait_time_ms);
 }
 
 unsigned int iot_os_eventgroup_set_bits(iot_os_eventgroup* eventgroup_handle,

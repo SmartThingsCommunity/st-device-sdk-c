@@ -263,7 +263,7 @@ void TC_iot_easysetup_httpd_deviceinfo_success(void **state)
 
     // Given
     iot_os_eventgroup_wait_bits(context->iot_events,
-                                IOT_EVENT_BIT_EASYSETUP_REQ, true, false, IOT_OS_MAX_DELAY);
+                                IOT_EVENT_BIT_EASYSETUP_REQ, true, IOT_OS_MAX_DELAY);
     easysetup_req.payload = NULL;
     easysetup_req.err = IOT_ERROR_NONE;
     if (iot_os_queue_receive(context->easysetup_req_queue, &easysetup_req, 0) == IOT_OS_FALSE) {
@@ -335,7 +335,7 @@ void TC_iot_easysetup_httpd_keyinfo_single_transfer_success(void **state)
 
     // Given
     iot_os_eventgroup_wait_bits(context->iot_events,
-                                IOT_EVENT_BIT_EASYSETUP_REQ, true, false, IOT_OS_MAX_DELAY);
+                                IOT_EVENT_BIT_EASYSETUP_REQ, true, IOT_OS_MAX_DELAY);
     easysetup_req.payload = NULL;
     easysetup_req.err = IOT_ERROR_NONE;
     if (iot_os_queue_receive(context->easysetup_req_queue, &easysetup_req, 0) == IOT_OS_FALSE) {

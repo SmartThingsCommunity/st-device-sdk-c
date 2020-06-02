@@ -905,7 +905,7 @@ static void _iot_main_task(struct iot_context *ctx)
 			IOT_EVENT_BIT_ALL, true, false, 500);
 #else
 		curr_events = iot_os_eventgroup_wait_bits(ctx->iot_events,
-			IOT_EVENT_BIT_ALL, true, false, IOT_MAIN_TASK_CYCLE);
+			IOT_EVENT_BIT_ALL, true, IOT_MAIN_TASK_CYCLE);
 #endif
 		if (curr_events & IOT_EVENT_BIT_COMMAND) {
 			cmd.param = NULL;
@@ -1598,7 +1598,7 @@ int st_conn_start(IOT_CTX *iot_ctx, st_status_cb status_cb,
 
 	iot_os_eventgroup_clear_bits(ctx->usr_events, IOT_USR_INTERACT_BIT_ALL);
 	curr_events = iot_os_eventgroup_wait_bits(ctx->usr_events,
-		IOT_USR_INTERACT_BIT_ALL, true, false, IOT_OS_MAX_DELAY);
+		IOT_USR_INTERACT_BIT_ALL, true, IOT_OS_MAX_DELAY);
 
 	if (curr_events & IOT_USR_INTERACT_BIT_PROV_CONFIRM) {
 		if (ctx->devconf.ownership_validation_type & IOT_OVF_TYPE_BUTTON) {
