@@ -293,9 +293,10 @@ int TC_iot_wt_create_memleak_detect_teardown(void **state);
 void TC_iot_wt_create_null_parameters(void **state);
 
 // TCs for iot_easysetup_httpd
-int TC_iot_easysetup_httpd_group_setup(void **state);
-int TC_iot_easysetup_httpd_group_teardown(void **state);
+int TC_iot_easysetup_httpd_setup(void **state);
+int TC_iot_easysetup_httpd_teardown(void **state);
 void TC_iot_easysetup_httpd_invalid_request(void **state);
 void TC_iot_easysetup_httpd_deviceinfo_success(void **state);
+void TC_iot_easysetup_httpd_keyinfo_single_transfer_success(void **state);
 
 #endif //ST_DEVICE_SDK_C_TCS_H
