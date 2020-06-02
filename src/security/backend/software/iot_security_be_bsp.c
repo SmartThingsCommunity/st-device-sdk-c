@@ -262,6 +262,7 @@ iot_error_t _iot_security_be_bsp_fs_store_to_nv(iot_security_storage_id_t storag
 #endif
 	if (err) {
 		IOT_ERROR("iot_bsp_fs_write = %d", err);
+		(void)iot_bsp_fs_close(handle);
 		return IOT_ERROR_SECURITY_FS_WRITE;
 	}
 
