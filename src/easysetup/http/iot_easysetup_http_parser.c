@@ -27,6 +27,7 @@
  ******************************************************************/
 
 #include <string.h>
+#include <ctype.h>
 #include "easysetup_http.h"
 #include "iot_debug.h"
 #include "iot_easysetup.h"
@@ -34,6 +35,27 @@
 typedef struct { char *name, *value; } header_t;
 
 static header_t reqhdr[17] = {{"\0", "\0"}};
+
+static bool is_header_content_length(char *header_key)
+{
+	const char content_length_lower[] = "content-length";
+
+	if (!header_key) {
+		return false;
+	}
+
+	if (strlen(header_key) != strlen(content_length_lower)) {
+		return false;
+	}
+
+	for (int i = 0; i < strlen(content_length_lower); i++) {
+		if (content_length_lower[i] != tolower(header_key[i])) {
+			return false;
+		}
+	}
+
+	return true;
+}
 
 iot_error_t es_msg_parser(char *rx_buffer, size_t rx_buffer_len, char **payload, int *cmd, int *type, size_t *content_len)
 {
@@ -75,8 +97,9 @@ iot_error_t es_msg_parser(char *rx_buffer, size_t rx_buffer_len, char **payload,
 		h->name = k;
 		h->value = v;
 
-		if (!strcmp(h->name,  "Content-Length"))
+		if (!is_header_content_length(h->name)) {
 			*content_len = atoi(h->value);
+		}
 
 		h++;
 
