@@ -725,6 +725,85 @@ error_handle:
 	return rc;
 }
 
+static void _iot_mqtt_close_net(MQTTClient *client)
+{
+	if (client == NULL || client->magic != MQTT_CLIENT_STRUCT_MAGIC_NUMBER) {
+		return;
+	}
+
+	do {
+		if (client->read_lock.sem == NULL)
+			return;
+	} while ((iot_os_mutex_lock(&client->read_lock)) != IOT_OS_TRUE);
+
+	do {
+		if (client->write_lock.sem == NULL) {
+			iot_os_mutex_unlock(&client->read_lock);
+			return;
+		}
+	} while ((iot_os_mutex_lock(&client->write_lock)) != IOT_OS_TRUE);
+	if (client->isconnected) {
+		client->isconnected = 0;
+		client->net->show_status(client->net);
+		client->net->disconnect(client->net);
+	}
+	iot_os_mutex_unlock(&client->write_lock);
+	iot_os_mutex_unlock(&client->read_lock);
+}
+
+static int _iot_mqtt_connect_net(MQTTClient *client, st_mqtt_broker_info_t *broker)
+{
+	int rc = 0, connect_retry = 3;
+	iot_error_t iot_err;
+
+	if (client == NULL || client->magic != MQTT_CLIENT_STRUCT_MAGIC_NUMBER) {
+		return E_ST_MQTT_FAILURE;
+	}
+
+	if((iot_os_mutex_lock(&client->read_lock)) != IOT_OS_TRUE) {
+		return E_ST_MQTT_FAILURE;
+	}
+
+	if((iot_os_mutex_lock(&client->write_lock)) != IOT_OS_TRUE) {
+		iot_os_mutex_unlock(&client->read_lock);
+		return E_ST_MQTT_FAILURE;
+	}
+
+	iot_err = iot_net_init(client->net);
+	if (iot_err) {
+		IOT_ERROR("failed to init network");
+		rc = E_ST_MQTT_FAILURE;
+		goto exit;
+	}
+
+	client->net->connection.url = broker->url;
+	client->net->connection.port = broker->port;
+	client->net->connection.ca_cert = broker->ca_cert;
+	client->net->connection.ca_cert_len = broker->ca_cert_len;
+
+	do {
+		iot_err = client->net->connect(client->net);
+		if (iot_err) {
+			IOT_ERROR("net->connect = %d, retry (%d)", iot_err, connect_retry);
+			connect_retry--;
+			iot_os_delay(2000);
+		}
+	} while ((iot_err != IOT_ERROR_NONE) && connect_retry);
+
+	if (iot_err != IOT_ERROR_NONE) {
+		IOT_DUMP(IOT_DEBUG_LEVEL_ERROR, IOT_DUMP_MQTT_CONNECT_NETWORK_FAIL, 0, 0);
+		IOT_ERROR("MQTT net connection failed");
+		rc = E_ST_MQTT_FAILURE;
+		goto exit;
+	}
+
+exit:
+	iot_os_mutex_unlock(&client->write_lock);
+	iot_os_mutex_unlock(&client->read_lock);
+
+	return rc;
+}
+
 static void _iot_mqtt_close_session(MQTTClient *c)
 {
 	IOT_WARN("mqtt close session");
