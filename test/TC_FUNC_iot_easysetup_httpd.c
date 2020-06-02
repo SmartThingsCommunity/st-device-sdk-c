@@ -357,3 +357,72 @@ void TC_iot_easysetup_httpd_keyinfo_single_transfer_success(void **state)
     _free_cipher(server_cipher);
     close(sock);
 }
+
+void TC_iot_easysetup_httpd_keyinfo_separated_transfer_success(void **state)
+{
+    int sock;
+    ssize_t len;
+    struct iot_context *context = (struct iot_context *)*state;
+    iot_error_t err;
+    struct iot_easysetup_payload easysetup_req;
+    char recv_buffer[1024] = {0, };
+    char *post_header_prefix = "POST /keyinfo HTTP/1.1\r\nConnection: keep-alive\r\nContent-Length: ";
+    char *post_body;
+    char *post_header;
+    size_t post_header_len = 0;
+    iot_crypto_cipher_info_t *server_cipher;
+    char *time_to_set;
+
+    // Given
+    err = _es_crypto_cipher_gen_iv(context->es_crypto_cipher_info);
+    assert_int_equal(err, IOT_ERROR_NONE);
+    time_to_set = calloc(sizeof(char), 11);
+    assert_non_null(time_to_set);
+    post_body = _generate_post_keyinfo_payload(2022, time_to_set, 11);
+    assert_non_null(post_body);
+    expect_string(__wrap_iot_bsp_system_set_time_in_sec, time_in_sec, time_to_set);
+    server_cipher = _generate_server_cipher(context->es_crypto_cipher_info->iv,
+                                            context->es_crypto_cipher_info->iv_len);
+    post_header_len = strlen(post_header_prefix) + strlen("4096\r\n\r\n") + 1;
+    post_header = calloc(1, post_header_len);
+    assert_non_null(post_header);
+    snprintf(post_header, post_header_len, "%s%zu\r\n\r\n",
+             post_header_prefix, strlen(post_body));
+    ref_step = IOT_EASYSETUP_STEP_KEYINFO;
+    memset(recv_buffer, '\0', sizeof(recv_buffer));
+    sock = _connect_to_server("127.0.0.1");
+
+    // When: send header only
+    len = send(sock, post_header, strlen(post_header), 0);
+    // Then
+    assert_int_equal(len, strlen(post_header));
+    usleep(100); // to make sure send separately.
+    // When: send body only
+    len = send(sock, post_body, strlen(post_body), 0);
+    // Then
+    assert_int_equal(len, strlen(post_body));
+
+    // Given
+    iot_os_eventgroup_wait_bits(context->iot_events,
+                                IOT_EVENT_BIT_EASYSETUP_REQ, true, false, IOT_OS_MAX_DELAY);
+    easysetup_req.payload = NULL;
+    easysetup_req.err = IOT_ERROR_NONE;
+    if (iot_os_queue_receive(context->easysetup_req_queue, &easysetup_req, 0) == IOT_OS_FALSE) {
+        assert_true(1);
+    }
+    err = iot_easysetup_request_handler(context, easysetup_req);
+    assert_int_equal(err, IOT_ERROR_NONE);
+
+    // When: recv response
+    len = recv(sock, recv_buffer, sizeof(recv_buffer), 0);
+    // Then
+    assert_true(len > 0);
+    assert_keyinfo_http_response(recv_buffer, server_cipher, IOT_OVF_TYPE_BUTTON);
+
+    // Teardown
+    free(time_to_set);
+    free(post_header);
+    free(post_body);
+    _free_cipher(server_cipher);
+    close(sock);
+}

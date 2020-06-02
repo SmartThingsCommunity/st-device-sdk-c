@@ -298,5 +298,6 @@ int TC_iot_easysetup_httpd_teardown(void **state);
 void TC_iot_easysetup_httpd_invalid_request(void **state);
 void TC_iot_easysetup_httpd_deviceinfo_success(void **state);
 void TC_iot_easysetup_httpd_keyinfo_single_transfer_success(void **state);
+void TC_iot_easysetup_httpd_keyinfo_separated_transfer_success(void **state);
 
 #endif //ST_DEVICE_SDK_C_TCS_H
