@@ -647,7 +647,7 @@ iot_error_t iot_log_file_seek(iot_log_file_handle_t *file_handle, int seek_offse
 	int new_offset;
 	iot_error_t iot_err = IOT_ERROR_NONE;
 
-	if (fine_handle->log_size == 0) {
+	if (file_handle->log_size == 0) {
 	    return IOT_ERROR_INVALID_ARGS;
 	}
 
