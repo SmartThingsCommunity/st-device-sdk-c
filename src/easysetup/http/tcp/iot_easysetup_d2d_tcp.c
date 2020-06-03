@@ -66,6 +66,11 @@ iot_error_t iot_easysetup_create_ssid(struct iot_devconf_prov_data *devconf, cha
 		goto out;
 
 	if (base64_written >= HASH_SIZE) {
+		if (devconf->hashed_sn) {
+			iot_os_free(devconf->hashed_sn);
+			devconf->hashed_sn = NULL;
+		}
+
 		devconf->hashed_sn = iot_os_malloc(base64_written + 1);
 		if (!devconf->hashed_sn) {
 			err = IOT_ERROR_MEM_ALLOC;

@@ -232,6 +232,13 @@ static void *_iot_es_mqtt_registration_cbor(struct iot_context *ctx,
 		IOT_ERROR("ctx is null");
 		return NULL;
 	}
+
+	devconf = &ctx->devconf;
+	if (!devconf->hashed_sn) {
+		IOT_ERROR("There are no hashed_sn");
+		return NULL;
+	}
+
 retry:
 	buflen += 128;
 
@@ -251,8 +258,6 @@ retry:
 		cbor_encode_text_stringz(&root_map, "locationId");
 		cbor_encode_text_stringz(&root_map, ctx->prov_data.cloud.location);
 	}
-
-	devconf = &ctx->devconf;
 
 	/* label is optional value */
 	if (ctx->prov_data.cloud.label) {
@@ -339,10 +344,7 @@ exit_failed:
 		free(ctx->prov_data.cloud.room);
 		ctx->prov_data.cloud.room = NULL;
 	}
-	if (ctx->devconf.hashed_sn) {
-		free(ctx->devconf.hashed_sn);
-		ctx->devconf.hashed_sn = NULL;
-	}
+
 	return NULL;
 }
 #else /* !STDK_IOT_CORE_SERIALIZE_CBOR */
@@ -360,13 +362,17 @@ static void *_iot_es_mqtt_registration_json(struct iot_context *ctx,
 		return NULL;
 	}
 
+	devconf = &ctx->devconf;
+	if (!devconf->hashed_sn) {
+		IOT_ERROR("There are no hashed_sn");
+		return NULL;
+	}
+
 	root = JSON_CREATE_OBJECT();
 	if (!root) {
 		IOT_ERROR("failed to create json");
 		return NULL;
 	}
-
-	devconf = &ctx->devconf;
 
 	if (ctx->prov_data.cloud.location) {
 	JSON_ADD_ITEM_TO_OBJECT(root, "locationId",
@@ -442,10 +448,7 @@ exit_json_making:
 		free(ctx->prov_data.cloud.room);
 		ctx->prov_data.cloud.room = NULL;
 	}
-	if (ctx->devconf.hashed_sn) {
-		free(ctx->devconf.hashed_sn);
-		ctx->devconf.hashed_sn = NULL;
-	}
+
 	return (void *)payload;
 }
 #endif /* STDK_IOT_CORE_SERIALIZE_CBOR */

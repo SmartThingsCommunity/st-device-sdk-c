@@ -675,6 +675,12 @@ static iot_error_t _do_iot_main_command(struct iot_context *ctx,
 				ctx->lookup_id = NULL;
 			}
 
+			/* we don't need this hashed_sn anymore*/
+			if (ctx->devconf.hashed_sn) {
+				free(ctx->devconf.hashed_sn);
+				ctx->devconf.hashed_sn = NULL;
+			}
+
 			/* if there is previous connection, disconnect it first. */
 			if (ctx->evt_mqttcli != NULL) {
 				IOT_INFO("There is previous connecting, disconnect it first.\n");
