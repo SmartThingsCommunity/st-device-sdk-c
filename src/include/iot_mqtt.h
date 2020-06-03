@@ -79,6 +79,12 @@ typedef struct st_mqtt_msg {
 
 typedef void (*st_mqtt_msg_handler)(st_mqtt_msg *, void *);
 
+typedef enum {
+	ST_MQTT_EVENT_MSG_DELIVERED = 1,
+} st_mqtt_event;
+
+typedef void (*st_mqtt_event_callback)(st_mqtt_event, void *, void *);
+
 enum {
 	st_mqtt_qos0,					/* MQTT QoS0 */
 	st_mqtt_qos1,					/* MQTT QoS1 */

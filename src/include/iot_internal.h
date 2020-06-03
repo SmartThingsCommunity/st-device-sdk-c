@@ -33,6 +33,13 @@
 #define IOT_TOPIC_SIZE (100)
 #define IOT_PAYLOAD_SIZE (1024)
 
+#define IOT_SUB_TOPIC_REGISTRATION_PREFIX	"/v1/registrations/notification"
+#define IOT_SUB_TOPIC_REGISTRATION_PREFIX_SIZE	30
+#define IOT_SUB_TOPIC_COMMAND_PREFIX		"/v1/commands"
+#define IOT_SUB_TOPIC_COMMAND_PREFIX_SIZE		12
+#define IOT_SUB_TOPIC_NOTIFICATION_PREFIX	"/v1/notifications"
+#define IOT_SUB_TOPIC_NOTIFICATION_PREFIX_SIZE	17
+
 #if defined(STDK_IOT_CORE_SERIALIZE_CBOR)
 #define IOT_PUB_TOPIC_REGISTRATION	"/v1/registrations/cbor"
 #define IOT_SUB_TOPIC_REGISTRATION	"/v1/registrations/notification/%s/cbor"

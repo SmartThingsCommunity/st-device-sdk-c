@@ -214,6 +214,52 @@ reg_sub_out:
 		JSON_DELETE(json);
 }
 
+void _iot_mqtt_signup_client_callback(st_mqtt_event event, void *event_data, void *user_data)
+{
+	switch (event) {
+		case ST_MQTT_EVENT_MSG_DELIVERED:
+			{
+				st_mqtt_msg *md = event_data;
+				if (!strncmp(md->topic, IOT_SUB_TOPIC_REGISTRATION_PREFIX, IOT_SUB_TOPIC_REGISTRATION_PREFIX_SIZE)) {
+					mqtt_reg_sub_cb(md, user_data);
+				} else {
+					IOT_WARN("No msg delivery handler for %s", md->topic);
+				}
+				IOT_DEBUG("raw msg (len:%d) : %s", md->payloadlen, mqtt_payload);
+				break;
+			}
+		default:
+			IOT_WARN("No MQTT event handler for %d", event);
+			break;
+	}
+}
+
+void _iot_mqtt_signin_client_callback(st_mqtt_event event, void *event_data, void *user_data)
+{
+	struct iot_context *ctx = (struct iot_context *)user_data;
+
+	switch (event) {
+		case ST_MQTT_EVENT_MSG_DELIVERED:
+			{
+				st_mqtt_msg *md = event_data;
+				char *mqtt_payload = md->payload;
+				if (!strncmp(md->topic, IOT_SUB_TOPIC_COMMAND_PREFIX, IOT_SUB_TOPIC_COMMAND_PREFIX_SIZE)) {
+					iot_cap_sub_cb(ctx->cap_handle_list, mqtt_payload);
+				} else if (!strncmp(md->topic, IOT_SUB_TOPIC_NOTIFICATION_PREFIX, IOT_SUB_TOPIC_NOTIFICATION_PREFIX_SIZE)) {
+					iot_noti_sub_cb(ctx, mqtt_payload);
+				} else {
+					IOT_WARN("No msg delivery handler for %s", md->topic);
+				}
+				IOT_DEBUG("raw msg (len:%d) : %s", md->payloadlen, mqtt_payload);
+				break;
+			}
+			break;
+		default:
+			IOT_WARN("No MQTT event handler for %d", event);
+			break;
+	}
+}
+
 #if defined(STDK_IOT_CORE_SERIALIZE_CBOR)
 static void *_iot_es_mqtt_registration_cbor(struct iot_context *ctx,
 			char *dip_id, size_t *msglen)
