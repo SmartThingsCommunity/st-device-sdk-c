@@ -83,7 +83,7 @@ typedef enum {
 	ST_MQTT_EVENT_MSG_DELIVERED = 1,
 } st_mqtt_event;
 
-typedef void (*st_mqtt_event_callback)(st_mqtt_event, void *, void *);
+typedef void (*st_mqtt_event_callback)(st_mqtt_event event, void *event_data, void *usr_data);
 
 enum {
 	st_mqtt_qos0,					/* MQTT QoS0 */
