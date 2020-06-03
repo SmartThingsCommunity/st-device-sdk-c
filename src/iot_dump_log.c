@@ -90,16 +90,16 @@ static struct iot_dump_header* _iot_dump_create_header()
 static iot_error_t _iot_dump_copy_memory(void *dest, int dest_size, const void *src, int src_size,
         void *buf, int buf_size, int *remain_number, int *written_len, int need_base64)
 {
-    size_t out_len1 = 0;
-    size_t out_len2 = 0;
-    size_t copy_len1 = 0;
-    size_t copy_len2 = 0;
+    size_t pre_out_len = 0;
+    size_t main_out_len = 0;
+    size_t pre_copy_len = 0;
+    size_t main_copy_len = 0;
     iot_error_t iot_err = IOT_ERROR_NONE;
 
-    *written_len = 0;
-
-    if ((!dest) || (!src) || (dest_size <= 0) || (src_size <= 0) || (buf_size < 3))
+    if ((!written_len) || (!dest) || (!src) || (dest_size <= 0) || (src_size <= 0) || (buf_size < 3))
         return IOT_ERROR_BAD_REQ;
+
+    *written_len = 0;
 
     if (src_size > dest_size)
         src_size = dest_size;
@@ -107,29 +107,29 @@ static iot_error_t _iot_dump_copy_memory(void *dest, int dest_size, const void *
     if (!need_base64) {
         memcpy(dest, src, src_size);
         *written_len = src_size;
-        return iot_err;
+        return IOT_ERROR_NONE;
     }
     //Step1: old 'remain' bytes and new (3-'remain') bytes are combined to 3bytes, and converted to base64
     if (*remain_number > 0) {
-        copy_len1 = 3 - *remain_number;
-        memcpy(buf + *remain_number, src, copy_len1);
-        iot_err = iot_crypto_base64_encode(buf, 3, dest, dest_size, &out_len1);
+        pre_copy_len = 3 - *remain_number;
+        memcpy(buf + *remain_number, src, pre_copy_len);
+        iot_err = iot_crypto_base64_encode(buf, 3, dest, dest_size, &pre_out_len);
         if (iot_err < 0) {
             return iot_err;
         }
         memset(buf, 0, 3);
-        *written_len = out_len1;
+        *written_len = pre_out_len;
     }
     //Step2: convert multiples of 3 bytes
-    *remain_number = (src_size - copy_len1) % 3;
-    copy_len2 = GET_LARGEST_MULTIPLE(src_size - copy_len1, 3);
-    iot_err = iot_crypto_base64_encode(src + copy_len1, copy_len2, dest + out_len1, dest_size - out_len1, &out_len2);
+    *remain_number = (src_size - pre_copy_len) % 3;
+    main_copy_len = GET_LARGEST_MULTIPLE(src_size - pre_copy_len, 3);
+    iot_err = iot_crypto_base64_encode(src + pre_copy_len, main_copy_len, dest + pre_out_len, dest_size - pre_out_len, &main_out_len);
     if (iot_err < 0) {
         return iot_err;
     }
     //Step3: save unconverted remain bytes to buf
-    memcpy(buf, src + copy_len1 + copy_len2, *remain_number);
-    *written_len = out_len1 + out_len2;
+    memcpy(buf, src + pre_copy_len + main_copy_len, *remain_number);
+    *written_len = pre_out_len + main_out_len;
     return iot_err;
 }
 
@@ -144,16 +144,28 @@ iot_error_t iot_dump_create_all_log_dump(struct iot_context *iot_ctx, char **log
     int written_len = 0;
 
     size_t max_msg_size = 0;
+    size_t min_log_size = 0;
     size_t output_log_size = 0;
     size_t stored_log_size = 0;
     size_t curr_size = 0;
     size_t msg_size;
 
     iot_error_t iot_err = IOT_ERROR_NONE;
-
 #ifdef CONFIG_STDK_IOT_CORE_LOG_FILE
     iot_log_file_handle_t *logfile;
+#endif
 
+    if (need_base64) {
+        min_log_size = IOT_CRYPTO_CAL_B64_LEN(sizeof(struct iot_dump_header) + sizeof(struct iot_dump_state));
+    } else {
+        min_log_size = sizeof(struct iot_dump_header) + sizeof(struct iot_dump_state);
+    }
+    if (max_log_dump_size < min_log_size) {
+        IOT_ERROR("input log size is smaller than minimum log size");
+        return IOT_ERROR_BAD_REQ;
+    }
+
+#ifdef CONFIG_STDK_IOT_CORE_LOG_FILE
 #if defined(CONFIG_STDK_IOT_CORE_LOG_FILE_RAM_ONLY)
     logfile = iot_log_file_open(&stored_log_size, RAM_ONLY);
 #elif defined(CONFIG_STDK_IOT_CORE_LOG_FILE_FLASH_WITH_RAM)
