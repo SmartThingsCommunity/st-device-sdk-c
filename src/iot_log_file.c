@@ -647,14 +647,12 @@ iot_error_t iot_log_file_seek(iot_log_file_handle_t *file_handle, int seek_offse
 	int new_offset;
 	iot_error_t iot_err = IOT_ERROR_NONE;
 
+	if (fine_handle->log_size == 0) {
+	    return IOT_ERROR_INVALID_ARGS;
+	}
+
 	switch (file_handle->file_type) {
 		case RAM_ONLY:
-			new_offset = ((origin_addr - file_handle->start_addr) + seek_offset) % file_handle->log_size;
-			if (new_offset < 0) {
-				new_offset += file_handle->log_size;
-			}
-			file_handle->cur_addr = file_handle->start_addr + new_offset;
-			break;
 		case FLASH_WITH_RAM:
 			new_offset = ((origin_addr - file_handle->start_addr) + seek_offset) % file_handle->log_size;
 			if (new_offset < 0) {
