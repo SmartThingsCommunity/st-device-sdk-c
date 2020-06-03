@@ -148,10 +148,10 @@ iot_error_t iot_dump_create_all_log_dump(struct iot_context *iot_ctx, char **log
     size_t output_log_size = 0;
     size_t stored_log_size = 0;
     size_t curr_size = 0;
-    size_t msg_size;
 
     iot_error_t iot_err = IOT_ERROR_NONE;
 #ifdef CONFIG_STDK_IOT_CORE_LOG_FILE
+    size_t msg_size;
     iot_log_file_handle_t *logfile;
 #endif
 
