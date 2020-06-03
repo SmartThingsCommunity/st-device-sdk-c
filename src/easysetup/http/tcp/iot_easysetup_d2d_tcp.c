@@ -1415,12 +1415,18 @@ iot_error_t _es_cloud_prov_parse(struct iot_context *ctx, char *in_payload)
 
 	/* location id is optional */
 	if (location_id_str) {
+		err = validate_uuid_format(location_id_str, strlen(location_id_str));
+		if (err) {
+			IOT_ERROR("invalid locationid format : %d", err);
+			err = IOT_ERROR_EASYSETUP_INVALID_REQUEST;
+			goto cloud_parse_out;
+		}
 		if ((ctx->prov_data.cloud.location = (char *)malloc(str_id_len)) == NULL) {
 			IOT_ERROR("failed to alloc mem for location_id");
 			IOT_ES_DUMP(IOT_DEBUG_LEVEL_ERROR, IOT_DUMP_EASYSETUP_MEM_ALLOC_ERROR, 0);
 			err = IOT_ERROR_EASYSETUP_MEM_ALLOC_ERROR;
-		goto cloud_parse_out;
-	}
+			goto cloud_parse_out;
+		}
 		memset(ctx->prov_data.cloud.location, 0, str_id_len);
 		memcpy((char *)ctx->prov_data.cloud.location,location_id_str, str_id_len);
 	} else {
@@ -1430,6 +1436,12 @@ iot_error_t _es_cloud_prov_parse(struct iot_context *ctx, char *in_payload)
 	room_id_str = _es_json_parse_string(root, "roomId");
 	/* roomId is optional */
 	if (room_id_str) {
+		err = validate_uuid_format(room_id_str, strlen(room_id_str));
+		if (err) {
+			IOT_ERROR("invalid roomid format : %d", err);
+			err = IOT_ERROR_EASYSETUP_INVALID_REQUEST;
+			goto cloud_parse_out;
+		}
 		if ((ctx->prov_data.cloud.room = (char *)malloc(str_id_len)) == NULL) {
 			IOT_ERROR("failed to for room_id");
 			IOT_ES_DUMP(IOT_DEBUG_LEVEL_ERROR, IOT_DUMP_EASYSETUP_MEM_ALLOC_ERROR, 0);
