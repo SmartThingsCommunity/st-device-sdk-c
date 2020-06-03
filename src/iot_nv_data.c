@@ -28,6 +28,7 @@
 #if !defined(CONFIG_STDK_IOT_CORE_SUPPORT_STNV_PARTITION)
 #include "iot_internal.h"
 #endif
+#include "security/iot_security_manager.h"
 #include "security/iot_security_storage.h"
 
 #define IOT_NVD_MAX_DATA_LEN (2048)
@@ -521,48 +522,6 @@ iot_error_t iot_nv_get_cloud_prov_data(struct iot_cloud_prov_data* cloud_prov)
 		goto exit;
 	}
 
-	/* IOT_NVD_LOCATION_ID */
-	memset(data, 0, DATA_SIZE);
-
-	ret = _iot_nv_read_data(iot_bsp_nv_get_data_path(IOT_NVD_LOCATION_ID), data, DATA_SIZE);
-	if (ret == IOT_ERROR_NONE) {
-		ret = iot_util_convert_str_uuid(data, &cloud_prov->location_id);
-		if (ret != IOT_ERROR_NONE) {
-			IOT_DEBUG("Location ID : convert str -> uuid failed");
-			ret = IOT_ERROR_NV_DATA_ERROR;
-			goto exit;
-		}
-	} else if (ret == IOT_ERROR_NV_DATA_NOT_EXIST) {
-		memset(&cloud_prov->location_id, 0, sizeof(cloud_prov->location_id));
-		ret = IOT_ERROR_NONE;
-	} else {
-		IOT_DEBUG("Location ID : read failed");
-		IOT_DUMP(IOT_DEBUG_LEVEL_DEBUG, IOT_DUMP_NV_DATA_READ_FAIL, IOT_NVD_LOCATION_ID, __LINE__);
-		ret = IOT_ERROR_NV_DATA_ERROR;
-		goto exit;
-	}
-
-	/* IOT_NVD_ROOM_ID */
-	memset(data, 0, DATA_SIZE);
-
-	ret = _iot_nv_read_data(iot_bsp_nv_get_data_path(IOT_NVD_ROOM_ID), data, DATA_SIZE);
-	if (ret == IOT_ERROR_NONE) {
-		ret = iot_util_convert_str_uuid(data, &cloud_prov->room_id);
-		if (ret != IOT_ERROR_NONE) {
-			IOT_DEBUG("Room ID : convert str -> uuid failed");
-			ret = IOT_ERROR_NV_DATA_ERROR;
-			goto exit;
-		}
-	} else if (ret == IOT_ERROR_NV_DATA_NOT_EXIST) {
-		memset(&cloud_prov->room_id, 0, sizeof(cloud_prov->room_id));
-		ret = IOT_ERROR_NONE;
-	} else {
-		IOT_DEBUG("Room ID : read failed");
-		IOT_DUMP(IOT_DEBUG_LEVEL_DEBUG, IOT_DUMP_NV_DATA_READ_FAIL, IOT_NVD_ROOM_ID, __LINE__);
-		ret = IOT_ERROR_NV_DATA_ERROR;
-		goto exit;
-	}
-
 	/* IOT_NVD_LABEL */
 	memset(data, 0, DATA_SIZE);
 
@@ -614,7 +573,6 @@ iot_error_t iot_nv_set_cloud_prov_data(struct iot_cloud_prov_data* cloud_prov)
 	size_t size;
 	int state;
 	char* data = NULL;
-	char valid_id;
 
 	data = malloc(sizeof(char) * DATA_SIZE);
 	IOT_WARN_CHECK(data == NULL, IOT_ERROR_NV_DATA_ERROR, "memory alloc fail");
@@ -664,60 +622,6 @@ iot_error_t iot_nv_set_cloud_prov_data(struct iot_cloud_prov_data* cloud_prov)
 		IOT_DUMP(IOT_DEBUG_LEVEL_DEBUG, IOT_DUMP_NV_DATA_WRITE_FAIL, IOT_NVD_SERVER_PORT, __LINE__);
 		ret = IOT_ERROR_NV_DATA_ERROR;
 		goto exit;
-	}
-
-	/* IOT_NVD_LOCATION_ID */
-	valid_id = 0;
-	for (int i = 0; i < sizeof(cloud_prov->location_id.id); i++) {
-		valid_id |= cloud_prov->location_id.id[i];
-	}
-
-	if (valid_id) {
-		size = DATA_SIZE;
-		ret = iot_util_convert_uuid_str(&cloud_prov->location_id, data, size);
-		if (ret != IOT_ERROR_NONE) {
-			IOT_DEBUG("Location ID : convert uuid -> str failed");
-			ret = IOT_ERROR_NV_DATA_ERROR;
-			goto exit;
-		}
-
-		size = strlen(data);
-		ret = _iot_nv_write_data(iot_bsp_nv_get_data_path(IOT_NVD_LOCATION_ID), data, size);
-		if (ret != IOT_ERROR_NONE) {
-			IOT_DEBUG("Location ID : write failed");
-			IOT_DUMP(IOT_DEBUG_LEVEL_DEBUG, IOT_DUMP_NV_DATA_WRITE_FAIL, IOT_NVD_LOCATION_ID, __LINE__);
-			ret = IOT_ERROR_NV_DATA_ERROR;
-			goto exit;
-		}
-	} else {
-		iot_nv_erase(IOT_NVD_LOCATION_ID);
-	}
-
-	/* IOT_NVD_ROOM_ID */
-	valid_id = 0;
-	for (int i = 0; i < sizeof(cloud_prov->room_id.id); i++) {
-		valid_id |= cloud_prov->room_id.id[i];
-	}
-
-	if (valid_id) {
-		size = DATA_SIZE;
-		ret = iot_util_convert_uuid_str(&cloud_prov->room_id, data, size);
-		if (ret != IOT_ERROR_NONE) {
-			IOT_DEBUG("Room ID : convert uuid -> str failed");
-			ret = IOT_ERROR_NV_DATA_ERROR;
-			goto exit;
-		}
-
-		size = strlen(data);
-		ret = _iot_nv_write_data(iot_bsp_nv_get_data_path(IOT_NVD_ROOM_ID), data, size);
-		if (ret != IOT_ERROR_NONE) {
-			IOT_DEBUG("Room ID : write failed");
-			IOT_DUMP(IOT_DEBUG_LEVEL_DEBUG, IOT_DUMP_NV_DATA_WRITE_FAIL, IOT_NVD_ROOM_ID, __LINE__);
-			ret = IOT_ERROR_NV_DATA_ERROR;
-			goto exit;
-		}
-	} else {
-		iot_nv_erase(IOT_NVD_ROOM_ID);
 	}
 
 	/* IOT_NVD_LABEL */
@@ -1241,6 +1145,44 @@ iot_error_t iot_nv_erase(iot_nvd_t nv_type)
 			return IOT_ERROR_NV_DATA_ERROR;
 		}
 	}
+
+	return IOT_ERROR_NONE;
+}
+
+iot_error_t iot_nv_get_static_certificate(iot_security_cert_id_t cert_id, iot_security_buffer_t *output_buf)
+{
+	unsigned char *data = NULL;
+	unsigned char *cert;
+	unsigned int cert_len;
+
+	IOT_DEBUG("cert id = %d", cert_id);
+
+	if (!output_buf) {
+		IOT_ERROR("output buf is null");
+		return IOT_ERROR_INVALID_ARGS;
+	}
+
+	switch (cert_id) {
+	case IOT_SECURITY_CERT_ID_ROOT_CA:
+		cert = st_root_ca;
+		cert_len = st_root_ca_len;
+		break;
+	default:
+		IOT_ERROR("'%s' is not a supported static certificate");
+		return IOT_ERROR_NV_DATA_ERROR;
+	}
+
+	data = (unsigned char *)iot_os_malloc(cert_len + 1);
+	if (!data) {
+		IOT_ERROR("failed to malloc for static nv");
+		return IOT_ERROR_MEM_ALLOC;
+	}
+
+	memcpy(data, cert, cert_len);
+	data[cert_len] = '\0';
+
+	output_buf->p = data;
+	output_buf->len = cert_len;
 
 	return IOT_ERROR_NONE;
 }

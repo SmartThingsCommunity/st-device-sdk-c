@@ -29,7 +29,10 @@
 #ifdef CONFIG_STDK_IOT_CORE_LOG_FILE
 #include "iot_log_file.h"
 #endif
-static struct iot_dump_state* _iot_dump_create_dump_state()
+
+#define GET_LARGEST_MULTIPLE(x, n) (((x)/(n))*(n))
+
+static struct iot_dump_state* _iot_dump_create_dump_state(struct iot_context *iot_ctx)
 {
     struct iot_dump_state* dump_state;
 
@@ -50,6 +53,20 @@ static struct iot_dump_state* _iot_dump_create_dump_state()
     strncpy(dump_state->bsp_name, iot_bsp_get_bsp_name(), sizeof(dump_state->bsp_name));
     strncpy(dump_state->bsp_version, iot_bsp_get_bsp_version_string(), sizeof(dump_state->bsp_version));
 
+    if (iot_ctx) {
+        if (iot_ctx->device_info.firmware_version) {
+            strncpy(dump_state->firmware_version, iot_ctx->device_info.firmware_version,
+                    sizeof(dump_state->firmware_version));
+        }
+        if (iot_ctx->device_info.model_number) {
+            strncpy(dump_state->model_number, iot_ctx->device_info.model_number,
+                    sizeof(dump_state->model_number));
+        }
+        if (iot_ctx->device_info.manufacturer_name) {
+            strncpy(dump_state->manufacturer_name, iot_ctx->device_info.manufacturer_name,
+                    sizeof(dump_state->manufacturer_name));
+        }
+    }
     return dump_state;
 }
 
@@ -63,138 +80,195 @@ static struct iot_dump_header* _iot_dump_create_header()
     }
     memset(header, 0, sizeof(struct iot_dump_header));
 
-    header->magic_number = MAGIC_NUMBER;
+    header->magic_number = IOT_DUMP_MAGIC_NUMBER;
     header->log_version = IOT_DUMP_LOG_VERSION;
     header->dump_state_size = sizeof(struct iot_dump_state);
 
     return header;
 }
 
-static int _iot_dump_copy_memory(void *dest, int dest_size, const void *src, int src_size,
-        void *buf, int buf_size, int *remain_number, int need_base64)
+static iot_error_t _iot_dump_copy_memory(void *dest, int dest_size, const void *src, int src_size,
+        void *buf, int buf_size, int *remain_number, int *written_len, int need_base64)
 {
-    size_t out_len1 = 0;
-    size_t out_len2 = 0;
-    size_t copy_len1 = 0;
-    size_t copy_len2 = 0;
-    int ret;
+    size_t pre_out_len = 0;
+    size_t main_out_len = 0;
+    size_t pre_copy_len = 0;
+    size_t main_copy_len = 0;
+    iot_error_t iot_err = IOT_ERROR_NONE;
 
-    if ((dest_size <= 0) || (src_size <= 0) || (buf_size < 3))
+    if ((!written_len) || (!dest) || (!src) || (dest_size <= 0) || (src_size <= 0) || (buf_size < 3))
         return IOT_ERROR_BAD_REQ;
+
+    *written_len = 0;
+
     if (src_size > dest_size)
         src_size = dest_size;
 
     if (!need_base64) {
         memcpy(dest, src, src_size);
-        return src_size;
+        *written_len = src_size;
+        return IOT_ERROR_NONE;
     }
     //Step1: old 'remain' bytes and new (3-'remain') bytes are combined to 3bytes, and converted to base64
     if (*remain_number > 0) {
-        copy_len1 = 3 - *remain_number;
-        memcpy(buf + *remain_number, src, copy_len1);
-        ret = iot_crypto_base64_encode(buf, 3, dest, dest_size, &out_len1);
-        if (ret < 0) {
-            return ret;
+        pre_copy_len = 3 - *remain_number;
+        memcpy(buf + *remain_number, src, pre_copy_len);
+        iot_err = iot_crypto_base64_encode(buf, 3, dest, dest_size, &pre_out_len);
+        if (iot_err < 0) {
+            return iot_err;
         }
         memset(buf, 0, 3);
+        *written_len = pre_out_len;
     }
     //Step2: convert multiples of 3 bytes
-    *remain_number = (src_size - copy_len1) % 3;
-    copy_len2 = ((src_size - copy_len1) / 3) * 3;
-    ret = iot_crypto_base64_encode(src + copy_len1, copy_len2, dest + out_len1, dest_size - out_len1, &out_len2);
-    if (ret < 0) {
-        return ret;
+    *remain_number = (src_size - pre_copy_len) % 3;
+    main_copy_len = GET_LARGEST_MULTIPLE(src_size - pre_copy_len, 3);
+    iot_err = iot_crypto_base64_encode(src + pre_copy_len, main_copy_len, dest + pre_out_len, dest_size - pre_out_len, &main_out_len);
+    if (iot_err < 0) {
+        return iot_err;
     }
     //Step3: save unconverted remain bytes to buf
-    memcpy(buf, src + copy_len1 + copy_len2, *remain_number);
-    return out_len1 + out_len2;
+    memcpy(buf, src + pre_copy_len + main_copy_len, *remain_number);
+    *written_len = pre_out_len + main_out_len;
+    return iot_err;
 }
 
-char* iot_dump_create_all_log_dump(int all_log_dump_size, int need_base64)
+iot_error_t iot_dump_create_all_log_dump(struct iot_context *iot_ctx, char **log_dump_output, size_t max_log_dump_size, size_t *allocated_size, int need_base64)
 {
-    char* all_log_dump;
     struct iot_dump_header* header;
     struct iot_dump_state* dump_state;
 
-    char temp_buf[48] = "";
+    char temp_buf[IOT_DUMP_BUFFER_SIZE] = "";
+    char *all_log_dump;
     int remain_number = 0;
+    int written_len = 0;
 
-    unsigned int curr_size = 0;
-    int ret;
+    size_t max_msg_size = 0;
+    size_t min_log_size = 0;
+    size_t output_log_size = 0;
+    size_t stored_log_size = 0;
+    size_t curr_size = 0;
+    size_t msg_size;
 
-    all_log_dump = iot_os_malloc(all_log_dump_size);
-    if (!all_log_dump) {
-        IOT_ERROR("failed to malloc for all_log_dump");
-        return NULL;
-    }
-    memset(all_log_dump, 0, all_log_dump_size);
-    header = _iot_dump_create_header();
-    ret = _iot_dump_copy_memory(all_log_dump + curr_size, all_log_dump_size - curr_size,
-                header, sizeof(struct iot_dump_header), temp_buf, sizeof(temp_buf), &remain_number, need_base64);
-    iot_os_free(header);
-    if (ret < 0) {
-        IOT_ERROR("failed to get all_log_dump : ret %d, line %d", ret, __LINE__);
-        iot_os_free(all_log_dump);
-        return NULL;
-    }
-    curr_size += ret;
-
-    dump_state = _iot_dump_create_dump_state();
-    ret = _iot_dump_copy_memory(all_log_dump + curr_size, all_log_dump_size - curr_size,
-                dump_state, sizeof(struct iot_dump_state), temp_buf, sizeof(temp_buf), &remain_number, need_base64);
-    iot_os_free(dump_state);
-    if (ret < 0) {
-        IOT_ERROR("failed to get all_log_dump : ret %d, line %d", ret, __LINE__);
-        iot_os_free(all_log_dump);
-        return NULL;
-    }
-    curr_size += ret;
-
+    iot_error_t iot_err = IOT_ERROR_NONE;
 #ifdef CONFIG_STDK_IOT_CORE_LOG_FILE
     iot_log_file_handle_t *logfile;
-    unsigned int log_buf_size = 0;
-    unsigned int maximum_msg_size, msg_size;
+#endif
 
     if (need_base64) {
-        maximum_msg_size = (all_log_dump_size - 1) / 4 * 3 - sizeof(struct iot_dump_header) - sizeof(struct iot_dump_state);
+        min_log_size = IOT_CRYPTO_CAL_B64_LEN(sizeof(struct iot_dump_header) + sizeof(struct iot_dump_state));
     } else {
-        maximum_msg_size = all_log_dump_size - sizeof(struct iot_dump_header) - sizeof(struct iot_dump_state);
+        min_log_size = sizeof(struct iot_dump_header) + sizeof(struct iot_dump_state);
+    }
+    if (max_log_dump_size < min_log_size) {
+        IOT_ERROR("input log size is smaller than minimum log size");
+        return IOT_ERROR_BAD_REQ;
     }
 
-    logfile = iot_log_file_open(&log_buf_size, RAM_ONLY);
-    if (maximum_msg_size > log_buf_size)
-        maximum_msg_size = log_buf_size;
-    while (maximum_msg_size) {
+#ifdef CONFIG_STDK_IOT_CORE_LOG_FILE
+#if defined(CONFIG_STDK_IOT_CORE_LOG_FILE_RAM_ONLY)
+    logfile = iot_log_file_open(&stored_log_size, RAM_ONLY);
+#elif defined(CONFIG_STDK_IOT_CORE_LOG_FILE_FLASH_WITH_RAM)
+    logfile = iot_log_file_open(&stored_log_size, FLASH_WITH_RAM);
+#else
+#error "Need to choice STDK_IOT_CORE_LOG_FILE_TYPE first"
+#endif
+#endif
+
+    if (need_base64) {
+        max_msg_size = (max_log_dump_size - 1) / 4 * 3 - sizeof(struct iot_dump_header) - sizeof(struct iot_dump_state);
+    } else {
+        max_msg_size = max_log_dump_size - sizeof(struct iot_dump_header) - sizeof(struct iot_dump_state);
+    }
+    if (max_msg_size > stored_log_size)
+        max_msg_size = stored_log_size;
+    max_msg_size = GET_LARGEST_MULTIPLE(max_msg_size, IOT_DUMP_LOG_MSG_LINE_LENGTH);
+
+    if (need_base64) {
+        output_log_size = IOT_CRYPTO_CAL_B64_LEN(max_msg_size + sizeof(struct iot_dump_header) + sizeof(struct iot_dump_state));
+    } else {
+        output_log_size = max_msg_size + sizeof(struct iot_dump_header) + sizeof(struct iot_dump_state);
+    }
+
+    all_log_dump = iot_os_malloc(output_log_size);
+    if (!all_log_dump) {
+        IOT_ERROR("failed to malloc for all_log_dump");
+        iot_err = IOT_ERROR_MEM_ALLOC;
+        goto end;
+    }
+    memset(all_log_dump, 0, output_log_size);
+
+    header = _iot_dump_create_header();
+    iot_err = _iot_dump_copy_memory(all_log_dump + curr_size, output_log_size - curr_size,
+                header, sizeof(struct iot_dump_header), temp_buf, sizeof(temp_buf), &remain_number, &written_len, need_base64);
+    iot_os_free(header);
+    if (iot_err < 0) {
+        IOT_ERROR("failed to get header for all_log_dump : ret %d", iot_err);
+        goto end;
+    }
+    curr_size += written_len;
+
+    dump_state = _iot_dump_create_dump_state(iot_ctx);
+    iot_err = _iot_dump_copy_memory(all_log_dump + curr_size, output_log_size - curr_size,
+                dump_state, sizeof(struct iot_dump_state), temp_buf, sizeof(temp_buf), &remain_number, &written_len, need_base64);
+    iot_os_free(dump_state);
+    if (iot_err < 0) {
+        IOT_ERROR("failed to get dump_state for all_log_dump : ret %d", iot_err);
+        goto end;
+    }
+    curr_size += written_len;
+
+#ifdef CONFIG_STDK_IOT_CORE_LOG_FILE
+    iot_log_file_seek(logfile, 0 - max_msg_size, logfile->tail_addr);
+
+    while (max_msg_size) {
         msg_size = sizeof(temp_buf) - remain_number;
-        if (msg_size > maximum_msg_size)
-            msg_size = maximum_msg_size;
+        if (msg_size > max_msg_size)
+            msg_size = max_msg_size;
 
         iot_log_file_read(logfile, temp_buf + remain_number, msg_size, &msg_size);
 
-        maximum_msg_size -= msg_size;
+        max_msg_size -= msg_size;
         msg_size += remain_number;
         remain_number = 0;
 
-        ret = _iot_dump_copy_memory(all_log_dump + curr_size, all_log_dump_size - curr_size,
-                temp_buf, msg_size, temp_buf, sizeof(temp_buf), &remain_number, need_base64);
-        if (ret < 0) {
-            IOT_ERROR("failed to get all_log_dump : ret %d, line %d", ret, __LINE__);
-            iot_os_free(all_log_dump);
-            return NULL;
+        iot_err = _iot_dump_copy_memory(all_log_dump + curr_size, output_log_size - curr_size,
+                temp_buf, msg_size, temp_buf, sizeof(temp_buf), &remain_number, &written_len, need_base64);
+        if (iot_err < 0) {
+            IOT_ERROR("failed to get log msg for all_log_dump : ret %d", iot_err);
+            goto end;
         }
-        curr_size += ret;
+        curr_size += written_len;
     }
     iot_log_file_close(logfile);
 #endif
 
     if (remain_number) {
         memset(temp_buf + remain_number, 0, 3 - remain_number);
-        _iot_dump_copy_memory(all_log_dump + curr_size, all_log_dump_size - curr_size,
-                temp_buf, 3 - remain_number, temp_buf, sizeof(temp_buf), &remain_number, need_base64);
+        iot_err = _iot_dump_copy_memory(all_log_dump + curr_size, output_log_size - curr_size,
+                temp_buf, 3 - remain_number, temp_buf, sizeof(temp_buf), &remain_number, &written_len, need_base64);
+        if (iot_err < 0) {
+            IOT_ERROR("failed to get remain character for all_log_dump : ret %d", iot_err);
+            goto end;
+        }
+        curr_size += written_len;
     }
 
+    if (allocated_size)
+        *allocated_size = output_log_size;
+    *log_dump_output = all_log_dump;
+    return iot_err;
 
-    return all_log_dump;
+end:
+#ifdef CONFIG_STDK_IOT_CORE_LOG_FILE
+    iot_log_file_close(logfile);
+#endif
+    if (all_log_dump)
+        iot_os_free(all_log_dump);
+    if (allocated_size)
+        *allocated_size = 0;
+    *log_dump_output = NULL;
+    return iot_err;
 }
 #ifdef CONFIG_STDK_IOT_CORE_LOG_FILE
 void iot_dump_log(iot_debug_level_t level, dump_log_id_t log_id, int arg1, int arg2)

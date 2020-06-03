@@ -46,6 +46,8 @@ extern "C" {
 #define DEFAULT_COMMNAD_TIMEOUT 		30000
 #define MQTT_PUBLISH_RETRY 				3
 #define MQTT_PING_RETRY 				3
+#define MQTT_WRITE_TIMEOUT				10000	/* in ms*/
+#define MQTT_READ_TIMEOUT				10000	/* in ms*/
 
 #define MQTT_DISCONNECT_MAX_SIZE		5
 #define MQTT_PUBACK_MAX_SIZE			5
@@ -57,19 +59,11 @@ extern "C" {
 
 #define MQTT_CLIENT_STRUCT_MAGIC_NUMBER	0x19890107
 
-typedef struct MQTTConnackData {
-	unsigned char rc;
-	unsigned char sessionPresent;
-} MQTTConnackData;
-
-typedef struct MQTTSubackData {
-	int granted_qos;
-} MQTTSubackData;
-
 enum packet_chunk_state {
 	PACKET_CHUNK_INIT,
 	PACKET_CHUNK_WRITE_PENDING,
 	PACKET_CHUNK_WRITE_COMPLETED,
+	PACKET_CHUNK_WRITE_FAIL,
 	PACKET_CHUNK_ACK_PENDING,
 	PACKET_CHUNK_READ_COMPLETED,
 	PACKET_CHUNK_ACKNOWLEDGED,
@@ -91,6 +85,7 @@ typedef struct iot_mqtt_packet_chunk {
 	int retry_count;
 
 	unsigned char have_owner;
+	int return_code;
 
 	struct iot_mqtt_packet_chunk *next;
 } iot_mqtt_packet_chunk_t;
@@ -105,13 +100,8 @@ typedef struct MQTTClient {
 	int magic;
 	unsigned int next_packetid,
 			command_timeout_ms;
-	size_t readbuf_size;
-	unsigned char *readbuf;
 	unsigned int keepAliveInterval;
-	char ping_outstanding;
-	int ping_retry_count;
 	int isconnected;
-	int cleansession;
 
 	struct MessageHandlers {
 		char *topicFilter;
@@ -123,51 +113,20 @@ typedef struct MQTTClient {
 	void *defaultUserData;
 
 	iot_net_interface_t *net;
-	iot_os_timer last_sent, last_received, ping_wait;
+	iot_os_timer last_sent, last_received;
 
-	iot_os_mutex mutex;
+	iot_os_mutex client_manage_lock;
 	iot_os_thread thread;
 
 	struct iot_mqtt_packet_chunk *ping_packet;
 
 	iot_os_mutex write_lock;
-	struct iot_mqtt_packet_chunk *current_writing_chunk;
-	size_t current_write_pos;
 	iot_os_mutex read_lock;
-	struct iot_mqtt_packet_chunk *current_reading_chunk;
-	size_t current_read_pos;
-	unsigned char reading_packet_fixed_header[MAX_NUM_OF_REMAINING_LENGTH_BYTES + 1];
-	size_t reading_packet_rem_size_length;
-
 
 	iot_mqtt_packet_chunk_queue_t write_pending_queue;
 	iot_mqtt_packet_chunk_queue_t ack_pending_queue;
 	iot_mqtt_packet_chunk_queue_t user_event_callback_queue;
 } MQTTClient;
-
-/** MQTT Connect - send an MQTT connect packet down the network and wait for a Connack
- *  @param options - connect options
- *  @return success code
- */
-DLLExport int MQTTConnectWithResults(st_mqtt_client client, st_mqtt_broker_info_t *broker, st_mqtt_connect_data *connect_data,
-									 MQTTConnackData *data);
-
-/** MQTT SetMessageHandler - set or remove a per topic message handler
- *  @param client - the client object to use
- *  @param topicFilter - the topic filter set the message handler for
- *  @param messageHandler - pointer to the message handler function or NULL to remove
- *  @return success code
- */
-DLLExport int MQTTSetMessageHandler(st_mqtt_client client, const char *topic, st_mqtt_msg_handler handler, void *user_data);
-
-/** MQTT Subscribe - send an MQTT subscribe packet and wait for suback before returning.
- *  @param client - the client object to use
- *  @param topicFilter - the topic filter to subscribe to
- *  @param message - the message to send
- *  @param data - suback granted QoS returned
- *  @return success code
- */
-DLLExport int MQTTSubscribeWithResults(st_mqtt_client client, const char *topic, int qos, st_mqtt_msg_handler handler, MQTTSubackData *data, void *user_data);
 
 #if defined(__cplusplus)
 }

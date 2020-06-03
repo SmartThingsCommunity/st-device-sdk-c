@@ -680,6 +680,8 @@ iot_error_t iot_api_device_info_load(unsigned char *device_info,
 		strncpy(model_number, JSON_GET_STRING_VALUE(item), str_len);
 		model_number[str_len] = '\0';
 		info->model_number = model_number;
+	} else {
+		info->model_number = NULL;
 	}
 
 	/* name_product_number */
@@ -695,6 +697,8 @@ iot_error_t iot_api_device_info_load(unsigned char *device_info,
 		product_number[str_len] = '\0';
 
 		info->product_number = product_number;
+	} else {
+		info->product_number = NULL;
 	}
 
 	/* name_marketing */
@@ -710,6 +714,8 @@ iot_error_t iot_api_device_info_load(unsigned char *device_info,
 		marketing_name[str_len] = '\0';
 
 		info->marketing_name = marketing_name;
+	} else {
+		info->marketing_name = NULL;
 	}
 
 	/* name_manufacturer */
@@ -725,6 +731,8 @@ iot_error_t iot_api_device_info_load(unsigned char *device_info,
 		manufacturer_name[str_len] = '\0';
 
 		info->manufacturer_name = manufacturer_name;
+	} else {
+		info->manufacturer_name = NULL;
 	}
 
 	/* manufacturerCode */
@@ -740,6 +748,8 @@ iot_error_t iot_api_device_info_load(unsigned char *device_info,
 		manufacturer_code[str_len] = '\0';
 
 		info->manufacturer_code = manufacturer_code;
+	} else {
+		info->manufacturer_code = NULL;
 	}
 
 	if (root)

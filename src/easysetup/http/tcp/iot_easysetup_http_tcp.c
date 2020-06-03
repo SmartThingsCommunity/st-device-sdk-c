@@ -50,7 +50,7 @@ static void _clear_listen_socket(void)
 
 static void es_tcp_task(void *pvParameters)
 {
-	char *payload = NULL;
+	char *payload;
 	char rx_buffer[RX_BUFFER_MAX];
 	int addr_family, ip_protocol, sock, ret, len, type, cmd;
 	iot_error_t err = IOT_ERROR_NONE;
@@ -94,6 +94,7 @@ static void es_tcp_task(void *pvParameters)
 		}
 
 		while (1) {
+			payload = NULL;
 			addrLen = sizeof(sourceAddr);
 			content_len = 0;
 
@@ -123,9 +124,10 @@ static void es_tcp_task(void *pvParameters)
 			else {
 				rx_buffer[len] = '\0';
 
-				err = es_msg_parser(rx_buffer, &payload, &cmd, &type, &content_len);
+				err = es_msg_parser(rx_buffer, sizeof(rx_buffer), &payload, &cmd, &type, &content_len);
 
-				if ((err == IOT_ERROR_NONE) && (content_len > strlen((char *)payload)))
+				if ((err == IOT_ERROR_NONE) && (type == D2D_POST)
+									&&	payload && (content_len > strlen((char *)payload)))
 				{
 					memset(rx_buffer, '\0', sizeof(rx_buffer));
 					len = recv(sock, rx_buffer, sizeof(rx_buffer) - 1, 0);

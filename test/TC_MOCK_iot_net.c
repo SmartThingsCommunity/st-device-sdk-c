@@ -43,7 +43,7 @@ static int _iot_net_mock_select(iot_net_interface_t *net, unsigned int timeout_m
     UNUSED(net);
     UNUSED(timeout_ms);
 
-    return 0;
+    return (int)mock();
 }
 
 struct mock_net_read_buffer_pointer {

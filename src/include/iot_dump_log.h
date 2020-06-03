@@ -19,11 +19,16 @@
 #ifndef _IOT_DUMP_LOG_H_
 #define _IOT_DUMP_LOG_H_
 
+#include "iot_main.h"
+
 #ifdef __cplusplus
 extern "C" {
 #endif
 
-#define MAGIC_NUMBER (0x57D1C109)
+#define IOT_DUMP_MAGIC_NUMBER (0x57D1C109)
+#define IOT_DUMP_LOG_MSG_LINE_LENGTH 16
+#define IOT_DUMP_BUFFER_SIZE 48
+
 
 struct iot_dump_header {
     int magic_number;
@@ -41,6 +46,9 @@ struct iot_dump_state {
     char os_version[16];
     char bsp_name[16];
     char bsp_version[16];
+    char firmware_version[16];
+    char model_number[16];
+    char manufacturer_name[16];
 };
 
 #define IOT_DUMP_LOG_VERSION 0
@@ -101,7 +109,6 @@ typedef enum {
 	/* Wifi provisioning */
 	IOT_DUMP_EASYSETUP_INVALID_MAC = 0x0531,
 	IOT_DUMP_EASYSETUP_INVALID_BROKER_URL = 0x0532,
-	IOT_DUMP_EASYSETUP_INVALID_ROOMID = 0x0533,
 	/* Server Common */
 	IOT_DUMP_EASYSETUP_500_BASE = 0x0540,
 	IOT_DUMP_EASYSETUP_INTERNAL_SERVER_ERROR = 0x0541,
@@ -178,11 +185,17 @@ typedef enum {
 	IOT_DUMP_EXAMPLE_COMMENT = 0xff02, /* decoder copies comment to output */
 } dump_log_id_t;
 
-/* create all_log_dump
- * @param all_log_dump_size - size of created all_log_dump
- * @return pointer of 'all log dump'
- * @warning must free returned pointer after using it.
+/**
+ * @brief create all_log_dump
+ * @param[in] iot_ctx - iot_core context
+ * @param[out] log_dump_output - a pointer of not allocated pointer for log dump buffer.
+ *         it will allocated in this function
+ * @param[in] max_log_dump_size - maximum size of log dump.
+ * @param[out] allocated_size - allocated memory size of log_dump_output
+ * @retval IOT_ERROR_NONE success
+ *
+ * @warning must free log_dump_output after using it.
  */
-char* iot_dump_create_all_log_dump(int all_log_dump_size, int need_base64);
+iot_error_t iot_dump_create_all_log_dump(struct iot_context *iot_ctx, char **log_dump_output, size_t max_log_dump_size, size_t *allocated_size, int need_base64);
 
 #endif /* _IOT_DUMP_LOG_H_ */

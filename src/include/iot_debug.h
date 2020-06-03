@@ -41,8 +41,10 @@ typedef enum {
 
 #ifdef SUPPORT_TC_ON_STATIC_FUNC
 #define STATIC_FUNCTION
+#define STATIC_VARIABLE
 #else
 #define STATIC_FUNCTION static
+#define STATIC_VARIABLE static
 #endif
 
 
