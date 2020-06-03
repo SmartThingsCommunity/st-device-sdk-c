@@ -46,10 +46,6 @@ const char *iot_bsp_nv_get_data_path(iot_nvd_t nv_type)
 		return "/mnt/ServerURL";
 	case IOT_NVD_SERVER_PORT:
 		return "/mnt/ServerPort";
-	case IOT_NVD_LOCATION_ID:
-		return "/mnt/LocationID";
-	case IOT_NVD_ROOM_ID:
-		return "/mnt/RoomID";
 	case IOT_NVD_LABEL:
 		return "/mnt/Label";
 	case IOT_NVD_DEVICE_ID:

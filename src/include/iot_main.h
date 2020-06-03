@@ -141,8 +141,6 @@ struct iot_wifi_prov_data {
 struct iot_cloud_prov_data {
 	char *broker_url;				/**< @brief broker url for mqtt */
 	int  broker_port;				/**< @brief broker port num for mqtt */
-	struct iot_uuid location_id;	/**< @brief location id for ST(server) management */
-	struct iot_uuid room_id;		/**< @brief room id for ST(server) management */
 	char *location;
 	char *room;
 	char *label;					/**< @brief device name, got from the mobile */

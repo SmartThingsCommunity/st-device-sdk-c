@@ -343,7 +343,6 @@ struct _prov_test_data {
     char *ssid;
     char *url;
     int num;
-    unsigned char id[IOT_UUID_BYTES];
 };
 
 static struct iot_device_prov_data *_generate_test_prov_data(struct _prov_test_data data)
@@ -364,7 +363,6 @@ static struct iot_device_prov_data *_generate_test_prov_data(struct _prov_test_d
     }
 
     cloud_prov->broker_port = data.num;
-    memcpy(&cloud_prov->location_id.id, &data.id, IOT_UUID_BYTES);
 
     return prov_data;
 }
@@ -373,11 +371,11 @@ void TC_check_prov_data_validation(void **state)
 {
     iot_error_t err;
     struct _prov_test_data test_set[] = {
-            { IOT_ERROR_NONE, "TestSsid", "test.domain.com", 443, { 0x80, 0x10, 0xF0, 0xE6, 0x50, 0x69, 0x12, 0x20, 0x04, 0x01, 0x00, 0x12, 0xB4, 0x10, 0x99, 0x77}},
-            { IOT_ERROR_INVALID_ARGS, NULL, "test.domain.com", 443, { 0x80, 0x10, 0xF0, 0xE6, 0x50, 0x69, 0x12, 0x20, 0x04, 0x01, 0x00, 0x12, 0xB4, 0x10, 0x99, 0x77}},
-            { IOT_ERROR_INVALID_ARGS, "TestSsid", NULL, 443, { 0x80, 0x10, 0xF0, 0xE6, 0x50, 0x69, 0x12, 0x20, 0x04, 0x01, 0x00, 0x12, 0xB4, 0x10, 0x99, 0x77}},
-            { IOT_ERROR_INVALID_ARGS, "TestSsid", "test.domain.com", -5, { 0x80, 0x10, 0xF0, 0xE6, 0x50, 0x69, 0x12, 0x20, 0x04, 0x01, 0x00, 0x12, 0xB4, 0x10, 0x99, 0x77}},
-            { IOT_ERROR_INVALID_ARGS, "TestSsid", "test.domain.com", 443, { 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00}},
+            { IOT_ERROR_NONE, "TestSsid", "test.domain.com", 443},
+            { IOT_ERROR_INVALID_ARGS, NULL, "test.domain.com", 443},
+            { IOT_ERROR_INVALID_ARGS, "TestSsid", NULL, 443},
+            { IOT_ERROR_INVALID_ARGS, "TestSsid", "test.domain.com", -5},
+            { IOT_ERROR_INVALID_ARGS, "TestSsid", "test.domain.com", 443},
     };
 
     for (int i = 0; i < sizeof(test_set)/sizeof(struct _prov_test_data); i++) {
