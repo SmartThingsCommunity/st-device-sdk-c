@@ -41,7 +41,8 @@
 
 #define IOT_USR_INTERACT_BIT_PROV_CONFIRM	(1u << 0u)
 #define IOT_USR_INTERACT_BIT_CONFIRM_FAILED	(1u << 1u)
-#define IOT_USR_INTERACT_BIT_ALL	(IOT_USR_INTERACT_BIT_PROV_CONFIRM | IOT_USR_INTERACT_BIT_CONFIRM_FAILED)
+#define IOT_USR_INTERACT_BIT_PROV_DONE		(1u << 2u)
+#define IOT_USR_INTERACT_BIT_ALL	(IOT_USR_INTERACT_BIT_PROV_CONFIRM | IOT_USR_INTERACT_BIT_CONFIRM_FAILED | IOT_USR_INTERACT_BIT_PROV_DONE)
 
 #define IOT_MAIN_TASK_CYCLE			100
 
@@ -140,8 +141,8 @@ struct iot_wifi_prov_data {
 struct iot_cloud_prov_data {
 	char *broker_url;				/**< @brief broker url for mqtt */
 	int  broker_port;				/**< @brief broker port num for mqtt */
-	struct iot_uuid location_id;	/**< @brief location id for ST(server) management */
-	struct iot_uuid room_id;		/**< @brief room id for ST(server) management */
+	char *location;
+	char *room;
 	char *label;					/**< @brief device name, got from the mobile */
 };
 
@@ -237,6 +238,7 @@ struct iot_context {
 	iot_os_queue *easysetup_req_queue;	/**< @brief request queue for easy-setup process */
 	iot_os_queue *easysetup_resp_queue;	/**< @brief response queue for easy-setup process */
 	bool es_res_created;				/**< @brief to check easy-setup resources are created or not */
+	bool es_http_ready;					/**< @brief to check easy-setup-httpd is initialized or not */
 
 	iot_state_t curr_state;			/**< @brief reflect current iot_state */
 	iot_state_t req_state;			/**< @brief reflect requested iot_state */
@@ -280,6 +282,7 @@ struct iot_context {
 	uint16_t cmd_count[IOT_COMMAND_TYPE_MAX+1];	/**< @brief current queued command counts */
 
 	iot_os_thread main_thread; /**< @brief iot main task thread */
+	iot_os_mutex st_conn_lock; /**< @brief User level control API lock */
 };
 
 #endif /* _IOT_MAIN_H_ */

@@ -59,7 +59,7 @@ void TC_STATIC_iot_security_be_bsp_fs_storage_id2target_success(void **state)
 	iot_security_storage_target_t target;
 
 	// Given
-	id = IOT_NVD_ROOM_ID;
+	id = IOT_NVD_DEVICE_ID;
 	// When
 	target = _iot_security_be_bsp_fs_storage_id2target(id);
 	// Then
@@ -84,21 +84,21 @@ void TC_STATIC_iot_security_be_bsp_fs_storage_id2filename_invalid_parameters(voi
 	char filename[IOT_SECURITY_STORAGE_FILENAME_MAX_LEN];
 
 	// Given
-	id = IOT_NVD_ROOM_ID;
+	id = IOT_NVD_DEVICE_ID;
 	// When: filename is null
 	err = _iot_security_be_bsp_fs_storage_id2filename(id, NULL, sizeof(filename));
 	// Then
 	assert_int_equal(err, IOT_ERROR_SECURITY_FS_INVALID_ARGS);
 
 	// Given
-	id = IOT_NVD_ROOM_ID;
+	id = IOT_NVD_DEVICE_ID;
 	// When: filename len is zero
 	err = _iot_security_be_bsp_fs_storage_id2filename(id, filename, 0);
 	// Then
 	assert_int_equal(err, IOT_ERROR_SECURITY_FS_INVALID_ARGS);
 
 	// Given
-	id = IOT_NVD_ROOM_ID;
+	id = IOT_NVD_DEVICE_ID;
 	// When: small filename len
 	err = _iot_security_be_bsp_fs_storage_id2filename(id, filename, 2);
 	// Then
@@ -119,7 +119,7 @@ void TC_STATIC_iot_security_be_bsp_fs_storage_id2filename_success(void **state)
 	char filename[IOT_SECURITY_STORAGE_FILENAME_MAX_LEN];
 
 	// Given: valid id
-	id = IOT_NVD_ROOM_ID;
+	id = IOT_NVD_DEVICE_ID;
 	// When
 	err = _iot_security_be_bsp_fs_storage_id2filename(id, filename, sizeof(filename));
 	// Then
@@ -132,12 +132,12 @@ void TC_iot_security_be_bsp_fs_load_malloc_failure(void **state)
 	iot_security_be_context_t be_context;
 	iot_security_storage_id_t id;
 	iot_security_buffer_t buf;
-	const char *room_id = "1cd8e3f2-0c88-4298-90e3-cd9b35a82140";
+	const char *device_id = "1cd8e3f2-0c88-4298-90e3-cd9b35a82140";
 
 	// Given: prepare room id
-	id = IOT_NVD_ROOM_ID;
-	buf.p = (unsigned char *)room_id;
-	buf.len = strlen(room_id) + 1;
+	id = IOT_NVD_DEVICE_ID;
+	buf.p = (unsigned char *)device_id;
+	buf.len = strlen(device_id) + 1;
 	// When
 	err = _iot_security_be_bsp_fs_store(NULL, id, &buf);
 	// Then
@@ -146,7 +146,7 @@ void TC_iot_security_be_bsp_fs_load_malloc_failure(void **state)
 	// Given: malloc failure
 	do_not_use_mock_iot_os_malloc_failure();
 	set_mock_iot_os_malloc_failure_with_index(0);
-	id = IOT_NVD_ROOM_ID;
+	id = IOT_NVD_DEVICE_ID;
 	// When
 	err = _iot_security_be_bsp_fs_load(&be_context, id, &buf);
 	// Then
@@ -194,12 +194,12 @@ void TC_iot_security_be_bsp_fs_load_success(void **state)
 	iot_security_storage_id_t id;
 	iot_security_buffer_t test_buf;
 	iot_security_buffer_t load_buf;
-	const char *room_id = "1cd8e3f2-0c88-4298-90e3-cd9b35a82140";
+	const char *device_id = "1cd8e3f2-0c88-4298-90e3-cd9b35a82140";
 
 	// Given: prepare room id
-	id = IOT_NVD_ROOM_ID;
-	test_buf.p = (unsigned char *)room_id;
-	test_buf.len = strlen(room_id) + 1;
+	id = IOT_NVD_DEVICE_ID;
+	test_buf.p = (unsigned char *)device_id;
+	test_buf.len = strlen(device_id) + 1;
 	err = _iot_security_be_bsp_fs_store(&be_context, id, &test_buf);
 	assert_int_equal(err, IOT_ERROR_NONE);
 	// When
@@ -264,12 +264,12 @@ void TC_iot_security_be_bsp_fs_store_success(void **state)
 	iot_error_t err;
 	iot_security_storage_id_t id;
 	iot_security_buffer_t buf;
-	const char *room_id = "1cd8e3f2-0c88-4298-90e3-cd9b35a82140";
+	const char *device_id = "1cd8e3f2-0c88-4298-90e3-cd9b35a82140";
 
 	// Given: prepare room id
-	id = IOT_NVD_ROOM_ID;
-	buf.p = (unsigned char *)room_id;
-	buf.len = strlen(room_id) + 1;
+	id = IOT_NVD_DEVICE_ID;
+	buf.p = (unsigned char *)device_id;
+	buf.len = strlen(device_id) + 1;
 	// When
 	err = _iot_security_be_bsp_fs_store(NULL, id, &buf);
 	// Then
@@ -301,12 +301,12 @@ void TC_iot_security_be_bsp_fs_remove_success(void **state)
 	iot_error_t err;
 	iot_security_storage_id_t id;
 	iot_security_buffer_t buf;
-	const char *room_id = "1cd8e3f2-0c88-4298-90e3-cd9b35a82140";
+	const char *device_id = "1cd8e3f2-0c88-4298-90e3-cd9b35a82140";
 
 	// Given: prepare room id
-	id = IOT_NVD_ROOM_ID;
-	buf.p = (unsigned char *)room_id;
-	buf.len = strlen(room_id) + 1;
+	id = IOT_NVD_DEVICE_ID;
+	buf.p = (unsigned char *)device_id;
+	buf.len = strlen(device_id) + 1;
 	err = _iot_security_be_bsp_fs_store(NULL, id, &buf);
 	assert_int_equal(err, IOT_ERROR_NONE);
 	// When

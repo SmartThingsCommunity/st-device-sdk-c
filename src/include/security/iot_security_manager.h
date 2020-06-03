@@ -1,6 +1,6 @@
 /* ***************************************************************************
  *
- * Copyright 2020 Samsung Electronics All Rights Reserved.
+ * Copyright (c) 2020 Samsung Electronics All Rights Reserved.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -16,31 +16,23 @@
  *
  ****************************************************************************/
 
-#ifndef _EASYSETUP_HTTP_H_
-#define _EASYSETUP_HTTP_H_
+#ifndef _IOT_SECURITY_MANAGER_H_
+#define _IOT_SECURITY_MANAGER_H_
 
 #ifdef __cplusplus
 extern "C" {
 #endif
 
-#include "iot_error.h"
-
-enum cgi_type {
-	D2D_GET= 0,
-	D2D_POST,
-	D2D_ERROR,
+enum iot_security_cert_id {
+	IOT_SECURITY_CERT_ID_UNKNOWN = 0,
+	IOT_SECURITY_CERT_ID_ROOT_CA,
+	IOT_SECURITY_CERT_ID_SUB_CA,
+	IOT_SECURITY_CERT_ID_DEVICE,
+	IOT_SECURITY_CERT_ID_MAX,
 };
-
-void http_msg_handler(int cmd, char **buffer, enum cgi_type type, char* data_buf);
-
-iot_error_t es_msg_parser(char *rx_buffer, size_t rx_buffer_len, char **payload, int *cmd, int *type, size_t *content_len);
-
-void es_http_init(void);
-
-void es_http_deinit(void);
 
 #ifdef __cplusplus
 }
 #endif
 
-#endif /* _EASYSETUP_HTTP_H_ */
+#endif /* _IOT_SECURITY_MANAGER_H_ */

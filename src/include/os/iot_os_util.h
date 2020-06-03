@@ -200,9 +200,7 @@ void iot_os_eventgroup_delete(iot_os_eventgroup* eventgroup_handle);
  * @param[in] bits_to_wait_for	bitwise value of bit/bits.
  *	ex) use 0b101 to wait bit 0 and/or bit 2
  * @param[in] clear_on_exit	if this value is IOT_OS_TRUE,
-	bits in 'bits_to_wait_for' will be cleared
- * @param[in] wait_for_all_bits	if this value is IOT_OS_TRUE,
- *	wait for ""ALL"" bits in 'bits_to_wait_for'
+ *	bits in 'bits_to_wait_for' will be cleared
  * @param[in] wait_time_ms	maximum time to wait until all/one of bits are set
  *
  * @return
@@ -211,8 +209,7 @@ void iot_os_eventgroup_delete(iot_os_eventgroup* eventgroup_handle);
  *
  */
 unsigned int iot_os_eventgroup_wait_bits(iot_os_eventgroup* eventgroup_handle,
-	const unsigned int bits_to_wait_for, const int clear_on_exit,
-	const int wait_for_all_bits, const unsigned int wait_time_ms);
+	const unsigned int bits_to_wait_for, const int clear_on_exit, const unsigned int wait_time_ms);
 /**
  * @brief	set bit/bits of eventgroup
  *
@@ -224,11 +221,10 @@ unsigned int iot_os_eventgroup_wait_bits(iot_os_eventgroup* eventgroup_handle,
  *	ex) use 0b100 will set only bit2
  *
  * @return
- *	return is bits of event after set bit/bits.
- *	if you set 'clear_on_exit' to IOT_OS_TRUE, it can be 0 because of other task waiting for bits
+ *	return IOT_OS_TRUE on success, IOT_OS_FALSE on failure
  *
  */
-unsigned int iot_os_eventgroup_set_bits(iot_os_eventgroup* eventgroup_handle,
+int iot_os_eventgroup_set_bits(iot_os_eventgroup* eventgroup_handle,
 	const unsigned int bits_to_set);
 /**
  * @brief	clear bit/bits of eventgroup
@@ -241,10 +237,10 @@ unsigned int iot_os_eventgroup_set_bits(iot_os_eventgroup* eventgroup_handle,
  *	ex) use 0b100 will clear only bit2
  *
  * @return
- *	return is bits of event BEFORE clear bit.
+ *	return IOT_OS_TRUE on success, IOT_OS_FALSE on failure
  *
  */
-unsigned int iot_os_eventgroup_clear_bits(iot_os_eventgroup* eventgroup_handle,
+int iot_os_eventgroup_clear_bits(iot_os_eventgroup* eventgroup_handle,
 	const unsigned int bits_to_clear);
 
 

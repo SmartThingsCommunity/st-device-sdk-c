@@ -95,22 +95,23 @@ void iot_os_eventgroup_delete(iot_os_eventgroup* eventgroup_handle)
 }
 
 unsigned int iot_os_eventgroup_wait_bits(iot_os_eventgroup* eventgroup_handle,
-		const unsigned int bits_to_wait_for, const int clear_on_exit,
-		const int wait_for_all_bits, const unsigned int wait_time_ms)
+		const unsigned int bits_to_wait_for, const int clear_on_exit, const unsigned int wait_time_ms)
 {
-	return xEventGroupWaitBits(eventgroup_handle, bits_to_wait_for, clear_on_exit, wait_for_all_bits, wait_time_ms);
+	return xEventGroupWaitBits(eventgroup_handle, bits_to_wait_for, clear_on_exit, false, wait_time_ms);
 }
 
-unsigned int iot_os_eventgroup_set_bits(iot_os_eventgroup* eventgroup_handle,
+int iot_os_eventgroup_set_bits(iot_os_eventgroup* eventgroup_handle,
 		const unsigned int bits_to_set)
 {
-	return xEventGroupSetBits(eventgroup_handle, bits_to_set);
+	xEventGroupSetBits(eventgroup_handle, bits_to_set);
+	return IOT_OS_TRUE;
 }
 
-unsigned int iot_os_eventgroup_clear_bits(iot_os_eventgroup* eventgroup_handle,
+int iot_os_eventgroup_clear_bits(iot_os_eventgroup* eventgroup_handle,
 		const unsigned int bits_to_clear)
 {
-	return xEventGroupClearBits(eventgroup_handle, bits_to_clear);
+	xEventGroupClearBits(eventgroup_handle, bits_to_clear);
+	return IOT_OS_TRUE;
 }
 
 /* Mutex */
@@ -132,7 +133,7 @@ int iot_os_mutex_lock(iot_os_mutex* mutex)
 {
 	int ret;
 
-	if (!mutex) {
+	if (!mutex || !mutex->sem) {
 		return IOT_OS_FALSE;
 	}
 
@@ -195,8 +196,11 @@ unsigned int iot_os_timer_left_ms(iot_os_timer timer)
 {
 	Freertos_Timer *freertos_timer = timer;
 
-	xTaskCheckForTimeOut(&freertos_timer->xTimeOut, &freertos_timer->xTicksToWait); /* updates xTicksToWait to the number left */
-	return (freertos_timer->xTicksToWait <= 0) ? 0 : (freertos_timer->xTicksToWait * portTICK_PERIOD_MS);
+	if ((xTaskCheckForTimeOut(&freertos_timer->xTimeOut, &freertos_timer->xTicksToWait)) == pdTRUE) {
+		return 0;
+	}
+
+	return (freertos_timer->xTicksToWait * portTICK_PERIOD_MS);
 }
 
 char iot_os_timer_isexpired(iot_os_timer timer)

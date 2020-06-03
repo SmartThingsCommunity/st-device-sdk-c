@@ -58,8 +58,6 @@ iot_error_t _check_prov_data_validation(struct iot_device_prov_data *prov_data)
 {
 	struct iot_wifi_prov_data *wifi = &(prov_data->wifi);
 	struct iot_cloud_prov_data *cloud = &(prov_data->cloud);
-	unsigned char valid_id = 0;
-	int i;
 
 	if (wifi->ssid[0] == '\0') {
 		IOT_ERROR("There is no ssid on prov_data");
@@ -75,15 +73,6 @@ iot_error_t _check_prov_data_validation(struct iot_device_prov_data *prov_data)
 		IOT_ERROR("There is wrong port(%d) on prov_data", cloud->broker_port);
 		return IOT_ERROR_INVALID_ARGS;
 	}
-
-	for (i = 0; i < 15; i++)
-		valid_id |= cloud->location_id.id[i];
-
-	if (valid_id == 0) {
-		IOT_ERROR("There is Nil-uuid-location prov_data");
-		return IOT_ERROR_INVALID_ARGS;
-	}
-
 	return IOT_ERROR_NONE;
 }
 
@@ -107,10 +96,6 @@ void _delete_easysetup_resources_all(struct iot_context *ctx)
 	if (ctx->easysetup_resp_queue) {
 		iot_os_queue_delete(ctx->easysetup_resp_queue);
 		ctx->easysetup_resp_queue = NULL;
-	}
-	if (ctx->devconf.hashed_sn) {
-		iot_os_free(ctx->devconf.hashed_sn);
-		ctx->devconf.hashed_sn = NULL;
 	}
 }
 
@@ -433,7 +418,11 @@ static iot_error_t _do_iot_main_command(struct iot_context *ctx,
 			switch (conf->mode) {
 			case IOT_WIFI_MODE_OFF:
 			case IOT_WIFI_MODE_STATION:
-				iot_easysetup_deinit(ctx);
+				if (ctx->es_http_ready) {
+					ctx->es_http_ready = false;
+					iot_easysetup_deinit(ctx);
+				}
+
 				if (ctx->scan_result) {
 					free(ctx->scan_result);
 					ctx->scan_result = NULL;
@@ -472,6 +461,8 @@ static iot_error_t _do_iot_main_command(struct iot_context *ctx,
 							IOT_WARN("Duplicated error handling, skip updating!!");
 							err = IOT_ERROR_DUPLICATED_CMD;
 						}
+					} else {
+						ctx->es_http_ready = true;
 					}
 				}
 				break;
@@ -504,6 +495,10 @@ static iot_error_t _do_iot_main_command(struct iot_context *ctx,
 					ctx->iot_reg_data.new_reged = true;
 					next_state = IOT_STATE_PROV_ENTER;
 				} else {
+					/* Wakeup user interaction by provisioning done */
+					iot_os_eventgroup_set_bits(ctx->usr_events,
+						IOT_USR_INTERACT_BIT_PROV_DONE);
+
 					next_state = IOT_STATE_PROV_DONE;
 				}
 			}
@@ -528,6 +523,11 @@ static iot_error_t _do_iot_main_command(struct iot_context *ctx,
 						 */
 						IOT_WARN("Some thing went wrong, got provisioning but no deviceId");
 						IOT_DUMP_MAIN(WARN, BASE, 0xC1EAC1EA);
+
+						if (ctx->es_http_ready) {
+							ctx->es_http_ready = false;
+							iot_easysetup_deinit(ctx);
+						}
 
 						if (ctx->es_res_created)
 							_delete_easysetup_resources_all(ctx);
@@ -675,6 +675,12 @@ static iot_error_t _do_iot_main_command(struct iot_context *ctx,
 				ctx->lookup_id = NULL;
 			}
 
+			/* we don't need this hashed_sn anymore*/
+			if (ctx->devconf.hashed_sn) {
+				free(ctx->devconf.hashed_sn);
+				ctx->devconf.hashed_sn = NULL;
+			}
+
 			/* if there is previous connection, disconnect it first. */
 			if (ctx->evt_mqttcli != NULL) {
 				IOT_INFO("There is previous connecting, disconnect it first.\n");
@@ -749,6 +755,11 @@ static iot_error_t _do_iot_main_command(struct iot_context *ctx,
 			reboot = (bool *)cmd->param;
 
 			IOT_DUMP_MAIN(WARN, BASE, (int)*reboot);
+
+			if (ctx->es_http_ready) {
+				ctx->es_http_ready = false;
+				iot_easysetup_deinit(ctx);
+			}
 
 			if (ctx->es_res_created)
 				_delete_easysetup_resources_all(ctx);
@@ -885,7 +896,7 @@ static void _iot_main_task(struct iot_context *ctx)
 			IOT_EVENT_BIT_ALL, true, false, 500);
 #else
 		curr_events = iot_os_eventgroup_wait_bits(ctx->iot_events,
-			IOT_EVENT_BIT_ALL, true, false, IOT_MAIN_TASK_CYCLE);
+			IOT_EVENT_BIT_ALL, true, IOT_MAIN_TASK_CYCLE);
 #endif
 		if (curr_events & IOT_EVENT_BIT_COMMAND) {
 			cmd.param = NULL;
@@ -1116,6 +1127,13 @@ IOT_CTX* st_conn_init(unsigned char *onboarding_config, unsigned int onboarding_
 	ctx->iot_reg_data.new_reged = false;
 	ctx->curr_state = ctx->req_state = IOT_STATE_UNKNOWN;
 
+	/* create mutext for user level st_conn_xxx APIs */
+	if (iot_os_mutex_init(&ctx->st_conn_lock) != IOT_OS_TRUE) {
+		IOT_ERROR("failed to init st_conn_lock\n");
+		IOT_DUMP_MAIN(ERROR, BASE, 0xDEADBEEF);
+		goto error_main_mutex_init;
+	}
+
 	/* create task */
 	if (iot_os_thread_create(_iot_main_task, IOT_TASK_NAME,
 			IOT_TASK_STACK_SIZE, (void *)ctx, IOT_TASK_PRIORITY,
@@ -1141,6 +1159,9 @@ IOT_CTX* st_conn_init(unsigned char *onboarding_config, unsigned int onboarding_
 	return (IOT_CTX*)ctx;
 
 error_main_task_init:
+	iot_os_mutex_destroy(&ctx->st_conn_lock);
+
+error_main_mutex_init:
 	iot_os_eventgroup_delete(ctx->iot_events);
 
 error_main_init_events:
@@ -1475,6 +1496,11 @@ static iot_error_t _do_state_updating(struct iot_context *ctx,
 		IOT_WARN("Iot-core task will be stopped, needed ext-triggering\n");
 		IOT_DUMP_MAIN(WARN, BASE, IOT_STATE_UNKNOWN);
 
+		if (ctx->es_http_ready) {
+			ctx->es_http_ready = false;
+			iot_easysetup_deinit(ctx);
+		}
+
 		if (ctx->es_res_created)
 			_delete_easysetup_resources_all(ctx);
 
@@ -1506,6 +1532,15 @@ int st_conn_start(IOT_CTX *iot_ctx, st_status_cb status_cb,
 	if (!ctx)
 		return IOT_ERROR_BAD_REQ;
 
+	iot_os_mutex_lock(&ctx->st_conn_lock);
+	if ((ctx->curr_state != IOT_STATE_UNKNOWN) || (ctx->req_state != IOT_STATE_UNKNOWN)) {
+		IOT_WARN("Can't start it, iot_main_task is already working(%d)", ctx->curr_state);
+		IOT_DUMP_MAIN(WARN, BASE, ctx->curr_state);
+
+		iot_err = IOT_ERROR_BAD_REQ;
+		goto end_st_conn_start;
+	}
+
 	if (ctx->es_res_created) {
 		IOT_WARN("Already easysetup resources are created!!");
 	} else {
@@ -1513,7 +1548,7 @@ int st_conn_start(IOT_CTX *iot_ctx, st_status_cb status_cb,
 		if (iot_err != IOT_ERROR_NONE) {
 			IOT_ERROR("failed to create easysetup resources(%d)", iot_err);
 			IOT_DUMP_MAIN(ERROR, BASE, iot_err);
-			return iot_err;
+			goto end_st_conn_start;
 		}
 	}
 
@@ -1539,7 +1574,7 @@ int st_conn_start(IOT_CTX *iot_ctx, st_status_cb status_cb,
 		}
 
 		_delete_easysetup_resources_all(ctx);
-		return iot_err;
+		goto end_st_conn_start;
 	}
 
 	if (ctx->devconf.ownership_validation_type & IOT_OVF_TYPE_BUTTON) {
@@ -1547,30 +1582,45 @@ int st_conn_start(IOT_CTX *iot_ctx, st_status_cb status_cb,
 			IOT_ERROR("There is no status_cb for otm");
 			IOT_DUMP_MAIN(ERROR, BASE, 0);
 			_delete_easysetup_resources_all(ctx);
-			return IOT_ERROR_BAD_REQ;
+			iot_err = IOT_ERROR_BAD_REQ;
+			goto end_st_conn_start;
 		}
 	}
 
 	iot_os_eventgroup_clear_bits(ctx->usr_events, IOT_USR_INTERACT_BIT_ALL);
 	curr_events = iot_os_eventgroup_wait_bits(ctx->usr_events,
-		IOT_USR_INTERACT_BIT_ALL, true, false, IOT_OS_MAX_DELAY);
+		IOT_USR_INTERACT_BIT_ALL, true, IOT_OS_MAX_DELAY);
 
 	if (curr_events & IOT_USR_INTERACT_BIT_PROV_CONFIRM) {
 		if (ctx->devconf.ownership_validation_type & IOT_OVF_TYPE_BUTTON) {
 			_do_status_report(ctx, IOT_STATE_PROV_CONFIRM, false);
 		}
+
+		iot_err = IOT_ERROR_NONE;
 	} else {
-		IOT_ERROR("Can't go to PROV_CONFIRM (0x%0x)", curr_events);
+		if (ctx->es_http_ready) {
+			ctx->es_http_ready = false;
+			iot_easysetup_deinit(ctx);
+		}
+
 		if (ctx->es_res_created) {
 			_delete_easysetup_resources_all(ctx);
 		}
-		return IOT_ERROR_TIMEOUT;
+
+		if (curr_events & IOT_USR_INTERACT_BIT_PROV_DONE) {
+			iot_err = IOT_ERROR_NONE;
+		} else {
+			IOT_ERROR("Can't go to PROV_CONFIRM (0x%0x)", curr_events);
+			iot_err = IOT_ERROR_TIMEOUT;
+		}
 	}
 
-	IOT_INFO("%s done", __func__);
-	IOT_DUMP_MAIN(INFO, BASE, 0);
+	IOT_INFO("%s done (%d)", __func__, iot_err);
+	IOT_DUMP_MAIN(INFO, BASE, iot_err);
 
-	return IOT_ERROR_NONE;
+end_st_conn_start:
+	iot_os_mutex_unlock(&ctx->st_conn_lock);
+	return iot_err;
 }
 
 int st_conn_cleanup(IOT_CTX *iot_ctx, bool reboot)

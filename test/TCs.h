@@ -150,8 +150,8 @@ void TC_iot_es_crypto_load_pk_invalid_parameters(void **state);
 void TC_iot_es_crypto_init_pk(void **state);
 
 // TCs for iot_easysetup_d2d.c
-int TC_iot_easysetup_d2d_setup(void **state);
-int TC_iot_easysetup_d2d_teardown(void **state);
+int TC_iot_easysetup_common_setup(void **state);
+int TC_iot_easysetup_common_teardown(void **state);
 void TC_iot_easysetup_create_ssid_null_parameters(void **state);
 void TC_iot_easysetup_create_ssid_success(void **state);
 void TC_iot_easysetup_request_handler_invalid_parameters(void **state);
@@ -203,6 +203,31 @@ void TC_iot_security_check_context_is_valid_null_parameters(void **state);
 void TC_iot_security_check_context_is_valid_success(void **state);
 void TC_iot_security_check_backend_funcs_entry_is_valid_failure(void **state);
 void TC_iot_security_check_backend_funcs_entry_is_valid_success(void **state);
+
+// TCs for iot_security_crypto.c
+int TC_iot_security_cipher_init_setup(void **state);
+int TC_iot_security_cipher_init_teardown(void **state);
+int TC_iot_security_cipher_setup(void **state);
+int TC_iot_security_cipher_teardown(void **state);
+void TC_iot_security_cipher_init_null_parameters(void **state);
+void TC_iot_security_cipher_init_malloc_failure(void **state);
+void TC_iot_security_cipher_init_success(void **state);
+void TC_iot_security_cipher_deinit_null_parameters(void **state);
+void TC_iot_security_cipher_deinit_success(void **state);
+void TC_iot_security_cipher_get_align_size_failure(void **state);
+void TC_iot_security_cipher_get_align_size_success(void **state);
+void TC_iot_security_cipher_set_params_invalid_parameters(void **state);
+void TC_iot_security_cipher_set_params_null_parameters(void **state);
+void TC_iot_security_cipher_set_params_success(void **state);
+void TC_iot_security_cipher_aes_encrypt_invalid_parameters(void **state);
+void TC_iot_security_cipher_aes_encrypt_null_parameters(void **state);
+void TC_iot_security_cipher_aes_encrypt_malloc_failure(void **state);
+void TC_iot_security_cipher_aes_encrypt_failure(void **state);
+void TC_iot_security_cipher_aes_decrypt_invalid_parameters(void **state);
+void TC_iot_security_cipher_aes_decrypt_null_parameters(void **state);
+void TC_iot_security_cipher_aes_decrypt_malloc_failure(void **state);
+void TC_iot_security_cipher_aes_decrypt_failure(void **state);
+void TC_iot_security_cipher_aes_success(void **state);
 
 // TCs for iot_security_storage.c
 int TC_iot_security_storage_init_setup(void **state);
@@ -268,9 +293,11 @@ int TC_iot_wt_create_memleak_detect_teardown(void **state);
 void TC_iot_wt_create_null_parameters(void **state);
 
 // TCs for iot_easysetup_httpd
-int TC_iot_easysetup_httpd_group_setup(void **state);
-int TC_iot_easysetup_httpd_group_teardown(void **state);
+int TC_iot_easysetup_httpd_setup(void **state);
+int TC_iot_easysetup_httpd_teardown(void **state);
 void TC_iot_easysetup_httpd_invalid_request(void **state);
 void TC_iot_easysetup_httpd_deviceinfo_success(void **state);
+void TC_iot_easysetup_httpd_keyinfo_single_transfer_success(void **state);
+void TC_iot_easysetup_httpd_keyinfo_separated_transfer_success(void **state);
 
 #endif //ST_DEVICE_SDK_C_TCS_H

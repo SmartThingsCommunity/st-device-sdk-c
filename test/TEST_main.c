@@ -163,28 +163,28 @@ int TEST_FUNC_iot_easysetup_d2d(void)
 {
     const struct CMUnitTest tests[] = {
             cmocka_unit_test(TC_iot_easysetup_create_ssid_null_parameters),
-            cmocka_unit_test_setup_teardown(TC_iot_easysetup_create_ssid_success, TC_iot_easysetup_d2d_setup, TC_iot_easysetup_d2d_teardown),
-            cmocka_unit_test_setup_teardown(TC_iot_easysetup_request_handler_invalid_parameters, TC_iot_easysetup_d2d_setup, TC_iot_easysetup_d2d_teardown),
-            cmocka_unit_test_setup_teardown(TC_iot_easysetup_request_handler_step_deviceinfo, TC_iot_easysetup_d2d_setup, TC_iot_easysetup_d2d_teardown),
+            cmocka_unit_test_setup_teardown(TC_iot_easysetup_create_ssid_success, TC_iot_easysetup_common_setup, TC_iot_easysetup_common_teardown),
+            cmocka_unit_test_setup_teardown(TC_iot_easysetup_request_handler_invalid_parameters, TC_iot_easysetup_common_setup, TC_iot_easysetup_common_teardown),
+            cmocka_unit_test_setup_teardown(TC_iot_easysetup_request_handler_step_deviceinfo, TC_iot_easysetup_common_setup, TC_iot_easysetup_common_teardown),
             cmocka_unit_test(TC_STATIC_es_deviceinfo_handler_null_parameter),
             cmocka_unit_test(TC_STATIC_es_crypto_cipher_gen_iv_success),
-            cmocka_unit_test_setup_teardown(TC_STATIC_es_deviceinfo_handler_success, TC_iot_easysetup_d2d_setup, TC_iot_easysetup_d2d_teardown),
-            cmocka_unit_test_setup_teardown(TC_STATIC_es_keyinfo_handler_success, TC_iot_easysetup_d2d_setup, TC_iot_easysetup_d2d_teardown),
-            cmocka_unit_test_setup_teardown(TC_STATIC_es_keyinfo_handler_success_with_y2038, TC_iot_easysetup_d2d_setup, TC_iot_easysetup_d2d_teardown),
-            cmocka_unit_test_setup_teardown(TC_STATIC_es_wifiprovisioninginfo_handler_success, TC_iot_easysetup_d2d_setup, TC_iot_easysetup_d2d_teardown),
-            cmocka_unit_test_setup_teardown(TC_STATIC_es_wifiprovisioninginfo_handler_success_without_authtype, TC_iot_easysetup_d2d_setup, TC_iot_easysetup_d2d_teardown),
-            cmocka_unit_test_setup_teardown(TC_STATIC_es_wifiscaninfo_handler_invalid_parameters, TC_iot_easysetup_d2d_setup, TC_iot_easysetup_d2d_teardown),
-            cmocka_unit_test_setup_teardown(TC_STATIC_es_wifiscaninfo_handler_success, TC_iot_easysetup_d2d_setup, TC_iot_easysetup_d2d_teardown),
-            cmocka_unit_test_setup_teardown(TC_STATIC_es_confirminfo_handler_null_parameters, TC_iot_easysetup_d2d_setup, TC_iot_easysetup_d2d_teardown),
-            cmocka_unit_test_setup_teardown(TC_STATIC_es_confirminfo_handler_out_ranged_otm_feature, TC_iot_easysetup_d2d_setup, TC_iot_easysetup_d2d_teardown),
-            cmocka_unit_test_setup_teardown(TC_STATIC_es_confirminfo_handler_justworks_and_pin, TC_iot_easysetup_d2d_setup, TC_iot_easysetup_d2d_teardown),
-            cmocka_unit_test_setup_teardown(TC_STATIC_es_confirminfo_handler_qr_code, TC_iot_easysetup_d2d_setup, TC_iot_easysetup_d2d_teardown),
-            cmocka_unit_test_setup_teardown(TC_STATIC_es_confirminfo_handler_button, TC_iot_easysetup_d2d_setup, TC_iot_easysetup_d2d_teardown),
-            cmocka_unit_test_setup_teardown(TC_STATIC_es_confirm_handler_success, TC_iot_easysetup_d2d_setup, TC_iot_easysetup_d2d_teardown),
-            cmocka_unit_test_setup_teardown(TC_STATIC_es_confirm_handler_invalid_pin, TC_iot_easysetup_d2d_setup, TC_iot_easysetup_d2d_teardown),
-            cmocka_unit_test_setup_teardown(TC_STATIC_es_confirm_handler_non_pin_otm, TC_iot_easysetup_d2d_setup, TC_iot_easysetup_d2d_teardown),
-            cmocka_unit_test_setup_teardown(TC_STATIC_es_confirm_handler_invalid_payload, TC_iot_easysetup_d2d_setup, TC_iot_easysetup_d2d_teardown),
-            cmocka_unit_test_setup_teardown(TC_STATIC_es_setupcomplete_handler_success, TC_iot_easysetup_d2d_setup, TC_iot_easysetup_d2d_teardown),
+            cmocka_unit_test_setup_teardown(TC_STATIC_es_deviceinfo_handler_success, TC_iot_easysetup_common_setup, TC_iot_easysetup_common_teardown),
+            cmocka_unit_test_setup_teardown(TC_STATIC_es_keyinfo_handler_success, TC_iot_easysetup_common_setup, TC_iot_easysetup_common_teardown),
+            cmocka_unit_test_setup_teardown(TC_STATIC_es_keyinfo_handler_success_with_y2038, TC_iot_easysetup_common_setup, TC_iot_easysetup_common_teardown),
+            cmocka_unit_test_setup_teardown(TC_STATIC_es_wifiprovisioninginfo_handler_success, TC_iot_easysetup_common_setup, TC_iot_easysetup_common_teardown),
+            cmocka_unit_test_setup_teardown(TC_STATIC_es_wifiprovisioninginfo_handler_success_without_authtype, TC_iot_easysetup_common_setup, TC_iot_easysetup_common_teardown),
+            cmocka_unit_test_setup_teardown(TC_STATIC_es_wifiscaninfo_handler_invalid_parameters, TC_iot_easysetup_common_setup, TC_iot_easysetup_common_teardown),
+            cmocka_unit_test_setup_teardown(TC_STATIC_es_wifiscaninfo_handler_success, TC_iot_easysetup_common_setup, TC_iot_easysetup_common_teardown),
+            cmocka_unit_test_setup_teardown(TC_STATIC_es_confirminfo_handler_null_parameters, TC_iot_easysetup_common_setup, TC_iot_easysetup_common_teardown),
+            cmocka_unit_test_setup_teardown(TC_STATIC_es_confirminfo_handler_out_ranged_otm_feature, TC_iot_easysetup_common_setup, TC_iot_easysetup_common_teardown),
+            cmocka_unit_test_setup_teardown(TC_STATIC_es_confirminfo_handler_justworks_and_pin, TC_iot_easysetup_common_setup, TC_iot_easysetup_common_teardown),
+            cmocka_unit_test_setup_teardown(TC_STATIC_es_confirminfo_handler_qr_code, TC_iot_easysetup_common_setup, TC_iot_easysetup_common_teardown),
+            cmocka_unit_test_setup_teardown(TC_STATIC_es_confirminfo_handler_button, TC_iot_easysetup_common_setup, TC_iot_easysetup_common_teardown),
+            cmocka_unit_test_setup_teardown(TC_STATIC_es_confirm_handler_success, TC_iot_easysetup_common_setup, TC_iot_easysetup_common_teardown),
+            cmocka_unit_test_setup_teardown(TC_STATIC_es_confirm_handler_invalid_pin, TC_iot_easysetup_common_setup, TC_iot_easysetup_common_teardown),
+            cmocka_unit_test_setup_teardown(TC_STATIC_es_confirm_handler_non_pin_otm, TC_iot_easysetup_common_setup, TC_iot_easysetup_common_teardown),
+            cmocka_unit_test_setup_teardown(TC_STATIC_es_confirm_handler_invalid_payload, TC_iot_easysetup_common_setup, TC_iot_easysetup_common_teardown),
+            cmocka_unit_test_setup_teardown(TC_STATIC_es_setupcomplete_handler_success, TC_iot_easysetup_common_setup, TC_iot_easysetup_common_teardown),
     };
     return cmocka_run_group_tests_name("iot_easysetup_d2d.c", tests, NULL, NULL);
 }
@@ -241,6 +241,32 @@ int TEST_FUNC_iot_security_common(void)
             cmocka_unit_test(TC_iot_security_check_backend_funcs_entry_is_valid_success),
     };
     return cmocka_run_group_tests_name("iot_security_common.c", tests, NULL, NULL);
+}
+
+int TEST_FUNC_iot_security_crypto(void)
+{
+    const struct CMUnitTest tests[] = {
+            cmocka_unit_test_setup_teardown(TC_iot_security_cipher_init_null_parameters, TC_iot_security_cipher_init_setup, TC_iot_security_cipher_init_teardown),
+            cmocka_unit_test_setup_teardown(TC_iot_security_cipher_init_malloc_failure, TC_iot_security_cipher_init_setup, TC_iot_security_cipher_init_teardown),
+            cmocka_unit_test_setup_teardown(TC_iot_security_cipher_init_success, TC_iot_security_cipher_init_setup, TC_iot_security_cipher_teardown),
+            cmocka_unit_test_setup_teardown(TC_iot_security_cipher_deinit_null_parameters, TC_iot_security_cipher_setup, TC_iot_security_cipher_init_teardown),
+            cmocka_unit_test_setup_teardown(TC_iot_security_cipher_deinit_success, TC_iot_security_cipher_setup, TC_iot_security_cipher_init_teardown),
+            cmocka_unit_test(TC_iot_security_cipher_get_align_size_failure),
+            cmocka_unit_test(TC_iot_security_cipher_get_align_size_success),
+            cmocka_unit_test_setup_teardown(TC_iot_security_cipher_set_params_invalid_parameters, TC_iot_security_cipher_setup, TC_iot_security_cipher_teardown),
+            cmocka_unit_test_setup_teardown(TC_iot_security_cipher_set_params_null_parameters, TC_iot_security_cipher_setup, TC_iot_security_cipher_teardown),
+            cmocka_unit_test_setup_teardown(TC_iot_security_cipher_set_params_success, TC_iot_security_cipher_setup, TC_iot_security_cipher_teardown),
+            cmocka_unit_test_setup_teardown(TC_iot_security_cipher_aes_encrypt_invalid_parameters, TC_iot_security_cipher_setup, TC_iot_security_cipher_teardown),
+            cmocka_unit_test_setup_teardown(TC_iot_security_cipher_aes_encrypt_null_parameters, TC_iot_security_cipher_setup, TC_iot_security_cipher_teardown),
+            cmocka_unit_test_setup_teardown(TC_iot_security_cipher_aes_encrypt_malloc_failure, TC_iot_security_cipher_setup, TC_iot_security_cipher_teardown),
+            cmocka_unit_test_setup_teardown(TC_iot_security_cipher_aes_encrypt_failure, TC_iot_security_cipher_init_setup, TC_iot_security_cipher_init_teardown),
+            cmocka_unit_test_setup_teardown(TC_iot_security_cipher_aes_decrypt_invalid_parameters, TC_iot_security_cipher_setup, TC_iot_security_cipher_teardown),
+            cmocka_unit_test_setup_teardown(TC_iot_security_cipher_aes_decrypt_null_parameters, TC_iot_security_cipher_setup, TC_iot_security_cipher_teardown),
+            cmocka_unit_test_setup_teardown(TC_iot_security_cipher_aes_decrypt_malloc_failure, TC_iot_security_cipher_setup, TC_iot_security_cipher_teardown),
+            cmocka_unit_test_setup_teardown(TC_iot_security_cipher_aes_decrypt_failure, TC_iot_security_cipher_init_setup, TC_iot_security_cipher_init_teardown),
+            cmocka_unit_test_setup_teardown(TC_iot_security_cipher_aes_success, TC_iot_security_cipher_setup, TC_iot_security_cipher_teardown),
+    };
+    return cmocka_run_group_tests_name("iot_security_crypto.c", tests, NULL, NULL);
 }
 
 int TEST_FUNC_iot_security_storage(void)
@@ -330,10 +356,16 @@ int TEST_FUNC_iot_wt(void)
 int TEST_FUNC_iot_easysetup_httpd(void)
 {
     const struct CMUnitTest tests[] = {
-            cmocka_unit_test(TC_iot_easysetup_httpd_invalid_request),
-            cmocka_unit_test(TC_iot_easysetup_httpd_deviceinfo_success),
+            cmocka_unit_test_setup_teardown(TC_iot_easysetup_httpd_invalid_request,
+                                            TC_iot_easysetup_httpd_setup, TC_iot_easysetup_httpd_teardown),
+            cmocka_unit_test_setup_teardown(TC_iot_easysetup_httpd_deviceinfo_success,
+                                            TC_iot_easysetup_httpd_setup, TC_iot_easysetup_httpd_teardown),
+            cmocka_unit_test_setup_teardown(TC_iot_easysetup_httpd_keyinfo_single_transfer_success,
+                                            TC_iot_easysetup_httpd_setup, TC_iot_easysetup_httpd_teardown),
+            cmocka_unit_test_setup_teardown(TC_iot_easysetup_httpd_keyinfo_separated_transfer_success,
+                                            TC_iot_easysetup_httpd_setup, TC_iot_easysetup_httpd_teardown),
     };
-    return cmocka_run_group_tests_name("iot_easysetup_tcp_httpd.c", tests, TC_iot_easysetup_httpd_group_setup, TC_iot_easysetup_httpd_group_teardown);
+    return cmocka_run_group_tests_name("iot_easysetup_tcp_httpd.c", tests, NULL, NULL);
 }
 
 int main(void) {
@@ -350,6 +382,7 @@ int main(void) {
     err += TEST_FUNC_iot_main();
     err += TEST_FUNC_iot_mqtt_client();
     err += TEST_FUNC_iot_security_common();
+    err += TEST_FUNC_iot_security_crypto();
     err += TEST_FUNC_iot_security_storage();
     err += TEST_FUNC_iot_security_helper();
     err += TEST_FUNC_iot_security_helper_ed25519();

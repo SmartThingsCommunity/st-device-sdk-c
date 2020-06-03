@@ -416,7 +416,7 @@ void TC_iot_nv_get_data_from_device_info_failure(void** state)
 	assert_int_equal(err, IOT_ERROR_INVALID_ARGS);
 
 	// Given: id not in device info
-	nv_id = IOT_NVD_ROOM_ID;
+	nv_id = IOT_NVD_SERVER_URL;
 	// When
 	err = iot_nv_get_data_from_device_info(nv_id, &buf);
 	// Then

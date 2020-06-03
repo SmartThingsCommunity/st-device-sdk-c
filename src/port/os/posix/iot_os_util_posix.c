@@ -222,8 +222,7 @@ void iot_os_eventgroup_delete(iot_os_eventgroup* eventgroup_handle)
 }
 
 unsigned int iot_os_eventgroup_wait_bits(iot_os_eventgroup* eventgroup_handle,
-		const unsigned int bits_to_wait_for, const int clear_on_exit,
-		const int wait_for_all_bits, const unsigned int wait_time_ms)
+		const unsigned int bits_to_wait_for, const int clear_on_exit, const unsigned int wait_time_ms)
 {
 	eventgroup_t *eventgroup = eventgroup_handle;
 	fd_set readfds;
@@ -273,7 +272,7 @@ unsigned int iot_os_eventgroup_wait_bits(iot_os_eventgroup* eventgroup_handle,
 	}
 }
 
-unsigned int iot_os_eventgroup_set_bits(iot_os_eventgroup* eventgroup_handle,
+int iot_os_eventgroup_set_bits(iot_os_eventgroup* eventgroup_handle,
 		const unsigned int bits_to_set)
 {
 	eventgroup_t *eventgroup = eventgroup_handle;
@@ -288,13 +287,13 @@ unsigned int iot_os_eventgroup_set_bits(iot_os_eventgroup* eventgroup_handle,
 		}
 	}
 
-	return bits;
+	return IOT_OS_TRUE;
 }
 
-unsigned int iot_os_eventgroup_clear_bits(iot_os_eventgroup* eventgroup_handle,
+int iot_os_eventgroup_clear_bits(iot_os_eventgroup* eventgroup_handle,
 		const unsigned int bits_to_clear)
 {
-	return IOT_ERROR_NONE;
+	return IOT_OS_TRUE;
 }
 
 /* Mutex */
@@ -311,6 +310,10 @@ int iot_os_mutex_init(iot_os_mutex* mutex)
 
 int iot_os_mutex_lock(iot_os_mutex* mutex)
 {
+	if (!mutex || !mutex->sem) {
+		return IOT_OS_FALSE;
+	}
+
 	pthread_mutex_t* mutex_p = mutex->sem;
 
 	pthread_mutex_lock(mutex_p);
