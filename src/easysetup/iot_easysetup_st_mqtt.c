@@ -247,9 +247,9 @@ retry:
 	cbor_encoder_create_map(&root, &root_map, CborIndefiniteLength);
 
 	/* location id is optional value */
-	if (location_id) {
-	cbor_encode_text_stringz(&root_map, "locationId");
-	cbor_encode_text_stringz(&root_map, ctx->prov_data.cloud.location);
+	if (ctx->prov_data.cloud.location) {
+		cbor_encode_text_stringz(&root_map, "locationId");
+		cbor_encode_text_stringz(&root_map, ctx->prov_data.cloud.location);
 	}
 
 	devconf = &ctx->devconf;
@@ -275,7 +275,7 @@ retry:
 	cbor_encode_text_stringz(&root_map, ctx->lookup_id);
 
 	/* room id is optional value */
-	if (room_id) {
+	if (ctx->prov_data.cloud.room) {
 		cbor_encode_text_stringz(&root_map, "roomId");
 		cbor_encode_text_stringz(&root_map, ctx->prov_data.cloud.room);
 	} else {
@@ -333,9 +333,11 @@ exit_failed:
 	free(buf);
 	if (ctx->prov_data.cloud.location) {
 		free(ctx->prov_data.cloud.location);
+		ctx->prov_data.cloud.location = NULL;
 	}
 	if (ctx->prov_data.cloud.room) {
 		free(ctx->prov_data.cloud.room);
+		ctx->prov_data.cloud.room = NULL;
 	}
 	if (ctx->devconf.hashed_sn) {
 		free(ctx->devconf.hashed_sn);
@@ -434,9 +436,11 @@ exit_json_making:
 
 	if (ctx->prov_data.cloud.location) {
 		free(ctx->prov_data.cloud.location);
+		ctx->prov_data.cloud.location = NULL;
 	}
 	if (ctx->prov_data.cloud.room) {
 		free(ctx->prov_data.cloud.room);
+		ctx->prov_data.cloud.room = NULL;
 	}
 	if (ctx->devconf.hashed_sn) {
 		free(ctx->devconf.hashed_sn);
