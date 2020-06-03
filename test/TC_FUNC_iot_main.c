@@ -375,7 +375,6 @@ void TC_check_prov_data_validation(void **state)
             { IOT_ERROR_INVALID_ARGS, NULL, "test.domain.com", 443},
             { IOT_ERROR_INVALID_ARGS, "TestSsid", NULL, 443},
             { IOT_ERROR_INVALID_ARGS, "TestSsid", "test.domain.com", -5},
-            { IOT_ERROR_INVALID_ARGS, "TestSsid", "test.domain.com", 443},
     };
 
     for (int i = 0; i < sizeof(test_set)/sizeof(struct _prov_test_data); i++) {
