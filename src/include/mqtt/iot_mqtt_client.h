@@ -100,11 +100,7 @@ typedef struct MQTTClient {
 	int magic;
 	unsigned int next_packetid,
 			command_timeout_ms;
-	size_t readbuf_size;
-	unsigned char *readbuf;
 	unsigned int keepAliveInterval;
-	char ping_outstanding;
-	int ping_retry_count;
 	int isconnected;
 
 	struct MessageHandlers {
@@ -117,9 +113,8 @@ typedef struct MQTTClient {
 	void *defaultUserData;
 
 	iot_net_interface_t *net;
-	iot_os_timer last_sent, last_received, ping_wait;
+	iot_os_timer last_sent, last_received;
 
-	iot_os_mutex mutex;
 	iot_os_mutex client_manage_lock;
 	iot_os_thread thread;
 
