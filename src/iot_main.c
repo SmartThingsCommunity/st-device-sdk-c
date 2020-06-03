@@ -58,8 +58,6 @@ iot_error_t _check_prov_data_validation(struct iot_device_prov_data *prov_data)
 {
 	struct iot_wifi_prov_data *wifi = &(prov_data->wifi);
 	struct iot_cloud_prov_data *cloud = &(prov_data->cloud);
-	unsigned char valid_id = 0;
-	int i;
 
 	if (wifi->ssid[0] == '\0') {
 		IOT_ERROR("There is no ssid on prov_data");
@@ -75,15 +73,6 @@ iot_error_t _check_prov_data_validation(struct iot_device_prov_data *prov_data)
 		IOT_ERROR("There is wrong port(%d) on prov_data", cloud->broker_port);
 		return IOT_ERROR_INVALID_ARGS;
 	}
-
-	for (i = 0; i < 15; i++)
-		valid_id |= cloud->location_id.id[i];
-
-	if (valid_id == 0) {
-		IOT_ERROR("There is Nil-uuid-location prov_data");
-		return IOT_ERROR_INVALID_ARGS;
-	}
-
 	return IOT_ERROR_NONE;
 }
 
@@ -107,10 +96,6 @@ void _delete_easysetup_resources_all(struct iot_context *ctx)
 	if (ctx->easysetup_resp_queue) {
 		iot_os_queue_delete(ctx->easysetup_resp_queue);
 		ctx->easysetup_resp_queue = NULL;
-	}
-	if (ctx->devconf.hashed_sn) {
-		iot_os_free(ctx->devconf.hashed_sn);
-		ctx->devconf.hashed_sn = NULL;
 	}
 }
 

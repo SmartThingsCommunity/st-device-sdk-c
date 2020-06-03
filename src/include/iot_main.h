@@ -143,6 +143,8 @@ struct iot_cloud_prov_data {
 	int  broker_port;				/**< @brief broker port num for mqtt */
 	struct iot_uuid location_id;	/**< @brief location id for ST(server) management */
 	struct iot_uuid room_id;		/**< @brief room id for ST(server) management */
+	char *location;
+	char *room;
 	char *label;					/**< @brief device name, got from the mobile */
 };
 

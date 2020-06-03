@@ -216,9 +216,10 @@ reg_sub_out:
 
 #if defined(STDK_IOT_CORE_SERIALIZE_CBOR)
 static void *_iot_es_mqtt_registration_cbor(struct iot_context *ctx,
-			char *location_id, char *room_id, char *dip_id, size_t *msglen)
+			char *dip_id, size_t *msglen)
 {
 	struct iot_devconf_prov_data *devconf;
+	struct timeval tv = {0,};
 	CborEncoder root = {0};
 	CborEncoder root_map = {0};
 	CborEncoder dip_key_map = {0};
@@ -227,8 +228,8 @@ static void *_iot_es_mqtt_registration_cbor(struct iot_context *ctx,
 	size_t buflen = 256;
 	size_t olen;
 
-	if (!ctx || !location_id) {
-		IOT_ERROR("ctx or location id is null");
+	if (!ctx) {
+		IOT_ERROR("ctx is null");
 		return NULL;
 	}
 retry:
@@ -245,8 +246,11 @@ retry:
 
 	cbor_encoder_create_map(&root, &root_map, CborIndefiniteLength);
 
+	/* location id is optional value */
+	if (location_id) {
 	cbor_encode_text_stringz(&root_map, "locationId");
-	cbor_encode_text_stringz(&root_map, location_id);
+	cbor_encode_text_stringz(&root_map, ctx->prov_data.cloud.location);
+	}
 
 	devconf = &ctx->devconf;
 
@@ -273,7 +277,15 @@ retry:
 	/* room id is optional value */
 	if (room_id) {
 		cbor_encode_text_stringz(&root_map, "roomId");
-		cbor_encode_text_stringz(&root_map, room_id);
+		cbor_encode_text_stringz(&root_map, ctx->prov_data.cloud.room);
+	} else {
+		cbor_encode_text_stringz(&root_map, "serialHash");
+		cbor_encode_text_stringz(&root_map, devconf->hashed_sn);
+
+		gettimeofday(&tv, NULL);
+
+		cbor_encode_text_stringz(&root_map, "provisioningTs");
+		cbor_encode_int(&root_map, tv.tv_sec);
 	}
 
 	/* dip is optional values */
@@ -319,20 +331,30 @@ retry:
 
 exit_failed:
 	free(buf);
-
+	if (ctx->prov_data.cloud.location) {
+		free(ctx->prov_data.cloud.location);
+	}
+	if (ctx->prov_data.cloud.room) {
+		free(ctx->prov_data.cloud.room);
+	}
+	if (ctx->devconf.hashed_sn) {
+		free(ctx->devconf.hashed_sn);
+		ctx->devconf.hashed_sn = NULL;
+	}
 	return NULL;
 }
 #else /* !STDK_IOT_CORE_SERIALIZE_CBOR */
 static void *_iot_es_mqtt_registration_json(struct iot_context *ctx,
-			char *location_id, char *room_id, char *dip_id, size_t *msglen)
+			char *dip_id, size_t *msglen)
 {
 	struct iot_devconf_prov_data *devconf;
+	struct timeval tv = {0,};
 	JSON_H *root = NULL;
 	JSON_H *dip_key = NULL;
 	char *payload = NULL;
 
-	if (!ctx || !location_id) {
-		IOT_ERROR("ctx or location id is null");
+	if (!ctx) {
+		IOT_ERROR("ctx is null");
 		return NULL;
 	}
 
@@ -344,8 +366,10 @@ static void *_iot_es_mqtt_registration_json(struct iot_context *ctx,
 
 	devconf = &ctx->devconf;
 
+	if (ctx->prov_data.cloud.location) {
 	JSON_ADD_ITEM_TO_OBJECT(root, "locationId",
-		JSON_CREATE_STRING(location_id));
+		JSON_CREATE_STRING(ctx->prov_data.cloud.location));
+	}
 
 	/* label is optional value */
 	if (ctx->prov_data.cloud.label) {
@@ -367,9 +391,17 @@ static void *_iot_es_mqtt_registration_json(struct iot_context *ctx,
 	JSON_ADD_ITEM_TO_OBJECT(root, "lookupId",
 		JSON_CREATE_STRING(ctx->lookup_id));
 
-	if (room_id) {
+	if (ctx->prov_data.cloud.room) {
 		JSON_ADD_ITEM_TO_OBJECT(root, "roomId",
-			JSON_CREATE_STRING(room_id));
+			JSON_CREATE_STRING(ctx->prov_data.cloud.room));
+	} else {
+		JSON_ADD_ITEM_TO_OBJECT(root, "serialHash",
+			JSON_CREATE_STRING(devconf->hashed_sn));
+
+		gettimeofday(&tv, NULL);
+
+		JSON_ADD_ITEM_TO_OBJECT(root, "provisioningTs",
+			JSON_CREATE_NUMBER(tv.tv_sec));
 	}
 
 	/* dip is optional values */
@@ -400,6 +432,16 @@ exit_json_making:
 
 	JSON_DELETE(root);
 
+	if (ctx->prov_data.cloud.location) {
+		free(ctx->prov_data.cloud.location);
+	}
+	if (ctx->prov_data.cloud.room) {
+		free(ctx->prov_data.cloud.room);
+	}
+	if (ctx->devconf.hashed_sn) {
+		free(ctx->devconf.hashed_sn);
+		ctx->devconf.hashed_sn = NULL;
+	}
 	return (void *)payload;
 }
 #endif /* STDK_IOT_CORE_SERIALIZE_CBOR */
@@ -409,10 +451,7 @@ iot_error_t _iot_es_mqtt_registration(struct iot_context *ctx, st_mqtt_client mq
 	int ret;
 	iot_error_t iot_err = IOT_ERROR_NONE;
 	st_mqtt_msg msg;
-	char *location_id = NULL;
-	char *room_id = NULL;
 	size_t str_id_len = 40;
-	char valid_id = 0;
 	char *dip_id = NULL;
 	size_t msglen = 0;
 
@@ -423,43 +462,6 @@ iot_error_t _iot_es_mqtt_registration(struct iot_context *ctx, st_mqtt_client mq
 
 	/* Step 2. Publish target's registration info to server */
 	ctx->iot_reg_data.updated = false;
-
-	location_id = (char *)malloc(str_id_len);
-	if (!location_id) {
-		IOT_ERROR("malloc failed for location id");
-		iot_err = IOT_ERROR_MEM_ALLOC;
-		goto failed_regist;
-	}
-	memset(location_id, 0, str_id_len);
-
-	iot_err = iot_util_convert_uuid_str(&ctx->prov_data.cloud.location_id,
-				location_id, str_id_len);
-	if (iot_err != IOT_ERROR_NONE) {
-		IOT_ERROR("%s error location_id convt (%d)", __func__, iot_err);
-		iot_err = IOT_ERROR_BAD_REQ;
-		goto failed_regist;
-	}
-
-	/* room id is optional value */
-	for (int i = 0; i < sizeof(ctx->prov_data.cloud.room_id); i++)
-		valid_id |= ctx->prov_data.cloud.room_id.id[i];
-
-	if (valid_id) {
-		room_id = (char *)malloc(str_id_len);
-		if (!room_id) {
-			IOT_ERROR("malloc failed for room id");
-			iot_err = IOT_ERROR_MEM_ALLOC;
-			goto failed_regist;
-		}
-		memset(room_id, 0, str_id_len);
-
-		iot_err = iot_util_convert_uuid_str(&ctx->prov_data.cloud.room_id,
-				room_id, str_id_len);
-		if (iot_err != IOT_ERROR_NONE) {
-			IOT_WARN("fail room_id convt (%d)", iot_err);
-			iot_err = IOT_ERROR_NONE;
-		}
-	}
 
 	/* dip id is optional value */
 	if (ctx->devconf.dip) {
@@ -482,11 +484,9 @@ iot_error_t _iot_es_mqtt_registration(struct iot_context *ctx, st_mqtt_client mq
 
 
 #if defined(STDK_IOT_CORE_SERIALIZE_CBOR)
-	msg.payload = _iot_es_mqtt_registration_cbor(ctx,
-				location_id, room_id, dip_id, &msglen);
+	msg.payload = _iot_es_mqtt_registration_cbor(ctx, dip_id, &msglen);
 #else
-	msg.payload = _iot_es_mqtt_registration_json(ctx,
-				location_id, room_id, dip_id, &msglen);
+	msg.payload = _iot_es_mqtt_registration_json(ctx, dip_id, &msglen);
 #endif
 	if (!msg.payload) {
 		IOT_ERROR("Failed to make payload for MQTTpub");
@@ -515,12 +515,6 @@ iot_error_t _iot_es_mqtt_registration(struct iot_context *ctx, st_mqtt_client mq
 failed_regist:
 	if (dip_id)
 		free(dip_id);
-
-	if (location_id)
-		free(location_id);
-
-	if (room_id)
-		free(room_id);
 
 	return iot_err;
 }

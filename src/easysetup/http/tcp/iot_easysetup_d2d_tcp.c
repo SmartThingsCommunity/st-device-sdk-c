@@ -134,7 +134,7 @@ char *_es_json_parse_string(JSON_H *json, const char *name)
 	}
 
 	if ((recv = JSON_GET_OBJECT_ITEM(json, name)) == NULL) {
-		IOT_ERROR("failed to find '%s'", name);
+		IOT_INFO("failed to find '%s'", name);
 		return NULL;
 	}
 	buf_len = (strlen(recv->valuestring) + 1);
@@ -1368,7 +1368,7 @@ wifi_parse_out:
 }
 
 STATIC_FUNCTION
-iot_error_t _es_cloud_prov_parse(char *in_payload)
+iot_error_t _es_cloud_prov_parse(struct iot_context *ctx, char *in_payload)
 {
 	struct iot_cloud_prov_data *cloud_prov = NULL;
 	char *full_url = NULL;
@@ -1377,6 +1377,7 @@ iot_error_t _es_cloud_prov_parse(char *in_payload)
 	JSON_H *root = NULL;
 	iot_error_t err = IOT_ERROR_NONE;
 	url_parse_t url = { .protocol = NULL, .domain = NULL, .port = 0};
+	size_t str_id_len = 40;
 
 	root = JSON_PARSE(in_payload);
 	if (!root) {
@@ -1411,24 +1412,32 @@ iot_error_t _es_cloud_prov_parse(char *in_payload)
 	}
 
 	location_id_str = _es_json_parse_string(root, "locationId");
-	err = iot_util_convert_str_uuid(location_id_str, &cloud_prov->location_id);
-	if (err) {
-		IOT_ERROR("failed to convert locationId");
-		IOT_ES_DUMP(IOT_DEBUG_LEVEL_ERROR, IOT_DUMP_EASYSETUP_INVALID_BROKER_URL, err);
-		err = IOT_ERROR_EASYSETUP_INVALID_BROKER_URL;
+
+	/* location id is optional */
+	if (location_id_str) {
+		if ((ctx->prov_data.cloud.location = (char *)malloc(str_id_len)) == NULL) {
+			IOT_ERROR("failed to alloc mem for location_id");
+			IOT_ES_DUMP(IOT_DEBUG_LEVEL_ERROR, IOT_DUMP_EASYSETUP_MEM_ALLOC_ERROR, 0);
+			err = IOT_ERROR_EASYSETUP_MEM_ALLOC_ERROR;
 		goto cloud_parse_out;
+	}
+		memset(ctx->prov_data.cloud.location, 0, str_id_len);
+		memcpy((char *)ctx->prov_data.cloud.location,location_id_str, str_id_len);
+	} else {
+		IOT_INFO("no locationId");
 	}
 
 	room_id_str = _es_json_parse_string(root, "roomId");
 	/* roomId is optional */
 	if (room_id_str) {
-		err = iot_util_convert_str_uuid(room_id_str, &cloud_prov->room_id);
-		if (err != IOT_ERROR_NONE) {
-			IOT_ERROR("failed to convert roomId");
-			IOT_ES_DUMP(IOT_DEBUG_LEVEL_ERROR, IOT_DUMP_EASYSETUP_INVALID_ROOMID, err);
-			err = IOT_ERROR_EASYSETUP_INVALID_ROOMID;
+		if ((ctx->prov_data.cloud.room = (char *)malloc(str_id_len)) == NULL) {
+			IOT_ERROR("failed to for room_id");
+			IOT_ES_DUMP(IOT_DEBUG_LEVEL_ERROR, IOT_DUMP_EASYSETUP_MEM_ALLOC_ERROR, 0);
+			err = IOT_ERROR_EASYSETUP_MEM_ALLOC_ERROR;
 			goto cloud_parse_out;
 		}
+		memset(ctx->prov_data.cloud.room, 0, str_id_len);
+		memcpy((char *)ctx->prov_data.cloud.room,room_id_str, str_id_len);
 	} else {
 		IOT_INFO("no roomId");
 	}
@@ -1520,7 +1529,7 @@ iot_error_t _es_wifiprovisioninginfo_handler(struct iot_context *ctx, char *in_p
 		goto out;
 	}
 
-	err = _es_cloud_prov_parse((char *)dec_msg);
+	err = _es_cloud_prov_parse(ctx, (char *)dec_msg);
 	if (err) {
 		IOT_ERROR("failed to parse cloud_prov");
 		goto out;
