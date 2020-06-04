@@ -231,7 +231,7 @@ static void _iot_mqtt_process_post_write(MQTTClient *client, iot_mqtt_packet_chu
 		case PUBREC:
 		case PINGREQ:
 			chunk->chunk_state = PACKET_CHUNK_ACK_PENDING;
-			iot_os_timer_count_ms(chunk->expiry_time, client->command_timeout_ms);
+			iot_os_timer_count_ms(chunk->expiry_time, MQTT_RETRY_TIMEOUT);
 			_iot_mqtt_queue_push(&client->ack_pending_queue, chunk);
 			break;
 		case PUBLISH:
@@ -242,7 +242,7 @@ static void _iot_mqtt_process_post_write(MQTTClient *client, iot_mqtt_packet_chu
 				}
 			} else {
 				chunk->chunk_state = PACKET_CHUNK_ACK_PENDING;
-				iot_os_timer_count_ms(chunk->expiry_time, client->command_timeout_ms);
+				iot_os_timer_count_ms(chunk->expiry_time, MQTT_RETRY_TIMEOUT);
 				_iot_mqtt_queue_push(&client->ack_pending_queue, chunk);
 			}
 			break;
@@ -618,11 +618,15 @@ exit:
 	return read;
 }
 
-int st_mqtt_create(st_mqtt_client *client, unsigned int command_timeout_ms)
+int st_mqtt_create(st_mqtt_client *client, st_mqtt_event_callback callback_fp, void *user_data)
 {
 	MQTTClient *c = NULL;
 	int rc = E_ST_MQTT_FAILURE;
 	iot_error_t iot_err;
+
+	if (callback_fp == NULL) {
+		return E_ST_MQTT_FAILURE;
+	}
 
 	*client = iot_os_malloc(sizeof(MQTTClient));
 	if (*client == NULL) {
@@ -633,12 +637,8 @@ int st_mqtt_create(st_mqtt_client *client, unsigned int command_timeout_ms)
 
 	c = *client;
 	c->magic = MQTT_CLIENT_STRUCT_MAGIC_NUMBER;
-
-	if (command_timeout_ms != 0) {
-		c->command_timeout_ms = command_timeout_ms;
-	} else {
-		c->command_timeout_ms = DEFAULT_COMMNAD_TIMEOUT;
-	}
+	c->user_callback_fp = callback_fp;
+	c->user_callback_user_data = user_data;
 
 	c->net = iot_os_malloc(sizeof(iot_net_interface_t));
 	if (c->net == NULL) {
@@ -689,7 +689,7 @@ int st_mqtt_create(st_mqtt_client *client, unsigned int command_timeout_ms)
 	c->ping_packet->packet_type = PINGREQ;
 	c->ping_packet->have_owner = 1;
 
-	IOT_DUMP(IOT_DEBUG_LEVEL_INFO, IOT_DUMP_MQTT_CREATE_SUCCESS, command_timeout_ms, 0);
+	IOT_DUMP(IOT_DEBUG_LEVEL_INFO, IOT_DUMP_MQTT_CREATE_SUCCESS, MQTT_RETRY_TIMEOUT, 0);
 	return 0;
 error_handle:
 	if (c) {
@@ -835,71 +835,6 @@ skip_manage_lock:
 	IOT_DUMP(IOT_DEBUG_LEVEL_INFO, IOT_DUMP_MQTT_DESTROY, 0, 0);
 }
 
-// assume topic filter and name is in correct format
-// # can only be at end
-// + and # can only be next to separator
-static char isTopicMatched(char *topicFilter, MQTTString *topicName)
-{
-	char *curf = topicFilter;
-	char *curn = topicName->lenstring.data;
-	char *curn_end = curn + topicName->lenstring.len;
-
-	while (*curf && curn < curn_end) {
-		if (*curn == '/' && *curf != '/') {
-			break;
-		}
-
-		if (*curf != '+' && *curf != '#' && *curf != *curn) {
-			break;
-		}
-
-		if (*curf == '+') {
-			// skip until we meet the next separator, or end of string
-			char *nextpos = curn + 1;
-
-			while (nextpos < curn_end && *nextpos != '/') {
-				nextpos = ++curn + 1;
-			}
-		} else if (*curf == '#') {
-			curn = curn_end - 1;	// skip until end of string
-		}
-
-		curf++;
-		curn++;
-	};
-
-	return (curn == curn_end) && (*curf == '\0');
-}
-
-
-int deliverMessage(MQTTClient *c, st_mqtt_msg *message)
-{
-	int i;
-	int rc = E_ST_MQTT_FAILURE;
-	MQTTString topic;
-	topic.cstring = NULL;
-	topic.lenstring.data = message->topic;
-	topic.lenstring.len = message->topiclen;
-
-	// we have to find the right message handler - indexed by topic
-	for (i = 0; i < MAX_MESSAGE_HANDLERS; ++i) {
-		if (c->messageHandlers[i].topicFilter != 0 && (MQTTPacket_equals(&topic, (char *)c->messageHandlers[i].topicFilter) ||
-				isTopicMatched((char *)c->messageHandlers[i].topicFilter, &topic))) {
-			if (c->messageHandlers[i].fp != NULL) {
-				c->messageHandlers[i].fp(message, c->messageHandlers[i].userData);
-				rc = 0;
-			}
-		}
-	}
-
-	if (rc == E_ST_MQTT_FAILURE && c->defaultMessageHandler != NULL) {
-		c->defaultMessageHandler(message, c->defaultUserData);
-		rc = 0;
-	}
-
-	return rc;
-}
-
 static int _iot_mqtt_check_alive(MQTTClient *client)
 {
 	int rc = 0;
@@ -970,21 +905,19 @@ static void _iot_mqtt_process_pending_packets(MQTTClient *client)
 
 static void _iot_mqtt_deliver_publish(MQTTClient *client, iot_mqtt_packet_chunk_t *chunk)
 {
-	MQTTString topicName;
 	st_mqtt_msg msg;
+	MQTTString topic_name;
 	int qos;
 	unsigned char dup;
 	unsigned short id;
 
-	if (MQTTDeserialize_publish(&dup, &qos, &msg.retained, &id, &topicName,
-							(unsigned char **)&msg.payload, (int *)&msg.payloadlen, chunk->chunk_data, chunk->chunk_size) != 1) {
-		return;
-	}
+	MQTTDeserialize_publish(&dup, &qos, &msg.retained, &id, &topic_name,
+							(unsigned char **)&msg.payload, (int *)&msg.payloadlen, chunk->chunk_data, chunk->chunk_size);
 
 	msg.qos = qos;
-	msg.topic = topicName.lenstring.data;
-	msg.topiclen = topicName.lenstring.len;
-	deliverMessage(client, &msg);
+	msg.topic = topic_name.lenstring.data;
+	msg.topiclen = topic_name.lenstring.len;
+	client->user_callback_fp(ST_MQTT_EVENT_MSG_DELIVERED, &msg, client->user_callback_user_data);
 }
 
 static void _iot_mqtt_process_user_callback(MQTTClient *client)
@@ -1163,49 +1096,7 @@ exit:
 	return rc;
 }
 
-int MQTTSetMessageHandler(st_mqtt_client client, const char *topic, st_mqtt_msg_handler handler, void *user_data)
-{
-	MQTTClient *c = client;
-	int rc = E_ST_MQTT_FAILURE;
-	int i = -1;
-
-	/* first check for an existing matching slot */
-	for (i = 0; i < MAX_MESSAGE_HANDLERS; ++i) {
-		if (c->messageHandlers[i].topicFilter != NULL && strcmp(c->messageHandlers[i].topicFilter, topic) == 0) {
-			if (handler == NULL) { /* remove existing */
-				free(c->messageHandlers[i].topicFilter);
-				c->messageHandlers[i].topicFilter = NULL;
-				c->messageHandlers[i].fp = NULL;
-				c->messageHandlers[i].userData = user_data;
-			}
-
-			rc = 0; /* return i when adding new subscription */
-			break;
-		}
-	}
-
-	/* if no existing, look for empty slot (unless we are removing) */
-	if (handler != NULL) {
-		if (rc == E_ST_MQTT_FAILURE) {
-			for (i = 0; i < MAX_MESSAGE_HANDLERS; ++i) {
-				if (c->messageHandlers[i].topicFilter == NULL) {
-					rc = 0;
-					break;
-				}
-			}
-		}
-
-		if (i < MAX_MESSAGE_HANDLERS) {
-			c->messageHandlers[i].topicFilter = strdup(topic);
-			c->messageHandlers[i].fp = handler;
-			c->messageHandlers[i].userData = user_data;
-		}
-	}
-
-	return rc;
-}
-
-int st_mqtt_subscribe(st_mqtt_client client, const char *topic, int qos, st_mqtt_msg_handler handler, void *user_data)
+int st_mqtt_subscribe(st_mqtt_client client, const char *topic, int qos)
 {
 	MQTTClient *c = client;
 	int rc = 0;
@@ -1236,7 +1127,7 @@ int st_mqtt_subscribe(st_mqtt_client client, const char *topic, int qos, st_mqtt
 		switch (sub_packet->chunk_state) {
 			case PACKET_CHUNK_ACKNOWLEDGED:
 				if (sub_packet->return_code != 0x80) {
-					rc = MQTTSetMessageHandler(client, topic, handler, user_data);
+					rc = 0;
 				}
 				goto exit;
 			case PACKET_CHUNK_WRITE_FAIL:
@@ -1287,7 +1178,6 @@ int st_mqtt_unsubscribe(st_mqtt_client client, const char *topic)
 		switch (unsub_packet->chunk_state) {
 			case PACKET_CHUNK_ACKNOWLEDGED:
 				rc = unsub_packet->return_code;
-				MQTTSetMessageHandler(client, topic, NULL, NULL);
 				goto exit;
 			case PACKET_CHUNK_WRITE_FAIL:
 			case PACKET_CHUNK_TIMEOUT:
