@@ -414,7 +414,7 @@ void TC_iot_security_manager_get_certificate_alloc_failure(void **state)
 		do_not_use_mock_iot_os_malloc_failure();
 		set_mock_iot_os_malloc_failure_with_index(i);
 		// Given
-		cert_id = IOT_SECURITY_CERT_ID_MQTT_ROOT_CA;
+		cert_id = IOT_SECURITY_CERT_ID_ROOT_CA;
 		// When
 		err = iot_security_manager_get_certificate(context, cert_id, &key_buf);
 		// Then
@@ -436,7 +436,7 @@ void TC_iot_security_manager_get_certificate_success(void **state)
 	assert_non_null(context);
 
 	// Given
-	cert_id = IOT_SECURITY_CERT_ID_MQTT_ROOT_CA;
+	cert_id = IOT_SECURITY_CERT_ID_ROOT_CA;
 	// When
 	err = iot_security_manager_get_certificate(context, cert_id, &cert_buf);
 	// Then

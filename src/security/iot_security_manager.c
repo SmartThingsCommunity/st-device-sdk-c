@@ -138,7 +138,7 @@ STATIC_FUNCTION
 iot_security_storage_target_t _iot_security_manager_check_certificate_target(iot_security_cert_id_t cert_id)
 {
 	switch (cert_id) {
-	case IOT_SECURITY_CERT_ID_MQTT_ROOT_CA:
+	case IOT_SECURITY_CERT_ID_ROOT_CA:
 		return IOT_SECURITY_STORAGE_TARGET_STATIC;
 	default:
 		return IOT_SECURITY_STORAGE_TARGET_NV;
