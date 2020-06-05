@@ -876,6 +876,24 @@ static iot_error_t _publish_event(struct iot_context *ctx, iot_cap_msg_t *cap_ms
 	return result;
 }
 
+static void _throw_away_all_pub_queue(struct iot_context *ctx)
+{
+	iot_cap_msg_t final_msg;
+
+	if (!ctx) {
+		IOT_ERROR("There is no ctx!!");
+		IOT_DUMP_MAIN(ERROR, BASE, 0xDEADBEEF);
+		return;
+	}
+
+	while (iot_os_queue_receive(ctx->pub_queue,
+				&final_msg, 0) == IOT_OS_TRUE) {
+		if (final_msg.msg) {
+			free(final_msg.msg);
+		}
+	}
+}
+
 static void _iot_main_task(struct iot_context *ctx)
 {
 	struct iot_command cmd;
@@ -941,7 +959,7 @@ static void _iot_main_task(struct iot_context *ctx)
 							IOT_DUMP_MAIN(WARN, BASE, err);
 
 							IOT_WARN("Try MQTT reconnecting..");
-							iot_os_queue_reset(ctx->pub_queue);
+							_throw_away_all_pub_queue(ctx);
 							next_state = IOT_STATE_CLOUD_CONNECTING;
 							err = iot_state_update(ctx, next_state, 0);
 							IOT_DUMP_MAIN(WARN, BASE, err);
@@ -992,7 +1010,8 @@ static void _iot_main_task(struct iot_context *ctx)
 			next_state = IOT_STATE_CLOUD_REGISTERING;
 			err = iot_state_update(ctx, next_state, 0);
 			IOT_DUMP_MAIN(WARN, BASE, err);
-			iot_os_queue_reset(ctx->pub_queue);
+			_throw_away_all_pub_queue(ctx);
+
 
 		} else if (ctx->evt_mqttcli && st_mqtt_yield(ctx->evt_mqttcli, 0) < 0) {
 			iot_es_disconnect(ctx, IOT_CONNECT_TYPE_COMMUNICATION);
@@ -1005,7 +1024,7 @@ static void _iot_main_task(struct iot_context *ctx)
 			next_state = IOT_STATE_CLOUD_CONNECTING;
 			err = iot_state_update(ctx, next_state, 0);
 			IOT_DUMP_MAIN(WARN, BASE, err);
-			iot_os_queue_reset(ctx->pub_queue);
+			_throw_away_all_pub_queue(ctx);
 		}
 #endif
 		_do_cmd_tout_check(ctx);
