@@ -181,6 +181,39 @@ config STDK_IOT_CORE_CRYPTO_SUPPORT_ED25519
     help
        Support Ed25519 based sign, encryption functions.
 
+choice STDK_IOT_CORE_SECURITY_BACKEND
+    prompt "Choose security backend block"
+    default STDK_IOT_CORE_SECURITY_BACKEND_SOFTWARE
+    depends on STDK_IOT_CORE
+    help
+       Choose the backend block of security.
+
+       Software based module or Hardware based module.
+       Hardware based module supports SE(Secure Element).
+
+config STDK_IOT_CORE_SECURITY_BACKEND_SOFTWARE
+    bool "Software"
+config STDK_IOT_CORE_SECURITY_BACKEND_HARDWARE
+    bool "Hardware"
+endchoice
+
+menu "Hardware backend"
+    depends on STDK_IOT_CORE_SECURITY_BACKEND_HARDWARE
+
+choice STDK_IOT_CORE_SECURITY_BACKEND_HARDWARE_MODULE
+    prompt "Choose hardware backend module"
+    default STDK_IOT_CORE_SECURITY_BACKEND_HARDWARE_VIRTUAL
+    help
+       Choose the module for hardware backend.
+
+       Virtual is a virtual module for module implementation.
+
+config STDK_IOT_CORE_SECURITY_BACKEND_HARDWARE_VIRTUAL
+    bool "Virtual"
+endchoice
+
+endmenu
+
 choice STDK_IOT_CORE_FS_ENCRYPTION
     prompt "Choose FS encryption method"
     default STDK_IOT_CORE_FS_HW_ENCRYPTION

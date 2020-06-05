@@ -61,6 +61,20 @@ else
 COMPONENT_SRCDIRS += crypto/ss
 endif
 
+COMPONENT_SRCDIRS += security
+COMPONENT_SRCDIRS += security/helper/libsodium
+ifdef CONFIG_STDK_IOT_CORE_USE_MBEDTLS
+COMPONENT_SRCDIRS += security/helper/mbedtls
+endif
+ifeq ($(CONFIG_STDK_IOT_CORE_SECURITY_BACKEND_SOFTWARE),y)
+	COMPONENT_SRCDIRS += security/backend/software
+	ifdef CONFIG_STDK_IOT_CORE_FS_SW_ENCRYPTION
+	COMPONENT_ADD_LDFLAGS += -L $(COMPONENT_PATH)/security/backend/software/lib/esp -liot_security_ss
+	endif
+else ifeq ($(CONFIG_STDK_IOT_CORE_SECURITY_BACKEND_HARDWARE),y)
+	COMPONENT_SRCDIRS += security/backend/hardware
+endif
+
 COMPONENT_SRCDIRS += easysetup
 
 ifdef CONFIG_STDK_IOT_CORE_EASYSETUP_HTTP
