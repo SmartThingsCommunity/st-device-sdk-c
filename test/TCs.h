@@ -89,6 +89,10 @@ void TC_st_cap_attr_send_success(void **state);
 void TC_st_cap_attr_send_invalid_parameter(void **state);
 void TC_iot_cap_sub_cb_success(void **state);
 void TC_iot_noti_sub_cb_rate_limit_reached_success(void **state);
+void TC_iot_parse_noti_data_device_deleted(void** state);
+void TC_iot_parse_noti_data_expired_jwt(void** state);
+void TC_iot_parse_noti_data_quota_reached(void** state);
+void TC_iot_parse_noti_data_rate_limit(void** state);
 
 // TCs for iot_crypto.c
 int TC_iot_crypto_pk_setup(void **state);
