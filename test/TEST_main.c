@@ -364,10 +364,10 @@ int TEST_FUNC_iot_security_helper_ed25519(void)
     return cmocka_run_group_tests_name("iot_security_helper_ed25519.c", tests, NULL, NULL);
 }
 
-#if CONFIG_STDK_IOT_CORE_SECURITY_BACKEND == SOFTWARE
 int TEST_FUNC_iot_security_software_be_bsp(void)
 {
     const struct CMUnitTest tests[] = {
+#if defined(CONFIG_STDK_IOT_CORE_SECURITY_BACKEND_SOFTWARE)
             cmocka_unit_test(TC_STATIC_iot_security_be_bsp_fs_storage_id2target_invalid_parameters),
             cmocka_unit_test(TC_STATIC_iot_security_be_bsp_fs_storage_id2target_success),
             cmocka_unit_test(TC_STATIC_iot_security_be_bsp_fs_storage_id2filename_invalid_parameters),
@@ -381,10 +381,10 @@ int TEST_FUNC_iot_security_software_be_bsp(void)
             cmocka_unit_test(TC_iot_security_be_bsp_fs_remove_success),
             cmocka_unit_test(TC_iot_security_be_bsp_init_null_parameters),
             cmocka_unit_test(TC_iot_security_be_bsp_init_success),
+#endif
     };
     return cmocka_run_group_tests_name("iot_security_be_bsp.c", tests, NULL, NULL);
 }
-#endif
 
 int TEST_FUNC_iot_wt(void)
 {
@@ -428,9 +428,7 @@ int main(void) {
     err += TEST_FUNC_iot_security_manager();
     err += TEST_FUNC_iot_security_helper();
     err += TEST_FUNC_iot_security_helper_ed25519();
-#if defined(CONFIG_STDK_IOT_CORE_SECURITY_BACKEND_SOFTWARE)
     err += TEST_FUNC_iot_security_software_be_bsp();
-#endif
     err += TEST_FUNC_iot_wt();
     err += TEST_FUNC_iot_easysetup_httpd();
 
