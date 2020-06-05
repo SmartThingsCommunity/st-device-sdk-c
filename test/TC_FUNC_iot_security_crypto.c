@@ -425,6 +425,7 @@ void TC_iot_security_pk_sign_malloc_failure(void **state)
 
 	// Local teardown
 	iot_os_free(msg_buf.p);
+	do_not_use_mock_iot_os_malloc_failure();
 }
 
 void TC_iot_security_pk_sign_failure(void **state)
