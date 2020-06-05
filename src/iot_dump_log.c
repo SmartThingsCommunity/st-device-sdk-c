@@ -133,7 +133,7 @@ static iot_error_t _iot_dump_copy_memory(void *dest, int dest_size, const void *
     return iot_err;
 }
 
-iot_error_t iot_dump_create_all_log_dump(struct iot_context *iot_ctx, char **log_dump_output, size_t max_log_dump_size, size_t *allocated_size, int need_base64)
+iot_error_t iot_dump_create_all_log_dump(struct iot_context *iot_ctx, char **log_dump_output, size_t max_log_dump_size, size_t *allocated_size, int log_mode)
 {
     struct iot_dump_header* header;
     struct iot_dump_state* dump_state;
@@ -148,6 +148,9 @@ iot_error_t iot_dump_create_all_log_dump(struct iot_context *iot_ctx, char **log
     size_t output_log_size = 0;
     size_t stored_log_size = 0;
     size_t curr_size = 0;
+
+    int need_base64 = log_mode & IOT_DUMP_MODE_NEED_BASE64;
+    int need_dump_state = log_mode & IOT_DUMP_MODE_NEED_DUMP_STATE;
 
     iot_error_t iot_err = IOT_ERROR_NONE;
 #ifdef CONFIG_STDK_IOT_CORE_LOG_FILE
@@ -199,6 +202,9 @@ iot_error_t iot_dump_create_all_log_dump(struct iot_context *iot_ctx, char **log
     memset(all_log_dump, 0, output_log_size);
 
     header = _iot_dump_create_header();
+    if (!need_dump_state) {
+        header->dump_state_size = 0;
+    }
     iot_err = _iot_dump_copy_memory(all_log_dump + curr_size, output_log_size - curr_size,
                 header, sizeof(struct iot_dump_header), temp_buf, sizeof(temp_buf), &remain_number, &written_len, need_base64);
     iot_os_free(header);
@@ -208,15 +214,17 @@ iot_error_t iot_dump_create_all_log_dump(struct iot_context *iot_ctx, char **log
     }
     curr_size += written_len;
 
-    dump_state = _iot_dump_create_dump_state(iot_ctx);
-    iot_err = _iot_dump_copy_memory(all_log_dump + curr_size, output_log_size - curr_size,
-                dump_state, sizeof(struct iot_dump_state), temp_buf, sizeof(temp_buf), &remain_number, &written_len, need_base64);
-    iot_os_free(dump_state);
-    if (iot_err < 0) {
-        IOT_ERROR("failed to get dump_state for all_log_dump : ret %d", iot_err);
-        goto end;
+    if (need_dump_state) {
+        dump_state = _iot_dump_create_dump_state(iot_ctx);
+        iot_err = _iot_dump_copy_memory(all_log_dump + curr_size, output_log_size - curr_size,
+                    dump_state, sizeof(struct iot_dump_state), temp_buf, sizeof(temp_buf), &remain_number, &written_len, need_base64);
+        iot_os_free(dump_state);
+        if (iot_err < 0) {
+            IOT_ERROR("failed to get dump_state for all_log_dump : ret %d", iot_err);
+            goto end;
+        }
+        curr_size += written_len;
     }
-    curr_size += written_len;
 
 #ifdef CONFIG_STDK_IOT_CORE_LOG_FILE
     iot_log_file_seek(logfile, 0 - max_msg_size, logfile->tail_addr);
@@ -270,6 +278,7 @@ end:
     *log_dump_output = NULL;
     return iot_err;
 }
+
 #ifdef CONFIG_STDK_IOT_CORE_LOG_FILE
 void iot_dump_log(iot_debug_level_t level, dump_log_id_t log_id, int arg1, int arg2)
 {
