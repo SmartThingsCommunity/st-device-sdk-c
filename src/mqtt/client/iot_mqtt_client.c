@@ -402,7 +402,11 @@ static void _iot_mqtt_process_received_ack(MQTTClient *client, iot_mqtt_packet_c
 			int count = 0, ack_qos;
 			unsigned short mypacketid;
 			MQTTDeserialize_suback(&mypacketid, 1, &count, (int *)&ack_qos, chunk->chunk_data, chunk->chunk_size);
-			tmp->return_code = ack_qos;
+			if (ack_qos == 0x80) {
+				tmp->return_code = E_ST_MQTT_FAILURE;
+			} else {
+				tmp->return_code = 0;
+			}
 		}
 
 		if (tmp->have_owner) {
@@ -1021,6 +1025,29 @@ void st_mqtt_endtask(st_mqtt_client client)
 	}
 }
 
+static int _iot_mqtt_wait_for(MQTTClient *client, iot_mqtt_packet_chunk_t *chunk)
+{
+	int rc = 0;
+
+	while (!(rc = _iot_mqtt_run_cycle(client))) {
+		switch (chunk->chunk_state) {
+			case PACKET_CHUNK_WRITE_COMPLETED:
+			case PACKET_CHUNK_ACKNOWLEDGED:
+				rc = chunk->return_code;
+				goto exit;
+			case PACKET_CHUNK_WRITE_FAIL:
+			case PACKET_CHUNK_TIMEOUT:
+				rc = E_ST_MQTT_FAILURE;
+				goto exit;
+			default:
+				continue;
+		}
+	}
+
+exit:
+	return rc;
+}
+
 int st_mqtt_connect(st_mqtt_client client, st_mqtt_broker_info_t *broker, st_mqtt_connect_data *connect_data)
 {
 	MQTTClient *c = client;
@@ -1069,19 +1096,7 @@ int st_mqtt_connect(st_mqtt_client client, st_mqtt_broker_info_t *broker, st_mqt
 	iot_os_timer_count_ms(c->last_received, c->keepAliveInterval * 1000);
 	_iot_mqtt_queue_push(&c->write_pending_queue, connect_packet);
 
-	while (!(rc = _iot_mqtt_run_cycle(c))) {
-		switch (connect_packet->chunk_state) {
-			case PACKET_CHUNK_ACKNOWLEDGED:
-				rc = connect_packet->return_code;
-				goto exit;
-			case PACKET_CHUNK_WRITE_FAIL:
-			case PACKET_CHUNK_TIMEOUT:
-				rc = E_ST_MQTT_FAILURE;
-				goto exit;
-			default:
-				continue;
-		}
-	}
+	rc = _iot_mqtt_wait_for(c, connect_packet);
 
 exit:
 	if (rc < 0) {
@@ -1123,21 +1138,7 @@ int st_mqtt_subscribe(st_mqtt_client client, const char *topic, int qos)
 	sub_packet->have_owner = 1;
 	_iot_mqtt_queue_push(&c->write_pending_queue, sub_packet);
 
-	while (!(rc = _iot_mqtt_run_cycle(c))) {
-		switch (sub_packet->chunk_state) {
-			case PACKET_CHUNK_ACKNOWLEDGED:
-				if (sub_packet->return_code != 0x80) {
-					rc = 0;
-				}
-				goto exit;
-			case PACKET_CHUNK_WRITE_FAIL:
-			case PACKET_CHUNK_TIMEOUT:
-				rc = E_ST_MQTT_FAILURE;
-				goto exit;
-			default:
-				continue;
-		}
-	}
+	rc = _iot_mqtt_wait_for(c, sub_packet);
 
 exit:
 	if (sub_packet) {
@@ -1174,19 +1175,7 @@ int st_mqtt_unsubscribe(st_mqtt_client client, const char *topic)
 	unsub_packet->have_owner = 1;
 	_iot_mqtt_queue_push(&c->write_pending_queue, unsub_packet);
 
-	while (!(rc = _iot_mqtt_run_cycle(c))) {
-		switch (unsub_packet->chunk_state) {
-			case PACKET_CHUNK_ACKNOWLEDGED:
-				rc = unsub_packet->return_code;
-				goto exit;
-			case PACKET_CHUNK_WRITE_FAIL:
-			case PACKET_CHUNK_TIMEOUT:
-				rc = E_ST_MQTT_FAILURE;
-				goto exit;
-			default:
-				continue;
-		}
-	}
+	rc = _iot_mqtt_wait_for(c, unsub_packet);
 
 exit:
 	if (unsub_packet) {
@@ -1229,20 +1218,7 @@ int st_mqtt_publish(st_mqtt_client client, st_mqtt_msg *msg)
 	pub_packet->qos = msg->qos;
 	_iot_mqtt_queue_push(&c->write_pending_queue, pub_packet);
 
-	while (!(rc = _iot_mqtt_run_cycle(c))) {
-		switch (pub_packet->chunk_state) {
-			case PACKET_CHUNK_ACKNOWLEDGED:
-			case PACKET_CHUNK_WRITE_COMPLETED:
-				rc = pub_packet->return_code;
-				goto exit;
-			case PACKET_CHUNK_WRITE_FAIL:
-			case PACKET_CHUNK_TIMEOUT:
-				rc = E_ST_MQTT_FAILURE;
-				goto exit;
-			default:
-				continue;
-		}
-	}
+	rc = _iot_mqtt_wait_for(c, pub_packet);
 
 exit:
 	if (pub_packet) {
@@ -1273,19 +1249,7 @@ int st_mqtt_disconnect(st_mqtt_client client)
 	}
 	_iot_mqtt_queue_push(&c->write_pending_queue, disconnect_packet);
 
-	while (!(rc = _iot_mqtt_run_cycle(c))) {
-		switch (disconnect_packet->chunk_state) {
-			case PACKET_CHUNK_WRITE_COMPLETED:
-				rc = disconnect_packet->return_code;
-				goto exit;
-			case PACKET_CHUNK_WRITE_FAIL:
-			case PACKET_CHUNK_TIMEOUT:
-				rc = E_ST_MQTT_FAILURE;
-				goto exit;
-			default:
-				continue;
-		}
-	}
+	rc = _iot_mqtt_wait_for(c, disconnect_packet);
 
 exit:
 	IOT_INFO("mqtt disconnect %d", rc);
