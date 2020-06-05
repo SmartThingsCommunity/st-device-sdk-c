@@ -56,8 +56,9 @@ struct iot_dump_state {
 #define IOT_DUMP_LOG_VERSION 0
 
 typedef enum {
-	IOT_DUMP_MAIN_BASE = 0x0000,
-	IOT_DUMP_MAIN_COMMAND = 0x0001,
+	IOT_DUMP_MAIN_BASE = 0x0000,	/* arg1: line-number, arg2: iot_error_t or specific */
+	IOT_DUMP_MAIN_COMMAND = 0x0001,	/* arg1: cmd_type or err, arg2: curr_state */
+	IOT_DUMP_MAIN_STATE =0x0002,	/* arg1: iot_state_t, arg2: final iot_error_t */
 	IOT_DUMP_MQTT_BASE = 0x0100,
 	IOT_DUMP_MQTT_CREATE_SUCCESS = 0x0101,	/* arg1: command_timeout_ms */
 	IOT_DUMP_MQTT_CREATE_FAIL = 0x0102, /* arg1: return code(rc) */
