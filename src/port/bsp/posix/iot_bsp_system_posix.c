@@ -23,6 +23,16 @@
 #include "iot_bsp_system.h"
 #include "iot_debug.h"
 
+const char* iot_bsp_get_bsp_name()
+{
+       return "posix";
+}
+
+const char* iot_bsp_get_bsp_version_string()
+{
+       return "";
+}
+
 void iot_bsp_system_reboot()
 {
 	exit(0);

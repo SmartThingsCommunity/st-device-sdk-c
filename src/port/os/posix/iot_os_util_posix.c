@@ -35,6 +35,22 @@ const unsigned int iot_os_max_delay = 0xFFFFFFFF;
 const unsigned int iot_os_true = true;
 const unsigned int iot_os_false = false;
 
+const char* iot_os_get_os_name()
+{
+       return "POSIX";
+}
+
+#define _STR_HELPER(x) #x
+#define _STR(x) _STR_HELPER(x)
+const char* iot_os_get_os_version_string()
+{
+#ifdef _POSIX_VERSION
+       return _STR(_POSIX_VERSION);
+#else
+       return "";
+#endif
+}
+
 /* Thread */
 int iot_os_thread_create(void * thread_function, const char* name, int stack_size,
 		void* data, int priority, iot_os_thread* thread_handle)
@@ -206,8 +222,7 @@ void iot_os_eventgroup_delete(iot_os_eventgroup* eventgroup_handle)
 }
 
 unsigned int iot_os_eventgroup_wait_bits(iot_os_eventgroup* eventgroup_handle,
-		const unsigned int bits_to_wait_for, const int clear_on_exit,
-		const int wait_for_all_bits, const unsigned int wait_time_ms)
+		const unsigned int bits_to_wait_for, const int clear_on_exit, const unsigned int wait_time_ms)
 {
 	eventgroup_t *eventgroup = eventgroup_handle;
 	fd_set readfds;
@@ -257,7 +272,7 @@ unsigned int iot_os_eventgroup_wait_bits(iot_os_eventgroup* eventgroup_handle,
 	}
 }
 
-unsigned int iot_os_eventgroup_set_bits(iot_os_eventgroup* eventgroup_handle,
+int iot_os_eventgroup_set_bits(iot_os_eventgroup* eventgroup_handle,
 		const unsigned int bits_to_set)
 {
 	eventgroup_t *eventgroup = eventgroup_handle;
@@ -272,13 +287,13 @@ unsigned int iot_os_eventgroup_set_bits(iot_os_eventgroup* eventgroup_handle,
 		}
 	}
 
-	return bits;
+	return IOT_OS_TRUE;
 }
 
-unsigned int iot_os_eventgroup_clear_bits(iot_os_eventgroup* eventgroup_handle,
+int iot_os_eventgroup_clear_bits(iot_os_eventgroup* eventgroup_handle,
 		const unsigned int bits_to_clear)
 {
-	return IOT_ERROR_NONE;
+	return IOT_OS_TRUE;
 }
 
 /* Mutex */
@@ -295,6 +310,10 @@ int iot_os_mutex_init(iot_os_mutex* mutex)
 
 int iot_os_mutex_lock(iot_os_mutex* mutex)
 {
+	if (!mutex || !mutex->sem) {
+		return IOT_OS_FALSE;
+	}
+
 	pthread_mutex_t* mutex_p = mutex->sem;
 
 	pthread_mutex_lock(mutex_p);

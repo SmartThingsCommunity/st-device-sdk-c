@@ -18,6 +18,9 @@ if(ENABLE_STDK_TEST)
         set(CMAKE_C_FLAGS_UNITTEST "${CMAKE_C_FLAGS_UNITTEST} -Wl,--wrap=${mock}")
     endforeach()
 
+    if("${CMAKE_C_FLAGS}" MATCHES "-DCONFIG_STDK_IOT_CORE_SECURITY_BACKEND_SOFTWARE")
+        set(SECURITY_EXTRA_SRCS TC_FUNC_iot_security_be_bsp.c)
+    endif()
 
     add_executable(stdk_test
                    TEST_main.c
@@ -32,11 +35,18 @@ if(ENABLE_STDK_TEST)
                    TC_FUNC_iot_capability.c
                    TC_FUNC_iot_crypto.c
                    TC_FUNC_iot_nv_data.c
+                   TC_UTIL_easysetup_common.h
+                   TC_UTIL_easysetup_common.c
                    TC_FUNC_iot_easysetup_d2d.c
                    TC_FUNC_iot_easysetup_crypto.c
                    TC_FUNC_iot_main.c
                    TC_FUNC_iot_mqtt_client.c
                    TC_FUNC_iot_security_common.c
+                   TC_FUNC_iot_security_crypto.c
+                   TC_FUNC_iot_security_storage.c
+                   TC_FUNC_iot_security_helper.c
+                   TC_FUNC_iot_security_helper_ed25519.c
+                   ${SECURITY_EXTRA_SRCS}
                    TC_FUNC_iot_wt.c
                    TC_FUNC_iot_easysetup_httpd.c)
 

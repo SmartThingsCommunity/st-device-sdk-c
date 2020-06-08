@@ -21,6 +21,7 @@
 
 #include "iot_error.h"
 #include "iot_main.h"
+#include "security/iot_security_common.h"
 
 #ifdef __cplusplus
 extern "C" {
@@ -31,8 +32,10 @@ extern "C" {
  * @brief internal nv data codes.
  */
 typedef enum {
+	IOT_NVD_UNKNOWN = 0,
+
 	/* wifi prov data */
-	IOT_NVD_WIFI_PROV_STATUS = 0,
+	IOT_NVD_WIFI_PROV_STATUS,
 	IOT_NVD_AP_SSID,
 	IOT_NVD_AP_PASS,
 	IOT_NVD_AP_BSSID,
@@ -43,8 +46,6 @@ typedef enum {
 	IOT_NVD_CLOUD_PROV_STATUS,
 	IOT_NVD_SERVER_URL,
 	IOT_NVD_SERVER_PORT,
-	IOT_NVD_LOCATION_ID,
-	IOT_NVD_ROOM_ID,
 	IOT_NVD_LABEL,
 	/* cloud prov data */
 
@@ -52,7 +53,8 @@ typedef enum {
 	IOT_NVD_MISC_INFO,
 
 	/* stored in stnv partition (manufacturer data) */
-	IOT_NVD_PRIVATE_KEY,
+	IOT_NVD_FACTORY,
+	IOT_NVD_PRIVATE_KEY = IOT_NVD_FACTORY,
 	IOT_NVD_PUBLIC_KEY,
 	IOT_NVD_ROOT_CA_CERT,
 	IOT_NVD_SUB_CA_CERT,
@@ -296,6 +298,34 @@ iot_error_t iot_nv_get_serial_number(char** sn, size_t* len);
  * @retval IOT_ERROR_NV_DATA_NOT_EXIST NV data does not exist.
  */
 iot_error_t iot_nv_erase(iot_nvd_t nv_type);
+
+/**
+ * @brief Get a certificate from code
+ *
+ * @details A some certificates are hard corded in static variable
+ * @param[in] cert_id a identity of certificate
+ * @param[out] output_buf a pointer to the security buffer of certificate
+ * @retval IOT_ERROR_NONE success
+ * @retval IOT_ERROR_INVALID_ARGS output_buf is invalid
+ * @retval IOT_ERROR_MEM_ALLOC memory allocation for certificate is failed
+ * @retval IOT_ERROR_NV_DATA_ERROR cert_id is not a static NV.
+ */
+iot_error_t iot_nv_get_static_certificate(iot_security_cert_id_t cert_id, iot_security_buffer_t *output_buf);
+
+#if !defined(CONFIG_STDK_IOT_CORE_SUPPORT_STNV_PARTITION)
+/**
+ * @brief Get nv data from device info
+ *
+ * @param[in] nv_id The type of nv data
+ * @param[out] output_buf a pointer to the security buffer of data
+ * @retval IOT_ERROR_NONE success
+ * @retval IOT_ERROR_INVALID_ARGS input parameter is invalid
+ * @retval IOT_ERROR_MEM_ALLOC memory allocation for data is failed
+ * @retval IOT_ERROR_UNINITIALIZED device info does not initialized
+ * @retval IOT_ERROR_NV_DATA_ERROR nv_id is invalid to get data from device info
+ */
+iot_error_t iot_nv_get_data_from_device_info(iot_nvd_t nv_id, iot_security_buffer_t *output_buf);
+#endif
 
 #ifdef __cplusplus
 }

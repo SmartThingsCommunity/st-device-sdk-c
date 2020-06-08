@@ -31,6 +31,7 @@
 #include <errno.h>
 #include <sys/types.h>
 #include <tinyara/config.h>
+#include <tinyara/version.h>
 
 #include "iot_error.h"
 #include "iot_os_util.h"
@@ -136,22 +137,26 @@ void iot_os_eventgroup_delete(iot_os_eventgroup *eventgroup_handle)
 }
 
 unsigned int iot_os_eventgroup_wait_bits(iot_os_eventgroup *eventgroup_handle,
-		const unsigned int bits_to_wait_for, const int clear_on_exit,
-		const int wait_for_all_bits, const unsigned int wait_time_ms)
+		const unsigned int bits_to_wait_for, const int clear_on_exit, const unsigned int wait_time_ms)
 {
-	return event_group_wait_bits(eventgroup_handle, bits_to_wait_for, clear_on_exit, wait_for_all_bits, VALIDATE_MSEC2TICK(wait_time_ms));
+	return event_group_wait_bits(eventgroup_handle, bits_to_wait_for, clear_on_exit, 0, VALIDATE_MSEC2TICK(wait_time_ms));
 }
 
-unsigned int iot_os_eventgroup_set_bits(iot_os_eventgroup *eventgroup_handle,
+int iot_os_eventgroup_set_bits(iot_os_eventgroup *eventgroup_handle,
 		const unsigned int bits_to_set)
 {
-	return event_group_set_bits(eventgroup_handle, bits_to_set);
+	if (event_group_set_bits(eventgroup_handle, bits_to_set) == -1) {
+	    return IOT_OS_FALSE;
+	} else {
+	    return IOT_OS_TRUE;
+	}
 }
 
-unsigned int iot_os_eventgroup_clear_bits(iot_os_eventgroup *eventgroup_handle,
+int iot_os_eventgroup_clear_bits(iot_os_eventgroup *eventgroup_handle,
 		const unsigned int bits_to_clear)
 {
-	return event_group_clear_bits(eventgroup_handle, bits_to_clear);
+	event_group_clear_bits(eventgroup_handle, bits_to_clear);
+	return IOT_OS_TRUE;
 }
 
 /* Mutex */
@@ -176,6 +181,20 @@ static void *recursive_mutex_create_wrapper(void)
 	return (void *)mutex;
 }
 
+const char* iot_os_get_os_name()
+{
+       return "TizenRT";
+}
+
+const char* iot_os_get_os_version_string()
+{
+#ifdef CONFIG_VERSION_STRING
+       return CONFIG_VERSION_STRING;
+#else
+       return "";
+#endif
+}
+
 
 int iot_os_mutex_init(iot_os_mutex *mutex)
 {
@@ -194,7 +213,7 @@ int iot_os_mutex_lock(iot_os_mutex *mutex)
 {
     int ret;
 
-    if (!mutex) {
+    if (!mutex || !mutex->sem) {
         return IOT_OS_FALSE;
     }
 

@@ -20,6 +20,7 @@
 #include <string.h>
 #include <esp_err.h>
 #include <nvs_flash.h>
+#include <esp_flash_encrypt.h>
 
 #include "iot_bsp_fs.h"
 #include "iot_bsp_nv_data.h"
@@ -61,15 +62,74 @@ static const char* _get_error_string(esp_err_t err) {
 	}
 }
 
+#if defined(CONFIG_NVS_ENCRYPTION)
+static iot_error_t _iot_bsp_fs_get_secure_config(nvs_sec_cfg_t *cfg)
+{
+	esp_err_t ret;
+	const esp_partition_t *key_partition;
+
+	if (!cfg) {
+		return IOT_ERROR_INVALID_ARGS;
+	}
+
+	if (esp_flash_encryption_enabled()) {
+		IOT_INFO("flash encryption is enabled");
+	} else {
+		IOT_ERROR("flash encryption is not enabled");
+		return IOT_ERROR_FS_ENCRYPT_INIT;
+	}
+
+	key_partition = esp_partition_find_first(ESP_PARTITION_TYPE_DATA, ESP_PARTITION_SUBTYPE_DATA_NVS_KEYS, NULL);
+	if (!key_partition) {
+		IOT_ERROR("nvs key partition not found");
+		return IOT_ERROR_FS_ENCRYPT_INIT;
+	}
+
+	ret = nvs_flash_read_security_cfg(key_partition, cfg);
+	if (ret == ESP_ERR_NVS_KEYS_NOT_INITIALIZED) {
+		IOT_INFO("nvs key is empty");
+
+		ret = nvs_flash_generate_keys(key_partition, cfg);
+		if (ret != ESP_OK) {
+			IOT_ERROR("failed to generate nvs key");
+			return IOT_ERROR_FS_ENCRYPT_INIT;
+		}
+
+		IOT_INFO("nvs key is generated");
+	}
+
+	return IOT_ERROR_NONE;
+}
+#endif
+
 iot_error_t iot_bsp_fs_init()
 {
-	esp_err_t ret = nvs_flash_init();
+	esp_err_t ret;
+#if defined(CONFIG_NVS_ENCRYPTION)
+	iot_error_t err;
+	nvs_sec_cfg_t cfg;
+
+	err = _iot_bsp_fs_get_secure_config(&cfg);
+	IOT_WARN_CHECK(err != IOT_ERROR_NONE, IOT_ERROR_INIT_FAIL, "failed to get secure configuration");
+
+	ret = nvs_flash_secure_init(&cfg);
+	IOT_WARN_CHECK(ret != ESP_OK, IOT_ERROR_INIT_FAIL, "%s init failed [%s]", NVS_DEFAULT_PART_NAME, _get_error_string(ret));
+
+#if defined(CONFIG_STDK_IOT_CORE_SUPPORT_STNV_PARTITION)
+	ret = nvs_flash_secure_init_partition(STDK_NV_DATA_PARTITION, &cfg);
+	IOT_WARN_CHECK(ret != ESP_OK, IOT_ERROR_INIT_FAIL, "%s init failed [%s]", STDK_NV_DATA_PARTITION, _get_error_string(ret));
+#endif
+
+#else /* !CONFIG_NVS_ENCRYPTION */
+
+	ret = nvs_flash_init();
 	IOT_WARN_CHECK(ret != ESP_OK, IOT_ERROR_INIT_FAIL, "%s init failed [%s]", NVS_DEFAULT_PART_NAME, _get_error_string(ret));
 
 #if defined(CONFIG_STDK_IOT_CORE_SUPPORT_STNV_PARTITION)
 	ret = nvs_flash_init_partition(STDK_NV_DATA_PARTITION);
 	IOT_WARN_CHECK(ret != ESP_OK, IOT_ERROR_INIT_FAIL, "%s init failed [%s]", STDK_NV_DATA_PARTITION, _get_error_string(ret));
 #endif
+#endif /* CONFIG_NVS_ENCRYPTION */
 	return IOT_ERROR_NONE;
 }
 

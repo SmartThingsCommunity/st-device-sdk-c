@@ -23,13 +23,17 @@
 extern "C" {
 #endif
 
+#include "iot_error.h"
+
 enum cgi_type {
 	D2D_GET= 0,
 	D2D_POST,
 	D2D_ERROR,
 };
 
-void http_packet_handle(const char *name, char **buf, char *payload, enum cgi_type type);
+void http_msg_handler(int cmd, char **buffer, enum cgi_type type, char* data_buf);
+
+iot_error_t es_msg_parser(char *rx_buffer, size_t rx_buffer_len, char **payload, int *cmd, int *type, size_t *content_len);
 
 void es_http_init(void);
 

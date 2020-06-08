@@ -1,5 +1,46 @@
 # HISTORY
 
+## 1.1.16 :  Changes until v1.1.16
+
+New Improvements
+
+ - Applyed new onboarding flow for the new SmartThings Apps (New version will be release at the end of Jun.)
+  * Support backward compatibility only for STDK. If you use the latest STDK, you can use old & new mobile's SmartThings Apps.
+    But if you want to use the new SmartThings Apps, you have to use the latest STDK (v1.1.16)
+ - Added ESP32's NVS encryption configuration - CONFIG_FLASH_ENCRYPTION_ENABLED
+  * ref. : https://docs.espressif.com/projects/esp-idf/en/v3.3.2/security/flash-encryption.html#
+ - Intruduce 'security backend' interface to support H/W secure storage such as eSE (embedded Secure Element)
+  * Added cipher module in crypto sub system & helper functions for base64, sha256 and ed25519 to curve25519 converting.
+ - Added new api to get certificate from rodata area.
+ - Intruduce iot_log_dump for STDK internal logging system
+  * Added new IOT_DUMP() macro & dump_log_id_t enums for case based logging
+  * Added IOT_DUMP() macro in each src files to remain each case
+
+Enhancements
+
+ - Update iot_os_eventgroup related usage for set_bits/clear_bits/wait_for_all_bits.
+ - Update MQTT related operation & functionality
+  * Change MQTT operation mechanism based on queue
+  * Implement MQTT operation cycle function & MQTT packet event user callback process based on chunk
+  * Implement MQTT packet handling functions based on chunk
+ - Added some device information items to display in IOT analytics board
+ - Update iot-core connection working flow for several external st_conn_start() API usage
+  * Added new st_lamp_conn_retry sample in apps/esp8266 of ref.
+  * Added 'st_conn_lock' mutex to restrict st_conn_start() usage
+ - Enforce http packet parser & find "Content-Length" header with case-insensitive for easysetup process
+ - Seperate easysetup d2d by the protocol type for supporting new onboarding flow
+ - Update guide & Doc. for os/bsp information, how to create QR code for STDK
+ - Added clean socket mechanism to remove es_tcp_task() when es_http_deinit() called
+
+Bug fixed:
+
+ - Add more validation condition check for mutex lock to guard code
+ - Calculating remaining timeout workaround for freertos version diff
+ - Fix wrong condition check on httpd
+ - Set NULL while loading missing optional values
+ - Potential bug fixed for st_conn_start() re-using scenarios without H/W reset
+ - Fix read length condition check issue on port/bsp/rtlxxx
+
 ## 1.1.14 :  Changes until v1.1.14
 
 New Improvements or features:
