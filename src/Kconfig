@@ -156,7 +156,7 @@ config STDK_DEBUG_MEMORY_CHECK
     help
         If this debug option is enabled, IOT_MEM_CHECK will print memory utilization.
 
-menu "Crypto"
+menu "Security"
     depends on STDK_IOT_CORE
 
 config STDK_IOT_CORE_USE_MBEDTLS
@@ -167,19 +167,21 @@ config STDK_IOT_CORE_USE_MBEDTLS
        If this option is enabled, STDK will use thin wrappers around
        mbedTLS for Crypto (sha, sign, ...) operations.
 
-config STDK_IOT_CORE_CRYPTO_SUPPORT_RSA
-    bool "Support RSA based crypto"
-    default n
+choice STDK_IOT_CORE_CRYPTO_IDENTITY_KEYTYPE
+    prompt "Choose device identity key type"
+    default STDK_IOT_CORE_CRYPTO_SUPPORT_ED25519
     depends on STDK_IOT_CORE
     help
-       Support RSA based sign, encryption functions.
+       Choose the type of public key registered on the Device Identity.
 
+       This key is used for JWT/CWT as signature algorithm to identify
+       the device.
+
+config STDK_IOT_CORE_CRYPTO_SUPPORT_RSA
+    bool "RSA"
 config STDK_IOT_CORE_CRYPTO_SUPPORT_ED25519
-    bool "Support Ed25519 based crypto"
-    default n
-    depends on STDK_IOT_CORE
-    help
-       Support Ed25519 based sign, encryption functions.
+    bool "Ed25519"
+endchoice
 
 choice STDK_IOT_CORE_SECURITY_BACKEND
     prompt "Choose security backend block"
@@ -230,7 +232,7 @@ config STDK_IOT_CORE_FS_HW_ENCRYPTION
     bool "Hardware"
 endchoice
 
-endmenu # Crypto
+endmenu # Security
 
 menu "Network"
     depends on STDK_IOT_CORE
