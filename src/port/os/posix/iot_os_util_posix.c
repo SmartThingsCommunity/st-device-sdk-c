@@ -190,12 +190,13 @@ int iot_os_queue_receive(iot_os_queue* queue_handle, void * data, unsigned int w
 #define EVENT_MAX 8
 
 typedef struct {
-	unsigned int id;
+	unsigned char id;
 	int fd[2];
 } event_t;
 
 typedef struct {
 	event_t group[EVENT_MAX];
+	unsigned char event_status;
 } eventgroup_t;
 
 iot_os_eventgroup* iot_os_eventgroup_create(void)
@@ -210,6 +211,7 @@ iot_os_eventgroup* iot_os_eventgroup_create(void)
 			return NULL;
 		}
 	}
+	eventgroup->event_status = 0;
 
 	return eventgroup;
 }
@@ -217,6 +219,11 @@ iot_os_eventgroup* iot_os_eventgroup_create(void)
 void iot_os_eventgroup_delete(iot_os_eventgroup* eventgroup_handle)
 {
 	eventgroup_t* eventgroup = eventgroup_handle;
+
+	for (int i = 0; i < EVENT_MAX; i++) {
+		close(eventgroup->group[i].fd[0]);
+		close(eventgroup->group[i].fd[1]);
+	}
 
 	free(eventgroup);
 }
@@ -227,6 +234,7 @@ unsigned int iot_os_eventgroup_wait_bits(iot_os_eventgroup* eventgroup_handle,
 	eventgroup_t *eventgroup = eventgroup_handle;
 	fd_set readfds;
 	int fd_max = 0;
+	unsigned char event_status_backup;
 
 	FD_ZERO(&readfds);
 
@@ -242,7 +250,7 @@ unsigned int iot_os_eventgroup_wait_bits(iot_os_eventgroup* eventgroup_handle,
 	char buf[3] = {0,};
 	struct timeval tv;
 	memset(&tv, 0x00, sizeof(tv));
-	unsigned int bits = 0x00000000;
+	unsigned char bits = 0x00;
 	ssize_t read_size = 0;
 
 	tv.tv_sec = wait_time_ms / 1000;
@@ -254,7 +262,7 @@ unsigned int iot_os_eventgroup_wait_bits(iot_os_eventgroup* eventgroup_handle,
 		return 0;
 	} else if (ret == 0) {
 		// Select Timeout
-		return 0;
+		return (unsigned int)eventgroup->event_status;
 	} else {
 		// read pipe
 		for (int i = 0; i < EVENT_MAX; i++) {
@@ -268,7 +276,12 @@ unsigned int iot_os_eventgroup_wait_bits(iot_os_eventgroup* eventgroup_handle,
 			}
 		}
 
-		return bits;
+		event_status_backup = eventgroup->event_status;
+		if (clear_on_exit) {
+			eventgroup->event_status &= ~(bits);
+		}
+
+		return (unsigned int)event_status_backup;
 	}
 }
 
@@ -276,10 +289,14 @@ int iot_os_eventgroup_set_bits(iot_os_eventgroup* eventgroup_handle,
 		const unsigned int bits_to_set)
 {
 	eventgroup_t *eventgroup = eventgroup_handle;
-	unsigned int bits = 0x00000000;
+	unsigned char bits = 0;
 	ssize_t write_size = 0;
 
 	for (int i = 0; i < EVENT_MAX; i++) {
+        if (eventgroup->group[i].id == (eventgroup->group[i].id & eventgroup->event_status)) {
+            IOT_DEBUG("already set 0x08x", eventgroup->group[i].id);
+            continue;
+        }
 		if (eventgroup->group[i].id == (eventgroup->group[i].id & bits_to_set)) {
 			write_size = write(eventgroup->group[i].fd[1], "Set", strlen("Set"));
 			IOT_DEBUG("write_size = %d", write_size);
@@ -287,12 +304,19 @@ int iot_os_eventgroup_set_bits(iot_os_eventgroup* eventgroup_handle,
 		}
 	}
 
+	eventgroup->event_status |= bits;
+
 	return IOT_OS_TRUE;
 }
 
 int iot_os_eventgroup_clear_bits(iot_os_eventgroup* eventgroup_handle,
 		const unsigned int bits_to_clear)
 {
+    eventgroup_t *eventgroup = eventgroup_handle;
+
+    eventgroup->event_status &= ~(bits_to_clear);
+    // TODO: clear written event to pipe
+
 	return IOT_OS_TRUE;
 }
 
