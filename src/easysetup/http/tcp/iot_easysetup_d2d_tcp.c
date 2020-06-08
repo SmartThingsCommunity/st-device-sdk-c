@@ -1785,70 +1785,42 @@ iot_error_t iot_easysetup_request_handler(struct iot_context *ctx, struct iot_ea
 	switch (request.step) {
 	case IOT_EASYSETUP_STEP_DEVICEINFO:
 		err = _es_deviceinfo_handler(ctx, &response.payload);
-		if (err) {
-			IOT_ERROR("failed to handle deviceinfo %d", err);
-		}
 		break;
 	case IOT_EASYSETUP_STEP_WIFISCANINFO:
 		err = _es_wifiscaninfo_handler(ctx, &response.payload);
-		if (err) {
-			IOT_ERROR("failed to handle wifiscaninfo %d", err);
-		}
 		break;
 	case IOT_EASYSETUP_STEP_KEYINFO:
 		err = _es_keyinfo_handler(ctx, request.payload, &response.payload);
-		if (err) {
-			IOT_ERROR("failed to handle keyinfo %d", err);
-		}
 		break;
 	case IOT_EASYSETUP_STEP_CONFIRMINFO:
 		err = _es_confirminfo_handler(ctx, request.payload, &response.payload);
-		if (err) {
-			IOT_ERROR("failed to handle confirminfo %d", err);
-		}
 		break;
 	case IOT_EASYSETUP_STEP_CONFIRM:
 		err = _es_confirm_handler(ctx, request.payload, &response.payload);
-		if (err) {
-			IOT_ERROR("failed to handle confirm %d", err);
-		}
 		break;
 	case IOT_EASYSETUP_STEP_WIFIPROVIONINGINFO:
 		err = _es_wifiprovisioninginfo_handler(ctx, request.payload, &response.payload);
-		if (err) {
-			IOT_ERROR("failed to handle wifiprovisionininginfo %d", err);
-		}
 		break;
 	case IOT_EASYSETUP_STEP_SETUPCOMPLETE:
 		err = _es_setupcomplete_handler(ctx, request.payload, &response.payload);
-		if (err) {
-			IOT_ERROR("failed to handle setupcomplete %d", err);
-		}
 		break;
 #if defined(CONFIG_STDK_IOT_CORE_EASYSETUP_HTTP_LOG_SUPPORT)
 	case IOT_EASYSETUP_STEP_LOG_SYSTEMINFO:
 		err = _es_log_systeminfo_handler(ctx, &response.payload);
-		if (err) {
-			IOT_ERROR("failed to handle logsysteminfo %d", err);
-		}
 		break;
 	case IOT_EASYSETUP_STEP_LOG_CREATE_DUMP:
 		err = _es_log_create_dump_handler(ctx, request.payload, &response.payload);
-		if (err) {
-			IOT_ERROR("failed to handle logcreatedump %d", err);
-		}
-	break;
+		break;
 	case IOT_EASYSETUP_STEP_LOG_GET_DUMP:
 		err = _es_log_get_dump_handler(ctx, &response.payload);
-		if (err) {
-			IOT_ERROR("failed to handle loggetdump %d", err);
-		}
 		break;
 #endif
 	default:
-		IOT_WARN("invalid step %d", request.step);
 		err = IOT_ERROR_EASYSETUP_INTERNAL_SERVER_ERROR;
 		break;
+	}
+	if (err) {
+		IOT_ERROR("failed to handle step %d (%d)", request.step, err);
 	}
 
 	response.err = err;
@@ -1857,7 +1829,7 @@ iot_error_t iot_easysetup_request_handler(struct iot_context *ctx, struct iot_ea
 		ret = iot_os_queue_send(ctx->easysetup_resp_queue, &response, 0);
 		if (ret != IOT_OS_TRUE) {
 			IOT_ERROR("Cannot put the response into easysetup_resp_queue");
-			err = IOT_ERROR_EASYSETUP_INTERNAL_SERVER_ERROR;
+			err = IOT_ERROR_EASYSETUP_QUEUE_SEND_ERROR;
 		} else {
 			iot_os_eventgroup_set_bits(ctx->iot_events,
 				IOT_EVENT_BIT_EASYSETUP_RESP);
@@ -1865,7 +1837,7 @@ iot_error_t iot_easysetup_request_handler(struct iot_context *ctx, struct iot_ea
 		}
 	} else {
 		IOT_ERROR("easysetup_resp_queue is deleted");
-		err = IOT_ERROR_NONE;
+		err = IOT_ERROR_EASYSETUP_INTERNAL_SERVER_ERROR;
 	}
 
 	return err;
