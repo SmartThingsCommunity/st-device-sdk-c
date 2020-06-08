@@ -26,6 +26,18 @@
 extern "C" {
 #endif
 
+/*
+ * @brief get bsp name
+ * @return return is string of bsp name
+ */
+const char* iot_bsp_get_bsp_name();
+
+/*
+ * @brief get bsp version string
+ * @return return is string of bsp version
+ */
+const char* iot_bsp_get_bsp_version_string();
+
 /**
   * @brief  Macro to use iot_bsp_system_reboot function
   *

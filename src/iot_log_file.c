@@ -24,22 +24,6 @@
 
 struct iot_log_file_ctx *log_ctx;
 
-void iot_dump_log(iot_debug_level_t level, dump_log_id_t log_id, int arg1, int arg2)
-{
-	int log[4] = {0,};
-
-	struct timeval time;
-	gettimeofday(&time, NULL);
-
-	log[0] = ((level & 0xf) << 28) | (log_id & 0xffff);
-	log[1] = time.tv_sec;
-	log[2] = arg1;
-	log[3] = arg2;
-
-	//TODO : save log to file
-	printf("%08x %08x %08x %08x\n" , log[0], log[1], log[2], log[3]);
-}
-
 #ifdef CONFIG_STDK_IOT_CORE_LOG_FILE_FLASH_WITH_RAM
 static unsigned int _iot_log_file_buf_free_size(void)
 {
@@ -145,7 +129,6 @@ int iot_log_file_store(const char *log_data, size_t log_size)
 		}
 	}
 #endif
-
 	return iot_log_file_cnt;
 }
 
@@ -582,13 +565,18 @@ iot_log_file_handle_t *iot_log_file_open(size_t *filesize, iot_log_file_type_t f
 		_iot_log_file_enable(IOT_LOG_FILE_FALSE);
 
 		/* Index of RAM buf array */
-		file_handle->start_addr = file_handle->cur_addr = 0;
+		file_handle->start_addr = 0;
+		file_handle->max_log_size = IOT_LOG_FILE_RAM_BUF_SIZE;
+		file_handle->tail_addr = log_ctx->log_buf.cnt;
 
 		if (log_ctx->log_buf.overridden == IOT_LOG_FILE_TRUE) {
-			file_handle->log_size =	*filesize = IOT_LOG_FILE_RAM_BUF_SIZE;
+			*filesize = IOT_LOG_FILE_RAM_BUF_SIZE;
+			file_handle->cur_addr = file_handle->tail_addr;
 		} else {
-			file_handle->log_size =	*filesize = log_ctx->log_buf.cnt;
+			*filesize = log_ctx->log_buf.cnt;
+			file_handle->cur_addr = file_handle->start_addr;
 		}
+		file_handle->log_size = *filesize;
 		break;
 
 	case FLASH_WITH_RAM:
@@ -601,15 +589,16 @@ iot_log_file_handle_t *iot_log_file_open(size_t *filesize, iot_log_file_type_t f
 		}
 
 		file_handle->start_addr = IOT_LOG_FILE_FLASH_ADDR + sizeof(struct iot_log_file_header_tag);
-		file_handle->log_size = IOT_LOG_FILE_FLASH_SIZE - sizeof(struct iot_log_file_header_tag);
-
-		if (log_file_header.written_size < file_handle->log_size) {
+		file_handle->max_log_size = IOT_LOG_FILE_FLASH_SIZE - sizeof(struct iot_log_file_header_tag);
+		file_handle->tail_addr = _iot_log_file_sector_to_addr(log_file_header.sector.num, log_file_header.sector.offset);
+		if (log_file_header.written_size < file_handle->max_log_size) {
 			file_handle->cur_addr = file_handle->start_addr;
 		} else {
-			file_handle->cur_addr = _iot_log_file_sector_to_addr(log_file_header.sector.num, log_file_header.sector.offset);
+			file_handle->cur_addr = file_handle->tail_addr;
 		}
 
 		*filesize = log_file_header.written_size;
+		file_handle->log_size = *filesize;
 		IOT_LOG_FILE_DEBUG("file handle start=0x%x cur=0x%x end=0x%x *filesize=0x%x(%d)\n",
 			file_handle->start_addr, file_handle->cur_addr, file_handle->log_size, *filesize, *filesize);
 		break;
@@ -632,6 +621,54 @@ error_log_file_open:
 	return NULL;
 }
 
+iot_error_t _iot_log_read_bytes(iot_log_file_handle_t *file_handle, void *buffer, unsigned int size)
+{
+	iot_error_t iot_err = IOT_ERROR_NONE;
+
+	switch (file_handle->file_type) {
+		case RAM_ONLY:
+			memcpy(buffer, &log_ctx->log_buf.buf[file_handle->cur_addr], size);
+			break;
+		case FLASH_WITH_RAM:
+			iot_err = iot_log_read_flash(file_handle->cur_addr, buffer, size);
+			break;
+		default:
+			IOT_LOG_FILE_ERROR("Unsupported file_type(%d)! %s %d\n",
+					file_handle->file_type, __FUNCTION__, __LINE__);
+			iot_err = IOT_ERROR_BAD_REQ;
+			break;
+	}
+
+	return iot_err;
+}
+
+iot_error_t iot_log_file_seek(iot_log_file_handle_t *file_handle, int seek_offset, unsigned int origin_addr)
+{
+	int new_offset;
+	iot_error_t iot_err = IOT_ERROR_NONE;
+
+	if (file_handle->log_size == 0) {
+	    return IOT_ERROR_INVALID_ARGS;
+	}
+
+	switch (file_handle->file_type) {
+		case RAM_ONLY:
+		case FLASH_WITH_RAM:
+			new_offset = ((origin_addr - file_handle->start_addr) + seek_offset) % file_handle->log_size;
+			if (new_offset < 0) {
+				new_offset += file_handle->log_size;
+			}
+			file_handle->cur_addr = file_handle->start_addr + new_offset;
+			break;
+		default:
+			IOT_LOG_FILE_ERROR("Unsupported file_type(%d)! %s %d\n",
+				file_handle->file_type, __FUNCTION__, __LINE__);
+			iot_err = IOT_ERROR_BAD_REQ;
+			break;
+	}
+	return iot_err;
+}
+
 iot_error_t iot_log_file_read(iot_log_file_handle_t *file_handle,
 		void *buffer, size_t buf_size, size_t *read_size)
 {
@@ -651,79 +688,48 @@ iot_error_t iot_log_file_read(iot_log_file_handle_t *file_handle,
 	valid_range = _iot_log_file_check_valid_range(file_handle, buf_size);
 	IOT_LOG_FILE_DEBUG("[%s] valid_range=%d\n", __FUNCTION__, valid_range);
 
-	switch (file_handle->file_type) {
-	case RAM_ONLY:
-		if (file_handle->cur_addr >= file_handle->log_size) {
-			IOT_LOG_FILE_ERROR("end of ram buf! %s %d\n", __FUNCTION__, __LINE__);
-			iot_err = IOT_ERROR_BAD_REQ;
-			break;
+	if (valid_range == IOT_LOG_FILE_TRUE) {
+		iot_err = _iot_log_read_bytes(file_handle, buffer, buf_size);
+		if (iot_err != IOT_ERROR_NONE) {
+			goto end;
 		}
 
-		if (valid_range == IOT_LOG_FILE_TRUE) {
-			memcpy(buffer, &log_ctx->log_buf.buf[file_handle->cur_addr], buf_size);
-			file_handle->cur_addr += buf_size;
-			final_read_size = buf_size;
-		} else {
-			offset_size = file_handle->cur_addr - file_handle->start_addr;
-			size_to_read = file_handle->log_size - offset_size;
+		file_handle->cur_addr += buf_size;
+		final_read_size = buf_size;
+	} else {
+		/* first read */
+		offset_size = file_handle->cur_addr - file_handle->start_addr;
+		size_to_read = file_handle->log_size - offset_size;
 
-			memcpy(buffer, &log_ctx->log_buf.buf[file_handle->cur_addr], size_to_read);
-			file_handle->cur_addr += size_to_read;
-			final_read_size = size_to_read;
+		iot_err = _iot_log_read_bytes(file_handle, buffer, size_to_read);
+		if (iot_err != IOT_ERROR_NONE) {
+			goto end;
 		}
-		break;
 
-	case FLASH_WITH_RAM:
-		if (valid_range == IOT_LOG_FILE_TRUE) {
-			iot_err = iot_log_read_flash(file_handle->cur_addr, buffer, buf_size);
-			if (iot_err != IOT_ERROR_NONE) {
-				goto end;
-			}
+		final_read_size = size_to_read;
+		remain_size = buf_size - size_to_read;
 
-			file_handle->cur_addr += buf_size;
-			final_read_size = buf_size;
-		} else {
-			/* first read */
-			offset_size = file_handle->cur_addr - file_handle->start_addr;
-			size_to_read = file_handle->log_size - offset_size;
-
-			iot_err = iot_log_read_flash(file_handle->cur_addr, buffer, size_to_read);
-			if (iot_err != IOT_ERROR_NONE) {
-				goto end;
-			}
-
-			final_read_size = size_to_read;
-			remain_size = buf_size - size_to_read;
-
-			max_remain_size = offset_size;
-			if (remain_size > max_remain_size) {
-				IOT_LOG_FILE_DEBUG("[%s] remain_size > max_remain_size\n", __FUNCTION__);
-				remain_size = max_remain_size;
-			}
-			IOT_LOG_FILE_DEBUG("[%s] remain_size=%d\n", __FUNCTION__, remain_size);
-
-			/* mark cur_addr for error handling & Update cur_addr */
-			old_file_handle_addr = file_handle->cur_addr;
-			file_handle->cur_addr = file_handle->start_addr;
-
-			/* second read */
-			iot_err = iot_log_read_flash(file_handle->cur_addr, buffer + size_to_read, remain_size);
-			if (iot_err != IOT_ERROR_NONE) {
-				file_handle->cur_addr = old_file_handle_addr;
-				final_read_size = 0;
-				goto end;
-			}
-
-			file_handle->cur_addr += remain_size;
-			final_read_size += remain_size;
+		max_remain_size = offset_size;
+		if (remain_size > max_remain_size) {
+			IOT_LOG_FILE_DEBUG("[%s] remain_size > max_remain_size\n", __FUNCTION__);
+			remain_size = max_remain_size;
 		}
-		break;
+		IOT_LOG_FILE_DEBUG("[%s] remain_size=%d\n", __FUNCTION__, remain_size);
 
-	default:
-		IOT_LOG_FILE_ERROR("Unsupported file_type(%d)! %s %d\n",
-			file_handle->file_type, __FUNCTION__, __LINE__);
-		iot_err = IOT_ERROR_BAD_REQ;
-		break;
+		/* mark cur_addr for error handling & Update cur_addr */
+		old_file_handle_addr = file_handle->cur_addr;
+		file_handle->cur_addr = file_handle->start_addr;
+
+		/* second read */
+		iot_err = _iot_log_read_bytes(file_handle, buffer + size_to_read, remain_size);
+		if (iot_err != IOT_ERROR_NONE) {
+			file_handle->cur_addr = old_file_handle_addr;
+			final_read_size = 0;
+			goto end;
+		}
+
+		file_handle->cur_addr += remain_size;
+		final_read_size += remain_size;
 	}
 
 	IOT_LOG_FILE_DEBUG("[%s] file_handle->cur_addr=0x%x\n", __FUNCTION__, file_handle->cur_addr);

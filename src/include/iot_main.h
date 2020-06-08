@@ -39,6 +39,11 @@
 #define IOT_EVENT_BIT_EASYSETUP_CONFIRM	(1u << 4u)
 #define IOT_EVENT_BIT_ALL	(IOT_EVENT_BIT_COMMAND | IOT_EVENT_BIT_CAPABILITY | IOT_EVENT_BIT_EASYSETUP_REQ)
 
+#define IOT_USR_INTERACT_BIT_PROV_CONFIRM	(1u << 0u)
+#define IOT_USR_INTERACT_BIT_CONFIRM_FAILED	(1u << 1u)
+#define IOT_USR_INTERACT_BIT_PROV_DONE		(1u << 2u)
+#define IOT_USR_INTERACT_BIT_ALL	(IOT_USR_INTERACT_BIT_PROV_CONFIRM | IOT_USR_INTERACT_BIT_CONFIRM_FAILED | IOT_USR_INTERACT_BIT_PROV_DONE)
+
 #define IOT_MAIN_TASK_CYCLE			100
 
 enum _iot_noti_type {
@@ -66,8 +71,8 @@ enum iot_command_type {
 
 	IOT_COMMAND_NOTIFICATION_RECEIVED,
 
-	IOT_COMMAND_TYPE_MAX, /* MAX : under 32 */
 	IOT_COMMAND_SELF_CLEANUP,
+	IOT_COMMAND_TYPE_MAX = IOT_COMMAND_SELF_CLEANUP, /* MAX : under 32 */
 	IOT_COMMNAD_STATE_UPDATE,
 };
 
@@ -82,6 +87,7 @@ enum iot_easysetup_step {
 	IOT_EASYSETUP_STEP_LOG_SYSTEMINFO,
 	IOT_EASYSETUP_STEP_LOG_CREATE_DUMP,
 	IOT_EASYSETUP_STEP_LOG_GET_DUMP,
+	IOT_EASYSETUP_INVALID_STEP,
 };
 
 enum iot_connect_type {
@@ -135,8 +141,8 @@ struct iot_wifi_prov_data {
 struct iot_cloud_prov_data {
 	char *broker_url;				/**< @brief broker url for mqtt */
 	int  broker_port;				/**< @brief broker port num for mqtt */
-	struct iot_uuid location_id;	/**< @brief location id for ST(server) management */
-	struct iot_uuid room_id;		/**< @brief room id for ST(server) management */
+	char *location;
+	char *room;
 	char *label;					/**< @brief device name, got from the mobile */
 };
 
@@ -206,6 +212,11 @@ struct iot_registered_data {
  */
 struct iot_device_info {
 	char *firmware_version;		/**< @brief device's binary/firmware version */
+	char *model_number;			/**< @brief device's model number */
+	char *product_number;			/**< @brief device's product number */
+	char *marketing_name;			/**< @brief device's marketing name */
+	char *manufacturer_name;		/**< @brief device's manaufacturer name */
+	char *manufacturer_code;		/**< @brief device's manaufacturer code */
 };
 
 /**
@@ -227,6 +238,7 @@ struct iot_context {
 	iot_os_queue *easysetup_req_queue;	/**< @brief request queue for easy-setup process */
 	iot_os_queue *easysetup_resp_queue;	/**< @brief response queue for easy-setup process */
 	bool es_res_created;				/**< @brief to check easy-setup resources are created or not */
+	bool es_http_ready;					/**< @brief to check easy-setup-httpd is initialized or not */
 
 	iot_state_t curr_state;			/**< @brief reflect current iot_state */
 	iot_state_t req_state;			/**< @brief reflect requested iot_state */
@@ -267,9 +279,10 @@ struct iot_context {
 
 	unsigned int cmd_err;						/**< @brief current command handling error checking value */
 	unsigned int cmd_status;					/**< @brief current command status */
-	uint16_t cmd_count[IOT_COMMAND_TYPE_MAX];	/**< @brief current queued command counts */
+	uint16_t cmd_count[IOT_COMMAND_TYPE_MAX+1];	/**< @brief current queued command counts */
 
 	iot_os_thread main_thread; /**< @brief iot main task thread */
+	iot_os_mutex st_conn_lock; /**< @brief User level control API lock */
 };
 
 #endif /* _IOT_MAIN_H_ */

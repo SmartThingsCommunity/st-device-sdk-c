@@ -90,8 +90,10 @@ typedef enum
 typedef struct
 {
 	unsigned int start_addr;
+	unsigned int tail_addr;
 	unsigned int cur_addr;
 	size_t log_size;
+	size_t max_log_size;
 
 	iot_log_file_type_t file_type;
 } iot_log_file_handle_t;
@@ -180,6 +182,16 @@ iot_error_t iot_log_file_remove(iot_log_file_type_t type);
  */
 iot_log_file_handle_t *iot_log_file_open(size_t *filesize, iot_log_file_type_t file_type);
 
+/**
+ * @brief Reposition file position indicator
+ *
+ * @details This function update cur_addr to value calculated from offset and origin considering circular buffer
+ * @param[in] file_handle Handle to access file
+ * @param[in] seek_offset Number of bytes to offset from origin(can be positive or negative or zero).
+ * @param[in] origin_addr Position used as reference for the offset.
+ * @retval IOT_ERROR_NONE success
+ */
+iot_error_t iot_log_file_seek(iot_log_file_handle_t *file_handle, int seek_offset, unsigned int origin_addr);
 /**
  * @brief Read file data using file handle
  * 
