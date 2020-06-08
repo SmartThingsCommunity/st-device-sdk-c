@@ -125,6 +125,15 @@ DLLExport int st_mqtt_connect(st_mqtt_client client, st_mqtt_broker_info_t *brok
  */
 DLLExport int st_mqtt_publish(st_mqtt_client client, st_mqtt_msg *msg);
 
+/** MQTT Publish Async - send an MQTT publish packet async call.
+ * 			  if it fails, notify via callback function.
+ *  @param client - the client object to use
+ *  @param msg - the publish packet message to send
+ *  @return 0 - success
+ *  		others - error codes
+ */
+DLLExport int st_mqtt_publish_async(st_mqtt_client client, st_mqtt_msg *msg);
+
 /** MQTT Subscribe - send an MQTT subscribe packet and wait for suback before returning.
  *  @param client - the client object to use
  *  @param topic - the topic filter to subscribe to
