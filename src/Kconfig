@@ -217,7 +217,7 @@ endmenu
 choice STDK_IOT_CORE_FS_ENCRYPTION
     prompt "Choose FS encryption method"
     default STDK_IOT_CORE_FS_HW_ENCRYPTION
-    depends on STDK_IOT_CORE
+    depends on STDK_IOT_CORE_SECURITY_BACKEND_SOFTWARE
     help
        Choose the file system encryption method.
 
@@ -228,8 +228,6 @@ config STDK_IOT_CORE_FS_SW_ENCRYPTION
     bool "Software"
 config STDK_IOT_CORE_FS_HW_ENCRYPTION
     bool "Hardware"
-config STDK_IOT_CORE_FS_SE_ENCRYPTION
-    bool "Hardware (SE)"
 endchoice
 
 endmenu # Crypto
