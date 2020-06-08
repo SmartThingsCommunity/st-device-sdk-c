@@ -21,8 +21,6 @@
 #include "iot_main.h"
 #include "iot_debug.h"
 #include "security/iot_security_crypto.h"
-#include "security/iot_security_ecdh.h"
-#include "security/iot_security_manager.h"
 #include "security/iot_security_storage.h"
 #include "security/iot_security_helper.h"
 #include "security/backend/iot_security_be.h"

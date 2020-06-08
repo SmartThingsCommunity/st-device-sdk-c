@@ -26,24 +26,6 @@ extern "C" {
 #endif
 
 /**
-* @brief Contains information for ecdh
-*/
-struct iot_security_ecdh_params {
-	/**
-	 * @brief a pointer to a things secret key based on curve25519 (software backend only)
-	 */
-	iot_security_buffer_t t_seckey;
-	/**
-	 * @brief a pointer to a server public key based on curve25519
-	 */
-	iot_security_buffer_t c_pubkey;
-	/**
-	 * @brief a pointer to a random token as a salt
-	 */
-	iot_security_buffer_t salt;
-};
-
-/**
  * @brief	Initialize a ecdh sub system
  * @details	Create a required parameter holder for ecdh system and init the backend module
  * @retval	IOT_ERROR_NONE success

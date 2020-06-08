@@ -28,39 +28,10 @@ extern "C" {
 /**
  * @brief Types of cipher operation
  */
-enum iot_security_cipher_mode {
+typedef enum iot_security_cipher_mode {
 	IOT_SECURITY_CIPHER_DECRYPT = 1,
 	IOT_SECURITY_CIPHER_ENCRYPT,
-};
-
-/**
- * @brief Algorithm types of key
- */
-enum iot_security_key_type {
-	IOT_SECURITY_KEY_TYPE_UNKNOWN = 0,
-	IOT_SECURITY_KEY_TYPE_ED25519,
-	IOT_SECURITY_KEY_TYPE_RSA2048,
-	IOT_SECURITY_KEY_TYPE_AES256 = 3,       /* must be 3 because referenced in ss.lib */
-	IOT_SECURITY_KEY_TYPE_MAX,
-};
-
-/**
- * @brief Contains information of public key pair
- */
-struct iot_security_pk_params {
-	iot_security_key_type_t type;           /** @brief type of key pair */
-	iot_security_buffer_t pubkey;           /** @brief public key buffer structure of key pair */
-	iot_security_buffer_t seckey;           /** @brief private key buffer structure of key pair  */
-};
-
-/**
- * @brief Contains cipher information
- */
-struct iot_security_cipher_params {
-	iot_security_key_type_t type;           /** @brief algorithm type of cipher */
-	iot_security_buffer_t key;              /** @brief a pointer to a shared key buffer structure */
-	iot_security_buffer_t iv;               /** @brief a pointer to a IV buffer for AES cipher structure */
-};
+} iot_security_cipher_mode_t;
 
 /**
  * @brief	Initialize a pubkey module in crypto sub system

@@ -25,7 +25,6 @@
 #include <iot_nv_data.h>
 #include <security/iot_security_crypto.h>
 #include <security/iot_security_ecdh.h>
-#include <security/iot_security_manager.h>
 
 #include "TC_MOCK_functions.h"
 

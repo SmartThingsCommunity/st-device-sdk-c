@@ -36,17 +36,81 @@ extern "C" {
 #define IOT_SECURITY_SIGNATURE_RSA2048_LEN      256
 #define IOT_SECURITY_SIGNATURE_UNKNOWN_LEN      0
 
-typedef enum iot_security_key_type iot_security_key_type_t;
-typedef enum iot_security_cipher_mode iot_security_cipher_mode_t;
-typedef enum iot_security_key_id iot_security_key_id_t;
-typedef enum iot_security_cert_id iot_security_cert_id_t;
-
-typedef struct iot_security_pk_params iot_security_pk_params_t;
-typedef struct iot_security_cipher_params iot_security_cipher_params_t;
-typedef struct iot_security_key_params iot_security_key_params_t;
-typedef struct iot_security_ecdh_params iot_security_ecdh_params_t;
 typedef struct iot_security_storage_params iot_security_storage_params_t;
 typedef struct iot_security_be_context iot_security_be_context_t;
+
+/**
+* @brief Contains a buffer information
+*/
+typedef struct iot_security_buffer {
+	size_t len;                                     /**< @brief length of buffer */
+	unsigned char *p;                               /**< @brief pointer of buffer */
+} iot_security_buffer_t;
+
+/**
+ * @brief Algorithm types of key
+ */
+typedef enum iot_security_key_type {
+	IOT_SECURITY_KEY_TYPE_UNKNOWN = 0,
+	IOT_SECURITY_KEY_TYPE_ED25519,
+	IOT_SECURITY_KEY_TYPE_RSA2048,
+	IOT_SECURITY_KEY_TYPE_AES256 = 3,               /* must be 3 because referenced in ss.lib */
+	IOT_SECURITY_KEY_TYPE_MAX,
+} iot_security_key_type_t;
+
+typedef enum iot_security_key_id {
+	IOT_SECURITY_KEY_ID_UNKNOWN = 0,
+	IOT_SECURITY_KEY_ID_DEVICE_PUBLIC,
+	IOT_SECURITY_KEY_ID_DEVICE_PRIVATE,
+	IOT_SECURITY_KEY_ID_SHARED_SECRET,
+	IOT_SECURITY_KEY_ID_MAX,
+} iot_security_key_id_t;
+
+typedef enum iot_security_cert_id {
+	IOT_SECURITY_CERT_ID_UNKNOWN = 0,
+	IOT_SECURITY_CERT_ID_ROOT_CA,
+	IOT_SECURITY_CERT_ID_SUB_CA,
+	IOT_SECURITY_CERT_ID_DEVICE,
+	IOT_SECURITY_CERT_ID_MAX,
+} iot_security_cert_id_t;
+
+/**
+ * @brief Contains information of public key pair
+ */
+typedef struct iot_security_pk_params {
+	iot_security_key_type_t type;                   /** @brief type of key pair */
+	iot_security_buffer_t pubkey;                   /** @brief public key buffer structure of key pair */
+	iot_security_buffer_t seckey;                   /** @brief private key buffer structure of key pair  */
+} iot_security_pk_params_t;
+
+/**
+ * @brief Contains information for cipher operation
+ */
+typedef struct iot_security_cipher_params {
+	iot_security_key_type_t type;                   /** @brief algorithm type of cipher */
+	iot_security_buffer_t key;                      /** @brief a pointer to a shared key buffer structure */
+	iot_security_buffer_t iv;                       /** @brief a pointer to a IV buffer for AES cipher structure */
+} iot_security_cipher_params_t;
+
+/**
+ * @brief Contains key information
+ */
+typedef struct iot_security_key_params {
+	iot_security_key_id_t key_id;
+	union {
+		iot_security_pk_params_t pk;            /** @brief for signature */
+		iot_security_cipher_params_t cipher;	/** @brief for encryption */
+	} params;
+} iot_security_key_params_t;
+
+/**
+* @brief Contains ecdh information
+*/
+typedef struct iot_security_ecdh_params {
+	iot_security_buffer_t t_seckey;                 /** @brief a pointer to a things secret key based on curve25519 (software backend only) */
+	iot_security_buffer_t c_pubkey;                 /** @brief a pointer to a server public key based on curve25519 */
+	iot_security_buffer_t salt;                     /** @brief a pointer to a random token as a salt */
+} iot_security_ecdh_params_t;
 
 /**
  * @brief A handle of security context
@@ -64,14 +128,6 @@ typedef enum iot_security_sub_system {
 	IOT_SECURITY_SUB_MANAGER = (1 << 3),
 	IOT_SECURITY_SUB_STORAGE = (1 << 4),
 } iot_security_sub_system_t;
-
-/**
- * @brief Contains a buffer information
- */
-typedef struct iot_security_buffer {
-	size_t len;                                     /**< @brief length of buffer */
-	unsigned char *p;                               /**< @brief pointer of buffer */
-} iot_security_buffer_t;
 
 /**
  * @brief Contains a security context data

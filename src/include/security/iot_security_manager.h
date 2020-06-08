@@ -20,38 +20,10 @@
 #define _IOT_SECURITY_MANAGER_H_
 
 #include "iot_security_common.h"
-#include "iot_security_crypto.h"
 
 #ifdef __cplusplus
 extern "C" {
 #endif
-
-enum iot_security_cert_id {
-	IOT_SECURITY_CERT_ID_UNKNOWN = 0,
-	IOT_SECURITY_CERT_ID_ROOT_CA,
-	IOT_SECURITY_CERT_ID_SUB_CA,
-	IOT_SECURITY_CERT_ID_DEVICE,
-	IOT_SECURITY_CERT_ID_MAX,
-};
-
-enum iot_security_key_id {
-	IOT_SECURITY_KEY_ID_UNKNOWN = 0,
-	IOT_SECURITY_KEY_ID_DEVICE_PUBLIC,
-	IOT_SECURITY_KEY_ID_DEVICE_PRIVATE,
-	IOT_SECURITY_KEY_ID_SHARED_SECRET,
-	IOT_SECURITY_KEY_ID_MAX,
-};
-
-/**
- * @brief Contains key information
- */
-struct iot_security_key_params {
-	iot_security_key_id_t key_id;
-	union {
-		iot_security_pk_params_t pk;            /** @brief for signature */
-		iot_security_cipher_params_t cipher;	/** @brief for encryption */
-	} params;
-};
 
 /**
  * @brief	Initialize a manager sub system

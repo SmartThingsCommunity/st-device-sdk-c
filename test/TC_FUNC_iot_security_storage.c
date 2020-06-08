@@ -24,7 +24,6 @@
 #include <iot_error.h>
 #include <iot_nv_data.h>
 #include <security/iot_security_storage.h>
-#include "security/backend/iot_security_be.h"
 
 #include "TC_MOCK_functions.h"
 
