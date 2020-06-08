@@ -23,6 +23,7 @@
 #include <iot_error.h>
 #include <iot_crypto.h>
 #include <iot_wt.h>
+#include <security/iot_security_common.h>
 #include "TC_MOCK_functions.h"
 
 #define UNUSED(x) (void**)(x)
@@ -50,7 +51,7 @@ void _fill_test_pkinfo(iot_crypto_pk_info_t *pk_info)
 	iot_error_t err;
 	unsigned char *pubkey;
 	unsigned char *seckey;
-	size_t key_len = IOT_CRYPTO_ED25519_LEN;
+	size_t key_len = IOT_SECURITY_ED25519_LEN;
 	size_t olen;
 
 	pubkey = (unsigned char *)malloc(key_len);

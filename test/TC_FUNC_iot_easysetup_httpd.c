@@ -32,6 +32,7 @@
 #include <iot_crypto.h>
 #include <iot_easysetup.h>
 #include <iot_internal.h>
+#include <security/iot_security_common.h>
 #include "TC_UTIL_easysetup_common.h"
 #include "../src/easysetup/http/easysetup_http.h"
 

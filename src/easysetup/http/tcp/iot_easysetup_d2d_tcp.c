@@ -38,8 +38,8 @@
 iot_error_t iot_easysetup_create_ssid(struct iot_devconf_prov_data *devconf, char *ssid, size_t ssid_len)
 {
 	char *serial = NULL;
-	unsigned char hash_buffer[IOT_CRYPTO_SHA256_LEN] = { 0, };
-	unsigned char base64url_buffer[IOT_CRYPTO_CAL_B64_LEN(IOT_CRYPTO_SHA256_LEN)] = { 0, };
+	unsigned char hash_buffer[IOT_SECURITY_SHA256_LEN] = { 0, };
+	unsigned char base64url_buffer[IOT_CRYPTO_CAL_B64_LEN(IOT_SECURITY_SHA256_LEN)] = { 0, };
 	size_t base64_written = 0;
 	char ssid_build[33] = { 0, };
 	unsigned char last_sn[HASH_SIZE + 1] = { 0,};
@@ -165,7 +165,7 @@ iot_error_t _es_crypto_cipher_gen_iv(iot_crypto_cipher_info_t *iv_info)
 	size_t iv_len;
 	unsigned char *iv;
 
-	iv_len = IOT_CRYPTO_IV_LEN;
+	iv_len = IOT_SECURITY_IV_LEN;
 	if ((iv = (unsigned char *)iot_os_malloc(iv_len)) == NULL) {
 		IOT_ERROR("failed to malloc for iv");
 		err = IOT_ERROR_EASYSETUP_MEM_ALLOC_ERROR;
@@ -446,14 +446,14 @@ iot_error_t _es_keyinfo_handler(struct iot_context *ctx, char *in_payload, char 
 	char *enc_msg = NULL;
 	char *plain_msg = NULL;
 	char tmp[3] = {0};
-	char rand_asc[IOT_CRYPTO_SHA256_LEN * 2 + 1] = { 0 };
+	char rand_asc[IOT_SECURITY_SHA256_LEN * 2 + 1] = { 0 };
 	unsigned char val;
 	unsigned int j;
 	iot_crypto_pk_info_t pk_info;
 	iot_crypto_ecdh_params_t params;
-	unsigned char key_tsec_curve[IOT_CRYPTO_ED25519_LEN];
-	unsigned char key_spub_sign[IOT_CRYPTO_ED25519_LEN];
-	unsigned char key_rand[IOT_CRYPTO_SHA256_LEN];
+	unsigned char key_tsec_curve[IOT_SECURITY_ED25519_LEN];
+	unsigned char key_spub_sign[IOT_SECURITY_ED25519_LEN];
+	unsigned char key_rand[IOT_SECURITY_SHA256_LEN];
 	unsigned char *decode_buf = NULL;
 	unsigned char *master_secret = NULL;
 	unsigned char *p_spub_str = NULL;
@@ -488,7 +488,7 @@ iot_error_t _es_keyinfo_handler(struct iot_context *ctx, char *in_payload, char 
 		IOT_ES_DUMP(IOT_DEBUG_LEVEL_ERROR, IOT_DUMP_EASYSETUP_BASE64_DECODE_ERROR, err);
 		err = IOT_ERROR_EASYSETUP_BASE64_DECODE_ERROR;
 		goto exit;
-	} else if (spub_len != IOT_CRYPTO_ED25519_LEN) {
+	} else if (spub_len != IOT_SECURITY_ED25519_LEN) {
 		IOT_ERROR("invalid spub length : %u", spub_len);
 		IOT_ES_DUMP(IOT_DEBUG_LEVEL_ERROR, IOT_DUMP_EASYSETUP_BASE64_DECODE_ERROR, spub_len);
 		err = IOT_ERROR_EASYSETUP_BASE64_DECODE_ERROR;
@@ -549,21 +549,21 @@ iot_error_t _es_keyinfo_handler(struct iot_context *ctx, char *in_payload, char 
 		goto exit_pk;
 	}
 
-	master_secret = iot_os_malloc(IOT_CRYPTO_SECRET_LEN + 1);
+	master_secret = iot_os_malloc(IOT_SECURITY_SECRET_LEN + 1);
 	if (!master_secret) {
 		IOT_ERROR("failed to malloc for master_secret");
 		IOT_ES_DUMP(IOT_DEBUG_LEVEL_ERROR, IOT_DUMP_EASYSETUP_MEM_ALLOC_ERROR, 0);
 		err = IOT_ERROR_EASYSETUP_MEM_ALLOC_ERROR;
 		goto exit_pk;
 	}
-	memset(master_secret, '\0', IOT_CRYPTO_SECRET_LEN + 1);
+	memset(master_secret, '\0', IOT_SECURITY_SECRET_LEN + 1);
 
 	params.s_pubkey = key_spub_sign;
 	params.t_seckey = key_tsec_curve;
 	params.hash_token = key_rand;
 	params.hash_token_len = sizeof(key_rand);
 
-	err = iot_crypto_ecdh_gen_master_secret(master_secret, IOT_CRYPTO_SECRET_LEN, &params);
+	err = iot_crypto_ecdh_gen_master_secret(master_secret, IOT_SECURITY_SECRET_LEN, &params);
 	if (err) {
 		IOT_ERROR("master secret generation failed %d", err);
 		IOT_ES_DUMP(IOT_DEBUG_LEVEL_ERROR, IOT_DUMP_EASYSETUP_SHARED_KEY_CREATION_FAIL, err);
@@ -576,7 +576,7 @@ iot_error_t _es_keyinfo_handler(struct iot_context *ctx, char *in_payload, char 
 
 	ctx->es_crypto_cipher_info->type = IOT_CRYPTO_CIPHER_AES256;
 	ctx->es_crypto_cipher_info->key = master_secret;
-	ctx->es_crypto_cipher_info->key_len = IOT_CRYPTO_SECRET_LEN;
+	ctx->es_crypto_cipher_info->key_len = IOT_SECURITY_SECRET_LEN;
 
 	if ((recv = JSON_GET_OBJECT_ITEM(root, "datetime")) == NULL) {
 		IOT_INFO("no datetime info");

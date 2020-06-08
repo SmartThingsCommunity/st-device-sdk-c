@@ -29,10 +29,10 @@
 #define TEST_SRAND "OTI0NTU3YjQ5OTRjNmRiN2UxOTAzMzAwYzc1ZmRlMmFmNTYwMDJiYmZhOWQzMGZjZGMwZWJiMDYwYWZlOWIxZg=="
 
 struct tc_key_pair {
-    unsigned char curve25519_pk[IOT_CRYPTO_ED25519_LEN];
-    unsigned char ed25519_pk[IOT_CRYPTO_ED25519_LEN];
-    unsigned char curve25519_sk[IOT_CRYPTO_ED25519_LEN];
-    unsigned char ed25519_sk[IOT_CRYPTO_ED25519_LEN];
+    unsigned char curve25519_pk[IOT_SECURITY_ED25519_LEN];
+    unsigned char ed25519_pk[IOT_SECURITY_ED25519_LEN];
+    unsigned char curve25519_sk[IOT_SECURITY_ED25519_LEN];
+    unsigned char ed25519_sk[IOT_SECURITY_ED25519_LEN];
 };
 
 struct tc_key_pair* _generate_test_keypair(const unsigned char *pk_b64url, size_t pk_b64url_len,

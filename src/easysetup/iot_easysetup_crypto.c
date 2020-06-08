@@ -55,8 +55,8 @@ static iot_error_t _iot_es_pk_load_ed25519(iot_crypto_pk_info_t *pk_info)
 	unsigned char *pubkey = NULL;
 	size_t seckey_b64_len;
 	size_t pubkey_b64_len;
-	size_t seckey_len = IOT_CRYPTO_ED25519_LEN;
-	size_t pubkey_len = IOT_CRYPTO_ED25519_LEN;
+	size_t seckey_len = IOT_SECURITY_ED25519_LEN;
+	size_t pubkey_len = IOT_SECURITY_ED25519_LEN;
 
 	err = iot_nv_get_private_key((char **)&seckey_b64, &seckey_b64_len);
 	if (err) {
