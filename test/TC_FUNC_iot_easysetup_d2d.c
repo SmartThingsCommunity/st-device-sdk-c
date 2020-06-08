@@ -30,6 +30,7 @@
 #include <regex.h>
 #include <errno.h>
 #include <iot_util.h>
+#include <iot_debug.h>
 #include "TC_MOCK_functions.h"
 #include "TC_UTIL_easysetup_common.h"
 
@@ -601,6 +602,16 @@ void TC_STATIC_es_confirminfo_handler_qr_code(void **state)
     _free_cipher(server_cipher);
 }
 
+static void _wait_and_send_confirm(struct iot_context *context)
+{
+    unsigned int event;
+    event = iot_os_eventgroup_wait_bits(context->usr_events,
+        IOT_USR_INTERACT_BIT_PROV_CONFIRM, true, IOT_OS_MAX_DELAY);
+    if (event & IOT_USR_INTERACT_BIT_PROV_CONFIRM) {
+        iot_os_eventgroup_set_bits(context->iot_events, IOT_EVENT_BIT_EASYSETUP_CONFIRM);
+    }
+}
+
 void TC_STATIC_es_confirminfo_handler_button(void **state)
 {
     iot_error_t err;
@@ -608,6 +619,7 @@ void TC_STATIC_es_confirminfo_handler_button(void **state)
     char *out_payload;
     struct iot_context *context;
     iot_crypto_cipher_info_t *server_cipher;
+    iot_os_thread confirm_thread;
 
     // Given
     context = (struct iot_context *)*state;
@@ -618,7 +630,7 @@ void TC_STATIC_es_confirminfo_handler_button(void **state)
     server_cipher = _generate_server_cipher(context->es_crypto_cipher_info->iv, context->es_crypto_cipher_info->iv_len);
     in_payload = _generate_confirminfo_payload(server_cipher, OVF_BIT_BUTTON, NULL);
     out_payload = NULL;
-    iot_os_eventgroup_set_bits(context->iot_events, IOT_EVENT_BIT_EASYSETUP_CONFIRM);
+    iot_os_thread_create(_wait_and_send_confirm, "TC confirminfo", 2048, context, 5, &confirm_thread);
     // When
     err = _es_confirminfo_handler(context, in_payload, &out_payload);
     // Then
@@ -626,6 +638,7 @@ void TC_STATIC_es_confirminfo_handler_button(void **state)
     assert_empty_json(server_cipher, out_payload);
 
     // Teardown
+    iot_os_thread_delete(confirm_thread);
     free(in_payload);
     free(out_payload);
     iot_os_eventgroup_delete(context->usr_events);
