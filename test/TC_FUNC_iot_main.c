@@ -171,7 +171,7 @@ void TC_st_conn_init_success(void **state)
     assert_string_equal(internal_context->devconf.vid, TEST_ONBOARDING_VID);
     assert_string_equal(internal_context->devconf.setupid, TEST_ONBOARDING_SETUPID);
     assert_string_equal(internal_context->devconf.device_type, TEST_ONBOARDING_DEVICETYPEID);
-    assert_int_equal(internal_context->devconf.pk_type, IOT_CRYPTO_PK_ED25519);
+    assert_int_equal(internal_context->devconf.pk_type, IOT_SECURITY_KEY_TYPE_ED25519);
     assert_string_equal(internal_context->device_info.firmware_version, TEST_FIRMWARE_VERSION);
     assert_non_null(internal_context->state_timer);
     assert_non_null(internal_context->cmd_queue);
