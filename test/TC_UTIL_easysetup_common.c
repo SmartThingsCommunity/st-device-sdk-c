@@ -169,10 +169,10 @@ struct tc_key_pair* _generate_test_keypair(const unsigned char *pk_b64url, size_
     assert_int_equal(err, IOT_ERROR_NONE);
     assert_int_equal(out_length, IOT_SECURITY_ED25519_LEN);
 
-    err = iot_crypto_ed25519_convert_pubkey(keypair->ed25519_pk, keypair->curve25519_pk);
+    err = iot_security_ed25519_convert_pubkey(keypair->ed25519_pk, keypair->curve25519_pk);
     assert_int_equal(err, IOT_ERROR_NONE);
 
-    err = iot_crypto_ed25519_convert_seckey(keypair->ed25519_sk, keypair->curve25519_sk);
+    err = iot_security_ed25519_convert_seckey(keypair->ed25519_sk, keypair->curve25519_sk);
     assert_int_equal(err, IOT_ERROR_NONE);
 
     return keypair;

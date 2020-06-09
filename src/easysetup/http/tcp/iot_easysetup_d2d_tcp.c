@@ -83,7 +83,7 @@ iot_error_t iot_easysetup_create_ssid(struct iot_devconf_prov_data *devconf, cha
 		memcpy(devconf->hashed_sn, base64url_buffer, base64_written);
 		memcpy(hashed_sn, base64url_buffer, HASH_SIZE);
 	} else {
-		err = IOT_ERROR_CRYPTO_BASE64_URLSAFE;
+		err = IOT_ERROR_SECURITY_BASE64_URL_ENCODE;
 		goto out;
 	}
 	hashed_sn[HASH_SIZE] = '\0';
