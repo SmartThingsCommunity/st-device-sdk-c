@@ -56,7 +56,7 @@ iot_error_t iot_easysetup_create_ssid(struct iot_devconf_prov_data *devconf, cha
 		IOT_ERROR("Failed to get serial number (%d)", err);
 		goto out;
 	}
-	err = iot_crypto_sha256((unsigned char*)serial, length, hash_buffer);
+	err = iot_security_sha256((unsigned char*)serial, length, hash_buffer, sizeof(hash_buffer));
 	if (err != IOT_ERROR_NONE) {
 		IOT_ERROR("Failed sha256 (%d)", err);
 		goto out;
