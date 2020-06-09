@@ -763,7 +763,7 @@ static iot_error_t _iot_jwt_create_b64s(iot_security_context_t *security_context
 	b64hp_buf.len = hp_len;
 	err = iot_security_pk_sign(security_context, &b64hp_buf, &sig_buf);
 	if (err) {
-		IOT_ERROR("iot_crypto_pk_sign returned error : %d", err);
+		IOT_ERROR("iot_security_pk_sign returned error : %d", err);
 		goto exit;
 	}
 
