@@ -193,17 +193,6 @@ int TEST_FUNC_iot_easysetup_d2d(void)
     return cmocka_run_group_tests_name("iot_easysetup_d2d.c", tests, NULL, NULL);
 }
 
-int TEST_FUNC_iot_easysetup_crypto(void)
-{
-    const struct CMUnitTest tests[] = {
-            cmocka_unit_test_setup_teardown(TC_iot_es_crypto_load_pk_success, TC_iot_easysetup_crypto_setup, TC_iot_easysetup_crypto_teardown),
-            cmocka_unit_test(TC_iot_es_crypto_load_pk_invalid_parameters),
-            cmocka_unit_test(TC_iot_es_crypto_init_pk),
-    };
-    return cmocka_run_group_tests_name("iot_easysetup_crypto.c", tests, NULL, NULL);
-
-}
-
 int TEST_FUNC_iot_main()
 {
     const struct CMUnitTest tests[] = {
@@ -442,7 +431,6 @@ int main(void) {
     err += TEST_FUNC_iot_util();
     err += TEST_FUNC_iot_uuid();
     err += TEST_FUNC_iot_easysetup_d2d();
-    err += TEST_FUNC_iot_easysetup_crypto();
     err += TEST_FUNC_iot_main();
     err += TEST_FUNC_iot_mqtt_client();
     err += TEST_FUNC_iot_security_common();

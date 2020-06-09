@@ -254,29 +254,6 @@ iot_error_t iot_es_connect(struct iot_context *ctx, int conn_type);
 iot_error_t iot_es_disconnect(struct iot_context *ctx, int conn_type);
 
 /**
- * @brief	initialize the buffer for pubkey information
- * @details	this function uses to initialize
- * @param[in]	pk_info		pubkey information structure to initialize
- * @param[in]	type		pubkey type, RSA or ED25519
- */
-void iot_es_crypto_init_pk(iot_crypto_pk_info_t *pk_info, iot_crypto_pk_type_t type);
-
-/**
- * @brief	easy setup crypto to load pubkey
- * @details	this function loads pubkey information
- * @param[in]	pk_info			pubkey information pointer for loading
- * @retval	IOT_ERROR_NONE		success.
- */
-iot_error_t iot_es_crypto_load_pk(iot_crypto_pk_info_t *pk_info);
-
-/**
- * @brief	easy setup crypto to free pubkey
- * @details	this function frees the loaded pubkey information
- * @param[in]	pk_info		loaded pubkey information pointer
- */
-void iot_es_crypto_free_pk(iot_crypto_pk_info_t *pk_info);
-
-/**
  * @brief	callback for mqtt command msg
  * @details	this function is used to handle command message from server
  * @param[in]	cap_handle_list		allocated capability handle list

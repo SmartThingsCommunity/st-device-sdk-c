@@ -146,13 +146,6 @@ void TC_iot_nv_erase_internal_failure(void** state);
 void TC_iot_nv_get_data_from_device_info_failure(void** state);
 void TC_iot_nv_get_data_from_device_info_success(void** state);
 
-// TCs for iot_easysetup_crypto.c
-int TC_iot_easysetup_crypto_setup(void **state);
-int TC_iot_easysetup_crypto_teardown(void **state);
-void TC_iot_es_crypto_load_pk_success(void** state);
-void TC_iot_es_crypto_load_pk_invalid_parameters(void **state);
-void TC_iot_es_crypto_init_pk(void **state);
-
 // TCs for iot_easysetup_d2d.c
 int TC_iot_easysetup_common_setup(void **state);
 int TC_iot_easysetup_common_teardown(void **state);

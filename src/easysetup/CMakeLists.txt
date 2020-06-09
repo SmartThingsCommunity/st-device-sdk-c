@@ -14,7 +14,6 @@ endif()
 
 target_sources(iotcore
                PRIVATE
-               iot_easysetup_crypto.c
                iot_easysetup_st_mqtt.c
                ${EASYSETUP_D2D_SOURCES}
                )
