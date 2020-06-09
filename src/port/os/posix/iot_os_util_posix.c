@@ -228,8 +228,8 @@ void iot_os_eventgroup_delete(iot_os_eventgroup* eventgroup_handle)
 	free(eventgroup);
 }
 
-unsigned int iot_os_eventgroup_wait_bits(iot_os_eventgroup* eventgroup_handle,
-		const unsigned int bits_to_wait_for, const int clear_on_exit, const unsigned int wait_time_ms)
+unsigned char iot_os_eventgroup_wait_bits(iot_os_eventgroup* eventgroup_handle,
+		const unsigned char bits_to_wait_for, const int clear_on_exit, const unsigned int wait_time_ms)
 {
 	eventgroup_t *eventgroup = eventgroup_handle;
 	fd_set readfds;

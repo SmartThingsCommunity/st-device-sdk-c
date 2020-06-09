@@ -650,7 +650,7 @@ void TC_STATIC_es_confirminfo_handler_qr_code(void **state)
 
 static void _wait_and_send_confirm(struct iot_context *context)
 {
-    unsigned int event;
+    unsigned char event;
     event = iot_os_eventgroup_wait_bits(context->usr_events,
         IOT_USR_INTERACT_BIT_PROV_CONFIRM, true, IOT_OS_MAX_DELAY);
     if (event & IOT_USR_INTERACT_BIT_PROV_CONFIRM) {

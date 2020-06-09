@@ -743,7 +743,7 @@ STATIC_FUNCTION
 iot_error_t _es_confirm_check_manager(struct iot_context *ctx, enum ownership_validation_feature confirm_feature, char *sn)
 {
 	char *dev_sn = NULL;
-	unsigned int curr_event = 0;
+	unsigned char curr_event = 0;
 	size_t devsn_len;
 	iot_error_t err = IOT_ERROR_NONE;
 
@@ -800,7 +800,7 @@ iot_error_t _es_confirm_check_manager(struct iot_context *ctx, enum ownership_va
 			IOT_ES_DUMP(IOT_DEBUG_LEVEL_INFO, IOT_DUMP_EASYSETUP_OTMTYPE_BUTTON, 0);
 
 			curr_event = iot_os_eventgroup_wait_bits(ctx->iot_events, IOT_EVENT_BIT_EASYSETUP_CONFIRM, false, ES_CONFIRM_MAX_DELAY);
-			IOT_DEBUG("curr_event = %d", curr_event);
+			IOT_DEBUG("curr_event = 0x%x", curr_event);
 
 			if (curr_event & IOT_EVENT_BIT_EASYSETUP_CONFIRM) {
 				IOT_INFO("confirm");

@@ -895,7 +895,7 @@ static void _throw_away_all_pub_queue(struct iot_context *ctx)
 static void _iot_main_task(struct iot_context *ctx)
 {
 	struct iot_command cmd;
-	unsigned int curr_events;
+	unsigned char curr_events;
 	iot_error_t err = IOT_ERROR_NONE;
 	iot_cap_msg_t final_msg;
 	struct iot_easysetup_payload easysetup_req;
@@ -1541,7 +1541,7 @@ int st_conn_start(IOT_CTX *iot_ctx, st_status_cb status_cb,
 	struct iot_state_data state_data;
 	iot_error_t iot_err;
 	struct iot_context *ctx = (struct iot_context*)iot_ctx;
-	unsigned int curr_events;
+	unsigned char curr_events;
 
 	if (!ctx)
 		return IOT_ERROR_BAD_REQ;

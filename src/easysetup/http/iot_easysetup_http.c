@@ -184,7 +184,7 @@ iot_error_t _iot_easysetup_gen_post_payload(struct iot_context *ctx, int cmd, ch
 	iot_error_t err = IOT_ERROR_NONE;
 	struct iot_easysetup_payload response;
 	int cur_step;
-	unsigned int curr_event;
+	unsigned char curr_event;
 
 	if (!in_payload) {
 		IOT_ERROR("Invalid payload");
