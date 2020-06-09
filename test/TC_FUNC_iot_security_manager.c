@@ -27,6 +27,7 @@
 #include <root_ca.h>
 #include <bsp/iot_bsp_random.h>
 #include <security/iot_security_manager.h>
+#include <security/iot_security_crypto.h>
 
 #include "TC_MOCK_functions.h"
 
