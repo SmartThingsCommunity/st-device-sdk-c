@@ -84,9 +84,9 @@ void _delete_easysetup_resources_all(struct iot_context *ctx)
 		iot_os_free(ctx->pin);
 		ctx->pin = NULL;
 	}
-	if (ctx->es_crypto_cipher_info) {
-		iot_os_free(ctx->es_crypto_cipher_info);
-		ctx->es_crypto_cipher_info = NULL;
+	if (ctx->easysetup_security_context) {
+		iot_security_deinit(ctx->easysetup_security_context);
+		ctx->easysetup_security_context = NULL;
 	}
 	if (ctx->easysetup_req_queue) {
 		iot_os_queue_delete(ctx->easysetup_req_queue);
@@ -121,13 +121,11 @@ iot_error_t _create_easysetup_resources(struct iot_context *ctx, iot_pin_t *pin_
 		}
 	}
 
-	if ((ctx->es_crypto_cipher_info = (iot_crypto_cipher_info_t *) iot_os_malloc(sizeof(iot_crypto_cipher_info_t))) == NULL) {
-		IOT_ERROR("failed to malloc for cipher info");
+	ctx->easysetup_security_context = iot_security_init();
+	if (ctx->easysetup_security_context == NULL) {
 		IOT_DUMP_MAIN(ERROR, BASE, 0xDEADBEEF);
-		ret = IOT_ERROR_MEM_ALLOC;
+		ret = IOT_ERROR_SECURITY_INIT;
 		goto create_fail;
-	} else {
-		memset(ctx->es_crypto_cipher_info, 0, sizeof(iot_crypto_cipher_info_t));
 	}
 
 	if (!ctx->easysetup_req_queue) {

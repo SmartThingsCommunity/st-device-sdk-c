@@ -26,6 +26,7 @@
 #include "iot_crypto.h"
 #include "iot_net.h"
 #include "iot_mqtt.h"
+#include "security/iot_security_crypto.h"
 
 #define IOT_UUID_BYTES				(16)
 
@@ -257,7 +258,7 @@ struct iot_context {
 	struct iot_devconf_prov_data devconf;	/**< @brief allocated device configuration data */
 	struct iot_device_info device_info;		/**< @brief allocated device information data */
 
-	iot_crypto_cipher_info_t *es_crypto_cipher_info;	/**< @brief cipher context ref. for easy-setup process */
+	iot_security_context_t *easysetup_security_context;	/**< @brief security context ref. for easy-setup process */
 
 	struct iot_registered_data iot_reg_data;	/**< @brief allocated registration data from server */
 	void *es_httpd_handle;						/**< @brief httpd handler for easy-setup process */
