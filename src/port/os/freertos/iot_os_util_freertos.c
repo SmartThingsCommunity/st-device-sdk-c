@@ -101,9 +101,9 @@ unsigned int iot_os_eventgroup_wait_bits(iot_os_eventgroup* eventgroup_handle,
 }
 
 int iot_os_eventgroup_set_bits(iot_os_eventgroup* eventgroup_handle,
-		const unsigned int bits_to_set)
+		const unsigned char bits_to_set)
 {
-	xEventGroupSetBits(eventgroup_handle, bits_to_set);
+	xEventGroupSetBits(eventgroup_handle, (const EventBits_t) bits_to_set);
 	return IOT_OS_TRUE;
 }
 

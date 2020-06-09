@@ -143,9 +143,9 @@ unsigned int iot_os_eventgroup_wait_bits(iot_os_eventgroup *eventgroup_handle,
 }
 
 int iot_os_eventgroup_set_bits(iot_os_eventgroup *eventgroup_handle,
-		const unsigned int bits_to_set)
+		const unsigned char bits_to_set)
 {
-	if (event_group_set_bits(eventgroup_handle, bits_to_set) == -1) {
+	if (event_group_set_bits(eventgroup_handle, (const event_bits_t) bits_to_set) == -1) {
 	    return IOT_OS_FALSE;
 	} else {
 	    return IOT_OS_TRUE;
