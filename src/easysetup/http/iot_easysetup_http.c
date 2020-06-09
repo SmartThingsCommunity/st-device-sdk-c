@@ -450,6 +450,8 @@ void iot_easysetup_deinit(struct iot_context *ctx)
 		log_buffer = NULL;
 	}
 #endif
+	iot_os_eventgroup_clear_bits(ctx->iot_events, IOT_EVENT_BIT_EASYSETUP_RESP);
+
 	IOT_REMARK("IOT_STATE_PROV_ES_DONE");
 	IOT_ES_DUMP(IOT_DEBUG_LEVEL_INFO, IOT_DUMP_EASYSETUP_DEINIT, 1);
 }
