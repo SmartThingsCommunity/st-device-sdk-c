@@ -152,7 +152,7 @@ iot_error_t iot_easysetup_request(struct iot_context *ctx,
 		ret = iot_os_queue_send(ctx->easysetup_req_queue, &request, 0);
 		if (ret != IOT_OS_TRUE) {
 			IOT_ERROR("Cannot put the request into easysetup_req_queue");
-			err = IOT_ERROR_BAD_REQ;
+			err = IOT_ERROR_EASYSETUP_QUEUE_SEND_ERROR;
 		} else {
 			iot_os_eventgroup_set_bits(ctx->iot_events,
 				IOT_EVENT_BIT_EASYSETUP_REQ);
