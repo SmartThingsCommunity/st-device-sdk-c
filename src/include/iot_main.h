@@ -23,7 +23,6 @@
 #include "iot_error.h"
 #include "iot_bsp_wifi.h"
 #include "iot_os_util.h"
-#include "iot_crypto.h"
 #include "iot_net.h"
 #include "iot_mqtt.h"
 #include "security/iot_security_crypto.h"

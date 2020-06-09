@@ -83,36 +83,6 @@ int TEST_FUNC_iot_capability(void)
     return cmocka_run_group_tests_name("iot_capability.c", tests, NULL, NULL);
 }
 
-int TEST_FUNC_iot_crypto(void)
-{
-    const struct CMUnitTest tests[] = {
-            cmocka_unit_test(TC_iot_crypto_pk_init_null_parameter),
-            cmocka_unit_test(TC_iot_crypto_pk_init_ed25519),
-            cmocka_unit_test(TC_iot_crypto_pk_init_invalid_type),
-            cmocka_unit_test(TC_iot_crypto_pk_free),
-            cmocka_unit_test_setup_teardown(TC_iot_crypto_pk_ed25519_success, TC_iot_crypto_pk_setup, TC_iot_crypto_pk_teardown),
-            cmocka_unit_test_setup_teardown(TC_iot_crypto_cipher_aes_null_parameter, TC_iot_crypto_cipher_aes_setup, TC_iot_crypto_cipher_aes_teardown),
-            cmocka_unit_test_setup_teardown(TC_iot_crypto_cipher_aes_invalid_parameter, TC_iot_crypto_cipher_aes_setup, TC_iot_crypto_cipher_aes_teardown),
-            cmocka_unit_test_setup_teardown(TC_iot_crypto_cipher_aes_success, TC_iot_crypto_cipher_aes_setup, TC_iot_crypto_cipher_aes_teardown),
-            cmocka_unit_test(TC_iot_crypto_cipher_get_align_size),
-            cmocka_unit_test_setup_teardown(TC_iot_crypto_ecdh_invalid_parameter, TC_iot_crypto_ecdh_setup, TC_iot_crypto_ecdh_teardown),
-            cmocka_unit_test_setup_teardown(TC_iot_crypto_ecdh_success, TC_iot_crypto_ecdh_setup, TC_iot_crypto_ecdh_teardown),
-            cmocka_unit_test_setup_teardown(TC_iot_crypto_ed25519_keypair_invalid_parameter, TC_iot_crypto_ed25519_keypair_setup, TC_iot_crypto_ed25519_keypair_teardown),
-            cmocka_unit_test_setup_teardown(TC_iot_crypto_ed25519_keypair_success, TC_iot_crypto_ed25519_keypair_setup, TC_iot_crypto_ed25519_keypair_teardown),
-            cmocka_unit_test(TC_iot_crypto_ed25519_convert_invalid_parameter),
-            cmocka_unit_test(TC_iot_crypto_ed25519_convert_success),
-            cmocka_unit_test(TC_iot_crypto_base64_invalid_parameter),
-            cmocka_unit_test(TC_iot_crypto_base64_failure),
-            cmocka_unit_test(TC_iot_crypto_base64_encode_success),
-            cmocka_unit_test(TC_iot_crypto_base64_decode_success),
-            cmocka_unit_test(TC_iot_crypto_base64_urlsafe_encode_success),
-            cmocka_unit_test(TC_iot_crypto_base64_urlsafe_decode_success),
-            cmocka_unit_test(TC_iot_crypto_base64_buffer_size),
-            cmocka_unit_test(TC_iot_parse_noti_data_rate_limit),
-    };
-    return cmocka_run_group_tests_name("iot_crypto.c", tests, NULL, NULL);
-}
-
 int TEST_FUNC_iot_nv_data(void)
 {
     const struct CMUnitTest tests[] = {
@@ -423,7 +393,6 @@ int main(void) {
 
     err += TEST_FUNC_iot_api();
     err += TEST_FUNC_iot_capability();
-    err += TEST_FUNC_iot_crypto();
     err += TEST_FUNC_iot_nv_data();
     err += TEST_FUNC_iot_util();
     err += TEST_FUNC_iot_uuid();

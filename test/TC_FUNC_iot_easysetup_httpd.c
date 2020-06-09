@@ -29,7 +29,6 @@
 #include <arpa/inet.h>
 #include <iot_main.h>
 #include <external/JSON.h>
-#include <iot_crypto.h>
 #include <security/iot_security_crypto.h>
 #include <security/iot_security_helper.h>
 #include <iot_easysetup.h>

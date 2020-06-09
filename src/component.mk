@@ -50,17 +50,6 @@ endif
 COMPONENT_SRCDIRS += deps/cbor/tinycbor/src
 COMPONENT_ADD_INCLUDEDIRS += deps/cbor/tinycbor/src
 
-COMPONENT_SRCDIRS += crypto
-ifdef CONFIG_STDK_IOT_CORE_USE_MBEDTLS
-COMPONENT_SRCDIRS += crypto/mbedtls
-endif
-ifdef CONFIG_STDK_IOT_CORE_FS_SW_ENCRYPTION
-COMPONENT_ADD_LDFLAGS += $(COMPONENT_PATH)/crypto/ss/lib/libiot_crypto_ss.a
-COMPONENT_ADD_LINKER_DEPS := $(COMPONENT_PATH)/crypto/ss/lib/libiot_crypto_ss.a
-else
-COMPONENT_SRCDIRS += crypto/ss
-endif
-
 COMPONENT_SRCDIRS += security
 COMPONENT_SRCDIRS += security/helper/libsodium
 ifdef CONFIG_STDK_IOT_CORE_USE_MBEDTLS

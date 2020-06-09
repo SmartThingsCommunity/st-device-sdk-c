@@ -94,38 +94,6 @@ void TC_iot_parse_noti_data_expired_jwt(void** state);
 void TC_iot_parse_noti_data_quota_reached(void** state);
 void TC_iot_parse_noti_data_rate_limit(void** state);
 
-// TCs for iot_crypto.c
-int TC_iot_crypto_pk_setup(void **state);
-int TC_iot_crypto_pk_teardown(void **state);
-void TC_iot_crypto_pk_init_null_parameter(void **state);
-void TC_iot_crypto_pk_init_ed25519(void **state);
-void TC_iot_crypto_pk_init_invalid_type(void **state);
-void TC_iot_crypto_pk_free(void **state);
-void TC_iot_crypto_pk_ed25519_success(void **state);
-int TC_iot_crypto_cipher_aes_setup(void **state);
-int TC_iot_crypto_cipher_aes_teardown(void **state);
-void TC_iot_crypto_cipher_aes_null_parameter(void **state);
-void TC_iot_crypto_cipher_aes_invalid_parameter(void **state);
-void TC_iot_crypto_cipher_aes_success(void **state);
-void TC_iot_crypto_cipher_get_align_size(void **state);
-int TC_iot_crypto_ecdh_setup(void **state);
-int TC_iot_crypto_ecdh_teardown(void **state);
-void TC_iot_crypto_ecdh_invalid_parameter(void **state);
-void TC_iot_crypto_ecdh_success(void **state);
-int TC_iot_crypto_ed25519_keypair_setup(void **state);
-int TC_iot_crypto_ed25519_keypair_teardown(void **state);
-void TC_iot_crypto_ed25519_keypair_invalid_parameter(void **state);
-void TC_iot_crypto_ed25519_keypair_success(void **state);
-void TC_iot_crypto_ed25519_convert_invalid_parameter(void **state);
-void TC_iot_crypto_ed25519_convert_success(void **state);
-void TC_iot_crypto_base64_invalid_parameter(void **state);
-void TC_iot_crypto_base64_failure(void **state);
-void TC_iot_crypto_base64_encode_success(void **state);
-void TC_iot_crypto_base64_decode_success(void **state);
-void TC_iot_crypto_base64_urlsafe_encode_success(void **state);
-void TC_iot_crypto_base64_urlsafe_decode_success(void **state);
-void TC_iot_crypto_base64_buffer_size(void **state);
-
 // TCs for iot_nv_data.c
 int TC_iot_nv_data_setup(void **state);
 int TC_iot_nv_data_teardown(void **state);

@@ -20,7 +20,6 @@
 #define _IOT_INTERNAL_H_
 
 #include "iot_capability.h"
-#include "iot_crypto.h"
 #include "iot_serialize.h"
 #include "iot_bsp_wifi.h"
 
