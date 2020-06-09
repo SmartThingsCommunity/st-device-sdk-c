@@ -37,11 +37,11 @@ struct tc_key_pair {
 
 struct tc_key_pair* _generate_test_keypair(const unsigned char *pk_b64url, size_t pk_b64url_len,
                                             const unsigned char *sk_b64url, size_t sk_b64url_len);
-char *_decode_and_decrypt_message(iot_crypto_cipher_info_t *cipher, unsigned char *b64url_aes256_message, size_t b64url_aes256_message_length);
-char *_encrypt_and_encode_message(iot_crypto_cipher_info_t *cipher, unsigned char *message, size_t message_length);
-iot_crypto_cipher_info_t* _generate_server_cipher(unsigned char *iv_data, size_t iv_length);
-iot_crypto_cipher_info_t* _generate_device_cipher(unsigned char *iv_data, size_t iv_length);
-void _free_cipher(iot_crypto_cipher_info_t *cipher);
+char *_decode_and_decrypt_message(iot_security_cipher_params_t *cipher, unsigned char *b64url_aes256_message, size_t b64url_aes256_message_length);
+char *_encrypt_and_encode_message(iot_security_cipher_params_t *cipher, unsigned char *message, size_t message_length);
+iot_security_cipher_params_t* _generate_server_cipher(unsigned char *iv_data, size_t iv_length);
+iot_security_cipher_params_t* _generate_device_cipher(unsigned char *iv_data, size_t iv_length);
+void _free_cipher(iot_security_cipher_params_t *cipher);
 
 unsigned char * _get_server_test_pubkey();
 
@@ -49,7 +49,8 @@ int TC_iot_easysetup_common_setup(void **state);
 int TC_iot_easysetup_common_teardown(void **state);
 
 char *_generate_post_keyinfo_payload(int year, char *time_to_set, size_t time_to_set_len);
-void assert_keyinfo(char *payload, iot_crypto_cipher_info_t *server_cipher, unsigned int expected_otm_support);
+void assert_iv_buffer(iot_security_buffer_t iv_buffer);
+void assert_keyinfo(char *payload, iot_security_cipher_params_t *server_cipher, unsigned int expected_otm_support);
 
 
 #endif //ST_DEVICE_SDK_C_TC_UTIL_EASYSETUP_COMMON_H

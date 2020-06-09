@@ -30,6 +30,8 @@
 #include <iot_main.h>
 #include <external/JSON.h>
 #include <iot_crypto.h>
+#include <security/iot_security_crypto.h>
+#include <security/iot_security_helper.h>
 #include <iot_easysetup.h>
 #include <iot_internal.h>
 #include <security/iot_security_common.h>
@@ -54,6 +56,10 @@ int TC_iot_easysetup_httpd_setup(void **state)
     assert_non_null(context->easysetup_req_queue);
     context->easysetup_resp_queue = iot_os_queue_create(1, sizeof(struct iot_easysetup_payload));
     assert_non_null(context->easysetup_resp_queue);
+    context->easysetup_security_context = iot_security_init();
+    assert_non_null(context->easysetup_security_context);
+    err = iot_security_cipher_init(context->easysetup_security_context);
+    assert_int_equal(err, IOT_ERROR_NONE);
 
     err = iot_easysetup_init(context);
     assert_int_equal(err, IOT_ERROR_NONE);
@@ -74,6 +80,8 @@ int TC_iot_easysetup_httpd_teardown(void **state)
     iot_os_queue_delete(context->easysetup_req_queue);
     iot_os_queue_delete(context->cmd_queue);
     iot_os_eventgroup_delete(context->iot_events);
+    iot_security_cipher_deinit(context->easysetup_security_context);
+    iot_security_deinit(context->easysetup_security_context);
 
     return TC_iot_easysetup_common_teardown((void**) &context);
 }
@@ -282,7 +290,7 @@ void TC_iot_easysetup_httpd_deviceinfo_success(void **state)
     close(sock);
 }
 
-void assert_keyinfo_http_response(char* buffer, iot_crypto_cipher_info_t *server_cipher, unsigned int expected_otm_support)
+void assert_keyinfo_http_response(char* buffer, iot_security_cipher_params_t *server_cipher, unsigned int expected_otm_support)
 {
     int code;
     char *body;
@@ -294,7 +302,7 @@ void assert_keyinfo_http_response(char* buffer, iot_crypto_cipher_info_t *server
 }
 
 extern int ref_step;
-extern iot_error_t _es_crypto_cipher_gen_iv(iot_crypto_cipher_info_t *iv_info);
+
 void TC_iot_easysetup_httpd_keyinfo_single_transfer_success(void **state)
 {
     int sock;
@@ -307,19 +315,22 @@ void TC_iot_easysetup_httpd_keyinfo_single_transfer_success(void **state)
     char *post_body;
     char *post_message;
     size_t post_message_len = 0;
-    iot_crypto_cipher_info_t *server_cipher;
+    iot_security_cipher_params_t *device_cipher;
+    iot_security_cipher_params_t *server_cipher;
     char *time_to_set;
 
     // Given
-    err = _es_crypto_cipher_gen_iv(context->es_crypto_cipher_info);
+    device_cipher = _generate_device_cipher(NULL, 0);
+    assert_non_null(device_cipher);
+    err = iot_security_cipher_set_params(context->easysetup_security_context, device_cipher);
     assert_int_equal(err, IOT_ERROR_NONE);
+    server_cipher = _generate_server_cipher(device_cipher->iv.p, device_cipher->iv.len);
+    assert_non_null(server_cipher);
     time_to_set = calloc(sizeof(char), 11);
     assert_non_null(time_to_set);
     post_body = _generate_post_keyinfo_payload(2021, time_to_set, 11);
     assert_non_null(post_body);
     expect_string(__wrap_iot_bsp_system_set_time_in_sec, time_in_sec, time_to_set);
-    server_cipher = _generate_server_cipher(context->es_crypto_cipher_info->iv,
-                                            context->es_crypto_cipher_info->iv_len);
     post_message_len = strlen(post_header) + strlen(post_body) + strlen("4096\r\n\r\n") + 1;
     post_message = calloc(1, post_message_len);
     assert_non_null(post_message);
@@ -355,6 +366,7 @@ void TC_iot_easysetup_httpd_keyinfo_single_transfer_success(void **state)
     free(time_to_set);
     free(post_message);
     free(post_body);
+    _free_cipher(device_cipher);
     _free_cipher(server_cipher);
     close(sock);
 }
@@ -371,19 +383,22 @@ void TC_iot_easysetup_httpd_keyinfo_separated_transfer_success(void **state)
     char *post_body;
     char *post_header;
     size_t post_header_len = 0;
-    iot_crypto_cipher_info_t *server_cipher;
+    iot_security_cipher_params_t *device_cipher;
+    iot_security_cipher_params_t *server_cipher;
     char *time_to_set;
 
     // Given
-    err = _es_crypto_cipher_gen_iv(context->es_crypto_cipher_info);
+    device_cipher = _generate_device_cipher(NULL, 0);
+    assert_non_null(device_cipher);
+    err = iot_security_cipher_set_params(context->easysetup_security_context, device_cipher);
     assert_int_equal(err, IOT_ERROR_NONE);
+    server_cipher = _generate_server_cipher(device_cipher->iv.p, device_cipher->iv.len);
+    assert_non_null(server_cipher);
     time_to_set = calloc(sizeof(char), 11);
     assert_non_null(time_to_set);
     post_body = _generate_post_keyinfo_payload(2022, time_to_set, 11);
     assert_non_null(post_body);
     expect_string(__wrap_iot_bsp_system_set_time_in_sec, time_in_sec, time_to_set);
-    server_cipher = _generate_server_cipher(context->es_crypto_cipher_info->iv,
-                                            context->es_crypto_cipher_info->iv_len);
     post_header_len = strlen(post_header_prefix) + strlen("4096\r\n\r\n") + 1;
     post_header = calloc(1, post_header_len);
     assert_non_null(post_header);
@@ -424,6 +439,7 @@ void TC_iot_easysetup_httpd_keyinfo_separated_transfer_success(void **state)
     free(time_to_set);
     free(post_header);
     free(post_body);
+    _free_cipher(device_cipher);
     _free_cipher(server_cipher);
     close(sock);
 }
