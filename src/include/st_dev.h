@@ -45,11 +45,13 @@ typedef enum iot_status {
  * @brief Contains a enumeration values for types of iot_status level.
  */
 typedef enum iot_stat_lv {
-	IOT_STAT_LV_STAY,		/**< @brief meanings for staying level with each status */
-	IOT_STAT_LV_START,		/**< @brief meanings for start level with each status  */
-	IOT_STAT_LV_DONE,		/**< @brief meanings for done level with each status */
-	IOT_STAT_LV_FAIL,		/**< @brief meanings for fail level with each status */
-	IOT_STAT_LV_CONN,		/**< @brief meanings for connection with mobile */
+	IOT_STAT_LV_STAY = 0,		/**< @brief meanings for staying level with each status */
+	IOT_STAT_LV_START = 1,		/**< @brief meanings for start level with each status  */
+	IOT_STAT_LV_DONE = 2,		/**< @brief meanings for done level with each status */
+	IOT_STAT_LV_FAIL = 3,		/**< @brief meanings for fail level with each status */
+	IOT_STAT_LV_CONN = 4,		/**< @brief meanings for connection with mobile */
+	IOT_STAT_LV_SIGN_UP = IOT_STAT_LV_START,	/**< @brief meanings for trying to sign-up process */
+	IOT_STAT_LV_SIGN_IN = 6,	/**< @brief meanings for trying to sign-in process */
 } iot_stat_lv_t;
 
 

@@ -221,11 +221,17 @@ void _do_status_report(struct iot_context *ctx,
 		break;
 
 	case IOT_STATE_CLOUD_REGISTERING:
-		/* fall through */
+		if (!is_final) {
+			fn_stat = IOT_STATUS_CONNECTING;
+			fn_stat_lv = IOT_STAT_LV_SIGN_UP;
+			is_report = true;
+		}
+		break;
+
 	case IOT_STATE_CLOUD_CONNECTING:
 		if (!is_final) {
 			fn_stat = IOT_STATUS_CONNECTING;
-			fn_stat_lv = IOT_STAT_LV_START;
+			fn_stat_lv = IOT_STAT_LV_SIGN_IN;
 			is_report = true;
 		}
 		break;
