@@ -28,9 +28,9 @@
 #include "iot_nv_data.h"
 #include "iot_debug.h"
 #include "iot_wt.h"
-#include "iot_crypto.h"
 #include "iot_os_util.h"
 #include "iot_bsp_system.h"
+#include "security/iot_security_manager.h"
 
 #include "JSON.h"
 #if defined(STDK_IOT_CORE_SERIALIZE_CBOR)
@@ -697,11 +697,9 @@ done_mqtt_connect:
 
 iot_error_t iot_es_connect(struct iot_context *ctx, int conn_type)
 {
+	iot_security_buffer_t token_buf = { 0 };
+	iot_security_buffer_t sn_buf = { 0 };
 	st_mqtt_client mqtt_cli = NULL;
-	char *dev_sn = NULL;
-	size_t devsn_len;
-	char *wt_data = NULL;
-	struct iot_crypto_pk_info pk_info = { 0, };
 	char *topicfilter = NULL;
 	iot_error_t iot_ret;
 	int ret;
@@ -711,20 +709,13 @@ iot_error_t iot_es_connect(struct iot_context *ctx, int conn_type)
 		return IOT_ERROR_INVALID_ARGS;
 	}
 
-	iot_ret = iot_nv_get_serial_number(&dev_sn, &devsn_len);
+	iot_ret = iot_nv_get_serial_number((char **)&sn_buf.p, &sn_buf.len);
 	if (iot_ret != IOT_ERROR_NONE) {
 		IOT_ERROR("failed to get serial num");
 		goto out;
 	}
 
-	iot_es_crypto_init_pk(&pk_info, ctx->devconf.pk_type);
-	iot_ret = iot_es_crypto_load_pk(&pk_info);
-	if (iot_ret != IOT_ERROR_NONE) {
-		IOT_ERROR("failed to load pk");
-		goto out;
-	}
-
-	iot_ret = iot_wt_create(&wt_data, dev_sn, &pk_info);
+	iot_ret = iot_wt_create((const iot_security_buffer_t *)&sn_buf, &token_buf);
 	if (iot_ret != IOT_ERROR_NONE) {
 		IOT_ERROR("failed to make wt-token");
 		goto out;
@@ -750,7 +741,7 @@ iot_error_t iot_es_connect(struct iot_context *ctx, int conn_type)
 			goto out;
 		}
 
-		iot_ret = _iot_es_mqtt_connect(ctx, mqtt_cli, (char *)ctx->iot_reg_data.deviceId, wt_data);
+		iot_ret = _iot_es_mqtt_connect(ctx, mqtt_cli, (char *)ctx->iot_reg_data.deviceId, (char *)token_buf.p);
 		if (iot_ret != IOT_ERROR_NONE) {
 			IOT_ERROR("failed to connect");
 			goto out;
@@ -797,7 +788,7 @@ iot_error_t iot_es_connect(struct iot_context *ctx, int conn_type)
 			goto out;
 		}
 
-		iot_ret = _iot_es_mqtt_connect(ctx, mqtt_cli, (char *)dev_sn, wt_data);
+		iot_ret = _iot_es_mqtt_connect(ctx, mqtt_cli, (char *)sn_buf.p, (char *)token_buf.p);
 		if (iot_ret != IOT_ERROR_NONE) {
 			IOT_ERROR("failed to connect");
 			goto out;
@@ -806,7 +797,7 @@ iot_error_t iot_es_connect(struct iot_context *ctx, int conn_type)
 		}
 
 		/* register notification subscribe for registration */
-		snprintf(topicfilter, IOT_TOPIC_SIZE, IOT_SUB_TOPIC_REGISTRATION, dev_sn);
+		snprintf(topicfilter, IOT_TOPIC_SIZE, IOT_SUB_TOPIC_REGISTRATION,  (char *)sn_buf.p);
 		IOT_DEBUG("noti subscribe topic : %s", topicfilter);
 		ret = st_mqtt_subscribe(mqtt_cli, topicfilter, st_mqtt_qos1);
 		if (ret) {
@@ -827,13 +818,11 @@ iot_error_t iot_es_connect(struct iot_context *ctx, int conn_type)
 	}
 
 out:
-	iot_es_crypto_free_pk(&pk_info);
+	if (sn_buf.p)
+		free((void *)sn_buf.p);
 
-	if (dev_sn)
-		free((void *)dev_sn);
-
-	if (wt_data)
-		free(wt_data);
+	if (token_buf.p)
+		free(token_buf.p);
 
 	if (topicfilter)
 		free(topicfilter);

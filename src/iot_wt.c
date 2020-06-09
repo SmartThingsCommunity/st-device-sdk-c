@@ -23,26 +23,35 @@
 #include "iot_internal.h"
 #include "iot_debug.h"
 #include "iot_error.h"
-#include "iot_crypto.h"
-#include "iot_wt.h"
 #include "iot_util.h"
 #include "iot_uuid.h"
+#include "security/iot_security_crypto.h"
 #include "security/iot_security_helper.h"
 
-static char * _iot_wt_alloc_b64_buffer(size_t plain_len, size_t *out_len)
+static iot_security_buffer_t *_iot_wt_alloc_b64_buffer(size_t plain_len)
 {
-	char *b64_buf;
-	size_t b64_len;
+	iot_security_buffer_t *b64_buf;
+	unsigned char *buf;
+	size_t len;
 
-	b64_len = IOT_SECURITY_B64_ENCODE_LEN(plain_len);
-
-	b64_buf = (char *)iot_os_malloc(b64_len);
+	b64_buf = (iot_security_buffer_t *)iot_os_malloc(sizeof(iot_security_buffer_t));
 	if (!b64_buf) {
-		IOT_ERROR("malloc failed for base64 token");
+		IOT_ERROR("failed to malloc for b64 buffer");
 		return NULL;
 	}
 
-	*out_len = b64_len;
+	memset(b64_buf, 0, sizeof(iot_security_buffer_t));
+
+	len = IOT_SECURITY_B64_ENCODE_LEN(plain_len);
+	buf = (unsigned char *)iot_os_malloc(len);
+	if (!buf) {
+		IOT_ERROR("failed to malloc for b64");
+		iot_os_free(b64_buf);
+		return NULL;
+	}
+
+	b64_buf->p = buf;
+	b64_buf->len = len;
 
 	return b64_buf;
 }
@@ -506,10 +515,15 @@ exit_cborbuf:
 
 #include <JSON.h>
 
-static char * _iot_jwt_header_rs256(const char *sn)
+static char * _iot_jwt_header_rs256(const iot_security_buffer_t *sn_buf)
 {
 	JSON_H *object;
 	char *object_str;
+
+	if (!sn_buf) {
+		IOT_ERROR("sn buf is null");
+		return NULL;
+	}
 
 	object = JSON_CREATE_OBJECT();
 	if (!object) {
@@ -522,7 +536,7 @@ static char * _iot_jwt_header_rs256(const char *sn)
 	JSON_ADD_ITEM_TO_OBJECT(object, "crv", JSON_CREATE_STRING(""));
 	JSON_ADD_ITEM_TO_OBJECT(object, "typ", JSON_CREATE_STRING("JWT"));
 	JSON_ADD_ITEM_TO_OBJECT(object, "ver", JSON_CREATE_STRING("0.0.1"));
-	JSON_ADD_ITEM_TO_OBJECT(object, "kid", JSON_CREATE_STRING(sn));
+	JSON_ADD_ITEM_TO_OBJECT(object, "kid", JSON_CREATE_STRING((char *)sn_buf->p));
 
 	object_str = JSON_PRINT(object);
 	if (!object_str) {
@@ -536,10 +550,15 @@ static char * _iot_jwt_header_rs256(const char *sn)
 	return object_str;
 }
 
-static char * _iot_jwt_header_ed25519(const char *sn)
+static char * _iot_jwt_header_ed25519(const iot_security_buffer_t *sn_buf)
 {
 	JSON_H *object;
 	char *object_str;
+
+	if (!sn_buf) {
+		IOT_ERROR("sn buf is null");
+		return NULL;
+	}
 
 	object = JSON_CREATE_OBJECT();
 	if (!object) {
@@ -552,7 +571,7 @@ static char * _iot_jwt_header_ed25519(const char *sn)
 	JSON_ADD_ITEM_TO_OBJECT(object, "crv", JSON_CREATE_STRING("Ed25519"));
 	JSON_ADD_ITEM_TO_OBJECT(object, "typ", JSON_CREATE_STRING("JWT"));
 	JSON_ADD_ITEM_TO_OBJECT(object, "ver", JSON_CREATE_STRING("0.0.1"));
-	JSON_ADD_ITEM_TO_OBJECT(object, "kid", JSON_CREATE_STRING(sn));
+	JSON_ADD_ITEM_TO_OBJECT(object, "kid", JSON_CREATE_STRING((char *)sn_buf->p));
 
 	object_str = JSON_PRINT(object);
 	if (!object_str) {
@@ -567,19 +586,19 @@ static char * _iot_jwt_header_ed25519(const char *sn)
 }
 
 
-static char * _iot_jwt_create_header(const char *sn, iot_crypto_pk_type_t pk_type)
+static char * _iot_jwt_create_header(const iot_security_buffer_t *sn_buf, iot_security_key_type_t key_type)
 {
 	char *object_str;
 
-	switch(pk_type) {
-	case IOT_CRYPTO_PK_RSA:
-		object_str = _iot_jwt_header_rs256(sn);
+	switch(key_type) {
+	case IOT_SECURITY_KEY_TYPE_RSA2048:
+		object_str = _iot_jwt_header_rs256(sn_buf);
 		break;
-	case IOT_CRYPTO_PK_ED25519:
-		object_str = _iot_jwt_header_ed25519(sn);
+	case IOT_SECURITY_KEY_TYPE_ED25519:
+		object_str = _iot_jwt_header_ed25519(sn_buf);
 		break;
 	default:
-		IOT_ERROR("pubkey type (%d) is not supported", pk_type);
+		IOT_ERROR("pubkey type (%d) is not supported", key_type);
 		object_str = NULL;
 		break;
 	}
@@ -587,16 +606,22 @@ static char * _iot_jwt_create_header(const char *sn, iot_crypto_pk_type_t pk_typ
 	return object_str;
 }
 
-static iot_error_t _iot_jwt_create_b64h(char **buf, size_t *out_len,
-				const char *sn, iot_crypto_pk_type_t pk_type)
+static iot_error_t _iot_jwt_create_b64h(const iot_security_buffer_t *sn_buf,
+					iot_security_key_type_t key_type,
+					iot_security_buffer_t *b64h_buf)
 {
-	iot_error_t err;
+	iot_error_t err = IOT_ERROR_NONE;
+	iot_security_buffer_t *b64_buf;
 	char *hdr;
-	char *b64_buf;
 	size_t hdr_len;
-	size_t b64_len;
+	size_t out_len;
 
-	hdr = _iot_jwt_create_header(sn, pk_type);
+	if (!sn_buf || !b64h_buf) {
+		IOT_ERROR("params is NULL");
+		return IOT_ERROR_INVALID_ARGS;
+	}
+
+	hdr = _iot_jwt_create_header(sn_buf, key_type);
 	if (!hdr) {
 		IOT_ERROR("_iot_jwt_create_header returned NULL");
 		err = IOT_ERROR_WEBTOKEN_FAIL;
@@ -605,22 +630,23 @@ static iot_error_t _iot_jwt_create_b64h(char **buf, size_t *out_len,
 
 	hdr_len = strlen(hdr);
 
-	b64_buf = _iot_wt_alloc_b64_buffer(hdr_len, &b64_len);
+	b64_buf = _iot_wt_alloc_b64_buffer(hdr_len);
 	if (!b64_buf) {
-		IOT_ERROR("_iot_wt_alloc_b64_buffer returned NULL");
-		err = IOT_ERROR_MEM_ALLOC;
 		goto exit_hdr;
 	}
 
-	err = iot_security_base64_encode((unsigned char *)hdr, hdr_len, (unsigned char *)b64_buf, b64_len, out_len);
+	err = iot_security_base64_encode((unsigned char *)hdr, hdr_len, b64_buf->p, b64_buf->len, &out_len);
 	if (err) {
-		IOT_ERROR("iot_security_base64_encode returned error : %d", err);
-		goto exit_b64_buf;
+		IOT_ERROR("iot_security_base64_encode = %d", err);
+		goto exit_b64_buf_p;
 	}
 
-	*buf = b64_buf;
-	goto exit_hdr;
+	b64h_buf->p = b64_buf->p;
+	b64h_buf->len = out_len;
+	goto exit_b64_buf;
 
+exit_b64_buf_p:
+	iot_os_free(b64_buf->p);
 exit_b64_buf:
 	iot_os_free(b64_buf);
 exit_hdr:
@@ -678,13 +704,13 @@ static char * _iot_jwt_create_payload(void)
 	return object_str;
 }
 
-static iot_error_t _iot_jwt_create_b64p(char **buf, size_t *out_len)
+static iot_error_t _iot_jwt_create_b64p(iot_security_buffer_t *b64p_buf)
 {
-	iot_error_t err;
+	iot_error_t err = IOT_ERROR_NONE;
+	iot_security_buffer_t *b64_buf;
 	char *payload;
-	char *b64_buf;
 	size_t payload_len;
-	size_t b64_len;
+	size_t out_len;
 
 	payload = _iot_jwt_create_payload();
 	if (!payload) {
@@ -695,22 +721,23 @@ static iot_error_t _iot_jwt_create_b64p(char **buf, size_t *out_len)
 
 	payload_len = strlen(payload);
 
-	b64_buf = _iot_wt_alloc_b64_buffer(payload_len, &b64_len);
+	b64_buf = _iot_wt_alloc_b64_buffer(payload_len);
 	if (!b64_buf) {
-		IOT_ERROR("_iot_wt_alloc_b64_buffer returned NULL");
-		err = IOT_ERROR_MEM_ALLOC;
 		goto exit_payload;
 	}
 
-	err = iot_security_base64_encode((unsigned char *)payload, payload_len, (unsigned char *)b64_buf, b64_len, out_len);
+	err = iot_security_base64_encode((unsigned char *)payload, payload_len, b64_buf->p, b64_buf->len, &out_len);
 	if (err) {
 		IOT_ERROR("iot_security_base64_encode returned error : %d", err);
-		goto exit_b64_buf;
+		goto exit_b64_buf_p;
 	}
 
-	*buf = b64_buf;
-	goto exit_payload;
+	b64p_buf->p = b64_buf->p;
+	b64p_buf->len = out_len;
+	goto exit_b64_buf;
 
+exit_b64_buf_p:
+	iot_os_free(b64_buf->p);
 exit_b64_buf:
 	iot_os_free(b64_buf);
 exit_payload:
@@ -719,92 +746,92 @@ exit:
 	return err;
 }
 
-static iot_error_t _iot_jwt_create_b64s(char **buf, size_t *out_len,
-                                        char *b64hp, size_t hp_len,
-					iot_crypto_pk_info_t *pk_info)
+static iot_error_t _iot_jwt_create_b64s(iot_security_context_t *security_context,
+                                        unsigned char *b64hp, size_t hp_len,
+                                        iot_security_buffer_t *b64s_buf)
 {
 	iot_error_t err;
-	iot_crypto_pk_context_t pk_ctx;
-	char *sig;
-	char *b64_buf;
-	size_t sig_len;
-	size_t b64_len;
+	iot_security_buffer_t b64hp_buf = { 0 };
+	iot_security_buffer_t sig_buf = { 0 };
+	iot_security_buffer_t *sig_b64_buf;
+	size_t out_len;
 
-	sig = (char *)iot_os_malloc(IOT_CRYPTO_SIGNATURE_LEN);
-	if (!sig) {
-		IOT_ERROR("malloc returned NULL");
-		err = IOT_ERROR_MEM_ALLOC;
+	b64hp_buf.p = b64hp;
+	b64hp_buf.len = hp_len;
+	err = iot_security_pk_sign(security_context, &b64hp_buf, &sig_buf);
+	if (err) {
+		IOT_ERROR("iot_crypto_pk_sign returned error : %d", err);
 		goto exit;
 	}
 
-	err = iot_crypto_pk_init(&pk_ctx, pk_info);
-	if (err) {
-		IOT_ERROR("iot_crypto_pk_init returned error : %d", err);
+	sig_b64_buf = _iot_wt_alloc_b64_buffer(sig_buf.len);
+	if (!sig_b64_buf) {
 		goto exit_sig;
 	}
 
-	err = iot_crypto_pk_sign(&pk_ctx, (unsigned char *)b64hp, hp_len,
-	                            (unsigned char *)sig, &sig_len);
-	if (err) {
-		IOT_ERROR("iot_crypto_pk_sign returned error : %d", err);
-		iot_crypto_pk_free(&pk_ctx);
-		goto exit_sig;
-	}
-
-	iot_crypto_pk_free(&pk_ctx);
-
-	b64_buf = _iot_wt_alloc_b64_buffer(sig_len, &b64_len);
-	if (!b64_buf) {
-		IOT_ERROR("_iot_wt_alloc_b64_buffer returned NULL");
-		err = IOT_ERROR_MEM_ALLOC;
-		goto exit_sig;
-	}
-
-	err = iot_security_base64_encode((unsigned char *)sig, sig_len, (unsigned char *)b64_buf, b64_len, out_len);
+	err = iot_security_base64_encode(sig_buf.p, sig_buf.len, sig_b64_buf->p, sig_b64_buf->len, &out_len);
 	if (err) {
 		IOT_ERROR("iot_security_base64_encode returned error : %d", err);
-		goto exit_b64_buf;
+		goto exit_b64_buf_p;
 	}
 
-	*buf = b64_buf;
-	goto exit_sig;
+	b64s_buf->p = sig_b64_buf->p;
+	b64s_buf->len = out_len;
+	goto exit_b64_buf;
 
+exit_b64_buf_p:
+	iot_os_free(sig_b64_buf->p);
 exit_b64_buf:
-	iot_os_free(b64_buf);
+	iot_os_free(sig_b64_buf);
 exit_sig:
-	iot_os_free(sig);
+	iot_os_free(sig_buf.p);
 exit:
 	return err;
 }
 
-static iot_error_t _iot_jwt_create(char **token, const char *sn, iot_crypto_pk_info_t *pk_info)
+static iot_error_t _iot_jwt_create(const iot_security_buffer_t *sn_buf, iot_security_buffer_t *token_buf)
 {
 	iot_error_t err;
-	char *b64h;
-	char *b64p;
-	char *b64s;
-	char *tmp;
-	size_t b64h_len;
-	size_t b64p_len;
-	size_t b64s_len;
+	iot_security_context_t *security_context;
+	iot_security_key_type_t key_type;
+	iot_security_buffer_t b64h_buf = { 0 };
+	iot_security_buffer_t b64p_buf = { 0 };
+	iot_security_buffer_t b64s_buf = { 0 };
+	unsigned char *tmp;
+	size_t sig_len;
 	size_t token_len;
 	size_t written = 0;
 
-	if (!token || !sn || !pk_info) {
+	if (!sn_buf || !token_buf) {
 		return IOT_ERROR_INVALID_ARGS;
+	}
+
+	security_context = iot_security_init();
+	if (!security_context) {
+		return IOT_ERROR_SECURITY_INIT;
+	}
+
+	err = iot_security_pk_init(security_context);
+	if (err) {
+		return err;
+	}
+
+	err = iot_security_pk_get_key_type(security_context, &key_type);
+	if (err) {
+		goto exit_payload;
 	}
 
 	/* b64h = b64(header) */
 
-	err = _iot_jwt_create_b64h(&b64h, &b64h_len, sn, pk_info->type);
+	err = _iot_jwt_create_b64h(sn_buf, key_type, &b64h_buf);
 	if (err) {
-		IOT_ERROR("_iot_jwt_create_b64h returned error : %d", err);
+		IOT_ERROR("_iot_jwt_create_b64h = %d", err);
 		goto exit;
 	}
 
 	/* b64p = b64(payload) */
 
-	err = _iot_jwt_create_b64p(&b64p, &b64p_len);
+	err = _iot_jwt_create_b64p(&b64p_buf);
 	if (err) {
 		IOT_ERROR("_iot_jwt_create_b64p returned error : %d", err);
 		goto exit_header;
@@ -812,26 +839,28 @@ static iot_error_t _iot_jwt_create(char **token, const char *sn, iot_crypto_pk_i
 
 	/* b64h.b64 */
 
-	token_len = b64h_len + b64p_len + IOT_SECURITY_B64_ENCODE_LEN(IOT_CRYPTO_SIGNATURE_LEN) + 3;
+	sig_len = iot_security_pk_get_signature_len(key_type);
 
-	tmp = (char *)iot_os_malloc(token_len);
+	token_len = b64h_buf.len + b64p_buf.len + IOT_SECURITY_B64_ENCODE_LEN(sig_len) + 3;
+
+	tmp = (unsigned char *)iot_os_malloc(token_len);
 	if (tmp == NULL) {
 		IOT_ERROR("malloc returned NULL");
 		err = IOT_ERROR_MEM_ALLOC;
 		goto exit_payload;
 	}
 
-	memcpy(tmp, b64h, b64h_len);
-	written += b64h_len;
+	memcpy(tmp, b64h_buf.p, b64h_buf.len);
+	written += b64h_buf.len;
 
 	tmp[written++] = '.';
 
-	memcpy(tmp + written, b64p, b64p_len);
-	written += b64p_len;
+	memcpy(tmp + written, b64p_buf.p, b64p_buf.len);
+	written += b64p_buf.len;
 
 	/* b64s = b64(sign(sha256(b64h.b64p))) */
 
-	err = _iot_jwt_create_b64s(&b64s, &b64s_len, tmp, written, pk_info);
+	err = _iot_jwt_create_b64s(security_context, tmp, written, &b64s_buf);
 	if (err) {
 		IOT_ERROR("_iot_jwt_create_b64s returned error : %d", err);
 		iot_os_free(tmp);
@@ -842,34 +871,38 @@ static iot_error_t _iot_jwt_create(char **token, const char *sn, iot_crypto_pk_i
 
 	tmp[written++] = '.';
 
-	memcpy(tmp + written, b64s, b64s_len);
-	written += b64s_len;
+	memcpy(tmp + written, b64s_buf.p, b64s_buf.len);
+	written += b64s_buf.len;
 
 	tmp[written] = '\0';
 
 	IOT_DEBUG("token: %s (%d)", tmp, written);
 
-	*token = tmp;
+	token_buf->p = tmp;
+	token_buf->len = written;
 	err = IOT_ERROR_NONE;
 	goto exit_signature;
 
 exit_signature:
-	iot_os_free(b64s);
+	iot_os_free(b64s_buf.p);
 exit_payload:
-	iot_os_free(b64p);
+	iot_os_free(b64p_buf.p);
 exit_header:
-	iot_os_free(b64h);
+	iot_os_free(b64h_buf.p);
 exit:
+	(void)iot_security_pk_deinit(security_context);
+	(void)iot_security_deinit(security_context);
+
 	return err;
 }
 
 #endif /* STDK_IOT_CORE_WEBTOKEN_CBOR */
 
-iot_error_t iot_wt_create(char **token, const char *sn, iot_crypto_pk_info_t *pk_info)
+iot_error_t iot_wt_create(const iot_security_buffer_t *sn_buf, iot_security_buffer_t *token_buf)
 {
 #if defined(STDK_IOT_CORE_WEBTOKEN_CBOR)
 	return _iot_cwt_create(token, sn, pk_info);
 #else
-	return _iot_jwt_create(token, sn, pk_info);
+	return _iot_jwt_create(sn_buf, token_buf);
 #endif
 }

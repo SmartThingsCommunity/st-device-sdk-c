@@ -21,20 +21,38 @@
 #include <cmocka.h>
 #include <string.h>
 #include <iot_error.h>
-#include <iot_crypto.h>
 #include <iot_wt.h>
+#include <iot_nv_data.h>
 #include <security/iot_security_helper.h>
 #include "TC_MOCK_functions.h"
 
 #define UNUSED(x) (void**)(x)
 
-#define SAMPLE_SECKEY_B64  "ztqmQ24u86J9bpFLjaoMfwauUZwKLjUIGsnrDwwnDM8="
-#define SAMPLE_PUBKEY_B64  "BKb7+m1Mo8OuMsodM91ohz/+rZKDc/otzUPSn4UkCUk="
-static const char *sample_device_num = "STDKfJvW7a861805";
+static char sample_device_info[] = {
+	"{\n"
+	"\t\"deviceInfo\": {\n"
+	"\t\t\"firmwareVersion\": \"testFirmwareVersion\",\n"
+	"\t\t\"privateKey\": \"y04i7Pme6rJTkLBPngQoZfEI5KEAyE70A9xOhoX8uTI=\",\n"
+	"\t\t\"publicKey\": \"Sh4cBHRnPuEFyinaVuEd+mE5IQTkwPHmbOrgD3fwPsw=\",\n"
+	"\t\t\"serialNumber\": \"STDKtestc77078cc\"\n"
+	"\t}\n"
+	"}"
+};
+
+static const char *sample_device_num = "STDKtestc77078cc";
 
 int TC_iot_wt_create_memleak_detect_setup(void **state)
 {
+	iot_error_t err;
 	UNUSED(state);
+
+#if !defined(CONFIG_STDK_IOT_CORE_SUPPORT_STNV_PARTITION)
+	err = iot_nv_init((unsigned char *)sample_device_info, strlen(sample_device_info));
+#else
+	err = iot_nv_init(NULL, 0);
+#endif
+	assert_int_equal(err, IOT_ERROR_NONE);
+
 	set_mock_detect_memory_leak(true);
 	return 0;
 }
@@ -46,75 +64,40 @@ int TC_iot_wt_create_memleak_detect_teardown(void **state)
 	return 0;
 }
 
-void _fill_test_pkinfo(iot_crypto_pk_info_t *pk_info)
-{
-	iot_error_t err;
-	unsigned char *pubkey;
-	unsigned char *seckey;
-	size_t key_len = IOT_SECURITY_ED25519_LEN;
-	size_t olen;
-
-	pubkey = (unsigned char *)malloc(key_len);
-	assert_non_null(pubkey);
-
-	seckey = (unsigned char *)malloc(key_len);
-	assert_non_null(seckey);
-
-	pk_info->type = IOT_CRYPTO_PK_ED25519;
-
-	err = iot_security_base64_decode(SAMPLE_PUBKEY_B64, strlen(SAMPLE_PUBKEY_B64), pubkey, key_len, &olen);
-	assert_int_equal(err, IOT_ERROR_NONE);
-	assert_int_equal(olen, key_len);
-	pk_info->pubkey = pubkey;
-	pk_info->pubkey_len = olen;
-
-	err = iot_security_base64_decode(SAMPLE_SECKEY_B64, strlen(SAMPLE_SECKEY_B64), seckey, key_len, &olen);
-	assert_int_equal(err, IOT_ERROR_NONE);
-	assert_int_equal(olen, key_len);
-	pk_info->seckey = seckey;
-	pk_info->seckey_len = olen;
-}
-
 void TC_iot_wt_create_null_parameters(void **state)
 {
 	iot_error_t err;
-	char *wt_data = NULL;
-	char *dev_sn;
-	struct iot_crypto_pk_info pk_info;
+	iot_security_buffer_t token_buf = { 0 };
+	iot_security_buffer_t sn_buf = { 0 };
 	UNUSED(state);
 
 	// Given: All parameters are null
 	// When
-	err = iot_wt_create(NULL, NULL, NULL);
+	err = iot_wt_create(NULL, NULL);
 	// Then: returns error
 	assert_int_not_equal(err, IOT_ERROR_NONE);
 
 	// Given
-	memset(&pk_info, '\0', sizeof(iot_crypto_pk_info_t));
-	_fill_test_pkinfo(&pk_info);
-	// When: token, dev_sn is null
-	err = iot_wt_create(NULL, NULL, &pk_info);
+	// When: token, sn is null
+	err = iot_wt_create(NULL, NULL);
 	// Then: returns error
 	assert_int_not_equal(err, IOT_ERROR_NONE);
 
 	// Given
-	dev_sn = (char *)sample_device_num;
+	sn_buf.p = (unsigned char *)sample_device_num;
+	sn_buf.len = strlen(sample_device_num);
 	// When: token is null
-	err = iot_wt_create(NULL, dev_sn, &pk_info);
+	err = iot_wt_create(&sn_buf, NULL);
 	// Then: returns error
 	assert_int_not_equal(err, IOT_ERROR_NONE);
 
 	// Given: All parameters
 	// When
-	err = iot_wt_create(&wt_data, dev_sn, &pk_info);
+	err = iot_wt_create(&sn_buf, &token_buf);
 	// Then: returns success
 	assert_int_equal(err, IOT_ERROR_NONE);
+	assert_non_null(token_buf.p);
 
-	//local teardown
-	if (pk_info.pubkey)
-		free((void *)pk_info.pubkey);
-	if (pk_info.seckey)
-		free((void *)pk_info.seckey);
-	if(wt_data)
-		iot_os_free(wt_data);
+	// Local teardown
+	iot_os_free(token_buf.p);
 }
