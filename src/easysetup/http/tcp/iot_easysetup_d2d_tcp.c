@@ -28,6 +28,7 @@
 #include "iot_util.h"
 #include "iot_debug.h"
 #include "security/iot_security_crypto.h"
+#include "security/iot_security_ecdh.h"
 #include "security/iot_security_helper.h"
 
 #define HASH_SIZE (4)
@@ -455,6 +456,8 @@ iot_error_t _es_keyinfo_handler(struct iot_context *ctx, char *in_payload, char 
 	JSON_H *array = NULL;
 	unsigned int i;
 	iot_error_t err = IOT_ERROR_NONE;
+	iot_security_ecdh_params_t ecdh_params = { 0 };
+	iot_security_buffer_t secret_buf = { 0 };
 	unsigned char *p_datetime_str = NULL;
 	unsigned char *p_regionaldatetime_str = NULL;
 	unsigned char *p_timezoneid_str = NULL;
@@ -464,13 +467,9 @@ iot_error_t _es_keyinfo_handler(struct iot_context *ctx, char *in_payload, char 
 	char rand_asc[IOT_SECURITY_SHA256_LEN * 2 + 1] = { 0 };
 	unsigned char val;
 	unsigned int j;
-	iot_crypto_pk_info_t pk_info;
-	iot_crypto_ecdh_params_t params;
-	unsigned char key_tsec_curve[IOT_SECURITY_ED25519_LEN];
 	unsigned char key_spub_sign[IOT_SECURITY_ED25519_LEN];
 	unsigned char key_rand[IOT_SECURITY_SHA256_LEN];
 	unsigned char *decode_buf = NULL;
-	unsigned char *master_secret = NULL;
 	unsigned char *p_spub_str = NULL;
 	unsigned char *p_rand_str = NULL;
 	size_t input_len = 0;
@@ -540,50 +539,33 @@ iot_error_t _es_keyinfo_handler(struct iot_context *ctx, char *in_payload, char 
 		key_rand[j] = val;
 	}
 
-	iot_es_crypto_init_pk(&pk_info, ctx->devconf.pk_type);
-	err = iot_es_crypto_load_pk(&pk_info);
+	err = iot_security_ecdh_init(ctx->easysetup_security_context);
 	if (err) {
-		IOT_ERROR("Cannot get key info %d", err);
-		IOT_ES_DUMP(IOT_DEBUG_LEVEL_ERROR, IOT_DUMP_EASYSETUP_RPK_NOT_FOUND, err);
-		err = IOT_ERROR_EASYSETUP_RPK_NOT_FOUND;
+		IOT_ERROR("iot_security_ecdh_init = %d", err);
+		IOT_ES_DUMP(IOT_DEBUG_LEVEL_ERROR, IOT_DUMP_EASYSETUP_SHARED_KEY_INIT_FAIL, err);
+		err = IOT_ERROR_EASYSETUP_SHARED_KEY_INIT_FAIL;
 		goto exit;
 	}
 
-	if (pk_info.type != IOT_CRYPTO_PK_ED25519) {
-		IOT_ERROR("%d is not supported yet", pk_info.type);
-		IOT_ES_DUMP(IOT_DEBUG_LEVEL_ERROR, IOT_DUMP_EASYSETUP_NOT_SUPPORTED, pk_info.type);
-		err = IOT_ERROR_EASYSETUP_NOT_SUPPORTED;
-		goto exit_pk;
-	}
+	ecdh_params.c_pubkey.p = key_spub_sign;
+	ecdh_params.c_pubkey.len = sizeof(key_spub_sign);
+	ecdh_params.salt.p = key_rand;
+	ecdh_params.salt.len = sizeof(key_rand);
 
-	err = iot_crypto_ed25519_convert_seckey(pk_info.seckey, key_tsec_curve);
+	err = iot_security_ecdh_set_params(ctx->easysetup_security_context, &ecdh_params);
 	if (err) {
-		IOT_ERROR("Cannot convert seckey of things %d", err);
-		IOT_ES_DUMP(IOT_DEBUG_LEVEL_ERROR, IOT_DUMP_EASYSETUP_SHARED_KEY_CREATION_FAIL, err);
-		err = IOT_ERROR_EASYSETUP_SHARED_KEY_CREATION_FAIL;
-		goto exit_pk;
+		IOT_ERROR("iot_security_ecdh_set_params = %d", err);
+		IOT_ES_DUMP(IOT_DEBUG_LEVEL_ERROR, IOT_DUMP_EASYSETUP_SHARED_KEY_PARAMS_FAIL, err);
+		err = IOT_ERROR_EASYSETUP_SHARED_KEY_PARAMS_FAIL;
+		goto exit_ecdh_deinit;
 	}
 
-	master_secret = iot_os_malloc(IOT_SECURITY_SECRET_LEN + 1);
-	if (!master_secret) {
-		IOT_ERROR("failed to malloc for master_secret");
-		IOT_ES_DUMP(IOT_DEBUG_LEVEL_ERROR, IOT_DUMP_EASYSETUP_MEM_ALLOC_ERROR, 0);
-		err = IOT_ERROR_EASYSETUP_MEM_ALLOC_ERROR;
-		goto exit_pk;
-	}
-	memset(master_secret, '\0', IOT_SECURITY_SECRET_LEN + 1);
-
-	params.s_pubkey = key_spub_sign;
-	params.t_seckey = key_tsec_curve;
-	params.hash_token = key_rand;
-	params.hash_token_len = sizeof(key_rand);
-
-	err = iot_crypto_ecdh_gen_master_secret(master_secret, IOT_SECURITY_SECRET_LEN, &params);
+	err = iot_security_ecdh_compute_shared_secret(ctx->easysetup_security_context, &secret_buf);
 	if (err) {
 		IOT_ERROR("master secret generation failed %d", err);
 		IOT_ES_DUMP(IOT_DEBUG_LEVEL_ERROR, IOT_DUMP_EASYSETUP_SHARED_KEY_CREATION_FAIL, err);
 		err = IOT_ERROR_EASYSETUP_SHARED_KEY_CREATION_FAIL;
-		goto exit_secret;
+		goto exit_ecdh_deinit;
 	} else {
 		IOT_INFO("master secret generation success");
 		IOT_ES_DUMP(IOT_DEBUG_LEVEL_INFO, IOT_DUMP_EASYSETUP_MASTER_SECRET_GENERATION_SUCCESS, 0);
@@ -745,11 +727,11 @@ exit_secret:
 	if (enc_msg) {
 		free(enc_msg);
 	}
-	if (err && master_secret) {
-		free(master_secret);
+	if (err && secret_buf.p) {
+		free(secret_buf.p);
 	}
-exit_pk:
-	iot_es_crypto_free_pk(&pk_info);
+exit_ecdh_deinit:
+	iot_security_ecdh_deinit(ctx->easysetup_security_context);
 exit:
 	if (root) {
 		JSON_DELETE(root);
