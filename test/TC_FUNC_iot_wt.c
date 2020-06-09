@@ -23,7 +23,7 @@
 #include <iot_error.h>
 #include <iot_crypto.h>
 #include <iot_wt.h>
-#include <security/iot_security_common.h>
+#include <security/iot_security_helper.h>
 #include "TC_MOCK_functions.h"
 
 #define UNUSED(x) (void**)(x)
@@ -62,13 +62,13 @@ void _fill_test_pkinfo(iot_crypto_pk_info_t *pk_info)
 
 	pk_info->type = IOT_CRYPTO_PK_ED25519;
 
-	err = iot_crypto_base64_decode(SAMPLE_PUBKEY_B64, strlen(SAMPLE_PUBKEY_B64), pubkey, key_len, &olen);
+	err = iot_security_base64_decode(SAMPLE_PUBKEY_B64, strlen(SAMPLE_PUBKEY_B64), pubkey, key_len, &olen);
 	assert_int_equal(err, IOT_ERROR_NONE);
 	assert_int_equal(olen, key_len);
 	pk_info->pubkey = pubkey;
 	pk_info->pubkey_len = olen;
 
-	err = iot_crypto_base64_decode(SAMPLE_SECKEY_B64, strlen(SAMPLE_SECKEY_B64), seckey, key_len, &olen);
+	err = iot_security_base64_decode(SAMPLE_SECKEY_B64, strlen(SAMPLE_SECKEY_B64), seckey, key_len, &olen);
 	assert_int_equal(err, IOT_ERROR_NONE);
 	assert_int_equal(olen, key_len);
 	pk_info->seckey = seckey;

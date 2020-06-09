@@ -26,6 +26,7 @@
 #include "iot_os_util.h"
 #include "iot_bsp_system.h"
 #include "iot_crypto.h"
+#include "security/iot_security_helper.h"
 #ifdef CONFIG_STDK_IOT_CORE_LOG_FILE
 #include "iot_log_file.h"
 #endif
@@ -113,7 +114,7 @@ static iot_error_t _iot_dump_copy_memory(void *dest, int dest_size, const void *
     if (*remain_number > 0) {
         pre_copy_len = 3 - *remain_number;
         memcpy(buf + *remain_number, src, pre_copy_len);
-        iot_err = iot_crypto_base64_encode(buf, 3, dest, dest_size, &pre_out_len);
+        iot_err = iot_security_base64_encode(buf, 3, dest, dest_size, &pre_out_len);
         if (iot_err < 0) {
             return iot_err;
         }
@@ -123,7 +124,7 @@ static iot_error_t _iot_dump_copy_memory(void *dest, int dest_size, const void *
     //Step2: convert multiples of 3 bytes
     *remain_number = (src_size - pre_copy_len) % 3;
     main_copy_len = GET_LARGEST_MULTIPLE(src_size - pre_copy_len, 3);
-    iot_err = iot_crypto_base64_encode(src + pre_copy_len, main_copy_len, dest + pre_out_len, dest_size - pre_out_len, &main_out_len);
+    iot_err = iot_security_base64_encode(src + pre_copy_len, main_copy_len, dest + pre_out_len, dest_size - pre_out_len, &main_out_len);
     if (iot_err < 0) {
         return iot_err;
     }
@@ -159,7 +160,7 @@ iot_error_t iot_dump_create_all_log_dump(struct iot_context *iot_ctx, char **log
 #endif
 
     if (need_base64) {
-        min_log_size = IOT_CRYPTO_CAL_B64_LEN(sizeof(struct iot_dump_header) + sizeof(struct iot_dump_state));
+        min_log_size = IOT_SECURITY_B64_ENCODE_LEN(sizeof(struct iot_dump_header) + sizeof(struct iot_dump_state));
     } else {
         min_log_size = sizeof(struct iot_dump_header) + sizeof(struct iot_dump_state);
     }
@@ -188,7 +189,7 @@ iot_error_t iot_dump_create_all_log_dump(struct iot_context *iot_ctx, char **log
     max_msg_size = GET_LARGEST_MULTIPLE(max_msg_size, IOT_DUMP_LOG_MSG_LINE_LENGTH);
 
     if (need_base64) {
-        output_log_size = IOT_CRYPTO_CAL_B64_LEN(max_msg_size + sizeof(struct iot_dump_header) + sizeof(struct iot_dump_state));
+        output_log_size = IOT_SECURITY_B64_ENCODE_LEN(max_msg_size + sizeof(struct iot_dump_header) + sizeof(struct iot_dump_state));
     } else {
         output_log_size = max_msg_size + sizeof(struct iot_dump_header) + sizeof(struct iot_dump_state);
     }

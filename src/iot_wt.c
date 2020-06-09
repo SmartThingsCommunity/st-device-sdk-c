@@ -27,13 +27,14 @@
 #include "iot_wt.h"
 #include "iot_util.h"
 #include "iot_uuid.h"
+#include "security/iot_security_helper.h"
 
 static char * _iot_wt_alloc_b64_buffer(size_t plain_len, size_t *out_len)
 {
 	char *b64_buf;
 	size_t b64_len;
 
-	b64_len = IOT_CRYPTO_CAL_B64_LEN(plain_len);
+	b64_len = IOT_SECURITY_B64_ENCODE_LEN(plain_len);
 
 	b64_buf = (char *)malloc(b64_len);
 	if (!b64_buf) {
@@ -473,9 +474,9 @@ retry:
 		goto exit_failed;
 	}
 
-	err = iot_crypto_base64_encode(cborbuf, cbor_len, (unsigned char *)cborbuf_b64, b64_len, &olen);
+	err = iot_security_base64_encode(cborbuf, cbor_len, (unsigned char *)cborbuf_b64, b64_len, &olen);
 	if (err) {
-		IOT_ERROR("iot_crypto_base64_encode returned error : %d", err);
+		IOT_ERROR("iot_security_base64_encode returned error : %d", err);
 		free(cborbuf_b64);
 		goto exit_failed;
 	}
@@ -611,9 +612,9 @@ static iot_error_t _iot_jwt_create_b64h(char **buf, size_t *out_len,
 		goto exit_hdr;
 	}
 
-	err = iot_crypto_base64_encode((unsigned char *)hdr, hdr_len, (unsigned char *)b64_buf, b64_len, out_len);
+	err = iot_security_base64_encode((unsigned char *)hdr, hdr_len, (unsigned char *)b64_buf, b64_len, out_len);
 	if (err) {
-		IOT_ERROR("iot_crypto_base64_encode returned error : %d", err);
+		IOT_ERROR("iot_security_base64_encode returned error : %d", err);
 		goto exit_b64_buf;
 	}
 
@@ -701,9 +702,9 @@ static iot_error_t _iot_jwt_create_b64p(char **buf, size_t *out_len)
 		goto exit_payload;
 	}
 
-	err = iot_crypto_base64_encode((unsigned char *)payload, payload_len, (unsigned char *)b64_buf, b64_len, out_len);
+	err = iot_security_base64_encode((unsigned char *)payload, payload_len, (unsigned char *)b64_buf, b64_len, out_len);
 	if (err) {
-		IOT_ERROR("iot_crypto_base64_encode returned error : %d", err);
+		IOT_ERROR("iot_security_base64_encode returned error : %d", err);
 		goto exit_b64_buf;
 	}
 
@@ -759,9 +760,9 @@ static iot_error_t _iot_jwt_create_b64s(char **buf, size_t *out_len,
 		goto exit_sig;
 	}
 
-	err = iot_crypto_base64_encode((unsigned char *)sig, sig_len, (unsigned char *)b64_buf, b64_len, out_len);
+	err = iot_security_base64_encode((unsigned char *)sig, sig_len, (unsigned char *)b64_buf, b64_len, out_len);
 	if (err) {
-		IOT_ERROR("iot_crypto_base64_encode returned error : %d", err);
+		IOT_ERROR("iot_security_base64_encode returned error : %d", err);
 		goto exit_b64_buf;
 	}
 
@@ -811,7 +812,7 @@ static iot_error_t _iot_jwt_create(char **token, const char *sn, iot_crypto_pk_i
 
 	/* b64h.b64 */
 
-	token_len = b64h_len + b64p_len + IOT_CRYPTO_CAL_B64_LEN(IOT_CRYPTO_SIGNATURE_LEN) + 3;
+	token_len = b64h_len + b64p_len + IOT_SECURITY_B64_ENCODE_LEN(IOT_CRYPTO_SIGNATURE_LEN) + 3;
 
 	tmp = (char *)malloc(token_len);
 	if (tmp == NULL) {
