@@ -23,7 +23,6 @@
 
 #include "iot_bsp_fs.h"
 #include "iot_bsp_nv_data.h"
-#include "iot_crypto.h"
 #include "iot_debug.h"
 
 #define STDK_NV_DATA_PARTITION "stnv"
@@ -285,10 +284,7 @@ iot_error_t iot_bsp_fs_read(iot_bsp_fs_handle_t handle, char* buffer, size_t *le
 	size_t required_size;
 
 #if defined(CONFIG_STDK_IOT_CORE_FS_SW_ENCRYPTION)
-	iot_error_t err;
 	char *data;
-	unsigned char *decbuf = NULL;
-	size_t olen;
 
 	ret = nvs_get_blob(handle.fd, handle.filename, NULL, &required_size);
 	if (ret == ESP_ERR_NVS_NOT_FOUND) {
@@ -310,25 +306,6 @@ iot_error_t iot_bsp_fs_read(iot_bsp_fs_handle_t handle, char* buffer, size_t *le
 		free(data);
 		return IOT_ERROR_FS_READ_FAIL;
 	}
-
-	err = iot_crypto_ss_decrypt((unsigned char *)data, required_size, &decbuf, &olen);
-	if (err) {
-		IOT_ERROR("iot_crypto_ss_decrypt = %d", err);
-		free(data);
-		return IOT_ERROR_FS_DECRYPT_FAIL;
-	}
-
-	if (*length < olen) {
-		IOT_ERROR("length is not enough (%d < %d)", *length, olen);
-		free(decbuf);
-		free(data);
-		return IOT_ERROR_FS_READ_FAIL;
-	} else {
-		memcpy(buffer, decbuf, olen);
-		*length = olen;
-	}
-
-	free(decbuf);
 #else
 	ret = nvs_get_str(handle.fd, handle.filename, NULL, &required_size);
 	if (ret == ESP_ERR_NVS_NOT_FOUND) {
@@ -346,7 +323,7 @@ iot_error_t iot_bsp_fs_read(iot_bsp_fs_handle_t handle, char* buffer, size_t *le
 		free(data);
 		return IOT_ERROR_FS_READ_FAIL;
 	}
-
+#endif
 	if (*length < required_size) {
 		IOT_ERROR("length is not enough (%d < %d)", *length, required_size);
 		free(data);
@@ -355,7 +332,7 @@ iot_error_t iot_bsp_fs_read(iot_bsp_fs_handle_t handle, char* buffer, size_t *le
 		memcpy(buffer, data, required_size);
 		*length = required_size;
 	}
-#endif
+
 	free(data);
 
 	return IOT_ERROR_NONE;
@@ -364,25 +341,7 @@ iot_error_t iot_bsp_fs_read(iot_bsp_fs_handle_t handle, char* buffer, size_t *le
 iot_error_t iot_bsp_fs_write(iot_bsp_fs_handle_t handle, const char* data, size_t length)
 {
 #if defined(CONFIG_STDK_IOT_CORE_FS_SW_ENCRYPTION)
-	esp_err_t ret;
-	iot_error_t err;
-	unsigned char *encbuf = NULL;
-	size_t data_len = strlen(data) + 1;
-	size_t olen;
-
-	err = iot_crypto_ss_encrypt((unsigned char *)data, data_len, &encbuf, &olen);
-	if (err) {
-		IOT_ERROR("iot_crypto_ss_encrypt = %d", err);
-		return IOT_ERROR_FS_ENCRYPT_FAIL;
-	}
-
-	ret = nvs_set_blob(handle.fd, handle.filename, (const void *)encbuf, olen);
-	if (ret != ESP_OK) {
-		IOT_ERROR("write '%s' failed [%s]", handle.filename, _get_error_string(ret));
-		free(encbuf);
-		return IOT_ERROR_FS_WRITE_FAIL;
-	}
-	free(encbuf);
+	esp_err_t ret = nvs_set_blob(handle.fd, handle.filename, data, length);
 #else
 	esp_err_t ret = nvs_set_str(handle.fd, handle.filename, data);
 #endif
