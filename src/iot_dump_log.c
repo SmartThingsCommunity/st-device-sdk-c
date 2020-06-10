@@ -153,16 +153,22 @@ iot_error_t iot_dump_create_all_log_dump(struct iot_context *iot_ctx, char **log
     int need_base64 = log_mode & IOT_DUMP_MODE_NEED_BASE64;
     int need_dump_state = log_mode & IOT_DUMP_MODE_NEED_DUMP_STATE;
 
+    int iot_dump_state_size = sizeof(struct iot_dump_state);
+
     iot_error_t iot_err = IOT_ERROR_NONE;
 #ifdef CONFIG_STDK_IOT_CORE_LOG_FILE
     size_t msg_size;
     iot_log_file_handle_t *logfile;
 #endif
 
+    if (!need_dump_state) {
+        iot_dump_state_size = 0;
+    }
+
     if (need_base64) {
-        min_log_size = IOT_SECURITY_B64_ENCODE_LEN(sizeof(struct iot_dump_header) + sizeof(struct iot_dump_state));
+        min_log_size = IOT_SECURITY_B64_ENCODE_LEN(sizeof(struct iot_dump_header) + iot_dump_state_size);
     } else {
-        min_log_size = sizeof(struct iot_dump_header) + sizeof(struct iot_dump_state);
+        min_log_size = sizeof(struct iot_dump_header) + iot_dump_state_size;
     }
     if (max_log_dump_size < min_log_size) {
         IOT_ERROR("input log size is smaller than minimum log size");
@@ -180,18 +186,18 @@ iot_error_t iot_dump_create_all_log_dump(struct iot_context *iot_ctx, char **log
 #endif
 
     if (need_base64) {
-        max_msg_size = (max_log_dump_size - 1) / 4 * 3 - sizeof(struct iot_dump_header) - sizeof(struct iot_dump_state);
+        max_msg_size = (max_log_dump_size - 1) / 4 * 3 - sizeof(struct iot_dump_header) - iot_dump_state_size;
     } else {
-        max_msg_size = max_log_dump_size - sizeof(struct iot_dump_header) - sizeof(struct iot_dump_state);
+        max_msg_size = max_log_dump_size - sizeof(struct iot_dump_header) - iot_dump_state_size;
     }
     if (max_msg_size > stored_log_size)
         max_msg_size = stored_log_size;
     max_msg_size = GET_LARGEST_MULTIPLE(max_msg_size, IOT_DUMP_LOG_MSG_LINE_LENGTH);
 
     if (need_base64) {
-        output_log_size = IOT_SECURITY_B64_ENCODE_LEN(max_msg_size + sizeof(struct iot_dump_header) + sizeof(struct iot_dump_state));
+        output_log_size = IOT_SECURITY_B64_ENCODE_LEN(max_msg_size + sizeof(struct iot_dump_header) + iot_dump_state_size);
     } else {
-        output_log_size = max_msg_size + sizeof(struct iot_dump_header) + sizeof(struct iot_dump_state);
+        output_log_size = max_msg_size + sizeof(struct iot_dump_header) + iot_dump_state_size;
     }
 
     all_log_dump = iot_os_malloc(output_log_size);
