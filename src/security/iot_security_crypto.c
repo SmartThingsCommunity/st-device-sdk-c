@@ -23,6 +23,8 @@
 #include "security/iot_security_crypto.h"
 #include "security/backend/iot_security_be.h"
 
+#include "mbedtls/cipher.h"
+
 iot_error_t iot_security_pk_init(iot_security_context_t *context)
 {
 	iot_error_t err;

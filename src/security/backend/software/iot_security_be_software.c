@@ -25,6 +25,11 @@
 #include "security/iot_security_helper.h"
 #include "security/backend/iot_security_be.h"
 
+#include "mbedtls/ctr_drbg.h"
+#include "mbedtls/entropy.h"
+#include "mbedtls/ecdh.h"
+#include "mbedtls/cipher.h"
+
 STATIC_FUNCTION
 iot_error_t _iot_security_be_check_context_and_params_is_valid(iot_security_context_t *context, iot_security_sub_system_t sub_system)
 {
