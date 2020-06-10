@@ -153,7 +153,7 @@ iot_error_t iot_dump_create_all_log_dump(struct iot_context *iot_ctx, char **log
     int need_base64 = log_mode & IOT_DUMP_MODE_NEED_BASE64;
     int need_dump_state = log_mode & IOT_DUMP_MODE_NEED_DUMP_STATE;
 
-    int iot_dump_state_size = sizeof(struct iot_dump_state);
+    size_t iot_dump_state_size = sizeof(struct iot_dump_state);
 
     iot_error_t iot_err = IOT_ERROR_NONE;
 #ifdef CONFIG_STDK_IOT_CORE_LOG_FILE
