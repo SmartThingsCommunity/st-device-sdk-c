@@ -906,6 +906,9 @@ static void _iot_main_task(struct iot_context *ctx)
 	iot_cap_msg_t final_msg;
 	struct iot_easysetup_payload easysetup_req;
 	iot_state_t next_state;
+#if !defined(STDK_MQTT_TASK)
+	unsigned int task_cycle = IOT_MAIN_TASK_DEFAULT_CYCLE;
+#endif
 
 	for( ; ; ) {
 #if defined(STDK_MQTT_TASK)
@@ -913,7 +916,7 @@ static void _iot_main_task(struct iot_context *ctx)
 			IOT_EVENT_BIT_ALL, true, false, 500);
 #else
 		curr_events = iot_os_eventgroup_wait_bits(ctx->iot_events,
-			IOT_EVENT_BIT_ALL, true, IOT_MAIN_TASK_CYCLE);
+			IOT_EVENT_BIT_ALL, true, task_cycle);
 #endif
 		if (curr_events & IOT_EVENT_BIT_COMMAND) {
 			cmd.param = NULL;
@@ -1003,32 +1006,41 @@ static void _iot_main_task(struct iot_context *ctx)
 
 #if !defined(STDK_MQTT_TASK)
 		/* check if there is MQTT packet from GG */
-		if (ctx->reg_mqttcli && st_mqtt_yield(ctx->reg_mqttcli, 0) < 0) {
-			iot_es_disconnect(ctx, IOT_CONNECT_TYPE_REGISTRATION);
-			IOT_WARN("Report Disconnected..");
-			next_state = IOT_STATE_CLOUD_DISCONNECTED;
-			err = iot_state_update(ctx, next_state, 0);
-			IOT_DUMP_MAIN(WARN, BASE, err);
+		task_cycle = IOT_MAIN_TASK_DEFAULT_CYCLE;
+		if (ctx->reg_mqttcli) {
+			int rc = st_mqtt_yield(ctx->reg_mqttcli, 0);
+			if (rc < 0) {
+				iot_es_disconnect(ctx, IOT_CONNECT_TYPE_REGISTRATION);
+				IOT_WARN("Report Disconnected..");
+				next_state = IOT_STATE_CLOUD_DISCONNECTED;
+				err = iot_state_update(ctx, next_state, 0);
+				IOT_DUMP_MAIN(WARN, BASE, err);
 
-			IOT_WARN("Try MQTT self re-registering..\n");
-			next_state = IOT_STATE_CLOUD_REGISTERING;
-			err = iot_state_update(ctx, next_state, 0);
-			IOT_DUMP_MAIN(WARN, BASE, err);
-			_throw_away_all_pub_queue(ctx);
+				IOT_WARN("Try MQTT self re-registering..\n");
+				next_state = IOT_STATE_CLOUD_REGISTERING;
+				err = iot_state_update(ctx, next_state, 0);
+				IOT_DUMP_MAIN(WARN, BASE, err);
+				_throw_away_all_pub_queue(ctx);
+			} else if (rc > 0) {
+				task_cycle = 0;
+			}
+		} else if (ctx->evt_mqttcli) {
+			int rc = st_mqtt_yield(ctx->evt_mqttcli, 0);
+			if (rc < 0) {
+				iot_es_disconnect(ctx, IOT_CONNECT_TYPE_COMMUNICATION);
+				IOT_WARN("Report Disconnected..");
+				next_state = IOT_STATE_CLOUD_DISCONNECTED;
+				err = iot_state_update(ctx, next_state, 0);
+				IOT_DUMP_MAIN(WARN, BASE, err);
 
-
-		} else if (ctx->evt_mqttcli && st_mqtt_yield(ctx->evt_mqttcli, 0) < 0) {
-			iot_es_disconnect(ctx, IOT_CONNECT_TYPE_COMMUNICATION);
-			IOT_WARN("Report Disconnected..");
-			next_state = IOT_STATE_CLOUD_DISCONNECTED;
-			err = iot_state_update(ctx, next_state, 0);
-			IOT_DUMP_MAIN(WARN, BASE, err);
-
-			IOT_WARN("Try MQTT self re-connecting..\n");
-			next_state = IOT_STATE_CLOUD_CONNECTING;
-			err = iot_state_update(ctx, next_state, 0);
-			IOT_DUMP_MAIN(WARN, BASE, err);
-			_throw_away_all_pub_queue(ctx);
+				IOT_WARN("Try MQTT self re-connecting..\n");
+				next_state = IOT_STATE_CLOUD_CONNECTING;
+				err = iot_state_update(ctx, next_state, 0);
+				IOT_DUMP_MAIN(WARN, BASE, err);
+				_throw_away_all_pub_queue(ctx);
+			} else if (rc > 0) {
+				task_cycle = 0;
+			}
 		}
 #endif
 		_do_cmd_tout_check(ctx);

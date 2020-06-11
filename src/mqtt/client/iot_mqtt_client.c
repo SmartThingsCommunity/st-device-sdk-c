@@ -992,6 +992,27 @@ int st_mqtt_yield(st_mqtt_client client, int time)
 	} while (!iot_os_timer_isexpired(timer) && !rc);
 	iot_os_timer_destroy(&timer);
 
+	// Check if there is left work to do.
+	if (rc == 0) {
+		if (c == NULL || c->magic != MQTT_CLIENT_STRUCT_MAGIC_NUMBER) {
+			return E_ST_MQTT_FAILURE;
+		}
+
+		if((iot_os_mutex_lock(&c->read_lock)) == IOT_OS_TRUE) {
+			if (c->write_pending_queue.head != NULL) {
+				rc = 1;
+			} else if (c->ack_pending_queue.head != NULL) {
+				rc = 1;
+			} else if (c->user_event_callback_queue.head != NULL) {
+				rc = 1;
+			} else if(c->isconnected && (c->net->select(c->net, 0) > 0)) {
+				rc = 1;
+			}
+
+			iot_os_mutex_unlock(&c->read_lock);
+		}
+	}
+
 	return rc;
 }
 
