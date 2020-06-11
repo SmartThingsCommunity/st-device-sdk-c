@@ -23,6 +23,182 @@
 #include "security/iot_security_crypto.h"
 #include "security/backend/iot_security_be.h"
 
+#include "mbedtls/cipher.h"
+
+iot_error_t iot_security_pk_init(iot_security_context_t *context)
+{
+	iot_error_t err;
+	iot_security_pk_params_t *pk_params;
+
+	if (!context) {
+		return IOT_ERROR_SECURITY_CONTEXT_NULL;
+	}
+
+	pk_params = (iot_security_pk_params_t *)iot_os_malloc(sizeof(iot_security_pk_params_t));
+	if (!pk_params) {
+		IOT_ERROR("failed to malloc for pk params");
+		return IOT_ERROR_MEM_ALLOC;
+	}
+
+	memset(pk_params, 0, sizeof(iot_security_pk_params_t));
+
+	context->pk_params = pk_params;
+
+	if (context->be_context &&
+		context->be_context->fn &&
+		context->be_context->fn->pk_init) {
+		err = context->be_context->fn->pk_init(context);
+		if (err) {
+			iot_os_free(context->pk_params);
+			context->pk_params = NULL;
+			return err;
+		}
+	}
+
+	context->sub_system |= IOT_SECURITY_SUB_PK;
+
+	return IOT_ERROR_NONE;
+}
+
+iot_error_t iot_security_pk_deinit(iot_security_context_t *context)
+{
+	iot_error_t err;
+
+	if (!context) {
+		return IOT_ERROR_SECURITY_CONTEXT_NULL;
+	}
+
+	if (context->be_context &&
+		context->be_context->fn &&
+		context->be_context->fn->pk_deinit) {
+		err = context->be_context->fn->pk_deinit(context);
+		if (err) {
+			return err;
+		}
+	}
+
+	if (context->pk_params) {
+		memset(context->pk_params, 0, sizeof(iot_security_pk_params_t));
+		iot_os_free(context->pk_params);
+		context->pk_params = NULL;
+	}
+
+	context->sub_system &= ~IOT_SECURITY_SUB_PK;
+
+	return IOT_ERROR_NONE;
+}
+
+size_t iot_security_pk_get_signature_len(iot_security_key_type_t pk_type)
+{
+	IOT_DEBUG("type = %d", pk_type);
+
+	switch (pk_type) {
+	case IOT_SECURITY_KEY_TYPE_RSA2048:
+		return IOT_SECURITY_SIGNATURE_RSA2048_LEN;
+	case IOT_SECURITY_KEY_TYPE_ED25519:
+		return IOT_SECURITY_SIGNATURE_ED25519_LEN;
+	default:
+		return IOT_SECURITY_SIGNATURE_UNKNOWN_LEN;
+	}
+}
+
+iot_error_t iot_security_pk_get_key_type(iot_security_context_t *context, iot_security_key_type_t *key_type)
+{
+	iot_error_t err;
+
+	err = iot_security_check_backend_funcs_entry_is_valid(context);
+	if (err) {
+		return err;
+	}
+
+	if (!key_type) {
+		IOT_ERROR("key type is null");
+		return IOT_ERROR_INVALID_ARGS;
+	}
+
+	if (!context->pk_params) {
+		IOT_ERROR("pk does not initialized");
+		return IOT_ERROR_SECURITY_PK_KEY_TYPE;
+	}
+
+	*key_type = context->pk_params->type;
+
+	IOT_DEBUG("type = %d", *key_type);
+
+	return IOT_ERROR_NONE;
+}
+
+iot_error_t iot_security_pk_sign(iot_security_context_t *context, iot_security_buffer_t *input_buf, iot_security_buffer_t *sig_buf)
+{
+	iot_error_t err;
+
+	err = iot_security_check_backend_funcs_entry_is_valid(context);
+	if (err) {
+		return err;
+	}
+
+	if (!input_buf || !input_buf->p || (input_buf->len == 0)) {
+		IOT_ERROR("input buf is invalid");
+		return IOT_ERROR_INVALID_ARGS;
+	}
+
+	if (!sig_buf) {
+		IOT_ERROR("sig buf is null");
+		return IOT_ERROR_INVALID_ARGS;
+	}
+
+	IOT_DEBUG("input = %d@%p", (int)input_buf->len, input_buf->p);
+
+	if (!context->be_context->fn->pk_sign) {
+		IOT_ERROR("be->fn->pk_sign is null");
+		return IOT_ERROR_SECURITY_BE_FUNC_NULL;
+	}
+
+	err = context->be_context->fn->pk_sign(context, input_buf, sig_buf);
+	if (err) {
+		return err;
+	}
+
+	IOT_DEBUG("sig = %d@%p", (int)sig_buf->len, sig_buf->p);
+
+	return IOT_ERROR_NONE;
+}
+
+iot_error_t iot_security_pk_verify(iot_security_context_t *context, iot_security_buffer_t *input_buf, iot_security_buffer_t *sig_buf)
+{
+	iot_error_t err;
+
+	err = iot_security_check_backend_funcs_entry_is_valid(context);
+	if (err) {
+		return err;
+	}
+
+	if (!input_buf || !input_buf->p || (input_buf->len == 0)) {
+		IOT_ERROR("input buf is invalid");
+		return IOT_ERROR_INVALID_ARGS;
+	}
+
+	if (!sig_buf || !sig_buf->p || (sig_buf->len == 0)) {
+		IOT_ERROR("sig buf is invalid");
+		return IOT_ERROR_INVALID_ARGS;
+	}
+
+	IOT_DEBUG("input = %d@%p", (int)input_buf->len, input_buf->p);
+	IOT_DEBUG("sig = %d@%p", (int)sig_buf->len, sig_buf->p);
+
+	if (!context->be_context->fn->pk_verify) {
+		IOT_ERROR("be->fn->pk_verify is null");
+		return IOT_ERROR_SECURITY_BE_FUNC_NULL;
+	}
+
+	err = context->be_context->fn->pk_verify(context, input_buf, sig_buf);
+	if (err) {
+		return err;
+	}
+
+	return IOT_ERROR_NONE;
+}
+
 iot_error_t iot_security_cipher_init(iot_security_context_t *context)
 {
 	iot_error_t err;

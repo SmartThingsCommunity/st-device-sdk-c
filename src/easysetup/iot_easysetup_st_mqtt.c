@@ -28,9 +28,9 @@
 #include "iot_nv_data.h"
 #include "iot_debug.h"
 #include "iot_wt.h"
-#include "iot_crypto.h"
 #include "iot_os_util.h"
 #include "iot_bsp_system.h"
+#include "security/iot_security_manager.h"
 
 #include "JSON.h"
 #if defined(STDK_IOT_CORE_SERIALIZE_CBOR)
@@ -212,6 +212,52 @@ reg_sub_out:
 
 	if (json != NULL)
 		JSON_DELETE(json);
+}
+
+void _iot_mqtt_registration_client_callback(st_mqtt_event event, void *event_data, void *user_data)
+{
+	switch (event) {
+		case ST_MQTT_EVENT_MSG_DELIVERED:
+			{
+				st_mqtt_msg *md = event_data;
+				if (!strncmp(md->topic, IOT_SUB_TOPIC_REGISTRATION_PREFIX, IOT_SUB_TOPIC_REGISTRATION_PREFIX_SIZE)) {
+					mqtt_reg_sub_cb(md, user_data);
+				} else {
+					IOT_WARN("No msg delivery handler for %s", md->topic);
+				}
+				IOT_DEBUG("raw msg (len:%d) : %s", md->payloadlen, mqtt_payload);
+				break;
+			}
+		default:
+			IOT_WARN("No MQTT event handler for %d", event);
+			break;
+	}
+}
+
+void _iot_mqtt_signin_client_callback(st_mqtt_event event, void *event_data, void *user_data)
+{
+	struct iot_context *ctx = (struct iot_context *)user_data;
+
+	switch (event) {
+		case ST_MQTT_EVENT_MSG_DELIVERED:
+			{
+				st_mqtt_msg *md = event_data;
+				char *mqtt_payload = md->payload;
+				if (!strncmp(md->topic, IOT_SUB_TOPIC_COMMAND_PREFIX, IOT_SUB_TOPIC_COMMAND_PREFIX_SIZE)) {
+					iot_cap_sub_cb(ctx->cap_handle_list, mqtt_payload);
+				} else if (!strncmp(md->topic, IOT_SUB_TOPIC_NOTIFICATION_PREFIX, IOT_SUB_TOPIC_NOTIFICATION_PREFIX_SIZE)) {
+					iot_noti_sub_cb(ctx, mqtt_payload);
+				} else {
+					IOT_WARN("No msg delivery handler for %s", md->topic);
+				}
+				IOT_DEBUG("raw msg (len:%d) : %s", md->payloadlen, mqtt_payload);
+				break;
+			}
+			break;
+		default:
+			IOT_WARN("No MQTT event handler for %d", event);
+			break;
+	}
 }
 
 #if defined(STDK_IOT_CORE_SERIALIZE_CBOR)
@@ -570,7 +616,7 @@ iot_error_t _iot_es_mqtt_connect(struct iot_context *ctx, st_mqtt_client target_
 		goto done_mqtt_connect;
 	}
 
-	iot_ret = iot_nv_get_root_certificate(&root_cert, &root_cert_len);
+	iot_ret = iot_nv_get_certificate(IOT_SECURITY_CERT_ID_ROOT_CA, &root_cert, &root_cert_len);
 	if (iot_ret != IOT_ERROR_NONE) {
 		IOT_ERROR("failed to get root cert");
 		goto done_mqtt_connect;
@@ -651,11 +697,9 @@ done_mqtt_connect:
 
 iot_error_t iot_es_connect(struct iot_context *ctx, int conn_type)
 {
+	iot_security_buffer_t token_buf = { 0 };
+	iot_security_buffer_t sn_buf = { 0 };
 	st_mqtt_client mqtt_cli = NULL;
-	char *dev_sn = NULL;
-	size_t devsn_len;
-	char *wt_data = NULL;
-	struct iot_crypto_pk_info pk_info = { 0, };
 	char *topicfilter = NULL;
 	iot_error_t iot_ret;
 	int ret;
@@ -665,26 +709,13 @@ iot_error_t iot_es_connect(struct iot_context *ctx, int conn_type)
 		return IOT_ERROR_INVALID_ARGS;
 	}
 
-	ret = st_mqtt_create(&mqtt_cli, IOT_DEFAULT_TIMEOUT);
-	if (ret) {
-		IOT_ERROR("Cannot create mqtt client");
-		return IOT_ERROR_MEM_ALLOC;
-	}
-
-	iot_ret = iot_nv_get_serial_number(&dev_sn, &devsn_len);
+	iot_ret = iot_nv_get_serial_number((char **)&sn_buf.p, &sn_buf.len);
 	if (iot_ret != IOT_ERROR_NONE) {
 		IOT_ERROR("failed to get serial num");
 		goto out;
 	}
 
-	iot_es_crypto_init_pk(&pk_info, ctx->devconf.pk_type);
-	iot_ret = iot_es_crypto_load_pk(&pk_info);
-	if (iot_ret != IOT_ERROR_NONE) {
-		IOT_ERROR("failed to load pk");
-		goto out;
-	}
-
-	iot_ret = iot_wt_create(&wt_data, dev_sn, &pk_info);
+	iot_ret = iot_wt_create((const iot_security_buffer_t *)&sn_buf, &token_buf);
 	if (iot_ret != IOT_ERROR_NONE) {
 		IOT_ERROR("failed to make wt-token");
 		goto out;
@@ -704,7 +735,13 @@ iot_error_t iot_es_connect(struct iot_context *ctx, int conn_type)
 			goto out;
 		}
 
-		iot_ret = _iot_es_mqtt_connect(ctx, mqtt_cli, (char *)ctx->iot_reg_data.deviceId, wt_data);
+		ret = st_mqtt_create(&mqtt_cli, _iot_mqtt_signin_client_callback, ctx);
+		if (ret) {
+			IOT_ERROR("Cannot create mqtt client");
+			goto out;
+		}
+
+		iot_ret = _iot_es_mqtt_connect(ctx, mqtt_cli, (char *)ctx->iot_reg_data.deviceId, (char *)token_buf.p);
 		if (iot_ret != IOT_ERROR_NONE) {
 			IOT_ERROR("failed to connect");
 			goto out;
@@ -714,8 +751,7 @@ iot_error_t iot_es_connect(struct iot_context *ctx, int conn_type)
 
 		snprintf(topicfilter, IOT_TOPIC_SIZE, IOT_SUB_TOPIC_NOTIFICATION, ctx->iot_reg_data.deviceId);
 		IOT_DEBUG("noti subscribe topic : %s", topicfilter);
-		ret = st_mqtt_subscribe(mqtt_cli, topicfilter, st_mqtt_qos1,
-				_iot_mqtt_noti_sub_callback, ctx);
+		ret = st_mqtt_subscribe(mqtt_cli, topicfilter, st_mqtt_qos1);
 		if (ret) {
 			IOT_WARN("subscribe error(%d)", ret);
 			iot_ret = IOT_ERROR_BAD_REQ;
@@ -725,8 +761,7 @@ iot_error_t iot_es_connect(struct iot_context *ctx, int conn_type)
 
 		snprintf(topicfilter, IOT_TOPIC_SIZE, IOT_SUB_TOPIC_COMMAND, ctx->iot_reg_data.deviceId);
 		IOT_DEBUG("cmd subscribe topic : %s", topicfilter);
-		ret = st_mqtt_subscribe(mqtt_cli, topicfilter, st_mqtt_qos1,
-				_iot_mqtt_cmd_sub_callback, ctx);
+		ret = st_mqtt_subscribe(mqtt_cli, topicfilter, st_mqtt_qos1);
 		if (ret) {
 			IOT_WARN("failed cmd sub registration(%d)", ret);
 			iot_ret = IOT_ERROR_BAD_REQ;
@@ -746,7 +781,14 @@ iot_error_t iot_es_connect(struct iot_context *ctx, int conn_type)
 		ctx->evt_mqttcli = mqtt_cli;
 	} else {
 		IOT_INFO("connect_type: registration");
-		iot_ret = _iot_es_mqtt_connect(ctx, mqtt_cli, (char *)dev_sn, wt_data);
+
+		ret = st_mqtt_create(&mqtt_cli, _iot_mqtt_registration_client_callback, ctx);
+		if (ret) {
+			IOT_ERROR("Cannot create mqtt client");
+			goto out;
+		}
+
+		iot_ret = _iot_es_mqtt_connect(ctx, mqtt_cli, (char *)sn_buf.p, (char *)token_buf.p);
 		if (iot_ret != IOT_ERROR_NONE) {
 			IOT_ERROR("failed to connect");
 			goto out;
@@ -755,10 +797,9 @@ iot_error_t iot_es_connect(struct iot_context *ctx, int conn_type)
 		}
 
 		/* register notification subscribe for registration */
-		snprintf(topicfilter, IOT_TOPIC_SIZE, IOT_SUB_TOPIC_REGISTRATION, dev_sn);
+		snprintf(topicfilter, IOT_TOPIC_SIZE, IOT_SUB_TOPIC_REGISTRATION,  (char *)sn_buf.p);
 		IOT_DEBUG("noti subscribe topic : %s", topicfilter);
-		ret = st_mqtt_subscribe(mqtt_cli, topicfilter, st_mqtt_qos1,
-				mqtt_reg_sub_cb, ctx);
+		ret = st_mqtt_subscribe(mqtt_cli, topicfilter, st_mqtt_qos1);
 		if (ret) {
 			IOT_ERROR("%s error MQTTsub(%d)", __func__, ret);
 			iot_ret = IOT_ERROR_BAD_REQ;
@@ -777,13 +818,11 @@ iot_error_t iot_es_connect(struct iot_context *ctx, int conn_type)
 	}
 
 out:
-	iot_es_crypto_free_pk(&pk_info);
+	if (sn_buf.p)
+		free((void *)sn_buf.p);
 
-	if (dev_sn)
-		free((void *)dev_sn);
-
-	if (wt_data)
-		free(wt_data);
+	if (token_buf.p)
+		free(token_buf.p);
 
 	if (topicfilter)
 		free(topicfilter);

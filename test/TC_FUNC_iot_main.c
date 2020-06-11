@@ -171,7 +171,7 @@ void TC_st_conn_init_success(void **state)
     assert_string_equal(internal_context->devconf.vid, TEST_ONBOARDING_VID);
     assert_string_equal(internal_context->devconf.setupid, TEST_ONBOARDING_SETUPID);
     assert_string_equal(internal_context->devconf.device_type, TEST_ONBOARDING_DEVICETYPEID);
-    assert_int_equal(internal_context->devconf.pk_type, IOT_CRYPTO_PK_ED25519);
+    assert_int_equal(internal_context->devconf.pk_type, IOT_SECURITY_KEY_TYPE_ED25519);
     assert_string_equal(internal_context->device_info.firmware_version, TEST_FIRMWARE_VERSION);
     assert_non_null(internal_context->state_timer);
     assert_non_null(internal_context->cmd_queue);
@@ -267,7 +267,7 @@ void TC_easysetup_resources_create_delete_success(void** state)
     // Then: success and has proper resources
     assert_int_equal(err, IOT_ERROR_NONE);
     assert_memory_equal(&pin.pin, context->pin, sizeof(iot_pin_t));
-    assert_non_null(context->es_crypto_cipher_info);
+    assert_non_null(context->easysetup_security_context);
     assert_non_null(context->easysetup_req_queue);
     assert_non_null(context->easysetup_resp_queue);
     assert_true(context->es_res_created);
@@ -276,7 +276,7 @@ void TC_easysetup_resources_create_delete_success(void** state)
     _delete_easysetup_resources_all(context);
     // Then: verify deletion
     assert_null(context->pin);
-    assert_null(context->es_crypto_cipher_info);
+    assert_null(context->easysetup_security_context);
     assert_null(context->easysetup_req_queue);
     assert_null(context->easysetup_resp_queue);
     assert_false(context->es_res_created);

@@ -43,9 +43,8 @@
 #define IOT_DUMP_MAIN(LVL, LOGID, arg) \
 	IOT_DUMP(IOT_DEBUG_LEVEL_##LVL, IOT_DUMP_MAIN_##LOGID, __LINE__, arg)
 
-#define IOT_DUMP_COMMAND(LVL, arg1, arg2) \
-	IOT_DUMP(IOT_DEBUG_LEVEL_##LVL, IOT_DUMP_MAIN_COMMAND, arg1, arg2)
-
+#define IOT_DUMP_MAIN_ARG2(LVL, LOGID, arg1, arg2) \
+	IOT_DUMP(IOT_DEBUG_LEVEL_##LVL, IOT_DUMP_MAIN_##LOGID, arg1, arg2)
 
 static int rcv_try_cnt;
 static iot_state_t rcv_fail_state;
@@ -85,9 +84,9 @@ void _delete_easysetup_resources_all(struct iot_context *ctx)
 		iot_os_free(ctx->pin);
 		ctx->pin = NULL;
 	}
-	if (ctx->es_crypto_cipher_info) {
-		iot_os_free(ctx->es_crypto_cipher_info);
-		ctx->es_crypto_cipher_info = NULL;
+	if (ctx->easysetup_security_context) {
+		iot_security_deinit(ctx->easysetup_security_context);
+		ctx->easysetup_security_context = NULL;
 	}
 	if (ctx->easysetup_req_queue) {
 		iot_os_queue_delete(ctx->easysetup_req_queue);
@@ -122,13 +121,11 @@ iot_error_t _create_easysetup_resources(struct iot_context *ctx, iot_pin_t *pin_
 		}
 	}
 
-	if ((ctx->es_crypto_cipher_info = (iot_crypto_cipher_info_t *) iot_os_malloc(sizeof(iot_crypto_cipher_info_t))) == NULL) {
-		IOT_ERROR("failed to malloc for cipher info");
+	ctx->easysetup_security_context = iot_security_init();
+	if (ctx->easysetup_security_context == NULL) {
 		IOT_DUMP_MAIN(ERROR, BASE, 0xDEADBEEF);
-		ret = IOT_ERROR_MEM_ALLOC;
+		ret = IOT_ERROR_SECURITY_INIT;
 		goto create_fail;
-	} else {
-		memset(ctx->es_crypto_cipher_info, 0, sizeof(iot_crypto_cipher_info_t));
 	}
 
 	if (!ctx->easysetup_req_queue) {
@@ -224,11 +221,17 @@ void _do_status_report(struct iot_context *ctx,
 		break;
 
 	case IOT_STATE_CLOUD_REGISTERING:
-		/* fall through */
+		if (!is_final) {
+			fn_stat = IOT_STATUS_CONNECTING;
+			fn_stat_lv = IOT_STAT_LV_SIGN_UP;
+			is_report = true;
+		}
+		break;
+
 	case IOT_STATE_CLOUD_CONNECTING:
 		if (!is_final) {
 			fn_stat = IOT_STATUS_CONNECTING;
-			fn_stat_lv = IOT_STAT_LV_START;
+			fn_stat_lv = IOT_STAT_LV_SIGN_IN;
 			is_report = true;
 		}
 		break;
@@ -327,7 +330,6 @@ static iot_error_t _do_iot_main_command(struct iot_context *ctx,
 
 	IOT_INFO("curr_main_cmd:%d, curr_main_state:%d/%d",
 		cmd->cmd_type, ctx->curr_state, ctx->req_state);
-	IOT_DUMP_COMMAND(INFO, cmd->cmd_type, ctx->req_state);
 
 	/* Some State has to queue several commands sequentially
 	 * But sometimes next command queuing or next process can make error
@@ -337,7 +339,7 @@ static iot_error_t _do_iot_main_command(struct iot_context *ctx,
 	 */
 	if (ctx->cmd_err && (cmd->cmd_type < IOT_COMMAND_TYPE_MAX)) {
 		IOT_WARN("iot-core had errors!!(0x%0x), skip cmd", ctx->cmd_err);
-		IOT_DUMP_COMMAND(WARN, ctx->cmd_err, ctx->curr_state);
+		IOT_DUMP_MAIN_ARG2(WARN, COMMAND, ctx->cmd_err, ctx->curr_state);
 		goto out_do_cmd;
 	}
 
@@ -699,7 +701,6 @@ static iot_error_t _do_iot_main_command(struct iot_context *ctx,
 				next_state = IOT_STATE_UNKNOWN;
 			} else if (err != IOT_ERROR_NONE) {
 				IOT_ERROR("failed to iot_es_connect for communication\n");
-				IOT_DUMP_MAIN(ERROR, BASE, err);
 
 				ctx->cmd_err |= (1u << cmd->cmd_type);
 				next_state = IOT_STATE_CHANGE_FAILED;
@@ -783,7 +784,7 @@ out_do_cmd:
 		_clear_cmd_status(ctx, cmd->cmd_type);
 	} else {
 		IOT_ERROR("failed to handle cmd: %d\n", cmd->cmd_type);
-		IOT_DUMP_COMMAND(ERROR, cmd->cmd_type, ctx->curr_state);
+		IOT_DUMP_MAIN_ARG2(ERROR, COMMAND, cmd->cmd_type, ctx->curr_state);
 	}
 
 	return err;
@@ -823,7 +824,6 @@ static void _do_cmd_tout_check(struct iot_context *ctx)
 			/* All command processes are done for req_state */
 			if (!ctx->cmd_err) {
 				IOT_INFO("New state updated for %d", ctx->req_state);
-				IOT_DUMP_MAIN(INFO, BASE, ctx->req_state);
 				ctx->curr_state = ctx->req_state;
 
 				if (ctx->status_cb)
@@ -832,7 +832,6 @@ static void _do_cmd_tout_check(struct iot_context *ctx)
 				/* Some command makes error, so do not update state */
 				IOT_ERROR("Some cmd(0x%0x) failed for %d state",
 					ctx->cmd_err, ctx->req_state);
-				IOT_DUMP_MAIN(ERROR, BASE, ctx->req_state);
 			}
 		}
 	}
@@ -881,10 +880,28 @@ static iot_error_t _publish_event(struct iot_context *ctx, iot_cap_msg_t *cap_ms
 	return result;
 }
 
+static void _throw_away_all_pub_queue(struct iot_context *ctx)
+{
+	iot_cap_msg_t final_msg;
+
+	if (!ctx) {
+		IOT_ERROR("There is no ctx!!");
+		IOT_DUMP_MAIN(ERROR, BASE, 0xDEADBEEF);
+		return;
+	}
+
+	while (iot_os_queue_receive(ctx->pub_queue,
+				&final_msg, 0) == IOT_OS_TRUE) {
+		if (final_msg.msg) {
+			free(final_msg.msg);
+		}
+	}
+}
+
 static void _iot_main_task(struct iot_context *ctx)
 {
 	struct iot_command cmd;
-	unsigned int curr_events;
+	unsigned char curr_events;
 	iot_error_t err = IOT_ERROR_NONE;
 	iot_cap_msg_t final_msg;
 	struct iot_easysetup_payload easysetup_req;
@@ -946,7 +963,7 @@ static void _iot_main_task(struct iot_context *ctx)
 							IOT_DUMP_MAIN(WARN, BASE, err);
 
 							IOT_WARN("Try MQTT reconnecting..");
-							iot_os_queue_reset(ctx->pub_queue);
+							_throw_away_all_pub_queue(ctx);
 							next_state = IOT_STATE_CLOUD_CONNECTING;
 							err = iot_state_update(ctx, next_state, 0);
 							IOT_DUMP_MAIN(WARN, BASE, err);
@@ -997,7 +1014,8 @@ static void _iot_main_task(struct iot_context *ctx)
 			next_state = IOT_STATE_CLOUD_REGISTERING;
 			err = iot_state_update(ctx, next_state, 0);
 			IOT_DUMP_MAIN(WARN, BASE, err);
-			iot_os_queue_reset(ctx->pub_queue);
+			_throw_away_all_pub_queue(ctx);
+
 
 		} else if (ctx->evt_mqttcli && st_mqtt_yield(ctx->evt_mqttcli, 0) < 0) {
 			iot_es_disconnect(ctx, IOT_CONNECT_TYPE_COMMUNICATION);
@@ -1010,7 +1028,7 @@ static void _iot_main_task(struct iot_context *ctx)
 			next_state = IOT_STATE_CLOUD_CONNECTING;
 			err = iot_state_update(ctx, next_state, 0);
 			IOT_DUMP_MAIN(WARN, BASE, err);
-			iot_os_queue_reset(ctx->pub_queue);
+			_throw_away_all_pub_queue(ctx);
 		}
 #endif
 		_do_cmd_tout_check(ctx);
@@ -1407,6 +1425,7 @@ static iot_error_t _do_state_updating(struct iot_context *ctx,
 	case IOT_STATE_INITIALIZED:
 		iot_cmd = IOT_COMMAND_CHECK_PROV_STATUS;
 		iot_err = iot_command_send(ctx, iot_cmd, NULL, 0);
+		IOT_DUMP_MAIN_ARG2(INFO, STATE, new_state, iot_err);
 		break;
 
 	case IOT_STATE_PROV_ENTER:
@@ -1476,6 +1495,7 @@ static iot_error_t _do_state_updating(struct iot_context *ctx,
 	case IOT_STATE_CLOUD_CONNECTED:
 		iot_cmd = IOT_COMMAND_READY_TO_CTL;
 		iot_err = iot_command_send(ctx, iot_cmd, NULL, 0);
+		IOT_DUMP_MAIN_ARG2(INFO, STATE, new_state, iot_err);
 		break;
 
 	case IOT_STATE_CLOUD_DISCONNECTED:
@@ -1494,7 +1514,7 @@ static iot_error_t _do_state_updating(struct iot_context *ctx,
 		 * such as reboot, re-start command from user-apps
 		 */
 		IOT_WARN("Iot-core task will be stopped, needed ext-triggering\n");
-		IOT_DUMP_MAIN(WARN, BASE, IOT_STATE_UNKNOWN);
+		IOT_DUMP_MAIN_ARG2(WARN, STATE, new_state, iot_err);
 
 		if (ctx->es_http_ready) {
 			ctx->es_http_ready = false;
@@ -1513,7 +1533,7 @@ static iot_error_t _do_state_updating(struct iot_context *ctx,
 
 	default:
 		IOT_ERROR("Unsupported new IOT_STATE!!(%d)\n", new_state);
-		IOT_DUMP_MAIN(ERROR, BASE, new_state);
+		IOT_DUMP_MAIN(ERROR, STATE, new_state);
 		break;
 
 	}
@@ -1527,7 +1547,7 @@ int st_conn_start(IOT_CTX *iot_ctx, st_status_cb status_cb,
 	struct iot_state_data state_data;
 	iot_error_t iot_err;
 	struct iot_context *ctx = (struct iot_context*)iot_ctx;
-	unsigned int curr_events;
+	unsigned char curr_events;
 
 	if (!ctx)
 		return IOT_ERROR_BAD_REQ;
