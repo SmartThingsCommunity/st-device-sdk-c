@@ -447,7 +447,7 @@ void TC_iot_easysetup_request_success(void **state)
     struct iot_context *context;
     const char *test_payload = "{ message: \"\" }";
     struct iot_easysetup_payload received_payload;
-    unsigned int easysetup_event = 0;
+    unsigned char easysetup_event = 0;
     UNUSED(state);
 
     // Given

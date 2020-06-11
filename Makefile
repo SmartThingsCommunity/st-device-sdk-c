@@ -32,7 +32,6 @@ SRCS	+= $(wildcard $(OS_DIR)/*.c)
 SRCS	+= $(wildcard $(NET_DIR)/*.c)
 SRCS	+= $(wildcard $(CRYPTO_DIR)/*.c)
 SRCS	+= $(EASYSETUP_DIR)/iot_easysetup_st_mqtt.c \
-			$(EASYSETUP_DIR)/iot_easysetup_crypto.c \
 			$(wildcard $(EASYSETUP_DIR)/posix_testing/*.c)
 SRCS	+= $(wildcard $(MQTT_DIR)/client/*.c)
 SRCS	+= $(wildcard $(MQTT_DIR)/packet/*.c)

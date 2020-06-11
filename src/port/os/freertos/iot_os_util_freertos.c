@@ -94,16 +94,16 @@ void iot_os_eventgroup_delete(iot_os_eventgroup* eventgroup_handle)
 	vEventGroupDelete(eventgroup_handle);
 }
 
-unsigned int iot_os_eventgroup_wait_bits(iot_os_eventgroup* eventgroup_handle,
-		const unsigned int bits_to_wait_for, const int clear_on_exit, const unsigned int wait_time_ms)
+unsigned char iot_os_eventgroup_wait_bits(iot_os_eventgroup* eventgroup_handle,
+		const unsigned char bits_to_wait_for, const int clear_on_exit, const unsigned int wait_time_ms)
 {
-	return xEventGroupWaitBits(eventgroup_handle, bits_to_wait_for, clear_on_exit, false, wait_time_ms);
+	return xEventGroupWaitBits(eventgroup_handle, (const EventBits_t) bits_to_wait_for, clear_on_exit, false, wait_time_ms);
 }
 
 int iot_os_eventgroup_set_bits(iot_os_eventgroup* eventgroup_handle,
-		const unsigned int bits_to_set)
+		const unsigned char bits_to_set)
 {
-	xEventGroupSetBits(eventgroup_handle, bits_to_set);
+	xEventGroupSetBits(eventgroup_handle, (const EventBits_t) bits_to_set);
 	return IOT_OS_TRUE;
 }
 

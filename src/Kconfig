@@ -156,7 +156,7 @@ config STDK_DEBUG_MEMORY_CHECK
     help
         If this debug option is enabled, IOT_MEM_CHECK will print memory utilization.
 
-menu "Crypto"
+menu "Security"
     depends on STDK_IOT_CORE
 
 config STDK_IOT_CORE_USE_MBEDTLS
@@ -167,24 +167,59 @@ config STDK_IOT_CORE_USE_MBEDTLS
        If this option is enabled, STDK will use thin wrappers around
        mbedTLS for Crypto (sha, sign, ...) operations.
 
-config STDK_IOT_CORE_CRYPTO_SUPPORT_RSA
-    bool "Support RSA based crypto"
-    default n
+choice STDK_IOT_CORE_CRYPTO_IDENTITY_KEYTYPE
+    prompt "Choose device identity key type"
+    default STDK_IOT_CORE_CRYPTO_SUPPORT_ED25519
     depends on STDK_IOT_CORE
     help
-       Support RSA based sign, encryption functions.
+       Choose the type of public key registered on the Device Identity.
 
+       This key is used for JWT/CWT as signature algorithm to identify
+       the device.
+
+config STDK_IOT_CORE_CRYPTO_SUPPORT_RSA
+    bool "RSA"
 config STDK_IOT_CORE_CRYPTO_SUPPORT_ED25519
-    bool "Support Ed25519 based crypto"
-    default n
+    bool "Ed25519"
+endchoice
+
+choice STDK_IOT_CORE_SECURITY_BACKEND
+    prompt "Choose security backend block"
+    default STDK_IOT_CORE_SECURITY_BACKEND_SOFTWARE
     depends on STDK_IOT_CORE
     help
-       Support Ed25519 based sign, encryption functions.
+       Choose the backend block of security.
+
+       Software based module or Hardware based module.
+       Hardware based module supports SE(Secure Element).
+
+config STDK_IOT_CORE_SECURITY_BACKEND_SOFTWARE
+    bool "Software"
+config STDK_IOT_CORE_SECURITY_BACKEND_HARDWARE
+    bool "Hardware"
+endchoice
+
+menu "Hardware backend"
+    depends on STDK_IOT_CORE_SECURITY_BACKEND_HARDWARE
+
+choice STDK_IOT_CORE_SECURITY_BACKEND_HARDWARE_MODULE
+    prompt "Choose hardware backend module"
+    default STDK_IOT_CORE_SECURITY_BACKEND_HARDWARE_VIRTUAL
+    help
+       Choose the module for hardware backend.
+
+       Virtual is a virtual module for module implementation.
+
+config STDK_IOT_CORE_SECURITY_BACKEND_HARDWARE_VIRTUAL
+    bool "Virtual"
+endchoice
+
+endmenu
 
 choice STDK_IOT_CORE_FS_ENCRYPTION
     prompt "Choose FS encryption method"
     default STDK_IOT_CORE_FS_HW_ENCRYPTION
-    depends on STDK_IOT_CORE
+    depends on STDK_IOT_CORE_SECURITY_BACKEND_SOFTWARE
     help
        Choose the file system encryption method.
 
@@ -195,11 +230,9 @@ config STDK_IOT_CORE_FS_SW_ENCRYPTION
     bool "Software"
 config STDK_IOT_CORE_FS_HW_ENCRYPTION
     bool "Hardware"
-config STDK_IOT_CORE_FS_SE_ENCRYPTION
-    bool "Hardware (SE)"
 endchoice
 
-endmenu # Crypto
+endmenu # Security
 
 menu "Network"
     depends on STDK_IOT_CORE

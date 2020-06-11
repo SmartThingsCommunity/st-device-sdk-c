@@ -50,15 +50,18 @@ endif
 COMPONENT_SRCDIRS += deps/cbor/tinycbor/src
 COMPONENT_ADD_INCLUDEDIRS += deps/cbor/tinycbor/src
 
-COMPONENT_SRCDIRS += crypto
+COMPONENT_SRCDIRS += security
+COMPONENT_SRCDIRS += security/helper/libsodium
 ifdef CONFIG_STDK_IOT_CORE_USE_MBEDTLS
-COMPONENT_SRCDIRS += crypto/mbedtls
+COMPONENT_SRCDIRS += security/helper/mbedtls
 endif
-ifdef CONFIG_STDK_IOT_CORE_FS_SW_ENCRYPTION
-COMPONENT_ADD_LDFLAGS += $(COMPONENT_PATH)/crypto/ss/lib/libiot_crypto_ss.a
-COMPONENT_ADD_LINKER_DEPS := $(COMPONENT_PATH)/crypto/ss/lib/libiot_crypto_ss.a
-else
-COMPONENT_SRCDIRS += crypto/ss
+ifeq ($(CONFIG_STDK_IOT_CORE_SECURITY_BACKEND_SOFTWARE),y)
+	COMPONENT_SRCDIRS += security/backend/software
+	ifdef CONFIG_STDK_IOT_CORE_FS_SW_ENCRYPTION
+	COMPONENT_ADD_LDFLAGS += -L $(COMPONENT_PATH)/security/backend/software/lib/esp -liot_security_ss
+	endif
+else ifeq ($(CONFIG_STDK_IOT_CORE_SECURITY_BACKEND_HARDWARE),y)
+	COMPONENT_SRCDIRS += security/backend/hardware
 endif
 
 COMPONENT_SRCDIRS += easysetup

@@ -24,7 +24,6 @@
 #include "iot_internal.h"
 #include "iot_debug.h"
 #include "iot_easysetup.h"
-#include "iot_crypto.h"
 #include "iot_nv_data.h"
 #include "iot_os_util.h"
 #include "iot_util.h"
@@ -152,7 +151,7 @@ iot_error_t iot_easysetup_request(struct iot_context *ctx,
 		ret = iot_os_queue_send(ctx->easysetup_req_queue, &request, 0);
 		if (ret != IOT_OS_TRUE) {
 			IOT_ERROR("Cannot put the request into easysetup_req_queue");
-			err = IOT_ERROR_BAD_REQ;
+			err = IOT_ERROR_EASYSETUP_QUEUE_SEND_ERROR;
 		} else {
 			iot_os_eventgroup_set_bits(ctx->iot_events,
 				IOT_EVENT_BIT_EASYSETUP_REQ);
@@ -232,7 +231,7 @@ iot_error_t iot_api_onboarding_config_load(unsigned char *onboarding_config,
 	char *vid = NULL;
 	char *devicetypeid = NULL;
 	unsigned int ownership_validation_type = 0;
-	iot_crypto_pk_type_t pk_type;
+	iot_security_key_type_t pk_type;
 	size_t str_len = 0;
 	int i;
 	struct iot_dip_data *new_dip = NULL;
@@ -401,9 +400,9 @@ iot_error_t iot_api_onboarding_config_load(unsigned char *onboarding_config,
 	/* device identity */
 	item = JSON_GET_OBJECT_ITEM(config, name_identityType);
 	if (!item || !strcmp(JSON_GET_STRING_VALUE(item), "ED25519")) {
-		pk_type = IOT_CRYPTO_PK_ED25519;
+		pk_type = IOT_SECURITY_KEY_TYPE_ED25519;
 	} else if (!strcmp(JSON_GET_STRING_VALUE(item), "CERTIFICATE")) {
-		pk_type = IOT_CRYPTO_PK_RSA;
+		pk_type = IOT_SECURITY_KEY_TYPE_RSA2048;
 	} else {
 #if defined(CONFIG_STDK_IOT_CORE_LOG_LEVEL_ERROR)
 		current_name = (char *)name_identityType;

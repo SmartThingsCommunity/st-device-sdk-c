@@ -177,56 +177,18 @@ iot_error_t iot_nv_get_cloud_prov_data(struct iot_cloud_prov_data* cloud_prov);
 iot_error_t iot_nv_set_cloud_prov_data(struct iot_cloud_prov_data* cloud_prov);
 
 /**
- * @brief Get a private key from the nv file-system.
+ * @brief Get a certificate from the nv file-system.
  *
- * @param[out] key A pointer to data array to store the private key from the nv file-system.
- * @param[out] len The length of the nv data.
+ * @param[in] cert_id A index of certificate to get
+ * @param[out] cert A pointer to data array to store the certificate from the nv file-system.
+ * @param[out] len The length of the certificate.
  * @retval IOT_ERROR_NONE Get nv data successful.
  * @retval IOT_ERROR_INVALID_ARGS Invalid argument.
  * @retval IOT_ERROR_NV_DATA_ERROR Get nv data failed.
  *
  * @warning The caller is always responsible to free the allocated pointer after using the data.
  */
-iot_error_t iot_nv_get_private_key(char** key, size_t* len);
-
-/**
- * @brief Get a public key from the nv file-system.
- *
- * @param[out] key A pointer to data array to store the public key from the nv file-system.
- * @param[out] len The length of the nv data.
- * @retval IOT_ERROR_NONE Get nv data successful.
- * @retval IOT_ERROR_INVALID_ARGS Invalid argument.
- * @retval IOT_ERROR_NV_DATA_ERROR Get nv data failed.
- *
- * @warning The caller is always responsible to free the allocated pointer after using the data.
- */
-iot_error_t iot_nv_get_public_key(char** key, size_t* len);
-
-/**
- * @brief Get a root cert from the nv file-system.
- *
- * @param[out] cert A pointer to data array to store the root cert from the nv file-system.
- * @param[out] len The length of the nv data.
- * @retval IOT_ERROR_NONE Get nv data successful.
- * @retval IOT_ERROR_INVALID_ARGS Invalid argument.
- * @retval IOT_ERROR_NV_DATA_ERROR Get nv data failed.
- *
- * @warning The caller is always responsible to free the allocated pointer after using the data.
- */
-iot_error_t iot_nv_get_root_certificate(char** cert, size_t* len);
-
-/**
- * @brief Get a client cert from the nv file-system.
- *
- * @param[out] cert A pointer to data array to store the client cert from the nv file-system.
- * @param[out] len The length of the nv data.
- * @retval IOT_ERROR_NONE Get nv data successful.
- * @retval IOT_ERROR_INVALID_ARGS Invalid argument.
- * @retval IOT_ERROR_NV_DATA_ERROR Get nv data failed.
- *
- * @warning The caller is always responsible to free the allocated pointer after using the data.
- */
-iot_error_t iot_nv_get_client_certificate(char** cert, size_t* len);
+iot_error_t iot_nv_get_certificate(iot_security_cert_id_t cert_id, char **cert, size_t *cert_len);
 
 /**
  * @brief Get a device id from the nv file-system.

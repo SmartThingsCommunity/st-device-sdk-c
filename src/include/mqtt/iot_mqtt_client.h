@@ -48,6 +48,7 @@ extern "C" {
 #define MQTT_PING_RETRY 				3
 #define MQTT_WRITE_TIMEOUT				10000	/* in ms*/
 #define MQTT_READ_TIMEOUT				10000	/* in ms*/
+#define MQTT_RETRY_TIMEOUT				12000	/* in ms*/
 
 #define MQTT_DISCONNECT_MAX_SIZE		5
 #define MQTT_PUBACK_MAX_SIZE			5
@@ -98,19 +99,12 @@ typedef struct iot_mqtt_packet_chunk_queue {
 
 typedef struct MQTTClient {
 	int magic;
-	unsigned int next_packetid,
-			command_timeout_ms;
+	unsigned int next_packetid;
 	unsigned int keepAliveInterval;
 	int isconnected;
 
-	struct MessageHandlers {
-		char *topicFilter;
-		void (*fp)(st_mqtt_msg *, void *);
-		void *userData;
-	} messageHandlers[MAX_MESSAGE_HANDLERS];	  /* Message handlers are indexed by subscription topic */
-
-	void (*defaultMessageHandler)(st_mqtt_msg *, void *);
-	void *defaultUserData;
+	st_mqtt_event_callback user_callback_fp;
+	void *user_callback_user_data;
 
 	iot_net_interface_t *net;
 	iot_os_timer last_sent, last_received;

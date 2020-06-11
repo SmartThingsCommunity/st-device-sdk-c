@@ -29,6 +29,14 @@
 #include "TC_MOCK_functions.h"
 #define UNUSED(x) (void**)(x)
 
+void _dummy_mqtt_client_callback(st_mqtt_event event, void *event_data, void *usr_data)
+{
+    UNUSED(event);
+    UNUSED(event_data);
+    UNUSED(usr_data);
+    return;
+}
+
 void TC_st_mqtt_create_success(void** state)
 {
     int err;
@@ -39,11 +47,11 @@ void TC_st_mqtt_create_success(void** state)
     // Given
     set_mock_detect_memory_leak(true);
     // When
-    err = st_mqtt_create(&client, 150);
+    err = st_mqtt_create(&client, _dummy_mqtt_client_callback, NULL);
     // Then
     assert_return_code(err, 0);
     internal_client = (MQTTClient*) client;
-    assert_int_equal(internal_client->command_timeout_ms, 150);
+    assert_int_equal(internal_client->user_callback_fp, _dummy_mqtt_client_callback);
     // Teardown
     st_mqtt_destroy(client);
     set_mock_detect_memory_leak(false);
@@ -58,7 +66,7 @@ static void _st_mqtt_connect_test_with_parameter(unsigned char give_rc, int expe
     unsigned char *mock_read_buffer;
 
     // Given
-    err = st_mqtt_create(&client, IOT_DEFAULT_TIMEOUT);
+    err = st_mqtt_create(&client, _dummy_mqtt_client_callback, NULL);
     assert_return_code(err, 0);
 
     broker_info.url = strdup("test.domain.com");
@@ -130,7 +138,7 @@ void TC_st_mqtt_disconnect_success(void** state)
     UNUSED(state);
 
     // Given
-    err = st_mqtt_create(&client, IOT_DEFAULT_TIMEOUT);
+    err = st_mqtt_create(&client, _dummy_mqtt_client_callback, NULL);
     assert_return_code(err, 0);
     c = (MQTTClient*) client;
     c->isconnected = 1;
@@ -172,7 +180,7 @@ void TC_st_mqtt_publish_success(void** state)
     UNUSED(state);
 
     // Given
-    err = st_mqtt_create(&client, IOT_DEFAULT_TIMEOUT);
+    err = st_mqtt_create(&client, _dummy_mqtt_client_callback, NULL);
     assert_return_code(err, 0);
     c = (MQTTClient*) client;
     c->isconnected = 1;
