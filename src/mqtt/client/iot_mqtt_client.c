@@ -698,7 +698,7 @@ int st_mqtt_create(st_mqtt_client *client, st_mqtt_event_callback callback_fp, v
 error_handle:
 	if (c) {
 		if (c->net)
-			free(c->net);
+			iot_os_free(c->net);
 		if (c->last_sent)
 			iot_os_timer_destroy(&c->last_sent);
 		if (c->last_received)
