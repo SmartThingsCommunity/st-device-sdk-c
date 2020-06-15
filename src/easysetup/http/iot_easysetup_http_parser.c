@@ -2,6 +2,7 @@
  *
  * MIT License
  *
+ * Copyright (c) 2020 Samsung Electronics
  * Copyright (c) 2019 Aleksey Kurepin
  *
  * Permission is hereby granted, free of charge, to any person obtaining a copy
