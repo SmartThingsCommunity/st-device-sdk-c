@@ -731,7 +731,7 @@ done_mqtt_connect:
 iot_error_t iot_es_connect(struct iot_context *ctx, int conn_type)
 {
 	iot_security_buffer_t token_buf = { 0 };
-	iot_security_buffer_t sn_buf = { 0 };
+	iot_wt_params_t wt_params = { 0 };
 	st_mqtt_client mqtt_cli = NULL;
 	char *topicfilter = NULL;
 	iot_error_t iot_ret;
@@ -742,13 +742,21 @@ iot_error_t iot_es_connect(struct iot_context *ctx, int conn_type)
 		return IOT_ERROR_INVALID_ARGS;
 	}
 
-	iot_ret = iot_nv_get_serial_number((char **)&sn_buf.p, &sn_buf.len);
+	iot_ret = iot_nv_get_serial_number((char **)&wt_params.sn, &wt_params.sn_len);
 	if (iot_ret != IOT_ERROR_NONE) {
 		IOT_ERROR("failed to get serial num");
 		goto out;
 	}
 
-	iot_ret = iot_wt_create((const iot_security_buffer_t *)&sn_buf, &token_buf);
+	wt_params.mnid = iot_os_strdup(ctx->devconf.mnid);
+	if (!wt_params.mnid) {
+		IOT_ERROR("failed to strdup for mnid");
+		goto out;
+	} else {
+		wt_params.mnid_len = strlen(wt_params.mnid);
+	}
+
+	iot_ret = iot_wt_create((const iot_wt_params_t *)&wt_params, &token_buf);
 	if (iot_ret != IOT_ERROR_NONE) {
 		IOT_ERROR("failed to make wt-token");
 		goto out;
@@ -821,7 +829,7 @@ iot_error_t iot_es_connect(struct iot_context *ctx, int conn_type)
 			goto out;
 		}
 
-		iot_ret = _iot_es_mqtt_connect(ctx, mqtt_cli, (char *)sn_buf.p, (char *)token_buf.p);
+		iot_ret = _iot_es_mqtt_connect(ctx, mqtt_cli, wt_params.sn, (char *)token_buf.p);
 		if (iot_ret != IOT_ERROR_NONE) {
 			IOT_ERROR("failed to connect");
 			goto out;
@@ -830,7 +838,7 @@ iot_error_t iot_es_connect(struct iot_context *ctx, int conn_type)
 		}
 
 		/* register notification subscribe for registration */
-		snprintf(topicfilter, IOT_TOPIC_SIZE, IOT_SUB_TOPIC_REGISTRATION,  (char *)sn_buf.p);
+		snprintf(topicfilter, IOT_TOPIC_SIZE, IOT_SUB_TOPIC_REGISTRATION, wt_params.sn);
 		IOT_DEBUG("noti subscribe topic : %s", topicfilter);
 		ret = st_mqtt_subscribe(mqtt_cli, topicfilter, st_mqtt_qos1);
 		if (ret) {
@@ -851,8 +859,11 @@ iot_error_t iot_es_connect(struct iot_context *ctx, int conn_type)
 	}
 
 out:
-	if (sn_buf.p)
-		free((void *)sn_buf.p);
+	if (wt_params.sn)
+		iot_os_free((void *)wt_params.sn);
+
+	if (wt_params.mnid)
+		iot_os_free((void *)wt_params.mnid);
 
 	if (token_buf.p)
 		free(token_buf.p);
