@@ -1669,7 +1669,6 @@ out:
 	return err;
 }
 
-#if defined(CONFIG_STDK_IOT_CORE_EASYSETUP_HTTP_LOG_SUPPORT)
 static iot_error_t _es_log_systeminfo_handler(struct iot_context *ctx, char **out_payload)
 {
 	char *output_ptr = NULL;
@@ -1761,7 +1760,6 @@ out:
 		JSON_DELETE(root);
 	return err;
 }
-#endif
 
 iot_error_t iot_easysetup_request_handler(struct iot_context *ctx, struct iot_easysetup_payload request)
 {
@@ -1797,7 +1795,6 @@ iot_error_t iot_easysetup_request_handler(struct iot_context *ctx, struct iot_ea
 	case IOT_EASYSETUP_STEP_SETUPCOMPLETE:
 		err = _es_setupcomplete_handler(ctx, request.payload, &response.payload);
 		break;
-#if defined(CONFIG_STDK_IOT_CORE_EASYSETUP_HTTP_LOG_SUPPORT)
 	case IOT_EASYSETUP_STEP_LOG_SYSTEMINFO:
 		err = _es_log_systeminfo_handler(ctx, &response.payload);
 		break;
@@ -1807,7 +1804,6 @@ iot_error_t iot_easysetup_request_handler(struct iot_context *ctx, struct iot_ea
 	case IOT_EASYSETUP_STEP_LOG_GET_DUMP:
 		err = _es_log_get_dump_handler(ctx, &response.payload);
 		break;
-#endif
 	default:
 		err = IOT_ERROR_EASYSETUP_INTERNAL_SERVER_ERROR;
 		break;
