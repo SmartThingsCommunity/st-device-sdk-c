@@ -1744,7 +1744,7 @@ static iot_error_t _es_log_get_dump_handler(struct iot_context *ctx, char **out_
 #if defined(CONFIG_STDK_IOT_CORE_EASYSETUP_HTTP_LOG_SUPPORT)
 	log_dump = iot_debug_get_log();
 #else
-	err = iot_dump_create_all_log_dump(ctx, &log_dump, log_dump_size, &written_size, true);
+	err = iot_dump_create_all_log_dump(ctx, &log_dump, log_dump_size, &written_size, IOT_DUMP_MODE_NEED_BASE64 | IOT_DUMP_MODE_NEED_DUMP_STATE);
 	if (err < 0) {
 		IOT_ERROR("Fail to get log dump!\n");
 		goto out;
