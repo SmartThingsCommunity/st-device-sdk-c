@@ -1726,7 +1726,7 @@ static iot_error_t _es_log_get_dump_handler(struct iot_context *ctx, char **out_
 	JSON_H *item = NULL;
 	JSON_H *root = NULL;
 	iot_error_t err = IOT_ERROR_NONE;
-#if !defined(CONFIG_STDK_IOT_CORE_EASYSETUP_HTTP_LOG_SUPPORT)
+#if !defined(CONFIG_STDK_IOT_CORE_EASYSETUP_LOG_SUPPORT_NO_USE_LOGFILE)
 	char *sumo_dump = NULL;
 	size_t log_dump_size = 2048;
 	size_t sumo_dump_size = 200;
@@ -1741,7 +1741,7 @@ static iot_error_t _es_log_get_dump_handler(struct iot_context *ctx, char **out_
 		goto out;
 	}
 
-#if defined(CONFIG_STDK_IOT_CORE_EASYSETUP_HTTP_LOG_SUPPORT)
+#if defined(CONFIG_STDK_IOT_CORE_EASYSETUP_LOG_SUPPORT_NO_USE_LOGFILE)
 	log_dump = iot_debug_get_log();
 #else
 	err = iot_dump_create_all_log_dump(ctx, &log_dump, log_dump_size, &written_size, IOT_DUMP_MODE_NEED_BASE64 | IOT_DUMP_MODE_NEED_DUMP_STATE);
@@ -1758,7 +1758,7 @@ static iot_error_t _es_log_get_dump_handler(struct iot_context *ctx, char **out_
 
 	JSON_ADD_NUMBER_TO_OBJECT(item, "code", 1);
 	JSON_ADD_ITEM_TO_OBJECT(item, "message", JSON_CREATE_STRING(log_dump));
-#if !defined(CONFIG_STDK_IOT_CORE_EASYSETUP_HTTP_LOG_SUPPORT)
+#if !defined(CONFIG_STDK_IOT_CORE_EASYSETUP_LOG_SUPPORT_NO_USE_LOGFILE)
 	JSON_ADD_ITEM_TO_OBJECT(item, "sumomessage", JSON_CREATE_STRING(sumo_dump));
 #endif
 
