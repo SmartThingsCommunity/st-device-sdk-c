@@ -431,19 +431,6 @@ static iot_error_t _do_iot_main_command(struct iot_context *ctx,
 				}
 				ctx->scan_num = 0;
 				break;
-			case IOT_WIFI_MODE_SCAN:
-				if(!ctx->scan_result) {
-					ctx->scan_result = (iot_wifi_scan_result_t *) malloc(IOT_WIFI_MAX_SCAN_RESULT * sizeof(iot_wifi_scan_result_t));
-					if(!ctx->scan_result){
-						IOT_ERROR("failed to malloc for iot_wifi_scan_result_t\n");
-						IOT_DUMP_MAIN(ERROR, BASE, 0xDEADBEEF);
-						break;
-					}
-					memset(ctx->scan_result, 0x0, (IOT_WIFI_MAX_SCAN_RESULT * sizeof(iot_wifi_scan_result_t)));
-				}
-
-				ctx->scan_num = iot_bsp_wifi_get_scan_result(ctx->scan_result);
-				break;
 			case IOT_WIFI_MODE_SOFTAP:
 				if (ctx->req_state == IOT_STATE_PROV_ENTER) {
 					err = iot_easysetup_init(ctx);
@@ -1443,7 +1430,7 @@ static iot_error_t _do_state_updating(struct iot_context *ctx,
 	case IOT_STATE_PROV_ENTER:
 		iot_err = iot_wifi_ctrl_request(ctx, IOT_WIFI_MODE_SCAN);
 		if (iot_err != IOT_ERROR_NONE) {
-			IOT_ERROR("Can't send WIFI mode scan.(%d)", iot_err);
+			IOT_ERROR("Can't control WIFI mode scan.(%d)", iot_err);
 			IOT_DUMP_MAIN(ERROR, BASE, iot_err);
  			break;
  		}
