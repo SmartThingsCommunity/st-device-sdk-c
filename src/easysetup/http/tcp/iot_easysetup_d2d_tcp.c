@@ -1747,11 +1747,13 @@ static iot_error_t _es_log_get_dump_handler(struct iot_context *ctx, char **out_
 	err = iot_dump_create_all_log_dump(ctx, &log_dump, log_dump_size, &written_size, IOT_DUMP_MODE_NEED_BASE64 | IOT_DUMP_MODE_NEED_DUMP_STATE);
 	if (err < 0) {
 		IOT_ERROR("Fail to get log dump!\n");
+		IOT_ES_DUMP(IOT_DEBUG_LEVEL_ERROR, IOT_DUMP_EASYSETUP_CREATE_LOGDUMP_FAIL, 0);
 		goto out;
 	}
 	err = iot_dump_create_all_log_dump(ctx, &sumo_dump, sumo_dump_size, &written_size, IOT_DUMP_MODE_NEED_BASE64);
 	if (err < 0) {
 		IOT_ERROR("Fail to get sumo dump!\n");
+		IOT_ES_DUMP(IOT_DEBUG_LEVEL_ERROR, IOT_DUMP_EASYSETUP_CREATE_SUMODUMP_FAIL, 0);
 		goto out;
 	}
 #endif
