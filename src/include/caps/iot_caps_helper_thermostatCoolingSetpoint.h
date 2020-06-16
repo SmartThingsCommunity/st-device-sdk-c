@@ -22,31 +22,33 @@
 #include "iot_caps_helper.h"
 
 enum {
-	CAPS_HELPER_THERMOSTAT_COOLING_SETPOINT_UNIT_F = 0,
-	CAPS_HELPER_THERMOSTAT_COOLING_SETPOINT_UNIT_C,
-	CAPS_HELPER_THERMOSTAT_COOLING_SETPOINT_UNIT_MAX
+    CAP_ENUM_THERMOSTATCOOLINGSETPOINT_COOLINGSETPOINT_UNIT_F,
+    CAP_ENUM_THERMOSTATCOOLINGSETPOINT_COOLINGSETPOINT_UNIT_C,
+    CAP_ENUM_THERMOSTATCOOLINGSETPOINT_COOLINGSETPOINT_UNIT_MAX
 };
 
 const static struct iot_caps_thermostatCoolingSetpoint {
-	const char *id;
-	const struct thermostatCoolingSetpoint_attr_coolingSetpoint {
-		const char *name;
-		const double min, max;
-		const unsigned char property;
-		const char *units[CAPS_HELPER_THERMOSTAT_COOLING_SETPOINT_UNIT_MAX];
-	} attr_coolingSetpoint;
-	const struct thermostatCoolingSetpoint_cmd_setCoolingSetpoint { const char *name; } cmd_setCoolingSetpoint;
+    const char *id;
+    const struct thermostatCoolingSetpoint_attr_coolingSetpoint {
+        const char *name;
+        const unsigned char property;
+        const unsigned char value_type;
+        const char *units[CAP_ENUM_THERMOSTATCOOLINGSETPOINT_COOLINGSETPOINT_UNIT_MAX];
+        const double min;
+        const double max;
+    } attr_coolingSetpoint;
+    const struct thermostatCoolingSetpoint_cmd_setCoolingSetpoint { const char* name; } cmd_setCoolingSetpoint;
 } caps_helper_thermostatCoolingSetpoint = {
-	.id = "thermostatCoolingSetpoint",
-	.attr_coolingSetpoint = {
-		.name = "coolingSetpoint",
-		.min = -460,
-		.max = 10000,
-		.property = ATTR_SET_VALUE_MIN | ATTR_SET_VALUE_MAX \
-			| ATTR_SET_VALUE_REQUIRED | ATTR_SET_UNIT_REQUIRED,
-		.units = { "F", "C" },
-	},
-	.cmd_setCoolingSetpoint = { .name = "setCoolingSetpoint" },
+    .id = "thermostatCoolingSetpoint",
+    .attr_coolingSetpoint = {
+        .name = "coolingSetpoint",
+        .property = ATTR_SET_VALUE_MIN | ATTR_SET_VALUE_MAX | ATTR_SET_VALUE_REQUIRED | ATTR_SET_UNIT_REQUIRED,
+        .value_type = VALUE_TYPE_NUMBER,
+        .units = {"F", "C"},
+        .min = -460,
+        .max = 10000,
+    },
+    .cmd_setCoolingSetpoint = { .name = "setCoolingSetpoint" }, // arguments: setpoint(number) 
 };
 
-#endif /* _IOT_CAPS_HELPER_THERMOSTAT_COOLING_SETPOINT_ */
+#endif /* _IOT_CAPS_HERLPER_THERMOSTAT_COOLING_SETPOINT_ */

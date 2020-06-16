@@ -22,30 +22,32 @@
 #include "iot_caps_helper.h"
 
 enum {
-	CAPS_HELPER_THERMOSTAT_OPERATING_STATE_VALUE_COOLING = 0,
-	CAPS_HELPER_THERMOSTAT_OPERATING_STATE_VALUE_FAN_ONLY,
-	CAPS_HELPER_THERMOSTAT_OPERATING_STATE_VALUE_HEATING,
-	CAPS_HELPER_THERMOSTAT_OPERATING_STATE_VALUE_IDLE,
-	CAPS_HELPER_THERMOSTAT_OPERATING_STATE_VALUE_PENDING_COOL,
-	CAPS_HELPER_THERMOSTAT_OPERATING_STATE_VALUE_PENDING_HEAT,
-	CAPS_HELPER_THERMOSTAT_OPERATING_STATE_VALUE_VENT_ECONOMIZER,
-	CAPS_HELPER_THERMOSTAT_OPERATING_STATE_VALUE_MAX
+    CAP_ENUM_THERMOSTATOPERATINGSTATE_THERMOSTATOPERATINGSTATE_VALUE_COOLING,
+    CAP_ENUM_THERMOSTATOPERATINGSTATE_THERMOSTATOPERATINGSTATE_VALUE_FAN_ONLY,
+    CAP_ENUM_THERMOSTATOPERATINGSTATE_THERMOSTATOPERATINGSTATE_VALUE_HEATING,
+    CAP_ENUM_THERMOSTATOPERATINGSTATE_THERMOSTATOPERATINGSTATE_VALUE_IDLE,
+    CAP_ENUM_THERMOSTATOPERATINGSTATE_THERMOSTATOPERATINGSTATE_VALUE_PENDING_COOL,
+    CAP_ENUM_THERMOSTATOPERATINGSTATE_THERMOSTATOPERATINGSTATE_VALUE_PENDING_HEAT,
+    CAP_ENUM_THERMOSTATOPERATINGSTATE_THERMOSTATOPERATINGSTATE_VALUE_VENT_ECONOMIZER,
+    CAP_ENUM_THERMOSTATOPERATINGSTATE_THERMOSTATOPERATINGSTATE_VALUE_MAX
 };
 
 const static struct iot_caps_thermostatOperatingState {
-	const char *id;
-	const struct thermostatOperatingState_attr_thermostatOperatingState {
-		const char *name;
-		const unsigned char property;
-		const char *values[CAPS_HELPER_THERMOSTAT_OPERATING_STATE_VALUE_MAX];
-	} attr_thermostatOperatingState;
+    const char *id;
+    const struct thermostatOperatingState_attr_thermostatOperatingState {
+        const char *name;
+        const unsigned char property;
+        const unsigned char value_type;
+        const char *values[CAP_ENUM_THERMOSTATOPERATINGSTATE_THERMOSTATOPERATINGSTATE_VALUE_MAX];
+    } attr_thermostatOperatingState;
 } caps_helper_thermostatOperatingState = {
-	.id = "thermostatOperatingState",
-	.attr_thermostatOperatingState = {
-		.name = "thermostatOperatingState",
-		.property = ATTR_SET_VALUE_REQUIRED,
-		.values = { "cooling", "fan only", "heating", "idle", "pending cool", "pending heat", "vent economizer" },
-	},
+    .id = "thermostatOperatingState",
+    .attr_thermostatOperatingState = {
+        .name = "thermostatOperatingState",
+        .property = ATTR_SET_VALUE_REQUIRED,
+        .value_type = VALUE_TYPE_STRING,
+        .values = {"cooling", "fan only", "heating", "idle", "pending cool", "pending heat", "vent economizer"},
+    },
 };
 
-#endif /* _IOT_CAPS_HELPER_THERMOSTAT_OPERATING_STATE_ */
+#endif /* _IOT_CAPS_HERLPER_THERMOSTAT_OPERATING_STATE_ */

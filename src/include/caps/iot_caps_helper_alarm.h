@@ -22,35 +22,37 @@
 #include "iot_caps_helper.h"
 
 enum {
-	CAPS_HELPER_ALARM_VALUE_BOTH = 0,
-	CAPS_HELPER_ALARM_VALUE_OFF,
-	CAPS_HELPER_ALARM_VALUE_SIREN,
-	CAPS_HELPER_ALARM_VALUE_STROBE,
-	CAPS_HELPER_ALARM_VALUE_MAX
+    CAP_ENUM_ALARM_ALARM_VALUE_BOTH,
+    CAP_ENUM_ALARM_ALARM_VALUE_OFF,
+    CAP_ENUM_ALARM_ALARM_VALUE_SIREN,
+    CAP_ENUM_ALARM_ALARM_VALUE_STROBE,
+    CAP_ENUM_ALARM_ALARM_VALUE_MAX
 };
 
 const static struct iot_caps_alarm {
-	const char *id;
-	const struct alarm_attr_alarm {
-		const char *name;
-		const unsigned char property;
-		const char *values[CAPS_HELPER_ALARM_VALUE_MAX];
-	} attr_alarm;
-	const struct alarm_cmd_both { const char *name; } cmd_both;
-	const struct alarm_cmd_off { const char *name; } cmd_off;
-	const struct alarm_cmd_siren { const char *name; } cmd_siren;
-	const struct alarm_cmd_strobe { const char *name; } cmd_strobe;
+    const char *id;
+    const struct alarm_attr_alarm {
+        const char *name;
+        const unsigned char property;
+        const unsigned char value_type;
+        const char *values[CAP_ENUM_ALARM_ALARM_VALUE_MAX];
+    } attr_alarm;
+    const struct alarm_cmd_both { const char* name; } cmd_both;
+    const struct alarm_cmd_siren { const char* name; } cmd_siren;
+    const struct alarm_cmd_off { const char* name; } cmd_off;
+    const struct alarm_cmd_strobe { const char* name; } cmd_strobe;
 } caps_helper_alarm = {
-	.id = "alarm",
-	.attr_alarm = {
-		.name = "alarm",
-		.property = ATTR_SET_VALUE_REQUIRED,
-		.values = { "both", "off", "siren", "strobe" },
-	},
-	.cmd_both = { .name = "both"},
-	.cmd_off = { .name = "off"},
-	.cmd_siren = { .name = "siren"},
-	.cmd_strobe = { .name = "strobe"},
+    .id = "alarm",
+    .attr_alarm = {
+        .name = "alarm",
+        .property = ATTR_SET_VALUE_REQUIRED,
+        .value_type = VALUE_TYPE_STRING,
+        .values = {"both", "off", "siren", "strobe"},
+    },
+    .cmd_both = { .name = "both" },
+    .cmd_siren = { .name = "siren" },
+    .cmd_off = { .name = "off" },
+    .cmd_strobe = { .name = "strobe" },
 };
 
-#endif /* _IOT_CAPS_HELPER_ALARM_ */
+#endif /* _IOT_CAPS_HERLPER_ALARM_ */

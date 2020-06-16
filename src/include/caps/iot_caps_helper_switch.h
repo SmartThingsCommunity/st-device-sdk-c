@@ -22,29 +22,31 @@
 #include "iot_caps_helper.h"
 
 enum {
-	CAPS_HELPER_SWITCH_VALUE_OFF = 0,
-	CAPS_HELPER_SWITCH_VALUE_ON,
-	CAPS_HELPER_SWITCH_VALUE_MAX
+    CAP_ENUM_SWITCH_SWITCH_VALUE_ON,
+    CAP_ENUM_SWITCH_SWITCH_VALUE_OFF,
+    CAP_ENUM_SWITCH_SWITCH_VALUE_MAX
 };
 
 const static struct iot_caps_switch {
-	const char *id;
-	const struct switch_attr_switch {
-		const char *name;
-		const unsigned char property;
-		const char *values[CAPS_HELPER_SWITCH_VALUE_MAX];
-	} attr_switch;
-	const struct switch_cmd_off { const char *name; } cmd_off;
-	const struct switch_cmd_on { const char *name; } cmd_on;
+    const char *id;
+    const struct switch_attr_switch {
+        const char *name;
+        const unsigned char property;
+        const unsigned char value_type;
+        const char *values[CAP_ENUM_SWITCH_SWITCH_VALUE_MAX];
+    } attr_switch;
+    const struct switch_cmd_on { const char* name; } cmd_on;
+    const struct switch_cmd_off { const char* name; } cmd_off;
 } caps_helper_switch = {
-	.id = "switch",
-	.attr_switch = {
-		.name = "switch",
-		.property = ATTR_SET_VALUE_REQUIRED,
-		.values = { "off", "on" },
-	},
-	.cmd_off = { .name = "off" },
-	.cmd_on = { .name = "on" },
+    .id = "switch",
+    .attr_switch = {
+        .name = "switch",
+        .property = ATTR_SET_VALUE_REQUIRED,
+        .value_type = VALUE_TYPE_STRING,
+        .values = {"on", "off"},
+    },
+    .cmd_on = { .name = "on" },
+    .cmd_off = { .name = "off" },
 };
 
-#endif /* _IOT_CAPS_HELPER_SWITCH_ */
+#endif /* _IOT_CAPS_HERLPER_SWITCH_ */

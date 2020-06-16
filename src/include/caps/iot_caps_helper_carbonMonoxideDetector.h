@@ -22,26 +22,28 @@
 #include "iot_caps_helper.h"
 
 enum {
-	CAPS_HELPER_CARBON_MONOXIDE_DETECTOR_VALUE_CLEAR = 0,
-	CAPS_HELPER_CARBON_MONOXIDE_DETECTOR_VALUE_DETECTED,
-	CAPS_HELPER_CARBON_MONOXIDE_DETECTOR_VALUE_TESTED,
-	CAPS_HELPER_CARBON_MONOXIDE_DETECTOR_VALUE_MAX
+    CAP_ENUM_CARBONMONOXIDEDETECTOR_CARBONMONOXIDE_VALUE_CLEAR,
+    CAP_ENUM_CARBONMONOXIDEDETECTOR_CARBONMONOXIDE_VALUE_DETECTED,
+    CAP_ENUM_CARBONMONOXIDEDETECTOR_CARBONMONOXIDE_VALUE_TESTED,
+    CAP_ENUM_CARBONMONOXIDEDETECTOR_CARBONMONOXIDE_VALUE_MAX
 };
 
 const static struct iot_caps_carbonMonoxideDetector {
-	const char *id;
-	const struct carbonMonoxideDetector_attr_carbonMonoxide {
-		const char *name;
-		const unsigned char property;
-		const char *values[CAPS_HELPER_CARBON_MONOXIDE_DETECTOR_VALUE_MAX];
-	} attr_carbonMonoxide;
+    const char *id;
+    const struct carbonMonoxideDetector_attr_carbonMonoxide {
+        const char *name;
+        const unsigned char property;
+        const unsigned char value_type;
+        const char *values[CAP_ENUM_CARBONMONOXIDEDETECTOR_CARBONMONOXIDE_VALUE_MAX];
+    } attr_carbonMonoxide;
 } caps_helper_carbonMonoxideDetector = {
-	.id = "carbonMonoxideDetector",
-	.attr_carbonMonoxide = {
-		.name = "carbonMonoxide",
-		.property = ATTR_SET_VALUE_REQUIRED,
-		.values = { "clear", "detected", "tested" },
-	}
+    .id = "carbonMonoxideDetector",
+    .attr_carbonMonoxide = {
+        .name = "carbonMonoxide",
+        .property = ATTR_SET_VALUE_REQUIRED,
+        .value_type = VALUE_TYPE_STRING,
+        .values = {"clear", "detected", "tested"},
+    },
 };
 
-#endif /* _IOT_CAPS_HELPER_CARBON_MONOXIDE_DETECTOR_ */
+#endif /* _IOT_CAPS_HERLPER_CARBON_MONOXIDE_DETECTOR_ */
