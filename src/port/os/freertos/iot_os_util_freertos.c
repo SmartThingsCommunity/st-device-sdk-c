@@ -109,9 +109,9 @@ int iot_os_eventgroup_set_bits(iot_os_eventgroup* eventgroup_handle,
 }
 
 int iot_os_eventgroup_clear_bits(iot_os_eventgroup* eventgroup_handle,
-		const unsigned int bits_to_clear)
+		const unsigned char bits_to_clear)
 {
-	xEventGroupClearBits(eventgroup_handle, bits_to_clear);
+	xEventGroupClearBits(eventgroup_handle, (const EventBits_t) bits_to_clear);
 	return IOT_OS_TRUE;
 }
 
