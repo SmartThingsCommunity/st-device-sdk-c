@@ -857,7 +857,7 @@ static iot_error_t _publish_event(struct iot_context *ctx, iot_cap_msg_t *cap_ms
 
 	IOT_INFO("publish event, topic : %s, payload :\n%s", ctx->mqtt_event_topic, msg.payload);
 
-	ret = st_mqtt_publish(ctx->evt_mqttcli, &msg);
+	ret = st_mqtt_publish_async(ctx->evt_mqttcli, &msg);
 	if (ret) {
 		IOT_WARN("MQTT pub error(%d)", ret);
 		IOT_DUMP_MAIN(WARN, BASE, ret);
