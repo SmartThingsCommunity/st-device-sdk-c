@@ -225,7 +225,7 @@ void _iot_mqtt_registration_client_callback(st_mqtt_event event, void *event_dat
 				} else {
 					IOT_WARN("No msg delivery handler for %s", md->topic);
 				}
-				IOT_DEBUG("raw msg (len:%d) : %s", md->payloadlen, mqtt_payload);
+				IOT_DEBUG("raw msg (len:%d) : %s", md->payloadlen, md->payload);
 				break;
 			}
 		default:
