@@ -123,9 +123,12 @@ static iot_error_t _iot_dump_copy_memory(void *dest, int dest_size, const void *
     //Step2: convert multiples of 3 bytes
     *remain_number = (src_size - pre_copy_len) % 3;
     main_copy_len = GET_LARGEST_MULTIPLE(src_size - pre_copy_len, 3);
-    iot_err = iot_security_base64_encode(src + pre_copy_len, main_copy_len, dest + pre_out_len, dest_size - pre_out_len, &main_out_len);
-    if (iot_err < 0) {
-        return iot_err;
+    if (main_copy_len > 0) {
+        iot_err = iot_security_base64_encode(src + pre_copy_len, main_copy_len, dest + pre_out_len,
+                                             dest_size - pre_out_len, &main_out_len);
+        if (iot_err < 0) {
+            return iot_err;
+        }
     }
     //Step3: save unconverted remain bytes to buf
     memcpy(buf, src + pre_copy_len + main_copy_len, *remain_number);

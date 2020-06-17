@@ -14,12 +14,13 @@ config STDK_IOT_CORE_EASYSETUP_HTTP
     help
        If this option is enabled, STDK will use httpd for easy setup.
 
-config STDK_IOT_CORE_EASYSETUP_HTTP_LOG_SUPPORT
+config STDK_IOT_CORE_EASYSETUP_LOG_SUPPORT_NO_USE_LOGFILE
     bool "Logging via device-to-device"
     default n
     depends on STDK_IOT_CORE_EASYSETUP_HTTP
     help
-       If this option is enabled, STDK will support logging via device-to-device mechanism.
+       If Logfile logging isn't supported, this optioin can be useful instead of logfile.
+       If this option is enabled, STDK can support logging via device-to-device mechanism without logfile system.
 
 config STDK_IOT_CORE_EASYSETUP_HTTP_LOG_SIZE
     int "log buffer size in byte"

@@ -35,7 +35,7 @@ static const char http_status_400[] = "HTTP/1.1 400 Bad Request";
 static const char http_status_500[] = "HTTP/1.1 500 Internal Server Error";
 static const char http_header[] = "\r\nServer: SmartThings Device SDK\r\nConnection: "CONNECTION_TYPE"\r\nContent-Type: application/json\r\nContent-Length: ";
 STATIC_VARIABLE int ref_step;
-#if defined(CONFIG_STDK_IOT_CORE_EASYSETUP_HTTP_LOG_SUPPORT)
+#if defined(CONFIG_STDK_IOT_CORE_EASYSETUP_LOG_SUPPORT_NO_USE_LOGFILE)
 static bool dump_enable;
 static char *log_buffer;
 unsigned int log_len;
@@ -60,7 +60,7 @@ const char *get_cgi_cmds[]=
 	IOT_ES_URI_GET_LOGS_DUMP,
 };
 
-#if defined(CONFIG_STDK_IOT_CORE_EASYSETUP_HTTP_LOG_SUPPORT)
+#if defined(CONFIG_STDK_IOT_CORE_EASYSETUP_LOG_SUPPORT_NO_USE_LOGFILE)
 void iot_debug_save_log(char* buf)
 {
 	if(dump_enable) {
@@ -425,7 +425,7 @@ iot_error_t iot_easysetup_init(struct iot_context *ctx)
 	es_http_init();
 	ref_step = 0;
 
-#if defined(CONFIG_STDK_IOT_CORE_EASYSETUP_HTTP_LOG_SUPPORT)
+#if defined(CONFIG_STDK_IOT_CORE_EASYSETUP_LOG_SUPPORT_NO_USE_LOGFILE)
 	if ((log_buffer = (char *)malloc(CONFIG_STDK_IOT_CORE_EASYSETUP_HTTP_LOG_SIZE)) == NULL) {
 		IOT_ERROR("failed to malloc for log buffer");
 		IOT_ES_DUMP(IOT_DEBUG_LEVEL_ERROR, IOT_DUMP_EASYSETUP_MEM_ALLOC_ERROR, 0);
@@ -450,7 +450,7 @@ void iot_easysetup_deinit(struct iot_context *ctx)
 
 	es_http_deinit();
 
-#if defined(CONFIG_STDK_IOT_CORE_EASYSETUP_HTTP_LOG_SUPPORT)
+#if defined(CONFIG_STDK_IOT_CORE_EASYSETUP_LOG_SUPPORT_NO_USE_LOGFILE)
 	if (log_buffer) {
 		dump_enable = false;
 		free(log_buffer);

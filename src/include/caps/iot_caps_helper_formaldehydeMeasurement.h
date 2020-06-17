@@ -21,29 +21,40 @@
 
 #include "iot_caps_helper.h"
 
+#ifdef __cplusplus
+extern "C" {
+#endif
+
 enum {
-	CAPS_HELPER_FORMALDEHYDE_MEASUREMENT_UNIT_PPM = 0,
-	CAPS_HELPER_FORMALDEHYDE_MEASUREMENT_UNIT_MG_PER_M3,
-	CAPS_HELPER_FORMALDEHYDE_MEASUREMENT_UNIT_MAX
+    CAP_ENUM_FORMALDEHYDEMEASUREMENT_FORMALDEHYDELEVEL_UNIT_PPM,
+    CAP_ENUM_FORMALDEHYDEMEASUREMENT_FORMALDEHYDELEVEL_UNIT_MG_PER_M3,
+    CAP_ENUM_FORMALDEHYDEMEASUREMENT_FORMALDEHYDELEVEL_UNIT_MAX
 };
 
 const static struct iot_caps_formaldehydeMeasurement {
-	const char *id;
-	const struct formaldehydeMeasurement_attr_formaldehydeLevel {
-		const char *name;
-		const double min, max;
-		const unsigned char property;
-		const char *units[CAPS_HELPER_FORMALDEHYDE_MEASUREMENT_UNIT_MAX];
-	} attr_formaldehydeLevel;
+    const char *id;
+    const struct formaldehydeMeasurement_attr_formaldehydeLevel {
+        const char *name;
+        const unsigned char property;
+        const unsigned char value_type;
+        const char *units[CAP_ENUM_FORMALDEHYDEMEASUREMENT_FORMALDEHYDELEVEL_UNIT_MAX];
+        const double min;
+        const double max;
+    } attr_formaldehydeLevel;
 } caps_helper_formaldehydeMeasurement = {
-	.id = "formaldehydeMeasurement",
-	.attr_formaldehydeLevel = {
-		.name = "formaldehydeLevel",
-		.min = 0,
-		.max = 1000000,
-		.property = ATTR_SET_VALUE_MIN | ATTR_SET_VALUE_MAX | ATTR_SET_VALUE_REQUIRED,
-		.units = {"ppm", "mg/m^3"},
-	},
+    .id = "formaldehydeMeasurement",
+    .attr_formaldehydeLevel = {
+        .name = "formaldehydeLevel",
+        .property = ATTR_SET_VALUE_MIN | ATTR_SET_VALUE_MAX | ATTR_SET_VALUE_REQUIRED | ATTR_SET_UNIT_REQUIRED,
+        .value_type = VALUE_TYPE_NUMBER,
+        .units = {"ppm", "mg/m^3"},
+        .min = 0,
+        .max = 1000000,
+    },
 };
 
-#endif /* _IOT_CAPS_HELPER_AIR_QUALITY_SENSOR_ */
+#ifdef __cplusplus
+}
+#endif
+
+#endif /* _IOT_CAPS_HERLPER_FORMALDEHYDE_MEASUREMENT_ */

@@ -56,7 +56,7 @@ extern void iot_dump_log(iot_debug_level_t level, dump_log_id_t log_id, int arg1
 
 extern void iot_bsp_debug(iot_debug_level_t level, const char* tag, const char* fmt, ...);
 extern void iot_bsp_debug_check_heap(const char* tag, const char* func, const int line, const char* fmt, ...);
-#if defined(CONFIG_STDK_IOT_CORE_EASYSETUP_HTTP_LOG_SUPPORT)
+#if defined(CONFIG_STDK_IOT_CORE_EASYSETUP_LOG_SUPPORT_NO_USE_LOGFILE)
 extern void iot_debug_save_log(char* buf);
 extern char *iot_debug_get_log(void);
 #endif

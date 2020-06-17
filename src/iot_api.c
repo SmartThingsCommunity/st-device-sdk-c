@@ -28,6 +28,7 @@
 #include "iot_os_util.h"
 #include "iot_util.h"
 #include "iot_uuid.h"
+#include "iot_bsp_wifi.h"
 
 #include "JSON.h"
 
@@ -80,7 +81,7 @@ iot_error_t iot_command_send(struct iot_context *ctx,
 iot_error_t iot_wifi_ctrl_request(struct iot_context *ctx,
 		iot_wifi_mode_t wifi_mode)
 {
-	iot_error_t iot_err;
+	iot_error_t iot_err = IOT_ERROR_BAD_REQ;
 	iot_wifi_conf wifi_conf;
 
 	if (!ctx) {
@@ -113,10 +114,27 @@ iot_error_t iot_wifi_ctrl_request(struct iot_context *ctx,
 		wifi_conf.authmode = IOT_WIFI_AUTH_WPA_WPA2_PSK;
 		break;
 
-	case IOT_WIFI_MODE_SCAN:
-		/* fall through */
 	case IOT_WIFI_MODE_OFF:
 		IOT_DEBUG("No need more settings for [%d] mode\n", wifi_mode);
+		break;
+
+	case IOT_WIFI_MODE_SCAN:
+		iot_err = iot_bsp_wifi_set_mode(&wifi_conf);
+		if (iot_err != IOT_ERROR_NONE) {
+			IOT_ERROR("failed to set wifi_set_mode for scan\n");
+			return iot_err;
+		}
+
+		if (!ctx->scan_result) {
+			ctx->scan_result = (iot_wifi_scan_result_t *)iot_os_malloc(IOT_WIFI_MAX_SCAN_RESULT * sizeof(iot_wifi_scan_result_t));
+			if (!ctx->scan_result) {
+				IOT_ERROR("failed to malloc for iot_wifi_scan_result_t\n");
+				break;
+			}
+			memset(ctx->scan_result, 0x0, (IOT_WIFI_MAX_SCAN_RESULT * sizeof(iot_wifi_scan_result_t)));
+		}
+
+		ctx->scan_num = iot_bsp_wifi_get_scan_result(ctx->scan_result);
 		break;
 
 	default:
@@ -124,9 +142,11 @@ iot_error_t iot_wifi_ctrl_request(struct iot_context *ctx,
 		return IOT_ERROR_BAD_REQ;
 	}
 
-	iot_err = iot_command_send(ctx,
+	if (wifi_mode != IOT_WIFI_MODE_SCAN) {
+		iot_err = iot_command_send(ctx,
 				IOT_COMMAND_NETWORK_MODE,
 					&wifi_conf, sizeof(wifi_conf));
+	}
 
 	return iot_err;
 }

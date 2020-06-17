@@ -69,6 +69,7 @@ enum packet_chunk_state {
 	PACKET_CHUNK_READ_COMPLETED,
 	PACKET_CHUNK_ACKNOWLEDGED,
 	PACKET_CHUNK_TIMEOUT,
+	PACKET_CHUNK_QUEUE_DESTROYED,
 };
 
 // Owner of packet chunk can be creator or caller of pop_queue()

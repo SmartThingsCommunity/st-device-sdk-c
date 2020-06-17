@@ -21,26 +21,36 @@
 
 #include "iot_caps_helper.h"
 
+#ifdef __cplusplus
+extern "C" {
+#endif
+
 enum {
-	CAPS_HELPER_ACCELERATION_SENSOR_VALUE_ACTIVE = 0,
-	CAPS_HELPER_ACCELERATION_SENSOR_VALUE_INACTIVE,
-	CAPS_HELPER_ACCELERATION_SENSOR_VALUE_MAX
+    CAP_ENUM_ACCELERATIONSENSOR_ACCELERATION_VALUE_ACTIVE,
+    CAP_ENUM_ACCELERATIONSENSOR_ACCELERATION_VALUE_INACTIVE,
+    CAP_ENUM_ACCELERATIONSENSOR_ACCELERATION_VALUE_MAX
 };
 
 const static struct iot_caps_accelerationSensor {
-	const char *id;
-	const struct accelerationSensor_attr_acceleration {
-		const char *name;
-		const unsigned char property;
-		const char *values[CAPS_HELPER_ACCELERATION_SENSOR_VALUE_MAX];
-	} attr_acceleration;
+    const char *id;
+    const struct accelerationSensor_attr_acceleration {
+        const char *name;
+        const unsigned char property;
+        const unsigned char value_type;
+        const char *values[CAP_ENUM_ACCELERATIONSENSOR_ACCELERATION_VALUE_MAX];
+    } attr_acceleration;
 } caps_helper_accelerationSensor = {
-	.id = "accelerationSensor",
-	.attr_acceleration = {
-		.name = "acceleration",
-		.property = ATTR_SET_VALUE_REQUIRED,
-		.values = { "active", "inactive" },
-	}
+    .id = "accelerationSensor",
+    .attr_acceleration = {
+        .name = "acceleration",
+        .property = ATTR_SET_VALUE_REQUIRED,
+        .value_type = VALUE_TYPE_STRING,
+        .values = {"active", "inactive"},
+    },
 };
 
-#endif /* _IOT_CAPS_HELPER_ACCELERATION_SENSOR_ */
+#ifdef __cplusplus
+}
+#endif
+
+#endif /* _IOT_CAPS_HERLPER_ACCELERATION_SENSOR_ */

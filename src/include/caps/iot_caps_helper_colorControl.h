@@ -19,44 +19,62 @@
 #ifndef _IOT_CAPS_HELPER_COLOR_CONTROL_
 #define _IOT_CAPS_HELPER_COLOR_CONTROL_
 
-
 #include "iot_caps_helper.h"
 
+#ifdef __cplusplus
+extern "C" {
+#endif
+
 const static struct iot_caps_colorControl {
-	const char *id;
-	const struct colorControl_attr_color {
-		const char *name;
-		const unsigned int max_length;
-		const unsigned char property;
-	} attr_color;
-	const struct colorControl_attr_int {
-		const char *name;
-		const int min;
-		const unsigned char property;
-	} attr_hue, attr_saturation;
-	const struct colorControl_cmd_setColor { const char *name; } cmd_setColor;
-	const struct colorControl_cmd_setHue { const char *name; } cmd_setHue;
-	const struct colorControl_cmd_setSaturation { const char *name; } cmd_setSaturation;
+    const char *id;
+    const struct colorControl_attr_color {
+        const char *name;
+        const unsigned char property;
+        const unsigned char value_type;
+        const unsigned int max_length;
+    } attr_color;
+    const struct colorControl_attr_hue {
+        const char *name;
+        const unsigned char property;
+        const unsigned char value_type;
+        const double min;
+    } attr_hue;
+    const struct colorControl_attr_saturation {
+        const char *name;
+        const unsigned char property;
+        const unsigned char value_type;
+        const double min;
+    } attr_saturation;
+    const struct colorControl_cmd_setHue { const char* name; } cmd_setHue;
+    const struct colorControl_cmd_setColor { const char* name; } cmd_setColor;
+    const struct colorControl_cmd_setSaturation { const char* name; } cmd_setSaturation;
 } caps_helper_colorControl = {
-	.id = "colorControl",
-	.attr_color = {
-		.name = "color",
-		.max_length = 255,
-		.property = ATTR_SET_MAX_LENGTH,
-	},
-	.attr_hue = {
-		.name = "hue",
-		.min = 0,
-		.property = ATTR_SET_VALUE_MIN,
-	},
-	.attr_saturation = {
-		.name = "saturation",
-		.min = 0,
-		.property = ATTR_SET_VALUE_MIN,
-	},
-	.cmd_setColor = { .name = "setColor" },
-	.cmd_setHue = { .name = "setHue" },
-	.cmd_setSaturation = { .name = "setSaturation" },
+    .id = "colorControl",
+    .attr_color = {
+        .name = "color",
+        .property = ATTR_SET_MAX_LENGTH,
+        .value_type = VALUE_TYPE_STRING,
+        .max_length = 255,
+    },
+    .attr_hue = {
+        .name = "hue",
+        .property = ATTR_SET_VALUE_MIN,
+        .value_type = VALUE_TYPE_NUMBER,
+        .min = 0,
+    },
+    .attr_saturation = {
+        .name = "saturation",
+        .property = ATTR_SET_VALUE_MIN,
+        .value_type = VALUE_TYPE_NUMBER,
+        .min = 0,
+    },
+    .cmd_setHue = { .name = "setHue" }, // arguments: hue(number) 
+    .cmd_setColor = { .name = "setColor" }, // arguments: color(object) 
+    .cmd_setSaturation = { .name = "setSaturation" }, // arguments: saturation(number) 
 };
 
-#endif /* _IOT_CAPS_HELPER_COLOR_CONTROL_ */
+#ifdef __cplusplus
+}
+#endif
+
+#endif /* _IOT_CAPS_HERLPER_COLOR_CONTROL_ */

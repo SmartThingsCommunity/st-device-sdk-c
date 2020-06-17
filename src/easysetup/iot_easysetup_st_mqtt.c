@@ -225,7 +225,7 @@ void _iot_mqtt_registration_client_callback(st_mqtt_event event, void *event_dat
 				} else {
 					IOT_WARN("No msg delivery handler for %s", md->topic);
 				}
-				IOT_DEBUG("raw msg (len:%d) : %s", md->payloadlen, mqtt_payload);
+				IOT_DEBUG("raw msg (len:%d) : %s", md->payloadlen, md->payload);
 				break;
 			}
 		default:
@@ -649,6 +649,7 @@ iot_error_t _iot_es_mqtt_connect(struct iot_context *ctx, st_mqtt_client target_
 			/* This case means Server can't start service for MQTT Things
 			 * This case is totally server-side issue, so we just report it to Apps
 			 */
+			ctx->mqtt_connect_critical_reject_count = 0;
 			iot_ret = IOT_ERROR_MQTT_SERVER_UNAVAIL;
 			break;
 
@@ -660,6 +661,11 @@ iot_error_t _iot_es_mqtt_connect(struct iot_context *ctx, st_mqtt_client target_
 			/* These cases are related to device's clientID, serialNumber, deviceId & web token
 			 * So we try to cleanup all data & reboot
 			 */
+			if (ctx->mqtt_connect_critical_reject_count++ < IOT_MQTT_CONNECT_CRITICAL_REJECT_MAX) {
+				IOT_WARN("MQTT critical reject retry %d", ctx->mqtt_connect_critical_reject_count);
+				iot_ret = IOT_ERROR_MQTT_CONNECT_FAIL;
+				break;
+			}
 			IOT_WARN("Rejected by Server!! cleanup all & reboot");
 
 			reboot = true;
@@ -672,9 +678,12 @@ iot_error_t _iot_es_mqtt_connect(struct iot_context *ctx, st_mqtt_client target_
 			 * network conditions (outside of the device) or, related to WIFI conditions
 			 * (inside of the device). So we try to do re-connecting limitedly
 			 */
+			ctx->mqtt_connect_critical_reject_count = 0;
 			iot_ret = IOT_ERROR_MQTT_CONNECT_FAIL;
 			break;
 		}
+	} else {
+		ctx->mqtt_connect_critical_reject_count = 0;
 	}
 
 #if defined(STDK_MQTT_TASK)

@@ -822,13 +822,6 @@ iot_error_t _es_confirm_check_manager(struct iot_context *ctx, enum ownership_va
 			return err;
 	}
 
-	err = iot_wifi_ctrl_request(ctx, IOT_WIFI_MODE_SCAN);
-	if (err != IOT_ERROR_NONE) {
-		IOT_ERROR("Can't send WIFI mode scan.(%d)", err);
-		IOT_ES_DUMP(IOT_DEBUG_LEVEL_ERROR, IOT_DUMP_EASYSETUP_WIFI_SCAN_NOT_FOUND, err);
-		err = IOT_ERROR_EASYSETUP_WIFI_SCAN_NOT_FOUND;
-	}
-
 out:
 	if (dev_sn)
 		free(dev_sn);
@@ -1097,13 +1090,6 @@ iot_error_t _es_confirm_handler(struct iot_context *ctx, char *in_payload, char 
 
 	*out_payload = final_msg;
 
-	err = iot_wifi_ctrl_request(ctx, IOT_WIFI_MODE_SCAN);
-	if (err != IOT_ERROR_NONE) {
-		IOT_ERROR("Can't send WIFI mode scan.(%d)", err);
-		IOT_ES_DUMP(IOT_DEBUG_LEVEL_ERROR, IOT_DUMP_EASYSETUP_WIFI_SCAN_NOT_FOUND, err);
-		err = IOT_ERROR_EASYSETUP_WIFI_SCAN_NOT_FOUND;
-	}
-
 out:
 	if (plain_msg) {
 		free(plain_msg);
@@ -1140,6 +1126,14 @@ iot_error_t _es_wifiscaninfo_handler(struct iot_context *ctx, char **out_payload
 		IOT_ERROR("invalid iot_context!!");
 		IOT_ES_DUMP(IOT_DEBUG_LEVEL_ERROR, IOT_DUMP_EASYSETUP_INTERNAL_SERVER_ERROR, 0);
 		err = IOT_ERROR_EASYSETUP_INTERNAL_SERVER_ERROR;
+		return err;
+	}
+
+	err = iot_wifi_ctrl_request(ctx, IOT_WIFI_MODE_SCAN);
+	if (err != IOT_ERROR_NONE) {
+		IOT_ERROR("Can't control WIFI mode scan.(%d)", err);
+		IOT_ES_DUMP(IOT_DEBUG_LEVEL_ERROR, IOT_DUMP_EASYSETUP_WIFI_SCAN_NOT_FOUND, err);
+		err = IOT_ERROR_EASYSETUP_WIFI_SCAN_NOT_FOUND;
 		return err;
 	}
 
@@ -1669,7 +1663,6 @@ out:
 	return err;
 }
 
-#if defined(CONFIG_STDK_IOT_CORE_EASYSETUP_HTTP_LOG_SUPPORT)
 static iot_error_t _es_log_systeminfo_handler(struct iot_context *ctx, char **out_payload)
 {
 	char *output_ptr = NULL;
@@ -1727,6 +1720,12 @@ static iot_error_t _es_log_get_dump_handler(struct iot_context *ctx, char **out_
 	JSON_H *item = NULL;
 	JSON_H *root = NULL;
 	iot_error_t err = IOT_ERROR_NONE;
+#if !defined(CONFIG_STDK_IOT_CORE_EASYSETUP_LOG_SUPPORT_NO_USE_LOGFILE)
+	char *sumo_dump = NULL;
+	size_t log_dump_size = 2048;
+	size_t sumo_dump_size = 200;
+	size_t written_size = 0;
+#endif
 
 	item = JSON_CREATE_OBJECT();
 	if (!item) {
@@ -1736,9 +1735,28 @@ static iot_error_t _es_log_get_dump_handler(struct iot_context *ctx, char **out_
 		goto out;
 	}
 
+#if defined(CONFIG_STDK_IOT_CORE_EASYSETUP_LOG_SUPPORT_NO_USE_LOGFILE)
 	log_dump = iot_debug_get_log();
+#else
+	err = iot_dump_create_all_log_dump(ctx, &log_dump, log_dump_size, &written_size, IOT_DUMP_MODE_NEED_BASE64 | IOT_DUMP_MODE_NEED_DUMP_STATE);
+	if (err < 0) {
+		IOT_ERROR("Fail to get log dump!\n");
+		IOT_ES_DUMP(IOT_DEBUG_LEVEL_ERROR, IOT_DUMP_EASYSETUP_CREATE_LOGDUMP_FAIL, 0);
+		goto out;
+	}
+	err = iot_dump_create_all_log_dump(ctx, &sumo_dump, sumo_dump_size, &written_size, IOT_DUMP_MODE_NEED_BASE64);
+	if (err < 0) {
+		IOT_ERROR("Fail to get sumo dump!\n");
+		IOT_ES_DUMP(IOT_DEBUG_LEVEL_ERROR, IOT_DUMP_EASYSETUP_CREATE_SUMODUMP_FAIL, 0);
+		goto out;
+	}
+#endif
+
 	JSON_ADD_NUMBER_TO_OBJECT(item, "code", 1);
 	JSON_ADD_ITEM_TO_OBJECT(item, "message", JSON_CREATE_STRING(log_dump));
+#if !defined(CONFIG_STDK_IOT_CORE_EASYSETUP_LOG_SUPPORT_NO_USE_LOGFILE)
+	JSON_ADD_ITEM_TO_OBJECT(item, "sumomessage", JSON_CREATE_STRING(sumo_dump));
+#endif
 
 	root = JSON_CREATE_OBJECT();
 	if (!root) {
@@ -1761,7 +1779,6 @@ out:
 		JSON_DELETE(root);
 	return err;
 }
-#endif
 
 iot_error_t iot_easysetup_request_handler(struct iot_context *ctx, struct iot_easysetup_payload request)
 {
@@ -1797,7 +1814,6 @@ iot_error_t iot_easysetup_request_handler(struct iot_context *ctx, struct iot_ea
 	case IOT_EASYSETUP_STEP_SETUPCOMPLETE:
 		err = _es_setupcomplete_handler(ctx, request.payload, &response.payload);
 		break;
-#if defined(CONFIG_STDK_IOT_CORE_EASYSETUP_HTTP_LOG_SUPPORT)
 	case IOT_EASYSETUP_STEP_LOG_SYSTEMINFO:
 		err = _es_log_systeminfo_handler(ctx, &response.payload);
 		break;
@@ -1807,7 +1823,6 @@ iot_error_t iot_easysetup_request_handler(struct iot_context *ctx, struct iot_ea
 	case IOT_EASYSETUP_STEP_LOG_GET_DUMP:
 		err = _es_log_get_dump_handler(ctx, &response.payload);
 		break;
-#endif
 	default:
 		err = IOT_ERROR_EASYSETUP_INTERNAL_SERVER_ERROR;
 		break;
