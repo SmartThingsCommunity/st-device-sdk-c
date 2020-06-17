@@ -21,6 +21,10 @@
 
 #include "iot_caps_helper.h"
 
+#ifdef __cplusplus
+extern "C" {
+#endif
+
 enum {
     CAP_ENUM_TEMPERATUREMEASUREMENT_TEMPERATURE_UNIT_F,
     CAP_ENUM_TEMPERATUREMEASUREMENT_TEMPERATURE_UNIT_C,
@@ -48,5 +52,9 @@ const static struct iot_caps_temperatureMeasurement {
         .max = 10000,
     },
 };
+
+#ifdef __cplusplus
+}
+#endif
 
 #endif /* _IOT_CAPS_HERLPER_TEMPERATURE_MEASUREMENT_ */

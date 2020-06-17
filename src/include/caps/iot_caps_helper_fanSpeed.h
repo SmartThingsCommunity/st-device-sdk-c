@@ -21,6 +21,10 @@
 
 #include "iot_caps_helper.h"
 
+#ifdef __cplusplus
+extern "C" {
+#endif
+
 const static struct iot_caps_fanSpeed {
     const char *id;
     const struct fanSpeed_attr_fanSpeed {
@@ -40,5 +44,9 @@ const static struct iot_caps_fanSpeed {
     },
     .cmd_setFanSpeed = { .name = "setFanSpeed" }, // arguments: speed(integer) 
 };
+
+#ifdef __cplusplus
+}
+#endif
 
 #endif /* _IOT_CAPS_HERLPER_FAN_SPEED_ */

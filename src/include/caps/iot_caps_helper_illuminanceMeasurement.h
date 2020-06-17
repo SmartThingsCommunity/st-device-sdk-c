@@ -21,6 +21,10 @@
 
 #include "iot_caps_helper.h"
 
+#ifdef __cplusplus
+extern "C" {
+#endif
+
 enum {
     CAP_ENUM_ILLUMINANCEMEASUREMENT_ILLUMINANCE_UNIT_LUX,
     CAP_ENUM_ILLUMINANCEMEASUREMENT_ILLUMINANCE_UNIT_MAX
@@ -47,5 +51,9 @@ const static struct iot_caps_illuminanceMeasurement {
         .max = 100000,
     },
 };
+
+#ifdef __cplusplus
+}
+#endif
 
 #endif /* _IOT_CAPS_HERLPER_ILLUMINANCE_MEASUREMENT_ */

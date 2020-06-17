@@ -21,6 +21,10 @@
 
 #include "iot_caps_helper.h"
 
+#ifdef __cplusplus
+extern "C" {
+#endif
+
 enum {
     CAP_ENUM_RELATIVEHUMIDITYMEASUREMENT_HUMIDITY_UNIT_PERCENT,
     CAP_ENUM_RELATIVEHUMIDITYMEASUREMENT_HUMIDITY_UNIT_MAX
@@ -47,5 +51,9 @@ const static struct iot_caps_relativeHumidityMeasurement {
         .max = 100,
     },
 };
+
+#ifdef __cplusplus
+}
+#endif
 
 #endif /* _IOT_CAPS_HERLPER_RELATIVE_HUMIDITY_MEASUREMENT_ */

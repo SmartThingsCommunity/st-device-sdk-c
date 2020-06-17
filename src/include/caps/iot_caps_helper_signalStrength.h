@@ -21,6 +21,10 @@
 
 #include "iot_caps_helper.h"
 
+#ifdef __cplusplus
+extern "C" {
+#endif
+
 enum {
     CAP_ENUM_SIGNALSTRENGTH_RSSI_UNIT_DBM,
     CAP_ENUM_SIGNALSTRENGTH_RSSI_UNIT_MAX
@@ -61,5 +65,9 @@ const static struct iot_caps_signalStrength {
         .max = 255,
     },
 };
+
+#ifdef __cplusplus
+}
+#endif
 
 #endif /* _IOT_CAPS_HERLPER_SIGNAL_STRENGTH_ */

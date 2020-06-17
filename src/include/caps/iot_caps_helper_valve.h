@@ -21,6 +21,10 @@
 
 #include "iot_caps_helper.h"
 
+#ifdef __cplusplus
+extern "C" {
+#endif
+
 enum {
     CAP_ENUM_VALVE_VALVE_VALUE_CLOSED,
     CAP_ENUM_VALVE_VALVE_VALUE_OPEN,
@@ -48,5 +52,9 @@ const static struct iot_caps_valve {
     .cmd_close = { .name = "close" },
     .cmd_open = { .name = "open" },
 };
+
+#ifdef __cplusplus
+}
+#endif
 
 #endif /* _IOT_CAPS_HERLPER_VALVE_ */

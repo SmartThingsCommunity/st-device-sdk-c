@@ -21,6 +21,10 @@
 
 #include "iot_caps_helper.h"
 
+#ifdef __cplusplus
+extern "C" {
+#endif
+
 const static struct iot_caps_odorSensor {
     const char *id;
     const struct odorSensor_attr_odorLevel {
@@ -38,5 +42,9 @@ const static struct iot_caps_odorSensor {
         .min = 0,
     },
 };
+
+#ifdef __cplusplus
+}
+#endif
 
 #endif /* _IOT_CAPS_HERLPER_ODOR_SENSOR_ */

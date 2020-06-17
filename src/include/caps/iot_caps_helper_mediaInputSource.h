@@ -21,6 +21,10 @@
 
 #include "iot_caps_helper.h"
 
+#ifdef __cplusplus
+extern "C" {
+#endif
+
 enum {
     CAP_ENUM_MEDIAINPUTSOURCE_INPUTSOURCE_VALUE_AM,
     CAP_ENUM_MEDIAINPUTSOURCE_INPUTSOURCE_VALUE_CD,
@@ -75,5 +79,9 @@ const static struct iot_caps_mediaInputSource {
     },
     .cmd_setInputSource = { .name = "setInputSource" }, // arguments: mode(string) 
 };
+
+#ifdef __cplusplus
+}
+#endif
 
 #endif /* _IOT_CAPS_HERLPER_MEDIA_INPUT_SOURCE_ */

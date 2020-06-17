@@ -21,6 +21,10 @@
 
 #include "iot_caps_helper.h"
 
+#ifdef __cplusplus
+extern "C" {
+#endif
+
 enum {
     CAP_ENUM_RAPIDCOOLING_RAPIDCOOLING_VALUE_OFF,
     CAP_ENUM_RAPIDCOOLING_RAPIDCOOLING_VALUE_ON,
@@ -46,5 +50,9 @@ const static struct iot_caps_rapidCooling {
     },
     .cmd_setRapidCooling = { .name = "setRapidCooling" }, // arguments: rapidCooling(string) 
 };
+
+#ifdef __cplusplus
+}
+#endif
 
 #endif /* _IOT_CAPS_HERLPER_RAPID_COOLING_ */

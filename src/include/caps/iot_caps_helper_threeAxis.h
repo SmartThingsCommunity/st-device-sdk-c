@@ -21,6 +21,10 @@
 
 #include "iot_caps_helper.h"
 
+#ifdef __cplusplus
+extern "C" {
+#endif
+
 enum {
     CAP_ENUM_THREEAXIS_THREEAXIS_UNIT_MG,
     CAP_ENUM_THREEAXIS_THREEAXIS_UNIT_MAX
@@ -47,5 +51,9 @@ const static struct iot_caps_threeAxis {
         .max = 10000,
     },
 };
+
+#ifdef __cplusplus
+}
+#endif
 
 #endif /* _IOT_CAPS_HERLPER_THREE_AXIS_ */

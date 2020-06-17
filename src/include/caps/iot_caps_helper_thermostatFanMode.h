@@ -21,6 +21,10 @@
 
 #include "iot_caps_helper.h"
 
+#ifdef __cplusplus
+extern "C" {
+#endif
+
 enum {
     CAP_ENUM_THERMOSTATFANMODE_THERMOSTATFANMODE_VALUE_AUTO,
     CAP_ENUM_THERMOSTATFANMODE_THERMOSTATFANMODE_VALUE_CIRCULATE,
@@ -67,5 +71,9 @@ const static struct iot_caps_thermostatFanMode {
     .cmd_fanAuto = { .name = "fanAuto" },
     .cmd_setThermostatFanMode = { .name = "setThermostatFanMode" }, // arguments: mode(string) 
 };
+
+#ifdef __cplusplus
+}
+#endif
 
 #endif /* _IOT_CAPS_HERLPER_THERMOSTAT_FAN_MODE_ */

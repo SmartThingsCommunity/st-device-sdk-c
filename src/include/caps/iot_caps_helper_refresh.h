@@ -21,6 +21,10 @@
 
 #include "iot_caps_helper.h"
 
+#ifdef __cplusplus
+extern "C" {
+#endif
+
 const static struct iot_caps_refresh {
     const char *id;
     const struct refresh_cmd_refresh { const char* name; } cmd_refresh;
@@ -28,5 +32,9 @@ const static struct iot_caps_refresh {
     .id = "refresh",
     .cmd_refresh = { .name = "refresh" },
 };
+
+#ifdef __cplusplus
+}
+#endif
 
 #endif /* _IOT_CAPS_HERLPER_REFRESH_ */

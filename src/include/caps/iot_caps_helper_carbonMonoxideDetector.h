@@ -21,6 +21,10 @@
 
 #include "iot_caps_helper.h"
 
+#ifdef __cplusplus
+extern "C" {
+#endif
+
 enum {
     CAP_ENUM_CARBONMONOXIDEDETECTOR_CARBONMONOXIDE_VALUE_CLEAR,
     CAP_ENUM_CARBONMONOXIDEDETECTOR_CARBONMONOXIDE_VALUE_DETECTED,
@@ -45,5 +49,9 @@ const static struct iot_caps_carbonMonoxideDetector {
         .values = {"clear", "detected", "tested"},
     },
 };
+
+#ifdef __cplusplus
+}
+#endif
 
 #endif /* _IOT_CAPS_HERLPER_CARBON_MONOXIDE_DETECTOR_ */

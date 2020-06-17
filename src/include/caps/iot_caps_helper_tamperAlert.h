@@ -21,6 +21,10 @@
 
 #include "iot_caps_helper.h"
 
+#ifdef __cplusplus
+extern "C" {
+#endif
+
 enum {
     CAP_ENUM_TAMPERALERT_TAMPER_VALUE_CLEAR,
     CAP_ENUM_TAMPERALERT_TAMPER_VALUE_DETECTED,
@@ -44,5 +48,9 @@ const static struct iot_caps_tamperAlert {
         .values = {"clear", "detected"},
     },
 };
+
+#ifdef __cplusplus
+}
+#endif
 
 #endif /* _IOT_CAPS_HERLPER_TAMPER_ALERT_ */

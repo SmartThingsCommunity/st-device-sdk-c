@@ -21,6 +21,10 @@
 
 #include "iot_caps_helper.h"
 
+#ifdef __cplusplus
+extern "C" {
+#endif
+
 enum {
     CAP_ENUM_BODYWEIGHTMEASUREMENT_BODYWEIGHTMEASUREMENT_UNIT_KG,
     CAP_ENUM_BODYWEIGHTMEASUREMENT_BODYWEIGHTMEASUREMENT_UNIT_LBS,
@@ -47,5 +51,9 @@ const static struct iot_caps_bodyWeightMeasurement {
         .min = 0,
     },
 };
+
+#ifdef __cplusplus
+}
+#endif
 
 #endif /* _IOT_CAPS_HERLPER_BODY_WEIGHT_MEASUREMENT_ */

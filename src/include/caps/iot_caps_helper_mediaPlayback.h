@@ -21,6 +21,10 @@
 
 #include "iot_caps_helper.h"
 
+#ifdef __cplusplus
+extern "C" {
+#endif
+
 #define CAP_ENUM_MEDIAPLAYBACK_SUPPORTEDPLAYBACKCOMMANDS_VALUE_MAX 5
 enum {
     CAP_ENUM_MEDIAPLAYBACK_PLAYBACKSTATUS_VALUE_PAUSED,
@@ -72,5 +76,9 @@ const static struct iot_caps_mediaPlayback {
     .cmd_fastForward = { .name = "fastForward" },
     .cmd_stop = { .name = "stop" },
 };
+
+#ifdef __cplusplus
+}
+#endif
 
 #endif /* _IOT_CAPS_HERLPER_MEDIA_PLAYBACK_ */

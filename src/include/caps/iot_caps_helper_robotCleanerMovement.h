@@ -21,6 +21,10 @@
 
 #include "iot_caps_helper.h"
 
+#ifdef __cplusplus
+extern "C" {
+#endif
+
 enum {
     CAP_ENUM_ROBOTCLEANERMOVEMENT_ROBOTCLEANERMOVEMENT_VALUE_HOMING,
     CAP_ENUM_ROBOTCLEANERMOVEMENT_ROBOTCLEANERMOVEMENT_VALUE_IDLE,
@@ -54,5 +58,9 @@ const static struct iot_caps_robotCleanerMovement {
     },
     .cmd_setRobotCleanerMovement = { .name = "setRobotCleanerMovement" }, // arguments: mode(string) 
 };
+
+#ifdef __cplusplus
+}
+#endif
 
 #endif /* _IOT_CAPS_HERLPER_ROBOT_CLEANER_MOVEMENT_ */

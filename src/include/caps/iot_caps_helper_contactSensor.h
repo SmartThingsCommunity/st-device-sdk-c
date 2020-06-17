@@ -21,6 +21,10 @@
 
 #include "iot_caps_helper.h"
 
+#ifdef __cplusplus
+extern "C" {
+#endif
+
 enum {
     CAP_ENUM_CONTACTSENSOR_CONTACT_VALUE_CLOSED,
     CAP_ENUM_CONTACTSENSOR_CONTACT_VALUE_OPEN,
@@ -44,5 +48,9 @@ const static struct iot_caps_contactSensor {
         .values = {"closed", "open"},
     },
 };
+
+#ifdef __cplusplus
+}
+#endif
 
 #endif /* _IOT_CAPS_HERLPER_CONTACT_SENSOR_ */

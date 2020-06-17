@@ -21,6 +21,10 @@
 
 #include "iot_caps_helper.h"
 
+#ifdef __cplusplus
+extern "C" {
+#endif
+
 enum {
     CAP_ENUM_SAMSUNGTV_SWITCH_VALUE_ON,
     CAP_ENUM_SAMSUNGTV_SWITCH_VALUE_OFF,
@@ -146,5 +150,9 @@ const static struct iot_caps_samsungTV {
     .cmd_volumeUp = { .name = "volumeUp" },
     .cmd_setVolume = { .name = "setVolume" }, // arguments: volume(integer) 
 };
+
+#ifdef __cplusplus
+}
+#endif
 
 #endif /* _IOT_CAPS_HERLPER_SAMSUNG_TV_ */

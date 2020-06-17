@@ -21,6 +21,10 @@
 
 #include "iot_caps_helper.h"
 
+#ifdef __cplusplus
+extern "C" {
+#endif
+
 const static struct iot_caps_tone {
     const char *id;
     const struct tone_cmd_beep { const char* name; } cmd_beep;
@@ -28,5 +32,9 @@ const static struct iot_caps_tone {
     .id = "tone",
     .cmd_beep = { .name = "beep" },
 };
+
+#ifdef __cplusplus
+}
+#endif
 
 #endif /* _IOT_CAPS_HERLPER_TONE_ */

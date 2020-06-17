@@ -21,6 +21,10 @@
 
 #include "iot_caps_helper.h"
 
+#ifdef __cplusplus
+extern "C" {
+#endif
+
 #define CAP_ENUM_DISHWASHEROPERATINGSTATE_SUPPORTEDMACHINESTATES_VALUE_MAX 3
 enum {
     CAP_ENUM_DISHWASHEROPERATINGSTATE_MACHINESTATE_VALUE_PAUSE,
@@ -97,5 +101,9 @@ const static struct iot_caps_dishwasherOperatingState {
     },
     .cmd_setMachineState = { .name = "setMachineState" }, // arguments: state(string) 
 };
+
+#ifdef __cplusplus
+}
+#endif
 
 #endif /* _IOT_CAPS_HERLPER_DISHWASHER_OPERATING_STATE_ */

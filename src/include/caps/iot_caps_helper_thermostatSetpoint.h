@@ -21,6 +21,10 @@
 
 #include "iot_caps_helper.h"
 
+#ifdef __cplusplus
+extern "C" {
+#endif
+
 enum {
     CAP_ENUM_THERMOSTATSETPOINT_THERMOSTATSETPOINT_UNIT_F,
     CAP_ENUM_THERMOSTATSETPOINT_THERMOSTATSETPOINT_UNIT_C,
@@ -48,5 +52,9 @@ const static struct iot_caps_thermostatSetpoint {
         .max = 10000,
     },
 };
+
+#ifdef __cplusplus
+}
+#endif
 
 #endif /* _IOT_CAPS_HERLPER_THERMOSTAT_SETPOINT_ */

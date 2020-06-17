@@ -21,6 +21,10 @@
 
 #include "iot_caps_helper.h"
 
+#ifdef __cplusplus
+extern "C" {
+#endif
+
 enum {
     CAP_ENUM_GASMETER_GASMETER_UNIT_KWH,
     CAP_ENUM_GASMETER_GASMETER_UNIT_MAX
@@ -108,5 +112,9 @@ const static struct iot_caps_gasMeter {
         .min = 0,
     },
 };
+
+#ifdef __cplusplus
+}
+#endif
 
 #endif /* _IOT_CAPS_HERLPER_GAS_METER_ */

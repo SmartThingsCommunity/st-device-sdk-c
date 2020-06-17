@@ -21,6 +21,10 @@
 
 #include "iot_caps_helper.h"
 
+#ifdef __cplusplus
+extern "C" {
+#endif
+
 enum {
     CAP_ENUM_SWITCHLEVEL_LEVEL_UNIT_PERCENT,
     CAP_ENUM_SWITCHLEVEL_LEVEL_UNIT_MAX
@@ -49,5 +53,9 @@ const static struct iot_caps_switchLevel {
     },
     .cmd_setLevel = { .name = "setLevel" }, // arguments: level(integer) rate(integer) 
 };
+
+#ifdef __cplusplus
+}
+#endif
 
 #endif /* _IOT_CAPS_HERLPER_SWITCH_LEVEL_ */

@@ -21,6 +21,10 @@
 
 #include "iot_caps_helper.h"
 
+#ifdef __cplusplus
+extern "C" {
+#endif
+
 const static struct iot_caps_execute {
     const char *id;
     const struct execute_attr_data {
@@ -38,5 +42,9 @@ const static struct iot_caps_execute {
     },
     .cmd_execute = { .name = "execute" }, // arguments: command(string) args(object) 
 };
+
+#ifdef __cplusplus
+}
+#endif
 
 #endif /* _IOT_CAPS_HERLPER_EXECUTE_ */

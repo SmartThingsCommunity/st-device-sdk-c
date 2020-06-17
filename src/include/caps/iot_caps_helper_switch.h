@@ -21,6 +21,10 @@
 
 #include "iot_caps_helper.h"
 
+#ifdef __cplusplus
+extern "C" {
+#endif
+
 enum {
     CAP_ENUM_SWITCH_SWITCH_VALUE_ON,
     CAP_ENUM_SWITCH_SWITCH_VALUE_OFF,
@@ -48,5 +52,9 @@ const static struct iot_caps_switch {
     .cmd_on = { .name = "on" },
     .cmd_off = { .name = "off" },
 };
+
+#ifdef __cplusplus
+}
+#endif
 
 #endif /* _IOT_CAPS_HERLPER_SWITCH_ */

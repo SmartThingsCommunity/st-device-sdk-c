@@ -21,6 +21,10 @@
 
 #include "iot_caps_helper.h"
 
+#ifdef __cplusplus
+extern "C" {
+#endif
+
 enum {
     CAP_ENUM_SOUNDSENSOR_SOUND_VALUE_DETECTED,
     CAP_ENUM_SOUNDSENSOR_SOUND_VALUE_NOT_DETECTED,
@@ -44,5 +48,9 @@ const static struct iot_caps_soundSensor {
         .values = {"detected", "not detected"},
     },
 };
+
+#ifdef __cplusplus
+}
+#endif
 
 #endif /* _IOT_CAPS_HERLPER_SOUND_SENSOR_ */

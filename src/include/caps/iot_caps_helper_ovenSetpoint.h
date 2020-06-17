@@ -21,6 +21,10 @@
 
 #include "iot_caps_helper.h"
 
+#ifdef __cplusplus
+extern "C" {
+#endif
+
 const static struct iot_caps_ovenSetpoint {
     const char *id;
     const struct ovenSetpoint_attr_ovenSetpoint {
@@ -40,5 +44,9 @@ const static struct iot_caps_ovenSetpoint {
     },
     .cmd_setOvenSetpoint = { .name = "setOvenSetpoint" }, // arguments: setpoint(integer) 
 };
+
+#ifdef __cplusplus
+}
+#endif
 
 #endif /* _IOT_CAPS_HERLPER_OVEN_SETPOINT_ */

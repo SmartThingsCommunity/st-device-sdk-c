@@ -21,6 +21,10 @@
 
 #include "iot_caps_helper.h"
 
+#ifdef __cplusplus
+extern "C" {
+#endif
+
 enum {
     CAP_ENUM_BODYMASSINDEXMEASUREMENT_BMIMEASUREMENT_UNIT_KG_PER_M2,
     CAP_ENUM_BODYMASSINDEXMEASUREMENT_BMIMEASUREMENT_UNIT_MAX
@@ -45,5 +49,9 @@ const static struct iot_caps_bodyMassIndexMeasurement {
         .min = 0,
     },
 };
+
+#ifdef __cplusplus
+}
+#endif
 
 #endif /* _IOT_CAPS_HERLPER_BODY_MASS_INDEX_MEASUREMENT_ */

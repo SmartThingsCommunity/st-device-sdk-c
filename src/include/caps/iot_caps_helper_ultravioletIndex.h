@@ -21,6 +21,10 @@
 
 #include "iot_caps_helper.h"
 
+#ifdef __cplusplus
+extern "C" {
+#endif
+
 const static struct iot_caps_ultravioletIndex {
     const char *id;
     const struct ultravioletIndex_attr_ultravioletIndex {
@@ -40,5 +44,9 @@ const static struct iot_caps_ultravioletIndex {
         .max = 255,
     },
 };
+
+#ifdef __cplusplus
+}
+#endif
 
 #endif /* _IOT_CAPS_HERLPER_ULTRAVIOLET_INDEX_ */

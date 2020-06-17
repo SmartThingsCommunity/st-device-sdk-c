@@ -21,6 +21,10 @@
 
 #include "iot_caps_helper.h"
 
+#ifdef __cplusplus
+extern "C" {
+#endif
+
 enum {
     CAP_ENUM_SLEEPSENSOR_SLEEPING_VALUE_NOT_SLEEPING,
     CAP_ENUM_SLEEPSENSOR_SLEEPING_VALUE_SLEEPING,
@@ -44,5 +48,9 @@ const static struct iot_caps_sleepSensor {
         .values = {"not sleeping", "sleeping"},
     },
 };
+
+#ifdef __cplusplus
+}
+#endif
 
 #endif /* _IOT_CAPS_HERLPER_SLEEP_SENSOR_ */

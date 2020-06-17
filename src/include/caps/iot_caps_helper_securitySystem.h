@@ -21,6 +21,10 @@
 
 #include "iot_caps_helper.h"
 
+#ifdef __cplusplus
+extern "C" {
+#endif
+
 enum {
     CAP_ENUM_SECURITYSYSTEM_SECURITYSYSTEMSTATUS_VALUE_ARMEDAWAY,
     CAP_ENUM_SECURITYSYSTEM_SECURITYSYSTEMSTATUS_VALUE_ARMEDSTAY,
@@ -63,5 +67,9 @@ const static struct iot_caps_securitySystem {
     .cmd_disarm = { .name = "disarm" },
     .cmd_armAway = { .name = "armAway" }, // arguments: bypassAll(boolean) 
 };
+
+#ifdef __cplusplus
+}
+#endif
 
 #endif /* _IOT_CAPS_HERLPER_SECURITY_SYSTEM_ */

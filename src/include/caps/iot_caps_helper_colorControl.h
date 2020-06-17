@@ -21,6 +21,10 @@
 
 #include "iot_caps_helper.h"
 
+#ifdef __cplusplus
+extern "C" {
+#endif
+
 const static struct iot_caps_colorControl {
     const char *id;
     const struct colorControl_attr_color {
@@ -68,5 +72,9 @@ const static struct iot_caps_colorControl {
     .cmd_setColor = { .name = "setColor" }, // arguments: color(object) 
     .cmd_setSaturation = { .name = "setSaturation" }, // arguments: saturation(number) 
 };
+
+#ifdef __cplusplus
+}
+#endif
 
 #endif /* _IOT_CAPS_HERLPER_COLOR_CONTROL_ */

@@ -21,6 +21,10 @@
 
 #include "iot_caps_helper.h"
 
+#ifdef __cplusplus
+extern "C" {
+#endif
+
 const static struct iot_caps_momentary {
     const char *id;
     const struct momentary_cmd_push { const char* name; } cmd_push;
@@ -28,5 +32,9 @@ const static struct iot_caps_momentary {
     .id = "momentary",
     .cmd_push = { .name = "push" },
 };
+
+#ifdef __cplusplus
+}
+#endif
 
 #endif /* _IOT_CAPS_HERLPER_MOMENTARY_ */

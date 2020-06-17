@@ -21,6 +21,10 @@
 
 #include "iot_caps_helper.h"
 
+#ifdef __cplusplus
+extern "C" {
+#endif
+
 enum {
     CAP_ENUM_POWERMETER_POWER_UNIT_W,
     CAP_ENUM_POWERMETER_POWER_UNIT_MAX
@@ -45,5 +49,9 @@ const static struct iot_caps_powerMeter {
         .min = 0,
     },
 };
+
+#ifdef __cplusplus
+}
+#endif
 
 #endif /* _IOT_CAPS_HERLPER_POWER_METER_ */

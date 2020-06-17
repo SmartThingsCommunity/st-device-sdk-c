@@ -21,6 +21,10 @@
 
 #include "iot_caps_helper.h"
 
+#ifdef __cplusplus
+extern "C" {
+#endif
+
 enum {
     CAP_ENUM_ALARM_ALARM_VALUE_BOTH,
     CAP_ENUM_ALARM_ALARM_VALUE_OFF,
@@ -54,5 +58,9 @@ const static struct iot_caps_alarm {
     .cmd_off = { .name = "off" },
     .cmd_strobe = { .name = "strobe" },
 };
+
+#ifdef __cplusplus
+}
+#endif
 
 #endif /* _IOT_CAPS_HERLPER_ALARM_ */

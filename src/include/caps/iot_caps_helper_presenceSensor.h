@@ -21,6 +21,10 @@
 
 #include "iot_caps_helper.h"
 
+#ifdef __cplusplus
+extern "C" {
+#endif
+
 enum {
     CAP_ENUM_PRESENCESENSOR_PRESENCE_VALUE_PRESENT,
     CAP_ENUM_PRESENCESENSOR_PRESENCE_VALUE_NOT_PRESENT,
@@ -44,5 +48,9 @@ const static struct iot_caps_presenceSensor {
         .values = {"present", "not present"},
     },
 };
+
+#ifdef __cplusplus
+}
+#endif
 
 #endif /* _IOT_CAPS_HERLPER_PRESENCE_SENSOR_ */

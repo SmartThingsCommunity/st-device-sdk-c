@@ -21,6 +21,10 @@
 
 #include "iot_caps_helper.h"
 
+#ifdef __cplusplus
+extern "C" {
+#endif
+
 enum {
     CAP_ENUM_FILTERSTATUS_FILTERSTATUS_VALUE_NORMAL,
     CAP_ENUM_FILTERSTATUS_FILTERSTATUS_VALUE_REPLACE,
@@ -44,5 +48,9 @@ const static struct iot_caps_filterStatus {
         .values = {"normal", "replace"},
     },
 };
+
+#ifdef __cplusplus
+}
+#endif
 
 #endif /* _IOT_CAPS_HERLPER_FILTER_STATUS_ */

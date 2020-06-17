@@ -21,6 +21,10 @@
 
 #include "iot_caps_helper.h"
 
+#ifdef __cplusplus
+extern "C" {
+#endif
+
 enum {
     CAP_ENUM_WINDOWSHADE_WINDOWSHADE_VALUE_CLOSED,
     CAP_ENUM_WINDOWSHADE_WINDOWSHADE_VALUE_CLOSING,
@@ -67,5 +71,9 @@ const static struct iot_caps_windowShade {
     .cmd_pause = { .name = "pause" },
     .cmd_open = { .name = "open" },
 };
+
+#ifdef __cplusplus
+}
+#endif
 
 #endif /* _IOT_CAPS_HERLPER_WINDOW_SHADE_ */

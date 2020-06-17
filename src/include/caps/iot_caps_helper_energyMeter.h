@@ -21,6 +21,10 @@
 
 #include "iot_caps_helper.h"
 
+#ifdef __cplusplus
+extern "C" {
+#endif
+
 enum {
     CAP_ENUM_ENERGYMETER_ENERGY_UNIT_WH,
     CAP_ENUM_ENERGYMETER_ENERGY_UNIT_KWH,
@@ -47,5 +51,9 @@ const static struct iot_caps_energyMeter {
         .min = 0,
     },
 };
+
+#ifdef __cplusplus
+}
+#endif
 
 #endif /* _IOT_CAPS_HERLPER_ENERGY_METER_ */

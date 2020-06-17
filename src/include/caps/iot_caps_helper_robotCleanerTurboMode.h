@@ -21,6 +21,10 @@
 
 #include "iot_caps_helper.h"
 
+#ifdef __cplusplus
+extern "C" {
+#endif
+
 enum {
     CAP_ENUM_ROBOTCLEANERTURBOMODE_ROBOTCLEANERTURBOMODE_VALUE_ON,
     CAP_ENUM_ROBOTCLEANERTURBOMODE_ROBOTCLEANERTURBOMODE_VALUE_OFF,
@@ -47,5 +51,9 @@ const static struct iot_caps_robotCleanerTurboMode {
     },
     .cmd_setRobotCleanerTurboMode = { .name = "setRobotCleanerTurboMode" }, // arguments: mode(string) 
 };
+
+#ifdef __cplusplus
+}
+#endif
 
 #endif /* _IOT_CAPS_HERLPER_ROBOT_CLEANER_TURBO_MODE_ */

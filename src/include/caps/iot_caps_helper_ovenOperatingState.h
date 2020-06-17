@@ -21,6 +21,10 @@
 
 #include "iot_caps_helper.h"
 
+#ifdef __cplusplus
+extern "C" {
+#endif
+
 enum {
     CAP_ENUM_OVENOPERATINGSTATE_OVENJOBSTATE_VALUE_CLEANING,
     CAP_ENUM_OVENOPERATINGSTATE_OVENJOBSTATE_VALUE_COOKING,
@@ -130,5 +134,9 @@ const static struct iot_caps_ovenOperatingState {
     .cmd_stop = { .name = "stop" },
     .cmd_setMachineState = { .name = "setMachineState" }, // arguments: state(string) 
 };
+
+#ifdef __cplusplus
+}
+#endif
 
 #endif /* _IOT_CAPS_HERLPER_OVEN_OPERATING_STATE_ */

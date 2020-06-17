@@ -21,6 +21,10 @@
 
 #include "iot_caps_helper.h"
 
+#ifdef __cplusplus
+extern "C" {
+#endif
+
 enum {
     CAP_ENUM_POWERSOURCE_POWERSOURCE_VALUE_BATTERY,
     CAP_ENUM_POWERSOURCE_POWERSOURCE_VALUE_DC,
@@ -46,5 +50,9 @@ const static struct iot_caps_powerSource {
         .values = {"battery", "dc", "mains", "unknown"},
     },
 };
+
+#ifdef __cplusplus
+}
+#endif
 
 #endif /* _IOT_CAPS_HERLPER_POWER_SOURCE_ */

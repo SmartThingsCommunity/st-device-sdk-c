@@ -21,6 +21,10 @@
 
 #include "iot_caps_helper.h"
 
+#ifdef __cplusplus
+extern "C" {
+#endif
+
 enum {
     CAP_ENUM_ACTIVITYLIGHTINGMODE_LIGHTINGMODE_VALUE_READING,
     CAP_ENUM_ACTIVITYLIGHTINGMODE_LIGHTINGMODE_VALUE_WRITING,
@@ -52,5 +56,9 @@ const static struct iot_caps_activityLightingMode {
     },
     .cmd_setLightingMode = { .name = "setLightingMode" }, // arguments: lightingMode(string) 
 };
+
+#ifdef __cplusplus
+}
+#endif
 
 #endif /* _IOT_CAPS_HERLPER_ACTIVITY_LIGHTING_MODE_ */

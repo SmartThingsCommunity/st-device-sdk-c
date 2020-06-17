@@ -21,6 +21,10 @@
 
 #include "iot_caps_helper.h"
 
+#ifdef __cplusplus
+extern "C" {
+#endif
+
 enum {
     CAP_ENUM_AUDIOMUTE_MUTE_VALUE_MUTED,
     CAP_ENUM_AUDIOMUTE_MUTE_VALUE_UNMUTED,
@@ -50,5 +54,9 @@ const static struct iot_caps_audioMute {
     .cmd_setMute = { .name = "setMute" }, // arguments: state(string) 
     .cmd_mute = { .name = "mute" },
 };
+
+#ifdef __cplusplus
+}
+#endif
 
 #endif /* _IOT_CAPS_HERLPER_AUDIO_MUTE_ */

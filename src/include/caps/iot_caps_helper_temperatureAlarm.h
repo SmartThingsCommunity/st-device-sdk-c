@@ -21,6 +21,10 @@
 
 #include "iot_caps_helper.h"
 
+#ifdef __cplusplus
+extern "C" {
+#endif
+
 enum {
     CAP_ENUM_TEMPERATUREALARM_TEMPERATUREALARM_VALUE_CLEARED,
     CAP_ENUM_TEMPERATUREALARM_TEMPERATUREALARM_VALUE_FREEZE,
@@ -46,5 +50,9 @@ const static struct iot_caps_temperatureAlarm {
         .values = {"cleared", "freeze", "heat", "rateOfRise"},
     },
 };
+
+#ifdef __cplusplus
+}
+#endif
 
 #endif /* _IOT_CAPS_HERLPER_TEMPERATURE_ALARM_ */

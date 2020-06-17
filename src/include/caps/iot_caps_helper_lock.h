@@ -21,6 +21,10 @@
 
 #include "iot_caps_helper.h"
 
+#ifdef __cplusplus
+extern "C" {
+#endif
+
 enum {
     CAP_ENUM_LOCK_LOCK_VALUE_LOCKED,
     CAP_ENUM_LOCK_LOCK_VALUE_UNKNOWN,
@@ -50,5 +54,9 @@ const static struct iot_caps_lock {
     .cmd_lock = { .name = "lock" },
     .cmd_unlock = { .name = "unlock" },
 };
+
+#ifdef __cplusplus
+}
+#endif
 
 #endif /* _IOT_CAPS_HERLPER_LOCK_ */

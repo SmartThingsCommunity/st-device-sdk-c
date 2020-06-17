@@ -21,6 +21,10 @@
 
 #include "iot_caps_helper.h"
 
+#ifdef __cplusplus
+extern "C" {
+#endif
+
 enum {
     CAP_ENUM_THERMOSTATCOOLINGSETPOINT_COOLINGSETPOINT_UNIT_F,
     CAP_ENUM_THERMOSTATCOOLINGSETPOINT_COOLINGSETPOINT_UNIT_C,
@@ -50,5 +54,9 @@ const static struct iot_caps_thermostatCoolingSetpoint {
     },
     .cmd_setCoolingSetpoint = { .name = "setCoolingSetpoint" }, // arguments: setpoint(number) 
 };
+
+#ifdef __cplusplus
+}
+#endif
 
 #endif /* _IOT_CAPS_HERLPER_THERMOSTAT_COOLING_SETPOINT_ */

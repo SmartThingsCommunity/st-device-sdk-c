@@ -21,6 +21,10 @@
 
 #include "iot_caps_helper.h"
 
+#ifdef __cplusplus
+extern "C" {
+#endif
+
 const static struct iot_caps_imageCapture {
     const char *id;
     const struct imageCapture_attr_image {
@@ -48,5 +52,9 @@ const static struct iot_caps_imageCapture {
     },
     .cmd_take = { .name = "take" }, // arguments: correlationId(string) reason(string) 
 };
+
+#ifdef __cplusplus
+}
+#endif
 
 #endif /* _IOT_CAPS_HERLPER_IMAGE_CAPTURE_ */

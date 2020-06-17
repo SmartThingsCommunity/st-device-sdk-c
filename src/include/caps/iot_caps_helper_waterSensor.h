@@ -21,6 +21,10 @@
 
 #include "iot_caps_helper.h"
 
+#ifdef __cplusplus
+extern "C" {
+#endif
+
 enum {
     CAP_ENUM_WATERSENSOR_WATER_VALUE_DRY,
     CAP_ENUM_WATERSENSOR_WATER_VALUE_WET,
@@ -44,5 +48,9 @@ const static struct iot_caps_waterSensor {
         .values = {"dry", "wet"},
     },
 };
+
+#ifdef __cplusplus
+}
+#endif
 
 #endif /* _IOT_CAPS_HERLPER_WATER_SENSOR_ */

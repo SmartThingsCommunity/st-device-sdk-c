@@ -21,6 +21,10 @@
 
 #include "iot_caps_helper.h"
 
+#ifdef __cplusplus
+extern "C" {
+#endif
+
 enum {
     CAP_ENUM_FANOSCILLATIONMODE_FANOSCILLATIONMODE_VALUE_FIXED,
     CAP_ENUM_FANOSCILLATIONMODE_FANOSCILLATIONMODE_VALUE_VERTICAL,
@@ -54,5 +58,9 @@ const static struct iot_caps_fanOscillationMode {
     },
     .cmd_setFanOscillationMode = { .name = "setFanOscillationMode" }, // arguments: fanOscillationMode(string) 
 };
+
+#ifdef __cplusplus
+}
+#endif
 
 #endif /* _IOT_CAPS_HERLPER_FAN_OSCILLATION_MODE_ */

@@ -21,6 +21,10 @@
 
 #include "iot_caps_helper.h"
 
+#ifdef __cplusplus
+extern "C" {
+#endif
+
 enum {
     CAP_ENUM_SMOKEDETECTOR_SMOKE_VALUE_CLEAR,
     CAP_ENUM_SMOKEDETECTOR_SMOKE_VALUE_DETECTED,
@@ -45,5 +49,9 @@ const static struct iot_caps_smokeDetector {
         .values = {"clear", "detected", "tested"},
     },
 };
+
+#ifdef __cplusplus
+}
+#endif
 
 #endif /* _IOT_CAPS_HERLPER_SMOKE_DETECTOR_ */

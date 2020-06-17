@@ -21,6 +21,10 @@
 
 #include "iot_caps_helper.h"
 
+#ifdef __cplusplus
+extern "C" {
+#endif
+
 enum {
     CAP_ENUM_VOLTAGEMEASUREMENT_VOLTAGE_UNIT_V,
     CAP_ENUM_VOLTAGEMEASUREMENT_VOLTAGE_UNIT_MAX
@@ -45,5 +49,9 @@ const static struct iot_caps_voltageMeasurement {
         .min = 0,
     },
 };
+
+#ifdef __cplusplus
+}
+#endif
 
 #endif /* _IOT_CAPS_HERLPER_VOLTAGE_MEASUREMENT_ */

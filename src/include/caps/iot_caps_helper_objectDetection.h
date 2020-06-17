@@ -21,6 +21,10 @@
 
 #include "iot_caps_helper.h"
 
+#ifdef __cplusplus
+extern "C" {
+#endif
+
 const static struct iot_caps_objectDetection {
     const char *id;
     const struct objectDetection_attr_detected {
@@ -48,5 +52,9 @@ const static struct iot_caps_objectDetection {
         .max_length = 255,
     },
 };
+
+#ifdef __cplusplus
+}
+#endif
 
 #endif /* _IOT_CAPS_HERLPER_OBJECT_DETECTION_ */

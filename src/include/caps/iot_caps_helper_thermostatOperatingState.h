@@ -21,6 +21,10 @@
 
 #include "iot_caps_helper.h"
 
+#ifdef __cplusplus
+extern "C" {
+#endif
+
 enum {
     CAP_ENUM_THERMOSTATOPERATINGSTATE_THERMOSTATOPERATINGSTATE_VALUE_COOLING,
     CAP_ENUM_THERMOSTATOPERATINGSTATE_THERMOSTATOPERATINGSTATE_VALUE_FAN_ONLY,
@@ -49,5 +53,9 @@ const static struct iot_caps_thermostatOperatingState {
         .values = {"cooling", "fan only", "heating", "idle", "pending cool", "pending heat", "vent economizer"},
     },
 };
+
+#ifdef __cplusplus
+}
+#endif
 
 #endif /* _IOT_CAPS_HERLPER_THERMOSTAT_OPERATING_STATE_ */

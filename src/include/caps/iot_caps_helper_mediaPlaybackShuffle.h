@@ -21,6 +21,10 @@
 
 #include "iot_caps_helper.h"
 
+#ifdef __cplusplus
+extern "C" {
+#endif
+
 enum {
     CAP_ENUM_MEDIAPLAYBACKSHUFFLE_PLAYBACKSHUFFLE_VALUE_DISABLED,
     CAP_ENUM_MEDIAPLAYBACKSHUFFLE_PLAYBACKSHUFFLE_VALUE_ENABLED,
@@ -46,5 +50,9 @@ const static struct iot_caps_mediaPlaybackShuffle {
     },
     .cmd_setPlaybackShuffle = { .name = "setPlaybackShuffle" }, // arguments: shuffle(string) 
 };
+
+#ifdef __cplusplus
+}
+#endif
 
 #endif /* _IOT_CAPS_HERLPER_MEDIA_PLAYBACK_SHUFFLE_ */

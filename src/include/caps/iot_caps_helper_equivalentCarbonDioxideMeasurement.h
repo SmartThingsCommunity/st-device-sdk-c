@@ -21,6 +21,10 @@
 
 #include "iot_caps_helper.h"
 
+#ifdef __cplusplus
+extern "C" {
+#endif
+
 enum {
     CAP_ENUM_EQUIVALENTCARBONDIOXIDEMEASUREMENT_EQUIVALENTCARBONDIOXIDEMEASUREMENT_UNIT_PPM,
     CAP_ENUM_EQUIVALENTCARBONDIOXIDEMEASUREMENT_EQUIVALENTCARBONDIOXIDEMEASUREMENT_UNIT_MAX
@@ -47,5 +51,9 @@ const static struct iot_caps_equivalentCarbonDioxideMeasurement {
         .max = 1000000,
     },
 };
+
+#ifdef __cplusplus
+}
+#endif
 
 #endif /* _IOT_CAPS_HERLPER_EQUIVALENT_CARBON_DIOXIDE_MEASUREMENT_ */

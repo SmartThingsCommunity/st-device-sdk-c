@@ -21,6 +21,10 @@
 
 #include "iot_caps_helper.h"
 
+#ifdef __cplusplus
+extern "C" {
+#endif
+
 enum {
     CAP_ENUM_FINEDUSTSENSOR_FINEDUSTLEVEL_UNIT_UG_PER_M3,
     CAP_ENUM_FINEDUSTSENSOR_FINEDUSTLEVEL_UNIT_MAX
@@ -45,5 +49,9 @@ const static struct iot_caps_fineDustSensor {
         .min = 0,
     },
 };
+
+#ifdef __cplusplus
+}
+#endif
 
 #endif /* _IOT_CAPS_HERLPER_FINE_DUST_SENSOR_ */

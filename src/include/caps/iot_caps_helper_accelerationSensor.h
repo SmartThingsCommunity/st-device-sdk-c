@@ -21,6 +21,10 @@
 
 #include "iot_caps_helper.h"
 
+#ifdef __cplusplus
+extern "C" {
+#endif
+
 enum {
     CAP_ENUM_ACCELERATIONSENSOR_ACCELERATION_VALUE_ACTIVE,
     CAP_ENUM_ACCELERATIONSENSOR_ACCELERATION_VALUE_INACTIVE,
@@ -44,5 +48,9 @@ const static struct iot_caps_accelerationSensor {
         .values = {"active", "inactive"},
     },
 };
+
+#ifdef __cplusplus
+}
+#endif
 
 #endif /* _IOT_CAPS_HERLPER_ACCELERATION_SENSOR_ */

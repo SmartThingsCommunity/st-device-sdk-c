@@ -21,6 +21,10 @@
 
 #include "iot_caps_helper.h"
 
+#ifdef __cplusplus
+extern "C" {
+#endif
+
 enum {
     CAP_ENUM_AIRQUALITYSENSOR_AIRQUALITY_UNIT_CAQI,
     CAP_ENUM_AIRQUALITYSENSOR_AIRQUALITY_UNIT_MAX
@@ -47,5 +51,9 @@ const static struct iot_caps_airQualitySensor {
         .max = 100,
     },
 };
+
+#ifdef __cplusplus
+}
+#endif
 
 #endif /* _IOT_CAPS_HERLPER_AIR_QUALITY_SENSOR_ */

@@ -21,6 +21,10 @@
 
 #include "iot_caps_helper.h"
 
+#ifdef __cplusplus
+extern "C" {
+#endif
+
 #define CAP_ENUM_BUTTON_SUPPORTEDBUTTONVALUES_VALUE_MAX 22
 enum {
     CAP_ENUM_BUTTON_BUTTON_VALUE_PUSHED,
@@ -89,5 +93,9 @@ const static struct iot_caps_button {
         .min = 0,
     },
 };
+
+#ifdef __cplusplus
+}
+#endif
 
 #endif /* _IOT_CAPS_HERLPER_BUTTON_ */

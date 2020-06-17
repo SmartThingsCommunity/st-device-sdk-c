@@ -21,6 +21,10 @@
 
 #include "iot_caps_helper.h"
 
+#ifdef __cplusplus
+extern "C" {
+#endif
+
 enum {
     CAP_ENUM_GARAGEDOORCONTROL_DOOR_VALUE_CLOSED,
     CAP_ENUM_GARAGEDOORCONTROL_DOOR_VALUE_CLOSING,
@@ -51,5 +55,9 @@ const static struct iot_caps_garageDoorControl {
     .cmd_close = { .name = "close" },
     .cmd_open = { .name = "open" },
 };
+
+#ifdef __cplusplus
+}
+#endif
 
 #endif /* _IOT_CAPS_HERLPER_GARAGE_DOOR_CONTROL_ */
