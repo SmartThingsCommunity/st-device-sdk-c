@@ -164,7 +164,9 @@ DLLExport void st_mqtt_destroy(st_mqtt_client client);
 /** MQTT Yield - MQTT background
  *  @param client - the client object to use
  *  @param time - the time, in milliseconds, to yield for
- *  @return success code
+ *  @return negative values - error codes
+ *  		0 - there is no work left
+ *  		1 - there is work left
  */
 DLLExport int st_mqtt_yield(st_mqtt_client client, int time);
 

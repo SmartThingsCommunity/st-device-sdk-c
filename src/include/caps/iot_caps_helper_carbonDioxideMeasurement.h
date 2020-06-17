@@ -21,28 +21,39 @@
 
 #include "iot_caps_helper.h"
 
+#ifdef __cplusplus
+extern "C" {
+#endif
+
 enum {
-	CAPS_HELPER_CARBON_DIOXIDE_MEASUREMENT_UNIT_PPM = 0,
-	CAPS_HELPER_CARBON_DIOXIDE_MEASUREMENT_UNIT_MAX
+    CAP_ENUM_CARBONDIOXIDEMEASUREMENT_CARBONDIOXIDE_UNIT_PPM,
+    CAP_ENUM_CARBONDIOXIDEMEASUREMENT_CARBONDIOXIDE_UNIT_MAX
 };
 
 const static struct iot_caps_carbonDioxideMeasurement {
-	const char *id;
-	struct carbonDioxideMeasurement_attr_carbonDioxide {
-		const char *name;
-		const int min, max;
-		const unsigned char property;
-		const char *units[CAPS_HELPER_CARBON_DIOXIDE_MEASUREMENT_UNIT_MAX];
-	} attr_carbonDioxide;
+    const char *id;
+    const struct carbonDioxideMeasurement_attr_carbonDioxide {
+        const char *name;
+        const unsigned char property;
+        const unsigned char value_type;
+        const char *units[CAP_ENUM_CARBONDIOXIDEMEASUREMENT_CARBONDIOXIDE_UNIT_MAX];
+        const int min;
+        const int max;
+    } attr_carbonDioxide;
 } caps_helper_carbonDioxideMeasurement = {
-	.id = "carbonDioxideMeasurement",
-	.attr_carbonDioxide = {
-		.name = "carbonDioxide",
-		.min = 0,
-		.max = 1000000,
-		.property = ATTR_SET_VALUE_MIN | ATTR_SET_VALUE_MAX | ATTR_SET_VALUE_REQUIRED,
-		.units = { "ppm" },
-	},
+    .id = "carbonDioxideMeasurement",
+    .attr_carbonDioxide = {
+        .name = "carbonDioxide",
+        .property = ATTR_SET_VALUE_MIN | ATTR_SET_VALUE_MAX | ATTR_SET_VALUE_REQUIRED,
+        .value_type = VALUE_TYPE_INTEGER,
+        .units = {"ppm"},
+        .min = 0,
+        .max = 1000000,
+    },
 };
 
-#endif /* _IOT_CAPS_HELPER_CARBON_DIOXIDE_MEASUREMENT_ */
+#ifdef __cplusplus
+}
+#endif
+
+#endif /* _IOT_CAPS_HERLPER_CARBON_DIOXIDE_MEASUREMENT_ */

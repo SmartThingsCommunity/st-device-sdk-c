@@ -21,30 +21,40 @@
 
 #include "iot_caps_helper.h"
 
+#ifdef __cplusplus
+extern "C" {
+#endif
+
 enum {
-	CAPS_HELPER_TEMPERATURE_MEASUREMENT_UNIT_F = 0,
-	CAPS_HELPER_TEMPERATURE_MEASUREMENT_UNIT_C,
-	CAPS_HELPER_TEMPERATURE_MEASUREMENT_UNIT_MAX
+    CAP_ENUM_TEMPERATUREMEASUREMENT_TEMPERATURE_UNIT_F,
+    CAP_ENUM_TEMPERATUREMEASUREMENT_TEMPERATURE_UNIT_C,
+    CAP_ENUM_TEMPERATUREMEASUREMENT_TEMPERATURE_UNIT_MAX
 };
 
 const static struct iot_caps_temperatureMeasurement {
-	const char *id;
-	const struct temperatureMeasurement_attr_temperature {
-		const char *name;
-		const double min, max;
-		const unsigned char property;
-		const char *units[CAPS_HELPER_TEMPERATURE_MEASUREMENT_UNIT_MAX];
-	} attr_temperature;
+    const char *id;
+    const struct temperatureMeasurement_attr_temperature {
+        const char *name;
+        const unsigned char property;
+        const unsigned char value_type;
+        const char *units[CAP_ENUM_TEMPERATUREMEASUREMENT_TEMPERATURE_UNIT_MAX];
+        const double min;
+        const double max;
+    } attr_temperature;
 } caps_helper_temperatureMeasurement = {
-	.id = "temperatureMeasurement",
-	.attr_temperature = {
-		.name = "temperature",
-		.min = -460,
-		.max = 10000,
-		.property = ATTR_SET_VALUE_MIN | ATTR_SET_VALUE_MAX \
-			| ATTR_SET_VALUE_REQUIRED | ATTR_SET_UNIT_REQUIRED,
-		.units = { "F", "C" }
-	}
+    .id = "temperatureMeasurement",
+    .attr_temperature = {
+        .name = "temperature",
+        .property = ATTR_SET_VALUE_MIN | ATTR_SET_VALUE_MAX | ATTR_SET_VALUE_REQUIRED | ATTR_SET_UNIT_REQUIRED,
+        .value_type = VALUE_TYPE_NUMBER,
+        .units = {"F", "C"},
+        .min = -460,
+        .max = 10000,
+    },
 };
 
-#endif /* _IOT_CAPS_HELPER_TEMPERATURE_MEASUREMENT_ */
+#ifdef __cplusplus
+}
+#endif
+
+#endif /* _IOT_CAPS_HERLPER_TEMPERATURE_MEASUREMENT_ */

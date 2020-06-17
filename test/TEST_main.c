@@ -181,6 +181,7 @@ int TEST_FUNC_iot_mqtt_client()
 {
     const struct CMUnitTest tests[] = {
             cmocka_unit_test(TC_st_mqtt_create_success),
+            cmocka_unit_test(TC_st_mqtt_create_failure),
             cmocka_unit_test(TC_st_mqtt_connect_with_connack_rc),
             cmocka_unit_test(TC_st_mqtt_disconnect_success),
             cmocka_unit_test(TC_st_mqtt_publish_success),

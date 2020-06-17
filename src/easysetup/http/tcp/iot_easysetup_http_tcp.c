@@ -164,7 +164,15 @@ static void es_tcp_task(void *pvParameters)
 					tx_buffer = NULL;
 				}
 				//Transfer finished in this loop, sock resources should be clean.
-				shutdown(sock, SHUT_RD);
+				shutdown(sock, SHUT_RDWR);
+				while (1) {
+					memset(rx_buffer, '\0', sizeof(rx_buffer));
+					rx_buffer[len] = '\0';
+					len = recv(sock, rx_buffer, sizeof(rx_buffer) - 1, 0);
+					if (len > 0)
+						continue;
+					break;
+				}
 				close(sock);
 				sock = -1;
 			}

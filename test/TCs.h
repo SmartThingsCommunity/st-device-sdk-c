@@ -152,6 +152,7 @@ void TC_check_prov_data_validation(void **state);
 
 // TCs for iot_mqtt_client.c
 void TC_st_mqtt_create_success(void** state);
+void TC_st_mqtt_create_failure(void** state);
 void TC_st_mqtt_connect_with_connack_rc(void** state);
 void TC_st_mqtt_disconnect_success(void** state);
 void TC_st_mqtt_publish_success(void** state);

@@ -464,7 +464,7 @@ void TC_iot_easysetup_request_success(void **state)
     // Then
     assert_int_equal(err, IOT_ERROR_NONE);
     easysetup_event = iot_os_eventgroup_wait_bits(context->iot_events,
-            IOT_EVENT_BIT_EASYSETUP_REQ, true, IOT_MAIN_TASK_CYCLE);
+            IOT_EVENT_BIT_EASYSETUP_REQ, true, IOT_MAIN_TASK_DEFAULT_CYCLE);
     assert_int_not_equal(easysetup_event, 0);
     os_ret = iot_os_queue_receive(context->easysetup_req_queue, &received_payload, 0);
     assert_int_equal(os_ret, IOT_OS_TRUE);

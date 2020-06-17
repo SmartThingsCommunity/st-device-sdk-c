@@ -44,7 +44,8 @@
 #define IOT_USR_INTERACT_BIT_PROV_DONE		(1u << 2u)
 #define IOT_USR_INTERACT_BIT_ALL	(IOT_USR_INTERACT_BIT_PROV_CONFIRM | IOT_USR_INTERACT_BIT_CONFIRM_FAILED | IOT_USR_INTERACT_BIT_PROV_DONE)
 
-#define IOT_MAIN_TASK_CYCLE			100
+#define IOT_MAIN_TASK_DEFAULT_CYCLE			100		/* in ms */
+#define IOT_MQTT_CONNECT_CRITICAL_REJECT_MAX	3
 
 enum _iot_noti_type {
 	/* Common notifications */
@@ -251,6 +252,7 @@ struct iot_context {
 
 	st_mqtt_client evt_mqttcli;			/**< @brief SmartThings MQTT Client for event & commands */
 	st_mqtt_client reg_mqttcli;			/**< @brief SmartThings MQTT Client for registration */
+	unsigned int mqtt_connect_critical_reject_count;		/**< @brief MQTT connect critical reject count */
 	char *mqtt_event_topic;				/**< @brief mqtt topic for event publish */
 
 	struct iot_device_prov_data prov_data;	/**< @brief allocated device provisioning data */

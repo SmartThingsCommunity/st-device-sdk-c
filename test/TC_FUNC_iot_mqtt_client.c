@@ -57,6 +57,31 @@ void TC_st_mqtt_create_success(void** state)
     set_mock_detect_memory_leak(false);
 }
 
+void TC_st_mqtt_create_failure(void** state)
+{
+    int err;
+    st_mqtt_client client;
+    MQTTClient *internal_client;
+    UNUSED(state);
+
+    for (unsigned int i = 0; i < 2; i++) {
+        // Given
+        set_mock_detect_memory_leak(false);
+        set_mock_iot_os_malloc_failure_with_index(i);
+        // When
+        err = st_mqtt_create(&client, _dummy_mqtt_client_callback, NULL);
+        // Then
+        assert_int_equal(err, E_ST_MQTT_FAILURE);
+        // Teardown
+        do_not_use_mock_iot_os_malloc_failure();
+    }
+
+    // When
+    err = st_mqtt_create(&client, NULL, NULL);
+    // Then
+    assert_int_equal(err, E_ST_MQTT_FAILURE);
+}
+
 static void _st_mqtt_connect_test_with_parameter(unsigned char give_rc, int expected_err)
 {
     int err;
