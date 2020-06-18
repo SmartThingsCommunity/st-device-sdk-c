@@ -43,19 +43,27 @@ void TC_iot_dump_create_dump_state_failure(void **state)
 {
     struct iot_context *context = NULL;
     char *buf = NULL;
-    size_t size = 0;
+    size_t allocated_size = 0;
+    size_t max_log_dump_size = 0;
     int mode = 0;
     iot_error_t err;
 
-    err = iot_dump_create_all_log_dump(context, &buf, 1, &size, mode);
+    // Given :  max_log_dump_size is smaller than minimum
+    max_log_dump_size = 1;
+    //when
+    err = iot_dump_create_all_log_dump(context, &buf, max_log_dump_size, &allocated_size, mode);
+    //then : failure
     assert_int_not_equal(err, IOT_ERROR_NONE);
 
     mode = IOT_DUMP_MODE_NEED_BASE64 | IOT_DUMP_MODE_NEED_DUMP_STATE;
+    max_log_dump_size = 500;
     for (int i = 0; i < 3; i++) {
+        // Given: malloc failure
         do_not_use_mock_iot_os_malloc_failure();
         set_mock_iot_os_malloc_failure_with_index(i);
-
-        err = iot_dump_create_all_log_dump(context, &buf, 500, &size, mode);
+        //when
+        err = iot_dump_create_all_log_dump(context, &buf, max_log_dump_size, &allocated_size, mode);
+        //then : failure
         assert_int_not_equal(err, IOT_ERROR_NONE);
     }
     do_not_use_mock_iot_os_malloc_failure();
@@ -65,29 +73,35 @@ void TC_iot_dump_create_dump_state_success(void **state)
 {
     struct iot_context *context = NULL;
     char *buf = NULL;
-    size_t size = 0;
+    size_t allocated_size = 0;
     int mode = 0;
     iot_error_t err;
 
     struct iot_device_info *device_info;
 
-    err = iot_dump_create_all_log_dump(context, &buf, 500, &size, mode);
+    //given: context is null, no base64, no dumpstate
+    //when:
+    err = iot_dump_create_all_log_dump(context, &buf, 500, &allocated_size, mode);
+    //then: success
     assert_int_equal(err, IOT_ERROR_NONE);
     assert_non_null(buf);
-    assert_true(size > 0);
+    assert_true(allocated_size > 0);
     free(buf);
 
+    //given: context has device info, base64, dumpstate
     context = (struct iot_context *) malloc((sizeof(struct iot_context)));
     memset(context, 0, sizeof(struct iot_context));
     device_info = &context->device_info;
     err = iot_api_device_info_load(sample_device_info, sizeof(sample_device_info), device_info);
     assert_int_equal(err, IOT_ERROR_NONE);
-
     mode = IOT_DUMP_MODE_NEED_BASE64 | IOT_DUMP_MODE_NEED_DUMP_STATE;
-    err = iot_dump_create_all_log_dump(context, &buf, 2048, &size, mode);
+
+    //when:
+    err = iot_dump_create_all_log_dump(context, &buf, 2048, &allocated_size, mode);
+    //then: success
     assert_int_equal(err, IOT_ERROR_NONE);
     assert_non_null(buf);
-    assert_true(size > 0);
+    assert_true(allocated_size > 0);
     free(buf);
 
     iot_api_device_info_mem_free(device_info);
