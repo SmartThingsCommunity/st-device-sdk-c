@@ -268,7 +268,7 @@ static void _iot_net_tls_disconnect(iot_net_interface_t *net)
 }
 
 static int _iot_net_tls_read(iot_net_interface_t *net,
-		unsigned char *buf, int len, iot_os_timer timer)
+		unsigned char *buf, size_t len, iot_os_timer timer)
 {
 	int recvLen = 0, ret = 0;
 
@@ -281,7 +281,7 @@ static int _iot_net_tls_read(iot_net_interface_t *net,
 	mbedtls_ssl_conf_read_timeout(&net->context.conf, (uint32_t)iot_os_timer_left_ms(timer));
 
 	do {
-		ret = mbedtls_ssl_read(&net->context.ssl, buf, (size_t)len);
+		ret = mbedtls_ssl_read(&net->context.ssl, buf, len);
 
 		if(ret > 0) {
 			recvLen += ret;
