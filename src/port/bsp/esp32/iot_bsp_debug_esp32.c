@@ -33,7 +33,7 @@ void iot_bsp_debug(iot_debug_level_t level, const char* tag, const char* fmt, ..
 	ret = vasprintf(&buf, fmt, va);
 	va_end(va);
 
-#if defined(CONFIG_STDK_IOT_CORE_EASYSETUP_HTTP_LOG_SUPPORT)
+#if defined(CONFIG_STDK_IOT_CORE_EASYSETUP_LOG_SUPPORT_NO_USE_LOGFILE)
 	iot_debug_save_log(buf);
 #endif
 

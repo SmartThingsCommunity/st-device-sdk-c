@@ -20,17 +20,17 @@
 #include <sys/time.h>
 
 #include "iot_main.h"
-#include "iot_crypto.h"
 #include "iot_uuid.h"
 #include "iot_bsp_random.h"
 #include "iot_debug.h"
+#include "security/iot_security_helper.h"
 
 iot_error_t iot_get_random_uuid_from_mac(struct iot_uuid *uuid)
 {
 	iot_error_t err;
 	struct timeval tv;
 	struct iot_mac mac;
-	unsigned char hash[IOT_CRYPTO_SHA256_LEN];
+	unsigned char hash[IOT_SECURITY_SHA256_LEN];
 	unsigned char *buf;
 	size_t buf_len;
 	int ret;
@@ -67,9 +67,9 @@ iot_error_t iot_get_random_uuid_from_mac(struct iot_uuid *uuid)
 	/*
 	 * uuid = first16byte(sha256(mac + usec))
 	 */
-	err = iot_crypto_sha256(buf, buf_len, hash);
+	err = iot_security_sha256(buf, buf_len, hash, sizeof(hash));
 	if (err) {
-		IOT_ERROR("iot_crypto_sha256 failed, ret = %d", err);
+		IOT_ERROR("iot_security_sha256 failed, ret = %d", err);
 		free((void *)buf);
 		return err;
 	}
@@ -102,7 +102,7 @@ iot_error_t iot_get_uuid_from_mac(struct iot_uuid *uuid)
 {
 	iot_error_t err;
 	struct iot_mac mac;
-	unsigned char hash[IOT_CRYPTO_SHA256_LEN];
+	unsigned char hash[IOT_SECURITY_SHA256_LEN];
 	unsigned char *buf;
 	size_t buf_len;
 
@@ -131,9 +131,9 @@ iot_error_t iot_get_uuid_from_mac(struct iot_uuid *uuid)
 	/*
 	 * uuid = first16byte(sha256(mac))
 	 */
-	err = iot_crypto_sha256(buf, buf_len, hash);
+	err = iot_security_sha256(buf, buf_len, hash, sizeof(hash));
 	if (err) {
-		IOT_ERROR("iot_crypto_sha256 failed, err = %d", err);
+		IOT_ERROR("iot_security_sha256 failed, err = %d", err);
 		free((void *)buf);
 		return err;
 	}

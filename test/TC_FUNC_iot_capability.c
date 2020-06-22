@@ -854,3 +854,143 @@ void TC_iot_noti_sub_cb_rate_limit_reached_success(void **state)
     iot_os_queue_delete(internal_context->cmd_queue);
     free(context);
 }
+
+extern iot_error_t _iot_parse_noti_data(void *data, iot_noti_data_t *noti_data);
+#define NOTI_TEST_UUID  "123e4567-e89b-12d3-a456-426614174000"
+#define NOTI_TEST_TIME  "1591326145"
+struct parse_noti_test_data {
+    char *payload;
+    int expected_result;
+    iot_noti_type_t type;
+    noti_data_raw_t raw;
+};
+
+void TC_iot_parse_noti_data_device_deleted(void** state)
+{
+    iot_error_t err;
+    iot_noti_data_t notification;
+    struct parse_noti_test_data test_data[4] = {
+            {"{\"target\":\""NOTI_TEST_UUID"\",\"event\":\"device.deleted\",\"deviceId\":\""NOTI_TEST_UUID"\"}",
+                    IOT_ERROR_NONE, _IOT_NOTI_TYPE_DEV_DELETED, 0, },
+            {"{\"target\":\""NOTI_TEST_UUID"\",\"event\":\"device.deleting\",\"deviceId\":\""NOTI_TEST_UUID"\"}",
+                    IOT_ERROR_BAD_REQ, _IOT_NOTI_TYPE_DEV_DELETED, 0, },
+            {"{\"target\":\""NOTI_TEST_UUID"\",\"deviceId\":\""NOTI_TEST_UUID"\"}",
+                    IOT_ERROR_BAD_REQ, _IOT_NOTI_TYPE_DEV_DELETED, 0, },
+            {"This is not json data",IOT_ERROR_BAD_REQ, _IOT_NOTI_TYPE_DEV_DELETED, 0, }
+    };
+
+    UNUSED(state);
+
+    for (int i = 0; i < 4; i++) {
+        // When
+        err = _iot_parse_noti_data((void*)test_data[i].payload, &notification);
+        // Then
+        assert_int_equal(err, test_data[i].expected_result);
+        if (test_data[i].expected_result == IOT_ERROR_NONE) {
+            assert_int_equal(notification.type, test_data[i].type);
+        }
+    }
+}
+
+void TC_iot_parse_noti_data_expired_jwt(void** state)
+{
+    iot_error_t err;
+    iot_noti_data_t notification;
+    struct parse_noti_test_data test_data[3] = {
+        { "{\"event\":\"expired.jwt\",\"deviceId\":\""NOTI_TEST_UUID"\",\"currentTime\":"NOTI_TEST_TIME"}",
+          IOT_ERROR_NONE, _IOT_NOTI_TYPE_JWT_EXPIRED, 0,},
+        { "{\"event\":\"expired.JavaWebToken\",\"deviceId\":\""NOTI_TEST_UUID"\",\"currentTime\":"NOTI_TEST_TIME"}",
+                IOT_ERROR_BAD_REQ, _IOT_NOTI_TYPE_JWT_EXPIRED, 0,},
+        { "{\"event\":\"expired.jwt\",\"deviceId\":\""NOTI_TEST_UUID"\"}",
+                IOT_ERROR_BAD_REQ, _IOT_NOTI_TYPE_JWT_EXPIRED, 0,},
+    };
+
+    UNUSED(state);
+
+    for (int i = 0; i < 3; i++) {
+        if (test_data[i].expected_result == IOT_ERROR_NONE) {
+            expect_string(__wrap_iot_bsp_system_set_time_in_sec, time_in_sec, NOTI_TEST_TIME);
+        }
+        err = _iot_parse_noti_data((void*)test_data[i].payload, &notification);
+        assert_int_equal(err, test_data[i].expected_result);
+        if (test_data[i].expected_result == IOT_ERROR_NONE) {
+            assert_int_equal(notification.type, test_data[i].type);
+        }
+    }
+}
+
+void TC_iot_parse_noti_data_quota_reached(void** state)
+{
+    iot_error_t err;
+    iot_noti_data_t notification;
+    struct parse_noti_test_data test_data[4] = {
+            { "{\"target\":\""NOTI_TEST_UUID"\",\"event\":\"quota.reached\",\"limit\":500,\"used\":501}",
+                    IOT_ERROR_NONE, _IOT_NOTI_TYPE_QUOTA_REACHED, {.quota = {501, 500}}},
+            { "{\"target\":\""NOTI_TEST_UUID"\",\"event\":\"quota.done\",\"limit\":500,\"used\":501}",
+                    IOT_ERROR_BAD_REQ, _IOT_NOTI_TYPE_QUOTA_REACHED, {.quota = {501, 500}}},
+            { "{\"target\":\""NOTI_TEST_UUID"\",\"event\":\"quota.reached\",\"used\":501}",
+                    IOT_ERROR_BAD_REQ, _IOT_NOTI_TYPE_QUOTA_REACHED, {.quota = {501, 0}}},
+            { "{\"target\":\""NOTI_TEST_UUID"\",\"event\":\"quota.reached\",\"limit\":500}",
+                    IOT_ERROR_BAD_REQ, _IOT_NOTI_TYPE_QUOTA_REACHED, {.quota = {0, 500}}},
+    };
+    UNUSED(state);
+
+    for (int i = 0; i < 4; i++) {
+        // When
+        err = _iot_parse_noti_data((void*)test_data[i].payload, &notification);
+        // Then
+        assert_int_equal(err, test_data[i].expected_result);
+        if (test_data[i].expected_result == IOT_ERROR_NONE) {
+            assert_int_equal(notification.type, test_data[i].type);
+            assert_int_equal(notification.raw.quota.limit, test_data[i].raw.quota.limit);
+            assert_int_equal(notification.raw.quota.used, test_data[i].raw.quota.used);
+        }
+    }
+}
+
+void TC_iot_parse_noti_data_rate_limit(void** state)
+{
+    iot_error_t err;
+    iot_noti_data_t notification;
+    struct parse_noti_test_data test_data[6] = {
+            { "{\"event\":\"rate.limit.reached\",\"deviceId\":\""NOTI_TEST_UUID"\",\"count\":7,"
+                        "\"threshold\":30,\"remainingTime\":60,\"eventId\":\"\",\"sequenceNumber\":128}",
+                    IOT_ERROR_NONE, _IOT_NOTI_TYPE_RATE_LIMIT,
+                    {.rate_limit = {7, 30, 60, 128}}},
+            { "{\"event\":\"rate.limit.reach\",\"deviceId\":\""NOTI_TEST_UUID"\",\"count\":7,"
+              "\"threshold\":30,\"remainingTime\":60,\"eventId\":\"\",\"sequenceNumber\":128}",
+                    IOT_ERROR_BAD_REQ, _IOT_NOTI_TYPE_RATE_LIMIT,
+                    {.rate_limit = {7, 30, 60, 128}}},
+            { "{\"event\":\"rate.limit.reached\",\"deviceId\":\""NOTI_TEST_UUID"\","
+              "\"threshold\":30,\"remainingTime\":60,\"eventId\":\"\",\"sequenceNumber\":128}",
+                    IOT_ERROR_BAD_REQ, _IOT_NOTI_TYPE_RATE_LIMIT,
+                    {.rate_limit = {0, 30, 60, 128}}},
+            { "{\"event\":\"rate.limit.reached\",\"deviceId\":\""NOTI_TEST_UUID"\",\"count\":7,"
+              "\"remainingTime\":60,\"eventId\":\"\",\"sequenceNumber\":128}",
+                    IOT_ERROR_BAD_REQ, _IOT_NOTI_TYPE_RATE_LIMIT,
+                    {.rate_limit = {7, 0, 60, 128}}},
+            { "{\"event\":\"rate.limit.reached\",\"deviceId\":\""NOTI_TEST_UUID"\",\"count\":7,"
+              "\"threshold\":30,\"eventId\":\"\",\"sequenceNumber\":128}",
+                    IOT_ERROR_BAD_REQ, _IOT_NOTI_TYPE_RATE_LIMIT,
+                    {.rate_limit = {7, 30, 0, 128}}},
+            { "{\"event\":\"rate.limit.reached\",\"deviceId\":\""NOTI_TEST_UUID"\",\"count\":7,"
+              "\"threshold\":30,\"remainingTime\":60,\"eventId\":\"\"}",
+                    IOT_ERROR_BAD_REQ, _IOT_NOTI_TYPE_RATE_LIMIT,
+                    {.rate_limit = {7, 30, 60, 0}}},
+    };
+    UNUSED(state);
+
+    for (int i = 0; i < 6; i++) {
+        // When
+        err = _iot_parse_noti_data((void*)test_data[i].payload, &notification);
+        // Then
+        assert_int_equal(err, test_data[i].expected_result);
+        if (test_data[i].expected_result == IOT_ERROR_NONE) {
+            assert_int_equal(notification.type, test_data[i].type);
+            assert_int_equal(notification.raw.rate_limit.count, test_data[i].raw.rate_limit.count);
+            assert_int_equal(notification.raw.rate_limit.remainingTime, test_data[i].raw.rate_limit.remainingTime);
+            assert_int_equal(notification.raw.rate_limit.sequenceNumber, test_data[i].raw.rate_limit.sequenceNumber);
+            assert_int_equal(notification.raw.rate_limit.threshold, test_data[i].raw.rate_limit.threshold);
+        }
+    }
+}

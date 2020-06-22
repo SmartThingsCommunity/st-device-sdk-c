@@ -34,7 +34,9 @@
 
 static int32_t sqnum = 0;
 
-static iot_error_t _iot_parse_noti_data(void *data, iot_noti_data_t *noti_data);
+STATIC_FUNCTION
+iot_error_t _iot_parse_noti_data(void *data, iot_noti_data_t *noti_data);
+
 static iot_error_t _iot_parse_cmd_data(JSON_H* cmditem, char** component,
 			char** capability, char** command, iot_cap_cmd_data_t* cmd_data);
 static iot_error_t _iot_make_evt_data(const char* component, const char* capability,
@@ -382,7 +384,8 @@ int st_cap_attr_send(IOT_CAP_HANDLE *cap_handle,
 	}
 }
 
-static iot_error_t _iot_parse_noti_data(void *data, iot_noti_data_t *noti_data)
+STATIC_FUNCTION
+iot_error_t _iot_parse_noti_data(void *data, iot_noti_data_t *noti_data)
 {
 	iot_error_t err = IOT_ERROR_NONE;
 	size_t noti_str_len;

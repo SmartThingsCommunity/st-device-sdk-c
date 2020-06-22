@@ -21,32 +21,42 @@
 
 #include "iot_caps_helper.h"
 
+#ifdef __cplusplus
+extern "C" {
+#endif
+
 enum {
-	CAPS_HELPER_THERMOSTAT_HEATING_SETPOINT_UNIT_F = 0,
-	CAPS_HELPER_THERMOSTAT_HEATING_SETPOINT_UNIT_C,
-	CAPS_HELPER_THERMOSTAT_HEATING_SETPOINT_UNIT_MAX
+    CAP_ENUM_THERMOSTATHEATINGSETPOINT_HEATINGSETPOINT_UNIT_F,
+    CAP_ENUM_THERMOSTATHEATINGSETPOINT_HEATINGSETPOINT_UNIT_C,
+    CAP_ENUM_THERMOSTATHEATINGSETPOINT_HEATINGSETPOINT_UNIT_MAX
 };
 
 const static struct iot_caps_thermostatHeatingSetpoint {
-	const char *id;
-	const struct thermostatHeatingSetpoint_attr_heatingSetpoint {
-		const char *name;
-		const double min, max;
-		const unsigned char property;
-		const char *units[CAPS_HELPER_THERMOSTAT_HEATING_SETPOINT_UNIT_MAX];
-	} attr_heatingSetpoint;
-	const struct thermostatHeatingSetpoint_cmd_setHeatingSetpoint { const char *name; } cmd_setHeatingSetpoint;
+    const char *id;
+    const struct thermostatHeatingSetpoint_attr_heatingSetpoint {
+        const char *name;
+        const unsigned char property;
+        const unsigned char value_type;
+        const char *units[CAP_ENUM_THERMOSTATHEATINGSETPOINT_HEATINGSETPOINT_UNIT_MAX];
+        const double min;
+        const double max;
+    } attr_heatingSetpoint;
+    const struct thermostatHeatingSetpoint_cmd_setHeatingSetpoint { const char* name; } cmd_setHeatingSetpoint;
 } caps_helper_thermostatHeatingSetpoint = {
-	.id = "thermostatHeatingSetpoint",
-	.attr_heatingSetpoint = {
-		.name = "heatingSetpoint",
-		.min = -460,
-		.max = 10000,
-		.property = ATTR_SET_VALUE_MIN | ATTR_SET_VALUE_MAX \
-			| ATTR_SET_VALUE_REQUIRED | ATTR_SET_UNIT_REQUIRED,
-		.units = { "F", "C" },
-	},
-	.cmd_setHeatingSetpoint = { .name = "setHeatingSetpoint" },
+    .id = "thermostatHeatingSetpoint",
+    .attr_heatingSetpoint = {
+        .name = "heatingSetpoint",
+        .property = ATTR_SET_VALUE_MIN | ATTR_SET_VALUE_MAX | ATTR_SET_VALUE_REQUIRED | ATTR_SET_UNIT_REQUIRED,
+        .value_type = VALUE_TYPE_NUMBER,
+        .units = {"F", "C"},
+        .min = -460,
+        .max = 10000,
+    },
+    .cmd_setHeatingSetpoint = { .name = "setHeatingSetpoint" }, // arguments: setpoint(number) 
 };
 
-#endif /* _IOT_CAPS_HELPER_THERMOSTAT_HEATING_SETPOINT_ */
+#ifdef __cplusplus
+}
+#endif
+
+#endif /* _IOT_CAPS_HERLPER_THERMOSTAT_HEATING_SETPOINT_ */

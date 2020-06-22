@@ -32,7 +32,6 @@ endif()
 
 add_library(iotcore
         iot_api.c
-        iot_crypto.c
         iot_capability.c
         iot_wt.c
         iot_main.c
@@ -40,6 +39,7 @@ add_library(iotcore
         iot_util.c
         iot_uuid.c
         iot_root_ca.c
+        iot_dump_log.c
         )
 
 target_link_libraries(iotcore
@@ -71,5 +71,4 @@ add_subdirectory(port/os/posix)
 add_subdirectory(port/net)
 add_subdirectory(easysetup)
 add_subdirectory(mqtt)
-add_subdirectory(crypto)
 add_subdirectory(security)

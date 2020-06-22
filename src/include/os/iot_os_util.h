@@ -208,8 +208,8 @@ void iot_os_eventgroup_delete(iot_os_eventgroup* eventgroup_handle);
  *  if you wait for bit0 and bit3, can check with  was setted, return will be 0b101 = 5
  *
  */
-unsigned int iot_os_eventgroup_wait_bits(iot_os_eventgroup* eventgroup_handle,
-	const unsigned int bits_to_wait_for, const int clear_on_exit, const unsigned int wait_time_ms);
+unsigned char iot_os_eventgroup_wait_bits(iot_os_eventgroup* eventgroup_handle,
+	const unsigned char bits_to_wait_for, const int clear_on_exit, const unsigned int wait_time_ms);
 /**
  * @brief	set bit/bits of eventgroup
  *
@@ -225,7 +225,7 @@ unsigned int iot_os_eventgroup_wait_bits(iot_os_eventgroup* eventgroup_handle,
  *
  */
 int iot_os_eventgroup_set_bits(iot_os_eventgroup* eventgroup_handle,
-	const unsigned int bits_to_set);
+	const unsigned char bits_to_set);
 /**
  * @brief	clear bit/bits of eventgroup
  *
@@ -241,7 +241,7 @@ int iot_os_eventgroup_set_bits(iot_os_eventgroup* eventgroup_handle,
  *
  */
 int iot_os_eventgroup_clear_bits(iot_os_eventgroup* eventgroup_handle,
-	const unsigned int bits_to_clear);
+	const unsigned char bits_to_clear);
 
 
 /**

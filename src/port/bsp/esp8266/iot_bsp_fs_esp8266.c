@@ -23,8 +23,10 @@
 
 #include "iot_bsp_fs.h"
 #include "iot_bsp_nv_data.h"
-#include "iot_crypto.h"
 #include "iot_debug.h"
+#if defined(CONFIG_STDK_IOT_CORE_FS_SW_ENCRYPTION)
+#include "security/backend/lib/iot_security_ss.h"
+#endif
 
 #define STDK_NV_DATA_PARTITION "stnv"
 #define STDK_NV_DATA_NAMESPACE "stdk"
@@ -311,7 +313,7 @@ iot_error_t iot_bsp_fs_read(iot_bsp_fs_handle_t handle, char* buffer, size_t *le
 		return IOT_ERROR_FS_READ_FAIL;
 	}
 
-	err = iot_crypto_ss_decrypt((unsigned char *)data, required_size, &decbuf, &olen);
+	err = iot_security_ss_decrypt((unsigned char *)data, required_size, &decbuf, &olen);
 	if (err) {
 		IOT_ERROR("iot_crypto_ss_decrypt = %d", err);
 		free(data);
@@ -370,7 +372,7 @@ iot_error_t iot_bsp_fs_write(iot_bsp_fs_handle_t handle, const char* data, size_
 	size_t data_len = strlen(data) + 1;
 	size_t olen;
 
-	err = iot_crypto_ss_encrypt((unsigned char *)data, data_len, &encbuf, &olen);
+	err = iot_security_ss_encrypt((unsigned char *)data, data_len, &encbuf, &olen);
 	if (err) {
 		IOT_ERROR("iot_crypto_ss_encrypt = %d", err);
 		return IOT_ERROR_FS_ENCRYPT_FAIL;

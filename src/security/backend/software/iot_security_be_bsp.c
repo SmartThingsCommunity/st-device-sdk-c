@@ -24,9 +24,6 @@
 #include "iot_bsp_nv_data.h"
 #include "security/iot_security_storage.h"
 #include "security/backend/iot_security_be.h"
-#if defined(CONFIG_STDK_IOT_CORE_FS_SW_ENCRYPTION)
-#include "security/backend/lib/iot_security_ss.h"
-#endif
 
 #if defined(CONFIG_STDK_IOT_CORE_OS_SUPPORT_POSIX)
 #define IOT_SECURITY_STORAGE_EXTRA_PATH	"."
@@ -98,6 +95,7 @@ iot_error_t _iot_security_be_bsp_fs_load_from_nv(iot_security_storage_id_t stora
 	char filename[IOT_SECURITY_STORAGE_FILENAME_MAX_LEN];
 	char *fs_buf;
 	size_t fs_buf_len;
+	unsigned char *realloc_buf;
 
 	IOT_DEBUG("id = %d", storage_id);
 
@@ -147,39 +145,17 @@ iot_error_t _iot_security_be_bsp_fs_load_from_nv(iot_security_storage_id_t stora
 		return err;
 	}
 
-	do {
-#if defined(CONFIG_STDK_IOT_CORE_FS_SW_ENCRYPTION)
-		unsigned char *decrypt_buf = NULL;
-		size_t decrypt_len;
-
-		err = iot_security_ss_decrypt((unsigned char *)fs_buf, fs_buf_len, &decrypt_buf, &decrypt_len);
-		if (err) {
-			IOT_ERROR("iot_security_ss_decrypt = %d", err);
-			iot_os_free(fs_buf);
-			(void)iot_bsp_fs_close(handle);
-			return IOT_ERROR_SECURITY_FS_DECRYPT;
-		}
-
-		output_buf->p = decrypt_buf;
-		output_buf->len = decrypt_len;
-
+	realloc_buf = (unsigned char *)iot_os_realloc(fs_buf, fs_buf_len + 1);
+	if (realloc_buf) {
+		realloc_buf[fs_buf_len] = '\0';
+		output_buf->p = realloc_buf;
+		output_buf->len = fs_buf_len;
+	} else {
+		IOT_ERROR("failed to realloc for buf");
 		iot_os_free(fs_buf);
-#else
-		unsigned char *realloc_buf;
-
-		realloc_buf = (unsigned char *)iot_os_realloc(fs_buf, fs_buf_len + 1);
-		if (realloc_buf) {
-			realloc_buf[fs_buf_len] = '\0';
-			output_buf->p = realloc_buf;
-			output_buf->len = fs_buf_len;
-		} else {
-			IOT_ERROR("failed to realloc for buf");
-			iot_os_free(fs_buf);
-			(void)iot_bsp_fs_close(handle);
-			return IOT_ERROR_MEM_ALLOC;
-		}
-#endif
-	} while (0);
+		(void)iot_bsp_fs_close(handle);
+		return IOT_ERROR_MEM_ALLOC;
+	}
 
 	err = iot_bsp_fs_close(handle);
 	if (err) {
@@ -243,23 +219,7 @@ iot_error_t _iot_security_be_bsp_fs_store_to_nv(iot_security_storage_id_t storag
 		return IOT_ERROR_SECURITY_FS_OPEN;
 	}
 
-#if defined(CONFIG_STDK_IOT_CORE_FS_SW_ENCRYPTION)
-	unsigned char *encrypt_buf = NULL;
-	size_t encrypt_len;
-
-	err = iot_security_ss_encrypt(input_buf->p, input_buf->len, &encrypt_buf, &encrypt_len);
-	if (err) {
-		IOT_ERROR("iot_security_ss_encrypt = %d", err);
-		(void)iot_bsp_fs_close(handle);
-		return IOT_ERROR_SECURITY_FS_ENCRYPT;
-	}
-
-	err = iot_bsp_fs_write(handle, (const char *)encrypt_buf, (unsigned int)encrypt_len);
-
-	iot_os_free(encrypt_buf);
-#else
 	err = iot_bsp_fs_write(handle, (const char *)input_buf->p, (unsigned int)input_buf->len);
-#endif
 	if (err) {
 		IOT_ERROR("iot_bsp_fs_write = %d", err);
 		(void)iot_bsp_fs_close(handle);

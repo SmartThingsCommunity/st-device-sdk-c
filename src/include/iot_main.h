@@ -23,9 +23,9 @@
 #include "iot_error.h"
 #include "iot_bsp_wifi.h"
 #include "iot_os_util.h"
-#include "iot_crypto.h"
 #include "iot_net.h"
 #include "iot_mqtt.h"
+#include "security/iot_security_crypto.h"
 
 #define IOT_UUID_BYTES				(16)
 
@@ -44,7 +44,8 @@
 #define IOT_USR_INTERACT_BIT_PROV_DONE		(1u << 2u)
 #define IOT_USR_INTERACT_BIT_ALL	(IOT_USR_INTERACT_BIT_PROV_CONFIRM | IOT_USR_INTERACT_BIT_CONFIRM_FAILED | IOT_USR_INTERACT_BIT_PROV_DONE)
 
-#define IOT_MAIN_TASK_CYCLE			100
+#define IOT_MAIN_TASK_DEFAULT_CYCLE			100		/* in ms */
+#define IOT_MQTT_CONNECT_CRITICAL_REJECT_MAX	3
 
 enum _iot_noti_type {
 	/* Common notifications */
@@ -165,7 +166,7 @@ struct iot_devconf_prov_data {
 	char *device_type;				/**< @brief device_type, determined in devworks */
 	char *vid;						/**< @brief vid, determined in devworks */
 	unsigned int ownership_validation_type;	/**< @brief onboarding process validation type, JUSTWORKS, BUTTON, PIN, QR */
-	iot_crypto_pk_type_t pk_type;	/**< @brief Authentication type, determined in devworks */
+	iot_security_key_type_t pk_type;	/**< @brief Authentication type, determined in devworks */
 	char *hashed_sn;				/**< @brief hashed serial, self-generating values during onboarding process */
 	struct iot_dip_data *dip;		/**< @brief Device Integration Profile data, determined in devworks, optional */
 };
@@ -251,13 +252,14 @@ struct iot_context {
 
 	st_mqtt_client evt_mqttcli;			/**< @brief SmartThings MQTT Client for event & commands */
 	st_mqtt_client reg_mqttcli;			/**< @brief SmartThings MQTT Client for registration */
+	unsigned int mqtt_connect_critical_reject_count;		/**< @brief MQTT connect critical reject count */
 	char *mqtt_event_topic;				/**< @brief mqtt topic for event publish */
 
 	struct iot_device_prov_data prov_data;	/**< @brief allocated device provisioning data */
 	struct iot_devconf_prov_data devconf;	/**< @brief allocated device configuration data */
 	struct iot_device_info device_info;		/**< @brief allocated device information data */
 
-	iot_crypto_cipher_info_t *es_crypto_cipher_info;	/**< @brief cipher context ref. for easy-setup process */
+	iot_security_context_t *easysetup_security_context;	/**< @brief security context ref. for easy-setup process */
 
 	struct iot_registered_data iot_reg_data;	/**< @brief allocated registration data from server */
 	void *es_httpd_handle;						/**< @brief httpd handler for easy-setup process */

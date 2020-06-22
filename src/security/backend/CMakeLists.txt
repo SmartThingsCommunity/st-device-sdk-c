@@ -1,3 +1,5 @@
 if("${CMAKE_C_FLAGS}" MATCHES "-DCONFIG_STDK_IOT_CORE_SECURITY_BACKEND_SOFTWARE")
 	add_subdirectory(software)
+elseif("${CMAKE_C_FLAGS}" MATCHES "-DCONFIG_STDK_IOT_CORE_SECURITY_BACKEND_HARDWARE")
+	add_subdirectory(hardware)
 endif()

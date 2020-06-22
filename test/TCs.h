@@ -89,50 +89,19 @@ void TC_st_cap_attr_send_success(void **state);
 void TC_st_cap_attr_send_invalid_parameter(void **state);
 void TC_iot_cap_sub_cb_success(void **state);
 void TC_iot_noti_sub_cb_rate_limit_reached_success(void **state);
-
-// TCs for iot_crypto.c
-int TC_iot_crypto_pk_setup(void **state);
-int TC_iot_crypto_pk_teardown(void **state);
-void TC_iot_crypto_pk_init_null_parameter(void **state);
-void TC_iot_crypto_pk_init_ed25519(void **state);
-void TC_iot_crypto_pk_init_invalid_type(void **state);
-void TC_iot_crypto_pk_free(void **state);
-void TC_iot_crypto_pk_ed25519_success(void **state);
-int TC_iot_crypto_cipher_aes_setup(void **state);
-int TC_iot_crypto_cipher_aes_teardown(void **state);
-void TC_iot_crypto_cipher_aes_null_parameter(void **state);
-void TC_iot_crypto_cipher_aes_invalid_parameter(void **state);
-void TC_iot_crypto_cipher_aes_success(void **state);
-void TC_iot_crypto_cipher_get_align_size(void **state);
-int TC_iot_crypto_ecdh_setup(void **state);
-int TC_iot_crypto_ecdh_teardown(void **state);
-void TC_iot_crypto_ecdh_invalid_parameter(void **state);
-void TC_iot_crypto_ecdh_success(void **state);
-int TC_iot_crypto_ed25519_keypair_setup(void **state);
-int TC_iot_crypto_ed25519_keypair_teardown(void **state);
-void TC_iot_crypto_ed25519_keypair_invalid_parameter(void **state);
-void TC_iot_crypto_ed25519_keypair_success(void **state);
-void TC_iot_crypto_ed25519_convert_invalid_parameter(void **state);
-void TC_iot_crypto_ed25519_convert_success(void **state);
-void TC_iot_crypto_base64_invalid_parameter(void **state);
-void TC_iot_crypto_base64_failure(void **state);
-void TC_iot_crypto_base64_encode_success(void **state);
-void TC_iot_crypto_base64_decode_success(void **state);
-void TC_iot_crypto_base64_urlsafe_encode_success(void **state);
-void TC_iot_crypto_base64_urlsafe_decode_success(void **state);
-void TC_iot_crypto_base64_buffer_size(void **state);
+void TC_iot_parse_noti_data_device_deleted(void** state);
+void TC_iot_parse_noti_data_expired_jwt(void** state);
+void TC_iot_parse_noti_data_quota_reached(void** state);
+void TC_iot_parse_noti_data_rate_limit(void** state);
 
 // TCs for iot_nv_data.c
 int TC_iot_nv_data_setup(void **state);
 int TC_iot_nv_data_teardown(void **state);
 void TC_iot_nv_get_wifi_prov_data_success(void **state);
 void TC_iot_nv_get_wifi_prov_data_null_parameters(void **state);
-void TC_iot_nv_get_root_certificate_success(void **state);
-void TC_iot_nv_get_root_certificate_null_parameters(void **state);
-void TC_iot_nv_get_root_certificate_internal_failure(void **state);
-void TC_iot_nv_get_client_certificate_null_parameters(void **state);
-void TC_iot_nv_get_public_key_success(void **state);
-void TC_iot_nv_get_public_key_null_parameters(void **state);
+void TC_iot_nv_get_certificate_success(void **state);
+void TC_iot_nv_get_certificate_null_parameters(void **state);
+void TC_iot_nv_get_certificate_internal_failure(void **state);
 void TC_iot_nv_get_serial_number_success(void **state);
 void TC_iot_nv_get_serial_number_null_parameters(void **state);
 void TC_iot_nv_get_device_id_null_parameters(void **state);
@@ -141,13 +110,6 @@ void TC_iot_nv_get_set_erase_device_id_success(void **state);
 void TC_iot_nv_erase_internal_failure(void** state);
 void TC_iot_nv_get_data_from_device_info_failure(void** state);
 void TC_iot_nv_get_data_from_device_info_success(void** state);
-
-// TCs for iot_easysetup_crypto.c
-int TC_iot_easysetup_crypto_setup(void **state);
-int TC_iot_easysetup_crypto_teardown(void **state);
-void TC_iot_es_crypto_load_pk_success(void** state);
-void TC_iot_es_crypto_load_pk_invalid_parameters(void **state);
-void TC_iot_es_crypto_init_pk(void **state);
 
 // TCs for iot_easysetup_d2d.c
 int TC_iot_easysetup_common_setup(void **state);
@@ -190,6 +152,7 @@ void TC_check_prov_data_validation(void **state);
 
 // TCs for iot_mqtt_client.c
 void TC_st_mqtt_create_success(void** state);
+void TC_st_mqtt_create_failure(void** state);
 void TC_st_mqtt_connect_with_connack_rc(void** state);
 void TC_st_mqtt_disconnect_success(void** state);
 void TC_st_mqtt_publish_success(void** state);
@@ -205,6 +168,28 @@ void TC_iot_security_check_backend_funcs_entry_is_valid_failure(void **state);
 void TC_iot_security_check_backend_funcs_entry_is_valid_success(void **state);
 
 // TCs for iot_security_crypto.c
+int TC_iot_security_pk_init_setup(void **state);
+int TC_iot_security_pk_init_teardown(void **state);
+int TC_iot_security_pk_setup(void **state);
+int TC_iot_security_pk_teardown(void **state);
+void TC_iot_security_pk_init_null_parameters(void **state);
+void TC_iot_security_pk_init_malloc_failure(void **state);
+void TC_iot_security_pk_init_success(void **state);
+void TC_iot_security_pk_deinit_null_parameters(void **state);
+void TC_iot_security_pk_deinit_success(void **state);
+void TC_iot_security_pk_get_signature_len_failure(void **state);
+void TC_iot_security_pk_get_signature_len_success(void **state);
+void TC_iot_security_pk_get_key_type_failure(void **state);
+void TC_iot_security_pk_get_key_type_success(void **state);
+void TC_iot_security_pk_sign_invalid_parameters(void **state);
+void TC_iot_security_pk_sign_null_parameters(void **state);
+void TC_iot_security_pk_sign_malloc_failure(void **state);
+void TC_iot_security_pk_sign_failure(void **state);
+void TC_iot_security_pk_verify_invalid_parameters(void **state);
+void TC_iot_security_pk_verify_null_parameters(void **state);
+void TC_iot_security_pk_verify_failure(void **state);
+void TC_iot_security_pk_success(void **state);
+
 int TC_iot_security_cipher_init_setup(void **state);
 int TC_iot_security_cipher_init_teardown(void **state);
 int TC_iot_security_cipher_setup(void **state);
@@ -228,6 +213,44 @@ void TC_iot_security_cipher_aes_decrypt_null_parameters(void **state);
 void TC_iot_security_cipher_aes_decrypt_malloc_failure(void **state);
 void TC_iot_security_cipher_aes_decrypt_failure(void **state);
 void TC_iot_security_cipher_aes_success(void **state);
+
+// TCs for iot_security_ecdh.c
+int TC_iot_security_ecdh_init_setup(void **state);
+int TC_iot_security_ecdh_init_teardown(void **state);
+int TC_iot_security_ecdh_setup(void **state);
+int TC_iot_security_ecdh_teardown(void **state);
+void TC_iot_security_ecdh_init_null_parameters(void **state);
+void TC_iot_security_ecdh_init_malloc_failure(void **state);
+void TC_iot_security_ecdh_init_success(void **state);
+void TC_iot_security_ecdh_set_params_null_parameters(void **state);
+void TC_iot_security_ecdh_set_params_invalid_parameters(void **state);
+void TC_iot_security_ecdh_set_params_success(void **state);
+void TC_iot_security_ecdh_compute_shared_secret_null_parameters(void **state);
+void TC_iot_security_ecdh_compute_shared_secret_failure(void **state);
+void TC_iot_security_ecdh_compute_shared_secret_malloc_failure(void **state);
+void TC_iot_security_ecdh_compute_shared_secret_success(void **state);
+void TC_iot_security_ecdh_and_dynamic_cipher(void **state);
+void TC_iot_security_ecdh_and_static_cipher(void **state);
+
+// TCs for iot_security_manager.c
+int TC_iot_security_manager_setup(void **state);
+int TC_iot_security_manager_teardown(void **state);
+void TC_iot_security_manager_init_null_parameters(void **state);
+void TC_iot_security_manager_init_success(void **state);
+void TC_iot_security_manager_deinit_null_parameters(void **state);
+void TC_iot_security_manager_deinit_success(void **state);
+void TC_iot_security_manager_set_key_null_parameters(void **state);
+void TC_iot_security_manager_set_key_invalid_parameters(void **state);
+void TC_iot_security_manager_set_key_alloc_failure(void **state);
+void TC_iot_security_manager_set_key_success(void **state);
+void TC_iot_security_manager_get_key_null_parameters(void **state);
+void TC_iot_security_manager_get_key_invalid_parameters(void **state);
+void TC_iot_security_manager_get_key_alloc_failure(void **state);
+void TC_iot_security_manager_get_key_success(void **state);
+void TC_iot_security_manager_get_certificate_null_parameters(void **state);
+void TC_iot_security_manager_get_certificate_invalid_parameters(void **state);
+void TC_iot_security_manager_get_certificate_alloc_failure(void **state);
+void TC_iot_security_manager_get_certificate_success(void **state);
 
 // TCs for iot_security_storage.c
 int TC_iot_security_storage_init_setup(void **state);
