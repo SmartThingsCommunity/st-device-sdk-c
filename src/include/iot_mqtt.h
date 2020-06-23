@@ -77,7 +77,11 @@ typedef struct st_mqtt_msg {
 	unsigned char retained;			/**< @brief MQTT publish packet retained */
 } st_mqtt_msg;
 
-typedef void (*st_mqtt_msg_handler)(st_mqtt_msg *, void *);
+typedef enum {
+	ST_MQTT_EVENT_MSG_DELIVERED = 1,
+} st_mqtt_event;
+
+typedef void (*st_mqtt_event_callback)(st_mqtt_event event, void *event_data, void *usr_data);
 
 enum {
 	st_mqtt_qos0,					/* MQTT QoS0 */
@@ -100,10 +104,11 @@ enum {
 /**
  * Create an MQTT client object
  * @param client - client object to create
- * @param command_timeout_ms - MQTT operation time out
+ * @param callback_fp - callback function when mqtt event(msg delivery, packet fail, disconnect etc..) occurs
+ * @param user_data - callback function user parameter
  * @return success code
  */
-DLLExport int st_mqtt_create(st_mqtt_client *client, unsigned int command_timeout_ms);
+DLLExport int st_mqtt_create(st_mqtt_client *client, st_mqtt_event_callback callback_fp, void *user_data);
 
 /** MQTT Connect - send an MQTT connect packet down the network and wait for a Connack
  *  @param client - the client object to use
@@ -120,15 +125,22 @@ DLLExport int st_mqtt_connect(st_mqtt_client client, st_mqtt_broker_info_t *brok
  */
 DLLExport int st_mqtt_publish(st_mqtt_client client, st_mqtt_msg *msg);
 
+/** MQTT Publish Async - send an MQTT publish packet async call.
+ * 			  if it fails, notify via callback function.
+ *  @param client - the client object to use
+ *  @param msg - the publish packet message to send
+ *  @return 0 - success
+ *  		others - error codes
+ */
+DLLExport int st_mqtt_publish_async(st_mqtt_client client, st_mqtt_msg *msg);
+
 /** MQTT Subscribe - send an MQTT subscribe packet and wait for suback before returning.
  *  @param client - the client object to use
  *  @param topic - the topic filter to subscribe to
  *  @param qos - request subscribe QoS level
- *  @param handler - callback function when subscribed packet arrive.
- *  @param user_data - callback function user parameter
  *  @return success code
  */
-DLLExport int st_mqtt_subscribe(st_mqtt_client client, const char *topic, int qos, st_mqtt_msg_handler handler, void *user_data);
+DLLExport int st_mqtt_subscribe(st_mqtt_client client, const char *topic, int qos);
 
 /** MQTT Subscribe - send an MQTT unsubscribe packet and wait for unsuback before returning.
  *  @param client - the client object to use
@@ -152,7 +164,9 @@ DLLExport void st_mqtt_destroy(st_mqtt_client client);
 /** MQTT Yield - MQTT background
  *  @param client - the client object to use
  *  @param time - the time, in milliseconds, to yield for
- *  @return success code
+ *  @return negative values - error codes
+ *  		0 - there is no work left
+ *  		1 - there is work left
  */
 DLLExport int st_mqtt_yield(st_mqtt_client client, int time);
 

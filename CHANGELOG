@@ -1,5 +1,40 @@
 # HISTORY
 
+## 1.1.18 :  Changes until v1.1.18
+
+New Improvements or features:
+
+ - Added SIGN_UP/IN iot_stat_lv to report things's sign-up/in status
+ - Added virtual device in hardware
+ - D2D protocol version update to ver.1.0.0
+  * It depends on Mobile's SmartThings Apps (will be update)
+ - Implement enhanced MQTT functionalities
+  * Add MQTT Publish Async function.
+  * Implement common MQTT packet complete wait sub-functions
+  * Implement MQTT event callback functions & Change callback mechanism
+ - Added security-system-manager to manage the key and certificate
+  * Added ecdh/pubkey sub/module system
+
+Enhancements or amendments:
+
+ - Added retry MQTT connect concept when critical rejects happen instead of clean
+ - Change its usage by sync-operation for IOT_WIFI_MODE_SCAN
+ - Update & fixed boilerplate for easysetup & doxygen for bsp
+ - Changes for 'logdump' & 'dumpstate' related usage
+ - Move sw backed fs encryption into bsp
+ - Updated & changed NV regarding security system
+ - Updated & changed Easysetup related security system (for ecdh, cipher, certificate get..)
+ - Updated new iot_os_eventgroup_xxx APIs usage (limit number of bits)
+ - Fixed & changed webtoken related security system (pk_info, jwt/cwt, error messages,..)
+ - Migrate pk/hash/base64 functions for security system
+
+Bug fixed:
+
+ - TC build error fixed to match MACRO with latest header
+ - MQTT chunk memory handling bug fixed by chunk onwer.
+ - To clear easysetup event group bit on easysetup deinit
+ - Throw away all pub_queue instead of reset to prevent memory-leak (on iot_main)
+
 ## 1.1.16 :  Changes until v1.1.16
 
 New Improvements

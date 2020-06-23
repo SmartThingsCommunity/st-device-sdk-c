@@ -24,7 +24,6 @@
 #include <iot_error.h>
 #include <iot_nv_data.h>
 #include <security/iot_security_storage.h>
-#include "security/backend/iot_security_be.h"
 
 #include "TC_MOCK_functions.h"
 
@@ -337,6 +336,9 @@ void TC_iot_security_storage_read_success(void **state)
 
 	context = (iot_security_context_t *)*state;
 	assert_non_null(context);
+
+	// Given: cleanup sample file
+	iot_security_storage_remove(context, storage_id);
 
 	// Given: prepare sample file
 	sample_buf.p = (unsigned char *)sample;

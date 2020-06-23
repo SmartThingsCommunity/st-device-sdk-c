@@ -21,30 +21,41 @@
 
 #include "iot_caps_helper.h"
 
+#ifdef __cplusplus
+extern "C" {
+#endif
+
 enum {
-	CAPS_HELPER_SWITCH_LEVEL_UNIT_PERCENT = 0,
-	CAPS_HELPER_SWITCH_LEVEL_UNIT_MAX
+    CAP_ENUM_SWITCHLEVEL_LEVEL_UNIT_PERCENT,
+    CAP_ENUM_SWITCHLEVEL_LEVEL_UNIT_MAX
 };
 
 const static struct iot_caps_switchLevel {
-	const char *id;
-	struct switchLevel_attr_level {
-		const char *name;
-		const int min, max;
-		const unsigned char property;
-		const char *units[CAPS_HELPER_SWITCH_LEVEL_UNIT_MAX];
-	} attr_level;
-	const struct switchLevel_cmd_setLevel { const char *name; } cmd_setLevel;
+    const char *id;
+    const struct switchLevel_attr_level {
+        const char *name;
+        const unsigned char property;
+        const unsigned char value_type;
+        const char *units[CAP_ENUM_SWITCHLEVEL_LEVEL_UNIT_MAX];
+        const int min;
+        const int max;
+    } attr_level;
+    const struct switchLevel_cmd_setLevel { const char* name; } cmd_setLevel;
 } caps_helper_switchLevel = {
-	.id = "switchLevel",
-	.attr_level = {
-		.name = "level",
-		.min = 0,
-		.max = 100,
-		.property = ATTR_SET_VALUE_MIN | ATTR_SET_VALUE_MAX | ATTR_SET_VALUE_REQUIRED,
-		.units = { "%" },
-	},
-	.cmd_setLevel = { .name = "setLevel" },
+    .id = "switchLevel",
+    .attr_level = {
+        .name = "level",
+        .property = ATTR_SET_VALUE_MIN | ATTR_SET_VALUE_MAX | ATTR_SET_VALUE_REQUIRED,
+        .value_type = VALUE_TYPE_INTEGER,
+        .units = {"%"},
+        .min = 0,
+        .max = 100,
+    },
+    .cmd_setLevel = { .name = "setLevel" }, // arguments: level(integer) rate(integer) 
 };
 
-#endif /* _IOT_CAPS_HELPER_SWITCH_LEVEL_ */
+#ifdef __cplusplus
+}
+#endif
+
+#endif /* _IOT_CAPS_HERLPER_SWITCH_LEVEL_ */

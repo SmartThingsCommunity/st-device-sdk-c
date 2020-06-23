@@ -21,28 +21,39 @@
 
 #include "iot_caps_helper.h"
 
+#ifdef __cplusplus
+extern "C" {
+#endif
+
 enum {
-	CAPS_HELPER_AIR_QUALITY_SENSOR_UNIT_CAQI = 0,
-	CAPS_HELPER_AIR_QUALITY_SENSOR_UNIT_MAX
+    CAP_ENUM_AIRQUALITYSENSOR_AIRQUALITY_UNIT_CAQI,
+    CAP_ENUM_AIRQUALITYSENSOR_AIRQUALITY_UNIT_MAX
 };
 
 const static struct iot_caps_airQualitySensor {
-	const char *id;
-	const struct airQualitySensor_attr_airQuality {
-		const char *name;
-		const double min, max;
-		const unsigned char property;
-		const char *units[CAPS_HELPER_AIR_QUALITY_SENSOR_UNIT_MAX];
-	} attr_airQuality;
+    const char *id;
+    const struct airQualitySensor_attr_airQuality {
+        const char *name;
+        const unsigned char property;
+        const unsigned char value_type;
+        const char *units[CAP_ENUM_AIRQUALITYSENSOR_AIRQUALITY_UNIT_MAX];
+        const int min;
+        const int max;
+    } attr_airQuality;
 } caps_helper_airQualitySensor = {
-	.id = "airQualitySensor",
-	.attr_airQuality = {
-		.name = "airQuality",
-		.min = 0,
-		.max = 100,
-		.property = ATTR_SET_VALUE_MIN | ATTR_SET_VALUE_MAX | ATTR_SET_VALUE_REQUIRED,
-		.units = { "CAQI" }
-	},
+    .id = "airQualitySensor",
+    .attr_airQuality = {
+        .name = "airQuality",
+        .property = ATTR_SET_VALUE_MIN | ATTR_SET_VALUE_MAX | ATTR_SET_VALUE_REQUIRED,
+        .value_type = VALUE_TYPE_INTEGER,
+        .units = {"CAQI"},
+        .min = 0,
+        .max = 100,
+    },
 };
 
-#endif /* _IOT_CAPS_HELPER_AIR_QUALITY_SENSOR_ */
+#ifdef __cplusplus
+}
+#endif
+
+#endif /* _IOT_CAPS_HERLPER_AIR_QUALITY_SENSOR_ */

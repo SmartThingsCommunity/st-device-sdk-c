@@ -71,7 +71,7 @@ typedef struct nv_item_table
 #define ALIGNUP(x, y)                 ((((x) + ((y) - 1)) / (y)) * (y))
 
 #define MAX_APP_DATA_SIZE (2048)
-#define MAX_NV_ITEM_CNT				 19
+#define MAX_NV_ITEM_CNT				 18
 
 #define OP_OK		1
 #define OP_FAIL	-1
@@ -91,8 +91,6 @@ nv_item_table_s nv_table[MAX_NV_ITEM_CNT] = {
 	{0xd317a076, 1025, NULL},   // CloudProvStatus
 	{0x2892596, 1025, NULL},  // ServerURL
 	{0xcadbd84, 37, NULL},   // ServerPort
-	{0xc02865a, 37, NULL},  // LocationID
-	{0x53a82, 37, NULL},  // RoomID
 	{0xf4e0, 37, NULL},  // Lable
 
 	{0x70012d, 129, NULL},  // DeviceID

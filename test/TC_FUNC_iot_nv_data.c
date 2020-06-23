@@ -24,6 +24,7 @@
 #include <string.h>
 #include <iot_util.h>
 #include <bsp/iot_bsp_nv_data.h>
+#include <security/iot_security_manager.h>
 #include "TC_MOCK_functions.h"
 #define UNUSED(x) (void**)(x)
 
@@ -150,135 +151,74 @@ void TC_iot_nv_get_wifi_prov_data_null_parameters(void **state)
     assert_int_not_equal(err, IOT_ERROR_NONE);
 }
 
-void TC_iot_nv_get_root_certificate_success(void **state)
+void TC_iot_nv_get_certificate_success(void **state)
 {
     iot_error_t err;
-    char *root_cert = NULL;
-    size_t root_cert_len = 0;
+    iot_security_cert_id_t cert_id;
+    char *cert = NULL;
+    size_t cert_len = 0;
     UNUSED(state);
 
+    // Given
+    cert_id = IOT_SECURITY_CERT_ID_ROOT_CA;
     // When
-    err = iot_nv_get_root_certificate(&root_cert, &root_cert_len);
+    err = iot_nv_get_certificate(cert_id, &cert, &cert_len);
     // Then
     assert_int_equal(err, IOT_ERROR_NONE);
-    assert_memory_equal(root_cert, st_root_ca, st_root_ca_len);
-    assert_int_equal(root_cert_len, st_root_ca_len);
+    assert_memory_equal(cert, st_root_ca, st_root_ca_len);
+    assert_int_equal(cert_len, st_root_ca_len);
 
     // Local teardown
-    free(root_cert);
+    free(cert);
 }
 
-void TC_iot_nv_get_root_certificate_null_parameters(void **state)
+void TC_iot_nv_get_certificate_null_parameters(void **state)
 {
     iot_error_t err;
-    char *root_cert = NULL;
-    size_t root_cert_len = 0;
+    iot_security_cert_id_t cert_id = IOT_SECURITY_CERT_ID_ROOT_CA;
+    char *cert = NULL;
+    size_t cert_len = 0;
     UNUSED(state);
 
     // When: All null parameters
-    err = iot_nv_get_root_certificate(NULL, NULL);
+    err = iot_nv_get_certificate(0, NULL, NULL);
     // Then
     assert_int_not_equal(err, IOT_ERROR_NONE);
 
     // When: len is null
-    err = iot_nv_get_root_certificate(&root_cert, NULL);
+    err = iot_nv_get_certificate(cert_id, &cert, NULL);
     // Then
     assert_int_not_equal(err, IOT_ERROR_NONE);
-    assert_null(root_cert);
+    assert_null(cert);
 
     // When: cert is null
-    err = iot_nv_get_root_certificate(NULL, &root_cert_len);
+    err = iot_nv_get_certificate(cert_id, NULL, &cert_len);
     // Then
     assert_int_not_equal(err, IOT_ERROR_NONE);
-    assert_int_equal(root_cert_len, 0);
+    assert_int_equal(cert_len, 0);
+
+    // When: cert id is unknown
+    err = iot_nv_get_certificate(0, &cert, &cert_len);
+    // Then
+    assert_int_not_equal(err, IOT_ERROR_NONE);
+    assert_null(cert);
+    assert_int_equal(cert_len, 0);
 }
 
-void TC_iot_nv_get_root_certificate_internal_failure(void **state)
+void TC_iot_nv_get_certificate_internal_failure(void **state)
 {
     iot_error_t err;
-    char *root_cert = NULL;
-    size_t root_cert_len = 0;
+    iot_security_cert_id_t cert_id = IOT_SECURITY_CERT_ID_ROOT_CA;
+    char *cert = NULL;
+    size_t cert_len = 0;
     UNUSED(state);
 
     // Given: malloc failed
     set_mock_iot_os_malloc_failure();
     // When
-    err = iot_nv_get_root_certificate(&root_cert, &root_cert_len);
+    err = iot_nv_get_certificate(cert_id, &cert, &cert_len);
     // Then
     assert_int_not_equal(err, IOT_ERROR_NONE);
-
-    // Local teardown
-    free(root_cert);
-}
-
-void TC_iot_nv_get_client_certificate_null_parameters(void **state)
-{
-    iot_error_t err;
-    char *client_cert = NULL;
-    size_t client_cert_len = 0;
-    UNUSED(state);
-
-    // When: All null parameters
-    err = iot_nv_get_client_certificate(NULL, NULL);
-    // Then
-    assert_int_not_equal(err, IOT_ERROR_NONE);
-
-    // When: len is null
-    err = iot_nv_get_client_certificate(&client_cert, NULL);
-    // Then
-    assert_int_not_equal(err, IOT_ERROR_NONE);
-    assert_null(client_cert);
-
-    // When: cert is null
-    err = iot_nv_get_client_certificate(NULL, &client_cert_len);
-    // Then
-    assert_int_not_equal(err, IOT_ERROR_NONE);
-    assert_int_equal(client_cert_len, 0);
-}
-
-void TC_iot_nv_get_public_key_success(void **state)
-{
-    iot_error_t err;
-    char *public_key = NULL;
-    size_t public_key_len = 0;
-    const char *sample_public_key = "BKb7+m1Mo8OuMsodM91ohz/+rZKDc/otzUPSn4UkCUk=";
-    UNUSED(state);
-
-    // When
-    err = iot_nv_get_public_key(&public_key, &public_key_len);
-    //Then
-    assert_int_equal(err, IOT_ERROR_NONE);
-    assert_memory_equal(public_key, sample_public_key, strlen(sample_public_key));
-    assert_int_equal(public_key_len, strlen(sample_public_key));
-
-    // Local teardown
-    free(public_key);
-}
-
-void TC_iot_nv_get_public_key_null_parameters(void **state)
-{
-    iot_error_t err;
-    char *public_key = NULL;
-    size_t public_key_len = 0;
-    UNUSED(state);
-
-    // When: All parameters null
-    err = iot_nv_get_public_key(NULL, NULL);
-    //Then
-    assert_int_not_equal(err, IOT_ERROR_NONE);
-
-    // When: Key is null
-    err = iot_nv_get_public_key(NULL, &public_key_len);
-    //Then
-    assert_int_not_equal(err, IOT_ERROR_NONE);
-    assert_int_equal(public_key_len, 0);
-
-    // When: Len is null
-    err = iot_nv_get_public_key(&public_key, NULL);
-    // Then
-    assert_int_not_equal(err, IOT_ERROR_NONE);
-    assert_int_equal(public_key_len, 0);
-    assert_null(public_key);
 }
 
 void TC_iot_nv_get_serial_number_success(void **state)
@@ -442,17 +382,17 @@ void TC_iot_nv_get_data_from_device_info_success(void** state)
 }
 
 #define SECURITY_TYPE_MAX 10
-extern iot_error_t _iot_nv_write_data(const char* path, const char* data, size_t size);
+extern iot_error_t _iot_nv_write_data(const iot_nvd_t nv_type, const char* data, size_t size);
 
 static void _setup_wifi_prov_status(wifi_status_cmd_t cmd)
 {
     iot_error_t err;
 
     if (cmd == NONE) {
-        err = _iot_nv_write_data(iot_bsp_nv_get_data_path(IOT_NVD_WIFI_PROV_STATUS), "NONE", strlen("NONE"));
+        err = _iot_nv_write_data(IOT_NVD_WIFI_PROV_STATUS, "NONE", strlen("NONE"));
         assert_int_equal(err, IOT_ERROR_NONE);
     } else if (cmd == DONE) {
-        err = _iot_nv_write_data(iot_bsp_nv_get_data_path(IOT_NVD_WIFI_PROV_STATUS), "DONE", strlen("DONE"));
+        err = _iot_nv_write_data(IOT_NVD_WIFI_PROV_STATUS, "DONE", strlen("DONE"));
         assert_int_equal(err, IOT_ERROR_NONE);
     }
 }
@@ -464,13 +404,13 @@ static void _setup_wifi_prov_data(iot_nvd_t nv_type)
 
     switch (nv_type) {
         case IOT_NVD_AP_SSID: {
-            err = _iot_nv_write_data(iot_bsp_nv_get_data_path(IOT_NVD_AP_SSID), sample_wifi_ssid,
+            err = _iot_nv_write_data(IOT_NVD_AP_SSID, sample_wifi_ssid,
                                      strlen(sample_wifi_ssid));
             assert_int_equal(err, IOT_ERROR_NONE);
             break;
         }
         case IOT_NVD_AP_PASS: {
-            err = _iot_nv_write_data(iot_bsp_nv_get_data_path(IOT_NVD_AP_PASS), sample_wifi_password,
+            err = _iot_nv_write_data(IOT_NVD_AP_PASS, sample_wifi_password,
                                      strlen(sample_wifi_password));
             assert_int_equal(err, IOT_ERROR_NONE);
             break;
@@ -479,7 +419,7 @@ static void _setup_wifi_prov_data(iot_nvd_t nv_type)
             err = iot_util_convert_str_mac(sample_bssid, &sample_wifi_bssid);
             assert_int_equal(err, IOT_ERROR_NONE);
 
-            err = _iot_nv_write_data(iot_bsp_nv_get_data_path(IOT_NVD_AP_BSSID), sample_wifi_bssid.addr,
+            err = _iot_nv_write_data(IOT_NVD_AP_BSSID, sample_wifi_bssid.addr,
                                      strlen(sample_wifi_bssid.addr));
             assert_int_equal(err, IOT_ERROR_NONE);
             break;
@@ -488,7 +428,7 @@ static void _setup_wifi_prov_data(iot_nvd_t nv_type)
             int size = snprintf(data, SECURITY_TYPE_MAX, "%d", sample_security_type);
             data[size] = '\0';
 
-            err = _iot_nv_write_data(iot_bsp_nv_get_data_path(IOT_NVD_AP_AUTH_TYPE), data, size);
+            err = _iot_nv_write_data(IOT_NVD_AP_AUTH_TYPE, data, size);
             assert_int_equal(err, IOT_ERROR_NONE);
             break;
         }

@@ -20,7 +20,6 @@
 #define _IOT_INTERNAL_H_
 
 #include "iot_capability.h"
-#include "iot_crypto.h"
 #include "iot_serialize.h"
 #include "iot_bsp_wifi.h"
 
@@ -32,6 +31,13 @@
 
 #define IOT_TOPIC_SIZE (100)
 #define IOT_PAYLOAD_SIZE (1024)
+
+#define IOT_SUB_TOPIC_REGISTRATION_PREFIX	"/v1/registrations/notification"
+#define IOT_SUB_TOPIC_REGISTRATION_PREFIX_SIZE	strlen(IOT_SUB_TOPIC_REGISTRATION_PREFIX)
+#define IOT_SUB_TOPIC_COMMAND_PREFIX		"/v1/commands"
+#define IOT_SUB_TOPIC_COMMAND_PREFIX_SIZE		strlen(IOT_SUB_TOPIC_COMMAND_PREFIX)
+#define IOT_SUB_TOPIC_NOTIFICATION_PREFIX	"/v1/notifications"
+#define IOT_SUB_TOPIC_NOTIFICATION_PREFIX_SIZE	strlen(IOT_SUB_TOPIC_NOTIFICATION_PREFIX)
 
 #if defined(STDK_IOT_CORE_SERIALIZE_CBOR)
 #define IOT_PUB_TOPIC_REGISTRATION	"/v1/registrations/cbor"
@@ -245,29 +251,6 @@ iot_error_t iot_es_connect(struct iot_context *ctx, int conn_type);
  * @retval	IOT_ERROR_NONE	success.
  */
 iot_error_t iot_es_disconnect(struct iot_context *ctx, int conn_type);
-
-/**
- * @brief	initialize the buffer for pubkey information
- * @details	this function uses to initialize
- * @param[in]	pk_info		pubkey information structure to initialize
- * @param[in]	type		pubkey type, RSA or ED25519
- */
-void iot_es_crypto_init_pk(iot_crypto_pk_info_t *pk_info, iot_crypto_pk_type_t type);
-
-/**
- * @brief	easy setup crypto to load pubkey
- * @details	this function loads pubkey information
- * @param[in]	pk_info			pubkey information pointer for loading
- * @retval	IOT_ERROR_NONE		success.
- */
-iot_error_t iot_es_crypto_load_pk(iot_crypto_pk_info_t *pk_info);
-
-/**
- * @brief	easy setup crypto to free pubkey
- * @details	this function frees the loaded pubkey information
- * @param[in]	pk_info		loaded pubkey information pointer
- */
-void iot_es_crypto_free_pk(iot_crypto_pk_info_t *pk_info);
 
 /**
  * @brief	callback for mqtt command msg

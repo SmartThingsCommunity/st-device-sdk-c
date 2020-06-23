@@ -1,0 +1,3 @@
+if("${CMAKE_C_FLAGS}" MATCHES "-DCONFIG_STDK_IOT_CORE_SECURITY_BACKEND_HARDWARE_VIRTUAL")
+	add_subdirectory(virtual)
+endif()

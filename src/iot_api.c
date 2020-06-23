@@ -24,11 +24,11 @@
 #include "iot_internal.h"
 #include "iot_debug.h"
 #include "iot_easysetup.h"
-#include "iot_crypto.h"
 #include "iot_nv_data.h"
 #include "iot_os_util.h"
 #include "iot_util.h"
 #include "iot_uuid.h"
+#include "iot_bsp_wifi.h"
 
 #include "JSON.h"
 
@@ -81,7 +81,7 @@ iot_error_t iot_command_send(struct iot_context *ctx,
 iot_error_t iot_wifi_ctrl_request(struct iot_context *ctx,
 		iot_wifi_mode_t wifi_mode)
 {
-	iot_error_t iot_err;
+	iot_error_t iot_err = IOT_ERROR_BAD_REQ;
 	iot_wifi_conf wifi_conf;
 
 	if (!ctx) {
@@ -114,10 +114,27 @@ iot_error_t iot_wifi_ctrl_request(struct iot_context *ctx,
 		wifi_conf.authmode = IOT_WIFI_AUTH_WPA_WPA2_PSK;
 		break;
 
-	case IOT_WIFI_MODE_SCAN:
-		/* fall through */
 	case IOT_WIFI_MODE_OFF:
 		IOT_DEBUG("No need more settings for [%d] mode\n", wifi_mode);
+		break;
+
+	case IOT_WIFI_MODE_SCAN:
+		iot_err = iot_bsp_wifi_set_mode(&wifi_conf);
+		if (iot_err != IOT_ERROR_NONE) {
+			IOT_ERROR("failed to set wifi_set_mode for scan\n");
+			return iot_err;
+		}
+
+		if (!ctx->scan_result) {
+			ctx->scan_result = (iot_wifi_scan_result_t *)iot_os_malloc(IOT_WIFI_MAX_SCAN_RESULT * sizeof(iot_wifi_scan_result_t));
+			if (!ctx->scan_result) {
+				IOT_ERROR("failed to malloc for iot_wifi_scan_result_t\n");
+				break;
+			}
+			memset(ctx->scan_result, 0x0, (IOT_WIFI_MAX_SCAN_RESULT * sizeof(iot_wifi_scan_result_t)));
+		}
+
+		ctx->scan_num = iot_bsp_wifi_get_scan_result(ctx->scan_result);
 		break;
 
 	default:
@@ -125,9 +142,11 @@ iot_error_t iot_wifi_ctrl_request(struct iot_context *ctx,
 		return IOT_ERROR_BAD_REQ;
 	}
 
-	iot_err = iot_command_send(ctx,
+	if (wifi_mode != IOT_WIFI_MODE_SCAN) {
+		iot_err = iot_command_send(ctx,
 				IOT_COMMAND_NETWORK_MODE,
 					&wifi_conf, sizeof(wifi_conf));
+	}
 
 	return iot_err;
 }
@@ -152,7 +171,7 @@ iot_error_t iot_easysetup_request(struct iot_context *ctx,
 		ret = iot_os_queue_send(ctx->easysetup_req_queue, &request, 0);
 		if (ret != IOT_OS_TRUE) {
 			IOT_ERROR("Cannot put the request into easysetup_req_queue");
-			err = IOT_ERROR_BAD_REQ;
+			err = IOT_ERROR_EASYSETUP_QUEUE_SEND_ERROR;
 		} else {
 			iot_os_eventgroup_set_bits(ctx->iot_events,
 				IOT_EVENT_BIT_EASYSETUP_REQ);
@@ -232,7 +251,7 @@ iot_error_t iot_api_onboarding_config_load(unsigned char *onboarding_config,
 	char *vid = NULL;
 	char *devicetypeid = NULL;
 	unsigned int ownership_validation_type = 0;
-	iot_crypto_pk_type_t pk_type;
+	iot_security_key_type_t pk_type;
 	size_t str_len = 0;
 	int i;
 	struct iot_dip_data *new_dip = NULL;
@@ -401,9 +420,9 @@ iot_error_t iot_api_onboarding_config_load(unsigned char *onboarding_config,
 	/* device identity */
 	item = JSON_GET_OBJECT_ITEM(config, name_identityType);
 	if (!item || !strcmp(JSON_GET_STRING_VALUE(item), "ED25519")) {
-		pk_type = IOT_CRYPTO_PK_ED25519;
+		pk_type = IOT_SECURITY_KEY_TYPE_ED25519;
 	} else if (!strcmp(JSON_GET_STRING_VALUE(item), "CERTIFICATE")) {
-		pk_type = IOT_CRYPTO_PK_RSA;
+		pk_type = IOT_SECURITY_KEY_TYPE_RSA2048;
 	} else {
 #if defined(CONFIG_STDK_IOT_CORE_LOG_LEVEL_ERROR)
 		current_name = (char *)name_identityType;

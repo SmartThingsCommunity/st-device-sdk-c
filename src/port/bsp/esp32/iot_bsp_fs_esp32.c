@@ -24,7 +24,6 @@
 
 #include "iot_bsp_fs.h"
 #include "iot_bsp_nv_data.h"
-#include "iot_crypto.h"
 #include "iot_debug.h"
 
 #define STDK_NV_DATA_PARTITION "stnv"
