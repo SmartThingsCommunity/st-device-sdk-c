@@ -370,6 +370,7 @@ int TEST_FUNC_iot_wt(void)
 {
     const struct CMUnitTest tests[] = {
             cmocka_unit_test_setup_teardown(TC_iot_wt_create_null_parameters, TC_iot_wt_create_memleak_detect_setup, TC_iot_wt_create_memleak_detect_teardown),
+            cmocka_unit_test_setup_teardown(TC_iot_wt_create_success, TC_iot_wt_create_memleak_detect_setup, TC_iot_wt_create_memleak_detect_teardown),
     };
     return cmocka_run_group_tests_name("iot_wt.c", tests, NULL, NULL);
 }
