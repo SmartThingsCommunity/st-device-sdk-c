@@ -62,7 +62,7 @@ static void mqtt_reg_sub_cb(st_mqtt_msg *md, void *userData)
 	char * mqtt_payload = md->payload;
 	char * registered_msg = NULL;
 	JSON_H *json = NULL;
-	JSON_H *svr_did = NULL;
+	JSON_H *item = NULL;
 	JSON_H *event = NULL;
 	JSON_H *cur_time = NULL;
 	JSON_H *dip_key = NULL;
@@ -71,6 +71,7 @@ static void mqtt_reg_sub_cb(st_mqtt_msg *md, void *userData)
 	char *svr_did_str = NULL;
 	enum iot_command_type iot_cmd;
 	struct iot_dip_data *reged_dip = NULL;
+	struct iot_uuid *reged_location = NULL;
 	iot_error_t err;
 
 	/*parsing mqtt_payload*/
@@ -182,9 +183,34 @@ static void mqtt_reg_sub_cb(st_mqtt_msg *md, void *userData)
 		reged_data->dip = reged_dip;
 	}
 
-	svr_did = JSON_GET_OBJECT_ITEM(json, "deviceId");
-	if (svr_did != NULL && !reged_data->updated) {
-		svr_did_str = JSON_PRINT(svr_did);
+	item = JSON_GET_OBJECT_ITEM(json, "locationId");
+	if (item != NULL) {
+		reged_location = iot_os_malloc(sizeof(struct iot_uuid));
+		if (!reged_location) {
+			IOT_ERROR("Can't alloc iot_uuid for location!!");
+			goto reg_sub_out;
+		}
+		memset(reged_location, 0, sizeof(struct iot_uuid));
+
+		err = iot_util_convert_str_uuid(JSON_GET_STRING_VALUE(item),
+				reged_location);
+		if (err != IOT_ERROR_NONE) {
+			IOT_ERROR("Can't convert str to uuid(%d)", err);
+			iot_os_free(reged_location);
+			goto reg_sub_out;
+		}
+
+		if (reged_data->locationId)
+			iot_os_free(reged_data->locationId);
+
+		reged_data->locationId = reged_location;
+	} else {
+		IOT_WARN("Server does not send locationId!!");
+	}
+
+	item = JSON_GET_OBJECT_ITEM(json, "deviceId");
+	if (item != NULL && !reged_data->updated) {
+		svr_did_str = JSON_PRINT(item);
 		if (svr_did_str == NULL) {
 			IOT_ERROR("Can't print server's did str!!");
 			goto reg_sub_out;

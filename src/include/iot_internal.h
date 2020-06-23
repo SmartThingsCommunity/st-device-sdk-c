@@ -64,6 +64,7 @@
  */
 typedef enum {
 	IOT_MISC_INFO_DIP = 0,	/**< @brief For Device Integration Profile information */
+	IOT_MISC_INFO_LOCATION,	/**< @brief for Device's location ID */
 } iot_misc_info_t;
 
 /* Core */

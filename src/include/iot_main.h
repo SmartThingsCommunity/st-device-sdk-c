@@ -203,6 +203,7 @@ struct iot_easysetup_payload {
  */
 struct iot_registered_data {
 	struct iot_dip_data *dip;					/**< @brief Registered Device Integration Profile data */
+	struct iot_uuid *locationId;				/**< @brief location Id, allocated from server */
 	char deviceId[IOT_REG_UUID_STR_LEN + 1];	/**< @brief device Id, allocated from server */
 	bool updated;								/**< @brief reflect getting device id */
 	bool new_reged;								/**< @brief reflect that it is new registration process or not */
