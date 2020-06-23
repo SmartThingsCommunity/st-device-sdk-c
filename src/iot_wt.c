@@ -383,6 +383,12 @@ static iot_error_t _iot_cwt_create(const iot_wt_params_t *wt_params, iot_securit
 	size_t buflen = 128;
 
 	if (!wt_params || !token_buf) {
+		IOT_ERROR("input param is null");
+		return IOT_ERROR_INVALID_ARGS;
+	}
+
+	if (!wt_params->sn || !wt_params->mnid) {
+		IOT_ERROR("mnid or sn is null");
 		return IOT_ERROR_INVALID_ARGS;
 	}
 
@@ -532,6 +538,11 @@ static char * _iot_jwt_header_rs256(const iot_wt_params_t *wt_params)
 		return NULL;
 	}
 
+	if (!wt_params->sn) {
+		IOT_ERROR("sn in params is null");
+		return NULL;
+	}
+
 	object = JSON_CREATE_OBJECT();
 	if (!object) {
 		IOT_ERROR("JSON_CREATE_OBJECT returned NULL");
@@ -564,6 +575,11 @@ static char * _iot_jwt_header_ed25519(const iot_wt_params_t *wt_params)
 
 	if (!wt_params) {
 		IOT_ERROR("wt_params is null");
+		return NULL;
+	}
+
+	if (!wt_params->sn) {
+		IOT_ERROR("sn in params is null");
 		return NULL;
 	}
 
@@ -673,6 +689,11 @@ static char * _iot_jwt_create_payload(const iot_wt_params_t *wt_params)
 
 	if (!wt_params) {
 		IOT_ERROR("wt_params is null");
+		return NULL;
+	}
+
+	if (!wt_params->mnid) {
+		IOT_ERROR("mnid in params is null");
 		return NULL;
 	}
 
