@@ -415,14 +415,6 @@ void TC_STATIC_es_wifiscaninfo_handler_invalid_parameters(void **state)
     struct iot_context *context;
     char *payload;
 
-    // Given: null payload
-    context = (struct iot_context *)*state;
-    payload = NULL;
-    // When
-    err = _es_wifiscaninfo_handler(context, &payload);
-    // Then
-    assert_int_not_equal(err, IOT_ERROR_NONE);
-
     // Given: null context, payload
     context = NULL;
     payload = NULL;
@@ -448,7 +440,7 @@ void TC_STATIC_es_wifiscaninfo_handler_success(void **state)
     assert_int_equal(err, IOT_ERROR_NONE);
     server_cipher = _generate_server_cipher(device_cipher->iv.p, device_cipher->iv.len);
     assert_non_null(server_cipher);
-    _generate_wifi_scan_list(context, 20);
+    will_return(__wrap_iot_bsp_wifi_get_scan_result, 20);
     // When
     err = _es_wifiscaninfo_handler(context, &out_payload);
     // Then
