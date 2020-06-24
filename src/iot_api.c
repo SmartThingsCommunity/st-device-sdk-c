@@ -29,6 +29,8 @@
 #include "iot_util.h"
 #include "iot_uuid.h"
 #include "iot_bsp_wifi.h"
+#include "security/iot_security_common.h"
+#include "security/iot_security_helper.h"
 
 #include "JSON.h"
 
@@ -993,6 +995,29 @@ static iot_error_t _get_dip_from_json(JSON_H *json, struct iot_dip_data *dip)
 	return iot_err;
 }
 
+static iot_error_t _get_location_from_json(JSON_H *json, struct iot_uuid *uuid)
+{
+	struct iot_uuid curr_uuid;
+	JSON_H *item = NULL;
+	iot_error_t iot_err;
+
+	item = JSON_GET_OBJECT_ITEM(json, "loId");
+	if (item == NULL) {
+		IOT_ERROR("There is no locationId in misc_info");
+		return IOT_ERROR_BAD_REQ;
+	}
+
+	iot_err = iot_util_convert_str_uuid(JSON_GET_STRING_VALUE(item),
+				&curr_uuid);
+	if (iot_err != IOT_ERROR_NONE) {
+		IOT_ERROR("Can't convert str to uuid(%d)", iot_err);
+		return iot_err;
+	}
+
+	memcpy(uuid, &curr_uuid, sizeof(curr_uuid));
+	return IOT_ERROR_NONE;
+}
+
 iot_error_t iot_misc_info_load(iot_misc_info_t type, void *out_data)
 {
 	char *misc_info = NULL;
@@ -1023,6 +1048,10 @@ iot_error_t iot_misc_info_load(iot_misc_info_t type, void *out_data)
 	switch (type) {
 	case IOT_MISC_INFO_DIP:
 		iot_err = _get_dip_from_json(json, (struct iot_dip_data *)out_data);
+		break;
+
+	case IOT_MISC_INFO_LOCATION:
+		iot_err = _get_location_from_json(json, (struct iot_uuid *)out_data);
 		break;
 
 	default:
@@ -1098,6 +1127,35 @@ static iot_error_t _set_dip_to_json(JSON_H *json, struct iot_dip_data *new_dip)
 	return iot_err;
 }
 
+static iot_error_t _set_location_to_json(JSON_H *json, struct iot_uuid *uuid)
+{
+	JSON_H *item = NULL;
+	char location_id[IOT_REG_UUID_STR_LEN + 1];
+	iot_error_t iot_err;
+
+	iot_err = iot_util_convert_uuid_str(uuid,
+				location_id, sizeof(location_id));
+	if (iot_err != IOT_ERROR_NONE) {
+		IOT_ERROR("Can't convert uuid to str(%d)", iot_err);
+		return iot_err;
+	}
+
+	item = JSON_CREATE_STRING(location_id);
+	if (item == NULL) {
+		IOT_ERROR("Can't make new string for locationId");
+		return IOT_ERROR_MEM_ALLOC;
+	}
+
+	if (JSON_GET_OBJECT_ITEM(json, "loId") == NULL) {
+		IOT_DEBUG("There is no locatinoId in misc_info");
+		JSON_ADD_ITEM_TO_OBJECT(json, "loId", item);
+	} else {
+		JSON_REPLACE_ITEM_IN_OBJ_CASESENS(json, "loId", item);
+	}
+
+	return IOT_ERROR_NONE;
+}
+
 iot_error_t iot_misc_info_store(iot_misc_info_t type, const void *in_data)
 {
 	char *old_misc_info = NULL;
@@ -1105,6 +1163,9 @@ iot_error_t iot_misc_info_store(iot_misc_info_t type, const void *in_data)
 	char *new_misc_info = NULL;
 	JSON_H *json = NULL;
 	iot_error_t iot_err = IOT_ERROR_NONE;
+	unsigned char old_hash[IOT_SECURITY_SHA256_LEN] = {0,};
+	unsigned char new_hash[IOT_SECURITY_SHA256_LEN] = {0,};
+	bool hash_chk = false;
 
 	if (!in_data) {
 		iot_err = IOT_ERROR_INVALID_ARGS;
@@ -1124,12 +1185,26 @@ iot_error_t iot_misc_info_store(iot_misc_info_t type, const void *in_data)
 		}
 	}
 
+	if ((old_misc_info != NULL) && (old_misc_info_len != 0)) {
+		iot_err = iot_security_sha256((const unsigned char *)old_misc_info,
+				old_misc_info_len, old_hash, sizeof(old_hash));
+		if (iot_err != IOT_ERROR_NONE) {
+			IOT_WARN("Can't make hash for old_misc_info!!");
+		} else {
+			hash_chk = true;
+		}
+	}
+
 	iot_os_free(old_misc_info);
 	old_misc_info = NULL;
 
 	switch (type) {
 	case IOT_MISC_INFO_DIP:
 		iot_err = _set_dip_to_json(json, (struct iot_dip_data *)in_data);
+		break;
+
+	case IOT_MISC_INFO_LOCATION:
+		iot_err = _set_location_to_json(json, (struct iot_uuid *)in_data);
 		break;
 
 	default:
@@ -1143,6 +1218,19 @@ iot_error_t iot_misc_info_store(iot_misc_info_t type, const void *in_data)
 
 	new_misc_info = JSON_PRINT(json);
 	IOT_DEBUG("Store raw msic_info str : %s", new_misc_info);
+
+	if (hash_chk) {
+		iot_err = iot_security_sha256((const unsigned char *)new_misc_info,
+				strlen(new_misc_info), new_hash, sizeof(new_hash));
+		if (iot_err != IOT_ERROR_NONE) {
+			IOT_WARN("Can't make hash for new_misc_info!!");
+		} else {
+			if (!memcmp(old_hash, new_hash, IOT_SECURITY_SHA256_LEN)) {
+				IOT_DEBUG("Same misc_info, skip NV update");
+				goto misc_info_store_out;
+			}
+		}
+	}
 
 	iot_err = iot_nv_set_misc_info(new_misc_info);
 	if (iot_err != IOT_ERROR_NONE) {

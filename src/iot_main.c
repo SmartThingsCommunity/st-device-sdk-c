@@ -633,6 +633,21 @@ static iot_error_t _do_iot_main_command(struct iot_context *ctx,
 					ctx->iot_reg_data.dip = NULL;
 				}
 
+				if (ctx->iot_reg_data.locationId) {
+					err = iot_misc_info_store(IOT_MISC_INFO_LOCATION,
+							(const void *)ctx->iot_reg_data.locationId);
+					if (err != IOT_ERROR_NONE) {
+						IOT_ERROR("Store LocationId failed!! (%d)", err);
+						IOT_DUMP_MAIN(ERROR, BASE, err);
+					}
+
+					iot_os_free(ctx->iot_reg_data.locationId);
+					ctx->iot_reg_data.locationId = NULL;
+				} else {
+					IOT_WARN("There is no locationId!!");
+					IOT_DUMP_MAIN(WARN, BASE, 0xBAD2C1EA);
+				}
+
 				err = iot_nv_set_device_id(ctx->iot_reg_data.deviceId);
 				if (err != IOT_ERROR_NONE) {
 					IOT_ERROR("Set deviceId failed!! (%d)", err);
