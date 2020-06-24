@@ -313,6 +313,88 @@ static bool _unlikely_with_stored_dip(struct iot_dip_data *chk_dip)
 	return false;
 }
 
+static iot_error_t _prepare_self_reged(struct iot_context *ctx)
+{
+	iot_error_t err = IOT_ERROR_NONE;
+	struct iot_uuid old_location;
+	char *location_str = NULL;
+	char *lookup_str = NULL;
+
+	if (!ctx) {
+		return IOT_ERROR_INVALID_ARGS;
+	}
+
+	/* Make new lookup_id for self-registration */
+	lookup_str = (char *)iot_os_malloc(IOT_REG_UUID_STR_LEN + 1);
+	if (!lookup_str) {
+		IOT_ERROR("Failed to malloc for lookup_str");
+		IOT_DUMP_MAIN(ERROR, BASE, 0xDEADBEEF);
+		return IOT_ERROR_MEM_ALLOC;
+	}
+	memset(lookup_str, 0, (IOT_REG_UUID_STR_LEN +1));
+
+	err = iot_get_random_id_str(lookup_str,
+			(IOT_REG_UUID_STR_LEN + 1));
+	if (err != IOT_ERROR_NONE) {
+		IOT_ERROR("Failed to get new lookup_str(%d)", err);
+		IOT_DUMP_MAIN(ERROR, BASE, err);
+		goto error_prepare_self;
+	}
+
+	/* Load previous locationId from NV */
+	err = iot_misc_info_load(IOT_MISC_INFO_LOCATION,
+			(void *)&old_location);
+	if (err != IOT_ERROR_NONE) {
+		IOT_ERROR("Failed to load old_location(%d)", err);
+		IOT_DUMP_MAIN(ERROR, BASE, err);
+		goto error_prepare_self;
+	}
+
+	location_str = (char *)iot_os_malloc(IOT_REG_UUID_STR_LEN +1);
+	if (!location_str) {
+		IOT_ERROR("Failed to malloc for location_str");
+		IOT_DUMP_MAIN(ERROR, BASE, 0xDEADBEEF);
+		err = IOT_ERROR_MEM_ALLOC;
+		goto error_prepare_self;
+	}
+	memset(location_str, 0, (IOT_REG_UUID_STR_LEN +1));
+
+	err = iot_util_convert_uuid_str(&old_location, location_str,
+			(IOT_REG_UUID_STR_LEN + 1));
+	if (err != IOT_ERROR_NONE) {
+		IOT_ERROR("Failed to convert location_str(%d)", err);
+		IOT_DUMP_MAIN(ERROR, BASE, err);
+		goto error_prepare_self;
+	}
+
+	/* lookup_id & location are runtime allocated string
+	 * during D2D process, so free it first to avoid memory-leak
+	 */
+	if (ctx->lookup_id) {
+		iot_os_free(ctx->lookup_id);
+	}
+	ctx->lookup_id = lookup_str;
+
+	if (ctx->prov_data.cloud.location) {
+		iot_os_free(ctx->prov_data.cloud.location);
+	}
+	ctx->prov_data.cloud.location = location_str;
+
+	return IOT_ERROR_NONE;
+
+error_prepare_self:
+	if (lookup_str) {
+		iot_os_free(lookup_str);
+	}
+
+	if (location_str) {
+		iot_os_free(location_str);
+	}
+
+	return err;
+}
+
+
 static iot_error_t _do_iot_main_command(struct iot_context *ctx,
 	struct iot_command *cmd)
 {
@@ -496,6 +578,8 @@ static iot_error_t _do_iot_main_command(struct iot_context *ctx,
 			break;
 
 		case IOT_COMMAND_CHECK_CLOUD_STATE:
+			ctx->iot_reg_data.self_reged = false;
+
 			if (ctx->iot_reg_data.new_reged) {
 				next_state = IOT_STATE_CLOUD_REGISTERING;
 			} else if (ctx->iot_reg_data.updated) {
@@ -553,20 +637,16 @@ static iot_error_t _do_iot_main_command(struct iot_context *ctx,
 					}
 
 					if (is_diff_dip) {
-						if (ctx->lookup_id == NULL) {
-							ctx->lookup_id = iot_os_malloc(IOT_REG_UUID_STR_LEN + 1);
-						}
-
-						err = iot_get_random_id_str(ctx->lookup_id,
-								(IOT_REG_UUID_STR_LEN + 1));
+						err = _prepare_self_reged(ctx);
 						if (err != IOT_ERROR_NONE) {
-							IOT_ERROR("Failed to get new lookup_id(%d)", err);
+							IOT_ERROR("Failed to prepare self registration(%d)", err);
 							IOT_DUMP_MAIN(ERROR, BASE, err);
 							is_diff_dip = false;
 						}
 					}
 
 					if (is_diff_dip) {
+						ctx->iot_reg_data.self_reged = true;
 						next_state = IOT_STATE_CLOUD_REGISTERING;
 					} else {
 						ctx->iot_reg_data.updated = true;
@@ -618,6 +698,16 @@ static iot_error_t _do_iot_main_command(struct iot_context *ctx,
 		case IOT_COMMAND_CLOUD_REGISTERED:
 			if (iot_es_disconnect(ctx, IOT_CONNECT_TYPE_REGISTRATION) != IOT_ERROR_NONE) {
 				IOT_ERROR("failed to _iot_es_disconnect for registration\n");
+			}
+
+			if (ctx->prov_data.cloud.location) {
+				iot_os_free(ctx->prov_data.cloud.location);
+				ctx->prov_data.cloud.location = NULL;
+			}
+
+			if (ctx->prov_data.cloud.room) {
+				iot_os_free(ctx->prov_data.cloud.room);
+				ctx->prov_data.cloud.room = NULL;
 			}
 
 			if (ctx->iot_reg_data.updated) {

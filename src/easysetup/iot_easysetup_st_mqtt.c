@@ -288,7 +288,7 @@ void _iot_mqtt_signin_client_callback(st_mqtt_event event, void *event_data, voi
 
 #if defined(STDK_IOT_CORE_SERIALIZE_CBOR)
 static void *_iot_es_mqtt_registration_cbor(struct iot_context *ctx,
-			char *dip_id, size_t *msglen)
+			char *dip_id, size_t *msglen, bool self_reged)
 {
 	struct iot_devconf_prov_data *devconf;
 	struct timeval tv = {0,};
@@ -306,7 +306,7 @@ static void *_iot_es_mqtt_registration_cbor(struct iot_context *ctx,
 	}
 
 	devconf = &ctx->devconf;
-	if (!devconf->hashed_sn) {
+	if ((self_reged == false) && !devconf->hashed_sn) {
 		IOT_ERROR("There are no hashed_sn");
 		return NULL;
 	}
@@ -329,6 +329,11 @@ retry:
 	if (ctx->prov_data.cloud.location) {
 		cbor_encode_text_stringz(&root_map, "locationId");
 		cbor_encode_text_stringz(&root_map, ctx->prov_data.cloud.location);
+	} else if (self_reged == true) {
+		/* But location is mandatory for self-registration */
+		IOT_ERROR("There is no location for self-registration!!");
+		cbor_encoder_close_container_checked(&root, &root_map);
+		goto exit_failed;
 	}
 
 	/* label is optional value */
@@ -352,10 +357,11 @@ retry:
 	cbor_encode_text_stringz(&root_map, ctx->lookup_id);
 
 	/* room id is optional value */
-	if (ctx->prov_data.cloud.room) {
+	if (ctx->prov_data.cloud.room && (self_reged == false)) {
 		cbor_encode_text_stringz(&root_map, "roomId");
 		cbor_encode_text_stringz(&root_map, ctx->prov_data.cloud.room);
-	} else {
+	} else if (self_reged == false) {
+		/* Do not send serialHash & provisioningTs for self-registration */
 		cbor_encode_text_stringz(&root_map, "serialHash");
 		cbor_encode_text_stringz(&root_map, devconf->hashed_sn);
 
@@ -408,20 +414,12 @@ retry:
 
 exit_failed:
 	free(buf);
-	if (ctx->prov_data.cloud.location) {
-		free(ctx->prov_data.cloud.location);
-		ctx->prov_data.cloud.location = NULL;
-	}
-	if (ctx->prov_data.cloud.room) {
-		free(ctx->prov_data.cloud.room);
-		ctx->prov_data.cloud.room = NULL;
-	}
 
 	return NULL;
 }
 #else /* !STDK_IOT_CORE_SERIALIZE_CBOR */
 static void *_iot_es_mqtt_registration_json(struct iot_context *ctx,
-			char *dip_id, size_t *msglen)
+			char *dip_id, size_t *msglen, bool self_reged)
 {
 	struct iot_devconf_prov_data *devconf;
 	struct timeval tv = {0,};
@@ -435,7 +433,7 @@ static void *_iot_es_mqtt_registration_json(struct iot_context *ctx,
 	}
 
 	devconf = &ctx->devconf;
-	if (!devconf->hashed_sn) {
+	if ((self_reged == false) && !devconf->hashed_sn) {
 		IOT_ERROR("There are no hashed_sn");
 		return NULL;
 	}
@@ -446,9 +444,15 @@ static void *_iot_es_mqtt_registration_json(struct iot_context *ctx,
 		return NULL;
 	}
 
+	/* location id is optional value */
 	if (ctx->prov_data.cloud.location) {
-	JSON_ADD_ITEM_TO_OBJECT(root, "locationId",
+		JSON_ADD_ITEM_TO_OBJECT(root, "locationId",
 		JSON_CREATE_STRING(ctx->prov_data.cloud.location));
+	} else if (self_reged == true) {
+		/* But location is mandatory for self-registration */
+		IOT_ERROR("There is no location for self-registration!!");
+		JSON_DELETE(root);
+		return NULL;
 	}
 
 	/* label is optional value */
@@ -471,10 +475,11 @@ static void *_iot_es_mqtt_registration_json(struct iot_context *ctx,
 	JSON_ADD_ITEM_TO_OBJECT(root, "lookupId",
 		JSON_CREATE_STRING(ctx->lookup_id));
 
-	if (ctx->prov_data.cloud.room) {
+	if (ctx->prov_data.cloud.room && (self_reged == false)) {
 		JSON_ADD_ITEM_TO_OBJECT(root, "roomId",
 			JSON_CREATE_STRING(ctx->prov_data.cloud.room));
-	} else {
+	} else if (self_reged == false) {
+		/* Do not send serialHash & provisioningTs for self-registration */
 		JSON_ADD_ITEM_TO_OBJECT(root, "serialHash",
 			JSON_CREATE_STRING(devconf->hashed_sn));
 
@@ -512,14 +517,6 @@ exit_json_making:
 
 	JSON_DELETE(root);
 
-	if (ctx->prov_data.cloud.location) {
-		free(ctx->prov_data.cloud.location);
-		ctx->prov_data.cloud.location = NULL;
-	}
-	if (ctx->prov_data.cloud.room) {
-		free(ctx->prov_data.cloud.room);
-		ctx->prov_data.cloud.room = NULL;
-	}
 
 	return (void *)payload;
 }
@@ -561,11 +558,12 @@ iot_error_t _iot_es_mqtt_registration(struct iot_context *ctx, st_mqtt_client mq
 		}
 	}
 
-
 #if defined(STDK_IOT_CORE_SERIALIZE_CBOR)
-	msg.payload = _iot_es_mqtt_registration_cbor(ctx, dip_id, &msglen);
+	msg.payload = _iot_es_mqtt_registration_cbor(ctx, dip_id, &msglen,
+					ctx->iot_reg_data.self_reged);
 #else
-	msg.payload = _iot_es_mqtt_registration_json(ctx, dip_id, &msglen);
+	msg.payload = _iot_es_mqtt_registration_json(ctx, dip_id, &msglen,
+					ctx->iot_reg_data.self_reged);
 #endif
 	if (!msg.payload) {
 		IOT_ERROR("Failed to make payload for MQTTpub");
