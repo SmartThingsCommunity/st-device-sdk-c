@@ -29,13 +29,13 @@ iot_error_t iot_security_ecdh_init(iot_security_context_t *context)
 	iot_security_ecdh_params_t *ecdh_params;
 
 	if (!context) {
-		return IOT_ERROR_SECURITY_CONTEXT_NULL;
+		IOT_ERROR_DUMP_AND_RETURN(CONTEXT_NULL, 0);
 	}
 
 	ecdh_params = (iot_security_ecdh_params_t *)iot_os_malloc(sizeof(iot_security_ecdh_params_t));
 	if (!ecdh_params) {
 		IOT_ERROR("failed to malloc for ecdh params");
-		return IOT_ERROR_MEM_ALLOC;
+		IOT_ERROR_DUMP_AND_RETURN(MEM_ALLOC, 0);
 	}
 
 	memset((void *)ecdh_params, 0, sizeof(iot_security_ecdh_params_t));
@@ -63,7 +63,7 @@ iot_error_t iot_security_ecdh_deinit(iot_security_context_t *context)
 	iot_error_t err;
 
 	if (!context) {
-		return IOT_ERROR_SECURITY_CONTEXT_NULL;
+		IOT_ERROR_DUMP_AND_RETURN(CONTEXT_NULL, 0);
 	}
 
 	if (context->be_context &&
@@ -97,12 +97,12 @@ iot_error_t iot_security_ecdh_set_params(iot_security_context_t *context, iot_se
 
 	if (!ecdh_set_params) {
 		IOT_ERROR("ecdh set params is null");
-		return IOT_ERROR_INVALID_ARGS;
+		IOT_ERROR_DUMP_AND_RETURN(INVALID_ARGS, 0);
 	}
 
 	if (!context->be_context->fn->ecdh_set_params) {
 		IOT_ERROR("be->fn->ecdh_set_params is null");
-		return IOT_ERROR_SECURITY_BE_FUNC_NULL;
+		IOT_ERROR_DUMP_AND_RETURN(BE_FUNC_NULL, 0);
 	}
 
 	err = context->be_context->fn->ecdh_set_params(context, ecdh_set_params);
@@ -128,7 +128,7 @@ iot_error_t iot_security_ecdh_compute_shared_secret(iot_security_context_t *cont
 
 	if (!context->be_context->fn->ecdh_compute_shared_secret) {
 		IOT_ERROR("be->fn->ecdh_compute_shared_secret is null");
-		return IOT_ERROR_SECURITY_BE_FUNC_NULL;
+		IOT_ERROR_DUMP_AND_RETURN(BE_FUNC_NULL, 0);
 	}
 
 	err = context->be_context->fn->ecdh_compute_shared_secret(context, secret_buf);

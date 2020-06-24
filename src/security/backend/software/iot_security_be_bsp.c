@@ -62,13 +62,13 @@ iot_error_t _iot_security_be_bsp_fs_storage_id2filename(iot_security_storage_id_
 
 	if (!filename || (filename_len == 0)) {
 		IOT_ERROR("filename is invalid");
-		return IOT_ERROR_SECURITY_FS_INVALID_ARGS;
+		IOT_ERROR_DUMP_AND_RETURN(FS_INVALID_ARGS, 0);
 	}
 
 	storage_file = iot_bsp_nv_get_data_path(storage_id);
 	if (!storage_file) {
 		IOT_ERROR("not found file for id = %d", storage_id);
-		return IOT_ERROR_SECURITY_STORAGE_INVALID_ID;
+		IOT_ERROR_DUMP_AND_RETURN(STORAGE_INVALID_ID, storage_id);
 	}
 
 	if (extra_path) {
@@ -77,7 +77,7 @@ iot_error_t _iot_security_be_bsp_fs_storage_id2filename(iot_security_storage_id_
 
 	if (filename_len < strlen(storage_file) + c) {
 		IOT_ERROR("length is not enough (%d < (%d + %d)", (int)filename_len, strlen(storage_file), c);
-		return IOT_ERROR_SECURITY_FS_BUFFER;
+		IOT_ERROR_DUMP_AND_RETURN(FS_BUFFER, filename_len);
 	}
 
 	snprintf(filename + c, filename_len - c, "%s", storage_file);
@@ -109,17 +109,17 @@ iot_error_t _iot_security_be_bsp_fs_load_from_nv(iot_security_storage_id_t stora
 		err = iot_bsp_fs_open_from_stnv(filename, &handle);
 		if (err) {
 			IOT_ERROR("iot_bsp_fs_open_from_stnv(%s) = %d", filename, err);
-			return IOT_ERROR_SECURITY_FS_OPEN;
+			IOT_ERROR_DUMP_AND_RETURN(FS_OPEN, err);
 		}
 #else
 		IOT_ERROR("not defined factory partition");
-		return IOT_ERROR_SECURITY_FS_OPEN;
+		IOT_ERROR_DUMP_AND_RETURN(FS_OPEN, 0);
 #endif
 	} else {
 		err = iot_bsp_fs_open(filename, FS_READONLY, &handle);
 		if (err) {
 			IOT_ERROR("iot_bsp_fs_open(%s) = %d", filename, err);
-			return IOT_ERROR_SECURITY_FS_OPEN;
+			IOT_ERROR_DUMP_AND_RETURN(FS_OPEN, err);
 		}
 	}
 
@@ -127,7 +127,7 @@ iot_error_t _iot_security_be_bsp_fs_load_from_nv(iot_security_storage_id_t stora
 	fs_buf = (char *)iot_os_malloc(fs_buf_len);
 	if (!fs_buf) {
 		IOT_ERROR("failed to malloc for fs buf");
-		return IOT_ERROR_MEM_ALLOC;
+		IOT_ERROR_DUMP_AND_RETURN(MEM_ALLOC, 0);
 	}
 
 	err = iot_bsp_fs_read(handle, fs_buf, &fs_buf_len);
@@ -137,6 +137,7 @@ iot_error_t _iot_security_be_bsp_fs_load_from_nv(iot_security_storage_id_t stora
 		} else {
 			IOT_ERROR("iot_bsp_fs_read = %d", err);
 			err = IOT_ERROR_SECURITY_FS_READ;
+			IOT_DUMP(IOT_DEBUG_LEVEL_ERROR, err, __LINE__, 0);
 		}
 
 		iot_os_free(fs_buf);
@@ -154,13 +155,13 @@ iot_error_t _iot_security_be_bsp_fs_load_from_nv(iot_security_storage_id_t stora
 		IOT_ERROR("failed to realloc for buf");
 		iot_os_free(fs_buf);
 		(void)iot_bsp_fs_close(handle);
-		return IOT_ERROR_MEM_ALLOC;
+		IOT_ERROR_DUMP_AND_RETURN(MEM_ALLOC, 0);
 	}
 
 	err = iot_bsp_fs_close(handle);
 	if (err) {
 		IOT_ERROR("iot_bsp_fs_close = %d", err);
-		return IOT_ERROR_SECURITY_FS_CLOSE;
+		IOT_ERROR_DUMP_AND_RETURN(FS_CLOSE, err);
 	}
 
 	return IOT_ERROR_NONE;
@@ -174,12 +175,12 @@ iot_error_t _iot_security_be_bsp_fs_load(iot_security_be_context_t *be_context, 
 	IOT_DEBUG("id = %d", storage_id);
 
 	if (!be_context) {
-		return IOT_ERROR_SECURITY_BE_CONTEXT_NULL;
+		IOT_ERROR_DUMP_AND_RETURN(BE_CONTEXT_NULL, 0);
 	}
 
 	if (!output_buf) {
 		IOT_ERROR("output buffer is invalid");
-		return IOT_ERROR_SECURITY_FS_INVALID_ARGS;
+		IOT_ERROR_DUMP_AND_RETURN(FS_INVALID_ARGS, 0);
 	}
 
 	memset(output_buf, 0, sizeof(iot_security_buffer_t));
@@ -192,12 +193,12 @@ iot_error_t _iot_security_be_bsp_fs_load(iot_security_be_context_t *be_context, 
 		return _iot_security_be_bsp_fs_load_from_nv(storage_id, output_buf);
 	case IOT_SECURITY_STORAGE_TARGET_DI:
 		if (!be_context->external_device_info_cb) {
-			return IOT_ERROR_SECURITY_BE_EXTERNAL_NULL;
+			IOT_ERROR_DUMP_AND_RETURN(BE_EXTERNAL_NULL, 0);
 		}
 		return be_context->external_device_info_cb(storage_id, output_buf);
 	default:
 		IOT_ERROR("cannot found target for id = %d", storage_id);
-		return IOT_ERROR_SECURITY_FS_UNKNOWN_TARGET;
+		IOT_ERROR_DUMP_AND_RETURN(FS_UNKNOWN_TARGET, 0);
 	}
 }
 
@@ -216,20 +217,20 @@ iot_error_t _iot_security_be_bsp_fs_store_to_nv(iot_security_storage_id_t storag
 	err = iot_bsp_fs_open(filename, FS_READWRITE, &handle);
 	if (err) {
 		IOT_ERROR("iot_bsp_fs_open(%s) = %d", filename, err);
-		return IOT_ERROR_SECURITY_FS_OPEN;
+		IOT_ERROR_DUMP_AND_RETURN(FS_OPEN, err);
 	}
 
 	err = iot_bsp_fs_write(handle, (const char *)input_buf->p, (unsigned int)input_buf->len);
 	if (err) {
 		IOT_ERROR("iot_bsp_fs_write = %d", err);
 		(void)iot_bsp_fs_close(handle);
-		return IOT_ERROR_SECURITY_FS_WRITE;
+		IOT_ERROR_DUMP_AND_RETURN(FS_WRITE, err);
 	}
 
 	err = iot_bsp_fs_close(handle);
 	if (err) {
 		IOT_ERROR("iot_bsp_fs_close = %d", err);
-		return IOT_ERROR_SECURITY_FS_CLOSE;
+		IOT_ERROR_DUMP_AND_RETURN(FS_CLOSE, err);
 	}
 
 	return IOT_ERROR_NONE;
@@ -244,7 +245,7 @@ iot_error_t _iot_security_be_bsp_fs_store(iot_security_be_context_t *be_context,
 
 	if (!input_buf || !input_buf->p || (input_buf->len == 0)) {
 		IOT_ERROR("input buffer is invalid");
-		return IOT_ERROR_SECURITY_FS_INVALID_ARGS;
+		IOT_ERROR_DUMP_AND_RETURN(FS_INVALID_ARGS, 0);
 	}
 
 	storage_target = _iot_security_be_bsp_fs_storage_id2target(storage_id);
@@ -254,13 +255,13 @@ iot_error_t _iot_security_be_bsp_fs_store(iot_security_be_context_t *be_context,
 		return _iot_security_be_bsp_fs_store_to_nv(storage_id, input_buf);
 	case IOT_SECURITY_STORAGE_TARGET_FACTORY:
 		IOT_ERROR("cannot update factory nv for id = %d", storage_id);
-		return IOT_ERROR_SECURITY_FS_INVALID_TARGET;
+		IOT_ERROR_DUMP_AND_RETURN(FS_INVALID_TARGET, storage_id);
 	case IOT_SECURITY_STORAGE_TARGET_DI:
 		IOT_ERROR("cannot update device info nv for id = %d", storage_id);
-		return IOT_ERROR_SECURITY_FS_INVALID_TARGET;
+		IOT_ERROR_DUMP_AND_RETURN(FS_INVALID_TARGET, storage_id);
 	default:
 		IOT_ERROR("cannot found target for id = %d", storage_id);
-		return IOT_ERROR_SECURITY_FS_UNKNOWN_TARGET;
+		IOT_ERROR_DUMP_AND_RETURN(FS_UNKNOWN_TARGET, storage_id);
 	}
 }
 
@@ -278,10 +279,10 @@ iot_error_t _iot_security_be_bsp_fs_remove_from_nv(iot_security_storage_id_t sto
 	err = iot_bsp_fs_remove(filename);
 	if (err) {
 		if (err == IOT_ERROR_FS_NO_FILE) {
-			return IOT_ERROR_SECURITY_FS_NOT_FOUND;
+			IOT_ERROR_DUMP_AND_RETURN(FS_NOT_FOUND, 0);
 		} else {
 			IOT_ERROR("iot_bsp_fs_remove = %d", err);
-			return IOT_ERROR_SECURITY_FS_REMOVE;
+			IOT_ERROR_DUMP_AND_RETURN(FS_REMOVE, err);
 		}
 	}
 
@@ -302,13 +303,13 @@ iot_error_t _iot_security_be_bsp_fs_remove(iot_security_be_context_t *be_context
 		return _iot_security_be_bsp_fs_remove_from_nv(storage_id);
 	case IOT_SECURITY_STORAGE_TARGET_FACTORY:
 		IOT_ERROR("cannot remove factory nv for id = %d", storage_id);
-		return IOT_ERROR_SECURITY_FS_INVALID_TARGET;
+		IOT_ERROR_DUMP_AND_RETURN(FS_INVALID_TARGET, storage_id);
 	case IOT_SECURITY_STORAGE_TARGET_DI:
 		IOT_ERROR("cannot remove device info nv for id = %d", storage_id);
-		return IOT_ERROR_SECURITY_FS_INVALID_TARGET;
+		IOT_ERROR_DUMP_AND_RETURN(FS_INVALID_TARGET, storage_id);
 	default:
 		IOT_ERROR("cannot found target for id = %d", storage_id);
-		return IOT_ERROR_SECURITY_FS_UNKNOWN_TARGET;
+		IOT_ERROR_DUMP_AND_RETURN(FS_UNKNOWN_TARGET, storage_id);
 	}
 }
 
@@ -321,7 +322,7 @@ const iot_security_be_bsp_funcs_t iot_security_be_software_bsp_funcs = {
 iot_error_t iot_security_be_bsp_init(iot_security_be_context_t *be_context)
 {
 	if (!be_context) {
-		return IOT_ERROR_SECURITY_BE_CONTEXT_NULL;
+		IOT_ERROR_DUMP_AND_RETURN(BE_CONTEXT_NULL, 0);
 	}
 
 	be_context->bsp_fn = &iot_security_be_software_bsp_funcs;
