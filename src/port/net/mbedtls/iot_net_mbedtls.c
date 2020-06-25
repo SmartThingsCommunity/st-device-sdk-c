@@ -278,6 +278,14 @@ static int _iot_net_tls_read(iot_net_interface_t *net,
 		return 0;
 	}
 
+	if (buf == NULL || timer == NULL) {
+		return -1;
+	}
+
+	if (len == 0) {
+		return 0;
+	}
+
 	mbedtls_ssl_conf_read_timeout(&net->context.conf, (uint32_t)iot_os_timer_left_ms(timer));
 
 	do {
