@@ -65,7 +65,7 @@ void reset_mock_net_read_buffer_pointer_index(void)
     net_read_ptr_index = 0;
 }
 
-static int _iot_net_mock_read(iot_net_interface_t *net, unsigned char *buf, int len, iot_os_timer timer)
+static int _iot_net_mock_read(iot_net_interface_t *net, unsigned char *buf, size_t len, iot_os_timer timer)
 {
     unsigned char *mock_buf = mock_ptr_type(unsigned char*);
     int ret;

@@ -98,7 +98,6 @@ iot_error_t _iot_nv_io_storage(const iot_nvd_t nv_id, iot_nv_io_mode_t mode, cha
 	iot_error_t err = IOT_ERROR_NONE;
 	iot_security_context_t *security_context;
 	iot_security_buffer_t data_buf = {0};
-	bool nv_append_null_terminated = 1;
 
 	IOT_DEBUG("id = %d, mode = %d", nv_id, mode);
 
@@ -137,7 +136,7 @@ iot_error_t _iot_nv_io_storage(const iot_nvd_t nv_id, iot_nv_io_mode_t mode, cha
 		}
 
 		memcpy(data, data_buf.p, data_buf.len);
-		/* null terminated string */
+		/* make null terminated string */
 		if (data_buf.len < data_len) {
 			data[data_buf.len] = '\0';
 		}
@@ -147,10 +146,6 @@ iot_error_t _iot_nv_io_storage(const iot_nvd_t nv_id, iot_nv_io_mode_t mode, cha
 	case IOT_NV_MODE_WRITE:
 		data_buf.p = (unsigned char *)data;
 		data_buf.len = data_len;
-
-		if (nv_append_null_terminated) {
-			data_buf.len += 1;
-		}
 
 		err = iot_security_storage_write(security_context, nv_id, &data_buf);
 		if (err != IOT_ERROR_NONE) {

@@ -230,6 +230,10 @@ static void _iot_mqtt_process_post_write(MQTTClient *client, iot_mqtt_packet_chu
 {
 	switch(chunk->packet_type) {
 		case CONNECT:
+			chunk->chunk_state = PACKET_CHUNK_ACK_PENDING;
+			iot_os_timer_count_ms(chunk->expiry_time, MQTT_CONNECT_TIMEOUT);
+			_iot_mqtt_queue_push(&client->ack_pending_queue, chunk);
+			break;
 		case SUBSCRIBE:
 		case UNSUBSCRIBE:
 		case PUBREL:
@@ -891,23 +895,41 @@ static void _iot_mqtt_process_pending_packets(MQTTClient *client)
 		if (w_chunk == NULL) {
 			return;
 		}
-		w_chunk->retry_count++;
-		if (w_chunk->retry_count < MQTT_PUBLISH_RETRY) {
-			w_chunk->chunk_state = PACKET_CHUNK_WRITE_PENDING;
-			if (client != NULL && client->magic == MQTT_CLIENT_STRUCT_MAGIC_NUMBER) {
-				_iot_mqtt_queue_push(&client->write_pending_queue, w_chunk);
-			} else {
-				_iot_mqtt_chunk_destroy(w_chunk);
-			}
-		} else {
-			w_chunk->chunk_state = PACKET_CHUNK_TIMEOUT;
-			if (!w_chunk->have_owner) {
-				if (client != NULL && client->magic == MQTT_CLIENT_STRUCT_MAGIC_NUMBER) {
-					_iot_mqtt_queue_push(&client->user_event_callback_queue, w_chunk);
+		switch (w_chunk->packet_type) {
+			case CONNECT:
+				if (w_chunk->have_owner) {
+					w_chunk->chunk_state = PACKET_CHUNK_TIMEOUT;
 				} else {
-					_iot_mqtt_chunk_destroy(w_chunk);
+					w_chunk->chunk_state = PACKET_CHUNK_TIMEOUT;
+					if (client != NULL && client->magic == MQTT_CLIENT_STRUCT_MAGIC_NUMBER) {
+						_iot_mqtt_queue_push(&client->user_event_callback_queue, w_chunk);
+					} else {
+						_iot_mqtt_chunk_destroy(w_chunk);
+					}
 				}
-			}
+				break;
+			default:
+				w_chunk->retry_count++;
+				if (w_chunk->retry_count < MQTT_PUBLISH_RETRY) {
+					w_chunk->chunk_state = PACKET_CHUNK_WRITE_PENDING;
+					if (client != NULL && client->magic == MQTT_CLIENT_STRUCT_MAGIC_NUMBER) {
+						_iot_mqtt_queue_push(&client->write_pending_queue, w_chunk);
+					} else {
+						_iot_mqtt_chunk_destroy(w_chunk);
+					}
+				} else {
+					if (w_chunk->have_owner) {
+						w_chunk->chunk_state = PACKET_CHUNK_TIMEOUT;
+					} else {
+						w_chunk->chunk_state = PACKET_CHUNK_TIMEOUT;
+						if (client != NULL && client->magic == MQTT_CLIENT_STRUCT_MAGIC_NUMBER) {
+							_iot_mqtt_queue_push(&client->user_event_callback_queue, w_chunk);
+						} else {
+							_iot_mqtt_chunk_destroy(w_chunk);
+						}
+					}
+				}
+				break;
 		}
 	}
 }

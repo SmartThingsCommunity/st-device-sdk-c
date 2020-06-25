@@ -323,4 +323,8 @@ void TC_iot_easysetup_httpd_deviceinfo_success(void **state);
 void TC_iot_easysetup_httpd_keyinfo_single_transfer_success(void **state);
 void TC_iot_easysetup_httpd_keyinfo_separated_transfer_success(void **state);
 
+// TCs for iot_dump_log.c
+void TC_iot_dump_create_dump_state_failure(void **state);
+void TC_iot_dump_create_dump_state_success(void **state);
+void TC_iot_dump_log(void **state);
 #endif //ST_DEVICE_SDK_C_TCS_H
