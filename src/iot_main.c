@@ -862,7 +862,8 @@ static iot_error_t _do_iot_main_command(struct iot_context *ctx,
 			if (*reboot) {
 				IOT_REBOOT();
 			} else {
-				err = iot_state_update(ctx, IOT_STATE_UNKNOWN, 0);
+				err = iot_state_update(ctx, IOT_STATE_UNKNOWN,
+						IOT_STATE_OPT_CLEANUP);
 			}
 
 			break;
@@ -987,6 +988,39 @@ static void _throw_away_all_pub_queue(struct iot_context *ctx)
 		if (final_msg.msg) {
 			free(final_msg.msg);
 		}
+	}
+}
+
+static void _throw_away_all_cmd_queue(struct iot_context *ctx)
+{
+	struct iot_command cmd;
+	enum iot_command_type cmd_type;
+
+	if (!ctx) {
+		IOT_ERROR("There is no ctx!!");
+		IOT_DUMP_MAIN(ERROR, BASE, 0xDEADBEEF);
+		return;
+	}
+
+	while (iot_os_queue_receive(ctx->cmd_queue,
+				&cmd, 0) == IOT_OS_TRUE) {
+		_clear_cmd_status(ctx, cmd.cmd_type);
+		if (cmd.param) {
+			free(cmd.param);
+		}
+	}
+
+	if (ctx->cmd_status) {
+		IOT_WARN("There are unfinished cmds : 0x%x", ctx->cmd_status);
+		for (cmd_type = IOT_COMMAND_READY_TO_CTL;
+				cmd_type <= IOT_COMMAND_TYPE_MAX; cmd_type++) {
+			if (ctx->cmd_count[cmd_type]) {
+				IOT_WARN("Remained cmd[%d] = %d", cmd_type,
+					ctx->cmd_count[cmd_type]);
+				ctx->cmd_count[cmd_type] = 0;
+			}
+		}
+		ctx->cmd_status = 0;
 	}
 }
 
@@ -1628,8 +1662,16 @@ static iot_error_t _do_state_updating(struct iot_context *ctx,
 		if (ctx->es_res_created)
 			_delete_easysetup_resources_all(ctx);
 
-		iot_os_eventgroup_set_bits(ctx->usr_events,
-			IOT_USR_INTERACT_BIT_CONFIRM_FAILED);
+		/* This is final state of iot-core, so update it now */
+		ctx->curr_state = ctx->req_state = IOT_STATE_UNKNOWN;
+
+		if (opt == IOT_STATE_OPT_CLEANUP) {
+			iot_os_eventgroup_set_bits(ctx->usr_events,
+				IOT_USR_INTERACT_BIT_CONFIRM_FAILED | IOT_USR_INTERACT_BIT_CLEANUP_DONE);
+		} else {
+			iot_os_eventgroup_set_bits(ctx->usr_events,
+				IOT_USR_INTERACT_BIT_CONFIRM_FAILED);
+		}
 
 		*timeout_ms = IOT_OS_MAX_DELAY;
 		iot_err = IOT_ERROR_NONE;
@@ -1711,9 +1753,13 @@ int st_conn_start(IOT_CTX *iot_ctx, st_status_cb status_cb,
 		}
 	}
 
+	iot_os_mutex_unlock(&ctx->st_conn_lock);
+
 	iot_os_eventgroup_clear_bits(ctx->usr_events, IOT_USR_INTERACT_BIT_ALL);
 	curr_events = iot_os_eventgroup_wait_bits(ctx->usr_events,
 		IOT_USR_INTERACT_BIT_ALL, true, IOT_OS_MAX_DELAY);
+
+	iot_os_mutex_lock(&ctx->st_conn_lock);
 
 	if (curr_events & IOT_USR_INTERACT_BIT_PROV_CONFIRM) {
 		if (ctx->devconf.ownership_validation_type & IOT_OVF_TYPE_BUTTON) {
@@ -1750,20 +1796,39 @@ end_st_conn_start:
 int st_conn_cleanup(IOT_CTX *iot_ctx, bool reboot)
 {
 	iot_error_t iot_err;
+	unsigned char curr_events;
 	struct iot_context *ctx = (struct iot_context*)iot_ctx;
 
 	if (!ctx)
 		return IOT_ERROR_BAD_REQ;
 
+	iot_os_mutex_lock(&ctx->st_conn_lock);
+
+	/* remove all queued commands */
+	_throw_away_all_cmd_queue(ctx);
+
+	iot_os_eventgroup_clear_bits(ctx->usr_events, IOT_USR_INTERACT_BIT_CLEANUP_DONE);
+
 	iot_err = iot_command_send(ctx,
 			IOT_COMMAND_SELF_CLEANUP, &reboot, sizeof(bool));
-
-	if ((iot_err == IOT_ERROR_NONE) && reboot) {
-		/* reboot case : infinite waiting for system reboot */
-		iot_os_delay(IOT_OS_MAX_DELAY);
-	} else if (iot_err == IOT_ERROR_NONE) {
-		iot_os_delay(1000);
+	if (iot_err != IOT_ERROR_NONE) {
+		IOT_ERROR("failed to send cleanup(%d)", iot_err);
+		IOT_DUMP_MAIN(ERROR, BASE, iot_err);
+		goto err_cleanup;
 	}
+
+	curr_events = iot_os_eventgroup_wait_bits(ctx->usr_events,
+		IOT_USR_INTERACT_BIT_CLEANUP_DONE, true, (NEXT_STATE_TIMEOUT_MS * 2));
+
+	if (!(curr_events & IOT_USR_INTERACT_BIT_CLEANUP_DONE)) {
+		IOT_ERROR("Timeout happened for st_conn_cleanup");
+		IOT_DUMP_MAIN(ERROR, BASE, 0x8BADF00D);
+		iot_err = IOT_ERROR_TIMEOUT;
+	}
+
+err_cleanup:
+
+	iot_os_mutex_unlock(&ctx->st_conn_lock);
 
 	return iot_err;
 }
