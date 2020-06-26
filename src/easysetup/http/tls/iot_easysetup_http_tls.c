@@ -23,6 +23,9 @@
 #include <netinet/in.h>
 #include <unistd.h>
 #endif
+#include <iot_nv_data.h>
+#include <iot_util.h>
+
 #include "../easysetup_http.h"
 #include "iot_os_util.h"
 #include "iot_debug.h"
@@ -37,90 +40,6 @@
 #include "mbedtls/certs.h"
 #include "mbedtls/x509.h"
 #include "mbedtls/debug.h"
-
-#define STDK_RSA_ROOTCA \
-"-----BEGIN CERTIFICATE-----\r\n" \
-"MIIDojCCAoqgAwIBAgIBATANBgkqhkiG9w0BAQsFADBzMQswCQYDVQQGEwJLUjEf\r\n" \
-"MB0GA1UECgwWU21hcnRUaGluZ3MgRGV2aWNlIFNESzEVMBMGA1UECwwMTVFUVCBS\r\n" \
-"b290IENBMSwwKgYDVQQDDCNTbWFydFRoaW5ncyBEZXZpY2UgU0RLIFJvb3QgQ0Eg\r\n" \
-"VEVTVDAgFw0yMDAzMTgwNzAzMzhaGA8yMDUwMDMxMTA3MDMzOFowczELMAkGA1UE\r\n" \
-"BhMCS1IxHzAdBgNVBAoMFlNtYXJ0VGhpbmdzIERldmljZSBTREsxFTATBgNVBAsM\r\n" \
-"DE1RVFQgUm9vdCBDQTEsMCoGA1UEAwwjU21hcnRUaGluZ3MgRGV2aWNlIFNESyBS\r\n" \
-"b290IENBIFRFU1QwggEiMA0GCSqGSIb3DQEBAQUAA4IBDwAwggEKAoIBAQC5Au2r\r\n" \
-"+itMj8vbvHwwaWa7QDRvNFEz/Qkb90JCnEGytLJV4XGWkcDiCnYYRlumMX9a1lmp\r\n" \
-"YRQHmCjArrY4iNO9S1EwM3fht9pXaJuNqZEC6leqwMPFIWImHOz6mezUqanMpe9R\r\n" \
-"oo161hvugal0aGHm5w6RbzXSCHTUWaHO+EaLq1Qm0IRuVHVLX9kltG7iqZXJ4CgJ\r\n" \
-"fZDjkBYzV8bj+pp6zcb1c+ZfpEQXtlxdTHtk4mRP6gnZwWsmPGzE6EEDlPUweiCz\r\n" \
-"F+uG9Aup43aKL4L25Sar1jlU7qOADS6JEOfbEiG3AmeS2cUiMF3YrFf6WrMYvE7q\r\n" \
-"YX43IyYlGNwg5qO5AgMBAAGjPzA9MA8GA1UdEwEB/wQFMAMBAf8wHQYDVR0OBBYE\r\n" \
-"FE18Fuly4MxVXZMBTfC2iEceRkRzMAsGA1UdDwQEAwIBxjANBgkqhkiG9w0BAQsF\r\n" \
-"AAOCAQEAQnji/3IXoYP3Ep2+BidrVBplw7CPKxBDebTOHEW/j4yQXbivFHF2l985\r\n" \
-"pTjCL4ToK4zRAxDSDsH+mpkaS2JjuiS/KAOGXFAxdV8H2fH5uO0aks4EDIx8SLLK\r\n" \
-"b7W3qSOtU9BNmgtwt2k9pgTq/GyEsbsAurxRRI23XNfD5eldDz4i/NYQ9tQkk7tI\r\n" \
-"yCuurSDuuF5ojdQ2BeWgF1BRJPyNfYpnD9NceJHvRuJAenL/2My6XC0q+9Cz8tyf\r\n" \
-"X0GZldbecF05pPIx3WMUKbgWfJaDFDOUaAXkQWGLRmkKzkSRHhCcVMJmThrcG8Y7\r\n" \
-"gjNv9hQqAgBQd8GZhfXR3NEhrxwNOA==\r\n" \
-"-----END CERTIFICATE-----\r\n"
-
-#define STDK_RSA_DEVICE \
-"-----BEGIN CERTIFICATE-----\r\n" \
-"MIID0jCCArqgAwIBAgIJAL9O6OLPK0ZsMA0GCSqGSIb3DQEBCwUAMHMxCzAJBgNV\r\n" \
-"BAYTAktSMR8wHQYDVQQKDBZTbWFydFRoaW5ncyBEZXZpY2UgU0RLMRUwEwYDVQQL\r\n" \
-"DAxNUVRUIFJvb3QgQ0ExLDAqBgNVBAMMI1NtYXJ0VGhpbmdzIERldmljZSBTREsg\r\n" \
-"Um9vdCBDQSBURVNUMCAXDTIwMDMxODA4MjAzNVoYDzIwNjAwMzA4MDgyMDM1WjBh\r\n" \
-"MQswCQYDVQQGEwJLUjEfMB0GA1UECgwWU21hcnRUaGluZ3MgRGV2aWNlIFNESzEU\r\n" \
-"MBIGA1UECwwLTVFUVCBEZXZpY2UxGzAZBgNVBAMMElNtYXJ0VGhpbmdzIERldmlj\r\n" \
-"ZTCCASIwDQYJKoZIhvcNAQEBBQADggEPADCCAQoCggEBAL4jUwmm4QWhGc4WvbJh\r\n" \
-"a8WDLcyVfCTqvtkMD9AqwaO8cC1n8C+IRqurD2gJSxyyRLQP2qIBjcX+iEs12d/Z\r\n" \
-"l+ZGUOovcWKRCfEr+qexsu3f2BS1A1U638iTjuF7ByxjI89F/RvmvbdlwxHvD1N9\r\n" \
-"6oJfF+MP4sFVqP/3QT14kbrQ7T7cEWokQx/l3ItvqSJzeEoccZBGPjAxf+3K2Fse\r\n" \
-"/y1mlJEBnQ+gfX3h7u8HkLO7NhCP490I0qZosi95hIU7wB7VxuWpctCp0uOcbh4K\r\n" \
-"Yo4bikYb2Hz+8NLl3R5eZsLDxZCrZmw/8xBgb0J+nwbUa1sljrelsjuKa7rRf+E3\r\n" \
-"nP0CAwEAAaN5MHcwCQYDVR0TBAIwADAfBgNVHSMEGDAWgBRNfBbpcuDMVV2TAU3w\r\n" \
-"tohHHkZEczAdBgNVHQ4EFgQUBVEurDL0dr9M2jI43P5eJYVjiN4wCwYDVR0PBAQD\r\n" \
-"AgXgMB0GA1UdJQQWMBQGCCsGAQUFBwMBBggrBgEFBQcDAjANBgkqhkiG9w0BAQsF\r\n" \
-"AAOCAQEAbgaAyWqF4z4LG2bLGHRD4QSmDpDIkByY0bX8y92oyFVlNokbu0ggV5nE\r\n" \
-"vmRh/dPB4KZ/uVt6ikfoZN6yCsrWkx8PWN7ivQsUhmcRqiPUQZZPdOk5XZEd8A1i\r\n" \
-"YRfBLTooFvfhoiOT7BKhwsst+U5ilh1ObcBUlGhme6dSgEfXUNFYf4bt7lupSjU8\r\n" \
-"2nHglmcClDXI0PhZJJbqci1yjXKwY+zJ9sgeBz4VqdTbdblQLRWpSYDLcfdCGO1r\r\n" \
-"gxTlCwIvfpTc6Fdqu9XHMnl3B8j9hDbXUknsfqr8uJgn/E9oCO9EON3kkgqg6qBb\r\n" \
-"uC555eYxbrmIgrHfx8Nf69vA4oxA9g==\r\n" \
-"-----END CERTIFICATE-----\r\n"
-
-const char mbedtls_stdk_cert[] = STDK_RSA_DEVICE;
-const size_t mbedtls_stdk_cert_len = sizeof(mbedtls_stdk_cert);
-
-#define STDK_RSA_PRIVATE_KEY \
-"-----BEGIN RSA PRIVATE KEY-----\r\n" \
-"MIIEpAIBAAKCAQEAviNTCabhBaEZzha9smFrxYMtzJV8JOq+2QwP0CrBo7xwLWfw\r\n" \
-"L4hGq6sPaAlLHLJEtA/aogGNxf6ISzXZ39mX5kZQ6i9xYpEJ8Sv6p7Gy7d/YFLUD\r\n" \
-"VTrfyJOO4XsHLGMjz0X9G+a9t2XDEe8PU33qgl8X4w/iwVWo//dBPXiRutDtPtwR\r\n" \
-"aiRDH+Xci2+pInN4ShxxkEY+MDF/7crYWx7/LWaUkQGdD6B9feHu7weQs7s2EI/j\r\n" \
-"3QjSpmiyL3mEhTvAHtXG5aly0KnS45xuHgpijhuKRhvYfP7w0uXdHl5mwsPFkKtm\r\n" \
-"bD/zEGBvQn6fBtRrWyWOt6WyO4prutF/4Tec/QIDAQABAoIBAG524VhbLqJxnSdh\r\n" \
-"iOYouU8vzhzswApGo4g//LPpE0UIRnfqyd0jpEM6B6Jeu9e5Ljcaet/iXTapkQ95\r\n" \
-"AtKNfTWYpovX8lzcfNUzwtVIZPbUNJqbK4uJv9es+ra/HkTIeFaEh+98173EDlfN\r\n" \
-"9q6AGg2SJ7OQWCIQnTXQtYN8F9ZbZ6hjPueO5V8oe0zfbP9tAMQWvWnm8Vg0+Zbs\r\n" \
-"oN8Hk4pKLoso91kHTmKgyRsLKx2jLrSWPH32EzMW9wkm+O4752xO/Qhi3IWXkzJJ\r\n" \
-"gbrPoLQ5GNp+c1pH1YHxW5p1WXaMU8gFVK4uOjrbmComCchRSZz2Vt+0kE5E2vRH\r\n" \
-"AfMC+qECgYEA9OzBJvnX3RhmT3zw+FlrsJD+iUY3vrlyLTIWzyxknyKKEGd013c0\r\n" \
-"noBU6ufHZ+WhgU9DjmugA80yx98Y+t4q97qqgZtMn8TnlGY7/t5YwvlU6TxMI7aa\r\n" \
-"s46bBMBvJbBdyBlvVkhA249wdFjgmhJv0fnae1l/s9eOUrRcMY1PTzkCgYEAxrxb\r\n" \
-"v8yRPd541MEg6vOvSjoeXHfh0W/HkwnDMTJh9NRJvC5JXViw4r/VgtYGh9Sj9C/S\r\n" \
-"FdK/3R1i8u0TnN3/jXUvAbWXQLsyPy0uD7tKdcuPluG654osiuzvFAUK5TOgsP8J\r\n" \
-"XNOEExepMbfXXzPo+uI0YnvWNjQ9VcdN0SDEt+UCgYB8mST56whB1fPWZD1CWltK\r\n" \
-"i7ixpSMex8Cp9V1dL7xQqIWMKtVp956xM5//kMIEvPEYk3ZOsbnJtU4sF/bhSLyb\r\n" \
-"Ij8ziAnHDaix+gBzfDGznpvvu1kQogi5Z8a8+BiTF9HdxfK59i/ogmQ3DC/WsaJp\r\n" \
-"M65OKg2pM/OXZ2GvY7ABIQKBgQDEy4bLQgZdTq02eNxg7Nga17xy8p+iJl9pglRQ\r\n" \
-"pkSMDZ/KgcdScV4P28jRG6Ex5mZIiwYtaBloGw594jf2sXq7GFxpA+n4Rqa2GsYu\r\n" \
-"+9b7GI1i6rqLR69eDsucdnXYi6xHOPWLf0SdJ2P7AMJ72sqNjWw0Tc7MtCQ8ifTL\r\n" \
-"7vf95QKBgQDs7pkpGwmTqkF5QpqLiJ1pVdo0ZKniia0k2Xzn6nIwhuWBq2WgIIhL\r\n" \
-"y9VLNovTHTHl6E4Y0jXjFmbapF03TEnM4mFBZ6lAIJuzN6dPY3VaZk6aDfpaV9fr\r\n" \
-"ay49ZXd3aQsYaker7WVrKPGxMNsZ7Ej5BETSeiT+xdOmZj7SuZvTlQ==\r\n" \
-"-----END RSA PRIVATE KEY-----\r\n"
-
-const char mbedtls_stdk_private_key[] = STDK_RSA_PRIVATE_KEY;
-const size_t mbedtls_stdk_private_key_len = sizeof(mbedtls_stdk_private_key);
 
 static char *tx_buffer = NULL;
 
@@ -168,11 +87,15 @@ static void es_mbedtls_close_connection(void)
 static void es_mbedtls_task(void *data)
 {
 	char buf[2048];
+	char *cert_buf = NULL;
+	char *cert_chain_buf = NULL;
 	char *payload = NULL;
 	const char *pers = "easysetup";
 	int ret, len, type, cmd;
 	int handshake_done = 0;
 	iot_error_t err = IOT_ERROR_NONE;
+	size_t cert_len;
+	size_t cert_chain_len;
 	size_t content_len;
 
 	mbedtls_net_init(&listen_fd);
@@ -188,23 +111,41 @@ static void es_mbedtls_task(void *data)
 #endif
 
 	/*
-	 * 1. Load the certificates and private RSA key
+	 * 1. Load the certificate chain
 	 */
-	ret = mbedtls_x509_crt_parse(&srvcert, (const unsigned char *) mbedtls_stdk_cert,
-						  mbedtls_stdk_cert_len);
-	if (ret != 0)
-	{
-		IOT_ERROR( "certification parse failed : %d", ret );
+	ret = iot_nv_get_certificate(IOT_SECURITY_CERT_ID_DEVICE, &cert_buf, &cert_len);
+	if (ret) {
+		IOT_ERROR("iot_nv_get_certificate = %d", ret);
 		goto exit;
 	}
 
-	ret = mbedtls_pk_parse_key(&pkey, (const unsigned char *) mbedtls_stdk_private_key,
-						 mbedtls_stdk_private_key_len, NULL, 0);
-	if (ret != 0)
-	{
-		IOT_ERROR("private key parse failed : %d\n\n", ret);
+	cert_chain_buf = (char *)iot_os_malloc(cert_len);
+	cert_chain_len = cert_len;
+	memcpy(cert_chain_buf, cert_buf, cert_len);
+
+	ret = iot_nv_get_certificate(IOT_SECURITY_CERT_ID_SUB_CA, &cert_buf, &cert_len);
+	if (ret) {
+		IOT_ERROR("iot_nv_get_certificate = %d", ret);
 		goto exit;
 	}
+
+	cert_chain_buf = (char *)iot_os_realloc(cert_chain_buf, cert_chain_len + cert_len + 1);
+	if (cert_chain_buf) {
+		memcpy(cert_chain_buf + cert_chain_len, cert_buf, cert_len);
+		cert_chain_len += cert_len + 1;
+		cert_chain_buf[cert_chain_len - 1] = '\0';
+	} else {
+		IOT_ERROR("failed to realloc for cert chain");
+		goto exit;
+	}
+
+	ret = mbedtls_x509_crt_parse(&srvcert, (const unsigned char *)cert_chain_buf, cert_chain_len);
+	if (ret) {
+		IOT_ERROR( "certification parse failed : 0x%x", -ret);
+		goto exit;
+	}
+
+	iot_os_free(cert_buf);
 
 	/*
 	 * 2. Setup the listening TCP socket
@@ -343,7 +284,7 @@ static void es_mbedtls_task(void *data)
 					   mbedtls_ssl_get_ciphersuite(&ssl));
 
 		if (tx_buffer) {
-			free(tx_buffer);
+			iot_os_free(tx_buffer);
 			tx_buffer = NULL;
 		}
 
@@ -365,7 +306,7 @@ static void es_mbedtls_task(void *data)
 		while (1) {
 			memset(buf, 0, sizeof(buf));
 			ret = mbedtls_ssl_read(&ssl, (unsigned char *) buf, len);
-			if (ret)
+			if (ret > 0)
 				continue;
 			break;
 		}
@@ -398,7 +339,7 @@ void es_http_deinit(void)
 	}
 
 	if (tx_buffer) {
-		free(tx_buffer);
+		iot_os_free(tx_buffer);
 		tx_buffer = NULL;
 	}
 
