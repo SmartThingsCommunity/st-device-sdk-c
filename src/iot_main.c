@@ -1779,6 +1779,8 @@ int st_conn_start(IOT_CTX *iot_ctx, st_status_cb status_cb,
 	state_data.iot_state = IOT_STATE_INITIALIZED;
 	state_data.opt = IOT_STATE_OPT_NONE;
 
+	ctx->add_justworks = false;
+
 	if (status_cb) {
 		SET_STATUS_CB(status_cb, maps, usr_data);
 	}
@@ -1979,8 +1981,10 @@ int st_conn_start_ex(IOT_CTX *iot_ctx, iot_ext_args_t *ext_args)
 		state_data.opt = IOT_STATE_OPT_NONE;
 
 		if (ext_args->skip_usr_confirm) {
-			/* TODO : setting easy-setup to skip user confirm */
-			IOT_DEBUG("Skip user confirm by JUSTWORK");
+			ctx->add_justworks = true;
+			IOT_DEBUG("Skip user confirm adding by JUSTWORK");
+		} else {
+			ctx->add_justworks = false;
 		}
 	}
 

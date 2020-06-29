@@ -691,7 +691,9 @@ temp_exit:// TODO: once app is published with time info feature, it should be de
 	}
 
 	for (i = OVF_BIT_JUSTWORKS; i < OVF_BIT_MAX_FEATURE; i++) {
-		if (ctx->devconf.ownership_validation_type & (unsigned)(1 << i)) {
+		if ((i == OVF_BIT_JUSTWORKS) && ctx->add_justworks) {
+			JSON_ADD_ITEM_TO_ARRAY(array, JSON_CREATE_NUMBER(i));
+		} else if (ctx->devconf.ownership_validation_type & (unsigned)(1 << i)) {
 			JSON_ADD_ITEM_TO_ARRAY(array, JSON_CREATE_NUMBER(i));
 		}
 	}
