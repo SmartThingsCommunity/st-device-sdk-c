@@ -73,7 +73,11 @@ ifdef CONFIG_STDK_IOT_CORE_EASYSETUP_POSIX_TESTING
 COMPONENT_SRCDIRS += easysetup/posix_testing
 endif
 
+ifdef CONFIG_STDK_IOT_CORE_EASYSETUP_X509
+COMPONENT_SRCDIRS += easysetup/http/tls
+else
 COMPONENT_SRCDIRS += easysetup/http/tcp
+endif
 
 CPPFLAGS += -include $(COMPONENT_PATH)/include/iot_common.h
 
