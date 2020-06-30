@@ -572,10 +572,11 @@ static iot_error_t _do_iot_main_command(struct iot_context *ctx,
 					ctx->iot_reg_data.new_reged = true;
 					next_state = IOT_STATE_PROV_ENTER;
 				} else {
-					/* Wakeup user interaction by provisioning done */
-					iot_os_eventgroup_set_bits(ctx->usr_events,
-						IOT_USR_INTERACT_BIT_PROV_DONE);
-
+					if (!(cmd_only && *cmd_only)) {
+						/* Wakeup user interaction by provisioning done */
+						iot_os_eventgroup_set_bits(ctx->usr_events,
+							IOT_USR_INTERACT_BIT_PROV_DONE);
+					}
 					next_state = IOT_STATE_PROV_DONE;
 				}
 			}
@@ -584,7 +585,10 @@ static iot_error_t _do_iot_main_command(struct iot_context *ctx,
 				iot_os_eventgroup_set_bits(ctx->usr_events,
 						IOT_USR_INTERACT_BIT_CMD_DONE);
 				/* We don't need recovering for command only case */
-				err = IOT_ERROR_NONE;
+				if (err != IOT_ERROR_NONE) {
+					IOT_WARN("Internal WARN(%d) happened for command ony", err);
+					err = IOT_ERROR_NONE;
+				}
 			} else {
 				err = iot_state_update(ctx, next_state, state_opt);
 			}
@@ -2016,6 +2020,71 @@ int st_conn_start_ex(IOT_CTX *iot_ctx, iot_ext_args_t *ext_args)
 	IOT_DUMP_MAIN(INFO, BASE, iot_err);
 
 end_st_conn_start_ex:
+	iot_os_mutex_unlock(&ctx->st_conn_lock);
+	return iot_err;
+}
+
+int st_info_get(IOT_CTX *iot_ctx, iot_info_type_t info_type, iot_info_data_t *info_data)
+{
+	iot_error_t iot_err = IOT_ERROR_NONE;
+	struct iot_context *ctx = (struct iot_context*)iot_ctx;
+	unsigned char curr_events;
+	bool cmd_only;
+
+	if (!ctx || !info_data) {
+		IOT_ERROR("invalid parameters\n");
+		return IOT_ERROR_INVALID_ARGS;
+	}
+
+	iot_os_mutex_lock(&ctx->st_conn_lock);
+
+	switch (info_type) {
+	case IOT_INFO_TYPE_IOT_STATUS_AND_STAT:
+		if (ctx->reported_stat) {
+			info_data->st_status.iot_status = (ctx->reported_stat & IOT_STATUS_ALL);
+			info_data->st_status.stat_lv = (ctx->reported_stat >> 8u);
+		} else {
+			IOT_WARN("There is no reported_stat!!");
+			iot_err = IOT_ERROR_BAD_REQ;
+		}
+		break;
+
+	case IOT_INFO_TYPE_IOT_PROVISIONED:
+		iot_os_eventgroup_clear_bits(ctx->usr_events, IOT_USR_INTERACT_BIT_CMD_DONE);
+		cmd_only = true;
+
+		/* Check if STDK can try to connect to sever */
+		iot_err = iot_command_send(ctx,
+				IOT_COMMAND_CHECK_PROV_STATUS, &cmd_only, sizeof(bool));
+		if (iot_err != IOT_ERROR_NONE) {
+			IOT_ERROR("failed to send check_prov(%d)", iot_err);
+			IOT_DUMP_MAIN(ERROR, BASE, iot_err);
+			goto end_st_info_get;
+		}
+
+		curr_events = iot_os_eventgroup_wait_bits(ctx->usr_events,
+			IOT_USR_INTERACT_BIT_CMD_DONE, true, (NEXT_STATE_TIMEOUT_MS * 2));
+
+		if (!(curr_events & IOT_USR_INTERACT_BIT_CMD_DONE)) {
+			IOT_ERROR("Timeout happened for check_prov");
+			iot_err = IOT_ERROR_TIMEOUT;
+			goto end_st_info_get;
+		}
+
+		if (ctx->iot_reg_data.new_reged) {
+			info_data->provisioned = false;
+		} else {
+			info_data->provisioned = true;
+		}
+		break;
+
+	default:
+		IOT_ERROR("Unsupported iot_info_type!!(%d)\n", info_type);
+		iot_err = IOT_ERROR_INVALID_ARGS;
+		break;
+	}
+
+end_st_info_get:
 	iot_os_mutex_unlock(&ctx->st_conn_lock);
 	return iot_err;
 }
