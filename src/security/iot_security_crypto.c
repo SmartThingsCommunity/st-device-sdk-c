@@ -95,6 +95,8 @@ size_t iot_security_pk_get_signature_len(iot_security_key_type_t pk_type)
 	switch (pk_type) {
 	case IOT_SECURITY_KEY_TYPE_RSA2048:
 		return IOT_SECURITY_SIGNATURE_RSA2048_LEN;
+	case IOT_SECURITY_KEY_TYPE_ECCP256:
+		return IOT_SECURITY_SIGNATURE_ECCP256_LEN;
 	case IOT_SECURITY_KEY_TYPE_ED25519:
 		return IOT_SECURITY_SIGNATURE_ED25519_LEN;
 	default:

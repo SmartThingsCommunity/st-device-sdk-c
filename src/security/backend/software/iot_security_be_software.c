@@ -340,6 +340,51 @@ iot_error_t _iot_security_be_software_pk_load_rsa(iot_security_context_t *contex
 }
 #endif
 
+#if defined(CONFIG_STDK_IOT_CORE_CRYPTO_SUPPORT_ECDSA)
+STATIC_FUNCTION
+iot_error_t _iot_security_be_software_pk_load_ecdsa(iot_security_context_t *context)
+{
+	iot_error_t err;
+	iot_security_storage_id_t storage_id;
+	iot_security_buffer_t key_buf = { 0 };
+
+	err = _iot_security_be_check_context_and_params_is_valid(context, IOT_SECURITY_SUB_PK);
+	if (err) {
+		return err;
+	}
+
+	storage_id = _iot_security_be_software_id_key2storage(IOT_SECURITY_KEY_ID_DEVICE_PRIVATE);
+	if (storage_id == IOT_NVD_UNKNOWN) {
+		return IOT_ERROR_SECURITY_KEY_INVALID_ID;
+	}
+
+	err = _iot_security_be_software_bsp_fs_load(context, storage_id, &key_buf);
+	if (err) {
+		return err;
+	}
+
+	context->pk_params->seckey = key_buf;
+
+#if defined(CONFIG_STDK_IOT_CORE_CRYPTO_SUPPORT_VERIFY)
+	storage_id = _iot_security_be_software_id_cert2storage(IOT_SECURITY_CERT_ID_DEVICE);
+	if (storage_id == IOT_NVD_UNKNOWN) {
+		return IOT_ERROR_SECURITY_KEY_INVALID_ID;
+	}
+
+	err = _iot_security_be_software_bsp_fs_load(context, storage_id, &key_buf);
+	if (err) {
+		_iot_security_be_software_buffer_free(&context->pk_params->seckey);
+		return err;
+	}
+
+	context->pk_params->pubkey = key_buf;
+#endif
+	context->pk_params->type = IOT_SECURITY_KEY_TYPE_ECCP256;
+
+	return err;
+}
+#endif
+
 STATIC_FUNCTION
 iot_error_t _iot_security_be_software_pk_load_key(iot_security_context_t *context)
 {
@@ -347,6 +392,8 @@ iot_error_t _iot_security_be_software_pk_load_key(iot_security_context_t *contex
 	return _iot_security_be_software_pk_load_ed25519(context);
 #elif defined(CONFIG_STDK_IOT_CORE_CRYPTO_SUPPORT_RSA)
 	return _iot_security_be_software_pk_load_rsa(context);
+#elif defined(CONFIG_STDK_IOT_CORE_CRYPTO_SUPPORT_ECDSA)
+	return _iot_security_be_software_pk_load_ecdsa(context);
 #else
 	IOT_ERROR("not implemented");
 	IOT_ERROR_DUMP_AND_RETURN(NOT_IMPLEMENTED, 0);
@@ -688,6 +735,163 @@ exit:
 #endif /* CONFIG_STDK_IOT_CORE_CRYPTO_SUPPORT_VERIFY */
 #endif /* CONFIG_STDK_IOT_CORE_CRYPTO_SUPPORT_RSA */
 
+#if defined(CONFIG_STDK_IOT_CORE_CRYPTO_SUPPORT_ECDSA)
+STATIC_FUNCTION
+iot_error_t _iot_security_be_software_pk_sign_ecdsa(iot_security_context_t *context, iot_security_buffer_t *input_buf, iot_security_buffer_t *sig_buf)
+{
+	iot_error_t err;
+	iot_security_pk_params_t *pk_params;
+	mbedtls_pk_context mbed_pk_context;
+	mbedtls_md_type_t mbed_md_type;
+	unsigned char hash[IOT_SECURITY_SHA256_LEN] = {0};
+	int ret;
+
+	err = _iot_security_be_check_context_and_params_is_valid(context, IOT_SECURITY_SUB_PK);
+	if (err) {
+		return err;
+	}
+
+	if (!input_buf || !input_buf->p || (input_buf->len == 0)) {
+		IOT_ERROR("input buffer is invalid");
+		return IOT_ERROR_INVALID_ARGS;
+	}
+
+	if (!sig_buf) {
+		IOT_ERROR("sig buffer is null");
+		return IOT_ERROR_INVALID_ARGS;
+	}
+
+	pk_params = context->pk_params;
+
+	if (!pk_params->seckey.p || (pk_params->seckey.len == 0)) {
+		IOT_ERROR("seckey is invalid with %d@%p", (int)pk_params->seckey.len, pk_params->seckey.p);
+		return IOT_ERROR_SECURITY_PK_INVALID_SECKEY;
+	}
+
+	IOT_DEBUG("input:  %3d@%p", (int)input_buf->len, input_buf->p);
+	IOT_DEBUG("seckey: %3d@%p", (int)pk_params->seckey.len, pk_params->seckey.p);
+
+	mbed_md_type = MBEDTLS_MD_SHA256;
+
+	mbedtls_pk_init(&mbed_pk_context);
+
+	ret = mbedtls_pk_parse_key(&mbed_pk_context, (const unsigned char *)pk_params->seckey.p, pk_params->seckey.len + 1, NULL, 0);
+	if (ret) {
+		IOT_ERROR("mbedtls_pk_parse_key = -0x%04X\n", -ret);
+		err = IOT_ERROR_SECURITY_PK_PARSEKEY;
+		goto exit;
+	}
+
+	err = iot_security_sha256(input_buf->p, input_buf->len, hash, sizeof(hash));
+	if (err) {
+		goto exit;
+	}
+
+	sig_buf->len = iot_security_pk_get_signature_len(pk_params->type);
+	sig_buf->p = (unsigned char *)iot_os_malloc(sig_buf->len);
+	if (!sig_buf->p) {
+		IOT_ERROR("failed to malloc for sig");
+		return IOT_ERROR_MEM_ALLOC;
+	}
+
+	ret = mbedtls_pk_sign(&mbed_pk_context, mbed_md_type, hash, sizeof(hash), sig_buf->p, &sig_buf->len, NULL, NULL);
+	if (ret) {
+		IOT_ERROR("mbedtls_pk_sign = -0x%04X\n", -ret);
+		_iot_security_be_software_buffer_free(sig_buf);
+		err = IOT_ERROR_SECURITY_PK_SIGN;
+		goto exit;
+	}
+
+	if (sig_buf->len != iot_security_pk_get_signature_len(pk_params->type)) {
+		unsigned char *tmp;
+		tmp = (unsigned char *)iot_os_realloc(sig_buf->p, sig_buf->len);
+		if (tmp) {
+			sig_buf->p = tmp;
+		}
+	}
+
+	IOT_DEBUG("sig:    %3d@%p", (int)sig_buf->len, sig_buf->p);
+
+	err = IOT_ERROR_NONE;
+exit:
+	memset(&hash, 0, sizeof(hash));
+	mbedtls_pk_free(&mbed_pk_context);
+
+	return err;
+}
+
+#if defined(CONFIG_STDK_IOT_CORE_CRYPTO_SUPPORT_VERIFY)
+static iot_error_t _iot_security_be_software_pk_verify_ecdsa(iot_security_context_t *context, iot_security_buffer_t *input_buf, iot_security_buffer_t *sig_buf)
+{
+	iot_error_t err;
+	iot_security_pk_params_t *pk_params;
+	mbedtls_x509_crt mbed_x509_crt;
+	mbedtls_pk_context mbed_pk_context;
+	mbedtls_md_type_t mbed_md_type;
+	unsigned char hash[IOT_SECURITY_SHA256_LEN] = {0};
+	int ret;
+
+	err = _iot_security_be_check_context_and_params_is_valid(context, IOT_SECURITY_SUB_PK);
+	if (err) {
+		return err;
+	}
+
+	if (!input_buf || !input_buf->p || (input_buf->len == 0)) {
+		IOT_ERROR("input buffer is invalid");
+		return IOT_ERROR_INVALID_ARGS;
+	}
+
+	if (!sig_buf || !sig_buf->p || (sig_buf->len == 0)) {
+		IOT_ERROR("sig buffer is invalid");
+		return IOT_ERROR_INVALID_ARGS;
+	}
+
+	pk_params = context->pk_params;
+
+	if (!pk_params->pubkey.p || (pk_params->pubkey.len == 0)) {
+		IOT_ERROR("pubkey is invalid");
+		return IOT_ERROR_SECURITY_PK_INVALID_PUBKEY;
+	}
+
+	IOT_DEBUG("input:  %3d@%p", (int)input->len, input->p);
+	IOT_DEBUG("sig:    %3d@%p", (int)sig->len, sig->p);
+	IOT_DEBUG("pubkey: %3d@%p", (int)pk_params->pubkey.len, pk_params->pubkey);
+
+	mbed_md_type = MBEDTLS_MD_SHA256;
+
+	mbedtls_x509_crt_init(&mbed_x509_crt);
+
+	ret = mbedtls_x509_crt_parse(&mbed_x509_crt, (const unsigned char *)pk_params->pubkey.p, pk_params->pubkey.len + 1);
+	if (ret) {
+		IOT_ERROR("mbedtls_pk_parse_key = -0x%04X\n", -ret);
+		err = IOT_ERROR_SECURITY_PK_PARSEKEY;
+		goto exit;
+	}
+
+	err = iot_security_sha256(input_buf->p, input_buf->len, hash, sizeof(hash));
+	if (err) {
+		goto exit;
+	}
+
+	ret = mbedtls_pk_verify(&mbed_x509_crt.pk, mbed_md_type, hash, sizeof(hash), sig_buf->p, sig_buf->len);
+	if (ret) {
+		IOT_ERROR("mbedtls_pk_verify = -0x%04X\n", -ret);
+		err = IOT_ERROR_SECURITY_PK_VERIFY;
+		goto exit;
+	}
+
+	IOT_DEBUG("sign verify success");
+
+	err = IOT_ERROR_NONE;
+exit:
+	memset(&hash, 0, sizeof(hash));
+	mbedtls_x509_crt_free(&mbed_x509_crt);
+
+	return err;
+}
+#endif /* CONFIG_STDK_IOT_CORE_CRYPTO_SUPPORT_VERIFY */
+#endif /* CONFIG_STDK_IOT_CORE_CRYPTO_SUPPORT_ECDSA */
+
 STATIC_FUNCTION
 iot_error_t _iot_security_be_software_pk_sign(iot_security_context_t *context, iot_security_buffer_t *input_buf, iot_security_buffer_t *sig_buf)
 {
@@ -695,6 +899,8 @@ iot_error_t _iot_security_be_software_pk_sign(iot_security_context_t *context, i
 	return _iot_security_be_software_pk_sign_ed25519(context, input_buf, sig_buf);
 #elif defined(CONFIG_STDK_IOT_CORE_CRYPTO_SUPPORT_RSA)
 	return _iot_security_be_software_pk_sign_rsa(context, input_buf, sig_buf);
+#elif defined(CONFIG_STDK_IOT_CORE_CRYPTO_SUPPORT_ECDSA)
+	return _iot_security_be_software_pk_sign_ecdsa(context, input_buf, sig_buf);
 #else
 	IOT_ERROR("not implemented");
 	IOT_ERROR_DUMP_AND_RETURN(NOT_IMPLEMENTED, 0);
@@ -709,6 +915,8 @@ iot_error_t _iot_security_be_software_pk_verify(iot_security_context_t *context,
 	return _iot_security_be_software_pk_verify_ed25519(context, input_buf, sig_buf);
 #elif defined(CONFIG_STDK_IOT_CORE_CRYPTO_SUPPORT_RSA)
 	return _iot_security_be_software_pk_verify_rsa(context, input_buf, sig_buf);
+#elif defined(CONFIG_STDK_IOT_CORE_CRYPTO_SUPPORT_ECDSA)
+	return _iot_security_be_software_pk_verify_ecdsa(context, input_buf, sig_buf);
 #else
 	IOT_ERROR("not implemented");
 	IOT_ERROR_DUMP_AND_RETURN(NOT_IMPLEMENTED, 0);
