@@ -1305,12 +1305,10 @@ IOT_CTX* st_conn_init(unsigned char *onboarding_config, unsigned int onboarding_
 	IOT_INFO("stdk_version : %d.%d.%d-%s",
 		VER_MAJOR, VER_MINOR, VER_PATCH, VER_EXTRA_STR);
 #else
-	IOT_INFO("stdk_version : %d.%d.%d",
-		VER_MAJOR, VER_MINOR, VER_PATCH);
+	IOT_INFO("stdk_version : %s", STDK_VERSION_STRING);
 #endif
 
-	IOT_DUMP_MAIN(INFO, BASE,
-		((VER_MAJOR << 24) | (VER_MINOR << 12) | VER_PATCH));
+	IOT_DUMP_MAIN(INFO, BASE, STDK_VERSION_CODE);
 
 	return (IOT_CTX*)ctx;
 

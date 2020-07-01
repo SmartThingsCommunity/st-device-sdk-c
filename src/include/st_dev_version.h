@@ -20,16 +20,20 @@
 #define _ST_DEV_VERSION_H_
 
 /* major: api incompatible */
-#define VER_MAJOR	(1)
+#define VER_MAJOR	1
 
 /* minor: feature added. keep api backward compatibility */
-#define VER_MINOR	(1)
+#define VER_MINOR	1
 
 /* patch: bug fix */
-#define VER_PATCH	(19)
+#define VER_PATCH	19
+
+#define _STR(s) #s
+#define _VERSION_STR(a, b, c)	_STR(a) "." _STR(b) "." _STR(c)
 
 /* External Macro for Apps, refer to linux's version.h */
 #define STDK_VERSION(a,b,c)	(((a) << 16) + ((b) << 8) + (c))
 #define STDK_VERSION_CODE	(STDK_VERSION(VER_MAJOR,VER_MINOR,VER_PATCH))
+#define STDK_VERSION_STRING	_VERSION_STR(VER_MAJOR, VER_MINOR, VER_PATCH)
 
 #endif /* _ST_DEV_VERSION_H_ */
