@@ -39,8 +39,13 @@ const static struct iot_caps_doorControl {
     const struct doorControl_attr_door {
         const char *name;
         const unsigned char property;
-        const unsigned char value_type;
+        const unsigned char valueType;
         const char *values[CAP_ENUM_DOORCONTROL_DOOR_VALUE_MAX];
+        const char *value_closed;
+        const char *value_closing;
+        const char *value_open;
+        const char *value_opening;
+        const char *value_unknown;
     } attr_door;
     const struct doorControl_cmd_close { const char* name; } cmd_close;
     const struct doorControl_cmd_open { const char* name; } cmd_open;
@@ -49,8 +54,13 @@ const static struct iot_caps_doorControl {
     .attr_door = {
         .name = "door",
         .property = ATTR_SET_VALUE_REQUIRED,
-        .value_type = VALUE_TYPE_STRING,
+        .valueType = VALUE_TYPE_STRING,
         .values = {"closed", "closing", "open", "opening", "unknown"},
+        .value_closed = "closed",
+        .value_closing = "closing",
+        .value_open = "open",
+        .value_opening = "opening",
+        .value_unknown = "unknown",
     },
     .cmd_close = { .name = "close" },
     .cmd_open = { .name = "open" },

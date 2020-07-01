@@ -37,16 +37,22 @@ const static struct iot_caps_carbonMonoxideDetector {
     const struct carbonMonoxideDetector_attr_carbonMonoxide {
         const char *name;
         const unsigned char property;
-        const unsigned char value_type;
+        const unsigned char valueType;
         const char *values[CAP_ENUM_CARBONMONOXIDEDETECTOR_CARBONMONOXIDE_VALUE_MAX];
+        const char *value_clear;
+        const char *value_detected;
+        const char *value_tested;
     } attr_carbonMonoxide;
 } caps_helper_carbonMonoxideDetector = {
     .id = "carbonMonoxideDetector",
     .attr_carbonMonoxide = {
         .name = "carbonMonoxide",
         .property = ATTR_SET_VALUE_REQUIRED,
-        .value_type = VALUE_TYPE_STRING,
+        .valueType = VALUE_TYPE_STRING,
         .values = {"clear", "detected", "tested"},
+        .value_clear = "clear",
+        .value_detected = "detected",
+        .value_tested = "tested",
     },
 };
 

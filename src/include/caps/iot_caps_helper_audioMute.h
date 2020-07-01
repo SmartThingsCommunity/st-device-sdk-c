@@ -36,8 +36,10 @@ const static struct iot_caps_audioMute {
     const struct audioMute_attr_mute {
         const char *name;
         const unsigned char property;
-        const unsigned char value_type;
+        const unsigned char valueType;
         const char *values[CAP_ENUM_AUDIOMUTE_MUTE_VALUE_MAX];
+        const char *value_muted;
+        const char *value_unmuted;
     } attr_mute;
     const struct audioMute_cmd_unmute { const char* name; } cmd_unmute;
     const struct audioMute_cmd_setMute { const char* name; } cmd_setMute;
@@ -47,8 +49,10 @@ const static struct iot_caps_audioMute {
     .attr_mute = {
         .name = "mute",
         .property = ATTR_SET_VALUE_REQUIRED,
-        .value_type = VALUE_TYPE_STRING,
+        .valueType = VALUE_TYPE_STRING,
         .values = {"muted", "unmuted"},
+        .value_muted = "muted",
+        .value_unmuted = "unmuted",
     },
     .cmd_unmute = { .name = "unmute" },
     .cmd_setMute = { .name = "setMute" }, // arguments: state(string) 

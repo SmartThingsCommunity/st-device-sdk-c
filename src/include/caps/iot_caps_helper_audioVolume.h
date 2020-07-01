@@ -35,8 +35,9 @@ const static struct iot_caps_audioVolume {
     const struct audioVolume_attr_volume {
         const char *name;
         const unsigned char property;
-        const unsigned char value_type;
+        const unsigned char valueType;
         const char *units[CAP_ENUM_AUDIOVOLUME_VOLUME_UNIT_MAX];
+        const char *unit_percent;
         const int min;
         const int max;
     } attr_volume;
@@ -48,8 +49,9 @@ const static struct iot_caps_audioVolume {
     .attr_volume = {
         .name = "volume",
         .property = ATTR_SET_VALUE_MIN | ATTR_SET_VALUE_MAX | ATTR_SET_VALUE_REQUIRED,
-        .value_type = VALUE_TYPE_INTEGER,
+        .valueType = VALUE_TYPE_INTEGER,
         .units = {"%"},
+        .unit_percent = "%",
         .min = 0,
         .max = 100,
     },

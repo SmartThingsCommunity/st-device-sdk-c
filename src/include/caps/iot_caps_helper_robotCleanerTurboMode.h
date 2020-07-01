@@ -37,8 +37,11 @@ const static struct iot_caps_robotCleanerTurboMode {
     const struct robotCleanerTurboMode_attr_robotCleanerTurboMode {
         const char *name;
         const unsigned char property;
-        const unsigned char value_type;
+        const unsigned char valueType;
         const char *values[CAP_ENUM_ROBOTCLEANERTURBOMODE_ROBOTCLEANERTURBOMODE_VALUE_MAX];
+        const char *value_on;
+        const char *value_off;
+        const char *value_silence;
     } attr_robotCleanerTurboMode;
     const struct robotCleanerTurboMode_cmd_setRobotCleanerTurboMode { const char* name; } cmd_setRobotCleanerTurboMode;
 } caps_helper_robotCleanerTurboMode = {
@@ -46,8 +49,11 @@ const static struct iot_caps_robotCleanerTurboMode {
     .attr_robotCleanerTurboMode = {
         .name = "robotCleanerTurboMode",
         .property = ATTR_SET_VALUE_REQUIRED,
-        .value_type = VALUE_TYPE_STRING,
+        .valueType = VALUE_TYPE_STRING,
         .values = {"on", "off", "silence"},
+        .value_on = "on",
+        .value_off = "off",
+        .value_silence = "silence",
     },
     .cmd_setRobotCleanerTurboMode = { .name = "setRobotCleanerTurboMode" }, // arguments: mode(string) 
 };

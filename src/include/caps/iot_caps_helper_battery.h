@@ -35,8 +35,9 @@ const static struct iot_caps_battery {
     const struct battery_attr_battery {
         const char *name;
         const unsigned char property;
-        const unsigned char value_type;
+        const unsigned char valueType;
         const char *units[CAP_ENUM_BATTERY_BATTERY_UNIT_MAX];
+        const char *unit_percent;
         const int min;
         const int max;
     } attr_battery;
@@ -45,8 +46,9 @@ const static struct iot_caps_battery {
     .attr_battery = {
         .name = "battery",
         .property = ATTR_SET_VALUE_MIN | ATTR_SET_VALUE_MAX | ATTR_SET_VALUE_REQUIRED,
-        .value_type = VALUE_TYPE_INTEGER,
+        .valueType = VALUE_TYPE_INTEGER,
         .units = {"%"},
+        .unit_percent = "%",
         .min = 0,
         .max = 100,
     },

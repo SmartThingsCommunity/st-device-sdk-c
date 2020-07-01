@@ -57,19 +57,63 @@ const static struct iot_caps_button {
     const struct button_attr_supportedButtonValues {
         const char *name;
         const unsigned char property;
-        const unsigned char value_type;
+        const unsigned char valueType;
         const char *values[CAP_ENUM_BUTTON_SUPPORTEDBUTTONVALUES_VALUE_MAX];
+        const char *value_pushed;
+        const char *value_held;
+        const char *value_double;
+        const char *value_pushed_2x;
+        const char *value_pushed_3x;
+        const char *value_pushed_4x;
+        const char *value_pushed_5x;
+        const char *value_pushed_6x;
+        const char *value_down;
+        const char *value_down_2x;
+        const char *value_down_3x;
+        const char *value_down_4x;
+        const char *value_down_5x;
+        const char *value_down_6x;
+        const char *value_down_hold;
+        const char *value_up;
+        const char *value_up_2x;
+        const char *value_up_3x;
+        const char *value_up_4x;
+        const char *value_up_5x;
+        const char *value_up_6x;
+        const char *value_up_hold;
     } attr_supportedButtonValues;
     const struct button_attr_button {
         const char *name;
         const unsigned char property;
-        const unsigned char value_type;
+        const unsigned char valueType;
         const char *values[CAP_ENUM_BUTTON_BUTTON_VALUE_MAX];
+        const char *value_pushed;
+        const char *value_held;
+        const char *value_double;
+        const char *value_pushed_2x;
+        const char *value_pushed_3x;
+        const char *value_pushed_4x;
+        const char *value_pushed_5x;
+        const char *value_pushed_6x;
+        const char *value_down;
+        const char *value_down_2x;
+        const char *value_down_3x;
+        const char *value_down_4x;
+        const char *value_down_5x;
+        const char *value_down_6x;
+        const char *value_down_hold;
+        const char *value_up;
+        const char *value_up_2x;
+        const char *value_up_3x;
+        const char *value_up_4x;
+        const char *value_up_5x;
+        const char *value_up_6x;
+        const char *value_up_hold;
     } attr_button;
     const struct button_attr_numberOfButtons {
         const char *name;
         const unsigned char property;
-        const unsigned char value_type;
+        const unsigned char valueType;
         const int min;
     } attr_numberOfButtons;
 } caps_helper_button = {
@@ -77,19 +121,63 @@ const static struct iot_caps_button {
     .attr_supportedButtonValues = {
         .name = "supportedButtonValues",
         .property = ATTR_SET_VALUE_ARRAY,
-        .value_type = VALUE_TYPE_STRING,
+        .valueType = VALUE_TYPE_STRING,
         .values = {"pushed", "held", "double", "pushed_2x", "pushed_3x", "pushed_4x", "pushed_5x", "pushed_6x", "down", "down_2x", "down_3x", "down_4x", "down_5x", "down_6x", "down_hold", "up", "up_2x", "up_3x", "up_4x", "up_5x", "up_6x", "up_hold"},
+        .value_pushed = "pushed",
+        .value_held = "held",
+        .value_double = "double",
+        .value_pushed_2x = "pushed_2x",
+        .value_pushed_3x = "pushed_3x",
+        .value_pushed_4x = "pushed_4x",
+        .value_pushed_5x = "pushed_5x",
+        .value_pushed_6x = "pushed_6x",
+        .value_down = "down",
+        .value_down_2x = "down_2x",
+        .value_down_3x = "down_3x",
+        .value_down_4x = "down_4x",
+        .value_down_5x = "down_5x",
+        .value_down_6x = "down_6x",
+        .value_down_hold = "down_hold",
+        .value_up = "up",
+        .value_up_2x = "up_2x",
+        .value_up_3x = "up_3x",
+        .value_up_4x = "up_4x",
+        .value_up_5x = "up_5x",
+        .value_up_6x = "up_6x",
+        .value_up_hold = "up_hold",
     },
     .attr_button = {
         .name = "button",
         .property = ATTR_SET_VALUE_REQUIRED,
-        .value_type = VALUE_TYPE_STRING,
+        .valueType = VALUE_TYPE_STRING,
         .values = {"pushed", "held", "double", "pushed_2x", "pushed_3x", "pushed_4x", "pushed_5x", "pushed_6x", "down", "down_2x", "down_3x", "down_4x", "down_5x", "down_6x", "down_hold", "up", "up_2x", "up_3x", "up_4x", "up_5x", "up_6x", "up_hold"},
+        .value_pushed = "pushed",
+        .value_held = "held",
+        .value_double = "double",
+        .value_pushed_2x = "pushed_2x",
+        .value_pushed_3x = "pushed_3x",
+        .value_pushed_4x = "pushed_4x",
+        .value_pushed_5x = "pushed_5x",
+        .value_pushed_6x = "pushed_6x",
+        .value_down = "down",
+        .value_down_2x = "down_2x",
+        .value_down_3x = "down_3x",
+        .value_down_4x = "down_4x",
+        .value_down_5x = "down_5x",
+        .value_down_6x = "down_6x",
+        .value_down_hold = "down_hold",
+        .value_up = "up",
+        .value_up_2x = "up_2x",
+        .value_up_3x = "up_3x",
+        .value_up_4x = "up_4x",
+        .value_up_5x = "up_5x",
+        .value_up_6x = "up_6x",
+        .value_up_hold = "up_hold",
     },
     .attr_numberOfButtons = {
         .name = "numberOfButtons",
         .property = ATTR_SET_VALUE_MIN | ATTR_SET_VALUE_REQUIRED,
-        .value_type = VALUE_TYPE_INTEGER,
+        .valueType = VALUE_TYPE_INTEGER,
         .min = 0,
     },
 };

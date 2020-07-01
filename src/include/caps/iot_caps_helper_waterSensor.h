@@ -36,16 +36,20 @@ const static struct iot_caps_waterSensor {
     const struct waterSensor_attr_water {
         const char *name;
         const unsigned char property;
-        const unsigned char value_type;
+        const unsigned char valueType;
         const char *values[CAP_ENUM_WATERSENSOR_WATER_VALUE_MAX];
+        const char *value_dry;
+        const char *value_wet;
     } attr_water;
 } caps_helper_waterSensor = {
     .id = "waterSensor",
     .attr_water = {
         .name = "water",
         .property = ATTR_SET_VALUE_REQUIRED,
-        .value_type = VALUE_TYPE_STRING,
+        .valueType = VALUE_TYPE_STRING,
         .values = {"dry", "wet"},
+        .value_dry = "dry",
+        .value_wet = "wet",
     },
 };
 

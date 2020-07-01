@@ -36,8 +36,10 @@ const static struct iot_caps_switch {
     const struct switch_attr_switch {
         const char *name;
         const unsigned char property;
-        const unsigned char value_type;
+        const unsigned char valueType;
         const char *values[CAP_ENUM_SWITCH_SWITCH_VALUE_MAX];
+        const char *value_on;
+        const char *value_off;
     } attr_switch;
     const struct switch_cmd_on { const char* name; } cmd_on;
     const struct switch_cmd_off { const char* name; } cmd_off;
@@ -46,8 +48,10 @@ const static struct iot_caps_switch {
     .attr_switch = {
         .name = "switch",
         .property = ATTR_SET_VALUE_REQUIRED,
-        .value_type = VALUE_TYPE_STRING,
+        .valueType = VALUE_TYPE_STRING,
         .values = {"on", "off"},
+        .value_on = "on",
+        .value_off = "off",
     },
     .cmd_on = { .name = "on" },
     .cmd_off = { .name = "off" },

@@ -40,37 +40,39 @@ const static struct iot_caps_gasMeter {
     const struct gasMeter_attr_gasMeterTime {
         const char *name;
         const unsigned char property;
-        const unsigned char value_type;
+        const unsigned char valueType;
     } attr_gasMeterTime;
     const struct gasMeter_attr_gasMeter {
         const char *name;
         const unsigned char property;
-        const unsigned char value_type;
+        const unsigned char valueType;
         const char *units[CAP_ENUM_GASMETER_GASMETER_UNIT_MAX];
+        const char *unit_kWh;
         const double min;
     } attr_gasMeter;
     const struct gasMeter_attr_gasMeterCalorific {
         const char *name;
         const unsigned char property;
-        const unsigned char value_type;
+        const unsigned char valueType;
         const double min;
     } attr_gasMeterCalorific;
     const struct gasMeter_attr_gasMeterVolume {
         const char *name;
         const unsigned char property;
-        const unsigned char value_type;
+        const unsigned char valueType;
         const char *units[CAP_ENUM_GASMETER_GASMETERVOLUME_UNIT_MAX];
+        const char *unit_m3;
         const double min;
     } attr_gasMeterVolume;
     const struct gasMeter_attr_gasMeterPrecision {
         const char *name;
         const unsigned char property;
-        const unsigned char value_type;
+        const unsigned char valueType;
     } attr_gasMeterPrecision;
     const struct gasMeter_attr_gasMeterConversion {
         const char *name;
         const unsigned char property;
-        const unsigned char value_type;
+        const unsigned char valueType;
         const double min;
     } attr_gasMeterConversion;
 } caps_helper_gasMeter = {
@@ -78,37 +80,39 @@ const static struct iot_caps_gasMeter {
     .attr_gasMeterTime = {
         .name = "gasMeterTime",
         .property = ATTR_SET_VALUE_REQUIRED,
-        .value_type = VALUE_TYPE_STRING,
+        .valueType = VALUE_TYPE_STRING,
     },
     .attr_gasMeter = {
         .name = "gasMeter",
         .property = ATTR_SET_VALUE_MIN | ATTR_SET_VALUE_REQUIRED,
-        .value_type = VALUE_TYPE_NUMBER,
+        .valueType = VALUE_TYPE_NUMBER,
         .units = {"kWh"},
+        .unit_kWh = "kWh",
         .min = 0,
     },
     .attr_gasMeterCalorific = {
         .name = "gasMeterCalorific",
         .property = ATTR_SET_VALUE_MIN | ATTR_SET_VALUE_REQUIRED,
-        .value_type = VALUE_TYPE_NUMBER,
+        .valueType = VALUE_TYPE_NUMBER,
         .min = 0,
     },
     .attr_gasMeterVolume = {
         .name = "gasMeterVolume",
         .property = ATTR_SET_VALUE_MIN | ATTR_SET_VALUE_REQUIRED,
-        .value_type = VALUE_TYPE_NUMBER,
+        .valueType = VALUE_TYPE_NUMBER,
         .units = {"m^3"},
+        .unit_m3 = "m^3",
         .min = 0,
     },
     .attr_gasMeterPrecision = {
         .name = "gasMeterPrecision",
         .property = ATTR_SET_VALUE_REQUIRED,
-        .value_type = VALUE_TYPE_OBJECT,
+        .valueType = VALUE_TYPE_OBJECT,
     },
     .attr_gasMeterConversion = {
         .name = "gasMeterConversion",
         .property = ATTR_SET_VALUE_MIN | ATTR_SET_VALUE_REQUIRED,
-        .value_type = VALUE_TYPE_NUMBER,
+        .valueType = VALUE_TYPE_NUMBER,
         .min = 0,
     },
 };

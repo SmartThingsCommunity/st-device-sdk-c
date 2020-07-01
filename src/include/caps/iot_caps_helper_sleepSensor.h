@@ -36,16 +36,20 @@ const static struct iot_caps_sleepSensor {
     const struct sleepSensor_attr_sleeping {
         const char *name;
         const unsigned char property;
-        const unsigned char value_type;
+        const unsigned char valueType;
         const char *values[CAP_ENUM_SLEEPSENSOR_SLEEPING_VALUE_MAX];
+        const char *value_not_sleeping;
+        const char *value_sleeping;
     } attr_sleeping;
 } caps_helper_sleepSensor = {
     .id = "sleepSensor",
     .attr_sleeping = {
         .name = "sleeping",
         .property = ATTR_SET_VALUE_REQUIRED,
-        .value_type = VALUE_TYPE_STRING,
+        .valueType = VALUE_TYPE_STRING,
         .values = {"not sleeping", "sleeping"},
+        .value_not_sleeping = "not sleeping",
+        .value_sleeping = "sleeping",
     },
 };
 

@@ -35,8 +35,9 @@ const static struct iot_caps_veryFineDustSensor {
     const struct veryFineDustSensor_attr_veryFineDustLevel {
         const char *name;
         const unsigned char property;
-        const unsigned char value_type;
+        const unsigned char valueType;
         const char *units[CAP_ENUM_VERYFINEDUSTSENSOR_VERYFINEDUSTLEVEL_UNIT_MAX];
+        const char *unit_ug_per_m3;
         const int min;
     } attr_veryFineDustLevel;
 } caps_helper_veryFineDustSensor = {
@@ -44,8 +45,9 @@ const static struct iot_caps_veryFineDustSensor {
     .attr_veryFineDustLevel = {
         .name = "veryFineDustLevel",
         .property = ATTR_SET_VALUE_MIN | ATTR_SET_VALUE_REQUIRED,
-        .value_type = VALUE_TYPE_INTEGER,
+        .valueType = VALUE_TYPE_INTEGER,
         .units = {"μg/m^3"},
+        .unit_ug_per_m3 = "μg/m^3",
         .min = 0,
     },
 };

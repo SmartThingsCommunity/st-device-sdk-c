@@ -35,8 +35,9 @@ const static struct iot_caps_airQualitySensor {
     const struct airQualitySensor_attr_airQuality {
         const char *name;
         const unsigned char property;
-        const unsigned char value_type;
+        const unsigned char valueType;
         const char *units[CAP_ENUM_AIRQUALITYSENSOR_AIRQUALITY_UNIT_MAX];
+        const char *unit_CAQI;
         const int min;
         const int max;
     } attr_airQuality;
@@ -45,8 +46,9 @@ const static struct iot_caps_airQualitySensor {
     .attr_airQuality = {
         .name = "airQuality",
         .property = ATTR_SET_VALUE_MIN | ATTR_SET_VALUE_MAX | ATTR_SET_VALUE_REQUIRED,
-        .value_type = VALUE_TYPE_INTEGER,
+        .valueType = VALUE_TYPE_INTEGER,
         .units = {"CAQI"},
+        .unit_CAQI = "CAQI",
         .min = 0,
         .max = 100,
     },

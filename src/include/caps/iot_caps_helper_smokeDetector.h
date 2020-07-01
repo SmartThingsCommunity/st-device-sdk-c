@@ -37,16 +37,22 @@ const static struct iot_caps_smokeDetector {
     const struct smokeDetector_attr_smoke {
         const char *name;
         const unsigned char property;
-        const unsigned char value_type;
+        const unsigned char valueType;
         const char *values[CAP_ENUM_SMOKEDETECTOR_SMOKE_VALUE_MAX];
+        const char *value_clear;
+        const char *value_detected;
+        const char *value_tested;
     } attr_smoke;
 } caps_helper_smokeDetector = {
     .id = "smokeDetector",
     .attr_smoke = {
         .name = "smoke",
         .property = ATTR_SET_VALUE_REQUIRED,
-        .value_type = VALUE_TYPE_STRING,
+        .valueType = VALUE_TYPE_STRING,
         .values = {"clear", "detected", "tested"},
+        .value_clear = "clear",
+        .value_detected = "detected",
+        .value_tested = "tested",
     },
 };
 

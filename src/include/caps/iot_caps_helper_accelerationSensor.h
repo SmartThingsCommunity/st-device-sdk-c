@@ -36,16 +36,20 @@ const static struct iot_caps_accelerationSensor {
     const struct accelerationSensor_attr_acceleration {
         const char *name;
         const unsigned char property;
-        const unsigned char value_type;
+        const unsigned char valueType;
         const char *values[CAP_ENUM_ACCELERATIONSENSOR_ACCELERATION_VALUE_MAX];
+        const char *value_active;
+        const char *value_inactive;
     } attr_acceleration;
 } caps_helper_accelerationSensor = {
     .id = "accelerationSensor",
     .attr_acceleration = {
         .name = "acceleration",
         .property = ATTR_SET_VALUE_REQUIRED,
-        .value_type = VALUE_TYPE_STRING,
+        .valueType = VALUE_TYPE_STRING,
         .values = {"active", "inactive"},
+        .value_active = "active",
+        .value_inactive = "inactive",
     },
 };
 

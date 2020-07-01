@@ -35,8 +35,9 @@ const static struct iot_caps_soundPressureLevel {
     const struct soundPressureLevel_attr_soundPressureLevel {
         const char *name;
         const unsigned char property;
-        const unsigned char value_type;
+        const unsigned char valueType;
         const char *units[CAP_ENUM_SOUNDPRESSURELEVEL_SOUNDPRESSURELEVEL_UNIT_MAX];
+        const char *unit_dB;
         const double min;
         const double max;
     } attr_soundPressureLevel;
@@ -45,8 +46,9 @@ const static struct iot_caps_soundPressureLevel {
     .attr_soundPressureLevel = {
         .name = "soundPressureLevel",
         .property = ATTR_SET_VALUE_MIN | ATTR_SET_VALUE_MAX | ATTR_SET_VALUE_REQUIRED,
-        .value_type = VALUE_TYPE_NUMBER,
+        .valueType = VALUE_TYPE_NUMBER,
         .units = {"dB"},
+        .unit_dB = "dB",
         .min = 0,
         .max = 194,
     },
