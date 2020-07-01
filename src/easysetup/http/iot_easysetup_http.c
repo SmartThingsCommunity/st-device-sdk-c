@@ -25,7 +25,11 @@
 #include "iot_easysetup.h"
 #include "iot_bsp_wifi.h"
 
+#if defined(CONFIG_STDK_IOT_CORE_EASYSETUP_X509)
 #define CONNECTION_TYPE "close"
+#else
+#define CONNECTION_TYPE "keep-alive"
+#endif
 #define MAX_PAYLOAD_LENGTH	1024
 #define ARRAY_SIZE(x) (int)(sizeof(x)/sizeof(x[0]))
 
