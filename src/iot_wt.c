@@ -278,6 +278,7 @@ static iot_error_t _iot_cwt_create_signature(iot_security_context_t *security_co
 	int array_num = 4;
 	unsigned char *cborbuf;
 	unsigned char *tmp;
+	unsigned char hash[IOT_SECURITY_SHA256_LEN] = { 0 };
 	size_t siglen;
 	size_t buflen = 128;
 	size_t olen;
@@ -349,14 +350,43 @@ retry:
 		}
 	}
 
-	message_buf.p = cborbuf;
-	message_buf.len = olen;
-
-	err = iot_security_pk_sign(security_context, &message_buf, output_buf);
+	err = iot_security_pk_get_key_type(security_context, &key_type);
 	if (err) {
-		IOT_ERROR("iot_security_pk_sign returned error : %d", err);
+		IOT_ERROR("iot_security_pk_get_key_type returned error : %d", err);
 		iot_os_free(cborbuf);
 		return err;
+	}
+
+	switch (key_type) {
+	case IOT_SECURITY_KEY_TYPE_ED25519:
+		message_buf.p = cborbuf;
+		message_buf.len = olen;
+
+		err = iot_security_pk_sign(security_context, &message_buf, output_buf);
+		if (err) {
+			IOT_ERROR("iot_security_pk_sign returned error : %d", err);
+			iot_os_free(cborbuf);
+			return err;
+		}
+		break;
+	default:
+		err = iot_security_sha256(cborbuf, olen, hash, sizeof(hash));
+		if (err) {
+			IOT_ERROR("iot_security_sha256 returned error : %d", err);
+			iot_os_free(cborbuf);
+			return err;
+		}
+
+		message_buf.p = hash;
+		message_buf.len = sizeof(hash);
+
+		err = iot_security_pk_sign(security_context, &message_buf, output_buf);
+		if (err) {
+			IOT_ERROR("iot_security_pk_sign returned error : %d", err);
+			iot_os_free(cborbuf);
+			return err;
+		}
+		break;
 	}
 
 	iot_os_free(cborbuf);
@@ -791,17 +821,44 @@ static iot_error_t _iot_jwt_create_b64s(iot_security_context_t *security_context
                                         iot_security_buffer_t *b64s_buf)
 {
 	iot_error_t err;
-	iot_security_buffer_t b64hp_buf = { 0 };
+	iot_security_buffer_t hp_buf = {0 };
 	iot_security_buffer_t sig_buf = { 0 };
 	iot_security_buffer_t *sig_b64_buf;
+	iot_security_key_type_t key_type;
+	unsigned char hash[IOT_SECURITY_SHA256_LEN] = { 0 };
 	size_t out_len;
 
-	b64hp_buf.p = b64hp;
-	b64hp_buf.len = hp_len;
-	err = iot_security_pk_sign(security_context, &b64hp_buf, &sig_buf);
+	err = iot_security_pk_get_key_type(security_context, &key_type);
 	if (err) {
-		IOT_ERROR("iot_security_pk_sign returned error : %d", err);
+		IOT_ERROR("iot_security_pk_get_key_type returned error : %d", err);
 		goto exit;
+	}
+
+	switch (key_type) {
+	case IOT_SECURITY_KEY_TYPE_ED25519:
+		hp_buf.p = b64hp;
+		hp_buf.len = hp_len;
+		err = iot_security_pk_sign(security_context, &hp_buf, &sig_buf);
+		if (err) {
+			IOT_ERROR("iot_security_pk_sign returned error : %d", err);
+			goto exit;
+		}
+		break;
+	default:
+		err = iot_security_sha256(b64hp, hp_len, hash, sizeof(hash));
+		if (err) {
+			IOT_ERROR("iot_security_sha256 returned error : %d", err);
+			goto exit;
+		}
+
+		hp_buf.p = hash;
+		hp_buf.len = sizeof(hash);
+		err = iot_security_pk_sign(security_context, &hp_buf, &sig_buf);
+		if (err) {
+			IOT_ERROR("iot_security_pk_sign returned error : %d", err);
+			goto exit;
+		}
+		break;
 	}
 
 	sig_b64_buf = _iot_wt_alloc_b64_buffer(sig_buf.len);
