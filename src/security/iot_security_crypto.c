@@ -118,12 +118,15 @@ iot_error_t iot_security_pk_get_key_type(iot_security_context_t *context, iot_se
 		IOT_ERROR_DUMP_AND_RETURN(INVALID_ARGS, 0);
 	}
 
-	if (!context->pk_params) {
-		IOT_ERROR("pk does not initialized");
-		IOT_ERROR_DUMP_AND_RETURN(PK_KEY_TYPE, 0);
+	if (!context->be_context->fn->pk_get_key_type) {
+		IOT_ERROR("be->fn->pk_get_key_type is null");
+		IOT_ERROR_DUMP_AND_RETURN(BE_FUNC_NULL, 0);
 	}
 
-	*key_type = context->pk_params->type;
+	err = context->be_context->fn->pk_get_key_type(context, key_type);
+	if (err) {
+		return err;
+	}
 
 	IOT_DEBUG("type = %d", *key_type);
 
