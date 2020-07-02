@@ -354,7 +354,7 @@ void TC_iot_security_pk_get_key_type_failure(void **state)
 	// When: get key type without pk_init
 	err = iot_security_pk_get_key_type(context, &key_type);
 	// Then
-	assert_int_equal(err, IOT_ERROR_SECURITY_PK_KEY_TYPE);
+	assert_int_not_equal(err, IOT_ERROR_NONE);
 }
 
 void TC_iot_security_pk_get_key_type_success(void **state)
