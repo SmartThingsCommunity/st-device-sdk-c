@@ -43,7 +43,7 @@ struct iot_dump_state {
     int stdk_version_code;
     int clock_time;
     int sequence_number;
-    int dummy;
+    int dip_version;
     char os_name[16];
     char os_version[16];
     char bsp_name[16];
@@ -51,6 +51,9 @@ struct iot_dump_state {
     char firmware_version[16];
     char model_number[16];
     char manufacturer_name[16];
+    char dip_id[16];
+
+    char device_id[8];
 };
 
 #define IOT_DUMP_LOG_VERSION 0
