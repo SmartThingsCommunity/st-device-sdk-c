@@ -71,7 +71,7 @@ typedef struct nv_item_table
 #define ALIGNUP(x, y)                 ((((x) + ((y) - 1)) / (y)) * (y))
 
 #define MAX_APP_DATA_SIZE (2048)
-#define MAX_NV_ITEM_CNT				 18
+#define MAX_NV_ITEM_CNT				 19
 
 #define OP_OK		1
 #define OP_FAIL	-1
@@ -104,7 +104,8 @@ nv_item_table_s nv_table[MAX_NV_ITEM_CNT] = {
 	{0xaf0205e, 2049, NULL},   // DeviceCert
 	{0x164c23, 37, NULL},   // ClaimID
 	{0x2887a54, 37, NULL},   // SerialNum
-	/* stored in stnv partition (manufacturer data) */
+
+	{0x7b718c, 2049, NULL},   // MiscInfo
 };
 
 /*

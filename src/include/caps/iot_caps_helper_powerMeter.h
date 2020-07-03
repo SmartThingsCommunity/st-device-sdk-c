@@ -35,8 +35,9 @@ const static struct iot_caps_powerMeter {
     const struct powerMeter_attr_power {
         const char *name;
         const unsigned char property;
-        const unsigned char value_type;
+        const unsigned char valueType;
         const char *units[CAP_ENUM_POWERMETER_POWER_UNIT_MAX];
+        const char *unit_W;
         const double min;
     } attr_power;
 } caps_helper_powerMeter = {
@@ -44,8 +45,9 @@ const static struct iot_caps_powerMeter {
     .attr_power = {
         .name = "power",
         .property = ATTR_SET_VALUE_MIN | ATTR_SET_VALUE_REQUIRED,
-        .value_type = VALUE_TYPE_NUMBER,
+        .valueType = VALUE_TYPE_NUMBER,
         .units = {"W"},
+        .unit_W = "W",
         .min = 0,
     },
 };

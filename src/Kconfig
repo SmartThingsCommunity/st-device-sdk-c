@@ -14,6 +14,13 @@ config STDK_IOT_CORE_EASYSETUP_HTTP
     help
        If this option is enabled, STDK will use httpd for easy setup.
 
+config STDK_IOT_CORE_EASYSETUP_X509
+    bool "Support x.509 for easysetup"
+    default n
+    depends on STDK_IOT_CORE_EASYSETUP_HTTP
+    help
+       If this option is enabled, STDK will use x.509 for easy setup.
+
 config STDK_IOT_CORE_EASYSETUP_LOG_SUPPORT_NO_USE_LOGFILE
     bool "Logging via device-to-device"
     default n
@@ -180,6 +187,8 @@ choice STDK_IOT_CORE_CRYPTO_IDENTITY_KEYTYPE
 
 config STDK_IOT_CORE_CRYPTO_SUPPORT_RSA
     bool "RSA"
+config STDK_IOT_CORE_CRYPTO_SUPPORT_ECDSA
+    bool "ECDSA"
 config STDK_IOT_CORE_CRYPTO_SUPPORT_ED25519
     bool "Ed25519"
 endchoice

@@ -36,16 +36,20 @@ const static struct iot_caps_soundSensor {
     const struct soundSensor_attr_sound {
         const char *name;
         const unsigned char property;
-        const unsigned char value_type;
+        const unsigned char valueType;
         const char *values[CAP_ENUM_SOUNDSENSOR_SOUND_VALUE_MAX];
+        const char *value_detected;
+        const char *value_not_detected;
     } attr_sound;
 } caps_helper_soundSensor = {
     .id = "soundSensor",
     .attr_sound = {
         .name = "sound",
         .property = ATTR_SET_VALUE_REQUIRED,
-        .value_type = VALUE_TYPE_STRING,
+        .valueType = VALUE_TYPE_STRING,
         .values = {"detected", "not detected"},
+        .value_detected = "detected",
+        .value_not_detected = "not detected",
     },
 };
 

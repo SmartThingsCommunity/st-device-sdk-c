@@ -36,8 +36,10 @@ const static struct iot_caps_thermostatSetpoint {
     const struct thermostatSetpoint_attr_thermostatSetpoint {
         const char *name;
         const unsigned char property;
-        const unsigned char value_type;
+        const unsigned char valueType;
         const char *units[CAP_ENUM_THERMOSTATSETPOINT_THERMOSTATSETPOINT_UNIT_MAX];
+        const char *unit_F;
+        const char *unit_C;
         const double min;
         const double max;
     } attr_thermostatSetpoint;
@@ -46,8 +48,10 @@ const static struct iot_caps_thermostatSetpoint {
     .attr_thermostatSetpoint = {
         .name = "thermostatSetpoint",
         .property = ATTR_SET_VALUE_MIN | ATTR_SET_VALUE_MAX | ATTR_SET_VALUE_REQUIRED | ATTR_SET_UNIT_REQUIRED,
-        .value_type = VALUE_TYPE_NUMBER,
+        .valueType = VALUE_TYPE_NUMBER,
         .units = {"F", "C"},
+        .unit_F = "F",
+        .unit_C = "C",
         .min = -460,
         .max = 10000,
     },

@@ -36,8 +36,10 @@ const static struct iot_caps_thermostatCoolingSetpoint {
     const struct thermostatCoolingSetpoint_attr_coolingSetpoint {
         const char *name;
         const unsigned char property;
-        const unsigned char value_type;
+        const unsigned char valueType;
         const char *units[CAP_ENUM_THERMOSTATCOOLINGSETPOINT_COOLINGSETPOINT_UNIT_MAX];
+        const char *unit_F;
+        const char *unit_C;
         const double min;
         const double max;
     } attr_coolingSetpoint;
@@ -47,8 +49,10 @@ const static struct iot_caps_thermostatCoolingSetpoint {
     .attr_coolingSetpoint = {
         .name = "coolingSetpoint",
         .property = ATTR_SET_VALUE_MIN | ATTR_SET_VALUE_MAX | ATTR_SET_VALUE_REQUIRED | ATTR_SET_UNIT_REQUIRED,
-        .value_type = VALUE_TYPE_NUMBER,
+        .valueType = VALUE_TYPE_NUMBER,
         .units = {"F", "C"},
+        .unit_F = "F",
+        .unit_C = "C",
         .min = -460,
         .max = 10000,
     },

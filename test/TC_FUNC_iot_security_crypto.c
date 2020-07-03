@@ -105,6 +105,40 @@ static char sample_device_info[] = {
 	"\t}\n"
 	"}"
 };
+#elif defined(CONFIG_STDK_IOT_CORE_CRYPTO_SUPPORT_ECDSA)
+#define TEST_ECDSA_PRIVATE_KEY \
+"-----BEGIN EC PRIVATE KEY-----\r\n" \
+"MHcCAQEEID9/vyoZcyY7OI7LbnkyfMTnINtYOLpNk5x9KCM8lmLdoAoGCCqGSM49\r\n" \
+"AwEHoUQDQgAEPYS01pFX7+PsnY2GUfpRTjohuSnQxP+3zdEP5Ovd5CnTTLzvPwbb\r\n" \
+"C0tUb0s4Jet0duPc7Vz9b91zqX5A5yZO8w==\r\n" \
+"-----END EC PRIVATE KEY-----"
+
+#define TEST_ECDSA_CERTIFICATE \
+"-----BEGIN CERTIFICATE-----\r\n" \
+"MIICMDCCAdegAwIBAgIJANC5Hjw2G4qUMAoGCCqGSM49BAMCMGcxCzAJBgNVBAYT\r\n" \
+"AktSMRYwFAYDVQQKDA1UaGluZ3MgU3lzdGVtMRkwFwYDVQQLDBBTbWFydFRoaW5n\r\n" \
+"cyBNUVRUMSUwIwYDVQQDDBxUaGluZ3Mgc2VsZi1zaWduZWQgcm9vdCBjZXJ0MCAX\r\n" \
+"DTIwMDYzMDAyMjExMVoYDzIwNjAwNjIwMDIyMTExWjBYMQswCQYDVQQGEwJLUjEW\r\n" \
+"MBQGA1UECgwNVGhpbmdzIFN5c3RlbTEZMBcGA1UECwwQU21hcnRUaGluZ3MgTVFU\r\n" \
+"VDEWMBQGA1UEAwwNVGhpbmdzIERldmljZTBZMBMGByqGSM49AgEGCCqGSM49AwEH\r\n" \
+"A0IABD2EtNaRV+/j7J2NhlH6UU46Ibkp0MT/t83RD+Tr3eQp00y87z8G2wtLVG9L\r\n" \
+"OCXrdHbj3O1c/W/dc6l+QOcmTvOjeTB3MAkGA1UdEwQCMAAwHwYDVR0jBBgwFoAU\r\n" \
+"7ZcCOlSfrHMs4F9+InsLj57fQsYwHQYDVR0OBBYEFJy/7DNDLa3DuAFMmYHhHtJg\r\n" \
+"PP/EMAsGA1UdDwQEAwIF4DAdBgNVHSUEFjAUBggrBgEFBQcDAQYIKwYBBQUHAwIw\r\n" \
+"CgYIKoZIzj0EAwIDRwAwRAIgNDgGFm5fDKtUNJMLXNWmnkeGYlmq4r4X7beHOu2Z\r\n" \
+"Ei8CIFdv66Rn53RtLL4AgpfBk8k1ut4ZJpQUEYG7F9P+GZOf\r\n" \
+"-----END CERTIFICATE-----"
+
+static char sample_device_info[] = {
+	"{\n"
+	"\t\"deviceInfo\": {\n"
+	"\t\t\"firmwareVersion\": \"testFirmwareVersion\",\n"
+	"\t\t\"privateKey\": \"" TEST_ECDSA_PRIVATE_KEY """\",\n"
+	"\t\t\"deviceCert\": \"" TEST_ECDSA_CERTIFICATE "\",\n"
+	"\t\t\"serialNumber\": \"STDKtestc77078cc\"\n"
+	"\t}\n"
+	"}"
+};
 #endif
 
 int TC_iot_security_pk_init_setup(void **state)
@@ -299,6 +333,13 @@ void TC_iot_security_pk_get_signature_len_success(void **state)
 	sig_len = iot_security_pk_get_signature_len(pk_type);
 	// Then
 	assert_int_equal((int)sig_len, IOT_SECURITY_SIGNATURE_ED25519_LEN);
+
+	// Given
+	pk_type = IOT_SECURITY_KEY_TYPE_ECCP256;
+	// When
+	sig_len = iot_security_pk_get_signature_len(pk_type);
+	// Then
+	assert_int_equal((int)sig_len, IOT_SECURITY_SIGNATURE_ECCP256_LEN);
 }
 
 void TC_iot_security_pk_get_key_type_failure(void **state)
@@ -313,7 +354,7 @@ void TC_iot_security_pk_get_key_type_failure(void **state)
 	// When: get key type without pk_init
 	err = iot_security_pk_get_key_type(context, &key_type);
 	// Then
-	assert_int_equal(err, IOT_ERROR_SECURITY_PK_KEY_TYPE);
+	assert_int_not_equal(err, IOT_ERROR_NONE);
 }
 
 void TC_iot_security_pk_get_key_type_success(void **state)

@@ -140,12 +140,13 @@ IOT_EVENT* st_cap_attr_create(const char *attribute,
 		evt_data->evt_value.type = IOT_CAP_VAL_TYPE_STR_ARRAY;
 		evt_data->evt_value.str_num = value->str_num;
 		evt_data->evt_value.strings = iot_os_malloc(value->str_num * sizeof(char*));
-		memset(evt_data->evt_value.strings, 0, value->str_num * sizeof(char*));
-		if (!evt_data->evt_value.strings) {
+		if (value->str_num != 0 && !evt_data->evt_value.strings) {
 			IOT_ERROR("failed to malloc for string array");
 			_iot_free_evt_data(evt_data);
 			iot_os_free(evt_data);
 			return NULL;
+		} else if (evt_data->evt_value.strings) {
+			memset(evt_data->evt_value.strings, 0, value->str_num * sizeof(char*));
 		}
 		for (int i = 0; i < value->str_num; i++) {
 			if (value->strings[i]) {
@@ -982,8 +983,12 @@ static iot_error_t _iot_make_evt_data_json(const char* component, const char* ca
 		} else if (evt_data_arr[i]->evt_value.type == IOT_CAP_VAL_TYPE_STRING) {
 			JSON_ADD_STRING_TO_OBJECT(evt_item, "value", evt_data_arr[i]->evt_value.string);
 		} else if (evt_data_arr[i]->evt_value.type == IOT_CAP_VAL_TYPE_STR_ARRAY) {
-			evt_subarr = JSON_CREATE_STRING_ARRAY(
-				(const char**)evt_data_arr[i]->evt_value.strings, evt_data_arr[i]->evt_value.str_num);
+			if (evt_data_arr[i]->evt_value.str_num == 0) {
+				evt_subarr = JSON_CREATE_ARRAY();
+			} else {
+				evt_subarr = JSON_CREATE_STRING_ARRAY(
+					(const char**)evt_data_arr[i]->evt_value.strings, evt_data_arr[i]->evt_value.str_num);
+			}
 			JSON_ADD_ITEM_TO_OBJECT(evt_item, "value", evt_subarr);
 		} else if (evt_data_arr[i]->evt_value.type == IOT_CAP_VAL_TYPE_JSON_OBJECT) {
 			evt_subjson = JSON_PARSE(evt_data_arr[i]->evt_value.json_object);

@@ -36,8 +36,10 @@ const static struct iot_caps_mediaPlaybackShuffle {
     const struct mediaPlaybackShuffle_attr_playbackShuffle {
         const char *name;
         const unsigned char property;
-        const unsigned char value_type;
+        const unsigned char valueType;
         const char *values[CAP_ENUM_MEDIAPLAYBACKSHUFFLE_PLAYBACKSHUFFLE_VALUE_MAX];
+        const char *value_disabled;
+        const char *value_enabled;
     } attr_playbackShuffle;
     const struct mediaPlaybackShuffle_cmd_setPlaybackShuffle { const char* name; } cmd_setPlaybackShuffle;
 } caps_helper_mediaPlaybackShuffle = {
@@ -45,8 +47,10 @@ const static struct iot_caps_mediaPlaybackShuffle {
     .attr_playbackShuffle = {
         .name = "playbackShuffle",
         .property = ATTR_SET_VALUE_REQUIRED,
-        .value_type = VALUE_TYPE_STRING,
+        .valueType = VALUE_TYPE_STRING,
         .values = {"disabled", "enabled"},
+        .value_disabled = "disabled",
+        .value_enabled = "enabled",
     },
     .cmd_setPlaybackShuffle = { .name = "setPlaybackShuffle" }, // arguments: shuffle(string) 
 };

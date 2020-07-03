@@ -314,6 +314,7 @@ void TC_iot_security_be_bsp_init_success(void **state);
 int TC_iot_wt_create_memleak_detect_setup(void **state);
 int TC_iot_wt_create_memleak_detect_teardown(void **state);
 void TC_iot_wt_create_null_parameters(void **state);
+void TC_iot_wt_create_success(void **state);
 
 // TCs for iot_easysetup_httpd
 int TC_iot_easysetup_httpd_setup(void **state);

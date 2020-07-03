@@ -36,16 +36,20 @@ const static struct iot_caps_motionSensor {
     const struct motionSensor_attr_motion {
         const char *name;
         const unsigned char property;
-        const unsigned char value_type;
+        const unsigned char valueType;
         const char *values[CAP_ENUM_MOTIONSENSOR_MOTION_VALUE_MAX];
+        const char *value_active;
+        const char *value_inactive;
     } attr_motion;
 } caps_helper_motionSensor = {
     .id = "motionSensor",
     .attr_motion = {
         .name = "motion",
         .property = ATTR_SET_VALUE_REQUIRED,
-        .value_type = VALUE_TYPE_STRING,
+        .valueType = VALUE_TYPE_STRING,
         .values = {"active", "inactive"},
+        .value_active = "active",
+        .value_inactive = "inactive",
     },
 };
 

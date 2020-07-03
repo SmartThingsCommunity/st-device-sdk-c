@@ -54,39 +54,53 @@ const static struct iot_caps_ovenOperatingState {
     const struct ovenOperatingState_attr_ovenJobState {
         const char *name;
         const unsigned char property;
-        const unsigned char value_type;
+        const unsigned char valueType;
         const char *values[CAP_ENUM_OVENOPERATINGSTATE_OVENJOBSTATE_VALUE_MAX];
+        const char *value_cleaning;
+        const char *value_cooking;
+        const char *value_cooling;
+        const char *value_draining;
+        const char *value_preheat;
+        const char *value_ready;
+        const char *value_rinsing;
     } attr_ovenJobState;
     const struct ovenOperatingState_attr_completionTime {
         const char *name;
         const unsigned char property;
-        const unsigned char value_type;
+        const unsigned char valueType;
     } attr_completionTime;
     const struct ovenOperatingState_attr_supportedMachineStates {
         const char *name;
         const unsigned char property;
-        const unsigned char value_type;
+        const unsigned char valueType;
         const char *values[CAP_ENUM_OVENOPERATINGSTATE_SUPPORTEDMACHINESTATES_VALUE_MAX];
+        const char *value_ready;
+        const char *value_running;
+        const char *value_paused;
     } attr_supportedMachineStates;
     const struct ovenOperatingState_attr_progress {
         const char *name;
         const unsigned char property;
-        const unsigned char value_type;
+        const unsigned char valueType;
         const char *units[CAP_ENUM_OVENOPERATINGSTATE_PROGRESS_UNIT_MAX];
+        const char *unit_percent;
         const int min;
         const int max;
     } attr_progress;
     const struct ovenOperatingState_attr_operationTime {
         const char *name;
         const unsigned char property;
-        const unsigned char value_type;
+        const unsigned char valueType;
         const int min;
     } attr_operationTime;
     const struct ovenOperatingState_attr_machineState {
         const char *name;
         const unsigned char property;
-        const unsigned char value_type;
+        const unsigned char valueType;
         const char *values[CAP_ENUM_OVENOPERATINGSTATE_MACHINESTATE_VALUE_MAX];
+        const char *value_ready;
+        const char *value_running;
+        const char *value_paused;
     } attr_machineState;
     const struct ovenOperatingState_cmd_start { const char* name; } cmd_start;
     const struct ovenOperatingState_cmd_stop { const char* name; } cmd_stop;
@@ -96,39 +110,53 @@ const static struct iot_caps_ovenOperatingState {
     .attr_ovenJobState = {
         .name = "ovenJobState",
         .property = NULL,
-        .value_type = VALUE_TYPE_STRING,
+        .valueType = VALUE_TYPE_STRING,
         .values = {"cleaning", "cooking", "cooling", "draining", "preheat", "ready", "rinsing"},
+        .value_cleaning = "cleaning",
+        .value_cooking = "cooking",
+        .value_cooling = "cooling",
+        .value_draining = "draining",
+        .value_preheat = "preheat",
+        .value_ready = "ready",
+        .value_rinsing = "rinsing",
     },
     .attr_completionTime = {
         .name = "completionTime",
         .property = ATTR_SET_VALUE_REQUIRED,
-        .value_type = VALUE_TYPE_STRING,
+        .valueType = VALUE_TYPE_STRING,
     },
     .attr_supportedMachineStates = {
         .name = "supportedMachineStates",
         .property = ATTR_SET_VALUE_ARRAY,
-        .value_type = VALUE_TYPE_STRING,
+        .valueType = VALUE_TYPE_STRING,
         .values = {"ready", "running", "paused"},
+        .value_ready = "ready",
+        .value_running = "running",
+        .value_paused = "paused",
     },
     .attr_progress = {
         .name = "progress",
         .property = ATTR_SET_VALUE_MIN | ATTR_SET_VALUE_MAX | ATTR_SET_VALUE_REQUIRED,
-        .value_type = VALUE_TYPE_INTEGER,
+        .valueType = VALUE_TYPE_INTEGER,
         .units = {"%"},
+        .unit_percent = "%",
         .min = 0,
         .max = 100,
     },
     .attr_operationTime = {
         .name = "operationTime",
         .property = ATTR_SET_VALUE_MIN,
-        .value_type = VALUE_TYPE_INTEGER,
+        .valueType = VALUE_TYPE_INTEGER,
         .min = 0,
     },
     .attr_machineState = {
         .name = "machineState",
         .property = NULL,
-        .value_type = VALUE_TYPE_STRING,
+        .valueType = VALUE_TYPE_STRING,
         .values = {"ready", "running", "paused"},
+        .value_ready = "ready",
+        .value_running = "running",
+        .value_paused = "paused",
     },
     .cmd_start = { .name = "start" }, // arguments: mode(string) time(integer) setpoint(integer) 
     .cmd_stop = { .name = "stop" },

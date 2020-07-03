@@ -49,25 +49,38 @@ const static struct iot_caps_dryerOperatingState {
     const struct dryerOperatingState_attr_completionTime {
         const char *name;
         const unsigned char property;
-        const unsigned char value_type;
+        const unsigned char valueType;
     } attr_completionTime;
     const struct dryerOperatingState_attr_supportedMachineStates {
         const char *name;
         const unsigned char property;
-        const unsigned char value_type;
+        const unsigned char valueType;
         const char *values[CAP_ENUM_DRYEROPERATINGSTATE_SUPPORTEDMACHINESTATES_VALUE_MAX];
+        const char *value_pause;
+        const char *value_run;
+        const char *value_stop;
     } attr_supportedMachineStates;
     const struct dryerOperatingState_attr_machineState {
         const char *name;
         const unsigned char property;
-        const unsigned char value_type;
+        const unsigned char valueType;
         const char *values[CAP_ENUM_DRYEROPERATINGSTATE_MACHINESTATE_VALUE_MAX];
+        const char *value_pause;
+        const char *value_run;
+        const char *value_stop;
     } attr_machineState;
     const struct dryerOperatingState_attr_dryerJobState {
         const char *name;
         const unsigned char property;
-        const unsigned char value_type;
+        const unsigned char valueType;
         const char *values[CAP_ENUM_DRYEROPERATINGSTATE_DRYERJOBSTATE_VALUE_MAX];
+        const char *value_cooling;
+        const char *value_delayWash;
+        const char *value_drying;
+        const char *value_finished;
+        const char *value_none;
+        const char *value_weightSensing;
+        const char *value_wrinklePrevent;
     } attr_dryerJobState;
     const struct dryerOperatingState_cmd_setMachineState { const char* name; } cmd_setMachineState;
 } caps_helper_dryerOperatingState = {
@@ -75,25 +88,38 @@ const static struct iot_caps_dryerOperatingState {
     .attr_completionTime = {
         .name = "completionTime",
         .property = ATTR_SET_VALUE_REQUIRED,
-        .value_type = VALUE_TYPE_STRING,
+        .valueType = VALUE_TYPE_STRING,
     },
     .attr_supportedMachineStates = {
         .name = "supportedMachineStates",
         .property = ATTR_SET_VALUE_REQUIRED | ATTR_SET_VALUE_ARRAY,
-        .value_type = VALUE_TYPE_STRING,
+        .valueType = VALUE_TYPE_STRING,
         .values = {"pause", "run", "stop"},
+        .value_pause = "pause",
+        .value_run = "run",
+        .value_stop = "stop",
     },
     .attr_machineState = {
         .name = "machineState",
         .property = ATTR_SET_VALUE_REQUIRED,
-        .value_type = VALUE_TYPE_STRING,
+        .valueType = VALUE_TYPE_STRING,
         .values = {"pause", "run", "stop"},
+        .value_pause = "pause",
+        .value_run = "run",
+        .value_stop = "stop",
     },
     .attr_dryerJobState = {
         .name = "dryerJobState",
         .property = ATTR_SET_VALUE_REQUIRED,
-        .value_type = VALUE_TYPE_STRING,
+        .valueType = VALUE_TYPE_STRING,
         .values = {"cooling", "delayWash", "drying", "finished", "none", "weightSensing", "wrinklePrevent"},
+        .value_cooling = "cooling",
+        .value_delayWash = "delayWash",
+        .value_drying = "drying",
+        .value_finished = "finished",
+        .value_none = "none",
+        .value_weightSensing = "weightSensing",
+        .value_wrinklePrevent = "wrinklePrevent",
     },
     .cmd_setMachineState = { .name = "setMachineState" }, // arguments: state(string) 
 };

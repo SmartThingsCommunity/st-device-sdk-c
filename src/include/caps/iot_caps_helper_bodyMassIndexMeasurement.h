@@ -35,8 +35,9 @@ const static struct iot_caps_bodyMassIndexMeasurement {
     const struct bodyMassIndexMeasurement_attr_bmiMeasurement {
         const char *name;
         const unsigned char property;
-        const unsigned char value_type;
+        const unsigned char valueType;
         const char *units[CAP_ENUM_BODYMASSINDEXMEASUREMENT_BMIMEASUREMENT_UNIT_MAX];
+        const char *unit_kg_per_m2;
         const double min;
     } attr_bmiMeasurement;
 } caps_helper_bodyMassIndexMeasurement = {
@@ -44,8 +45,9 @@ const static struct iot_caps_bodyMassIndexMeasurement {
     .attr_bmiMeasurement = {
         .name = "bmiMeasurement",
         .property = ATTR_SET_VALUE_MIN | ATTR_SET_VALUE_REQUIRED,
-        .value_type = VALUE_TYPE_NUMBER,
+        .valueType = VALUE_TYPE_NUMBER,
         .units = {"kg/m^2"},
+        .unit_kg_per_m2 = "kg/m^2",
         .min = 0,
     },
 };

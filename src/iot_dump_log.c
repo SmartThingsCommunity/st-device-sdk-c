@@ -54,6 +54,19 @@ static struct iot_dump_state* _iot_dump_create_dump_state(struct iot_context *io
     strncpy(dump_state->bsp_version, iot_bsp_get_bsp_version_string(), sizeof(dump_state->bsp_version));
 
     if (iot_ctx) {
+        if (iot_ctx->iot_reg_data.deviceId) {
+            strncpy(dump_state->device_id, iot_ctx->iot_reg_data.deviceId,
+                    sizeof(dump_state->device_id));
+        }
+
+        if (iot_ctx->devconf.dip && iot_ctx->devconf.dip->dip_id.id) {
+            memcpy(dump_state->dip_id, iot_ctx->devconf.dip->dip_id.id,
+                    sizeof(dump_state->dip_id));
+
+            dump_state->dip_version =
+                    ((iot_ctx->devconf.dip->dip_major_version & 0xffff) << 16)
+                            | (iot_ctx->devconf.dip->dip_minor_version & 0xffff);
+        }
         if (iot_ctx->device_info.firmware_version) {
             strncpy(dump_state->firmware_version, iot_ctx->device_info.firmware_version,
                     sizeof(dump_state->firmware_version));

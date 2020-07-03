@@ -34,6 +34,7 @@ extern "C" {
 
 #define IOT_SECURITY_SIGNATURE_ED25519_LEN      64
 #define IOT_SECURITY_SIGNATURE_RSA2048_LEN      256
+#define IOT_SECURITY_SIGNATURE_ECCP256_LEN      1024    /* MBEDTLS_MPI_MAX_SIZE */
 #define IOT_SECURITY_SIGNATURE_UNKNOWN_LEN      0
 
 typedef struct iot_security_storage_params iot_security_storage_params_t;
@@ -54,6 +55,7 @@ typedef enum iot_security_key_type {
 	IOT_SECURITY_KEY_TYPE_UNKNOWN = 0,
 	IOT_SECURITY_KEY_TYPE_ED25519,
 	IOT_SECURITY_KEY_TYPE_RSA2048,
+	IOT_SECURITY_KEY_TYPE_ECCP256,
 	IOT_SECURITY_KEY_TYPE_AES256 = 3,               /* must be 3 because referenced in ss.lib */
 	IOT_SECURITY_KEY_TYPE_MAX,
 } iot_security_key_type_t;

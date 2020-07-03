@@ -35,8 +35,9 @@ const static struct iot_caps_switchLevel {
     const struct switchLevel_attr_level {
         const char *name;
         const unsigned char property;
-        const unsigned char value_type;
+        const unsigned char valueType;
         const char *units[CAP_ENUM_SWITCHLEVEL_LEVEL_UNIT_MAX];
+        const char *unit_percent;
         const int min;
         const int max;
     } attr_level;
@@ -46,8 +47,9 @@ const static struct iot_caps_switchLevel {
     .attr_level = {
         .name = "level",
         .property = ATTR_SET_VALUE_MIN | ATTR_SET_VALUE_MAX | ATTR_SET_VALUE_REQUIRED,
-        .value_type = VALUE_TYPE_INTEGER,
+        .valueType = VALUE_TYPE_INTEGER,
         .units = {"%"},
+        .unit_percent = "%",
         .min = 0,
         .max = 100,
     },

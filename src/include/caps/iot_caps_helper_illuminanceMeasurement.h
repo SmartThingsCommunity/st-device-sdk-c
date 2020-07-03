@@ -35,8 +35,9 @@ const static struct iot_caps_illuminanceMeasurement {
     const struct illuminanceMeasurement_attr_illuminance {
         const char *name;
         const unsigned char property;
-        const unsigned char value_type;
+        const unsigned char valueType;
         const char *units[CAP_ENUM_ILLUMINANCEMEASUREMENT_ILLUMINANCE_UNIT_MAX];
+        const char *unit_lux;
         const double min;
         const double max;
     } attr_illuminance;
@@ -45,8 +46,9 @@ const static struct iot_caps_illuminanceMeasurement {
     .attr_illuminance = {
         .name = "illuminance",
         .property = ATTR_SET_VALUE_MIN | ATTR_SET_VALUE_MAX | ATTR_SET_VALUE_REQUIRED,
-        .value_type = VALUE_TYPE_NUMBER,
+        .valueType = VALUE_TYPE_NUMBER,
         .units = {"lux"},
+        .unit_lux = "lux",
         .min = 0,
         .max = 100000,
     },

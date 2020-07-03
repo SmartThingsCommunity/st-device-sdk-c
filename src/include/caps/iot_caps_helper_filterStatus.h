@@ -36,16 +36,20 @@ const static struct iot_caps_filterStatus {
     const struct filterStatus_attr_filterStatus {
         const char *name;
         const unsigned char property;
-        const unsigned char value_type;
+        const unsigned char valueType;
         const char *values[CAP_ENUM_FILTERSTATUS_FILTERSTATUS_VALUE_MAX];
+        const char *value_normal;
+        const char *value_replace;
     } attr_filterStatus;
 } caps_helper_filterStatus = {
     .id = "filterStatus",
     .attr_filterStatus = {
         .name = "filterStatus",
         .property = ATTR_SET_VALUE_REQUIRED,
-        .value_type = VALUE_TYPE_STRING,
+        .valueType = VALUE_TYPE_STRING,
         .values = {"normal", "replace"},
+        .value_normal = "normal",
+        .value_replace = "replace",
     },
 };
 

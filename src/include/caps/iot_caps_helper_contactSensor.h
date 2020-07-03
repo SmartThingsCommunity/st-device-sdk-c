@@ -36,16 +36,20 @@ const static struct iot_caps_contactSensor {
     const struct contactSensor_attr_contact {
         const char *name;
         const unsigned char property;
-        const unsigned char value_type;
+        const unsigned char valueType;
         const char *values[CAP_ENUM_CONTACTSENSOR_CONTACT_VALUE_MAX];
+        const char *value_closed;
+        const char *value_open;
     } attr_contact;
 } caps_helper_contactSensor = {
     .id = "contactSensor",
     .attr_contact = {
         .name = "contact",
         .property = ATTR_SET_VALUE_REQUIRED,
-        .value_type = VALUE_TYPE_STRING,
+        .valueType = VALUE_TYPE_STRING,
         .values = {"closed", "open"},
+        .value_closed = "closed",
+        .value_open = "open",
     },
 };
 
