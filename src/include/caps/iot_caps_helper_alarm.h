@@ -38,8 +38,12 @@ const static struct iot_caps_alarm {
     const struct alarm_attr_alarm {
         const char *name;
         const unsigned char property;
-        const unsigned char value_type;
+        const unsigned char valueType;
         const char *values[CAP_ENUM_ALARM_ALARM_VALUE_MAX];
+        const char *value_both;
+        const char *value_off;
+        const char *value_siren;
+        const char *value_strobe;
     } attr_alarm;
     const struct alarm_cmd_both { const char* name; } cmd_both;
     const struct alarm_cmd_siren { const char* name; } cmd_siren;
@@ -50,8 +54,12 @@ const static struct iot_caps_alarm {
     .attr_alarm = {
         .name = "alarm",
         .property = ATTR_SET_VALUE_REQUIRED,
-        .value_type = VALUE_TYPE_STRING,
+        .valueType = VALUE_TYPE_STRING,
         .values = {"both", "off", "siren", "strobe"},
+        .value_both = "both",
+        .value_off = "off",
+        .value_siren = "siren",
+        .value_strobe = "strobe",
     },
     .cmd_both = { .name = "both" },
     .cmd_siren = { .name = "siren" },

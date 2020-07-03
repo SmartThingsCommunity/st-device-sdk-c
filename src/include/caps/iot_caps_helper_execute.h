@@ -30,7 +30,7 @@ const static struct iot_caps_execute {
     const struct execute_attr_data {
         const char *name;
         const unsigned char property;
-        const unsigned char value_type;
+        const unsigned char valueType;
     } attr_data;
     const struct execute_cmd_execute { const char* name; } cmd_execute;
 } caps_helper_execute = {
@@ -38,7 +38,7 @@ const static struct iot_caps_execute {
     .attr_data = {
         .name = "data",
         .property = ATTR_SET_VALUE_REQUIRED,
-        .value_type = VALUE_TYPE_OBJECT,
+        .valueType = VALUE_TYPE_OBJECT,
     },
     .cmd_execute = { .name = "execute" }, // arguments: command(string) args(object) 
 };

@@ -41,14 +41,23 @@ const static struct iot_caps_windowShade {
     const struct windowShade_attr_windowShade {
         const char *name;
         const unsigned char property;
-        const unsigned char value_type;
+        const unsigned char valueType;
         const char *values[CAP_ENUM_WINDOWSHADE_WINDOWSHADE_VALUE_MAX];
+        const char *value_closed;
+        const char *value_closing;
+        const char *value_open;
+        const char *value_opening;
+        const char *value_partially_open;
+        const char *value_unknown;
     } attr_windowShade;
     const struct windowShade_attr_supportedWindowShadeCommands {
         const char *name;
         const unsigned char property;
-        const unsigned char value_type;
+        const unsigned char valueType;
         const char *values[CAP_ENUM_WINDOWSHADE_SUPPORTEDWINDOWSHADECOMMANDS_VALUE_MAX];
+        const char *value_open;
+        const char *value_close;
+        const char *value_pause;
     } attr_supportedWindowShadeCommands;
     const struct windowShade_cmd_close { const char* name; } cmd_close;
     const struct windowShade_cmd_pause { const char* name; } cmd_pause;
@@ -58,14 +67,23 @@ const static struct iot_caps_windowShade {
     .attr_windowShade = {
         .name = "windowShade",
         .property = ATTR_SET_VALUE_REQUIRED,
-        .value_type = VALUE_TYPE_STRING,
+        .valueType = VALUE_TYPE_STRING,
         .values = {"closed", "closing", "open", "opening", "partially open", "unknown"},
+        .value_closed = "closed",
+        .value_closing = "closing",
+        .value_open = "open",
+        .value_opening = "opening",
+        .value_partially_open = "partially open",
+        .value_unknown = "unknown",
     },
     .attr_supportedWindowShadeCommands = {
         .name = "supportedWindowShadeCommands",
         .property = ATTR_SET_VALUE_ARRAY,
-        .value_type = VALUE_TYPE_STRING,
+        .valueType = VALUE_TYPE_STRING,
         .values = {"open", "close", "pause"},
+        .value_open = "open",
+        .value_close = "close",
+        .value_pause = "pause",
     },
     .cmd_close = { .name = "close" },
     .cmd_pause = { .name = "pause" },

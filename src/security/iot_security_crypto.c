@@ -31,13 +31,13 @@ iot_error_t iot_security_pk_init(iot_security_context_t *context)
 	iot_security_pk_params_t *pk_params;
 
 	if (!context) {
-		return IOT_ERROR_SECURITY_CONTEXT_NULL;
+		IOT_ERROR_DUMP_AND_RETURN(CONTEXT_NULL, 0);
 	}
 
 	pk_params = (iot_security_pk_params_t *)iot_os_malloc(sizeof(iot_security_pk_params_t));
 	if (!pk_params) {
 		IOT_ERROR("failed to malloc for pk params");
-		return IOT_ERROR_MEM_ALLOC;
+		IOT_ERROR_DUMP_AND_RETURN(MEM_ALLOC, 0);
 	}
 
 	memset(pk_params, 0, sizeof(iot_security_pk_params_t));
@@ -65,7 +65,7 @@ iot_error_t iot_security_pk_deinit(iot_security_context_t *context)
 	iot_error_t err;
 
 	if (!context) {
-		return IOT_ERROR_SECURITY_CONTEXT_NULL;
+		IOT_ERROR_DUMP_AND_RETURN(CONTEXT_NULL, 0);
 	}
 
 	if (context->be_context &&
@@ -95,6 +95,8 @@ size_t iot_security_pk_get_signature_len(iot_security_key_type_t pk_type)
 	switch (pk_type) {
 	case IOT_SECURITY_KEY_TYPE_RSA2048:
 		return IOT_SECURITY_SIGNATURE_RSA2048_LEN;
+	case IOT_SECURITY_KEY_TYPE_ECCP256:
+		return IOT_SECURITY_SIGNATURE_ECCP256_LEN;
 	case IOT_SECURITY_KEY_TYPE_ED25519:
 		return IOT_SECURITY_SIGNATURE_ED25519_LEN;
 	default:
@@ -113,15 +115,18 @@ iot_error_t iot_security_pk_get_key_type(iot_security_context_t *context, iot_se
 
 	if (!key_type) {
 		IOT_ERROR("key type is null");
-		return IOT_ERROR_INVALID_ARGS;
+		IOT_ERROR_DUMP_AND_RETURN(INVALID_ARGS, 0);
 	}
 
-	if (!context->pk_params) {
-		IOT_ERROR("pk does not initialized");
-		return IOT_ERROR_SECURITY_PK_KEY_TYPE;
+	if (!context->be_context->fn->pk_get_key_type) {
+		IOT_ERROR("be->fn->pk_get_key_type is null");
+		IOT_ERROR_DUMP_AND_RETURN(BE_FUNC_NULL, 0);
 	}
 
-	*key_type = context->pk_params->type;
+	err = context->be_context->fn->pk_get_key_type(context, key_type);
+	if (err) {
+		return err;
+	}
 
 	IOT_DEBUG("type = %d", *key_type);
 
@@ -139,19 +144,19 @@ iot_error_t iot_security_pk_sign(iot_security_context_t *context, iot_security_b
 
 	if (!input_buf || !input_buf->p || (input_buf->len == 0)) {
 		IOT_ERROR("input buf is invalid");
-		return IOT_ERROR_INVALID_ARGS;
+		IOT_ERROR_DUMP_AND_RETURN(INVALID_ARGS, 0);
 	}
 
 	if (!sig_buf) {
 		IOT_ERROR("sig buf is null");
-		return IOT_ERROR_INVALID_ARGS;
+		IOT_ERROR_DUMP_AND_RETURN(INVALID_ARGS, 0);
 	}
 
 	IOT_DEBUG("input = %d@%p", (int)input_buf->len, input_buf->p);
 
 	if (!context->be_context->fn->pk_sign) {
 		IOT_ERROR("be->fn->pk_sign is null");
-		return IOT_ERROR_SECURITY_BE_FUNC_NULL;
+		IOT_ERROR_DUMP_AND_RETURN(BE_FUNC_NULL, 0);
 	}
 
 	err = context->be_context->fn->pk_sign(context, input_buf, sig_buf);
@@ -175,12 +180,12 @@ iot_error_t iot_security_pk_verify(iot_security_context_t *context, iot_security
 
 	if (!input_buf || !input_buf->p || (input_buf->len == 0)) {
 		IOT_ERROR("input buf is invalid");
-		return IOT_ERROR_INVALID_ARGS;
+		IOT_ERROR_DUMP_AND_RETURN(INVALID_ARGS, 0);
 	}
 
 	if (!sig_buf || !sig_buf->p || (sig_buf->len == 0)) {
 		IOT_ERROR("sig buf is invalid");
-		return IOT_ERROR_INVALID_ARGS;
+		IOT_ERROR_DUMP_AND_RETURN(INVALID_ARGS, 0);
 	}
 
 	IOT_DEBUG("input = %d@%p", (int)input_buf->len, input_buf->p);
@@ -188,7 +193,7 @@ iot_error_t iot_security_pk_verify(iot_security_context_t *context, iot_security
 
 	if (!context->be_context->fn->pk_verify) {
 		IOT_ERROR("be->fn->pk_verify is null");
-		return IOT_ERROR_SECURITY_BE_FUNC_NULL;
+		IOT_ERROR_DUMP_AND_RETURN(BE_FUNC_NULL, 0);
 	}
 
 	err = context->be_context->fn->pk_verify(context, input_buf, sig_buf);
@@ -205,13 +210,13 @@ iot_error_t iot_security_cipher_init(iot_security_context_t *context)
 	iot_security_cipher_params_t *cipher_params;
 
 	if (!context) {
-		return IOT_ERROR_SECURITY_CONTEXT_NULL;
+		IOT_ERROR_DUMP_AND_RETURN(CONTEXT_NULL, 0);
 	}
 
 	cipher_params = (iot_security_cipher_params_t *)iot_os_malloc(sizeof(iot_security_cipher_params_t));
 	if (!cipher_params) {
 		IOT_ERROR("failed to malloc for cipher info");
-		return IOT_ERROR_MEM_ALLOC;
+		IOT_ERROR_DUMP_AND_RETURN(MEM_ALLOC, 0);
 	}
 
 	memset(cipher_params, 0, sizeof(iot_security_cipher_params_t));
@@ -225,7 +230,7 @@ iot_error_t iot_security_cipher_init(iot_security_context_t *context)
 		if (err) {
 			iot_os_free(context->cipher_params);
 			context->cipher_params = NULL;
-			return IOT_ERROR_SECURITY_CIPHER_INIT;
+			IOT_ERROR_DUMP_AND_RETURN(CIPHER_INIT, 0);
 		}
 	}
 
@@ -239,7 +244,7 @@ iot_error_t iot_security_cipher_deinit(iot_security_context_t *context)
 	iot_error_t err;
 
 	if (!context) {
-		return IOT_ERROR_SECURITY_CONTEXT_NULL;
+		IOT_ERROR_DUMP_AND_RETURN(CONTEXT_NULL, 0);
 	}
 
 	if (context->be_context &&
@@ -322,12 +327,12 @@ iot_error_t iot_security_cipher_set_params(iot_security_context_t *context, iot_
 
 	if (!cipher_set_params) {
 		IOT_ERROR("cipher set params is null");
-		return IOT_ERROR_INVALID_ARGS;
+		IOT_ERROR_DUMP_AND_RETURN(INVALID_ARGS, 0);
 	}
 
 	if (!context->be_context->fn->cipher_set_params) {
 		IOT_ERROR("be->fn->cipher_set_params is null");
-		return IOT_ERROR_SECURITY_BE_FUNC_NULL;
+		IOT_ERROR_DUMP_AND_RETURN(BE_FUNC_NULL, 0);
 	}
 
 	err = context->be_context->fn->cipher_set_params(context, cipher_set_params);
@@ -349,12 +354,12 @@ iot_error_t iot_security_cipher_aes_encrypt(iot_security_context_t *context, iot
 
 	if (!input_buf || !input_buf->p || (input_buf->len == 0)) {
 		IOT_ERROR("input buf is invalid");
-		return IOT_ERROR_INVALID_ARGS;
+		IOT_ERROR_DUMP_AND_RETURN(INVALID_ARGS, 0);
 	}
 
 	if (!output_buf) {
 		IOT_ERROR("output buf is null");
-		return IOT_ERROR_INVALID_ARGS;
+		IOT_ERROR_DUMP_AND_RETURN(INVALID_ARGS, 0);
 	}
 
 	IOT_DEBUG("input = %d@%p", (int)input_buf->len, input_buf->p);
@@ -363,7 +368,7 @@ iot_error_t iot_security_cipher_aes_encrypt(iot_security_context_t *context, iot
 
 	if (!context->be_context->fn->cipher_aes_encrypt) {
 		IOT_ERROR("be->fn->cipher_aes_encrypt is null");
-		return IOT_ERROR_SECURITY_BE_FUNC_NULL;
+		IOT_ERROR_DUMP_AND_RETURN(BE_FUNC_NULL, 0);
 	}
 
 	err = context->be_context->fn->cipher_aes_encrypt(context, input_buf, output_buf);
@@ -387,12 +392,12 @@ iot_error_t iot_security_cipher_aes_decrypt(iot_security_context_t *context, iot
 
 	if (!input_buf || !input_buf->p || (input_buf->len == 0)) {
 		IOT_ERROR("input buf is invalid");
-		return IOT_ERROR_INVALID_ARGS;
+		IOT_ERROR_DUMP_AND_RETURN(INVALID_ARGS, 0);
 	}
 
 	if (!output_buf) {
 		IOT_ERROR("output buf is null");
-		return IOT_ERROR_INVALID_ARGS;
+		IOT_ERROR_DUMP_AND_RETURN(INVALID_ARGS, 0);
 	}
 
 	IOT_DEBUG("input = %d@%p", (int)input_buf->len, input_buf->p);
@@ -401,7 +406,7 @@ iot_error_t iot_security_cipher_aes_decrypt(iot_security_context_t *context, iot
 
 	if (!context->be_context->fn->cipher_aes_decrypt) {
 		IOT_ERROR("be->fn->cipher_aes_decrypt is null");
-		return IOT_ERROR_SECURITY_BE_FUNC_NULL;
+		IOT_ERROR_DUMP_AND_RETURN(BE_FUNC_NULL, 0);
 	}
 
 	err = context->be_context->fn->cipher_aes_decrypt(context, input_buf, output_buf);

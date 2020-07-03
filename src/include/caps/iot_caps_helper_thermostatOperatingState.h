@@ -41,16 +41,30 @@ const static struct iot_caps_thermostatOperatingState {
     const struct thermostatOperatingState_attr_thermostatOperatingState {
         const char *name;
         const unsigned char property;
-        const unsigned char value_type;
+        const unsigned char valueType;
         const char *values[CAP_ENUM_THERMOSTATOPERATINGSTATE_THERMOSTATOPERATINGSTATE_VALUE_MAX];
+        const char *value_cooling;
+        const char *value_fan_only;
+        const char *value_heating;
+        const char *value_idle;
+        const char *value_pending_cool;
+        const char *value_pending_heat;
+        const char *value_vent_economizer;
     } attr_thermostatOperatingState;
 } caps_helper_thermostatOperatingState = {
     .id = "thermostatOperatingState",
     .attr_thermostatOperatingState = {
         .name = "thermostatOperatingState",
         .property = ATTR_SET_VALUE_REQUIRED,
-        .value_type = VALUE_TYPE_STRING,
+        .valueType = VALUE_TYPE_STRING,
         .values = {"cooling", "fan only", "heating", "idle", "pending cool", "pending heat", "vent economizer"},
+        .value_cooling = "cooling",
+        .value_fan_only = "fan only",
+        .value_heating = "heating",
+        .value_idle = "idle",
+        .value_pending_cool = "pending cool",
+        .value_pending_heat = "pending heat",
+        .value_vent_economizer = "vent economizer",
     },
 };
 

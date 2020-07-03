@@ -35,15 +35,16 @@ const static struct iot_caps_signalStrength {
     const struct signalStrength_attr_rssi {
         const char *name;
         const unsigned char property;
-        const unsigned char value_type;
+        const unsigned char valueType;
         const char *units[CAP_ENUM_SIGNALSTRENGTH_RSSI_UNIT_MAX];
+        const char *unit_dBm;
         const double min;
         const double max;
     } attr_rssi;
     const struct signalStrength_attr_lqi {
         const char *name;
         const unsigned char property;
-        const unsigned char value_type;
+        const unsigned char valueType;
         const int min;
         const int max;
     } attr_lqi;
@@ -52,15 +53,16 @@ const static struct iot_caps_signalStrength {
     .attr_rssi = {
         .name = "rssi",
         .property = ATTR_SET_VALUE_MIN | ATTR_SET_VALUE_MAX | ATTR_SET_VALUE_REQUIRED,
-        .value_type = VALUE_TYPE_NUMBER,
+        .valueType = VALUE_TYPE_NUMBER,
         .units = {"dBm"},
+        .unit_dBm = "dBm",
         .min = -200,
         .max = 0,
     },
     .attr_lqi = {
         .name = "lqi",
         .property = ATTR_SET_VALUE_MIN | ATTR_SET_VALUE_MAX | ATTR_SET_VALUE_REQUIRED,
-        .value_type = VALUE_TYPE_INTEGER,
+        .valueType = VALUE_TYPE_INTEGER,
         .min = 0,
         .max = 255,
     },

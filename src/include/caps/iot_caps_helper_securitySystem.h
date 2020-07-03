@@ -37,14 +37,17 @@ const static struct iot_caps_securitySystem {
     const struct securitySystem_attr_alarm {
         const char *name;
         const unsigned char property;
-        const unsigned char value_type;
+        const unsigned char valueType;
         const unsigned int max_length;
     } attr_alarm;
     const struct securitySystem_attr_securitySystemStatus {
         const char *name;
         const unsigned char property;
-        const unsigned char value_type;
+        const unsigned char valueType;
         const char *values[CAP_ENUM_SECURITYSYSTEM_SECURITYSYSTEMSTATUS_VALUE_MAX];
+        const char *value_armedAway;
+        const char *value_armedStay;
+        const char *value_disarmed;
     } attr_securitySystemStatus;
     const struct securitySystem_cmd_armStay { const char* name; } cmd_armStay;
     const struct securitySystem_cmd_disarm { const char* name; } cmd_disarm;
@@ -54,14 +57,17 @@ const static struct iot_caps_securitySystem {
     .attr_alarm = {
         .name = "alarm",
         .property = ATTR_SET_VALUE_REQUIRED | ATTR_SET_MAX_LENGTH,
-        .value_type = VALUE_TYPE_STRING,
+        .valueType = VALUE_TYPE_STRING,
         .max_length = 255,
     },
     .attr_securitySystemStatus = {
         .name = "securitySystemStatus",
         .property = ATTR_SET_VALUE_REQUIRED,
-        .value_type = VALUE_TYPE_STRING,
+        .valueType = VALUE_TYPE_STRING,
         .values = {"armedAway", "armedStay", "disarmed"},
+        .value_armedAway = "armedAway",
+        .value_armedStay = "armedStay",
+        .value_disarmed = "disarmed",
     },
     .cmd_armStay = { .name = "armStay" }, // arguments: bypassAll(boolean) 
     .cmd_disarm = { .name = "disarm" },

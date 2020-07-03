@@ -30,19 +30,19 @@ const static struct iot_caps_colorControl {
     const struct colorControl_attr_color {
         const char *name;
         const unsigned char property;
-        const unsigned char value_type;
+        const unsigned char valueType;
         const unsigned int max_length;
     } attr_color;
     const struct colorControl_attr_hue {
         const char *name;
         const unsigned char property;
-        const unsigned char value_type;
+        const unsigned char valueType;
         const double min;
     } attr_hue;
     const struct colorControl_attr_saturation {
         const char *name;
         const unsigned char property;
-        const unsigned char value_type;
+        const unsigned char valueType;
         const double min;
     } attr_saturation;
     const struct colorControl_cmd_setHue { const char* name; } cmd_setHue;
@@ -53,19 +53,19 @@ const static struct iot_caps_colorControl {
     .attr_color = {
         .name = "color",
         .property = ATTR_SET_MAX_LENGTH,
-        .value_type = VALUE_TYPE_STRING,
+        .valueType = VALUE_TYPE_STRING,
         .max_length = 255,
     },
     .attr_hue = {
         .name = "hue",
         .property = ATTR_SET_VALUE_MIN,
-        .value_type = VALUE_TYPE_NUMBER,
+        .valueType = VALUE_TYPE_NUMBER,
         .min = 0,
     },
     .attr_saturation = {
         .name = "saturation",
         .property = ATTR_SET_VALUE_MIN,
-        .value_type = VALUE_TYPE_NUMBER,
+        .valueType = VALUE_TYPE_NUMBER,
         .min = 0,
     },
     .cmd_setHue = { .name = "setHue" }, // arguments: hue(number) 

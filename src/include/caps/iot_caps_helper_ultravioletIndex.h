@@ -30,7 +30,7 @@ const static struct iot_caps_ultravioletIndex {
     const struct ultravioletIndex_attr_ultravioletIndex {
         const char *name;
         const unsigned char property;
-        const unsigned char value_type;
+        const unsigned char valueType;
         const double min;
         const double max;
     } attr_ultravioletIndex;
@@ -39,7 +39,7 @@ const static struct iot_caps_ultravioletIndex {
     .attr_ultravioletIndex = {
         .name = "ultravioletIndex",
         .property = ATTR_SET_VALUE_MIN | ATTR_SET_VALUE_MAX | ATTR_SET_VALUE_REQUIRED,
-        .value_type = VALUE_TYPE_NUMBER,
+        .valueType = VALUE_TYPE_NUMBER,
         .min = 0,
         .max = 255,
     },

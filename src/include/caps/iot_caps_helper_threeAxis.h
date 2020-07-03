@@ -35,8 +35,9 @@ const static struct iot_caps_threeAxis {
     const struct threeAxis_attr_threeAxis {
         const char *name;
         const unsigned char property;
-        const unsigned char value_type;
+        const unsigned char valueType;
         const char *units[CAP_ENUM_THREEAXIS_THREEAXIS_UNIT_MAX];
+        const char *unit_mG;
         const int min;
         const int max;
     } attr_threeAxis;
@@ -45,8 +46,9 @@ const static struct iot_caps_threeAxis {
     .attr_threeAxis = {
         .name = "threeAxis",
         .property = ATTR_SET_VALUE_MIN | ATTR_SET_VALUE_MAX | ATTR_SET_VALUE_REQUIRED | ATTR_SET_VALUE_ARRAY,
-        .value_type = VALUE_TYPE_INTEGER,
+        .valueType = VALUE_TYPE_INTEGER,
         .units = {"mG"},
+        .unit_mG = "mG",
         .min = -10000,
         .max = 10000,
     },

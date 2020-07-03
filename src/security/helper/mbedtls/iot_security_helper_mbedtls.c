@@ -32,12 +32,12 @@ static iot_error_t _iot_security_url_encode(char *buf, size_t buf_len)
 
 	if (!buf) {
 		IOT_ERROR("buf is null");
-		return IOT_ERROR_INVALID_ARGS;
+		IOT_ERROR_DUMP_AND_RETURN(INVALID_ARGS, 0);
 	}
 
 	if (!buf_len) {
 		IOT_ERROR("length is zero");
-		return IOT_ERROR_INVALID_ARGS;
+		IOT_ERROR_DUMP_AND_RETURN(INVALID_ARGS, 0);
 	}
 
 	for (i = 0; i < buf_len; i++) {
@@ -62,12 +62,12 @@ static iot_error_t _iot_security_url_decode(char *buf, size_t buf_len)
 
 	if (!buf) {
 		IOT_ERROR("buf is null");
-		return IOT_ERROR_INVALID_ARGS;
+		IOT_ERROR_DUMP_AND_RETURN(INVALID_ARGS, 0);
 	}
 
 	if (!buf_len) {
 		IOT_ERROR("length is zero");
-		return IOT_ERROR_INVALID_ARGS;
+		IOT_ERROR_DUMP_AND_RETURN(INVALID_ARGS, 0);
 	}
 
 	for (i = 0; i < buf_len; i++) {
@@ -94,17 +94,17 @@ iot_error_t iot_security_base64_encode(const unsigned char *src, size_t src_len,
 
 	if (!src || (src_len == 0)) {
 		IOT_ERROR("invalid src with %d@%p", (int)src_len, src);
-		return IOT_ERROR_INVALID_ARGS;
+		IOT_ERROR_DUMP_AND_RETURN(INVALID_ARGS, 0);
 	}
 
 	if (!dst || (dst_len == 0)) {
 		IOT_ERROR("invalid dst with %d@%p", (int)dst_len, dst);
-		return IOT_ERROR_INVALID_ARGS;
+		IOT_ERROR_DUMP_AND_RETURN(INVALID_ARGS, 0);
 	}
 
 	if (!out_len) {
 		IOT_ERROR("length output buffer is null");
-		return IOT_ERROR_INVALID_ARGS;
+		IOT_ERROR_DUMP_AND_RETURN(INVALID_ARGS, 0);
 	}
 
 	IOT_DEBUG("src: %d@%p, dst: %d@%p", (int)src_len, src, (int)dst_len, dst);
@@ -112,7 +112,7 @@ iot_error_t iot_security_base64_encode(const unsigned char *src, size_t src_len,
 	ret = mbedtls_base64_encode(dst, dst_len, out_len, src, src_len);
 	if (ret) {
 		IOT_ERROR("mbedtls_base64_encode = -0x%04X", -ret);
-		return IOT_ERROR_SECURITY_BASE64_ENCODE;
+		IOT_ERROR_DUMP_AND_RETURN(BASE64_ENCODE, -ret);
 	}
 
 	IOT_DEBUG("done: %d@%p", (int)*out_len, dst);
@@ -128,17 +128,17 @@ iot_error_t iot_security_base64_decode(const unsigned char *src, size_t src_len,
 
 	if (!src || (src_len == 0)) {
 		IOT_ERROR("invalid src with %d@%p", (int)src_len, src);
-		return IOT_ERROR_INVALID_ARGS;
+		IOT_ERROR_DUMP_AND_RETURN(INVALID_ARGS, 0);
 	}
 
 	if (!dst || (dst_len == 0)) {
 		IOT_ERROR("invalid dst with %d@%p", (int)dst_len, dst);
-		return IOT_ERROR_INVALID_ARGS;
+		IOT_ERROR_DUMP_AND_RETURN(INVALID_ARGS, 0);
 	}
 
 	if (!out_len) {
 		IOT_ERROR("length output buffer is null");
-		return IOT_ERROR_INVALID_ARGS;
+		IOT_ERROR_DUMP_AND_RETURN(INVALID_ARGS, 0);
 	}
 
 	IOT_DEBUG("src: %d@%p, dst: %d@%p", (int)src_len, src, (int)dst_len, dst);
@@ -146,7 +146,7 @@ iot_error_t iot_security_base64_decode(const unsigned char *src, size_t src_len,
 	ret = mbedtls_base64_decode(dst, dst_len, out_len, src, src_len);
 	if (ret) {
 		IOT_ERROR("mbedtls_base64_decode = -0x%04X", -ret);
-		return IOT_ERROR_SECURITY_BASE64_DECODE;
+		IOT_ERROR_DUMP_AND_RETURN(BASE64_DECODE, -ret);
 	}
 
 	IOT_DEBUG("done: %d@%p", (int)*out_len, dst);
@@ -162,17 +162,17 @@ iot_error_t iot_security_base64_encode_urlsafe(const unsigned char *src, size_t 
 
 	if (!src || (src_len == 0)) {
 		IOT_ERROR("invalid src with %d@%p", (int)src_len, src);
-		return IOT_ERROR_INVALID_ARGS;
+		IOT_ERROR_DUMP_AND_RETURN(INVALID_ARGS, 0);
 	}
 
 	if (!dst || (dst_len == 0)) {
 		IOT_ERROR("invalid dst with %d@%p", (int)dst_len, dst);
-		return IOT_ERROR_INVALID_ARGS;
+		IOT_ERROR_DUMP_AND_RETURN(INVALID_ARGS, 0);
 	}
 
 	if (!out_len) {
 		IOT_ERROR("length output buffer is null");
-		return IOT_ERROR_INVALID_ARGS;
+		IOT_ERROR_DUMP_AND_RETURN(INVALID_ARGS, 0);
 	}
 
 	IOT_DEBUG("src: %d@%p, dst: %d@%p", (int)src_len, src, (int)dst_len, dst);
@@ -180,13 +180,13 @@ iot_error_t iot_security_base64_encode_urlsafe(const unsigned char *src, size_t 
 	ret = mbedtls_base64_encode(dst, dst_len, out_len, src, src_len);
 	if (ret) {
 		IOT_ERROR("mbedtls_base64_encode = -0x%04X", -ret);
-		return IOT_ERROR_SECURITY_BASE64_URL_ENCODE;
+		IOT_ERROR_DUMP_AND_RETURN(BASE64_URL_ENCODE, -ret);
 	}
 
 	ret = _iot_security_url_encode((char *)dst, *out_len);
 	if (ret) {
 		IOT_ERROR("_iot_security_url_encode = %d", ret);
-		return IOT_ERROR_SECURITY_BASE64_URL_ENCODE;
+		IOT_ERROR_DUMP_AND_RETURN(BASE64_URL_ENCODE, ret);
 	}
 
 	IOT_DEBUG("done: %d@%p", (int)*out_len, dst);
@@ -205,17 +205,17 @@ iot_error_t iot_security_base64_decode_urlsafe(const unsigned char *src, size_t 
 
 	if (!src || (src_len == 0)) {
 		IOT_ERROR("invalid src with %d@%p", (int)src_len, src);
-		return IOT_ERROR_INVALID_ARGS;
+		IOT_ERROR_DUMP_AND_RETURN(INVALID_ARGS, 0);
 	}
 
 	if (!dst || (dst_len == 0)) {
 		IOT_ERROR("invalid dst with %d@%p", (int)dst_len, dst);
-		return IOT_ERROR_INVALID_ARGS;
+		IOT_ERROR_DUMP_AND_RETURN(INVALID_ARGS, 0);
 	}
 
 	if (!out_len) {
 		IOT_ERROR("length output buffer is null");
-		return IOT_ERROR_INVALID_ARGS;
+		IOT_ERROR_DUMP_AND_RETURN(INVALID_ARGS, 0);
 	}
 
 	IOT_DEBUG("src: %d@%p, dst: %d@%p", (int)src_len, src, (int)dst_len, dst);
@@ -224,7 +224,7 @@ iot_error_t iot_security_base64_decode_urlsafe(const unsigned char *src, size_t 
 	src_dup = (unsigned char *)iot_os_malloc(align_len + 1);
 	if (src_dup == NULL) {
 		IOT_ERROR("malloc failed for align buffer");
-		return IOT_ERROR_MEM_ALLOC;
+		IOT_ERROR_DUMP_AND_RETURN(MEM_ALLOC, 0);
 	}
 
 	memcpy(src_dup, src, src_len);
@@ -238,14 +238,14 @@ iot_error_t iot_security_base64_decode_urlsafe(const unsigned char *src, size_t 
 	if (ret) {
 		IOT_ERROR("_iot_security_url_decode = %d", ret);
 		iot_os_free(src_dup);
-		return IOT_ERROR_SECURITY_BASE64_URL_DECODE;
+		IOT_ERROR_DUMP_AND_RETURN(BASE64_URL_DECODE, ret);
 	}
 
 	ret = mbedtls_base64_decode(dst, dst_len, out_len, (const unsigned char *)src_dup, align_len);
 	if (ret) {
 		IOT_ERROR("mbedtls_base64_decode = -0x%04X", -ret);
 		iot_os_free(src_dup);
-		return IOT_ERROR_SECURITY_BASE64_URL_DECODE;
+		IOT_ERROR_DUMP_AND_RETURN(BASE64_URL_DECODE, -ret);
 	}
 
 	IOT_DEBUG("done: %d@%p", (int)*out_len, dst);
@@ -259,18 +259,18 @@ iot_error_t iot_security_sha256(const unsigned char *input, size_t input_len, un
 
 	if (!input || (input_len == 0)) {
 		IOT_ERROR("invalid input with %d@%p", (int)input_len, input);
-		return IOT_ERROR_INVALID_ARGS;
+		IOT_ERROR_DUMP_AND_RETURN(INVALID_ARGS, 0);
 	}
 
 	if (!output || (output_len < IOT_SECURITY_SHA256_LEN)) {
 		IOT_ERROR("invalid output with %d@%p", (int)output_len, output);
-		return IOT_ERROR_INVALID_ARGS;
+		IOT_ERROR_DUMP_AND_RETURN(INVALID_ARGS, 0);
 	}
 
 	ret = mbedtls_sha256_ret(input, input_len, output, 0);
 	if (ret) {
 		IOT_ERROR("mbedtls_sha256_ret = -0x%04X", -ret);
-		return IOT_ERROR_SECURITY_SHA256;
+		IOT_ERROR_DUMP_AND_RETURN(SHA256, -ret);
 	}
 
 	return IOT_ERROR_NONE;

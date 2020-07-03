@@ -35,8 +35,9 @@ const static struct iot_caps_colorTemperature {
     const struct colorTemperature_attr_colorTemperature {
         const char *name;
         const unsigned char property;
-        const unsigned char value_type;
+        const unsigned char valueType;
         const char *units[CAP_ENUM_COLORTEMPERATURE_COLORTEMPERATURE_UNIT_MAX];
+        const char *unit_K;
         const int min;
         const int max;
     } attr_colorTemperature;
@@ -46,8 +47,9 @@ const static struct iot_caps_colorTemperature {
     .attr_colorTemperature = {
         .name = "colorTemperature",
         .property = ATTR_SET_VALUE_MIN | ATTR_SET_VALUE_MAX | ATTR_SET_VALUE_REQUIRED,
-        .value_type = VALUE_TYPE_INTEGER,
+        .valueType = VALUE_TYPE_INTEGER,
         .units = {"K"},
+        .unit_K = "K",
         .min = 1,
         .max = 30000,
     },
