@@ -134,7 +134,7 @@ static esp_err_t event_handler(void *ctx, system_event_t *event)
 		break;
 
 	case SYSTEM_EVENT_AP_STADISCONNECTED:
-		IOT_INFO("station:"MACSTR"leave, AID=%d",
+		IOT_INFO("station:"MACSTR" leave, AID=%d",
 				MAC2STR(event->event_info.sta_disconnected.mac),
 				event->event_info.sta_disconnected.aid);
 
