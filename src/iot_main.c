@@ -1749,6 +1749,13 @@ do { \
 	ctx->status_usr_data = NULL; \
 } while(0)
 
+#define IS_CTX_VALID(ctx) ( \
+	ctx ? ( \
+	ctx->cmd_queue ? ( \
+	ctx->pub_queue ? ( \
+	ctx->usr_events ? ( \
+	ctx->iot_events ? true : false) : false) : false) : false) : false)
+
 int st_conn_start(IOT_CTX *iot_ctx, st_status_cb status_cb,
 		iot_status_t maps, void *usr_data, iot_pin_t *pin_num)
 {
@@ -1757,7 +1764,7 @@ int st_conn_start(IOT_CTX *iot_ctx, st_status_cb status_cb,
 	struct iot_context *ctx = (struct iot_context*)iot_ctx;
 	unsigned char curr_events;
 
-	if (!ctx)
+	if (!IS_CTX_VALID(ctx))
 		return IOT_ERROR_BAD_REQ;
 
 	iot_os_mutex_lock(&ctx->st_conn_lock);
@@ -1831,7 +1838,7 @@ int st_conn_cleanup(IOT_CTX *iot_ctx, bool reboot)
 	unsigned char curr_events;
 	struct iot_context *ctx = (struct iot_context*)iot_ctx;
 
-	if (!ctx)
+	if (!IS_CTX_VALID(ctx))
 		return IOT_ERROR_BAD_REQ;
 
 	iot_os_mutex_lock(&ctx->st_conn_lock);
@@ -1873,7 +1880,7 @@ int st_conn_start_ex(IOT_CTX *iot_ctx, iot_ext_args_t *ext_args)
 	unsigned char curr_events;
 	bool cmd_only;
 
-	if (!ctx || !ext_args) {
+	if (!IS_CTX_VALID(ctx) || !ext_args) {
 		IOT_ERROR("invalid parameters\n");
 		return IOT_ERROR_INVALID_ARGS;
 	}
@@ -2031,7 +2038,7 @@ int st_info_get(IOT_CTX *iot_ctx, iot_info_type_t info_type, iot_info_data_t *in
 	unsigned char curr_events;
 	bool cmd_only;
 
-	if (!ctx || !info_data) {
+	if (!IS_CTX_VALID(ctx) || !info_data) {
 		IOT_ERROR("invalid parameters\n");
 		return IOT_ERROR_INVALID_ARGS;
 	}
