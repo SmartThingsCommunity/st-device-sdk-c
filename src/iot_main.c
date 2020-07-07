@@ -1303,7 +1303,7 @@ IOT_CTX* st_conn_init(unsigned char *onboarding_config, unsigned int onboarding_
 	ctx->iot_reg_data.new_reged = false;
 	ctx->curr_state = ctx->req_state = IOT_STATE_UNKNOWN;
 
-	/* create mutext for user level st_conn_xxx APIs */
+	/* create mutex for user level st_conn_xxx APIs */
 	if (iot_os_mutex_init(&ctx->st_conn_lock) != IOT_OS_TRUE) {
 		IOT_ERROR("failed to init st_conn_lock\n");
 		IOT_DUMP_MAIN(ERROR, BASE, 0xDEADBEEF);
