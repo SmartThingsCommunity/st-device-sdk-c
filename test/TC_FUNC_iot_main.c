@@ -27,6 +27,7 @@
 #include <iot_nv_data.h>
 #include <iot_easysetup.h>
 #include <iot_util.h>
+#include <iot_capability.h>
 #include "TC_MOCK_functions.h"
 
 #define UNUSED(x) (void**)(x)
@@ -234,6 +235,11 @@ void TC_st_conn_cleanup_success(void **state)
     internal_context->cmd_queue = iot_os_queue_create(IOT_QUEUE_LENGTH,
                                          sizeof(struct iot_command));
     assert_non_null(internal_context->cmd_queue);
+    internal_context->pub_queue = iot_os_queue_create(IOT_QUEUE_LENGTH,
+                                         sizeof(iot_cap_msg_t));
+    assert_non_null(internal_context->pub_queue);
+    internal_context->usr_events = iot_os_eventgroup_create();
+    assert_non_null(internal_context->usr_events);
     internal_context->iot_events = iot_os_eventgroup_create();
     assert_non_null(internal_context->iot_events);
     expect_any(__wrap_iot_os_delay, delay_ms);
@@ -243,6 +249,8 @@ void TC_st_conn_cleanup_success(void **state)
     assert_return_code(err, 0);
     // Teardown
     iot_os_queue_delete(internal_context->cmd_queue);
+    iot_os_queue_delete(internal_context->pub_queue);
+    iot_os_eventgroup_delete(internal_context->usr_events);
     iot_os_eventgroup_delete(internal_context->iot_events);
     free(internal_context);
 }
