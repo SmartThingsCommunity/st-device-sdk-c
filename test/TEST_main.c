@@ -252,6 +252,7 @@ int TEST_FUNC_iot_security_crypto(void)
 int TEST_FUNC_iot_security_ecdh(void)
 {
     const struct CMUnitTest tests[] = {
+#if defined(CONFIG_STDK_IOT_CORE_CRYPTO_SUPPORT_ED25519)
             cmocka_unit_test(TC_iot_security_ecdh_init_null_parameters),
             cmocka_unit_test_setup_teardown(TC_iot_security_ecdh_init_malloc_failure, TC_iot_security_ecdh_init_setup, TC_iot_security_ecdh_init_teardown),
             cmocka_unit_test_setup_teardown(TC_iot_security_ecdh_init_success, TC_iot_security_ecdh_init_setup, TC_iot_security_ecdh_init_teardown),
@@ -264,6 +265,7 @@ int TEST_FUNC_iot_security_ecdh(void)
             cmocka_unit_test_setup_teardown(TC_iot_security_ecdh_compute_shared_secret_success, TC_iot_security_ecdh_setup, TC_iot_security_ecdh_teardown),
             cmocka_unit_test_setup_teardown(TC_iot_security_ecdh_and_dynamic_cipher, TC_iot_security_ecdh_setup, TC_iot_security_ecdh_teardown),
             cmocka_unit_test_setup_teardown(TC_iot_security_ecdh_and_static_cipher, TC_iot_security_ecdh_setup, TC_iot_security_ecdh_teardown),
+#endif
     };
     return cmocka_run_group_tests_name("iot_security_ecdh.c", tests, NULL, NULL);
 }
