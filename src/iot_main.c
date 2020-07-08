@@ -1765,9 +1765,11 @@ int st_conn_start(IOT_CTX *iot_ctx, st_status_cb status_cb,
 	unsigned char curr_events;
 
 	if (!IS_CTX_VALID(ctx))
+		return IOT_ERROR_INVALID_ARGS;
+
+	if (iot_os_mutex_lock(&ctx->st_conn_lock) != IOT_OS_TRUE)
 		return IOT_ERROR_BAD_REQ;
 
-	iot_os_mutex_lock(&ctx->st_conn_lock);
 	if ((ctx->curr_state != IOT_STATE_UNKNOWN) || (ctx->req_state != IOT_STATE_UNKNOWN)) {
 		IOT_WARN("Can't start it, iot_main_task is already working(%d)", ctx->curr_state);
 		IOT_DUMP_MAIN(WARN, BASE, ctx->curr_state);
@@ -1839,9 +1841,10 @@ int st_conn_cleanup(IOT_CTX *iot_ctx, bool reboot)
 	struct iot_context *ctx = (struct iot_context*)iot_ctx;
 
 	if (!IS_CTX_VALID(ctx))
-		return IOT_ERROR_BAD_REQ;
+		return IOT_ERROR_INVALID_ARGS;
 
-	iot_os_mutex_lock(&ctx->st_conn_lock);
+	if (iot_os_mutex_lock(&ctx->st_conn_lock) != IOT_OS_TRUE)
+		return IOT_ERROR_BAD_REQ;
 
 	/* remove all queued commands */
 	_throw_away_all_cmd_queue(ctx);
@@ -1899,7 +1902,9 @@ int st_conn_start_ex(IOT_CTX *iot_ctx, iot_ext_args_t *ext_args)
 		}
 	}
 
-	iot_os_mutex_lock(&ctx->st_conn_lock);
+	if (iot_os_mutex_lock(&ctx->st_conn_lock) != IOT_OS_TRUE)
+		return IOT_ERROR_BAD_REQ;
+
 	if ((ctx->curr_state != IOT_STATE_UNKNOWN) || (ctx->req_state != IOT_STATE_UNKNOWN)) {
 		IOT_WARN("iot-core is already working(%d), stop & remove all cmd first",
 			ctx->curr_state);
@@ -2043,7 +2048,8 @@ int st_info_get(IOT_CTX *iot_ctx, iot_info_type_t info_type, iot_info_data_t *in
 		return IOT_ERROR_INVALID_ARGS;
 	}
 
-	iot_os_mutex_lock(&ctx->st_conn_lock);
+	if (iot_os_mutex_lock(&ctx->st_conn_lock) != IOT_OS_TRUE)
+		return IOT_ERROR_BAD_REQ;
 
 	switch (info_type) {
 	case IOT_INFO_TYPE_IOT_STATUS_AND_STAT:
