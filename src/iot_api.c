@@ -85,6 +85,7 @@ iot_error_t iot_wifi_ctrl_request(struct iot_context *ctx,
 {
 	iot_error_t iot_err = IOT_ERROR_BAD_REQ;
 	iot_wifi_conf wifi_conf;
+	bool send_cmd = true;
 
 	if (!ctx) {
 		IOT_ERROR("There is no ctx\n");
@@ -117,10 +118,19 @@ iot_error_t iot_wifi_ctrl_request(struct iot_context *ctx,
 		break;
 
 	case IOT_WIFI_MODE_OFF:
-		IOT_DEBUG("No need more settings for [%d] mode\n", wifi_mode);
+		send_cmd = false;
+
+		wifi_conf.mode = IOT_WIFI_MODE_OFF;
+		iot_err = iot_bsp_wifi_set_mode(&wifi_conf);
+		if (iot_err != IOT_ERROR_NONE) {
+			IOT_ERROR("failed to set wifi_set_mode for scan\n");
+			return iot_err;
+		}
 		break;
 
 	case IOT_WIFI_MODE_SCAN:
+		send_cmd = false;
+
 		iot_err = iot_bsp_wifi_set_mode(&wifi_conf);
 		if (iot_err != IOT_ERROR_NONE) {
 			IOT_ERROR("failed to set wifi_set_mode for scan\n");
@@ -144,7 +154,7 @@ iot_error_t iot_wifi_ctrl_request(struct iot_context *ctx,
 		return IOT_ERROR_BAD_REQ;
 	}
 
-	if (wifi_mode != IOT_WIFI_MODE_SCAN) {
+	if (send_cmd) {
 		iot_err = iot_command_send(ctx,
 				IOT_COMMAND_NETWORK_MODE,
 					&wifi_conf, sizeof(wifi_conf));
@@ -917,12 +927,22 @@ iot_error_t iot_device_cleanup(struct iot_context *ctx)
 		IOT_ERROR("%s: failed to erase device ID: %d", __func__, iot_err);
 	}
 
-	if((iot_err = iot_es_disconnect(ctx, IOT_CONNECT_TYPE_COMMUNICATION)) != IOT_ERROR_NONE) {
-		IOT_ERROR("%s: mqtt disconnect failed %d", __func__, iot_err);
+	/* if there is previous connection, disconnect it first. */
+	if (ctx->evt_mqttcli != NULL) {
+		IOT_INFO("There is previous connecting, disconnect it first.\n");
+		iot_err = iot_es_disconnect(ctx, IOT_CONNECT_TYPE_COMMUNICATION);
+		if (iot_err != IOT_ERROR_NONE) {
+			IOT_ERROR("%s: evt_mqtt disconnect failed %d", __func__, iot_err);
+		}
 	}
 
-	config.mode = IOT_WIFI_MODE_OFF;
-	iot_bsp_wifi_set_mode(&config);
+	if (ctx->reg_mqttcli != NULL) {
+		IOT_INFO("There is active registering, disconnect it first.\n");
+		iot_err = iot_es_disconnect(ctx, IOT_CONNECT_TYPE_REGISTRATION);
+		if (iot_err != IOT_ERROR_NONE) {
+			IOT_ERROR("%s: reg_mqtt disconnect failed %d", __func__, iot_err);
+		}
+	}
 
 	if(ctx->lookup_id) {
 		free(ctx->lookup_id);

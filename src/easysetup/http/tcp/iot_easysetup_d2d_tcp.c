@@ -575,7 +575,7 @@ iot_error_t _es_keyinfo_handler(struct iot_context *ctx, char *in_payload, char 
 		IOT_INFO("no datetime info");
 		IOT_ES_DUMP(IOT_DEBUG_LEVEL_ERROR, IOT_DUMP_EASYSETUP_INVALID_REQUEST, 0);
 		err  = IOT_ERROR_EASYSETUP_INVALID_REQUEST;
-		goto temp_exit;
+		goto exit_ecdh_deinit;
 	}
 	p_datetime_str = (unsigned char *)JSON_GET_STRING_VALUE(recv);
 
@@ -670,8 +670,6 @@ iot_error_t _es_keyinfo_handler(struct iot_context *ctx, char *in_payload, char 
 
 	IOT_DEBUG("timezoneid = %s", decode_buf); // TODO: where to store
 
-temp_exit:// TODO: once app is published with time info feature, it should be deleted.
-
 	JSON_DELETE(root);
 
 	root = JSON_CREATE_OBJECT();
@@ -691,7 +689,9 @@ temp_exit:// TODO: once app is published with time info feature, it should be de
 	}
 
 	for (i = OVF_BIT_JUSTWORKS; i < OVF_BIT_MAX_FEATURE; i++) {
-		if (ctx->devconf.ownership_validation_type & (unsigned)(1 << i)) {
+		if ((i == OVF_BIT_JUSTWORKS) && ctx->add_justworks) {
+			JSON_ADD_ITEM_TO_ARRAY(array, JSON_CREATE_NUMBER(i));
+		} else if (ctx->devconf.ownership_validation_type & (unsigned)(1 << i)) {
 			JSON_ADD_ITEM_TO_ARRAY(array, JSON_CREATE_NUMBER(i));
 		}
 	}

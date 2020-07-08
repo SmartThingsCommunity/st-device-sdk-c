@@ -1028,8 +1028,6 @@ int st_mqtt_yield(st_mqtt_client client, int time)
 		if((iot_os_mutex_lock(&c->read_lock)) == IOT_OS_TRUE) {
 			if (c->write_pending_queue.head != NULL) {
 				rc = 1;
-			} else if (c->ack_pending_queue.head != NULL) {
-				rc = 1;
 			} else if (c->user_event_callback_queue.head != NULL) {
 				rc = 1;
 			} else if(c->isconnected && (c->net->select(c->net, 0) > 0)) {

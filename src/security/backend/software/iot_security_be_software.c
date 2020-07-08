@@ -590,7 +590,6 @@ iot_error_t _iot_security_be_software_pk_sign_rsa(iot_security_context_t *contex
 	iot_security_pk_params_t *pk_params;
 	mbedtls_pk_context mbed_pk_context;
 	mbedtls_md_type_t mbed_md_type;
-	unsigned char hash[IOT_SECURITY_SHA256_LEN] = {0};
 	int ret;
 
 	err = _iot_security_be_check_context_and_params_is_valid(context, IOT_SECURITY_SUB_PK);
@@ -630,11 +629,6 @@ iot_error_t _iot_security_be_software_pk_sign_rsa(iot_security_context_t *contex
 		goto exit;
 	}
 
-	err = iot_security_sha256(input_buf->p, input_buf->len, hash, sizeof(hash));
-	if (err) {
-		goto exit;
-	}
-
 	sig_buf->len = iot_security_pk_get_signature_len(pk_params->type);
 	sig_buf->p = (unsigned char *)iot_os_malloc(sig_buf->len);
 	if (!sig_buf->p) {
@@ -642,7 +636,7 @@ iot_error_t _iot_security_be_software_pk_sign_rsa(iot_security_context_t *contex
 		IOT_ERROR_DUMP_AND_RETURN(MEM_ALLOC, 0);
 	}
 
-	ret = mbedtls_pk_sign(&mbed_pk_context, mbed_md_type, hash, sizeof(hash), sig_buf->p, &sig_buf->len, NULL, NULL);
+	ret = mbedtls_pk_sign(&mbed_pk_context, mbed_md_type, input_buf->p, input_buf->len, sig_buf->p, &sig_buf->len, NULL, NULL);
 	if (ret) {
 		IOT_ERROR("mbedtls_pk_sign = -0x%04X\n", -ret);
 		_iot_security_be_software_buffer_free(sig_buf);
@@ -655,7 +649,6 @@ iot_error_t _iot_security_be_software_pk_sign_rsa(iot_security_context_t *contex
 
 	err = IOT_ERROR_NONE;
 exit:
-	memset(&hash, 0, sizeof(hash));
 	mbedtls_pk_free(&mbed_pk_context);
 
 	return err;
@@ -669,7 +662,6 @@ static iot_error_t _iot_security_be_software_pk_verify_rsa(iot_security_context_
 	mbedtls_x509_crt mbed_x509_crt;
 	mbedtls_pk_context mbed_pk_context;
 	mbedtls_md_type_t mbed_md_type;
-	unsigned char hash[IOT_SECURITY_SHA256_LEN] = {0};
 	int ret;
 
 	err = _iot_security_be_check_context_and_params_is_valid(context, IOT_SECURITY_SUB_PK);
@@ -710,12 +702,7 @@ static iot_error_t _iot_security_be_software_pk_verify_rsa(iot_security_context_
 		goto exit;
 	}
 
-	err = iot_security_sha256(input_buf->p, input_buf->len, hash, sizeof(hash));
-	if (err) {
-		goto exit;
-	}
-
-	ret = mbedtls_pk_verify(&mbed_x509_crt.pk, mbed_md_type, hash, sizeof(hash), sig_buf->p, sig_buf->len);
+	ret = mbedtls_pk_verify(&mbed_x509_crt.pk, mbed_md_type, input_buf->p, input_buf->len, sig_buf->p, sig_buf->len);
 	if (ret) {
 		IOT_ERROR("mbedtls_pk_verify = -0x%04X\n", -ret);
 		err = IOT_ERROR_SECURITY_PK_VERIFY;
@@ -727,7 +714,6 @@ static iot_error_t _iot_security_be_software_pk_verify_rsa(iot_security_context_
 
 	err = IOT_ERROR_NONE;
 exit:
-	memset(&hash, 0, sizeof(hash));
 	mbedtls_x509_crt_free(&mbed_x509_crt);
 
 	return err;
@@ -743,7 +729,6 @@ iot_error_t _iot_security_be_software_pk_sign_ecdsa(iot_security_context_t *cont
 	iot_security_pk_params_t *pk_params;
 	mbedtls_pk_context mbed_pk_context;
 	mbedtls_md_type_t mbed_md_type;
-	unsigned char hash[IOT_SECURITY_SHA256_LEN] = {0};
 	int ret;
 
 	err = _iot_security_be_check_context_and_params_is_valid(context, IOT_SECURITY_SUB_PK);
@@ -782,11 +767,6 @@ iot_error_t _iot_security_be_software_pk_sign_ecdsa(iot_security_context_t *cont
 		goto exit;
 	}
 
-	err = iot_security_sha256(input_buf->p, input_buf->len, hash, sizeof(hash));
-	if (err) {
-		goto exit;
-	}
-
 	sig_buf->len = iot_security_pk_get_signature_len(pk_params->type);
 	sig_buf->p = (unsigned char *)iot_os_malloc(sig_buf->len);
 	if (!sig_buf->p) {
@@ -794,7 +774,7 @@ iot_error_t _iot_security_be_software_pk_sign_ecdsa(iot_security_context_t *cont
 		return IOT_ERROR_MEM_ALLOC;
 	}
 
-	ret = mbedtls_pk_sign(&mbed_pk_context, mbed_md_type, hash, sizeof(hash), sig_buf->p, &sig_buf->len, NULL, NULL);
+	ret = mbedtls_pk_sign(&mbed_pk_context, mbed_md_type, input_buf->p, input_buf->len, sig_buf->p, &sig_buf->len, NULL, NULL);
 	if (ret) {
 		IOT_ERROR("mbedtls_pk_sign = -0x%04X\n", -ret);
 		_iot_security_be_software_buffer_free(sig_buf);
@@ -814,7 +794,6 @@ iot_error_t _iot_security_be_software_pk_sign_ecdsa(iot_security_context_t *cont
 
 	err = IOT_ERROR_NONE;
 exit:
-	memset(&hash, 0, sizeof(hash));
 	mbedtls_pk_free(&mbed_pk_context);
 
 	return err;
@@ -828,7 +807,6 @@ static iot_error_t _iot_security_be_software_pk_verify_ecdsa(iot_security_contex
 	mbedtls_x509_crt mbed_x509_crt;
 	mbedtls_pk_context mbed_pk_context;
 	mbedtls_md_type_t mbed_md_type;
-	unsigned char hash[IOT_SECURITY_SHA256_LEN] = {0};
 	int ret;
 
 	err = _iot_security_be_check_context_and_params_is_valid(context, IOT_SECURITY_SUB_PK);
@@ -868,12 +846,7 @@ static iot_error_t _iot_security_be_software_pk_verify_ecdsa(iot_security_contex
 		goto exit;
 	}
 
-	err = iot_security_sha256(input_buf->p, input_buf->len, hash, sizeof(hash));
-	if (err) {
-		goto exit;
-	}
-
-	ret = mbedtls_pk_verify(&mbed_x509_crt.pk, mbed_md_type, hash, sizeof(hash), sig_buf->p, sig_buf->len);
+	ret = mbedtls_pk_verify(&mbed_x509_crt.pk, mbed_md_type, input_buf->p, input_buf->len, sig_buf->p, sig_buf->len);
 	if (ret) {
 		IOT_ERROR("mbedtls_pk_verify = -0x%04X\n", -ret);
 		err = IOT_ERROR_SECURITY_PK_VERIFY;
@@ -884,7 +857,6 @@ static iot_error_t _iot_security_be_software_pk_verify_ecdsa(iot_security_contex
 
 	err = IOT_ERROR_NONE;
 exit:
-	memset(&hash, 0, sizeof(hash));
 	mbedtls_x509_crt_free(&mbed_x509_crt);
 
 	return err;
