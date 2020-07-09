@@ -1,3 +1,6 @@
+include ("component.cmake")
+
+if(CONFIG_STDK_IOT_CORE_OS_SUPPORT_POSIX)
 set(CJSON_DIR deps/json)
 include(CheckIncludeFile)
 check_include_file(${CJSON_DIR}/cJSON/cJSON.h CJSON_H)
@@ -23,6 +26,7 @@ add_subdirectory(deps/json/cJSON)
 set(ENABLE_PROGRAMS OFF CACHE BOOL "Build mbed TLS programs." FORCE)
 set(ENABLE_TESTING OFF CACHE BOOL "Build mbed TLS tests." FORCE)
 add_subdirectory(deps/mbedtls/mbedtls)
+endif()
 
 if(CMAKE_C_COMPILER_ID STREQUAL "GNU" AND CMAKE_BUILD_TYPE MATCHES UnitTest)
     foreach(mock ${MOCKED_FUNCTIONS})
@@ -42,33 +46,24 @@ add_library(iotcore
         iot_dump_log.c
         )
 
-target_link_libraries(iotcore
-        PRIVATE
-        curl
-        sodium
-        mbedcrypto
-        mbedx509
-        mbedtls
-        cjson
-        )
+foreach(TMP_DIR ${COMPONENT_SRCDIRS})
+    add_subdirectory(${TMP_DIR})
+endforeach()
 
 target_include_directories(iotcore
         PRIVATE
-        deps/json/cJSON
-        deps/mbedtls/mbedtls/include
-        port/net/mbedtls
         include/bsp
-        include/bsp/posix
         include/os
         include/mqtt
         include/external
+        ${COMPONENT_ADD_INCLUDEDIRS}
+        ${STDK_INCLUDE_PATH}
         PUBLIC
         include
         )
 
-add_subdirectory(port/bsp/posix)
-add_subdirectory(port/os/posix)
-add_subdirectory(port/net)
-add_subdirectory(easysetup)
-add_subdirectory(mqtt)
-add_subdirectory(security)
+target_link_libraries(iotcore
+        PRIVATE
+        ${STDK_LINK_LIBRARY}
+        )
+
