@@ -468,25 +468,15 @@ static iot_error_t _do_iot_main_command(struct iot_context *ctx,
 			if (!conf) {
 				IOT_ERROR("failed to get iot_wifi_conf\n");
 				IOT_DUMP_MAIN(ERROR, BASE, 0xDEADBEEF);
-
-				if (ctx->req_state != IOT_STATE_CHANGE_FAILED) {
-					ctx->cmd_err |= (1u << cmd->cmd_type);
-					next_state = IOT_STATE_CHANGE_FAILED;
-					state_opt = ctx->req_state;
-					err = iot_state_update(ctx,
-							next_state, state_opt);
-				} else {
-					IOT_WARN("Duplicated error handling, skip updating!!");
-					err = IOT_ERROR_DUPLICATED_CMD;
+			} else {
+				err = iot_bsp_wifi_set_mode(conf);
+				if (err < 0) {
+					IOT_ERROR("failed to set wifi_set_mode\n");
+					IOT_DUMP_MAIN(ERROR, BASE, err);
 				}
-				break;
 			}
 
-			err = iot_bsp_wifi_set_mode(conf);
-			if (err < 0) {
-				IOT_ERROR("failed to set wifi_set_mode\n");
-				IOT_DUMP_MAIN(ERROR, BASE, err);
-
+			if (!conf || err < 0) {
 				if (ctx->req_state != IOT_STATE_CHANGE_FAILED) {
 					ctx->cmd_err |= (1u << cmd->cmd_type);
 					next_state = IOT_STATE_CHANGE_FAILED;
