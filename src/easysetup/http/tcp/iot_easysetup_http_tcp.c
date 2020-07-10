@@ -101,8 +101,10 @@ static int _process_accept_socket(int sock)
 			len = recv(sock, rx_buffer + rx_buffer_len, sizeof(rx_buffer) - rx_buffer_len - 1, 0);
 
 			if (len < 0) {
-				IOT_ERROR("recv failed: errno %d", errno);
-				IOT_ES_DUMP(IOT_DEBUG_LEVEL_ERROR, IOT_DUMP_EASYSETUP_SOCKET_RECV_FAIL, errno);
+				if (!deinit_processing) {
+					IOT_ERROR("recv failed: errno %d", errno);
+					IOT_ES_DUMP(IOT_DEBUG_LEVEL_ERROR, IOT_DUMP_EASYSETUP_SOCKET_RECV_FAIL, errno);
+				}
 				return -1;
 			}
 			else if (len == 0) {
