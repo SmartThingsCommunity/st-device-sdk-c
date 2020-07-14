@@ -213,7 +213,7 @@ void _do_status_report(struct iot_context *ctx,
 		break;
 
 	case IOT_STATE_PROV_DONE:
-		if (!is_final) {
+		if (is_final) {
 			fn_stat = IOT_STATUS_PROVISIONING;
 			fn_stat_lv = IOT_STAT_LV_DONE;
 			is_report = true;
