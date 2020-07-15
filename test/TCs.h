@@ -328,4 +328,8 @@ void TC_iot_easysetup_httpd_keyinfo_separated_transfer_success(void **state);
 void TC_iot_dump_create_dump_state_failure(void **state);
 void TC_iot_dump_create_dump_state_success(void **state);
 void TC_iot_dump_log(void **state);
+
+// TCs for iot_easysetup_st_mqtt.c
+void TC_STATIC_iot_es_mqtt_registration_success(void **state);
+
 #endif //ST_DEVICE_SDK_C_TCS_H

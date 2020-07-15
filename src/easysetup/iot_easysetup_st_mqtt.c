@@ -240,6 +240,7 @@ reg_sub_out:
 		JSON_DELETE(json);
 }
 
+STATIC_FUNCTION
 void _iot_mqtt_registration_client_callback(st_mqtt_event event, void *event_data, void *user_data)
 {
 	switch (event) {
@@ -260,6 +261,7 @@ void _iot_mqtt_registration_client_callback(st_mqtt_event event, void *event_dat
 	}
 }
 
+STATIC_FUNCTION
 void _iot_mqtt_signin_client_callback(st_mqtt_event event, void *event_data, void *user_data)
 {
 	struct iot_context *ctx = (struct iot_context *)user_data;
@@ -287,7 +289,8 @@ void _iot_mqtt_signin_client_callback(st_mqtt_event event, void *event_data, voi
 }
 
 #if defined(STDK_IOT_CORE_SERIALIZE_CBOR)
-static void *_iot_es_mqtt_registration_cbor(struct iot_context *ctx,
+STATIC_FUNCTION
+void *_iot_es_mqtt_registration_cbor(struct iot_context *ctx,
 			char *dip_id, size_t *msglen, bool self_reged)
 {
 	struct iot_devconf_prov_data *devconf;
@@ -460,7 +463,8 @@ exit_failed:
 	return NULL;
 }
 #else /* !STDK_IOT_CORE_SERIALIZE_CBOR */
-static void *_iot_es_mqtt_registration_json(struct iot_context *ctx,
+STATIC_FUNCTION
+void *_iot_es_mqtt_registration_json(struct iot_context *ctx,
 			char *dip_id, size_t *msglen, bool self_reged)
 {
 	struct iot_devconf_prov_data *devconf;
