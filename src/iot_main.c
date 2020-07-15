@@ -213,7 +213,7 @@ void _do_status_report(struct iot_context *ctx,
 		break;
 
 	case IOT_STATE_PROV_DONE:
-		if (!is_final) {
+		if (is_final) {
 			fn_stat = IOT_STATUS_PROVISIONING;
 			fn_stat_lv = IOT_STAT_LV_DONE;
 			is_report = true;
@@ -586,7 +586,7 @@ static iot_error_t _do_iot_main_command(struct iot_context *ctx,
 						IOT_USR_INTERACT_BIT_CMD_DONE);
 				/* We don't need recovering for command only case */
 				if (err != IOT_ERROR_NONE) {
-					IOT_WARN("Internal WARN(%d) happened for command ony", err);
+					IOT_WARN("Internal WARN(%d) happened for command only", err);
 					err = IOT_ERROR_NONE;
 				}
 			} else {

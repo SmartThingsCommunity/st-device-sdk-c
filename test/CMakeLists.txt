@@ -50,6 +50,7 @@ if(ENABLE_STDK_TEST)
                    TC_FUNC_iot_wt.c
                    TC_FUNC_iot_easysetup_httpd.c
                    TC_FUNC_iot_dump_log.c
+                   TC_FUNC_iot_easysetup_st_mqtt.c
                    )
 
     target_link_libraries(stdk_test

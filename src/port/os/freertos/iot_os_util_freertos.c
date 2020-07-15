@@ -98,7 +98,7 @@ void iot_os_eventgroup_delete(iot_os_eventgroup* eventgroup_handle)
 unsigned char iot_os_eventgroup_wait_bits(iot_os_eventgroup* eventgroup_handle,
 		const unsigned char bits_to_wait_for, const int clear_on_exit, const unsigned int wait_time_ms)
 {
-	return xEventGroupWaitBits(eventgroup_handle, (const EventBits_t) bits_to_wait_for, clear_on_exit, false, wait_time_ms);
+	return xEventGroupWaitBits(eventgroup_handle, (const EventBits_t) bits_to_wait_for, clear_on_exit, false, pdMS_TO_TICKS(wait_time_ms));
 }
 
 int iot_os_eventgroup_set_bits(iot_os_eventgroup* eventgroup_handle,
@@ -189,7 +189,7 @@ typedef struct Freertos_Timer {
 
 void iot_os_timer_count_ms(iot_os_timer timer, unsigned int timeout_ms)
 {
-	((Freertos_Timer *)timer)->xTicksToWait = timeout_ms / portTICK_PERIOD_MS; /* convert milliseconds to ticks */
+	((Freertos_Timer *)timer)->xTicksToWait = pdMS_TO_TICKS(timeout_ms); /* convert milliseconds to ticks */
 	vTaskSetTimeOutState(&((Freertos_Timer *)timer)->xTimeOut); /* Record the time at which this function was entered. */
 }
 

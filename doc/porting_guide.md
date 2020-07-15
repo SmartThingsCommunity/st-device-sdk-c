@@ -215,11 +215,11 @@ These APIs are related to operating system.
 | APIs                                                         | Description                                                  |
 | ------------------------------------------------------------ | ------------------------------------------------------------ |
 | void iot_os_delay  ( unsigned int  delay_ms )                | This function will delay thread for given time               |
-| unsigned int iot_os_eventgroup_clear_bits  ( iot_os_eventgroup *  eventgroup_handle,  <br/>  const unsigned int  bits_to_clear ) | This function will clear bit/bits of eventgroup              |
+| unsigned int iot_os_eventgroup_clear_bits  ( iot_os_eventgroup *  eventgroup_handle,  <br/>  const unsigned char  bits_to_clear ) | This function will clear bit/bits of eventgroup              |
 | iot_os_eventgroup* iot_os_eventgroup_create  ( void   )      | This function create eventgroup and return eventgroup handle |
 | void iot_os_eventgroup_delete  ( iot_os_eventgroup *  eventgroup_handle ) | This function delete eventgroup                              |
-| unsigned int iot_os_eventgroup_set_bits  ( iot_os_eventgroup *  eventgroup_handle,  <br/>  const unsigned int  bits_to_set ) | This function will set bit/bits of eventgroup                |
-| unsigned int iot_os_eventgroup_wait_bits  ( iot_os_eventgroup *  eventgroup_handle,  <br/>  const unsigned int  bits_to_wait_for,  <br/>  const int  clear_on_exit,  <br/>  const int  wait_for_all_bits,  <br/>  const unsigned int  wait_time_ms ) | This function will wait for bit of group of bits to become set |
+| unsigned int iot_os_eventgroup_set_bits  ( iot_os_eventgroup *  eventgroup_handle,  <br/>  const unsigned char  bits_to_set ) | This function will set bit/bits of eventgroup                |
+| unsigned char iot_os_eventgroup_wait_bits  ( iot_os_eventgroup *  eventgroup_handle,  <br/>  const unsigned char  bits_to_wait_for,  <br/>  const int  clear_on_exit,  <br/>  const unsigned int  wait_time_ms ) | This function will wait for bit of group of bits to become set |
 | int iot_os_mutex_init  ( iot_os_mutex *  mutex )             | This function will create mutex                              |
 | int iot_os_mutex_lock  ( iot_os_mutex *  mutex )             | This function will lock mutex before critical section        |
 | int iot_os_mutex_unlock  ( iot_os_mutex *  mutex )           | This function will unlock mutex after critical section       |

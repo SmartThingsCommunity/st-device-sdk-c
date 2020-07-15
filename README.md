@@ -90,7 +90,7 @@ For more information, please review the following documents:
 - [SmartThings Direct-connected devices](https://smartthings.developer.samsung.com/docs/devices/direct-connected-devices/overview.html) : It covers the overall workflow and detailed steps for connecting devices to the SmartThings Cloud directly.
 - [Capabilities Reference](https://smartthings.developer.samsung.com/docs/api-ref/capabilities.html) : This page serves as a reference for the supported capabilities.
 - [Developer Workspace](https://smartthings.developer.samsung.com/workspace/) : It provides functions related to device information registration and device integration in the SmartThings cloud.
-- [STDK Code Lab](https://developer.samsung.com/codelab/smartThings/device/overview) : The code lab data of the 2019 Samsung Developer Conference. It includes a demo video and a tutorial.
+- [STDK Code Lab](https://developer.samsung.com/codelab/smartthings/smartthings-device-sdk/overview.html) : The code lab data of the 2019 Samsung Developer Conference. It includes a demo video and a tutorial.
 
 ## License
 
