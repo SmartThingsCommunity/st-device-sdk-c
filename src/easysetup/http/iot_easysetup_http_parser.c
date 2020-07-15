@@ -39,6 +39,7 @@ static header_t reqhdr[17] = {{"\0", "\0"}};
 
 static bool is_header_content_length(char *header_key)
 {
+	int i;
 	const char content_length_lower[] = "content-length";
 
 	if (!header_key) {
@@ -49,7 +50,7 @@ static bool is_header_content_length(char *header_key)
 		return false;
 	}
 
-	for (int i = 0; i < strlen(content_length_lower); i++) {
+	for (i = 0; i < strlen(content_length_lower); i++) {
 		if (content_length_lower[i] != (char)tolower((int)header_key[i])) {
 			return false;
 		}
