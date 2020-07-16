@@ -1353,10 +1353,12 @@ error_main_init_cmd_q:
 error_main_load_device_info:
 	iot_api_onboarding_config_mem_free(devconf_prov);
 
+error_main_load_onboarding_config:
 #if defined(CONFIG_STDK_IOT_CORE_LOG_FILE)
+	iot_log_file_exit();
+
 error_main_log_file_init:
 #endif
-error_main_load_onboarding_config:
 	iot_nv_deinit();
 
 error_main_bsp_init:

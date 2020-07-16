@@ -148,6 +148,13 @@ struct iot_log_file_ctx
 iot_error_t iot_log_file_init(iot_log_file_type_t type);
 
 /**
+ * @brief Free the log_ctx resource.
+ *
+ * @details This function to free the log_ctx resource
+ */
+void iot_log_file_exit(void);
+
+/**
  * @brief Store log data to log file.
  * @param[in] log_data a pointer to the log data to store
  * @param[in] log_size the size of log data pointed by log_data in bytes

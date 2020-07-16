@@ -36,26 +36,155 @@ static char *tx_buffer = NULL;
 static iot_os_thread es_tcp_task_handle = NULL;
 
 static int listen_sock = -1;
+static int accept_sock = -1;
 static int deinit_processing = 0;
 
-static void _clear_listen_socket(void)
+static void _clear_sockets(void)
 {
 	if (listen_sock != -1) {
-		IOT_INFO("Shutting down listen socket");
-		shutdown(listen_sock, SHUT_RD);
+		IOT_INFO("close listen socket");
 		close(listen_sock);
 		listen_sock = -1;
 	}
+
+	// if http deinit before ST app reset tcp connection, we need close it here
+	if (accept_sock != -1) {
+		IOT_INFO("close accept socket");
+		close(accept_sock);
+		accept_sock = -1;
+	}
+}
+
+static int _process_accept_socket(int sock)
+{
+	char rx_buffer[RX_BUFFER_MAX];
+	int rx_buffer_len = 0;
+	int http_request_header_len = 0;
+	iot_error_t err = IOT_ERROR_NONE;
+	size_t content_len = 0;
+
+	char *payload;
+	int ret, len, type, cmd;
+
+ 	// set tcp keepalive related opts 
+	// if ST app WiFi disconnect coincidentally during easysetup, 
+	// we need short time tcp keepalive here.
+	int keep_alive = 1;
+	setsockopt(sock, SOL_SOCKET, SO_KEEPALIVE, &keep_alive, sizeof(int));
+
+	int idle = 10;
+	setsockopt(sock, IPPROTO_TCP, TCP_KEEPIDLE, &idle, sizeof(int));
+
+	int interval = 5;
+	setsockopt(sock, IPPROTO_TCP, TCP_KEEPINTVL, &interval, sizeof(int));
+
+	int maxpkt = 3;
+	setsockopt(sock, IPPROTO_TCP, TCP_KEEPCNT, &maxpkt, sizeof(int));
+
+
+	// HTTP response as tcp payload is sent once, and mostly less than MTU.
+	// There is no need for tcp packet coalesced.
+	// To enhance throughput, disable TCP Nagle's algorithm here.
+	int no_delay = 1;
+	setsockopt(sock, IPPROTO_TCP, TCP_NODELAY, &no_delay, sizeof(int));
+
+	while (1)
+	{
+		// start to process one http request
+		http_request_header_len = -1;
+		memset(rx_buffer, '\0', sizeof(rx_buffer));
+		rx_buffer_len = 0;
+		content_len = 0;
+        
+		// ensure complete http request header before es_msg_parser
+		do {
+			len = recv(sock, rx_buffer + rx_buffer_len, sizeof(rx_buffer) - rx_buffer_len - 1, 0);
+
+			if (len < 0) {
+				if (!deinit_processing) {
+					IOT_ERROR("recv failed: errno %d", errno);
+					IOT_ES_DUMP(IOT_DEBUG_LEVEL_ERROR, IOT_DUMP_EASYSETUP_SOCKET_RECV_FAIL, errno);
+				}
+				return -1;
+			}
+			else if (len == 0) {
+				IOT_ERROR("Connection closed");
+				IOT_ES_DUMP(IOT_DEBUG_LEVEL_ERROR, IOT_DUMP_EASYSETUP_SOCKET_CON_CLOSE, 0);
+				return -1;
+			}
+			else {
+				rx_buffer_len += len;
+			}
+
+			// \r\n\r\n  header end
+			for (int i = 0; i < rx_buffer_len; i++) {
+				if (i < rx_buffer_len - 3) {
+					if ((rx_buffer[i] == '\r') && (rx_buffer[i + 1] == '\n') && (rx_buffer[i + 2] == '\r')
+						&& (rx_buffer[i + 3] == '\n')) {
+						http_request_header_len = i + 4;
+					}
+				}
+			} 
+		} while (http_request_header_len < 0);
+
+		err = es_msg_parser(rx_buffer, sizeof(rx_buffer), &payload, &cmd, &type, &content_len);
+
+		if ((err == IOT_ERROR_NONE) && (type == D2D_POST)
+				&& payload && (content_len > strlen((char *)payload)))
+		{
+			do {
+				len = recv(sock, rx_buffer + rx_buffer_len, sizeof(rx_buffer) - rx_buffer_len - 1, 0);
+
+				if (len < 0) {
+					IOT_ERROR("recv failed: errno %d", errno);
+					IOT_ES_DUMP(IOT_DEBUG_LEVEL_ERROR, IOT_DUMP_EASYSETUP_SOCKET_RECV_FAIL, errno);
+					return -1;
+				}
+				else if (len == 0) {
+					IOT_ERROR("Connection closed");
+					IOT_ES_DUMP(IOT_DEBUG_LEVEL_ERROR, IOT_DUMP_EASYSETUP_SOCKET_CON_CLOSE, 0);
+					return -1;
+				}
+				else {
+					rx_buffer_len += len;
+				}
+			} while (rx_buffer_len < (http_request_header_len + content_len));
+
+			payload = rx_buffer + http_request_header_len;
+		}
+        
+
+		if(err == IOT_ERROR_INVALID_ARGS)
+			http_msg_handler(cmd, &tx_buffer, D2D_ERROR, payload);
+		else
+			http_msg_handler(cmd, &tx_buffer, type, payload);
+
+		if (!tx_buffer) {
+			IOT_ERROR("tx_buffer is NULL");
+			IOT_ES_DUMP(IOT_DEBUG_LEVEL_ERROR, IOT_DUMP_EASYSETUP_INTERNAL_SERVER_ERROR, 0);
+			return -1;
+		}
+
+		len = strlen((char *)tx_buffer);
+		tx_buffer[len] = 0;
+
+		ret = send(sock, tx_buffer, len, 0);
+		free(tx_buffer);
+		tx_buffer = NULL;
+		if (ret < 0) {
+			IOT_ERROR("Error is occurred during sending: errno %d", ret);
+			IOT_ES_DUMP(IOT_DEBUG_LEVEL_ERROR, IOT_DUMP_EASYSETUP_SOCKET_SEND_FAIL, ret);
+			return -1;
+		}
+	}
+
+	return 0;
 }
 
 static void es_tcp_task(void *pvParameters)
 {
-	char *payload;
-	char rx_buffer[RX_BUFFER_MAX];
-	int addr_family, ip_protocol, sock, ret, len, type, cmd;
-	iot_error_t err = IOT_ERROR_NONE;
+	int addr_family, ip_protocol, ret;
 	struct sockaddr_in sourceAddr;
-	size_t content_len;
 	uint addrLen;
 
 	while (!deinit_processing) {
@@ -94,12 +223,10 @@ static void es_tcp_task(void *pvParameters)
 		}
 
 		while (1) {
-			payload = NULL;
 			addrLen = sizeof(sourceAddr);
-			content_len = 0;
 
-			sock = accept(listen_sock, (struct sockaddr *)&sourceAddr, &addrLen);
-			if (sock < 0) {
+			accept_sock = accept(listen_sock, (struct sockaddr *)&sourceAddr, &addrLen);
+			if (accept_sock < 0) {
 				if (!deinit_processing) {
 					IOT_ERROR("Unable to accept connection: errno %d", errno);
 					IOT_ES_DUMP(IOT_DEBUG_LEVEL_ERROR, IOT_DUMP_EASYSETUP_SOCKET_ACCEPT_FAIL, errno);
@@ -107,91 +234,23 @@ static void es_tcp_task(void *pvParameters)
 				break;
 			}
 
-			memset(rx_buffer, '\0', sizeof(rx_buffer));
+			_process_accept_socket(accept_sock);
 
-			len = recv(sock, rx_buffer, sizeof(rx_buffer) - 1, 0);
-
-			if (len < 0) {
-				IOT_ERROR("recv failed: errno %d", errno);
-				IOT_ES_DUMP(IOT_DEBUG_LEVEL_ERROR, IOT_DUMP_EASYSETUP_SOCKET_RECV_FAIL, errno);
-				break;
-			}
-			else if (len == 0) {
-				IOT_ERROR("Connection closed");
-				IOT_ES_DUMP(IOT_DEBUG_LEVEL_ERROR, IOT_DUMP_EASYSETUP_SOCKET_CON_CLOSE, 0);
-				break;
-			}
-			else {
-				rx_buffer[len] = '\0';
-
-				err = es_msg_parser(rx_buffer, sizeof(rx_buffer), &payload, &cmd, &type, &content_len);
-
-				if ((err == IOT_ERROR_NONE) && (type == D2D_POST)
-									&&	payload && (content_len > strlen((char *)payload)))
-				{
-					memset(rx_buffer, '\0', sizeof(rx_buffer));
-					len = recv(sock, rx_buffer, sizeof(rx_buffer) - 1, 0);
-					if (len < 0) {
-						IOT_ERROR("recv failed: errno %d", errno);
-						IOT_ES_DUMP(IOT_DEBUG_LEVEL_ERROR, IOT_DUMP_EASYSETUP_SOCKET_RECV_FAIL, errno);
-						break;
-					}
-					payload = rx_buffer;
-				}
-
-				if(err == IOT_ERROR_INVALID_ARGS)
-					http_msg_handler(cmd, &tx_buffer, D2D_ERROR, payload);
-				else
-					http_msg_handler(cmd, &tx_buffer, type, payload);
-
-				if (!tx_buffer) {
-					IOT_ERROR("tx_buffer is NULL");
-					IOT_ES_DUMP(IOT_DEBUG_LEVEL_ERROR, IOT_DUMP_EASYSETUP_INTERNAL_SERVER_ERROR, 0);
-					break;
-				}
-
-				len = strlen((char *)tx_buffer);
-				tx_buffer[len] = 0;
-
-				ret = send(sock, tx_buffer, len, 0);
-				if (ret < 0) {
-					IOT_ERROR("Error is occurred during sending: errno %d", ret);
-					IOT_ES_DUMP(IOT_DEBUG_LEVEL_ERROR, IOT_DUMP_EASYSETUP_SOCKET_SEND_FAIL, ret);
-					break;
-				}
-				if (tx_buffer) {
-					free(tx_buffer);
-					tx_buffer = NULL;
-				}
-				//Transfer finished in this loop, sock resources should be clean.
-				shutdown(sock, SHUT_RDWR);
-				while (1) {
-					memset(rx_buffer, '\0', sizeof(rx_buffer));
-					rx_buffer[len] = '\0';
-					len = recv(sock, rx_buffer, sizeof(rx_buffer) - 1, 0);
-					if (len > 0)
-						continue;
-					break;
-				}
-				close(sock);
-				sock = -1;
+			if (!deinit_processing && accept_sock != -1)
+			{
+				close(accept_sock);
+				accept_sock = -1;
 			}
 		}
 
-		if (sock != -1) {
-			IOT_ERROR("Shutting down socket and restarting...");
-			IOT_ES_DUMP(IOT_DEBUG_LEVEL_ERROR, IOT_DUMP_EASYSETUP_SOCKET_SHUTDOWN, ret);
-			shutdown(sock, SHUT_RD);
-			close(sock);
-		}
 		//sock resources should be clean
 		if (!deinit_processing) {
-			_clear_listen_socket();
+			_clear_sockets();
 		}
 	}
 
 	if (!deinit_processing) {
-		_clear_listen_socket();
+		_clear_sockets();
 	}
 
 	/*set es_tcp_task_handle to null, prevent dulicate delete in es_tcp_deinit*/
@@ -213,7 +272,7 @@ void es_http_deinit(void)
 
 	deinit_processing = 1;
 	//sock resources should be clean
-	_clear_listen_socket();
+	_clear_sockets();
 
 	if (es_tcp_task_handle) {
 		iot_os_thread_delete(es_tcp_task_handle);

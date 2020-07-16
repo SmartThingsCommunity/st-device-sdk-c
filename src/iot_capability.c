@@ -91,6 +91,7 @@ IOT_EVENT* st_cap_attr_create_string_array(const char *attribute,
 IOT_EVENT* st_cap_attr_create(const char *attribute,
 			iot_cap_val_t *value, const char *unit, const char *data)
 {
+	int i;
 	iot_cap_evt_data_t* evt_data;
 
 	if (!attribute) {
@@ -148,7 +149,7 @@ IOT_EVENT* st_cap_attr_create(const char *attribute,
 		} else if (evt_data->evt_value.strings) {
 			memset(evt_data->evt_value.strings, 0, value->str_num * sizeof(char*));
 		}
-		for (int i = 0; i < value->str_num; i++) {
+		for (i = 0; i < value->str_num; i++) {
 			if (value->strings[i]) {
 				evt_data->evt_value.strings[i] = iot_os_strdup(value->strings[i]);
 			} else {
@@ -737,6 +738,7 @@ static iot_error_t _iot_parse_cmd_data(JSON_H* cmditem, char** component,
 	JSON_H *subitem = NULL;
 	int arr_size = 0;
 	int num_args = 0;
+	int i;
 
 	cap_component = JSON_GET_OBJECT_ITEM(cmditem, "component");
 	cap_capability = JSON_GET_OBJECT_ITEM(cmditem, "capability");
@@ -759,7 +761,7 @@ static iot_error_t _iot_parse_cmd_data(JSON_H* cmditem, char** component,
 	subitem = JSON_GET_ARRAY_ITEM(cap_args, 0);
 
 	if (subitem != NULL) {
-		for (int i = 0; i < arr_size; i++) {
+		for (i = 0; i < arr_size; i++) {
 			if (JSON_IS_BOOL(subitem)) {
 				cmd_data->args_str[num_args] = NULL;
 				cmd_data->cmd_data[num_args].type = IOT_CAP_VAL_TYPE_BOOLEAN;
@@ -952,6 +954,7 @@ static iot_error_t _iot_make_evt_data_json(const char* component, const char* ca
 	JSON_H *prov_data = NULL;
 	char time_in_ms[16]; /* 155934720000 is '2019-06-01 00:00:00.00 UTC' */
 	iot_error_t err = IOT_ERROR_NONE;
+	int i;
 
 	if (!msg) {
 		IOT_ERROR("msg is NULL");
@@ -961,7 +964,7 @@ static iot_error_t _iot_make_evt_data_json(const char* component, const char* ca
 	evt_root = JSON_CREATE_OBJECT();
 	evt_arr = JSON_CREATE_ARRAY();
 
-	for (int i = 0; i < arr_size; i++) {
+	for (i = 0; i < arr_size; i++) {
 		evt_item = JSON_CREATE_OBJECT();
 
 		/* component */
@@ -1081,6 +1084,8 @@ void iot_cap_call_init_cb(iot_cap_handle_list_t *cap_handle_list)
 
 static void _iot_free_val(iot_cap_val_t* val)
 {
+	int i;
+
 	if (val == NULL) {
 		return;
 	}
@@ -1091,7 +1096,7 @@ static void _iot_free_val(iot_cap_val_t* val)
 	}
 	else if (val->type == IOT_CAP_VAL_TYPE_STR_ARRAY
 				&& val->strings != NULL) {
-		for (int i = 0; i < val->str_num; i++) {
+		for (i = 0; i < val->str_num; i++) {
 			if (val->strings[i] != NULL) {
 				iot_os_free(val->strings[i]);
 			}
@@ -1116,11 +1121,13 @@ static void _iot_free_unit(iot_cap_unit_t* unit)
 
 static void _iot_free_cmd_data(iot_cap_cmd_data_t* cmd_data)
 {
+	int i;
+
 	if (cmd_data == NULL) {
 		return;
 	}
 
-	for (int i = 0; i < cmd_data->num_args; i++) {
+	for (i = 0; i < cmd_data->num_args; i++) {
 		if (cmd_data->args_str[i] != NULL) {
 			free(cmd_data->args_str[i]);
 		}

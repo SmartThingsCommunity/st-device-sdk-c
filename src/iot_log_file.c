@@ -804,10 +804,10 @@ iot_error_t iot_log_file_remove(iot_log_file_type_t type)
 	return iot_err;
 }
 
-static void _iot_log_file_exit(void)
+void iot_log_file_exit(void)
 {
 	if (log_ctx != NULL) {
-		free(log_ctx);
+		iot_os_free(log_ctx);
 		log_ctx = NULL;
 	}
 }
@@ -872,7 +872,7 @@ error_task_init:
 #endif
 
 end:
-	_iot_log_file_exit();
+	iot_log_file_exit();
 
 	return ret;
 }
