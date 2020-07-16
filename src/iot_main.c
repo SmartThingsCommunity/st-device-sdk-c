@@ -488,19 +488,6 @@ static iot_error_t _do_iot_main_command(struct iot_context *ctx,
 			}
 
 			switch (conf->mode) {
-			case IOT_WIFI_MODE_OFF:
-			case IOT_WIFI_MODE_STATION:
-				if (ctx->es_http_ready) {
-					ctx->es_http_ready = false;
-					iot_easysetup_deinit(ctx);
-				}
-
-				if (ctx->scan_result) {
-					free(ctx->scan_result);
-					ctx->scan_result = NULL;
-				}
-				ctx->scan_num = 0;
-				break;
 			case IOT_WIFI_MODE_SOFTAP:
 				if (ctx->req_state == IOT_STATE_PROV_ENTER) {
 					err = iot_easysetup_init(ctx);
