@@ -46,9 +46,6 @@
 #define IOT_DUMP_MAIN_ARG2(LVL, LOGID, arg1, arg2) \
 	IOT_DUMP(IOT_DEBUG_LEVEL_##LVL, IOT_DUMP_MAIN_##LOGID, arg1, arg2)
 
-static int rcv_try_cnt;
-static iot_state_t rcv_fail_state;
-
 static iot_error_t _do_state_updating(struct iot_context *ctx,
 		iot_state_t new_state, int opt, unsigned int *timeout_ms);
 
@@ -457,8 +454,8 @@ static iot_error_t _do_iot_main_command(struct iot_context *ctx,
 
 		/* For Resource control */
 		case IOT_COMMAND_READY_TO_CTL:
-			rcv_fail_state = IOT_STATE_INITIALIZED;
-			rcv_try_cnt = 0;
+			ctx->rcv_fail_state = IOT_STATE_INITIALIZED;
+			ctx->rcv_try_cnt = 0;
 			iot_cap_call_init_cb(ctx->cap_handle_list);
 			break;
 
@@ -1380,20 +1377,20 @@ static iot_error_t _do_recovery(struct iot_context *ctx,
 		fail_state, ctx->curr_state);
 
 	if ((fail_state != IOT_STATE_PROV_ENTER) && (fail_state != IOT_STATE_PROV_CONFIRM)) {
-		if (fail_state != rcv_fail_state) {
-			rcv_try_cnt = 0;
-			rcv_fail_state = fail_state;
+		if (fail_state != ctx->rcv_fail_state) {
+			ctx->rcv_try_cnt = 0;
+			ctx->rcv_fail_state = fail_state;
 		} else {
-			rcv_try_cnt++;
+			ctx->rcv_try_cnt++;
 		}
 	}
 
 	/* Repeated same exceptional cases
 	 * So try do something more first
 	 */
-	if (rcv_try_cnt > RECOVER_TRY_MAX) {
+	if (ctx->rcv_try_cnt > RECOVER_TRY_MAX) {
 		IOT_WARN("Recovery state:[%d] repeated MAX times(%d)",
-			fail_state, rcv_try_cnt);
+			fail_state, ctx->rcv_try_cnt);
 		IOT_DUMP_MAIN(WARN, BASE, fail_state);
 		switch (fail_state) {
 		case IOT_STATE_CLOUD_REGISTERING:
@@ -1414,19 +1411,18 @@ static iot_error_t _do_recovery(struct iot_context *ctx,
 				IOT_ERROR("Can't send WIFI station command(%d)",
 					iot_err);
 				IOT_DUMP_MAIN(ERROR, BASE, iot_err);
-				break;
 			}
-
-			/* reset rcv_try_cnt */
-			rcv_try_cnt = 0;
 			break;
 
 		default:
 			IOT_WARN("No action for repeating state:[%d] failure (%d)",
-				fail_state, rcv_try_cnt);
-			IOT_DUMP_MAIN(WARN, BASE, rcv_try_cnt);
+				fail_state, ctx->rcv_try_cnt);
+			IOT_DUMP_MAIN(WARN, BASE, ctx->rcv_try_cnt);
 			break;
 		}
+
+		/* reset rcv_try_cnt */
+		ctx->rcv_try_cnt = 0;
 	}
 
 	if (ctx->curr_state == fail_state) {
@@ -1682,6 +1678,10 @@ static iot_error_t _do_state_updating(struct iot_context *ctx,
 		if (ctx->status_cb) {
 			_do_status_report(ctx, IOT_STATE_CLOUD_DISCONNECTED, false);
 		}
+
+		/* Reset recovery flags */
+		ctx->rcv_fail_state = IOT_STATE_UNKNOWN;
+		ctx->rcv_try_cnt = 0;
 
 		if (opt == IOT_STATE_OPT_CLEANUP) {
 			iot_os_eventgroup_set_bits(ctx->usr_events,

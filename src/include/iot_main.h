@@ -294,6 +294,9 @@ struct iot_context {
 	iot_os_mutex iot_cmd_lock; /**< @brief iot-core's command handling lock*/
 
 	bool add_justworks; 	/**< @brief to skip user-confirm using JUSTWORKS bit */
+
+	unsigned char rcv_try_cnt;	/**< @brief to check current recovery repeated counts */
+	iot_state_t rcv_fail_state;	/**< @brief to check current failed state for recovery */
 };
 
 #endif /* _IOT_MAIN_H_ */
