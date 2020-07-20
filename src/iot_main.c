@@ -1056,6 +1056,8 @@ static void _iot_main_task(struct iot_context *ctx)
 #endif
 		if (curr_events & IOT_EVENT_BIT_COMMAND) {
 			cmd.param = NULL;
+
+			iot_os_mutex_lock(&ctx->iot_cmd_lock);
 			if (iot_os_queue_receive(ctx->cmd_queue,
 					&cmd, 0) != IOT_OS_FALSE) {
 
@@ -1075,6 +1077,7 @@ static void _iot_main_task(struct iot_context *ctx)
 				 */
 				iot_os_eventgroup_set_bits(ctx->iot_events, IOT_EVENT_BIT_COMMAND);
 			}
+			iot_os_mutex_unlock(&ctx->iot_cmd_lock);
 		}
 
 		if (curr_events & IOT_EVENT_BIT_CAPABILITY) {
@@ -1293,11 +1296,18 @@ IOT_CTX* st_conn_init(unsigned char *onboarding_config, unsigned int onboarding_
 	ctx->iot_reg_data.new_reged = false;
 	ctx->curr_state = ctx->req_state = IOT_STATE_UNKNOWN;
 
+	/* create mutex for iot-core's command handling */
+	if (iot_os_mutex_init(&ctx->iot_cmd_lock) != IOT_OS_TRUE) {
+		IOT_ERROR("failed to init iot_cmd_lock\n");
+		IOT_DUMP_MAIN(ERROR, BASE, 0xDEADBEEF);
+		goto error_main_cmd_mutex_init;
+	}
+
 	/* create mutex for user level st_conn_xxx APIs */
 	if (iot_os_mutex_init(&ctx->st_conn_lock) != IOT_OS_TRUE) {
 		IOT_ERROR("failed to init st_conn_lock\n");
 		IOT_DUMP_MAIN(ERROR, BASE, 0xDEADBEEF);
-		goto error_main_mutex_init;
+		goto error_main_conn_mutex_init;
 	}
 
 	/* create task */
@@ -1325,7 +1335,10 @@ IOT_CTX* st_conn_init(unsigned char *onboarding_config, unsigned int onboarding_
 error_main_task_init:
 	iot_os_mutex_destroy(&ctx->st_conn_lock);
 
-error_main_mutex_init:
+error_main_conn_mutex_init:
+	iot_os_mutex_destroy(&ctx->iot_cmd_lock);
+
+error_main_cmd_mutex_init:
 	iot_os_eventgroup_delete(ctx->iot_events);
 
 error_main_init_events:
@@ -1839,7 +1852,9 @@ int st_conn_cleanup(IOT_CTX *iot_ctx, bool reboot)
 		return IOT_ERROR_BAD_REQ;
 
 	/* remove all queued commands */
+	iot_os_mutex_lock(&ctx->iot_cmd_lock);
 	_throw_away_all_cmd_queue(ctx);
+	iot_os_mutex_unlock(&ctx->iot_cmd_lock);
 
 	iot_os_eventgroup_clear_bits(ctx->usr_events, IOT_USR_INTERACT_BIT_CLEANUP_DONE);
 
@@ -1903,7 +1918,9 @@ int st_conn_start_ex(IOT_CTX *iot_ctx, iot_ext_args_t *ext_args)
 		IOT_DUMP_MAIN(WARN, BASE, ctx->curr_state);
 
 		/* remove all queued commands */
+		iot_os_mutex_lock(&ctx->iot_cmd_lock);
 		_throw_away_all_cmd_queue(ctx);
+		iot_os_mutex_unlock(&ctx->iot_cmd_lock);
 
 		/* if there is previous connection, disconnect it first. */
 		if (ctx->evt_mqttcli != NULL) {

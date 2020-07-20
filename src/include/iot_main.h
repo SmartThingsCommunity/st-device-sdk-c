@@ -291,6 +291,7 @@ struct iot_context {
 
 	iot_os_thread main_thread; /**< @brief iot main task thread */
 	iot_os_mutex st_conn_lock; /**< @brief User level control API lock */
+	iot_os_mutex iot_cmd_lock; /**< @brief iot-core's command handling lock*/
 
 	bool add_justworks; 	/**< @brief to skip user-confirm using JUSTWORKS bit */
 };
