@@ -129,6 +129,8 @@ iot_error_t _iot_easysetup_gen_get_payload(struct iot_context *ctx, int cmd, cha
 
 	if (cur_step < IOT_EASYSETUP_STEP_LOG_SYSTEMINFO)
 		ref_step++;
+	else
+		ref_step = 0;
 
 	err = iot_easysetup_request(ctx, cur_step, NULL);
 	if (err) {
@@ -236,6 +238,8 @@ iot_error_t _iot_easysetup_gen_post_payload(struct iot_context *ctx, int cmd, ch
 
 	if (cur_step < IOT_EASYSETUP_STEP_LOG_SYSTEMINFO)
 		ref_step++;
+	else
+		ref_step = 0;
 
 	err = iot_easysetup_request(ctx, cur_step, in_payload);
 	if (err) {

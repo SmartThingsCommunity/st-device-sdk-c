@@ -1129,12 +1129,11 @@ iot_error_t _es_wifiscaninfo_handler(struct iot_context *ctx, char **out_payload
 		return err;
 	}
 
+	//optional : some chipsets don't support wifi scan mode during working AP mode
 	err = iot_wifi_ctrl_request(ctx, IOT_WIFI_MODE_SCAN);
 	if (err != IOT_ERROR_NONE) {
-		IOT_ERROR("Can't control WIFI mode scan.(%d)", err);
-		IOT_ES_DUMP(IOT_DEBUG_LEVEL_ERROR, IOT_DUMP_EASYSETUP_WIFI_SCAN_NOT_FOUND, err);
-		err = IOT_ERROR_EASYSETUP_WIFI_SCAN_NOT_FOUND;
-		return err;
+		IOT_INFO("Can't control WIFI mode scan.(%d)", err);
+		IOT_ES_DUMP(IOT_DEBUG_LEVEL_INFO, IOT_DUMP_EASYSETUP_WIFI_SCAN_NOT_FOUND, err);
 	}
 
 	if (!ctx->scan_num) {

@@ -96,12 +96,36 @@ iot_error_t iot_wifi_ctrl_request(struct iot_context *ctx,
 	wifi_conf.mode = wifi_mode;
 
 	switch (wifi_mode) {
+	case IOT_WIFI_MODE_OFF:
+		/* fall through */
 	case IOT_WIFI_MODE_STATION:
-		memcpy(wifi_conf.ssid, ctx->prov_data.wifi.ssid,
-			strlen(ctx->prov_data.wifi.ssid));
-		memcpy(wifi_conf.pass, ctx->prov_data.wifi.password,
-			strlen(ctx->prov_data.wifi.password));
-		wifi_conf.authmode = ctx->prov_data.wifi.security_type;
+		/* easysetup resource deinit & free for both */
+		if (ctx->es_http_ready) {
+			ctx->es_http_ready = false;
+			iot_easysetup_deinit(ctx);
+		}
+
+		if (ctx->scan_result) {
+			free(ctx->scan_result);
+			ctx->scan_result = NULL;
+		}
+		ctx->scan_num = 0;
+
+		if (wifi_mode == IOT_WIFI_MODE_STATION) {
+			memcpy(wifi_conf.ssid, ctx->prov_data.wifi.ssid,
+				strlen(ctx->prov_data.wifi.ssid));
+			memcpy(wifi_conf.pass, ctx->prov_data.wifi.password,
+				strlen(ctx->prov_data.wifi.password));
+			wifi_conf.authmode = ctx->prov_data.wifi.security_type;
+		} else {	/* For IOT_WIFI_MODE_OFF case */
+			send_cmd = false;
+
+			iot_err = iot_bsp_wifi_set_mode(&wifi_conf);
+			if (iot_err != IOT_ERROR_NONE) {
+				IOT_ERROR("failed to set wifi_set_mode for scan\n");
+				return iot_err;
+			}
+		}
 		break;
 
 	case IOT_WIFI_MODE_SOFTAP:
@@ -115,17 +139,6 @@ iot_error_t iot_wifi_ctrl_request(struct iot_context *ctx,
 
 		snprintf(wifi_conf.pass, sizeof(wifi_conf.pass), "1111122222");
 		wifi_conf.authmode = IOT_WIFI_AUTH_WPA_WPA2_PSK;
-		break;
-
-	case IOT_WIFI_MODE_OFF:
-		send_cmd = false;
-
-		wifi_conf.mode = IOT_WIFI_MODE_OFF;
-		iot_err = iot_bsp_wifi_set_mode(&wifi_conf);
-		if (iot_err != IOT_ERROR_NONE) {
-			IOT_ERROR("failed to set wifi_set_mode for scan\n");
-			return iot_err;
-		}
 		break;
 
 	case IOT_WIFI_MODE_SCAN:

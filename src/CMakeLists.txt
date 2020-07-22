@@ -1,3 +1,6 @@
+include ("component.cmake")
+
+if(CONFIG_STDK_IOT_CORE_OS_SUPPORT_POSIX)
 set(CJSON_DIR deps/json)
 include(CheckIncludeFile)
 check_include_file(${CJSON_DIR}/cJSON/cJSON.h CJSON_H)
@@ -5,6 +8,7 @@ if (NOT CJSON_H)
     message(STATUS "submodule init for cJSON")
     execute_process(COMMAND git submodule update --init ${CJSON_DIR}
                     WORKING_DIRECTORY "${CMAKE_CURRENT_SOURCE_DIR}")
+    set(STDK_INCLUDE_PATH "${STDK_INCLUDE_PATH}" ${CJSON_DIR}/cJSON)
 endif (NOT CJSON_H)
 
 set(MBEDTLS_DIR deps/mbedtls)
@@ -13,16 +17,22 @@ if (NOT MBEDTLS_H)
     message(STATUS "submodule init for mbedtls")
     execute_process(COMMAND git submodule update --init ${MBEDTLS_DIR}
                     WORKING_DIRECTORY "${CMAKE_CURRENT_SOURCE_DIR}")
+    set(STDK_INCLUDE_PATH "${STDK_INCLUDE_PATH}" ${MBEDTLS_DIR}/mbedtls/include)
 endif (NOT MBEDTLS_H)
 
 set(CMAKE_C_FLAGS "${CMAKE_C_FLAGS} -fPIC -fpic")
 set(BUILD_SHARED_LIBS OFF CACHE BOOL "Build shared libraries" FORCE)
 set(ENABLE_CJSON_TEST OFF CACHE BOOL "Enable building cJSON test" FORCE)
-add_subdirectory(deps/json/cJSON)
+add_subdirectory(${CJSON_DIR}/cJSON)
+set(STDK_LINK_LIBRARY ${STDK_LINK_LIBRARY} cjson)
 
 set(ENABLE_PROGRAMS OFF CACHE BOOL "Build mbed TLS programs." FORCE)
 set(ENABLE_TESTING OFF CACHE BOOL "Build mbed TLS tests." FORCE)
-add_subdirectory(deps/mbedtls/mbedtls)
+add_subdirectory(${MBEDTLS_DIR}/mbedtls)
+set(STDK_LINK_LIBRARY ${STDK_LINK_LIBRARY} mbedtls mbedx509 mbedcrypto)
+
+set(STDK_LINK_LIBRARY ${STDK_LINK_LIBRARY} sodium)
+endif()
 
 if(CMAKE_C_COMPILER_ID STREQUAL "GNU" AND CMAKE_BUILD_TYPE MATCHES UnitTest)
     foreach(mock ${MOCKED_FUNCTIONS})
@@ -42,33 +52,22 @@ add_library(iotcore
         iot_dump_log.c
         )
 
-target_link_libraries(iotcore
-        PRIVATE
-        curl
-        sodium
-        mbedcrypto
-        mbedx509
-        mbedtls
-        cjson
-        )
+foreach(TMP_DIR ${STDK_SRC_PATH})
+    add_subdirectory(${TMP_DIR})
+endforeach()
 
 target_include_directories(iotcore
         PRIVATE
-        deps/json/cJSON
-        deps/mbedtls/mbedtls/include
-        port/net/mbedtls
         include/bsp
-        include/bsp/posix
         include/os
         include/mqtt
         include/external
+        ${STDK_INCLUDE_PATH}
         PUBLIC
         include
         )
 
-add_subdirectory(port/bsp/posix)
-add_subdirectory(port/os/posix)
-add_subdirectory(port/net)
-add_subdirectory(easysetup)
-add_subdirectory(mqtt)
-add_subdirectory(security)
+target_link_libraries(iotcore
+        PRIVATE
+        ${STDK_LINK_LIBRARY}
+        )

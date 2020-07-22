@@ -197,9 +197,9 @@ void TC_iot_easysetup_httpd_invalid_request(void **state)
     ssize_t len;
     char *request_message[REQ_MAX];
     char recv_buffer[1024] = {0, };
-    char *get_request_message = "GET /invaliduri HTTP/1.1\r\nContent-Length: 0\r\n";
+    char *get_request_message = "GET /invaliduri HTTP/1.1\r\nContent-Length: 0\r\n\r\n";
     char *post_request_message = "POST /invaliduri HTTP/1.1\r\nContent-Type: application/json\r\nContent-Length: 18 \r\n\r\n{\"message\":\"invalid\"}";
-    char *invalid_method_message = "INVAL /deviceinfo HTTP/1.1\r\nContent-Length: 0\r\n";
+    char *invalid_method_message = "INVAL /deviceinfo HTTP/1.1\r\nContent-Length: 0\r\n\r\n";
 
     // Given
     request_message[REQ_GET_INVALID_URI] = get_request_message;
@@ -258,7 +258,7 @@ void TC_iot_easysetup_httpd_deviceinfo_success(void **state)
     iot_error_t err;
     struct iot_easysetup_payload easysetup_req;
     char recv_buffer[1024] = {0, };
-    char *request_message = "GET /deviceinfo HTTP/1.1\r\nConnection: keep-alive\r\n";
+    char *request_message = "GET /deviceinfo HTTP/1.1\r\nConnection: keep-alive\r\n\r\n";
 
     // Given
     memset(recv_buffer, '\0', sizeof(recv_buffer));

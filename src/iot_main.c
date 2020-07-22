@@ -46,9 +46,6 @@
 #define IOT_DUMP_MAIN_ARG2(LVL, LOGID, arg1, arg2) \
 	IOT_DUMP(IOT_DEBUG_LEVEL_##LVL, IOT_DUMP_MAIN_##LOGID, arg1, arg2)
 
-static int rcv_try_cnt;
-static iot_state_t rcv_fail_state;
-
 static iot_error_t _do_state_updating(struct iot_context *ctx,
 		iot_state_t new_state, int opt, unsigned int *timeout_ms);
 
@@ -457,8 +454,8 @@ static iot_error_t _do_iot_main_command(struct iot_context *ctx,
 
 		/* For Resource control */
 		case IOT_COMMAND_READY_TO_CTL:
-			rcv_fail_state = IOT_STATE_INITIALIZED;
-			rcv_try_cnt = 0;
+			ctx->rcv_fail_state = IOT_STATE_INITIALIZED;
+			ctx->rcv_try_cnt = 0;
 			iot_cap_call_init_cb(ctx->cap_handle_list);
 			break;
 
@@ -468,25 +465,15 @@ static iot_error_t _do_iot_main_command(struct iot_context *ctx,
 			if (!conf) {
 				IOT_ERROR("failed to get iot_wifi_conf\n");
 				IOT_DUMP_MAIN(ERROR, BASE, 0xDEADBEEF);
-
-				if (ctx->req_state != IOT_STATE_CHANGE_FAILED) {
-					ctx->cmd_err |= (1u << cmd->cmd_type);
-					next_state = IOT_STATE_CHANGE_FAILED;
-					state_opt = ctx->req_state;
-					err = iot_state_update(ctx,
-							next_state, state_opt);
-				} else {
-					IOT_WARN("Duplicated error handling, skip updating!!");
-					err = IOT_ERROR_DUPLICATED_CMD;
+			} else {
+				err = iot_bsp_wifi_set_mode(conf);
+				if (err < 0) {
+					IOT_ERROR("failed to set wifi_set_mode\n");
+					IOT_DUMP_MAIN(ERROR, BASE, err);
 				}
-				break;
 			}
 
-			err = iot_bsp_wifi_set_mode(conf);
-			if (err < 0) {
-				IOT_ERROR("failed to set wifi_set_mode\n");
-				IOT_DUMP_MAIN(ERROR, BASE, err);
-
+			if (!conf || err < 0) {
 				if (ctx->req_state != IOT_STATE_CHANGE_FAILED) {
 					ctx->cmd_err |= (1u << cmd->cmd_type);
 					next_state = IOT_STATE_CHANGE_FAILED;
@@ -501,19 +488,6 @@ static iot_error_t _do_iot_main_command(struct iot_context *ctx,
 			}
 
 			switch (conf->mode) {
-			case IOT_WIFI_MODE_OFF:
-			case IOT_WIFI_MODE_STATION:
-				if (ctx->es_http_ready) {
-					ctx->es_http_ready = false;
-					iot_easysetup_deinit(ctx);
-				}
-
-				if (ctx->scan_result) {
-					free(ctx->scan_result);
-					ctx->scan_result = NULL;
-				}
-				ctx->scan_num = 0;
-				break;
 			case IOT_WIFI_MODE_SOFTAP:
 				if (ctx->req_state == IOT_STATE_PROV_ENTER) {
 					err = iot_easysetup_init(ctx);
@@ -1066,6 +1040,8 @@ static void _iot_main_task(struct iot_context *ctx)
 #endif
 		if (curr_events & IOT_EVENT_BIT_COMMAND) {
 			cmd.param = NULL;
+
+			iot_os_mutex_lock(&ctx->iot_cmd_lock);
 			if (iot_os_queue_receive(ctx->cmd_queue,
 					&cmd, 0) != IOT_OS_FALSE) {
 
@@ -1085,6 +1061,7 @@ static void _iot_main_task(struct iot_context *ctx)
 				 */
 				iot_os_eventgroup_set_bits(ctx->iot_events, IOT_EVENT_BIT_COMMAND);
 			}
+			iot_os_mutex_unlock(&ctx->iot_cmd_lock);
 		}
 
 		if (curr_events & IOT_EVENT_BIT_CAPABILITY) {
@@ -1303,11 +1280,18 @@ IOT_CTX* st_conn_init(unsigned char *onboarding_config, unsigned int onboarding_
 	ctx->iot_reg_data.new_reged = false;
 	ctx->curr_state = ctx->req_state = IOT_STATE_UNKNOWN;
 
+	/* create mutex for iot-core's command handling */
+	if (iot_os_mutex_init(&ctx->iot_cmd_lock) != IOT_OS_TRUE) {
+		IOT_ERROR("failed to init iot_cmd_lock\n");
+		IOT_DUMP_MAIN(ERROR, BASE, 0xDEADBEEF);
+		goto error_main_cmd_mutex_init;
+	}
+
 	/* create mutex for user level st_conn_xxx APIs */
 	if (iot_os_mutex_init(&ctx->st_conn_lock) != IOT_OS_TRUE) {
 		IOT_ERROR("failed to init st_conn_lock\n");
 		IOT_DUMP_MAIN(ERROR, BASE, 0xDEADBEEF);
-		goto error_main_mutex_init;
+		goto error_main_conn_mutex_init;
 	}
 
 	/* create task */
@@ -1335,7 +1319,10 @@ IOT_CTX* st_conn_init(unsigned char *onboarding_config, unsigned int onboarding_
 error_main_task_init:
 	iot_os_mutex_destroy(&ctx->st_conn_lock);
 
-error_main_mutex_init:
+error_main_conn_mutex_init:
+	iot_os_mutex_destroy(&ctx->iot_cmd_lock);
+
+error_main_cmd_mutex_init:
 	iot_os_eventgroup_delete(ctx->iot_events);
 
 error_main_init_events:
@@ -1377,20 +1364,20 @@ static iot_error_t _do_recovery(struct iot_context *ctx,
 		fail_state, ctx->curr_state);
 
 	if ((fail_state != IOT_STATE_PROV_ENTER) && (fail_state != IOT_STATE_PROV_CONFIRM)) {
-		if (fail_state != rcv_fail_state) {
-			rcv_try_cnt = 0;
-			rcv_fail_state = fail_state;
+		if (fail_state != ctx->rcv_fail_state) {
+			ctx->rcv_try_cnt = 0;
+			ctx->rcv_fail_state = fail_state;
 		} else {
-			rcv_try_cnt++;
+			ctx->rcv_try_cnt++;
 		}
 	}
 
 	/* Repeated same exceptional cases
 	 * So try do something more first
 	 */
-	if (rcv_try_cnt > RECOVER_TRY_MAX) {
+	if (ctx->rcv_try_cnt > RECOVER_TRY_MAX) {
 		IOT_WARN("Recovery state:[%d] repeated MAX times(%d)",
-			fail_state, rcv_try_cnt);
+			fail_state, ctx->rcv_try_cnt);
 		IOT_DUMP_MAIN(WARN, BASE, fail_state);
 		switch (fail_state) {
 		case IOT_STATE_CLOUD_REGISTERING:
@@ -1411,19 +1398,18 @@ static iot_error_t _do_recovery(struct iot_context *ctx,
 				IOT_ERROR("Can't send WIFI station command(%d)",
 					iot_err);
 				IOT_DUMP_MAIN(ERROR, BASE, iot_err);
-				break;
 			}
-
-			/* reset rcv_try_cnt */
-			rcv_try_cnt = 0;
 			break;
 
 		default:
 			IOT_WARN("No action for repeating state:[%d] failure (%d)",
-				fail_state, rcv_try_cnt);
-			IOT_DUMP_MAIN(WARN, BASE, rcv_try_cnt);
+				fail_state, ctx->rcv_try_cnt);
+			IOT_DUMP_MAIN(WARN, BASE, ctx->rcv_try_cnt);
 			break;
 		}
+
+		/* reset rcv_try_cnt */
+		ctx->rcv_try_cnt = 0;
 	}
 
 	if (ctx->curr_state == fail_state) {
@@ -1680,6 +1666,10 @@ static iot_error_t _do_state_updating(struct iot_context *ctx,
 			_do_status_report(ctx, IOT_STATE_CLOUD_DISCONNECTED, false);
 		}
 
+		/* Reset recovery flags */
+		ctx->rcv_fail_state = IOT_STATE_UNKNOWN;
+		ctx->rcv_try_cnt = 0;
+
 		if (opt == IOT_STATE_OPT_CLEANUP) {
 			iot_os_eventgroup_set_bits(ctx->usr_events,
 				IOT_USR_INTERACT_BIT_STATE_UNKNOWN | IOT_USR_INTERACT_BIT_CLEANUP_DONE);
@@ -1849,7 +1839,9 @@ int st_conn_cleanup(IOT_CTX *iot_ctx, bool reboot)
 		return IOT_ERROR_BAD_REQ;
 
 	/* remove all queued commands */
+	iot_os_mutex_lock(&ctx->iot_cmd_lock);
 	_throw_away_all_cmd_queue(ctx);
+	iot_os_mutex_unlock(&ctx->iot_cmd_lock);
 
 	iot_os_eventgroup_clear_bits(ctx->usr_events, IOT_USR_INTERACT_BIT_CLEANUP_DONE);
 
@@ -1913,7 +1905,9 @@ int st_conn_start_ex(IOT_CTX *iot_ctx, iot_ext_args_t *ext_args)
 		IOT_DUMP_MAIN(WARN, BASE, ctx->curr_state);
 
 		/* remove all queued commands */
+		iot_os_mutex_lock(&ctx->iot_cmd_lock);
 		_throw_away_all_cmd_queue(ctx);
+		iot_os_mutex_unlock(&ctx->iot_cmd_lock);
 
 		/* if there is previous connection, disconnect it first. */
 		if (ctx->evt_mqttcli != NULL) {
