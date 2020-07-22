@@ -21,6 +21,7 @@
 #include <errno.h>
 #if defined(__unix__) || (defined(__APPLE__) && defined(__MACH__))
 #include <netinet/in.h>
+#include <netinet/tcp.h>
 #include <unistd.h>
 #endif
 #include "../easysetup_http.h"

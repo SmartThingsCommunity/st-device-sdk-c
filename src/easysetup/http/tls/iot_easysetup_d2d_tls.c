@@ -414,13 +414,6 @@ iot_error_t _es_confirm_check_manager(struct iot_context *ctx, enum ownership_va
 			return err;
 	}
 
-	err = iot_wifi_ctrl_request(ctx, IOT_WIFI_MODE_SCAN);
-	if (err != IOT_ERROR_NONE) {
-		IOT_ERROR("Can't send WIFI mode scan.(%d)", err);
-		IOT_ES_DUMP(IOT_DEBUG_LEVEL_ERROR, IOT_DUMP_EASYSETUP_WIFI_SCAN_NOT_FOUND, err);
-		err = IOT_ERROR_EASYSETUP_WIFI_SCAN_NOT_FOUND;
-	}
-
 out:
 	if (dev_sn)
 		free(dev_sn);
@@ -589,13 +582,6 @@ iot_error_t _es_confirm_handler(struct iot_context *ctx, char *in_payload, char 
 
 	*out_payload = final_msg;
 
-	err = iot_wifi_ctrl_request(ctx, IOT_WIFI_MODE_SCAN);
-	if (err != IOT_ERROR_NONE) {
-		IOT_ERROR("Can't send WIFI mode scan.(%d)", err);
-		IOT_ES_DUMP(IOT_DEBUG_LEVEL_ERROR, IOT_DUMP_EASYSETUP_WIFI_SCAN_NOT_FOUND, err);
-		err = IOT_ERROR_EASYSETUP_WIFI_SCAN_NOT_FOUND;
-	}
-
 out:
 	if (root) {
 		JSON_DELETE(root);
@@ -619,6 +605,13 @@ iot_error_t _es_wifiscaninfo_handler(struct iot_context *ctx, char **out_payload
 		IOT_ES_DUMP(IOT_DEBUG_LEVEL_ERROR, IOT_DUMP_EASYSETUP_INTERNAL_SERVER_ERROR, 0);
 		err = IOT_ERROR_EASYSETUP_INTERNAL_SERVER_ERROR;
 		return err;
+	}
+
+	//optional : some chipsets don't support wifi scan mode during working AP mode
+	err = iot_wifi_ctrl_request(ctx, IOT_WIFI_MODE_SCAN);
+	if (err != IOT_ERROR_NONE) {
+		IOT_INFO("Can't control WIFI mode scan.(%d)", err);
+		IOT_ES_DUMP(IOT_DEBUG_LEVEL_INFO, IOT_DUMP_EASYSETUP_WIFI_SCAN_NOT_FOUND, err);
 	}
 
 	if (!ctx->scan_num) {

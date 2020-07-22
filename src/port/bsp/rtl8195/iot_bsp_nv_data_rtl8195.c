@@ -69,7 +69,6 @@ const char* iot_bsp_nv_get_data_path(iot_nvd_t nv_type)
 		return "DeviceCert";
 	case IOT_NVD_SERIAL_NUM:
 		return "SerialNum";
-	/* stored in stnv partition (manufacturer data) */
 
 	default:
 		return NULL;
