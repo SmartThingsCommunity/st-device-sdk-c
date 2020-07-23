@@ -1708,22 +1708,11 @@ do { \
 		} \
 	\
 		iot_err = IOT_ERROR_NONE; \
+	} else if (curr_events & IOT_USR_INTERACT_BIT_PROV_DONE) { \
+		iot_err = IOT_ERROR_NONE; \
 	} else { \
-		if (ctx->es_http_ready) { \
-			ctx->es_http_ready = false; \
-			iot_easysetup_deinit(ctx); \
-		} \
-	\
-		if (ctx->es_res_created) { \
-			_delete_easysetup_resources_all(ctx); \
-		} \
-	\
-		if (curr_events & IOT_USR_INTERACT_BIT_PROV_DONE) { \
-			iot_err = IOT_ERROR_NONE; \
-		} else { \
-			IOT_ERROR("Can't go to PROV_CONFIRM (0x%0x)", curr_events); \
-			iot_err = IOT_ERROR_TIMEOUT; \
-		} \
+		IOT_ERROR("Can't go to PROV_CONFIRM (0x%0x)", curr_events); \
+		iot_err = IOT_ERROR_TIMEOUT; \
 	} \
 } while(0)
 
