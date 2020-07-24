@@ -19,11 +19,16 @@
 #ifndef _IOT_SERIALIZE_H_
 #define _IOT_SERIALIZE_H_
 
+#include "JSON.h"
+
 #ifdef __cplusplus
 extern "C" {
 #endif
 
 #define IOT_CBOR_MAX_BUF_LEN	1024
+/* In case of nano newlib, it doesn't support float printf,sprintf family */
+#define IOT_SERIALIZE_SPRINTF_FLOAT	0
+#define IOT_SERIALIZE_DECIMAL_PRECISION	1000000
 
 /**
  * @brief	Convert cbor payload to json payload
@@ -39,6 +44,18 @@ extern "C" {
  * @retval	IOT_ERROR_CBOR_TO_JSON	failed to write payload with json
  */
 iot_error_t iot_serialize_cbor2json(uint8_t *cbor, size_t cborlen, char **json, size_t *jsonlen);
+
+/**
+ * @brief	Convert json structure to cbor payload
+ * @param[in]	json	a node to a json strucure
+ * @param[out]	cbor	a pointer to a buffer to store cbor payload
+ * @param[out]	cborlen	the size of buffer pointed by cbor in bytes
+ * @return	iot_state_t
+ * @retval	IOT_ERROR_NONE		cbor successfully converted to json
+ * @retval	IOT_ERROR_INVALID_ARG	there is something wrong with the inputs
+ * @retval	IOT_ERROR_MEM_ALLOC	failed to alloc buffer to store json
+ */
+iot_error_t iot_serialize_json2cbor(JSON_H *json, uint8_t **cbor, size_t *cborlen);
 
 #ifdef __cplusplus
 }
