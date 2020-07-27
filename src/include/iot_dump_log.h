@@ -255,10 +255,10 @@ typedef enum {
 	IOT_DUMP_EASYSETUP_CREATE_LOGDUMP_FAIL = 0x05A1,
 	IOT_DUMP_EASYSETUP_CREATE_SUMODUMP_FAIL = 0x05A2,
 	IOT_DUMP_NV_DATA_BASE = 0x600,
-	IOT_DUMP_NV_DATA_READ_FAIL = 0x601,
-	IOT_DUMP_NV_DATA_WRITE_FAIL = 0x602,
-	IOT_DUMP_NV_DATA_ERASE_FAIL = 0x603,
-	IOT_DUMP_NV_DATA_NOT_EXIST = 0x604,
+	IOT_DUMP_NV_DATA_READ_FAIL = 0x601, /* arg1: enum iot_nvd_t, arg2: line number */
+	IOT_DUMP_NV_DATA_WRITE_FAIL = 0x602, /* arg1: enum iot_nvd_t, arg2: line number */
+	IOT_DUMP_NV_DATA_ERASE_FAIL = 0x603, /* arg1: enum iot_nvd_t, arg2: line number */
+	IOT_DUMP_NV_DATA_NOT_EXIST = 0x604, /* arg1: enum iot_nvd_t, arg2: line number */
 	IOT_DUMP_BSP_WIFI_BASE = 0x0700,
 	IOT_DUMP_BSP_WIFI_INIT_SUCCESS = 0x0701,
 	IOT_DUMP_BSP_WIFI_INIT_FAIL = 0x0702, /* arg1: return code(rc), arg2: line number */
