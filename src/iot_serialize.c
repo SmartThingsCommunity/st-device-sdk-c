@@ -320,7 +320,12 @@ static CborError _iot_json_value_to_cbor(JSON_H *json, CborEncoder *cbor)
 		cbor_encoder_close_container_checked(cbor, &d);
 	} else if (JSON_IS_NUMBER(json)) {
 		double number = JSON_GET_NUMBER_VALUE(json);
-		err = cbor_encode_double(cbor, number);
+		double intpart;
+		if (modf(number, &intpart) == 0) {
+			err = cbor_encode_int(cbor, (int)number);
+		} else {
+			err = cbor_encode_double(cbor, number);
+		}
 		if (err != 0 && err != CborErrorOutOfMemory) {
 			return err;
 		}
