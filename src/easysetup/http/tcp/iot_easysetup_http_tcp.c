@@ -65,7 +65,7 @@ static int _process_accept_socket(int sock)
 	size_t content_len = 0;
 
 	char *payload;
-	int ret, len, type, cmd;
+	int i, ret, len, type, cmd;
 
  	// set tcp keepalive related opts 
 	// if ST app WiFi disconnect coincidentally during easysetup, 
@@ -118,7 +118,7 @@ static int _process_accept_socket(int sock)
 			}
 
 			// \r\n\r\n  header end
-			for (int i = 0; i < rx_buffer_len; i++) {
+			for (i = 0; i < rx_buffer_len; i++) {
 				if (i < rx_buffer_len - 3) {
 					if ((rx_buffer[i] == '\r') && (rx_buffer[i + 1] == '\n') && (rx_buffer[i + 2] == '\r')
 						&& (rx_buffer[i + 3] == '\n')) {
