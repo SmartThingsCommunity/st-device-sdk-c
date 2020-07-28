@@ -36,7 +36,7 @@
 #define MAC_ADDR_BUFFER_SIZE	20
 #define URL_BUFFER_SIZE		64
 #define WIFIINFO_BUFFER_SIZE	20
-#define ES_CONFIRM_MAX_DELAY	10000
+#define ES_CONFIRM_MAX_DELAY	100000
 
 iot_error_t iot_easysetup_create_ssid(struct iot_devconf_prov_data *devconf, char *ssid, size_t ssid_len)
 {
