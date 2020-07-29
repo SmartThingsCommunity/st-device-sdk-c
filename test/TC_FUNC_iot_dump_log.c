@@ -51,7 +51,7 @@ void TC_iot_dump_create_dump_state_failure(void **state)
     // Given :  max_log_dump_size is smaller than minimum
     max_log_dump_size = 1;
     //when
-    err = iot_dump_create_all_log_dump(context, &buf, max_log_dump_size, &allocated_size, mode);
+    err = st_create_log_dump((IOT_CTX *)context, &buf, max_log_dump_size, &allocated_size, mode);
     //then : failure
     assert_int_not_equal(err, IOT_ERROR_NONE);
 
@@ -62,7 +62,7 @@ void TC_iot_dump_create_dump_state_failure(void **state)
         do_not_use_mock_iot_os_malloc_failure();
         set_mock_iot_os_malloc_failure_with_index(i);
         //when
-        err = iot_dump_create_all_log_dump(context, &buf, max_log_dump_size, &allocated_size, mode);
+        err = st_create_log_dump((IOT_CTX *)context, &buf, max_log_dump_size, &allocated_size, mode);
         //then : failure
         assert_int_not_equal(err, IOT_ERROR_NONE);
     }
@@ -81,7 +81,7 @@ void TC_iot_dump_create_dump_state_success(void **state)
 
     //given: context is null, no base64, no dumpstate
     //when:
-    err = iot_dump_create_all_log_dump(context, &buf, 500, &allocated_size, mode);
+    err = st_create_log_dump((IOT_CTX *)context, &buf, 500, &allocated_size, mode);
     //then: success
     assert_int_equal(err, IOT_ERROR_NONE);
     assert_non_null(buf);
@@ -97,7 +97,7 @@ void TC_iot_dump_create_dump_state_success(void **state)
     mode = IOT_DUMP_MODE_NEED_BASE64 | IOT_DUMP_MODE_NEED_DUMP_STATE;
 
     //when:
-    err = iot_dump_create_all_log_dump(context, &buf, 2048, &allocated_size, mode);
+    err = st_create_log_dump((IOT_CTX *)context, &buf, 2048, &allocated_size, mode);
     //then: success
     assert_int_equal(err, IOT_ERROR_NONE);
     assert_non_null(buf);

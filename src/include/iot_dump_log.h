@@ -29,9 +29,6 @@ extern "C" {
 #define IOT_DUMP_LOG_MSG_LINE_LENGTH 16
 #define IOT_DUMP_BUFFER_SIZE 48
 
-#define IOT_DUMP_MODE_NEED_BASE64 (1<<0)
-#define IOT_DUMP_MODE_NEED_DUMP_STATE (1<<1)
-
 struct iot_dump_header {
     int magic_number;
     int log_version;
@@ -172,93 +169,93 @@ typedef enum {
 	IOT_DUMP_SECURITY_INVALID_ARGS = 0x03F1,
 	IOT_DUMP_UTIL_BASE = 0x0400,
 	/* Client Common */
-	IOT_DUMP_EASYSETUP_400_BASE = 0x0500,
-	IOT_DUMP_EASYSETUP_INVALID_CMD = 0x0501,
-	IOT_DUMP_EASYSETUP_INVALID_REQUEST = 0x0502,
-	IOT_DUMP_EASYSETUP_INVALID_SEQUENCE = 0x0503,
-	IOT_DUMP_EASYSETUP_NOT_SUPPORTED = 0x0504,
-	IOT_DUMP_EASYSETUP_BASE64_DECODE_ERROR = 0x0505,
-	IOT_DUMP_EASYSETUP_AES256_DECRYPTION_ERROR = 0x0506,
+	IOT_DUMP_EASYSETUP_400_BASE = 0x0500, /* arg1: line number, arg2: 0 */
+	IOT_DUMP_EASYSETUP_INVALID_CMD = 0x0501, /* arg1: line number, arg2: cmd number */
+	IOT_DUMP_EASYSETUP_INVALID_REQUEST = 0x0502, /* arg1: line number, arg2: 0 */
+	IOT_DUMP_EASYSETUP_INVALID_SEQUENCE = 0x0503, /* arg1: line number, arg2: cmd number */
+	IOT_DUMP_EASYSETUP_NOT_SUPPORTED = 0x0504, /* arg1: line number, arg2: 0 */
+	IOT_DUMP_EASYSETUP_BASE64_DECODE_ERROR = 0x0505, /* arg1: line number, arg2: err number */
+	IOT_DUMP_EASYSETUP_AES256_DECRYPTION_ERROR = 0x0506, /* arg1: line number, arg2: err number */
 	/* Key Info */
-	IOT_DUMP_EASYSETUP_RAND_DECODE_ERROR = 0x0511,
-	IOT_DUMP_EASYSETUP_INVALID_TIME = 0x0512,
+	IOT_DUMP_EASYSETUP_RAND_DECODE_ERROR = 0x0511, /* arg1: line number, arg2: err number */
+	IOT_DUMP_EASYSETUP_INVALID_TIME = 0x0512, /* arg1: line number, arg2: err number */
 	/* Otm */
-	IOT_DUMP_EASYSETUP_INVALID_QR = 0x0521,
-	IOT_DUMP_EASYSETUP_INVALID_SERIAL_NUMBER = 0x0522,
-	IOT_DUMP_EASYSETUP_INVALID_PIN = 0x0523,
-	IOT_DUMP_EASYSETUP_PIN_NOT_MATCHED = 0x0524,
-	IOT_DUMP_EASYSETUP_OTMTYPE_JUSTWORK = 0x0525,
-	IOT_DUMP_EASYSETUP_OTMTYPE_QR = 0x0526,
-	IOT_DUMP_EASYSETUP_OTMTYPE_BUTTON = 0x0527,
-	IOT_DUMP_EASYSETUP_OTMTYPE_PIN = 0x0528,
-	IOT_DUMP_EASYSETUP_OTMTYPE_NOT_SUPPORTED = 0x0529,
-	IOT_DUMP_EASYSETUP_REPORTED_OTMTYPE = 0x052A,
+	IOT_DUMP_EASYSETUP_INVALID_QR = 0x0521, /* arg1: line number, arg2: 0 */
+	IOT_DUMP_EASYSETUP_INVALID_SERIAL_NUMBER = 0x0522, /* arg1: line number, arg2: 0 */
+	IOT_DUMP_EASYSETUP_INVALID_PIN = 0x0523, /* arg1: line number, arg2: 0 */
+	IOT_DUMP_EASYSETUP_PIN_NOT_MATCHED = 0x0524, /* arg1: line number, arg2: 0 */
+	IOT_DUMP_EASYSETUP_OTMTYPE_JUSTWORK = 0x0525, /* arg1: line number, arg2: 0 */
+	IOT_DUMP_EASYSETUP_OTMTYPE_QR = 0x0526, /* arg1: line number, arg2: 0 */
+	IOT_DUMP_EASYSETUP_OTMTYPE_BUTTON = 0x0527, /* arg1: line number, arg2: 0 */
+	IOT_DUMP_EASYSETUP_OTMTYPE_PIN = 0x0528, /* arg1: line number, arg2: 0 */
+	IOT_DUMP_EASYSETUP_OTMTYPE_NOT_SUPPORTED = 0x0529, /* arg1: line number, arg2: 0 */
+	IOT_DUMP_EASYSETUP_REPORTED_OTMTYPE = 0x052A, /* arg1: line number, arg2: return value */
 	/* Wifi provisioning */
-	IOT_DUMP_EASYSETUP_INVALID_MAC = 0x0531,
-	IOT_DUMP_EASYSETUP_INVALID_BROKER_URL = 0x0532,
+	IOT_DUMP_EASYSETUP_INVALID_MAC = 0x0531, /* arg1: line number, arg2: err number */
+	IOT_DUMP_EASYSETUP_INVALID_BROKER_URL = 0x0532, /* arg1: line number, arg2: err number */
 	/* Server Common */
-	IOT_DUMP_EASYSETUP_500_BASE = 0x0540,
-	IOT_DUMP_EASYSETUP_INTERNAL_SERVER_ERROR = 0x0541,
-	IOT_DUMP_EASYSETUP_JSON_CREATE_ERROR = 0x0542,
-	IOT_DUMP_EASYSETUP_MEM_ALLOC_ERROR = 0x0543,
-	IOT_DUMP_EASYSETUP_BASE64_ENCODE_ERROR = 0x0544,
-	IOT_DUMP_EASYSETUP_AES256_ENCRYPTION_ERROR = 0x0545,
-	IOT_DUMP_EASYSETUP_FAILED_CREATE_LOG = 0x0546,
-	IOT_DUMP_EASYSETUP_WAIT_RESPONSE = 0x0547,
-	IOT_DUMP_EASYSETUP_CMD_SUCCESS = 0x0548,
-	IOT_DUMP_EASYSETUP_CMD_FAIL = 0x0549,
-	IOT_DUMP_EASYSETUP_INIT = 0x054A,
-	IOT_DUMP_EASYSETUP_DEINIT = 0x054B,
-	IOT_DUMP_EASYSETUP_CIPHER_ERROR = 0x054C,
-	IOT_DUMP_EASYSETUP_CIPHER_ALIGN_ERROR = 0x054D,
-	IOT_DUMP_EASYSETUP_CIPHER_PARAMS_ERROR = 0x054E,
+	IOT_DUMP_EASYSETUP_500_BASE = 0x0540, /* arg1: line number, arg2: 0 */
+	IOT_DUMP_EASYSETUP_INTERNAL_SERVER_ERROR = 0x0541, /* arg1: line number, arg2: err number */
+	IOT_DUMP_EASYSETUP_JSON_CREATE_ERROR = 0x0542, /* arg1: line number, arg2: 0 */
+	IOT_DUMP_EASYSETUP_MEM_ALLOC_ERROR = 0x0543, /* arg1: line number, arg2: 0 */
+	IOT_DUMP_EASYSETUP_BASE64_ENCODE_ERROR = 0x0544, /* arg1: line number, arg2: err number */
+	IOT_DUMP_EASYSETUP_AES256_ENCRYPTION_ERROR = 0x0545, /* arg1: line number, arg2: err number */
+	IOT_DUMP_EASYSETUP_FAILED_CREATE_LOG = 0x0546, /* arg1: line number, arg2: 0 */
+	IOT_DUMP_EASYSETUP_WAIT_RESPONSE = 0x0547, /* arg1: line number, arg2: cmd number */
+	IOT_DUMP_EASYSETUP_CMD_SUCCESS = 0x0548, /* arg1: line number, arg2: cmd number */
+	IOT_DUMP_EASYSETUP_CMD_FAIL = 0x0549, /* arg1: line number, arg2: cmd number */
+	IOT_DUMP_EASYSETUP_INIT = 0x054A, /* arg1: line number, arg2: 0 for start, 1 for end */
+	IOT_DUMP_EASYSETUP_DEINIT = 0x054B, /* arg1: line number, arg2: 0 for start, 1 for end */
+	IOT_DUMP_EASYSETUP_CIPHER_ERROR = 0x054C, /* arg1: line number, arg2: err number */
+	IOT_DUMP_EASYSETUP_CIPHER_ALIGN_ERROR = 0x054D, /* arg1: line number, arg2: cipher type */
+	IOT_DUMP_EASYSETUP_CIPHER_PARAMS_ERROR = 0x054E, /* arg1: line number, arg2: 0 */
 	IOT_DUMP_EASYSETUP_QUEUE_FAIL = 0x054C, /* arg1: line number, arg2: 0 for recv, 1 for send */
 	/* Key Info */
-	IOT_DUMP_EASYSETUP_SHARED_KEY_INIT_FAIL = 0x0551,
-	IOT_DUMP_EASYSETUP_SHARED_KEY_CREATION_FAIL = 0x0552,
-	IOT_DUMP_EASYSETUP_MASTER_SECRET_GENERATION_SUCCESS = 0x0553,
-	IOT_DUMP_EASYSETUP_SHARED_KEY_PARAMS_FAIL = 0x0554,
+	IOT_DUMP_EASYSETUP_SHARED_KEY_INIT_FAIL = 0x0551, /* arg1: line number, arg2: err number */
+	IOT_DUMP_EASYSETUP_SHARED_KEY_CREATION_FAIL = 0x0552, /* arg1: line number, arg2: err number */
+	IOT_DUMP_EASYSETUP_MASTER_SECRET_GENERATION_SUCCESS = 0x0553, /* arg1: line number, arg2: 0 */
+	IOT_DUMP_EASYSETUP_SHARED_KEY_PARAMS_FAIL = 0x0554, /* arg1: line number, arg2: err number */
 	/* Otm */
-	IOT_DUMP_EASYSETUP_CONFIRM_NOT_SUPPORT = 0x0561,
-	IOT_DUMP_EASYSETUP_CONFIRM_TIMEOUT = 0x0562,
-	IOT_DUMP_EASYSETUP_SERIAL_NOT_FOUND = 0x0563,
-	IOT_DUMP_EASYSETUP_CONFIRM_DENIED = 0x0564,
-	IOT_DUMP_EASYSETUP_PIN_NOT_FOUND = 0x0565,
-	IOT_DUMP_EASYSETUP_GET_OWNER_CONFIRM = 0x0566,
+	IOT_DUMP_EASYSETUP_CONFIRM_NOT_SUPPORT = 0x0561, /* arg1: line number, arg2: return value */
+	IOT_DUMP_EASYSETUP_CONFIRM_TIMEOUT = 0x0562, /* arg1: line number, arg2: 0 */
+	IOT_DUMP_EASYSETUP_SERIAL_NOT_FOUND = 0x0563, /* arg1: line number, arg2: err number */
+	IOT_DUMP_EASYSETUP_CONFIRM_DENIED = 0x0564, /* arg1: line number, arg2: 0 */
+	IOT_DUMP_EASYSETUP_PIN_NOT_FOUND = 0x0565, /* arg1: line number, arg2: 0 */
+	IOT_DUMP_EASYSETUP_GET_OWNER_CONFIRM = 0x0566, /* arg1: line number, arg2: 0 */
 	/* Wifi provisioning */
-	IOT_DUMP_EASYSETUP_WIFI_SCAN_NOT_FOUND = 0x0571,
-	IOT_DUMP_EASYSETUP_WIFI_DATA_WRITE_FAIL = 0x0572,
-	IOT_DUMP_EASYSETUP_WIFI_DATA_READ_FAIL = 0x0573,
-	IOT_DUMP_EASYSETUP_CLOUD_DATA_WRITE_FAIL = 0x0574,
-	IOT_DUMP_EASYSETUP_LOOKUPID_GENERATE_FAIL = 0x0575,
-	IOT_DUMP_EASYSETUP_WIFI_NOT_DISCOVERED = 0x0576,
-	IOT_DUMP_EASYSETUP_WIFI_INVALID_PASSWORD = 0x0577,
-	IOT_DUMP_EASYSETUP_WIFI_INVALID_SSID = 0x0578,
-	IOT_DUMP_EASYSETUP_WIFI_INVALID_BSSID = 0x0579,
-	IOT_DUMP_EASYSETUP_PROVISIONING_SUCCESS = 0x057A,
+	IOT_DUMP_EASYSETUP_WIFI_SCAN_NOT_FOUND = 0x0571, /* arg1: line number, arg2: err number */
+	IOT_DUMP_EASYSETUP_WIFI_DATA_WRITE_FAIL = 0x0572, /* arg1: line number, arg2: err number */
+	IOT_DUMP_EASYSETUP_WIFI_DATA_READ_FAIL = 0x0573, /* arg1: line number, arg2: err number */
+	IOT_DUMP_EASYSETUP_CLOUD_DATA_WRITE_FAIL = 0x0574, /* arg1: line number, arg2: err number */
+	IOT_DUMP_EASYSETUP_LOOKUPID_GENERATE_FAIL = 0x0575, /* arg1: line number, arg2: err number */
+	IOT_DUMP_EASYSETUP_WIFI_NOT_DISCOVERED = 0x0576, /* arg1: line number, arg2: 0 */
+	IOT_DUMP_EASYSETUP_WIFI_INVALID_PASSWORD = 0x0577, /* arg1: line number, arg2: 0 */
+	IOT_DUMP_EASYSETUP_WIFI_INVALID_SSID = 0x0578, /* arg1: line number, arg2: 0 */
+	IOT_DUMP_EASYSETUP_WIFI_INVALID_BSSID = 0x0579, /* arg1: line number, arg2: 0 */
+	IOT_DUMP_EASYSETUP_PROVISIONING_SUCCESS = 0x057A, /* arg1: line number, arg2: 0 */
 	/* Registration */
-	IOT_DUMP_EASYSETUP_REGISTER_FAILED_REGISTRATION  = 0x0581,
+	IOT_DUMP_EASYSETUP_REGISTER_FAILED_REGISTRATION  = 0x0581, /* arg1: line number, arg2: 0 */
 	/* Certificate */
-	IOT_DUMP_EASYSETUP_CETIFICATE_FAILED_GET_CERTIFICATE = 0x0589,
+	IOT_DUMP_EASYSETUP_CETIFICATE_FAILED_GET_CERTIFICATE = 0x0589, /* arg1: line number, arg2: 0 */
 	/* tcp */
-	IOT_DUMP_EASYSETUP_TCP_INIT = 0x0591,
-	IOT_DUMP_EASYSETUP_TCP_DEINIT = 0x0592,
-	IOT_DUMP_EASYSETUP_SOCKET_CREATE_FAIL = 0x0593,
-	IOT_DUMP_EASYSETUP_SOCKET_BIND_FAIL = 0x0594,
-	IOT_DUMP_EASYSETUP_SOCKET_LISTEN_FAIL = 0x0595,
-	IOT_DUMP_EASYSETUP_SOCKET_ACCEPT_FAIL = 0x0596,
-	IOT_DUMP_EASYSETUP_SOCKET_RECV_FAIL = 0x0597,
-	IOT_DUMP_EASYSETUP_SOCKET_CON_CLOSE = 0x0598,
-	IOT_DUMP_EASYSETUP_SOCKET_SEND_FAIL = 0x0599,
-	IOT_DUMP_EASYSETUP_SOCKET_SHUTDOWN = 0x059A,
+	IOT_DUMP_EASYSETUP_TCP_INIT = 0x0591, /* arg1: line number, arg2: 0 for start, 1 for end */
+	IOT_DUMP_EASYSETUP_TCP_DEINIT = 0x0592, /* arg1: line number, arg2: 0 for start, 1 for end */
+	IOT_DUMP_EASYSETUP_SOCKET_CREATE_FAIL = 0x0593, /* arg1: line number, arg2: err number */
+	IOT_DUMP_EASYSETUP_SOCKET_BIND_FAIL = 0x0594, /* arg1: line number, arg2: err number */
+	IOT_DUMP_EASYSETUP_SOCKET_LISTEN_FAIL = 0x0595, /* arg1: line number, arg2: err number */
+	IOT_DUMP_EASYSETUP_SOCKET_ACCEPT_FAIL = 0x0596, /* arg1: line number, arg2: err number */
+	IOT_DUMP_EASYSETUP_SOCKET_RECV_FAIL = 0x0597, /* arg1: line number, arg2: err number */
+	IOT_DUMP_EASYSETUP_SOCKET_CON_CLOSE = 0x0598, /* arg1: line number, arg2: 0 */
+	IOT_DUMP_EASYSETUP_SOCKET_SEND_FAIL = 0x0599, /* arg1: line number, arg2: return value */
+	IOT_DUMP_EASYSETUP_SOCKET_SHUTDOWN = 0x059A, /* arg1: line number, arg2: return value */
 	/* Logging */
-	IOT_DUMP_EASYSETUP_CREATE_LOGDUMP_FAIL = 0x05A1,
-	IOT_DUMP_EASYSETUP_CREATE_SUMODUMP_FAIL = 0x05A2,
+	IOT_DUMP_EASYSETUP_CREATE_LOGDUMP_FAIL = 0x05A1, /* arg1: line number, arg2: 0 */
+	IOT_DUMP_EASYSETUP_CREATE_SUMODUMP_FAIL = 0x05A2, /* arg1: line number, arg2: 0 */
 	IOT_DUMP_NV_DATA_BASE = 0x600,
-	IOT_DUMP_NV_DATA_READ_FAIL = 0x601,
-	IOT_DUMP_NV_DATA_WRITE_FAIL = 0x602,
-	IOT_DUMP_NV_DATA_ERASE_FAIL = 0x603,
-	IOT_DUMP_NV_DATA_NOT_EXIST = 0x604,
+	IOT_DUMP_NV_DATA_READ_FAIL = 0x601, /* arg1: enum iot_nvd_t, arg2: line number */
+	IOT_DUMP_NV_DATA_WRITE_FAIL = 0x602, /* arg1: enum iot_nvd_t, arg2: line number */
+	IOT_DUMP_NV_DATA_ERASE_FAIL = 0x603, /* arg1: enum iot_nvd_t, arg2: line number */
+	IOT_DUMP_NV_DATA_NOT_EXIST = 0x604, /* arg1: enum iot_nvd_t, arg2: line number */
 	IOT_DUMP_BSP_WIFI_BASE = 0x0700,
 	IOT_DUMP_BSP_WIFI_INIT_SUCCESS = 0x0701,
 	IOT_DUMP_BSP_WIFI_INIT_FAIL = 0x0702, /* arg1: return code(rc), arg2: line number */
@@ -280,20 +277,8 @@ typedef enum {
 	IOT_DUMP_EXAMPLE_COMMENT = 0xff02, /* decoder copies comment to output */
 } dump_log_id_t;
 
-/**
- * @brief create all_log_dump
- * @param[in] iot_ctx - iot_core context
- * @param[out] log_dump_output - a pointer of not allocated pointer for log dump buffer.
- *         it will allocated in this function
- * @param[in] max_log_dump_size - maximum size of log dump.
- * @param[out] allocated_size - allocated memory size of log_dump_output
- * @param[in] log_mode - log mode generated by OR operation of following values
- *    IOT_DUMP_MODE_NEED_BASE64 : make log encoded to base64
- *    IOT_DUMP_MODE_NEED_DUMP_STATE : add dump state in log
- * @retval IOT_ERROR_NONE success
- *
- * @warning must free log_dump_output after using it.
- */
-iot_error_t iot_dump_create_all_log_dump(struct iot_context *iot_ctx, char **log_dump_output, size_t max_log_dump_size, size_t *allocated_size, int log_mode);
+#ifdef __cplusplus
+}
+#endif
 
 #endif /* _IOT_DUMP_LOG_H_ */
