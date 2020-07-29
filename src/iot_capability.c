@@ -184,7 +184,36 @@ IOT_EVENT* st_cap_attr_create(const char *attribute,
 	return (IOT_EVENT*)evt_data;
 }
 
+IOT_EVENT* st_cap_create_attr(IOT_CAP_HANDLE *cap_handle, const char *attribute,
+			iot_cap_val_t *value, const char *unit, const char *data)
+{
+	iot_cap_evt_data_t* evt_data = NULL;
+
+	if (cap_handle == NULL) {
+		IOT_ERROR("There is no cap handle");
+		return NULL;
+	}
+
+	evt_data = (iot_cap_evt_data_t *)st_cap_attr_create(attribute, value, unit, data);
+	if (evt_data == NULL)
+		return NULL;
+
+	evt_data->ref_cap = (struct iot_cap_handle *)cap_handle;
+
+	return (IOT_EVENT*)evt_data;
+}
+
 void st_cap_attr_free(IOT_EVENT* event)
+{
+	iot_cap_evt_data_t* evt_data = (iot_cap_evt_data_t*) event;
+
+	if (evt_data) {
+		_iot_free_evt_data(evt_data);
+		iot_os_free(evt_data);
+	}
+}
+
+void st_cap_free_attr(IOT_EVENT* event)
 {
 	iot_cap_evt_data_t* evt_data = (iot_cap_evt_data_t*) event;
 
@@ -385,6 +414,83 @@ int st_cap_attr_send(IOT_CAP_HANDLE *cap_handle,
 #else
 	final_msg.msg = JSON_PRINT(evt_root);;
 	final_msg.msglen = strlen(final_msg.msg);
+#endif
+	JSON_DELETE(evt_root);
+	if (final_msg.msg == NULL) {
+		IOT_ERROR("Fail to transfer to payload");
+		return IOT_ERROR_BAD_REQ;
+	}
+
+	ret = iot_os_queue_send(ctx->pub_queue, &final_msg, 0);
+	if (ret != IOT_OS_TRUE) {
+		IOT_DUMP(IOT_DEBUG_LEVEL_ERROR, IOT_DUMP_CAPABILITY_SEND_EVENT_QUEUE_FAIL_ERROR, ret, 0);
+		IOT_WARN("Cannot put the paylod into pub_queue");
+		free(final_msg.msg);
+
+		return IOT_ERROR_BAD_REQ;
+	} else {
+		IOT_DUMP(IOT_DEBUG_LEVEL_INFO, IOT_DUMP_CAPABILITY_SEND_EVENT_SUCCESS, evt_num, 0);
+		iot_os_eventgroup_set_bits(ctx->iot_events,
+			IOT_EVENT_BIT_CAPABILITY);
+
+		return sqnum;
+	}
+}
+
+int st_cap_send_attr(IOT_EVENT *event[], uint8_t evt_num)
+{
+	iot_cap_evt_data_t** evt_data = (iot_cap_evt_data_t**)event;
+	int ret;
+	struct iot_context *ctx = NULL;
+	iot_cap_msg_t final_msg = {0};
+	int i;
+	JSON_H *evt_root = NULL;
+	JSON_H *evt_arr = NULL;
+	JSON_H *evt_item = NULL;
+
+	if (!evt_data || !evt_num || !evt_data[0] || !evt_data[0]->ref_cap || !evt_data[0]->ref_cap->ctx) {
+		IOT_DUMP(IOT_DEBUG_LEVEL_ERROR, IOT_DUMP_CAPABILITY_SEND_EVENT_NO_DATA_ERROR, 0, 0);
+		IOT_ERROR("There is no ctx or evt_data");
+		return IOT_ERROR_INVALID_ARGS;
+	}
+	ctx = evt_data[0]->ref_cap->ctx;
+
+	if (ctx->curr_state < IOT_STATE_CLOUD_CONNECTING) {
+		IOT_DUMP(IOT_DEBUG_LEVEL_ERROR, IOT_DUMP_CAPABILITY_SEND_EVENT_NO_CONNECT_ERROR, ctx->curr_state, 0);
+		IOT_ERROR("Target has not connected to server yet!!");
+		return IOT_ERROR_BAD_REQ;
+	}
+
+	sqnum = (sqnum + 1) & MAX_SQNUM;	// Use only positive number
+
+	evt_root = JSON_CREATE_OBJECT();
+	evt_arr = JSON_CREATE_ARRAY();
+
+	JSON_ADD_ITEM_TO_OBJECT(evt_root, "deviceEvents", evt_arr);
+
+	/* Make event data format & enqueue data */
+	for (i = 0; i < evt_num; i++) {
+		if (!evt_data[i] || !(evt_data[i]->ref_cap) || ctx != evt_data[i]->ref_cap->ctx) {
+			IOT_ERROR("There si no capability reference in event data or ctx not matched");
+			JSON_DELETE(evt_root);
+			return IOT_ERROR_BAD_REQ;
+		}
+		evt_item = _iot_make_evt_data(evt_data[i]->ref_cap->component, evt_data[i]->ref_cap->capability, evt_data[i]);
+		if (evt_item == NULL) {
+			IOT_ERROR("Cannot make evt_data!!");
+			JSON_DELETE(evt_root);
+			return IOT_ERROR_BAD_REQ;
+		}
+		JSON_ADD_ITEM_TO_ARRAY(evt_arr, evt_item);
+	}
+
+#if defined(STDK_IOT_CORE_SERIALIZE_CBOR)
+	iot_serialize_json2cbor(evt_root, (uint8_t **)&final_msg.msg, (size_t *)&final_msg.msglen);
+#else
+	final_msg.msg = JSON_PRINT(evt_root);
+	if (final_msg.msg != NULL) {
+		final_msg.msglen = strlen(final_msg.msg);
+	}
 #endif
 	JSON_DELETE(evt_root);
 	if (final_msg.msg == NULL) {
