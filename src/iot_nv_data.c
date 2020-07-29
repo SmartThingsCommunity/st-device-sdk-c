@@ -32,10 +32,11 @@
 #include "security/iot_security_storage.h"
 
 #define IOT_NVD_MAX_DATA_LEN (2048)
-#define IOT_NVD_MAX_ID_LEN (36) // Device/Location/Profile ID, SSID, SN
+#define IOT_NVD_MAX_ID_LEN (36)
 #define IOT_NVD_MAX_PW_LEN (64)
 #define IOT_NVD_MAX_BSSID_LEN (6)
 #define IOT_NVD_MAX_UID_LEN (128)
+#define IOT_NVD_MAX_SN_LEN (64)
 
 typedef enum iot_nv_io_mode {
 	IOT_NV_MODE_READ = 1,
@@ -829,7 +830,7 @@ iot_error_t iot_nv_get_serial_number(char** sn, size_t* len)
 
 	iot_error_t ret;
 	unsigned int size;
-	const int DATA_SIZE = IOT_NVD_MAX_ID_LEN + 1;
+	const int DATA_SIZE = IOT_NVD_MAX_SN_LEN + 1;
 	char* data = NULL;
 	char* new_buff = NULL;
 

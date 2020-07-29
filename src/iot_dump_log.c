@@ -149,10 +149,11 @@ static iot_error_t _iot_dump_copy_memory(void *dest, int dest_size, const void *
     return iot_err;
 }
 
-iot_error_t iot_dump_create_all_log_dump(struct iot_context *iot_ctx, char **log_dump_output, size_t max_log_dump_size, size_t *allocated_size, int log_mode)
+int st_create_log_dump(IOT_CTX *iot_ctx, char **log_dump_output, unsigned int max_log_dump_size, unsigned int *allocated_size, int log_mode)
 {
     struct iot_dump_header* header;
     struct iot_dump_state* dump_state;
+    struct iot_context *ctx = (struct iot_context*)iot_ctx;
 
     char temp_buf[IOT_DUMP_BUFFER_SIZE] = "";
     char *all_log_dump;
@@ -237,7 +238,7 @@ iot_error_t iot_dump_create_all_log_dump(struct iot_context *iot_ctx, char **log
     curr_size += written_len;
 
     if (need_dump_state) {
-        dump_state = _iot_dump_create_dump_state(iot_ctx);
+        dump_state = _iot_dump_create_dump_state(ctx);
         iot_err = _iot_dump_copy_memory(all_log_dump + curr_size, output_log_size - curr_size,
                     dump_state, sizeof(struct iot_dump_state), temp_buf, sizeof(temp_buf), &remain_number, &written_len, need_base64);
         iot_os_free(dump_state);
@@ -249,28 +250,30 @@ iot_error_t iot_dump_create_all_log_dump(struct iot_context *iot_ctx, char **log
     }
 
 #ifdef CONFIG_STDK_IOT_CORE_LOG_FILE
-    iot_log_file_seek(logfile, 0 - max_msg_size, logfile->tail_addr);
+    if (logfile) {
+        iot_log_file_seek(logfile, 0 - max_msg_size, logfile->tail_addr);
 
-    while (max_msg_size) {
-        msg_size = sizeof(temp_buf) - remain_number;
-        if (msg_size > max_msg_size)
-            msg_size = max_msg_size;
+        while (max_msg_size) {
+            msg_size = sizeof(temp_buf) - remain_number;
+            if (msg_size > max_msg_size)
+                msg_size = max_msg_size;
 
-        iot_log_file_read(logfile, temp_buf + remain_number, msg_size, &msg_size);
+            iot_log_file_read(logfile, temp_buf + remain_number, msg_size, &msg_size);
 
-        max_msg_size -= msg_size;
-        msg_size += remain_number;
-        remain_number = 0;
+            max_msg_size -= msg_size;
+            msg_size += remain_number;
+            remain_number = 0;
 
-        iot_err = _iot_dump_copy_memory(all_log_dump + curr_size, output_log_size - curr_size,
-                temp_buf, msg_size, temp_buf, sizeof(temp_buf), &remain_number, &written_len, need_base64);
-        if (iot_err < 0) {
-            IOT_ERROR("failed to get log msg for all_log_dump : ret %d", iot_err);
-            goto end;
+            iot_err = _iot_dump_copy_memory(all_log_dump + curr_size, output_log_size - curr_size,
+                    temp_buf, msg_size, temp_buf, sizeof(temp_buf), &remain_number, &written_len, need_base64);
+            if (iot_err < 0) {
+                IOT_ERROR("failed to get log msg for all_log_dump : ret %d", iot_err);
+                goto end;
+            }
+            curr_size += written_len;
         }
-        curr_size += written_len;
+        iot_log_file_close(logfile);
     }
-    iot_log_file_close(logfile);
 #endif
 
     if (remain_number) {
@@ -291,7 +294,9 @@ iot_error_t iot_dump_create_all_log_dump(struct iot_context *iot_ctx, char **log
 
 end:
 #ifdef CONFIG_STDK_IOT_CORE_LOG_FILE
-    iot_log_file_close(logfile);
+    if (logfile) {
+        iot_log_file_close(logfile);
+    }
 #endif
     if (all_log_dump)
         iot_os_free(all_log_dump);

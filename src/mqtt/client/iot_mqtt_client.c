@@ -1093,6 +1093,8 @@ static int _iot_mqtt_wait_for(MQTTClient *client, iot_mqtt_packet_chunk_t *chunk
 					if (tmp) {
 						goto exit;
 					}
+				} else {
+					iot_os_thread_yield();
 				}
 				break;
 			case PACKET_CHUNK_WRITE_COMPLETED:

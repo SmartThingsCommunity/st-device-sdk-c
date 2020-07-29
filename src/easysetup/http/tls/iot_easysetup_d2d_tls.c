@@ -34,7 +34,7 @@
 #define MAC_ADDR_BUFFER_SIZE	20
 #define URL_BUFFER_SIZE		64
 #define WIFIINFO_BUFFER_SIZE	20
-#define ES_CONFIRM_MAX_DELAY	10000
+#define ES_CONFIRM_MAX_DELAY	100000
 
 iot_error_t iot_easysetup_create_ssid(struct iot_devconf_prov_data *devconf, char *ssid, size_t ssid_len)
 {
@@ -1125,13 +1125,13 @@ static iot_error_t _es_log_get_dump_handler(struct iot_context *ctx, char **out_
 #if defined(CONFIG_STDK_IOT_CORE_EASYSETUP_LOG_SUPPORT_NO_USE_LOGFILE)
 	log_dump = iot_debug_get_log();
 #else
-	err = iot_dump_create_all_log_dump(ctx, &log_dump, log_dump_size, &written_size, IOT_DUMP_MODE_NEED_BASE64 | IOT_DUMP_MODE_NEED_DUMP_STATE);
+	err = st_create_log_dump((IOT_CTX *)ctx, &log_dump, log_dump_size, &written_size, IOT_DUMP_MODE_NEED_BASE64 | IOT_DUMP_MODE_NEED_DUMP_STATE);
 	if (err < 0) {
 		IOT_ERROR("Fail to get log dump!\n");
 		IOT_ES_DUMP(IOT_DEBUG_LEVEL_ERROR, IOT_DUMP_EASYSETUP_CREATE_LOGDUMP_FAIL, 0);
 		goto out;
 	}
-	err = iot_dump_create_all_log_dump(ctx, &sumo_dump, sumo_dump_size, &written_size, IOT_DUMP_MODE_NEED_BASE64);
+	err = st_create_log_dump((IOT_CTX *)ctx, &sumo_dump, sumo_dump_size, &written_size, IOT_DUMP_MODE_NEED_BASE64);
 	if (err < 0) {
 		IOT_ERROR("Fail to get sumo dump!\n");
 		IOT_ES_DUMP(IOT_DEBUG_LEVEL_ERROR, IOT_DUMP_EASYSETUP_CREATE_SUMODUMP_FAIL, 0);
