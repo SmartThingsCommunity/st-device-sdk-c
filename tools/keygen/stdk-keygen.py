@@ -210,8 +210,8 @@ def bulk(args):
     sub_path = os.path.join(root_path, time)
     batch_items = []
 
-    if not os.path.exists(args.csv):
-        raise TypeError("not found '%s'" % args.csv)
+    if not os.path.exists(args.input):
+        raise TypeError("not found '%s'" % args.input)
 
     print("Loading " + args.input + "...")
 
