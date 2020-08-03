@@ -78,12 +78,13 @@ class Batch():
         else:
             path = self._batch_output
 
-        dir = os.path.dirname(path)
-
         if os.path.exists(path):
             raise TypeError("WARNING: '%s' is already registered" % path)
 
-        os.makedirs(dir, exist_ok=True)
+        dir = os.path.dirname(path)
+
+        if os.path.isdir(dir):
+            os.makedirs(dir, exist_ok=True)
 
         with open(path, 'w', newline='') as csvfile:
             fieldnames = ['sn', 'keyType', 'keyCrv', 'pubkey']
