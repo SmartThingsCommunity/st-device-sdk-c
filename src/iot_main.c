@@ -1695,7 +1695,6 @@ static iot_error_t _do_state_updating(struct iot_context *ctx,
 do { \
 	iot_os_mutex_unlock(&ctx->st_conn_lock); \
 	\
-	iot_os_eventgroup_clear_bits(ctx->usr_events, IOT_USR_INTERACT_BITS_ST_CONN); \
 	curr_events = iot_os_eventgroup_wait_bits(ctx->usr_events, \
 		IOT_USR_INTERACT_BITS_ST_CONN, true, IOT_OS_MAX_DELAY); \
 	\
@@ -1761,6 +1760,15 @@ int st_conn_start(IOT_CTX *iot_ctx, st_status_cb status_cb,
 		goto end_st_conn_start;
 	}
 
+	if (ctx->devconf.ownership_validation_type & IOT_OVF_TYPE_BUTTON) {
+		if (!ctx->status_cb) {
+			IOT_ERROR("There is no status_cb for otm");
+			IOT_DUMP_MAIN(ERROR, BASE, 0);
+			iot_err = IOT_ERROR_BAD_REQ;
+			goto end_st_conn_start;
+		}
+	}
+
 	if (ctx->es_res_created) {
 		IOT_WARN("Already easysetup resources are created!!");
 	} else {
@@ -1781,6 +1789,8 @@ int st_conn_start(IOT_CTX *iot_ctx, st_status_cb status_cb,
 		SET_STATUS_CB(status_cb, maps, usr_data);
 	}
 
+	iot_os_eventgroup_clear_bits(ctx->usr_events, IOT_USR_INTERACT_BITS_ST_CONN);
+
 	iot_err = iot_command_send(ctx, IOT_COMMNAD_STATE_UPDATE,
 				&state_data, sizeof(struct iot_state_data));
 
@@ -1795,16 +1805,6 @@ int st_conn_start(IOT_CTX *iot_ctx, st_status_cb status_cb,
 			_delete_easysetup_resources_all(ctx);
 		}
 		goto end_st_conn_start;
-	}
-
-	if (ctx->devconf.ownership_validation_type & IOT_OVF_TYPE_BUTTON) {
-		if (!ctx->status_cb) {
-			IOT_ERROR("There is no status_cb for otm");
-			IOT_DUMP_MAIN(ERROR, BASE, 0);
-			_delete_easysetup_resources_all(ctx);
-			iot_err = IOT_ERROR_BAD_REQ;
-			goto end_st_conn_start;
-		}
 	}
 
 	WAIT_USR_INTERACT();
@@ -2002,6 +2002,10 @@ int st_conn_start_ex(IOT_CTX *iot_ctx, iot_ext_args_t *ext_args)
 
 	if (ext_args->status_cb) {
 		SET_STATUS_CB(ext_args->status_cb, ext_args->maps, ext_args->usr_data);
+	}
+
+	if (ext_args->start_pt == IOT_STATUS_PROVISIONING) {
+		iot_os_eventgroup_clear_bits(ctx->usr_events, IOT_USR_INTERACT_BITS_ST_CONN);
 	}
 
 	iot_err = iot_command_send(ctx, IOT_COMMNAD_STATE_UPDATE,
