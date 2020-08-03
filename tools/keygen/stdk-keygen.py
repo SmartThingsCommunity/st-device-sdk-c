@@ -78,12 +78,13 @@ class Batch():
         else:
             path = self._batch_output
 
-        dir = os.path.dirname(path)
-
         if os.path.exists(path):
             raise TypeError("WARNING: '%s' is already registered" % path)
 
-        os.makedirs(dir, exist_ok=True)
+        dir = os.path.dirname(path)
+
+        if os.path.isdir(dir):
+            os.makedirs(dir, exist_ok=True)
 
         with open(path, 'w', newline='') as csvfile:
             fieldnames = ['sn', 'keyType', 'keyCrv', 'pubkey']
@@ -210,8 +211,8 @@ def bulk(args):
     sub_path = os.path.join(root_path, time)
     batch_items = []
 
-    if not os.path.exists(args.csv):
-        raise TypeError("not found '%s'" % args.csv)
+    if not os.path.exists(args.input):
+        raise TypeError("not found '%s'" % args.input)
 
     print("Loading " + args.input + "...")
 
