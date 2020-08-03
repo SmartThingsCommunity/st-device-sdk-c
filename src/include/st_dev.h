@@ -21,6 +21,7 @@
 
 #include <stdint.h>
 #include <stdbool.h>
+#include <stddef.h>
 
 #include "st_dev_version.h"
 
@@ -480,7 +481,7 @@ int st_info_get(IOT_CTX *iot_ctx, iot_info_type_t info_type, iot_info_data_t *in
  *
  * @warning must free log_dump_output after using it.
  */
-int st_create_log_dump(IOT_CTX *iot_ctx, char **log_dump_output, unsigned int max_log_dump_size, unsigned int *allocated_size, int log_mode);
+int st_create_log_dump(IOT_CTX *iot_ctx, char **log_dump_output, size_t max_log_dump_size, size_t *allocated_size, int log_mode);
 
 #ifdef __cplusplus
 }

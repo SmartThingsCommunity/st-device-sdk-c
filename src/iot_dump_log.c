@@ -149,7 +149,7 @@ static iot_error_t _iot_dump_copy_memory(void *dest, int dest_size, const void *
     return iot_err;
 }
 
-int st_create_log_dump(IOT_CTX *iot_ctx, char **log_dump_output, unsigned int max_log_dump_size, unsigned int *allocated_size, int log_mode)
+int st_create_log_dump(IOT_CTX *iot_ctx, char **log_dump_output, size_t max_log_dump_size, size_t *allocated_size, int log_mode)
 {
     struct iot_dump_header* header;
     struct iot_dump_state* dump_state;

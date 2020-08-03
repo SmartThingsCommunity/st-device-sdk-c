@@ -34,12 +34,12 @@ else()
     include("stdkconfig.cmake")
 endif()
 
-foreach(stdk_extra_cflags ${STDK_EXTRA_CFLAGS})
-    set(CMAKE_C_FLAGS "${CMAKE_C_FLAGS} -D${stdk_extra_cflags}")
-    set(${stdk_extra_cflags} "y")
-endforeach()
-
 if(CMAKE_C_COMPILER_ID STREQUAL "GNU" AND CMAKE_BUILD_TYPE MATCHES UnitTest)
+    foreach(stdk_extra_cflags ${STDK_UNITTEST_EXTRA_CFLAGS})
+        set(CMAKE_C_FLAGS "${CMAKE_C_FLAGS} -D${stdk_extra_cflags}")
+        set(${stdk_extra_cflags} "y")
+    endforeach()
+
     set(MOCKED_FUNCTIONS
         iot_bsp_wifi_get_mac
         iot_os_malloc
@@ -51,6 +51,11 @@ if(CMAKE_C_COMPILER_ID STREQUAL "GNU" AND CMAKE_BUILD_TYPE MATCHES UnitTest)
         iot_os_delay
         iot_net_init
         )
+else()
+    foreach(stdk_extra_cflags ${STDK_EXTRA_CFLAGS})
+        set(CMAKE_C_FLAGS "${CMAKE_C_FLAGS} -D${stdk_extra_cflags}")
+        set(${stdk_extra_cflags} "y")
+    endforeach()
 endif()
 
 add_subdirectory(src)
