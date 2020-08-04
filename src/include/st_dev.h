@@ -263,6 +263,20 @@ IOT_EVENT* st_cap_attr_create_int(const char *attribute, int integer, const char
  */
 IOT_EVENT* st_cap_attr_create_number(const char *attribute, double number, const char *unit);
 
+#define ST_CAP_SEND_ATTR_NUMBER(cap_handle, attribute, value_number, unit, data, output_seq_num)\
+{\
+	IOT_EVENT *attr = NULL;\
+	iot_cap_val_t value;\
+\
+	value.type = IOT_CAP_VAL_TYPE_NUMBER;\
+	value.number = value_number;\
+	attr = st_cap_create_attr(cap_handle, attribute, &value, unit, data);\
+	if (attr != NULL){\
+		output_seq_num = st_cap_send_attr(&attr, 1);\
+		st_cap_attr_free(attr);\
+	}\
+}
+
 /**
  * @brief Create IOT_EVENT data with string `value`.
  *
@@ -282,6 +296,20 @@ IOT_EVENT* st_cap_attr_create_number(const char *attribute, double number, const
  * @see @ref st_cap_attr_send
  */
 IOT_EVENT* st_cap_attr_create_string(const char *attribute, char *string, const char *unit);
+
+#define ST_CAP_SEND_ATTR_STRING(cap_handle, attribute, value_string, unit, data, output_seq_num)\
+{\
+	IOT_EVENT *attr = NULL;\
+	iot_cap_val_t value;\
+\
+	value.type = IOT_CAP_VAL_TYPE_STRING;\
+	value.string = value_string;\
+	attr = st_cap_create_attr(cap_handle, attribute, &value, unit, data);\
+	if (attr != NULL){\
+		output_seq_num = st_cap_send_attr(&attr, 1);\
+		st_cap_attr_free(attr);\
+	}\
+}
 
 /**
  * @brief Create IOT_EVENT data with string array `value`.
@@ -304,6 +332,21 @@ IOT_EVENT* st_cap_attr_create_string(const char *attribute, char *string, const 
  */
 IOT_EVENT* st_cap_attr_create_string_array(const char *attribute,
 		uint8_t str_num, char *string_array[], const char *unit);
+
+#define ST_CAP_SEND_ATTR_STRINGS_ARRAY(cap_handle, attribute, value_string_array, array_num, unit, data, output_seq_num)\
+{\
+	IOT_EVENT *attr = NULL;\
+	iot_cap_val_t value;\
+\
+	value.type = IOT_CAP_VAL_TYPE_STR_ARRAY;\
+	value.str_num = array_num;\
+	value.strings = value_string_array;\
+	attr = st_cap_create_attr(cap_handle, attribute, &value, unit, data);\
+	if (attr != NULL){\
+		output_seq_num = st_cap_send_attr(&attr, 1);\
+		st_cap_attr_free(attr);\
+	}\
+}
 
 /**
  * @brief Create IOT_EVENT data.
