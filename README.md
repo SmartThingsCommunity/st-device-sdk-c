@@ -12,9 +12,14 @@ It is distributed in source form and written in C99 for the purpose of portabili
 
 ## Announcements
 
-- ### WARNING : PLEASE USE master branch only until mid of Aug. 2020. (estimated plan)
+Good news! We have launched the new commercial program for MQTT devices. You will be able to submit for certification into the SmartThings mobile app later this month. To prepare for submission, please perform the neccessary steps with your current integrations:
 
-All version 1.2.xx at 'develop' branch contains new features which aren't compatible with the current SmartThings mobile application. So use of version 1.1.18 at 'master' branch is highly recommended for your own project. Release of the new compatible SmartThings mobile application has schedule at mid of Aug. We will inform you further information when these new features merge to 'master' branch
+ - Update to the latest SmartThings Device SDK
+   - Please use SmartThings Device SDK v1.3.3 or later
+ - Downlaod the updated onboarding_config.json for your devices.
+ - Re-register any test devices you have registered previously.
+ - Update to the latest SmartThings mobile app to test your device
+   - Please use SmartThings mobile application v1.7.51 (for Android), v1.6.51 (for iOS) or later
 
 ## Main features
 
