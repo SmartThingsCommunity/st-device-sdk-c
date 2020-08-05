@@ -1761,7 +1761,7 @@ int st_conn_start(IOT_CTX *iot_ctx, st_status_cb status_cb,
 	}
 
 	if (ctx->devconf.ownership_validation_type & IOT_OVF_TYPE_BUTTON) {
-		if (!ctx->status_cb) {
+		if (!status_cb) {
 			IOT_ERROR("There is no status_cb for otm");
 			IOT_DUMP_MAIN(ERROR, BASE, 0);
 			iot_err = IOT_ERROR_BAD_REQ;
