@@ -1094,7 +1094,7 @@ static int _iot_mqtt_wait_for(MQTTClient *client, iot_mqtt_packet_chunk_t *chunk
 						goto exit;
 					}
 				} else {
-					iot_os_thread_yield();
+					iot_os_delay(MQTT_ACKPENDING_WAITCYCLE_IN_SYNC_FUNCTION);
 				}
 				break;
 			case PACKET_CHUNK_WRITE_COMPLETED:

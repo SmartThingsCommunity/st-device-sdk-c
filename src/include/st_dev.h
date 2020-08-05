@@ -263,6 +263,20 @@ IOT_EVENT* st_cap_attr_create_int(const char *attribute, int integer, const char
  */
 IOT_EVENT* st_cap_attr_create_number(const char *attribute, double number, const char *unit);
 
+#define ST_CAP_SEND_ATTR_NUMBER(cap_handle, attribute, value_number, unit, data, output_seq_num)\
+{\
+	IOT_EVENT *attr = NULL;\
+	iot_cap_val_t value;\
+\
+	value.type = IOT_CAP_VAL_TYPE_NUMBER;\
+	value.number = value_number;\
+	attr = st_cap_create_attr(cap_handle, attribute, &value, unit, data);\
+	if (attr != NULL){\
+		output_seq_num = st_cap_send_attr(&attr, 1);\
+		st_cap_attr_free(attr);\
+	}\
+}
+
 /**
  * @brief Create IOT_EVENT data with string `value`.
  *
@@ -282,6 +296,20 @@ IOT_EVENT* st_cap_attr_create_number(const char *attribute, double number, const
  * @see @ref st_cap_attr_send
  */
 IOT_EVENT* st_cap_attr_create_string(const char *attribute, char *string, const char *unit);
+
+#define ST_CAP_SEND_ATTR_STRING(cap_handle, attribute, value_string, unit, data, output_seq_num)\
+{\
+	IOT_EVENT *attr = NULL;\
+	iot_cap_val_t value;\
+\
+	value.type = IOT_CAP_VAL_TYPE_STRING;\
+	value.string = value_string;\
+	attr = st_cap_create_attr(cap_handle, attribute, &value, unit, data);\
+	if (attr != NULL){\
+		output_seq_num = st_cap_send_attr(&attr, 1);\
+		st_cap_attr_free(attr);\
+	}\
+}
 
 /**
  * @brief Create IOT_EVENT data with string array `value`.
@@ -304,6 +332,21 @@ IOT_EVENT* st_cap_attr_create_string(const char *attribute, char *string, const 
  */
 IOT_EVENT* st_cap_attr_create_string_array(const char *attribute,
 		uint8_t str_num, char *string_array[], const char *unit);
+
+#define ST_CAP_SEND_ATTR_STRINGS_ARRAY(cap_handle, attribute, value_string_array, array_num, unit, data, output_seq_num)\
+{\
+	IOT_EVENT *attr = NULL;\
+	iot_cap_val_t value;\
+\
+	value.type = IOT_CAP_VAL_TYPE_STR_ARRAY;\
+	value.str_num = array_num;\
+	value.strings = value_string_array;\
+	attr = st_cap_create_attr(cap_handle, attribute, &value, unit, data);\
+	if (attr != NULL){\
+		output_seq_num = st_cap_send_attr(&attr, 1);\
+		st_cap_attr_free(attr);\
+	}\
+}
 
 /**
  * @brief Create IOT_EVENT data.
@@ -328,6 +371,31 @@ IOT_EVENT* st_cap_attr_create(const char *attribute,
 			iot_cap_val_t *value, const char *unit, const char *data);
 
 /**
+ * @brief Create IOT_EVENT data.
+ *
+ * @details This function creates a new IOT_EVENT data with input parameters.
+ * Once it returns, user has full responsibility for deallocating event data
+ * by using [st_cap_free_attr](@ref st_cap_free_attr).
+ * NOTE:IOT_EVENT created in this function must be passed to st_cap_send_attr function
+ * to send evnets.
+ *
+ * @param[in] cap_handle Capability reference which the event is created in.
+ * @param[in] attribute The attribute string of IOT_EVENT data.
+ * @param[in] value The value to add to IOT_EVENT data.
+ * @param[in] unit The unit string if needed. Otherwise NULL.
+ * @param[in] data The data json object if needed. Otherwise NULL.
+ *
+ * @return Pointer of `IOT_EVENT` which is used to publish device status.
+ *
+ * @warning Must call [st_cap_free_attr](@ref st_cap_free_attr)
+ * to free IOT_EVENT data after using it.
+ *
+ * @see @ref st_cap_attr_send
+ */
+IOT_EVENT* st_cap_create_attr(IOT_CAP_HANDLE *cap_handle, const char *attribute,
+			iot_cap_val_t *value, const char *unit, const char *data);
+
+/**
  * @brief Free IOT_EVENT data.
  *
  * @details This function frees IOT_EVENT data.
@@ -335,6 +403,15 @@ IOT_EVENT* st_cap_attr_create(const char *attribute,
  * @param[in] event The IOT_EVENT data to free.
  */
 void st_cap_attr_free(IOT_EVENT* event);
+
+/**
+ * @brief Free IOT_EVENT data.
+ *
+ * @details This function frees IOT_EVENT data.
+ *
+ * @param[in] event The IOT_EVENT data to free.
+ */
+void st_cap_free_attr(IOT_EVENT* event);
 
 /**
  * @brief Request to publish deviceEvent.
@@ -353,6 +430,23 @@ void st_cap_attr_free(IOT_EVENT* event);
  */
 int st_cap_attr_send(IOT_CAP_HANDLE *cap_handle,
 		uint8_t evt_num, IOT_EVENT *event[]);
+
+/**
+ * @brief Request to publish deviceEvent.
+ *
+ * @details This function creates a deviceEvent with the list of IOT_EVENT data,
+ * and requests to publish it.
+ * When there is no error, this function returns sequence number,
+ * which is unique value to identify the deviceEvent message.
+ * NOTE:IOT_EVENT must be created from st_cap_create_attr
+ *
+ * @param[in] event The IOT_EVENT data list to create the deviceEvent.
+ * @param[in] evt_num The number of IOT_EVENT data in the event.
+ *
+ * @return return `sequence number`(which is positive integer) if successful,
+ * negative integer for error case.
+ */
+int st_cap_send_attr(IOT_EVENT *event[], uint8_t evt_num);
 
 /**
  * @brief Create and initialize a capability handle.

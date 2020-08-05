@@ -39,6 +39,11 @@ typedef struct {
  */
 typedef struct iot_cap_evt_data_t {
 	/**
+	 * @brief Capability reference for this event.
+	 *
+	 */
+	struct iot_cap_handle *ref_cap;
+	/**
 	 * @brief NULL-terminated string, which is name of `attributes`.
 	 *
 	 */
