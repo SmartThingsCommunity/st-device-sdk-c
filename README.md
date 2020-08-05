@@ -12,7 +12,7 @@ It is distributed in source form and written in C99 for the purpose of portabili
 
 ## Announcements
 
-Good news! We have launched the new commercial program for MQTT devices. You will be able to submit for certification into the SmartThings mobile app later this month. To prepare for submission, please perform the neccessary steps with your current integrations:
+Good news! We have launched the new commercial program for MQTT devices. You will be able to submit for certification into the SmartThings mobile app later this month. To prepare for submission, please perform the necessary steps with your current integrations:
 
  - Update to the latest SmartThings Device SDK
    - Please use SmartThings Device SDK v1.3.3 or later
