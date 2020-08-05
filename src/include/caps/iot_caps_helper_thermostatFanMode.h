@@ -39,14 +39,22 @@ const static struct iot_caps_thermostatFanMode {
     const struct thermostatFanMode_attr_thermostatFanMode {
         const char *name;
         const unsigned char property;
-        const unsigned char value_type;
+        const unsigned char valueType;
         const char *values[CAP_ENUM_THERMOSTATFANMODE_THERMOSTATFANMODE_VALUE_MAX];
+        const char *value_auto;
+        const char *value_circulate;
+        const char *value_followschedule;
+        const char *value_on;
     } attr_thermostatFanMode;
     const struct thermostatFanMode_attr_supportedThermostatFanModes {
         const char *name;
         const unsigned char property;
-        const unsigned char value_type;
+        const unsigned char valueType;
         const char *values[CAP_ENUM_THERMOSTATFANMODE_SUPPORTEDTHERMOSTATFANMODES_VALUE_MAX];
+        const char *value_auto;
+        const char *value_circulate;
+        const char *value_followschedule;
+        const char *value_on;
     } attr_supportedThermostatFanModes;
     const struct thermostatFanMode_cmd_fanOn { const char* name; } cmd_fanOn;
     const struct thermostatFanMode_cmd_fanCirculate { const char* name; } cmd_fanCirculate;
@@ -57,14 +65,22 @@ const static struct iot_caps_thermostatFanMode {
     .attr_thermostatFanMode = {
         .name = "thermostatFanMode",
         .property = ATTR_SET_VALUE_REQUIRED,
-        .value_type = VALUE_TYPE_STRING,
+        .valueType = VALUE_TYPE_STRING,
         .values = {"auto", "circulate", "followschedule", "on"},
+        .value_auto = "auto",
+        .value_circulate = "circulate",
+        .value_followschedule = "followschedule",
+        .value_on = "on",
     },
     .attr_supportedThermostatFanModes = {
         .name = "supportedThermostatFanModes",
         .property = ATTR_SET_VALUE_ARRAY,
-        .value_type = VALUE_TYPE_STRING,
+        .valueType = VALUE_TYPE_STRING,
         .values = {"auto", "circulate", "followschedule", "on"},
+        .value_auto = "auto",
+        .value_circulate = "circulate",
+        .value_followschedule = "followschedule",
+        .value_on = "on",
     },
     .cmd_fanOn = { .name = "fanOn" },
     .cmd_fanCirculate = { .name = "fanCirculate" },

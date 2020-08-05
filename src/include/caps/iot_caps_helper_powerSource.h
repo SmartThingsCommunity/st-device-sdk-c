@@ -38,16 +38,24 @@ const static struct iot_caps_powerSource {
     const struct powerSource_attr_powerSource {
         const char *name;
         const unsigned char property;
-        const unsigned char value_type;
+        const unsigned char valueType;
         const char *values[CAP_ENUM_POWERSOURCE_POWERSOURCE_VALUE_MAX];
+        const char *value_battery;
+        const char *value_dc;
+        const char *value_mains;
+        const char *value_unknown;
     } attr_powerSource;
 } caps_helper_powerSource = {
     .id = "powerSource",
     .attr_powerSource = {
         .name = "powerSource",
         .property = ATTR_SET_VALUE_REQUIRED,
-        .value_type = VALUE_TYPE_STRING,
+        .valueType = VALUE_TYPE_STRING,
         .values = {"battery", "dc", "mains", "unknown"},
+        .value_battery = "battery",
+        .value_dc = "dc",
+        .value_mains = "mains",
+        .value_unknown = "unknown",
     },
 };
 

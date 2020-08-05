@@ -35,8 +35,9 @@ const static struct iot_caps_carbonMonoxideMeasurement {
     const struct carbonMonoxideMeasurement_attr_carbonMonoxideLevel {
         const char *name;
         const unsigned char property;
-        const unsigned char value_type;
+        const unsigned char valueType;
         const char *units[CAP_ENUM_CARBONMONOXIDEMEASUREMENT_CARBONMONOXIDELEVEL_UNIT_MAX];
+        const char *unit_ppm;
         const double min;
         const double max;
     } attr_carbonMonoxideLevel;
@@ -45,8 +46,9 @@ const static struct iot_caps_carbonMonoxideMeasurement {
     .attr_carbonMonoxideLevel = {
         .name = "carbonMonoxideLevel",
         .property = ATTR_SET_VALUE_MIN | ATTR_SET_VALUE_MAX | ATTR_SET_VALUE_REQUIRED | ATTR_SET_UNIT_REQUIRED,
-        .value_type = VALUE_TYPE_NUMBER,
+        .valueType = VALUE_TYPE_NUMBER,
         .units = {"ppm"},
+        .unit_ppm = "ppm",
         .min = 0,
         .max = 1000000,
     },

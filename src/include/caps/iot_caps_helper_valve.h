@@ -36,8 +36,10 @@ const static struct iot_caps_valve {
     const struct valve_attr_valve {
         const char *name;
         const unsigned char property;
-        const unsigned char value_type;
+        const unsigned char valueType;
         const char *values[CAP_ENUM_VALVE_VALVE_VALUE_MAX];
+        const char *value_closed;
+        const char *value_open;
     } attr_valve;
     const struct valve_cmd_close { const char* name; } cmd_close;
     const struct valve_cmd_open { const char* name; } cmd_open;
@@ -46,8 +48,10 @@ const static struct iot_caps_valve {
     .attr_valve = {
         .name = "valve",
         .property = ATTR_SET_VALUE_REQUIRED,
-        .value_type = VALUE_TYPE_STRING,
+        .valueType = VALUE_TYPE_STRING,
         .values = {"closed", "open"},
+        .value_closed = "closed",
+        .value_open = "open",
     },
     .cmd_close = { .name = "close" },
     .cmd_open = { .name = "open" },

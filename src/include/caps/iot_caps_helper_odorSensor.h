@@ -30,7 +30,7 @@ const static struct iot_caps_odorSensor {
     const struct odorSensor_attr_odorLevel {
         const char *name;
         const unsigned char property;
-        const unsigned char value_type;
+        const unsigned char valueType;
         const int min;
     } attr_odorLevel;
 } caps_helper_odorSensor = {
@@ -38,7 +38,7 @@ const static struct iot_caps_odorSensor {
     .attr_odorLevel = {
         .name = "odorLevel",
         .property = ATTR_SET_VALUE_MIN | ATTR_SET_VALUE_REQUIRED,
-        .value_type = VALUE_TYPE_INTEGER,
+        .valueType = VALUE_TYPE_INTEGER,
         .min = 0,
     },
 };

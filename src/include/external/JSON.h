@@ -34,6 +34,22 @@ static inline JSON_H *JSON_GET_OBJECT_ITEM(const JSON_H * const obj, const char 
     return cJSON_GetObjectItem(obj, string);
 }
 
+static inline JSON_H *JSON_GET_CHILD_ITEM(const JSON_H * const obj) {
+    return ((cJSON *)obj)->child;
+}
+
+static inline JSON_H *JSON_GET_NEXT_ITEM(const JSON_H * const obj) {
+    return ((cJSON *)obj)->next;
+}
+
+static inline char *JSON_GET_OBJECT_ITEM_STRING(const JSON_H * const obj) {
+    return ((cJSON *)obj)->string;
+}
+
+static inline double JSON_GET_NUMBER_VALUE(const JSON_H * const item) {
+    return ((cJSON *)item)->valuedouble;
+}
+
 static inline JSON_H *JSON_DUPLICATE(const JSON_H* item, bool recurse) {
 	return cJSON_Duplicate(item, recurse);
 }
@@ -138,6 +154,10 @@ static inline void JSON_REPLACE_ITEM_IN_OBJ_CASESENS(JSON_H *obj, const char *st
 typedef void JSON_H;
 JSON_H *JSON_CREATE_OBJECT(void);
 JSON_H *JSON_GET_OBJECT_ITEM(const JSON_H * const obj, const char * const string);
+JSON_H *JSON_GET_CHILD_ITEM(const JSON_H * const obj);
+JSON_H *JSON_GET_NEXT_ITEM(const JSON_H * const obj);
+char *JSON_GET_OBJECT_ITEM_STRING(const JSON_H * const obj);
+double JSON_GET_NUMBER_VALUE(const JSON_H * const item);
 JSON_H *JSON_DUPLICATE(const JSON_H* item, bool recurse);
 void JSON_ADD_ITEM_TO_OBJECT(JSON_H *obj, const char *string, JSON_H *item);
 void JSON_ADD_NUMBER_TO_OBJECT(JSON_H * const obj, const char * const name, const double number);

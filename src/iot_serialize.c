@@ -21,12 +21,12 @@
 #include <string.h>
 #include <math.h>
 
-#include <cJSON.h>
 #include <cbor.h>
 
 #include "iot_debug.h"
 #include "iot_error.h"
 #include "iot_internal.h"
+#include "JSON.h"
 
 #include <inttypes.h>
 #include "compilersupport_p.h"
@@ -108,6 +108,9 @@ static CborError _iot_cbor_value_to_json(CborValue *it, char *out, size_t *olen)
 	size_t n = 0;
 	uint64_t val_i64;
 	double val_dbl;
+#if !IOT_SERIALIZE_SPRINTF_FLOAT
+	double intpart, fracpart;
+#endif
 
 	type = cbor_value_get_type(it);
 
@@ -175,7 +178,7 @@ static CborError _iot_cbor_value_to_json(CborValue *it, char *out, size_t *olen)
 		if (fpclassify(val_dbl) < 0) {
 			return CborErrorIO;
 		}
-
+#if IOT_SERIALIZE_SPRINTF_FLOAT
 		val_i64 = (uint64_t)fabs(val_dbl);
 		if ((double)val_i64 == fabs(val_dbl)) {
 			/* print as integer so we get the full precision */
@@ -184,6 +187,21 @@ static CborError _iot_cbor_value_to_json(CborValue *it, char *out, size_t *olen)
 			/* this number is definitely not a 64-bit integer */
 			c += sprintf(out + c, "%." DBL_DECIMAL_DIG_STR "g", val_dbl);
 		}
+#else
+		fracpart = modf(val_dbl, &intpart);
+		c += sprintf(out + c, "%d", (int)intpart);
+		if (fracpart != 0) {
+			c += sprintf(out + c, ".");
+			fracpart = round(fracpart * IOT_SERIALIZE_DECIMAL_PRECISION) / IOT_SERIALIZE_DECIMAL_PRECISION;
+			if (fracpart < 0) {
+				fracpart *= -1;
+			}
+			while(fracpart != (int)fracpart) {
+				fracpart *= 10;
+				c += sprintf(out + c, "%d", ((int)fracpart) % 10);
+			}
+		}
+#endif
 
 		break;
 	default:
@@ -255,4 +273,126 @@ iot_error_t iot_serialize_cbor2json(uint8_t *cbor, size_t cborlen, char **json, 
 	IOT_DEBUG("json 0x%x@%p", (int)*jsonlen, *json);
 
 	return IOT_ERROR_NONE;
+}
+
+static CborError _iot_json_value_to_cbor(JSON_H *json, CborEncoder *cbor)
+{
+	CborError err = 0;
+
+	if (JSON_IS_OBJECT(json)) {
+		CborEncoder d = {0};
+		char *string;
+		cbor_encoder_create_map(cbor, &d, CborIndefiniteLength);
+		JSON_H *child = JSON_GET_CHILD_ITEM(json);
+		while (child) {
+			string = JSON_GET_OBJECT_ITEM_STRING(child);
+			err = cbor_encode_text_stringz(&d, string);
+			if (err != 0 && err != CborErrorOutOfMemory) {
+				return err;
+			}
+			err = _iot_json_value_to_cbor(child, &d);
+			if (err != 0 && err != CborErrorOutOfMemory) {
+				return err;
+			}
+
+			child = JSON_GET_NEXT_ITEM(child);
+		}
+		cbor_encoder_close_container_checked(cbor, &d);
+	} else if (JSON_IS_STRING(json)) {
+		char *string;
+		string = JSON_GET_STRING_VALUE(json);
+		err = cbor_encode_text_stringz(cbor, string);
+		if (err != 0 && err != CborErrorOutOfMemory) {
+			return err;
+		}
+	} else if (JSON_IS_ARRAY(json)) {
+		CborEncoder d = {0};
+		cbor_encoder_create_array(cbor, &d, CborIndefiniteLength);
+		JSON_H *child = JSON_GET_CHILD_ITEM(json);
+		while (child) {
+			err = _iot_json_value_to_cbor(child, &d);
+			if (err != 0 && err != CborErrorOutOfMemory) {
+				return err;
+			}
+
+			child = JSON_GET_NEXT_ITEM(child);
+		}
+		cbor_encoder_close_container_checked(cbor, &d);
+	} else if (JSON_IS_NUMBER(json)) {
+		double number = JSON_GET_NUMBER_VALUE(json);
+		double intpart;
+		if (modf(number, &intpart) == 0) {
+			err = cbor_encode_int(cbor, (int)number);
+		} else {
+			err = cbor_encode_double(cbor, number);
+		}
+		if (err != 0 && err != CborErrorOutOfMemory) {
+			return err;
+		}
+	} else {
+		IOT_ERROR("not supporting type");
+		return CborUnknownError;
+	}
+
+	return err;
+}
+
+iot_error_t iot_serialize_json2cbor(JSON_H *json, uint8_t **cbor, size_t *cborlen)
+{
+	CborError err;
+	CborEncoder root = {0};
+	uint8_t *buf;
+	size_t olen = 128, actual_len;
+	size_t extra_bytes_needed = 0;
+
+	if ((cbor == NULL) || (cborlen == NULL) ||
+	    (json == NULL)) {
+		IOT_ERROR("invalid params");
+		return IOT_ERROR_INVALID_ARGS;
+	}
+
+retry:
+	olen += extra_bytes_needed;
+	buf = (uint8_t *)iot_os_malloc(olen + 1);
+	if (buf == NULL) {
+		IOT_ERROR("failed to malloc for cbor");
+		return IOT_ERROR_MEM_ALLOC;
+	}
+	memset(buf, 0, olen + 1);
+
+	cbor_encoder_init(&root, buf, olen, 0);
+
+	err = _iot_json_value_to_cbor(json, &root);
+	if (err != 0 && err != CborErrorOutOfMemory) {
+		IOT_ERROR("fail serialize to cbor");
+		goto exit_failed;
+	}
+
+	extra_bytes_needed = cbor_encoder_get_extra_bytes_needed(&root);
+	if (extra_bytes_needed) {
+		IOT_WARN("allocated size is not enough need more %d", extra_bytes_needed);
+		free(buf);
+		goto retry;
+	}
+
+	actual_len = cbor_encoder_get_buffer_size(&root, buf);
+	if (actual_len < olen) {
+		uint8_t *tmp = (uint8_t *)realloc(buf, actual_len + 1);
+		if (!tmp) {
+			IOT_ERROR("realloc failed for cbor");
+			goto exit_failed;
+		} else {
+			buf = tmp;
+		}
+	}
+
+	*cbor = buf;
+	*cborlen = actual_len;
+
+	return 0;
+
+exit_failed:
+	free(buf);
+
+	return IOT_ERROR_BAD_REQ;
 }

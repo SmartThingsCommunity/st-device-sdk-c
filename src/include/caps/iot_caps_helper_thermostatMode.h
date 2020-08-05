@@ -72,14 +72,88 @@ const static struct iot_caps_thermostatMode {
     const struct thermostatMode_attr_thermostatMode {
         const char *name;
         const unsigned char property;
-        const unsigned char value_type;
+        const unsigned char valueType;
         const char *values[CAP_ENUM_THERMOSTATMODE_THERMOSTATMODE_VALUE_MAX];
+        const char *value_asleep;
+        const char *value_auto;
+        const char *value_autowitheco;
+        const char *value_autowithreset;
+        const char *value_autochangeover;
+        const char *value_autochangeoveractive;
+        const char *value_autocool;
+        const char *value_autoheat;
+        const char *value_auxheatonly;
+        const char *value_auxiliaryemergencyheat;
+        const char *value_away;
+        const char *value_cool;
+        const char *value_custom;
+        const char *value_dayoff;
+        const char *value_dryair;
+        const char *value_eco;
+        const char *value_emergency_heat;
+        const char *value_emergencyheat;
+        const char *value_emergencyheatactive;
+        const char *value_energysavecool;
+        const char *value_energysaveheat;
+        const char *value_fanonly;
+        const char *value_frostguard;
+        const char *value_furnace;
+        const char *value_heat;
+        const char *value_heatingoff;
+        const char *value_home;
+        const char *value_in;
+        const char *value_manual;
+        const char *value_moistair;
+        const char *value_off;
+        const char *value_out;
+        const char *value_resume;
+        const char *value_rush_hour;
+        const char *value_rushhour;
+        const char *value_schedule;
+        const char *value_southernaway;
     } attr_thermostatMode;
     const struct thermostatMode_attr_supportedThermostatModes {
         const char *name;
         const unsigned char property;
-        const unsigned char value_type;
+        const unsigned char valueType;
         const char *values[CAP_ENUM_THERMOSTATMODE_SUPPORTEDTHERMOSTATMODES_VALUE_MAX];
+        const char *value_asleep;
+        const char *value_auto;
+        const char *value_autowitheco;
+        const char *value_autowithreset;
+        const char *value_autochangeover;
+        const char *value_autochangeoveractive;
+        const char *value_autocool;
+        const char *value_autoheat;
+        const char *value_auxheatonly;
+        const char *value_auxiliaryemergencyheat;
+        const char *value_away;
+        const char *value_cool;
+        const char *value_custom;
+        const char *value_dayoff;
+        const char *value_dryair;
+        const char *value_eco;
+        const char *value_emergency_heat;
+        const char *value_emergencyheat;
+        const char *value_emergencyheatactive;
+        const char *value_energysavecool;
+        const char *value_energysaveheat;
+        const char *value_fanonly;
+        const char *value_frostguard;
+        const char *value_furnace;
+        const char *value_heat;
+        const char *value_heatingoff;
+        const char *value_home;
+        const char *value_in;
+        const char *value_manual;
+        const char *value_moistair;
+        const char *value_off;
+        const char *value_out;
+        const char *value_resume;
+        const char *value_rush_hour;
+        const char *value_rushhour;
+        const char *value_schedule;
+        const char *value_southernaway;
     } attr_supportedThermostatModes;
     const struct thermostatMode_cmd_heat { const char* name; } cmd_heat;
     const struct thermostatMode_cmd_emergencyHeat { const char* name; } cmd_emergencyHeat;
@@ -92,14 +166,88 @@ const static struct iot_caps_thermostatMode {
     .attr_thermostatMode = {
         .name = "thermostatMode",
         .property = ATTR_SET_VALUE_REQUIRED,
-        .value_type = VALUE_TYPE_STRING,
+        .valueType = VALUE_TYPE_STRING,
         .values = {"asleep", "auto", "autowitheco", "autowithreset", "autochangeover", "autochangeoveractive", "autocool", "autoheat", "auxheatonly", "auxiliaryemergencyheat", "away", "cool", "custom", "dayoff", "dryair", "eco", "emergency heat", "emergencyheat", "emergencyheatactive", "energysavecool", "energysaveheat", "fanonly", "frostguard", "furnace", "heat", "heatingoff", "home", "in", "manual", "moistair", "off", "out", "resume", "rush hour", "rushhour", "schedule", "southernaway"},
+        .value_asleep = "asleep",
+        .value_auto = "auto",
+        .value_autowitheco = "autowitheco",
+        .value_autowithreset = "autowithreset",
+        .value_autochangeover = "autochangeover",
+        .value_autochangeoveractive = "autochangeoveractive",
+        .value_autocool = "autocool",
+        .value_autoheat = "autoheat",
+        .value_auxheatonly = "auxheatonly",
+        .value_auxiliaryemergencyheat = "auxiliaryemergencyheat",
+        .value_away = "away",
+        .value_cool = "cool",
+        .value_custom = "custom",
+        .value_dayoff = "dayoff",
+        .value_dryair = "dryair",
+        .value_eco = "eco",
+        .value_emergency_heat = "emergency heat",
+        .value_emergencyheat = "emergencyheat",
+        .value_emergencyheatactive = "emergencyheatactive",
+        .value_energysavecool = "energysavecool",
+        .value_energysaveheat = "energysaveheat",
+        .value_fanonly = "fanonly",
+        .value_frostguard = "frostguard",
+        .value_furnace = "furnace",
+        .value_heat = "heat",
+        .value_heatingoff = "heatingoff",
+        .value_home = "home",
+        .value_in = "in",
+        .value_manual = "manual",
+        .value_moistair = "moistair",
+        .value_off = "off",
+        .value_out = "out",
+        .value_resume = "resume",
+        .value_rush_hour = "rush hour",
+        .value_rushhour = "rushhour",
+        .value_schedule = "schedule",
+        .value_southernaway = "southernaway",
     },
     .attr_supportedThermostatModes = {
         .name = "supportedThermostatModes",
         .property = ATTR_SET_VALUE_ARRAY,
-        .value_type = VALUE_TYPE_STRING,
+        .valueType = VALUE_TYPE_STRING,
         .values = {"asleep", "auto", "autowitheco", "autowithreset", "autochangeover", "autochangeoveractive", "autocool", "autoheat", "auxheatonly", "auxiliaryemergencyheat", "away", "cool", "custom", "dayoff", "dryair", "eco", "emergency heat", "emergencyheat", "emergencyheatactive", "energysavecool", "energysaveheat", "fanonly", "frostguard", "furnace", "heat", "heatingoff", "home", "in", "manual", "moistair", "off", "out", "resume", "rush hour", "rushhour", "schedule", "southernaway"},
+        .value_asleep = "asleep",
+        .value_auto = "auto",
+        .value_autowitheco = "autowitheco",
+        .value_autowithreset = "autowithreset",
+        .value_autochangeover = "autochangeover",
+        .value_autochangeoveractive = "autochangeoveractive",
+        .value_autocool = "autocool",
+        .value_autoheat = "autoheat",
+        .value_auxheatonly = "auxheatonly",
+        .value_auxiliaryemergencyheat = "auxiliaryemergencyheat",
+        .value_away = "away",
+        .value_cool = "cool",
+        .value_custom = "custom",
+        .value_dayoff = "dayoff",
+        .value_dryair = "dryair",
+        .value_eco = "eco",
+        .value_emergency_heat = "emergency heat",
+        .value_emergencyheat = "emergencyheat",
+        .value_emergencyheatactive = "emergencyheatactive",
+        .value_energysavecool = "energysavecool",
+        .value_energysaveheat = "energysaveheat",
+        .value_fanonly = "fanonly",
+        .value_frostguard = "frostguard",
+        .value_furnace = "furnace",
+        .value_heat = "heat",
+        .value_heatingoff = "heatingoff",
+        .value_home = "home",
+        .value_in = "in",
+        .value_manual = "manual",
+        .value_moistair = "moistair",
+        .value_off = "off",
+        .value_out = "out",
+        .value_resume = "resume",
+        .value_rush_hour = "rush hour",
+        .value_rushhour = "rushhour",
+        .value_schedule = "schedule",
+        .value_southernaway = "southernaway",
     },
     .cmd_heat = { .name = "heat" },
     .cmd_emergencyHeat = { .name = "emergencyHeat" },

@@ -38,8 +38,12 @@ const static struct iot_caps_lock {
     const struct lock_attr_lock {
         const char *name;
         const unsigned char property;
-        const unsigned char value_type;
+        const unsigned char valueType;
         const char *values[CAP_ENUM_LOCK_LOCK_VALUE_MAX];
+        const char *value_locked;
+        const char *value_unknown;
+        const char *value_unlocked;
+        const char *value_unlocked_with_timeout;
     } attr_lock;
     const struct lock_cmd_lock { const char* name; } cmd_lock;
     const struct lock_cmd_unlock { const char* name; } cmd_unlock;
@@ -48,8 +52,12 @@ const static struct iot_caps_lock {
     .attr_lock = {
         .name = "lock",
         .property = ATTR_SET_VALUE_REQUIRED,
-        .value_type = VALUE_TYPE_STRING,
+        .valueType = VALUE_TYPE_STRING,
         .values = {"locked", "unknown", "unlocked", "unlocked with timeout"},
+        .value_locked = "locked",
+        .value_unknown = "unknown",
+        .value_unlocked = "unlocked",
+        .value_unlocked_with_timeout = "unlocked with timeout",
     },
     .cmd_lock = { .name = "lock" },
     .cmd_unlock = { .name = "unlock" },

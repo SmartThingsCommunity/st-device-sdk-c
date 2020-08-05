@@ -62,7 +62,7 @@ static void mqtt_reg_sub_cb(st_mqtt_msg *md, void *userData)
 	char * mqtt_payload = md->payload;
 	char * registered_msg = NULL;
 	JSON_H *json = NULL;
-	JSON_H *svr_did = NULL;
+	JSON_H *item = NULL;
 	JSON_H *event = NULL;
 	JSON_H *cur_time = NULL;
 	JSON_H *dip_key = NULL;
@@ -71,6 +71,7 @@ static void mqtt_reg_sub_cb(st_mqtt_msg *md, void *userData)
 	char *svr_did_str = NULL;
 	enum iot_command_type iot_cmd;
 	struct iot_dip_data *reged_dip = NULL;
+	struct iot_uuid *reged_location = NULL;
 	iot_error_t err;
 
 	/*parsing mqtt_payload*/
@@ -182,9 +183,34 @@ static void mqtt_reg_sub_cb(st_mqtt_msg *md, void *userData)
 		reged_data->dip = reged_dip;
 	}
 
-	svr_did = JSON_GET_OBJECT_ITEM(json, "deviceId");
-	if (svr_did != NULL && !reged_data->updated) {
-		svr_did_str = JSON_PRINT(svr_did);
+	item = JSON_GET_OBJECT_ITEM(json, "locationId");
+	if (item != NULL) {
+		reged_location = iot_os_malloc(sizeof(struct iot_uuid));
+		if (!reged_location) {
+			IOT_ERROR("Can't alloc iot_uuid for location!!");
+			goto reg_sub_out;
+		}
+		memset(reged_location, 0, sizeof(struct iot_uuid));
+
+		err = iot_util_convert_str_uuid(JSON_GET_STRING_VALUE(item),
+				reged_location);
+		if (err != IOT_ERROR_NONE) {
+			IOT_ERROR("Can't convert str to uuid(%d)", err);
+			iot_os_free(reged_location);
+			goto reg_sub_out;
+		}
+
+		if (reged_data->locationId)
+			iot_os_free(reged_data->locationId);
+
+		reged_data->locationId = reged_location;
+	} else {
+		IOT_WARN("Server does not send locationId!!");
+	}
+
+	item = JSON_GET_OBJECT_ITEM(json, "deviceId");
+	if (item != NULL && !reged_data->updated) {
+		svr_did_str = JSON_PRINT(item);
 		if (svr_did_str == NULL) {
 			IOT_ERROR("Can't print server's did str!!");
 			goto reg_sub_out;
@@ -214,6 +240,7 @@ reg_sub_out:
 		JSON_DELETE(json);
 }
 
+STATIC_FUNCTION
 void _iot_mqtt_registration_client_callback(st_mqtt_event event, void *event_data, void *user_data)
 {
 	switch (event) {
@@ -234,6 +261,7 @@ void _iot_mqtt_registration_client_callback(st_mqtt_event event, void *event_dat
 	}
 }
 
+STATIC_FUNCTION
 void _iot_mqtt_signin_client_callback(st_mqtt_event event, void *event_data, void *user_data)
 {
 	struct iot_context *ctx = (struct iot_context *)user_data;
@@ -261,10 +289,12 @@ void _iot_mqtt_signin_client_callback(st_mqtt_event event, void *event_data, voi
 }
 
 #if defined(STDK_IOT_CORE_SERIALIZE_CBOR)
-static void *_iot_es_mqtt_registration_cbor(struct iot_context *ctx,
-			char *dip_id, size_t *msglen)
+STATIC_FUNCTION
+void *_iot_es_mqtt_registration_cbor(struct iot_context *ctx,
+			char *dip_id, size_t *msglen, bool self_reged)
 {
 	struct iot_devconf_prov_data *devconf;
+	struct iot_device_info *dev_info;
 	struct timeval tv = {0,};
 	CborEncoder root = {0};
 	CborEncoder root_map = {0};
@@ -278,9 +308,10 @@ static void *_iot_es_mqtt_registration_cbor(struct iot_context *ctx,
 		IOT_ERROR("ctx is null");
 		return NULL;
 	}
+	dev_info = &(ctx->device_info);
 
 	devconf = &ctx->devconf;
-	if (!devconf->hashed_sn) {
+	if ((self_reged == false) && !devconf->hashed_sn) {
 		IOT_ERROR("There are no hashed_sn");
 		return NULL;
 	}
@@ -303,6 +334,11 @@ retry:
 	if (ctx->prov_data.cloud.location) {
 		cbor_encode_text_stringz(&root_map, "locationId");
 		cbor_encode_text_stringz(&root_map, ctx->prov_data.cloud.location);
+	} else if (self_reged == true) {
+		/* But location is mandatory for self-registration */
+		IOT_ERROR("There is no location for self-registration!!");
+		cbor_encoder_close_container_checked(&root, &root_map);
+		goto exit_failed;
 	}
 
 	/* label is optional value */
@@ -326,10 +362,11 @@ retry:
 	cbor_encode_text_stringz(&root_map, ctx->lookup_id);
 
 	/* room id is optional value */
-	if (ctx->prov_data.cloud.room) {
+	if (ctx->prov_data.cloud.room && (self_reged == false)) {
 		cbor_encode_text_stringz(&root_map, "roomId");
 		cbor_encode_text_stringz(&root_map, ctx->prov_data.cloud.room);
-	} else {
+	} else if (self_reged == false) {
+		/* Do not send serialHash & provisioningTs for self-registration */
 		cbor_encode_text_stringz(&root_map, "serialHash");
 		cbor_encode_text_stringz(&root_map, devconf->hashed_sn);
 
@@ -337,6 +374,46 @@ retry:
 
 		cbor_encode_text_stringz(&root_map, "provisioningTs");
 		cbor_encode_int(&root_map, tv.tv_sec);
+	}
+
+	/* Add optional information if it available */
+	if (dev_info->opt_info) {
+		/* firmwareVersion is mandatory on the device_info */
+		cbor_encode_text_stringz(&root_map, "firmwareVersion");
+		cbor_encode_text_stringz(&root_map, dev_info->firmware_version);
+
+		if (dev_info->model_number) {
+			cbor_encode_text_stringz(&root_map, "modelNumber");
+			cbor_encode_text_stringz(&root_map, dev_info->model_number);
+		}
+
+		if (dev_info->marketing_name) {
+			cbor_encode_text_stringz(&root_map, "marketingName");
+			cbor_encode_text_stringz(&root_map, dev_info->marketing_name);
+		}
+
+		if (dev_info->manufacturer_name) {
+			cbor_encode_text_stringz(&root_map, "manufacturerName");
+			cbor_encode_text_stringz(&root_map, dev_info->manufacturer_name);
+		}
+
+		if (dev_info->manufacturer_code) {
+			cbor_encode_text_stringz(&root_map, "manufacturerCode");
+			cbor_encode_text_stringz(&root_map, dev_info->manufacturer_code);
+		}
+
+		if (iot_os_get_os_name()) {
+			cbor_encode_text_stringz(&root_map, "osType");
+			cbor_encode_text_stringz(&root_map, iot_os_get_os_name());
+		}
+
+		if (iot_os_get_os_version_string()) {
+			cbor_encode_text_stringz(&root_map, "osVersion");
+			cbor_encode_text_stringz(&root_map, iot_os_get_os_version_string());
+		}
+
+		cbor_encode_text_stringz(&root_map, "stdkVersion");
+		cbor_encode_text_stringz(&root_map, STDK_VERSION_STRING);
 	}
 
 	/* dip is optional values */
@@ -382,22 +459,16 @@ retry:
 
 exit_failed:
 	free(buf);
-	if (ctx->prov_data.cloud.location) {
-		free(ctx->prov_data.cloud.location);
-		ctx->prov_data.cloud.location = NULL;
-	}
-	if (ctx->prov_data.cloud.room) {
-		free(ctx->prov_data.cloud.room);
-		ctx->prov_data.cloud.room = NULL;
-	}
 
 	return NULL;
 }
 #else /* !STDK_IOT_CORE_SERIALIZE_CBOR */
-static void *_iot_es_mqtt_registration_json(struct iot_context *ctx,
-			char *dip_id, size_t *msglen)
+STATIC_FUNCTION
+void *_iot_es_mqtt_registration_json(struct iot_context *ctx,
+			char *dip_id, size_t *msglen, bool self_reged)
 {
 	struct iot_devconf_prov_data *devconf;
+	struct iot_device_info *dev_info;
 	struct timeval tv = {0,};
 	JSON_H *root = NULL;
 	JSON_H *dip_key = NULL;
@@ -407,9 +478,10 @@ static void *_iot_es_mqtt_registration_json(struct iot_context *ctx,
 		IOT_ERROR("ctx is null");
 		return NULL;
 	}
+	dev_info = &(ctx->device_info);
 
 	devconf = &ctx->devconf;
-	if (!devconf->hashed_sn) {
+	if ((self_reged == false) && !devconf->hashed_sn) {
 		IOT_ERROR("There are no hashed_sn");
 		return NULL;
 	}
@@ -420,9 +492,15 @@ static void *_iot_es_mqtt_registration_json(struct iot_context *ctx,
 		return NULL;
 	}
 
+	/* location id is optional value */
 	if (ctx->prov_data.cloud.location) {
-	JSON_ADD_ITEM_TO_OBJECT(root, "locationId",
+		JSON_ADD_ITEM_TO_OBJECT(root, "locationId",
 		JSON_CREATE_STRING(ctx->prov_data.cloud.location));
+	} else if (self_reged == true) {
+		/* But location is mandatory for self-registration */
+		IOT_ERROR("There is no location for self-registration!!");
+		JSON_DELETE(root);
+		return NULL;
 	}
 
 	/* label is optional value */
@@ -445,10 +523,11 @@ static void *_iot_es_mqtt_registration_json(struct iot_context *ctx,
 	JSON_ADD_ITEM_TO_OBJECT(root, "lookupId",
 		JSON_CREATE_STRING(ctx->lookup_id));
 
-	if (ctx->prov_data.cloud.room) {
+	if (ctx->prov_data.cloud.room && (self_reged == false)) {
 		JSON_ADD_ITEM_TO_OBJECT(root, "roomId",
 			JSON_CREATE_STRING(ctx->prov_data.cloud.room));
-	} else {
+	} else if (self_reged == false) {
+		/* Do not send serialHash & provisioningTs for self-registration */
 		JSON_ADD_ITEM_TO_OBJECT(root, "serialHash",
 			JSON_CREATE_STRING(devconf->hashed_sn));
 
@@ -456,6 +535,47 @@ static void *_iot_es_mqtt_registration_json(struct iot_context *ctx,
 
 		JSON_ADD_ITEM_TO_OBJECT(root, "provisioningTs",
 			JSON_CREATE_NUMBER(tv.tv_sec));
+	}
+
+	/* Add optional information if it available */
+	if (dev_info->opt_info) {
+		/* firmwareVersion is mandatory on the device_info */
+		JSON_ADD_ITEM_TO_OBJECT(root, "firmwareVersion",
+			JSON_CREATE_STRING(dev_info->firmware_version));
+
+		if (dev_info->model_number) {
+			JSON_ADD_ITEM_TO_OBJECT(root, "modelNumber",
+				JSON_CREATE_STRING(dev_info->model_number));
+		}
+
+		if (dev_info->marketing_name) {
+			JSON_ADD_ITEM_TO_OBJECT(root, "marketingName",
+				JSON_CREATE_STRING(dev_info->marketing_name));
+		}
+
+		if (dev_info->manufacturer_name) {
+			JSON_ADD_ITEM_TO_OBJECT(root, "manufacturerName",
+				JSON_CREATE_STRING(dev_info->manufacturer_name));
+		}
+
+		if (dev_info->manufacturer_code) {
+			JSON_ADD_ITEM_TO_OBJECT(root, "manufacturerCode",
+				JSON_CREATE_STRING(dev_info->manufacturer_code));
+		}
+
+		if (iot_os_get_os_name()) {
+			JSON_ADD_ITEM_TO_OBJECT(root, "osType",
+				JSON_CREATE_STRING(iot_os_get_os_name()));
+		}
+
+		if (iot_os_get_os_version_string()) {
+			JSON_ADD_ITEM_TO_OBJECT(root, "osVersion",
+				JSON_CREATE_STRING(iot_os_get_os_version_string()));
+		}
+
+		/* STDK release version */
+		JSON_ADD_ITEM_TO_OBJECT(root, "stdkVersion",
+			JSON_CREATE_STRING(STDK_VERSION_STRING));
 	}
 
 	/* dip is optional values */
@@ -486,14 +606,6 @@ exit_json_making:
 
 	JSON_DELETE(root);
 
-	if (ctx->prov_data.cloud.location) {
-		free(ctx->prov_data.cloud.location);
-		ctx->prov_data.cloud.location = NULL;
-	}
-	if (ctx->prov_data.cloud.room) {
-		free(ctx->prov_data.cloud.room);
-		ctx->prov_data.cloud.room = NULL;
-	}
 
 	return (void *)payload;
 }
@@ -535,11 +647,12 @@ iot_error_t _iot_es_mqtt_registration(struct iot_context *ctx, st_mqtt_client mq
 		}
 	}
 
-
 #if defined(STDK_IOT_CORE_SERIALIZE_CBOR)
-	msg.payload = _iot_es_mqtt_registration_cbor(ctx, dip_id, &msglen);
+	msg.payload = _iot_es_mqtt_registration_cbor(ctx, dip_id, &msglen,
+					ctx->iot_reg_data.self_reged);
 #else
-	msg.payload = _iot_es_mqtt_registration_json(ctx, dip_id, &msglen);
+	msg.payload = _iot_es_mqtt_registration_json(ctx, dip_id, &msglen,
+					ctx->iot_reg_data.self_reged);
 #endif
 	if (!msg.payload) {
 		IOT_ERROR("Failed to make payload for MQTTpub");
@@ -707,7 +820,7 @@ done_mqtt_connect:
 iot_error_t iot_es_connect(struct iot_context *ctx, int conn_type)
 {
 	iot_security_buffer_t token_buf = { 0 };
-	iot_security_buffer_t sn_buf = { 0 };
+	iot_wt_params_t wt_params = { 0 };
 	st_mqtt_client mqtt_cli = NULL;
 	char *topicfilter = NULL;
 	iot_error_t iot_ret;
@@ -718,13 +831,21 @@ iot_error_t iot_es_connect(struct iot_context *ctx, int conn_type)
 		return IOT_ERROR_INVALID_ARGS;
 	}
 
-	iot_ret = iot_nv_get_serial_number((char **)&sn_buf.p, &sn_buf.len);
+	iot_ret = iot_nv_get_serial_number((char **)&wt_params.sn, &wt_params.sn_len);
 	if (iot_ret != IOT_ERROR_NONE) {
 		IOT_ERROR("failed to get serial num");
 		goto out;
 	}
 
-	iot_ret = iot_wt_create((const iot_security_buffer_t *)&sn_buf, &token_buf);
+	wt_params.mnid = iot_os_strdup(ctx->devconf.mnid);
+	if (!wt_params.mnid) {
+		IOT_ERROR("failed to strdup for mnid");
+		goto out;
+	} else {
+		wt_params.mnid_len = strlen(wt_params.mnid);
+	}
+
+	iot_ret = iot_wt_create((const iot_wt_params_t *)&wt_params, &token_buf);
 	if (iot_ret != IOT_ERROR_NONE) {
 		IOT_ERROR("failed to make wt-token");
 		goto out;
@@ -797,7 +918,7 @@ iot_error_t iot_es_connect(struct iot_context *ctx, int conn_type)
 			goto out;
 		}
 
-		iot_ret = _iot_es_mqtt_connect(ctx, mqtt_cli, (char *)sn_buf.p, (char *)token_buf.p);
+		iot_ret = _iot_es_mqtt_connect(ctx, mqtt_cli, wt_params.sn, (char *)token_buf.p);
 		if (iot_ret != IOT_ERROR_NONE) {
 			IOT_ERROR("failed to connect");
 			goto out;
@@ -806,7 +927,7 @@ iot_error_t iot_es_connect(struct iot_context *ctx, int conn_type)
 		}
 
 		/* register notification subscribe for registration */
-		snprintf(topicfilter, IOT_TOPIC_SIZE, IOT_SUB_TOPIC_REGISTRATION,  (char *)sn_buf.p);
+		snprintf(topicfilter, IOT_TOPIC_SIZE, IOT_SUB_TOPIC_REGISTRATION, wt_params.sn);
 		IOT_DEBUG("noti subscribe topic : %s", topicfilter);
 		ret = st_mqtt_subscribe(mqtt_cli, topicfilter, st_mqtt_qos1);
 		if (ret) {
@@ -827,8 +948,11 @@ iot_error_t iot_es_connect(struct iot_context *ctx, int conn_type)
 	}
 
 out:
-	if (sn_buf.p)
-		free((void *)sn_buf.p);
+	if (wt_params.sn)
+		iot_os_free((void *)wt_params.sn);
+
+	if (wt_params.mnid)
+		iot_os_free((void *)wt_params.mnid);
 
 	if (token_buf.p)
 		free(token_buf.p);

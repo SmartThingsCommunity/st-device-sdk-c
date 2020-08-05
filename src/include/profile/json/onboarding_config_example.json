@@ -11,6 +11,11 @@
       "PIN",
       "QR"
     ],
-    "identityType": "ED25519_or_CERTIFICATE"
+    "identityType": "ED25519",
+    "deviceIntegrationProfileKey": {
+      "id": "DIP_UUID",
+      "majorVersion": 0,
+      "minorVersion": 1
+    }
   }
 }

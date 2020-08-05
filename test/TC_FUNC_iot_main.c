@@ -27,6 +27,7 @@
 #include <iot_nv_data.h>
 #include <iot_easysetup.h>
 #include <iot_util.h>
+#include <iot_capability.h>
 #include "TC_MOCK_functions.h"
 
 #define UNUSED(x) (void**)(x)
@@ -211,7 +212,7 @@ void TC_st_conn_cleanup_invalid_parameters(void **state)
     // Given: empty context
     context = (IOT_CTX*) malloc(sizeof(struct iot_context));
     memset(context, '\0', sizeof(struct iot_context));
-    // When: Null iot_ctx
+    // When: empty iot_ctx
     err = st_conn_cleanup(context, true);
     // Then
     assert_int_not_equal(err, 0);
@@ -219,11 +220,26 @@ void TC_st_conn_cleanup_invalid_parameters(void **state)
     free(context);
 }
 
+static void _cleanup_test_task(struct iot_context *ctx)
+{
+    struct iot_command cmd;
+
+    iot_os_eventgroup_wait_bits(ctx->iot_events,
+            IOT_EVENT_BIT_COMMAND, true, IOT_MAIN_TASK_DEFAULT_CYCLE);
+    if (iot_os_queue_receive(ctx->cmd_queue,
+            &cmd, 0) != IOT_OS_FALSE) {
+        if (cmd.cmd_type == IOT_COMMAND_SELF_CLEANUP) {
+            iot_os_eventgroup_set_bits(ctx->usr_events, IOT_USR_INTERACT_BIT_CLEANUP_DONE);
+        }
+    }
+}
+
 void TC_st_conn_cleanup_success(void **state)
 {
     IOT_CTX *context;
     struct iot_context *internal_context;
     int err;
+    iot_os_thread test_thread;
     UNUSED(state);
 
     // Given
@@ -234,16 +250,28 @@ void TC_st_conn_cleanup_success(void **state)
     internal_context->cmd_queue = iot_os_queue_create(IOT_QUEUE_LENGTH,
                                          sizeof(struct iot_command));
     assert_non_null(internal_context->cmd_queue);
+    internal_context->pub_queue = iot_os_queue_create(IOT_QUEUE_LENGTH,
+                                         sizeof(iot_cap_msg_t));
+    assert_non_null(internal_context->pub_queue);
+    internal_context->usr_events = iot_os_eventgroup_create();
+    assert_non_null(internal_context->usr_events);
     internal_context->iot_events = iot_os_eventgroup_create();
     assert_non_null(internal_context->iot_events);
-    expect_any(__wrap_iot_os_delay, delay_ms);
+    err = iot_os_mutex_init(&internal_context->st_conn_lock);
+    assert_int_equal(err, IOT_OS_TRUE);
+    err = iot_os_thread_create(_cleanup_test_task, "cleanup_test_task", 2048,
+            internal_context, IOT_TASK_PRIORITY, &test_thread);
+    assert_int_equal(err, IOT_OS_TRUE);
     // When: Null iot_ctx
     err = st_conn_cleanup(context, true);
     // Then
     assert_return_code(err, 0);
     // Teardown
     iot_os_queue_delete(internal_context->cmd_queue);
+    iot_os_queue_delete(internal_context->pub_queue);
+    iot_os_eventgroup_delete(internal_context->usr_events);
     iot_os_eventgroup_delete(internal_context->iot_events);
+    iot_os_mutex_destroy(&internal_context->st_conn_lock);
     free(internal_context);
 }
 
@@ -310,7 +338,7 @@ void TC_do_status_report(void** state)
             { 0, IOT_STATE_PROV_ENTER, true, IOT_STATUS_PROVISIONING, IOT_STAT_LV_START },
             { 0, IOT_STATE_PROV_CONN_MOBILE, false, IOT_STATUS_PROVISIONING, IOT_STAT_LV_CONN },
             { 0, IOT_STATE_PROV_CONFIRM, true, IOT_STATUS_NEED_INTERACT, IOT_STAT_LV_STAY },
-            { 0, IOT_STATE_PROV_DONE, false, IOT_STATUS_PROVISIONING, IOT_STAT_LV_DONE },
+            { 0, IOT_STATE_PROV_DONE, true, IOT_STATUS_PROVISIONING, IOT_STAT_LV_DONE },
             { 0, IOT_STATE_CLOUD_REGISTERING, false, IOT_STATUS_CONNECTING, IOT_STAT_LV_SIGN_UP },
             { 0, IOT_STATE_CLOUD_CONNECTING, false, IOT_STATUS_CONNECTING, IOT_STAT_LV_SIGN_IN },
             { 0, IOT_STATE_CLOUD_CONNECTED, false, IOT_STATUS_CONNECTING, IOT_STAT_LV_DONE },

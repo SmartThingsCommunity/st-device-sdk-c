@@ -42,8 +42,16 @@ const static struct iot_caps_activityLightingMode {
     const struct activityLightingMode_attr_lightingMode {
         const char *name;
         const unsigned char property;
-        const unsigned char value_type;
+        const unsigned char valueType;
         const char *values[CAP_ENUM_ACTIVITYLIGHTINGMODE_LIGHTINGMODE_VALUE_MAX];
+        const char *value_reading;
+        const char *value_writing;
+        const char *value_computer;
+        const char *value_night;
+        const char *value_sleepPreparation;
+        const char *value_day;
+        const char *value_cozy;
+        const char *value_soft;
     } attr_lightingMode;
     const struct activityLightingMode_cmd_setLightingMode { const char* name; } cmd_setLightingMode;
 } caps_helper_activityLightingMode = {
@@ -51,8 +59,16 @@ const static struct iot_caps_activityLightingMode {
     .attr_lightingMode = {
         .name = "lightingMode",
         .property = ATTR_SET_VALUE_REQUIRED,
-        .value_type = VALUE_TYPE_STRING,
+        .valueType = VALUE_TYPE_STRING,
         .values = {"reading", "writing", "computer", "night", "sleepPreparation", "day", "cozy", "soft"},
+        .value_reading = "reading",
+        .value_writing = "writing",
+        .value_computer = "computer",
+        .value_night = "night",
+        .value_sleepPreparation = "sleepPreparation",
+        .value_day = "day",
+        .value_cozy = "cozy",
+        .value_soft = "soft",
     },
     .cmd_setLightingMode = { .name = "setLightingMode" }, // arguments: lightingMode(string) 
 };

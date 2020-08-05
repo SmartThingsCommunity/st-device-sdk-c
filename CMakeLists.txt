@@ -26,23 +26,20 @@ set(CMAKE_BUILD_TYPE "${CMAKE_BUILD_TYPE}" CACHE STRING
     FORCE
     )
 
-set(STDK_EXTRA_CFLAGS
-    CONFIG_STDK_IOT_CORE_OS_SUPPORT_POSIX
-    CONFIG_STDK_IOT_CORE_USE_MBEDTLS
-    CONFIG_STDK_IOT_CORE_NET_MBEDTLS
-    CONFIG_STDK_IOT_CORE_CRYPTO_SUPPORT_ED25519
-    CONFIG_STDK_IOT_CORE_CRYPTO_SUPPORT_VERIFY
-    CONFIG_STDK_IOT_CORE_SECURITY_BACKEND_SOFTWARE
-#    CONFIG_STDK_IOT_CORE_LOG_LEVEL_ERROR
-#    CONFIG_STDK_IOT_CORE_LOG_LEVEL_WARN
-#    CONFIG_STDK_IOT_CORE_LOG_LEVEL_INFO
-#    CONFIG_STDK_IOT_CORE_LOG_LEVEL_DEBUG
-    )
-foreach(stdk_extra_cflags ${STDK_EXTRA_CFLAGS})
-    set(CMAKE_C_FLAGS "${CMAKE_C_FLAGS} -D${stdk_extra_cflags}")
-endforeach()
+if(EXISTS ${stdk_config})
+    message("include stdk_config : ${stdk_config}")
+    include("${stdk_config}")
+else()
+    message("include default stdk_config")
+    include("stdkconfig.cmake")
+endif()
 
 if(CMAKE_C_COMPILER_ID STREQUAL "GNU" AND CMAKE_BUILD_TYPE MATCHES UnitTest)
+    foreach(stdk_extra_cflags ${STDK_UNITTEST_EXTRA_CFLAGS})
+        set(CMAKE_C_FLAGS "${CMAKE_C_FLAGS} -D${stdk_extra_cflags}")
+        set(${stdk_extra_cflags} "y")
+    endforeach()
+
     set(MOCKED_FUNCTIONS
         iot_bsp_wifi_get_mac
         iot_os_malloc
@@ -54,6 +51,11 @@ if(CMAKE_C_COMPILER_ID STREQUAL "GNU" AND CMAKE_BUILD_TYPE MATCHES UnitTest)
         iot_os_delay
         iot_net_init
         )
+else()
+    foreach(stdk_extra_cflags ${STDK_EXTRA_CFLAGS})
+        set(CMAKE_C_FLAGS "${CMAKE_C_FLAGS} -D${stdk_extra_cflags}")
+        set(${stdk_extra_cflags} "y")
+    endforeach()
 endif()
 
 add_subdirectory(src)

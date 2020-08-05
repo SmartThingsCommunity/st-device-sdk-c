@@ -61,7 +61,8 @@ static int _ishex(char c)
 
 static int _ishex_len(char *c, size_t len)
 {
-	for (int i = 0; i < len; i++, c++)
+	int i;
+	for (i = 0; i < len; i++, c++)
 	{
 		if (!_ishex(*c)) {
 			return 0;

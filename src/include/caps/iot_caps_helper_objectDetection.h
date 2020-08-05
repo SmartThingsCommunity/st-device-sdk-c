@@ -30,12 +30,12 @@ const static struct iot_caps_objectDetection {
     const struct objectDetection_attr_detected {
         const char *name;
         const unsigned char property;
-        const unsigned char value_type;
+        const unsigned char valueType;
     } attr_detected;
     const struct objectDetection_attr_supportedValues {
         const char *name;
         const unsigned char property;
-        const unsigned char value_type;
+        const unsigned char valueType;
         const unsigned int max_length;
     } attr_supportedValues;
 } caps_helper_objectDetection = {
@@ -43,12 +43,12 @@ const static struct iot_caps_objectDetection {
     .attr_detected = {
         .name = "detected",
         .property = ATTR_SET_VALUE_REQUIRED,
-        .value_type = VALUE_TYPE_OBJECT,
+        .valueType = VALUE_TYPE_OBJECT,
     },
     .attr_supportedValues = {
         .name = "supportedValues",
         .property = ATTR_SET_MAX_LENGTH | ATTR_SET_VALUE_ARRAY,
-        .value_type = VALUE_TYPE_STRING,
+        .valueType = VALUE_TYPE_STRING,
         .max_length = 255,
     },
 };

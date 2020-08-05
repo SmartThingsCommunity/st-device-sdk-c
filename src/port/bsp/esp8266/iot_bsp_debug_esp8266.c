@@ -116,7 +116,7 @@ void iot_bsp_debug_check_heap(const char* tag, const char* func, const int line,
 	}
 }
 
-#if defined(CONFIG_STDK_IOT_CORE_LOG_FILE)
+#if defined(CONFIG_STDK_IOT_CORE_LOG_FILE_FLASH_WITH_RAM)
 iot_error_t iot_log_read_flash(unsigned int src_addr, void *des_addr, unsigned int size)
 {
 	iot_error_t iot_err = IOT_ERROR_NONE;

@@ -294,7 +294,6 @@ struct test_wifi_provisioning_data {
 extern iot_error_t _es_wifiprovisioninginfo_handler(struct iot_context *ctx, char *in_payload, char **out_payload);
 
 // static functions for test
-static void _generate_wifi_scan_list(struct iot_context *context, uint16_t amount);
 static char* _generate_post_wifiprovisioninginfo_payload(iot_security_cipher_params_t *cipher, struct test_wifi_provisioning_data prov);
 static void assert_lookup_id(const char *payload, iot_security_cipher_params_t *cipher);
 static void assert_wifi_provisioning(struct iot_context *context, struct test_wifi_provisioning_data prov);
@@ -415,14 +414,6 @@ void TC_STATIC_es_wifiscaninfo_handler_invalid_parameters(void **state)
     struct iot_context *context;
     char *payload;
 
-    // Given: null payload
-    context = (struct iot_context *)*state;
-    payload = NULL;
-    // When
-    err = _es_wifiscaninfo_handler(context, &payload);
-    // Then
-    assert_int_not_equal(err, IOT_ERROR_NONE);
-
     // Given: null context, payload
     context = NULL;
     payload = NULL;
@@ -448,7 +439,7 @@ void TC_STATIC_es_wifiscaninfo_handler_success(void **state)
     assert_int_equal(err, IOT_ERROR_NONE);
     server_cipher = _generate_server_cipher(device_cipher->iv.p, device_cipher->iv.len);
     assert_non_null(server_cipher);
-    _generate_wifi_scan_list(context, 20);
+    will_return(__wrap_iot_bsp_wifi_get_scan_result, 20);
     // When
     err = _es_wifiscaninfo_handler(context, &out_payload);
     // Then
@@ -1051,21 +1042,6 @@ static char *_generate_confirminfo_payload(iot_security_cipher_params_t *cipher,
     JSON_DELETE(root);
 
     return formed_message;
-}
-
-static void _generate_wifi_scan_list(struct iot_context *context, uint16_t amount)
-{
-    assert_non_null(context);
-    assert_int_equal(context->scan_num, 0);
-    assert_null(context->scan_result);
-    assert_true(amount <= 20);
-
-    context->scan_result = (iot_wifi_scan_result_t *) malloc(IOT_WIFI_MAX_SCAN_RESULT * sizeof(iot_wifi_scan_result_t));
-    assert_non_null(context->scan_result);
-    memset(context->scan_result, 0, (IOT_WIFI_MAX_SCAN_RESULT * sizeof(iot_wifi_scan_result_t)));
-
-    will_return(__wrap_iot_bsp_wifi_get_scan_result, amount);
-    context->scan_num = iot_bsp_wifi_get_scan_result(context->scan_result);
 }
 
 static char* _generate_post_wifiprovisioninginfo_payload(iot_security_cipher_params_t *cipher, struct test_wifi_provisioning_data prov)

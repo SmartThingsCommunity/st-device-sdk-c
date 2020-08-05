@@ -40,9 +40,13 @@
 #define IOT_EVENT_BIT_ALL	(IOT_EVENT_BIT_COMMAND | IOT_EVENT_BIT_CAPABILITY | IOT_EVENT_BIT_EASYSETUP_REQ)
 
 #define IOT_USR_INTERACT_BIT_PROV_CONFIRM	(1u << 0u)
-#define IOT_USR_INTERACT_BIT_CONFIRM_FAILED	(1u << 1u)
+#define IOT_USR_INTERACT_BIT_STATE_UNKNOWN	(1u << 1u)
 #define IOT_USR_INTERACT_BIT_PROV_DONE		(1u << 2u)
-#define IOT_USR_INTERACT_BIT_ALL	(IOT_USR_INTERACT_BIT_PROV_CONFIRM | IOT_USR_INTERACT_BIT_CONFIRM_FAILED | IOT_USR_INTERACT_BIT_PROV_DONE)
+#define IOT_USR_INTERACT_BIT_CLEANUP_DONE	(1u << 3u)
+#define IOT_USR_INTERACT_BIT_CMD_DONE		(1u << 4u)
+
+#define IOT_USR_INTERACT_BITS_ST_CONN	(IOT_USR_INTERACT_BIT_PROV_CONFIRM | IOT_USR_INTERACT_BIT_STATE_UNKNOWN \
+				| IOT_USR_INTERACT_BIT_PROV_DONE | IOT_USR_INTERACT_BIT_CLEANUP_DONE)
 
 #define IOT_MAIN_TASK_DEFAULT_CYCLE			100		/* in ms */
 #define IOT_MQTT_CONNECT_CRITICAL_REJECT_MAX	3
@@ -117,6 +121,7 @@ typedef enum iot_state_type {
 enum iot_state_opt {
 	IOT_STATE_OPT_NONE,
 	IOT_STATE_OPT_NEED_INTERACT,
+	IOT_STATE_OPT_CLEANUP,
 };
 
 /**
@@ -203,9 +208,11 @@ struct iot_easysetup_payload {
  */
 struct iot_registered_data {
 	struct iot_dip_data *dip;					/**< @brief Registered Device Integration Profile data */
+	struct iot_uuid *locationId;				/**< @brief location Id, allocated from server */
 	char deviceId[IOT_REG_UUID_STR_LEN + 1];	/**< @brief device Id, allocated from server */
 	bool updated;								/**< @brief reflect getting device id */
 	bool new_reged;								/**< @brief reflect that it is new registration process or not */
+	bool self_reged;							/**< @brief reflect that it is self registration process or not */
 };
 
 /**
@@ -214,10 +221,10 @@ struct iot_registered_data {
 struct iot_device_info {
 	char *firmware_version;		/**< @brief device's binary/firmware version */
 	char *model_number;			/**< @brief device's model number */
-	char *product_number;			/**< @brief device's product number */
 	char *marketing_name;			/**< @brief device's marketing name */
 	char *manufacturer_name;		/**< @brief device's manaufacturer name */
 	char *manufacturer_code;		/**< @brief device's manaufacturer code */
+	unsigned char opt_info;			/**< @brief to check optional information */
 };
 
 /**
@@ -285,6 +292,12 @@ struct iot_context {
 
 	iot_os_thread main_thread; /**< @brief iot main task thread */
 	iot_os_mutex st_conn_lock; /**< @brief User level control API lock */
+	iot_os_mutex iot_cmd_lock; /**< @brief iot-core's command handling lock*/
+
+	bool add_justworks; 	/**< @brief to skip user-confirm using JUSTWORKS bit */
+
+	unsigned char rcv_try_cnt;	/**< @brief to check current recovery repeated counts */
+	iot_state_t rcv_fail_state;	/**< @brief to check current failed state for recovery */
 };
 
 #endif /* _IOT_MAIN_H_ */

@@ -60,7 +60,7 @@ typedef struct iot_net_interface {
 	/**< @brief check network socket status */
 	int (*select)(iot_net_interface_t *, unsigned int);
 	/**< @brief read from network */
-	int (*read)(iot_net_interface_t *, unsigned char *, int, iot_os_timer);
+	int (*read)(iot_net_interface_t *, unsigned char *, size_t, iot_os_timer);
 	/**< @brief write to network */
 	int (*write)(iot_net_interface_t *, unsigned char *, int, iot_os_timer);
 	/**< @brief show socket status on console */

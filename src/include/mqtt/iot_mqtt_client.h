@@ -49,6 +49,8 @@ extern "C" {
 #define MQTT_WRITE_TIMEOUT				10000	/* in ms*/
 #define MQTT_READ_TIMEOUT				10000	/* in ms*/
 #define MQTT_RETRY_TIMEOUT				12000	/* in ms*/
+#define MQTT_CONNECT_TIMEOUT			20000	/* in ms*/
+#define MQTT_ACKPENDING_WAITCYCLE_IN_SYNC_FUNCTION			50		/* in ms*/
 
 #define MQTT_DISCONNECT_MAX_SIZE		5
 #define MQTT_PUBACK_MAX_SIZE			5

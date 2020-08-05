@@ -64,6 +64,7 @@
  */
 typedef enum {
 	IOT_MISC_INFO_DIP = 0,	/**< @brief For Device Integration Profile information */
+	IOT_MISC_INFO_LOCATION,	/**< @brief for Device's location ID */
 } iot_misc_info_t;
 
 /* Core */
@@ -72,8 +73,8 @@ typedef enum {
  * @details	this function sends specific command to iot-task via queue
  * @param[in]	ctx					iot-core context
  * @param[in]	cmd_type			actual specific command type
- * @param[in]	param				additional parameter data for each command
- * @param[in]	param_size			additional parameter size
+ * @param[in]	param				additional parameter for each command
+ * @param[in]	param_size			additional parameter's size
  * @retval	IOT_ERROR_NONE			success.
  * @retval	IOT_ERROR_MEM_ALLOC		memory allocation failed
  * @retval	IOT_ERROR_BAD_REQ		queue send error
@@ -98,13 +99,13 @@ iot_error_t iot_wifi_ctrl_request(struct iot_context *ctx,
  * @details	this function tries to update iot-state using iot_command_send internally
  * @param[in]	ctx					iot-core context
  * @param[in]	new_state			new iot-state to update
- * @param[in]	need_interact			additional parameter data for each command
+ * @param[in]	opt				optional parameter for each new_state
  * @retval	IOT_ERROR_NONE			success.
  * @retval	IOT_ERROR_MEM_ALLOC		memory allocation failed
  * @retval	IOT_ERROR_BAD_REQ		queue send error
  */
 iot_error_t iot_state_update(struct iot_context *ctx,
-	iot_state_t new_state, int need_interact);
+	iot_state_t new_state, int opt);
 
 /**
  * @brief	send easysetup cgi payload manipulation request

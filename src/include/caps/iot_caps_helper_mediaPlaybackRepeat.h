@@ -37,8 +37,11 @@ const static struct iot_caps_mediaPlaybackRepeat {
     const struct mediaPlaybackRepeat_attr_playbackRepeatMode {
         const char *name;
         const unsigned char property;
-        const unsigned char value_type;
+        const unsigned char valueType;
         const char *values[CAP_ENUM_MEDIAPLAYBACKREPEAT_PLAYBACKREPEATMODE_VALUE_MAX];
+        const char *value_all;
+        const char *value_off;
+        const char *value_one;
     } attr_playbackRepeatMode;
     const struct mediaPlaybackRepeat_cmd_setPlaybackRepeatMode { const char* name; } cmd_setPlaybackRepeatMode;
 } caps_helper_mediaPlaybackRepeat = {
@@ -46,8 +49,11 @@ const static struct iot_caps_mediaPlaybackRepeat {
     .attr_playbackRepeatMode = {
         .name = "playbackRepeatMode",
         .property = ATTR_SET_VALUE_REQUIRED,
-        .value_type = VALUE_TYPE_STRING,
+        .valueType = VALUE_TYPE_STRING,
         .values = {"all", "off", "one"},
+        .value_all = "all",
+        .value_off = "off",
+        .value_one = "one",
     },
     .cmd_setPlaybackRepeatMode = { .name = "setPlaybackRepeatMode" }, // arguments: mode(string) 
 };

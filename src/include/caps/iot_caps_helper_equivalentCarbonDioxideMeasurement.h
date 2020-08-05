@@ -35,8 +35,9 @@ const static struct iot_caps_equivalentCarbonDioxideMeasurement {
     const struct equivalentCarbonDioxideMeasurement_attr_equivalentCarbonDioxideMeasurement {
         const char *name;
         const unsigned char property;
-        const unsigned char value_type;
+        const unsigned char valueType;
         const char *units[CAP_ENUM_EQUIVALENTCARBONDIOXIDEMEASUREMENT_EQUIVALENTCARBONDIOXIDEMEASUREMENT_UNIT_MAX];
+        const char *unit_ppm;
         const double min;
         const double max;
     } attr_equivalentCarbonDioxideMeasurement;
@@ -45,8 +46,9 @@ const static struct iot_caps_equivalentCarbonDioxideMeasurement {
     .attr_equivalentCarbonDioxideMeasurement = {
         .name = "equivalentCarbonDioxideMeasurement",
         .property = ATTR_SET_VALUE_MIN | ATTR_SET_VALUE_MAX | ATTR_SET_VALUE_REQUIRED,
-        .value_type = VALUE_TYPE_NUMBER,
+        .valueType = VALUE_TYPE_NUMBER,
         .units = {"ppm"},
+        .unit_ppm = "ppm",
         .min = 0,
         .max = 1000000,
     },

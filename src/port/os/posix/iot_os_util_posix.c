@@ -347,6 +347,10 @@ int iot_os_mutex_lock(iot_os_mutex* mutex)
 
 int iot_os_mutex_unlock(iot_os_mutex* mutex)
 {
+	if (!mutex || !mutex->sem) {
+		return IOT_OS_FALSE;
+	}
+
 	pthread_mutex_t* mutex_p = mutex->sem;
 
 	pthread_mutex_unlock(mutex_p);
@@ -356,6 +360,12 @@ int iot_os_mutex_unlock(iot_os_mutex* mutex)
 
 void iot_os_mutex_destroy(iot_os_mutex* mutex)
 {
+	if (!mutex || !mutex->sem) {
+		return;
+	}
+	pthread_mutex_t* mutex_p = mutex->sem;
+
+	pthread_mutex_destroy(mutex_p);
 }
 
 /* Delay */

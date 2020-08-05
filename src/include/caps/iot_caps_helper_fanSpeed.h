@@ -30,7 +30,7 @@ const static struct iot_caps_fanSpeed {
     const struct fanSpeed_attr_fanSpeed {
         const char *name;
         const unsigned char property;
-        const unsigned char value_type;
+        const unsigned char valueType;
         const int min;
     } attr_fanSpeed;
     const struct fanSpeed_cmd_setFanSpeed { const char* name; } cmd_setFanSpeed;
@@ -39,7 +39,7 @@ const static struct iot_caps_fanSpeed {
     .attr_fanSpeed = {
         .name = "fanSpeed",
         .property = ATTR_SET_VALUE_MIN | ATTR_SET_VALUE_REQUIRED,
-        .value_type = VALUE_TYPE_INTEGER,
+        .valueType = VALUE_TYPE_INTEGER,
         .min = 0,
     },
     .cmd_setFanSpeed = { .name = "setFanSpeed" }, // arguments: speed(integer) 

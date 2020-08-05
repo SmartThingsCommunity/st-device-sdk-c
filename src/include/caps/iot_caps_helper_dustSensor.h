@@ -40,15 +40,17 @@ const static struct iot_caps_dustSensor {
     const struct dustSensor_attr_fineDustLevel {
         const char *name;
         const unsigned char property;
-        const unsigned char value_type;
+        const unsigned char valueType;
         const char *units[CAP_ENUM_DUSTSENSOR_FINEDUSTLEVEL_UNIT_MAX];
+        const char *unit_ug_per_m3;
         const int min;
     } attr_fineDustLevel;
     const struct dustSensor_attr_dustLevel {
         const char *name;
         const unsigned char property;
-        const unsigned char value_type;
+        const unsigned char valueType;
         const char *units[CAP_ENUM_DUSTSENSOR_DUSTLEVEL_UNIT_MAX];
+        const char *unit_ug_per_m3;
         const int min;
     } attr_dustLevel;
 } caps_helper_dustSensor = {
@@ -56,15 +58,17 @@ const static struct iot_caps_dustSensor {
     .attr_fineDustLevel = {
         .name = "fineDustLevel",
         .property = ATTR_SET_VALUE_MIN | ATTR_SET_VALUE_REQUIRED,
-        .value_type = VALUE_TYPE_INTEGER,
+        .valueType = VALUE_TYPE_INTEGER,
         .units = {"μg/m^3"},
+        .unit_ug_per_m3 = "μg/m^3",
         .min = 0,
     },
     .attr_dustLevel = {
         .name = "dustLevel",
         .property = ATTR_SET_VALUE_MIN | ATTR_SET_VALUE_REQUIRED,
-        .value_type = VALUE_TYPE_INTEGER,
+        .valueType = VALUE_TYPE_INTEGER,
         .units = {"μg/m^3"},
+        .unit_ug_per_m3 = "μg/m^3",
         .min = 0,
     },
 };

@@ -30,7 +30,7 @@ const static struct iot_caps_ovenSetpoint {
     const struct ovenSetpoint_attr_ovenSetpoint {
         const char *name;
         const unsigned char property;
-        const unsigned char value_type;
+        const unsigned char valueType;
         const int min;
     } attr_ovenSetpoint;
     const struct ovenSetpoint_cmd_setOvenSetpoint { const char* name; } cmd_setOvenSetpoint;
@@ -39,7 +39,7 @@ const static struct iot_caps_ovenSetpoint {
     .attr_ovenSetpoint = {
         .name = "ovenSetpoint",
         .property = ATTR_SET_VALUE_MIN | ATTR_SET_VALUE_REQUIRED,
-        .value_type = VALUE_TYPE_INTEGER,
+        .valueType = VALUE_TYPE_INTEGER,
         .min = 0,
     },
     .cmd_setOvenSetpoint = { .name = "setOvenSetpoint" }, // arguments: setpoint(integer) 

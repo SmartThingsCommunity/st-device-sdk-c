@@ -60,37 +60,51 @@ const static struct iot_caps_samsungTV {
     const struct samsungTV_attr_volume {
         const char *name;
         const unsigned char property;
-        const unsigned char value_type;
+        const unsigned char valueType;
         const int min;
     } attr_volume;
     const struct samsungTV_attr_messageButton {
         const char *name;
         const unsigned char property;
-        const unsigned char value_type;
+        const unsigned char valueType;
     } attr_messageButton;
     const struct samsungTV_attr_switch {
         const char *name;
         const unsigned char property;
-        const unsigned char value_type;
+        const unsigned char valueType;
         const char *values[CAP_ENUM_SAMSUNGTV_SWITCH_VALUE_MAX];
+        const char *value_on;
+        const char *value_off;
     } attr_switch;
     const struct samsungTV_attr_mute {
         const char *name;
         const unsigned char property;
-        const unsigned char value_type;
+        const unsigned char valueType;
         const char *values[CAP_ENUM_SAMSUNGTV_MUTE_VALUE_MAX];
+        const char *value_muted;
+        const char *value_unknown;
+        const char *value_unmuted;
     } attr_mute;
     const struct samsungTV_attr_pictureMode {
         const char *name;
         const unsigned char property;
-        const unsigned char value_type;
+        const unsigned char valueType;
         const char *values[CAP_ENUM_SAMSUNGTV_PICTUREMODE_VALUE_MAX];
+        const char *value_dynamic;
+        const char *value_movie;
+        const char *value_standard;
+        const char *value_unknown;
     } attr_pictureMode;
     const struct samsungTV_attr_soundMode {
         const char *name;
         const unsigned char property;
-        const unsigned char value_type;
+        const unsigned char valueType;
         const char *values[CAP_ENUM_SAMSUNGTV_SOUNDMODE_VALUE_MAX];
+        const char *value_clear_voice;
+        const char *value_movie;
+        const char *value_music;
+        const char *value_standard;
+        const char *value_unknown;
     } attr_soundMode;
     const struct samsungTV_cmd_on { const char* name; } cmd_on;
     const struct samsungTV_cmd_off { const char* name; } cmd_off;
@@ -107,37 +121,51 @@ const static struct iot_caps_samsungTV {
     .attr_volume = {
         .name = "volume",
         .property = ATTR_SET_VALUE_MIN,
-        .value_type = VALUE_TYPE_INTEGER,
+        .valueType = VALUE_TYPE_INTEGER,
         .min = 0,
     },
     .attr_messageButton = {
         .name = "messageButton",
         .property = NULL,
-        .value_type = VALUE_TYPE_OBJECT,
+        .valueType = VALUE_TYPE_OBJECT,
     },
     .attr_switch = {
         .name = "switch",
         .property = NULL,
-        .value_type = VALUE_TYPE_STRING,
+        .valueType = VALUE_TYPE_STRING,
         .values = {"on", "off"},
+        .value_on = "on",
+        .value_off = "off",
     },
     .attr_mute = {
         .name = "mute",
         .property = NULL,
-        .value_type = VALUE_TYPE_STRING,
+        .valueType = VALUE_TYPE_STRING,
         .values = {"muted", "unknown", "unmuted"},
+        .value_muted = "muted",
+        .value_unknown = "unknown",
+        .value_unmuted = "unmuted",
     },
     .attr_pictureMode = {
         .name = "pictureMode",
         .property = NULL,
-        .value_type = VALUE_TYPE_STRING,
+        .valueType = VALUE_TYPE_STRING,
         .values = {"dynamic", "movie", "standard", "unknown"},
+        .value_dynamic = "dynamic",
+        .value_movie = "movie",
+        .value_standard = "standard",
+        .value_unknown = "unknown",
     },
     .attr_soundMode = {
         .name = "soundMode",
         .property = NULL,
-        .value_type = VALUE_TYPE_STRING,
+        .valueType = VALUE_TYPE_STRING,
         .values = {"clear voice", "movie", "music", "standard", "unknown"},
+        .value_clear_voice = "clear voice",
+        .value_movie = "movie",
+        .value_music = "music",
+        .value_standard = "standard",
+        .value_unknown = "unknown",
     },
     .cmd_on = { .name = "on" },
     .cmd_off = { .name = "off" },

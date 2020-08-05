@@ -27,16 +27,16 @@ STATIC_FUNCTION
 iot_error_t _iot_security_storage_set_storage_id(iot_security_context_t *context, iot_security_storage_id_t storage_id)
 {
 	if (!context) {
-		return IOT_ERROR_SECURITY_CONTEXT_NULL;
+		IOT_ERROR_DUMP_AND_RETURN(CONTEXT_NULL, 0);
 	}
 
 	if (!context->storage_params) {
-		return IOT_ERROR_SECURITY_STORAGE_PARAMS_NULL;
+		IOT_ERROR_DUMP_AND_RETURN(STORAGE_PARAMS_NULL, 0);
 	}
 
 	if ((storage_id <= IOT_NVD_UNKNOWN) || (storage_id >= IOT_NVD_MAX)) {
 		IOT_ERROR("'%d' is invalid id", storage_id);
-		return IOT_ERROR_SECURITY_STORAGE_INVALID_ID;
+		IOT_ERROR_DUMP_AND_RETURN(STORAGE_INVALID_ID, storage_id);
 	}
 
 	context->storage_params->storage_id = storage_id;
@@ -50,13 +50,13 @@ iot_error_t iot_security_storage_init(iot_security_context_t *context)
 	iot_security_storage_params_t *storage_params;
 
 	if (!context) {
-		return IOT_ERROR_SECURITY_CONTEXT_NULL;
+		IOT_ERROR_DUMP_AND_RETURN(CONTEXT_NULL, 0);
 	}
 
 	storage_params = (iot_security_storage_params_t *)iot_os_malloc(sizeof(iot_security_storage_params_t));
 	if (!storage_params) {
 		IOT_ERROR("failed to malloc for storage params");
-		return IOT_ERROR_MEM_ALLOC;
+		IOT_ERROR_DUMP_AND_RETURN(MEM_ALLOC, 0);
 	}
 
 	memset(storage_params, 0, sizeof(iot_security_storage_params_t));
@@ -84,7 +84,7 @@ iot_error_t iot_security_storage_deinit(iot_security_context_t *context)
 	iot_error_t err;
 
 	if (!context) {
-		return IOT_ERROR_SECURITY_CONTEXT_NULL;
+		IOT_ERROR_DUMP_AND_RETURN(CONTEXT_NULL, 0);
 	}
 
 	if (context->be_context &&
@@ -125,14 +125,14 @@ iot_error_t iot_security_storage_read(iot_security_context_t *context, iot_secur
 
 	if (!output_buf) {
 		IOT_ERROR("output buf is invalid");
-		return IOT_ERROR_INVALID_ARGS;
+		IOT_ERROR_DUMP_AND_RETURN(INVALID_ARGS, 0);
 	}
 
 	memset(output_buf, 0, sizeof(iot_security_buffer_t));
 
 	if (!context->be_context->fn->storage_read) {
 		IOT_ERROR("be->fn->storage_read is null");
-		return IOT_ERROR_SECURITY_BE_FUNC_NULL;
+		IOT_ERROR_DUMP_AND_RETURN(BE_FUNC_NULL, 0);
 	}
 
 	err = context->be_context->fn->storage_read(context, output_buf);
@@ -166,12 +166,12 @@ iot_error_t iot_security_storage_write(iot_security_context_t *context, iot_secu
 
 	if (!input_buf || !input_buf->p || (input_buf->len == 0)) {
 		IOT_ERROR("input buf is invalid");
-		return IOT_ERROR_INVALID_ARGS;
+		IOT_ERROR_DUMP_AND_RETURN(INVALID_ARGS, 0);
 	}
 
 	if (!context->be_context->fn->storage_write) {
 		IOT_ERROR("be->fn->storage_write is null");
-		return IOT_ERROR_SECURITY_BE_FUNC_NULL;
+		IOT_ERROR_DUMP_AND_RETURN(BE_FUNC_NULL, 0);
 	}
 
 	err = context->be_context->fn->storage_write(context, input_buf);
@@ -202,7 +202,7 @@ iot_error_t iot_security_storage_remove(iot_security_context_t *context, iot_sec
 
 	if (!context->be_context->fn->storage_remove) {
 		IOT_ERROR("be->fn->storage_remove is null");
-		return IOT_ERROR_SECURITY_BE_FUNC_NULL;
+		IOT_ERROR_DUMP_AND_RETURN(BE_FUNC_NULL, 0);
 	}
 
 	err = context->be_context->fn->storage_remove(context);

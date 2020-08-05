@@ -38,16 +38,24 @@ const static struct iot_caps_temperatureAlarm {
     const struct temperatureAlarm_attr_temperatureAlarm {
         const char *name;
         const unsigned char property;
-        const unsigned char value_type;
+        const unsigned char valueType;
         const char *values[CAP_ENUM_TEMPERATUREALARM_TEMPERATUREALARM_VALUE_MAX];
+        const char *value_cleared;
+        const char *value_freeze;
+        const char *value_heat;
+        const char *value_rateOfRise;
     } attr_temperatureAlarm;
 } caps_helper_temperatureAlarm = {
     .id = "temperatureAlarm",
     .attr_temperatureAlarm = {
         .name = "temperatureAlarm",
         .property = ATTR_SET_VALUE_REQUIRED,
-        .value_type = VALUE_TYPE_STRING,
+        .valueType = VALUE_TYPE_STRING,
         .values = {"cleared", "freeze", "heat", "rateOfRise"},
+        .value_cleared = "cleared",
+        .value_freeze = "freeze",
+        .value_heat = "heat",
+        .value_rateOfRise = "rateOfRise",
     },
 };
 
