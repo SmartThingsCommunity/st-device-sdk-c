@@ -1,5 +1,49 @@
 # HISTORY
 
+## 1.3.3 :  Changes until v1.3.3
+
+ * Please use SmartThings mobile application v1.7.51 (for Android), v1.6.51 (for iOS) or later
+  For detailed information, please refer to 'Announcements' of the README.md
+ ** The server's root certificate has changed to increase the validity until Jan 15 12:00:00 2038 GMT
+  Please use SmartThings Device SDK v1.3.3 or later to verify it normally
+
+New Improvements or features:
+
+ - Change server's root certificate to increase the validity until Jan 15 12:00:00 2038 GMT
+ - Change keygen-tool from linux based binary to python based source-code
+  * For detailed information, please refer to tools/keygen/READ.md
+ - Introduce new user-level APIs to control iot-core
+  * st_conn_start_ex() : To start st_conn_start() at the specific points. It supports only IOT_STATUS_PROVISIONING & IOT_STATUS_CONNECTING cases
+  * st_info_get() : To get iot-core's information. There are two types of information IOT_INFO_TYPE_IOT_STATUS_AND_STAT & IOT_INFO_TYPE_IOT_PROVISIONED
+ - Update Web-Token making APIs for server side DI V2 interface
+ - Support EMW3166 chipset from MXCHIP
+ - Change st_conn_cleanup() API usage by block & sync mechanism
+ - Update self-registration process for DIP updating
+ - Implement some json2cbor transfer handling interanl function.
+
+Enhancements or amendments:
+
+ - Replace & modify iot_create_all_log_dump with st_create_log_dump
+ - Increase confirm timeout from 10s to 100s
+ - Optimize the code to reduce the number of computations of length
+ - Call thread yield to avoid MQTT ack pending busy waiting loop
+ - Change IOT_USR_INTERACT_BIT_XX events-bit usage & remove resource cleanup routine on WAIT_USR_INTERACT()
+ - Adjust easysetup resource deinit & free sequence to prevent unwanted disconnection event it 'es_http' task
+ - Add inline dummy functions : iot_log_read_flash()/iot_log_write_flash()/iot_log_erase_sector()
+ - Add internal ctx validation checking routine in iot_main.c
+ - Add forcely JUSTWORKS confirmation bit adding logic to skip user-confirmation during D2D process
+ - Add optional device_info values into registration payload : firmware_version, model_number, marketing_name, manufacturer_name/code, os_name/version and stdk_version
+ - Skip error check for second wifi scan mode requesting : The second wifi scan mode supporting is optional
+
+Bug fixed:
+
+ - Change PROVISIONING/DONE iot_status reporting timing to fix PROVISIONING/FAIL reporting after PROVISIONING/DONE
+ - Add iot_cmd_lock mutex to prevent unwanted reentrant during recovery processing
+ - Fix building error about security helper on POSIX
+ - Remove 'Ack pending work' on the queue handled immediately to prevent unwanted task running
+ - Fix NV layer written length bug to make mismatch of data length between the written & the read by adding null terminated
+ - Send MQTT CONNECT packet only once during connection. (no duplication)
+
 ## 1.1.18 :  Changes until v1.1.18
 
 New Improvements or features:
