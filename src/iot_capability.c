@@ -42,39 +42,41 @@ static void _iot_free_val(iot_cap_val_t* val);
 static void _iot_free_unit(iot_cap_unit_t* unit);
 static void _iot_free_cmd_data(iot_cap_cmd_data_t* cmd_data);
 static void _iot_free_evt_data(iot_cap_evt_data_t* evt_data);
+static IOT_EVENT* _iot_cap_create_attr(const char *attribute,
+			iot_cap_val_t *value, const char *unit, const char *data);
 
 /**************************************************************
 *                       Synchronous Call                      *
 **************************************************************/
 /* External API */
-IOT_EVENT* st_cap_attr_create_int(const char *attribute, int integer, const char *unit)
+DEPRECATED IOT_EVENT* st_cap_attr_create_int(const char *attribute, int integer, const char *unit)
 {
 	iot_cap_val_t value;
 	value.type = IOT_CAP_VAL_TYPE_INTEGER;
 	value.integer = integer;
 
-	return st_cap_attr_create(attribute, &value, unit, NULL);
+	return _iot_cap_create_attr(attribute, &value, unit, NULL);
 }
 
-IOT_EVENT* st_cap_attr_create_number(const char *attribute, double number, const char *unit)
+DEPRECATED IOT_EVENT* st_cap_attr_create_number(const char *attribute, double number, const char *unit)
 {
 	iot_cap_val_t value;
 	value.type = IOT_CAP_VAL_TYPE_NUMBER;
 	value.number = number;
 
-	return st_cap_attr_create(attribute, &value, unit, NULL);
+	return _iot_cap_create_attr(attribute, &value, unit, NULL);
 }
 
-IOT_EVENT* st_cap_attr_create_string(const char *attribute, char *string, const char *unit)
+DEPRECATED IOT_EVENT* st_cap_attr_create_string(const char *attribute, char *string, const char *unit)
 {
 	iot_cap_val_t value;
 	value.type = IOT_CAP_VAL_TYPE_STRING;
 	value.string = string;
 
-	return st_cap_attr_create(attribute, &value, unit, NULL);
+	return _iot_cap_create_attr(attribute, &value, unit, NULL);
 }
 
-IOT_EVENT* st_cap_attr_create_string_array(const char *attribute,
+DEPRECATED IOT_EVENT* st_cap_attr_create_string_array(const char *attribute,
 			uint8_t str_num, char *string_array[], const char *unit)
 {
 	iot_cap_val_t value;
@@ -82,10 +84,16 @@ IOT_EVENT* st_cap_attr_create_string_array(const char *attribute,
 	value.str_num = str_num;
 	value.strings = string_array;
 
-	return st_cap_attr_create(attribute, &value, unit, NULL);
+	return _iot_cap_create_attr(attribute, &value, unit, NULL);
 }
 
-IOT_EVENT* st_cap_attr_create(const char *attribute,
+DEPRECATED IOT_EVENT* st_cap_attr_create(const char *attribute,
+			iot_cap_val_t *value, const char *unit, const char *data)
+{
+	return _iot_cap_create_attr(attribute, value, unit, data);
+}
+
+static IOT_EVENT* _iot_cap_create_attr(const char *attribute,
 			iot_cap_val_t *value, const char *unit, const char *data)
 {
 	int i;
@@ -192,7 +200,7 @@ IOT_EVENT* st_cap_create_attr(IOT_CAP_HANDLE *cap_handle, const char *attribute,
 		return NULL;
 	}
 
-	evt_data = (iot_cap_evt_data_t *)st_cap_attr_create(attribute, value, unit, data);
+	evt_data = (iot_cap_evt_data_t *)_iot_cap_create_attr(attribute, value, unit, data);
 	if (evt_data == NULL)
 		return NULL;
 
@@ -201,7 +209,7 @@ IOT_EVENT* st_cap_create_attr(IOT_CAP_HANDLE *cap_handle, const char *attribute,
 	return (IOT_EVENT*)evt_data;
 }
 
-void st_cap_attr_free(IOT_EVENT* event)
+DEPRECATED void st_cap_attr_free(IOT_EVENT* event)
 {
 	iot_cap_evt_data_t* evt_data = (iot_cap_evt_data_t*) event;
 
@@ -363,7 +371,7 @@ int st_cap_cmd_set_cb(IOT_CAP_HANDLE *cap_handle, const char *cmd_type,
 	return IOT_ERROR_NONE;
 }
 
-int st_cap_attr_send(IOT_CAP_HANDLE *cap_handle,
+DEPRECATED int st_cap_attr_send(IOT_CAP_HANDLE *cap_handle,
 		uint8_t evt_num, IOT_EVENT *event[])
 {
 	iot_cap_evt_data_t** evt_data = (iot_cap_evt_data_t**)event;
