@@ -36,8 +36,10 @@ const static struct iot_caps_formaldehydeMeasurement {
     const struct formaldehydeMeasurement_attr_formaldehydeLevel {
         const char *name;
         const unsigned char property;
-        const unsigned char value_type;
+        const unsigned char valueType;
         const char *units[CAP_ENUM_FORMALDEHYDEMEASUREMENT_FORMALDEHYDELEVEL_UNIT_MAX];
+        const char *unit_ppm;
+        const char *unit_mg_per_m3;
         const double min;
         const double max;
     } attr_formaldehydeLevel;
@@ -46,8 +48,10 @@ const static struct iot_caps_formaldehydeMeasurement {
     .attr_formaldehydeLevel = {
         .name = "formaldehydeLevel",
         .property = ATTR_SET_VALUE_MIN | ATTR_SET_VALUE_MAX | ATTR_SET_VALUE_REQUIRED | ATTR_SET_UNIT_REQUIRED,
-        .value_type = VALUE_TYPE_NUMBER,
+        .valueType = VALUE_TYPE_NUMBER,
         .units = {"ppm", "mg/m^3"},
+        .unit_ppm = "ppm",
+        .unit_mg_per_m3 = "mg/m^3",
         .min = 0,
         .max = 1000000,
     },

@@ -29,6 +29,8 @@
 #include "iot_util.h"
 #include "iot_uuid.h"
 #include "iot_bsp_wifi.h"
+#include "security/iot_security_common.h"
+#include "security/iot_security_helper.h"
 
 #include "JSON.h"
 
@@ -83,6 +85,7 @@ iot_error_t iot_wifi_ctrl_request(struct iot_context *ctx,
 {
 	iot_error_t iot_err = IOT_ERROR_BAD_REQ;
 	iot_wifi_conf wifi_conf;
+	bool send_cmd = true;
 
 	if (!ctx) {
 		IOT_ERROR("There is no ctx\n");
@@ -93,12 +96,36 @@ iot_error_t iot_wifi_ctrl_request(struct iot_context *ctx,
 	wifi_conf.mode = wifi_mode;
 
 	switch (wifi_mode) {
+	case IOT_WIFI_MODE_OFF:
+		/* fall through */
 	case IOT_WIFI_MODE_STATION:
-		memcpy(wifi_conf.ssid, ctx->prov_data.wifi.ssid,
-			strlen(ctx->prov_data.wifi.ssid));
-		memcpy(wifi_conf.pass, ctx->prov_data.wifi.password,
-			strlen(ctx->prov_data.wifi.password));
-		wifi_conf.authmode = ctx->prov_data.wifi.security_type;
+		/* easysetup resource deinit & free for both */
+		if (ctx->es_http_ready) {
+			ctx->es_http_ready = false;
+			iot_easysetup_deinit(ctx);
+		}
+
+		if (ctx->scan_result) {
+			free(ctx->scan_result);
+			ctx->scan_result = NULL;
+		}
+		ctx->scan_num = 0;
+
+		if (wifi_mode == IOT_WIFI_MODE_STATION) {
+			memcpy(wifi_conf.ssid, ctx->prov_data.wifi.ssid,
+				strlen(ctx->prov_data.wifi.ssid));
+			memcpy(wifi_conf.pass, ctx->prov_data.wifi.password,
+				strlen(ctx->prov_data.wifi.password));
+			wifi_conf.authmode = ctx->prov_data.wifi.security_type;
+		} else {	/* For IOT_WIFI_MODE_OFF case */
+			send_cmd = false;
+
+			iot_err = iot_bsp_wifi_set_mode(&wifi_conf);
+			if (iot_err != IOT_ERROR_NONE) {
+				IOT_ERROR("failed to set wifi_set_mode for scan\n");
+				return iot_err;
+			}
+		}
 		break;
 
 	case IOT_WIFI_MODE_SOFTAP:
@@ -114,11 +141,9 @@ iot_error_t iot_wifi_ctrl_request(struct iot_context *ctx,
 		wifi_conf.authmode = IOT_WIFI_AUTH_WPA_WPA2_PSK;
 		break;
 
-	case IOT_WIFI_MODE_OFF:
-		IOT_DEBUG("No need more settings for [%d] mode\n", wifi_mode);
-		break;
-
 	case IOT_WIFI_MODE_SCAN:
+		send_cmd = false;
+
 		iot_err = iot_bsp_wifi_set_mode(&wifi_conf);
 		if (iot_err != IOT_ERROR_NONE) {
 			IOT_ERROR("failed to set wifi_set_mode for scan\n");
@@ -142,7 +167,7 @@ iot_error_t iot_wifi_ctrl_request(struct iot_context *ctx,
 		return IOT_ERROR_BAD_REQ;
 	}
 
-	if (wifi_mode != IOT_WIFI_MODE_SCAN) {
+	if (send_cmd) {
 		iot_err = iot_command_send(ctx,
 				IOT_COMMAND_NETWORK_MODE,
 					&wifi_conf, sizeof(wifi_conf));
@@ -580,6 +605,8 @@ void iot_api_device_info_mem_free(struct iot_device_info *device_info)
 	if (!device_info)
 		return;
 
+	device_info->opt_info = 0;
+
 	if (device_info->firmware_version) {
 		iot_os_free(device_info->firmware_version);
 		device_info->firmware_version = NULL;
@@ -587,27 +614,22 @@ void iot_api_device_info_mem_free(struct iot_device_info *device_info)
 
 	if (device_info->model_number) {
 		iot_os_free(device_info->model_number);
-		device_info->firmware_version = NULL;
-	}
-
-	if (device_info->product_number) {
-		iot_os_free(device_info->product_number);
-		device_info->firmware_version = NULL;
+		device_info->model_number = NULL;
 	}
 
 	if (device_info->marketing_name) {
 		iot_os_free(device_info->marketing_name);
-		device_info->firmware_version = NULL;
+		device_info->marketing_name = NULL;
 	}
 
 	if (device_info->manufacturer_name) {
 		iot_os_free(device_info->manufacturer_name);
-		device_info->firmware_version = NULL;
+		device_info->manufacturer_name = NULL;
 	}
 
 	if (device_info->manufacturer_code) {
 		iot_os_free(device_info->manufacturer_code);
-		device_info->firmware_version = NULL;
+		device_info->manufacturer_code = NULL;
 	}
 }
 
@@ -622,7 +644,6 @@ static void _dump_device_info(struct iot_device_info *info)
 static const char name_deviceInfo[] = "deviceInfo";
 static const char name_version[] = "firmwareVersion";
 static const char name_model_number[] = "modelNumber";
-static const char name_product_number[] = "productNumber";
 static const char name_marketing[] = "marketingName";
 static const char name_manufacturer[] = "manufacturerName";
 static const char name_manufacturer_code[] = "manufacturerCode";
@@ -636,7 +657,6 @@ iot_error_t iot_api_device_info_load(unsigned char *device_info,
 	JSON_H *item = NULL;
 	char *firmware_version = NULL;
 	char *model_number = NULL;
-	char *product_number = NULL;
 	char *marketing_name = NULL;
 	char *manufacturer_name = NULL;
 	char *manufacturer_code = NULL;
@@ -686,6 +706,7 @@ iot_error_t iot_api_device_info_load(unsigned char *device_info,
 	firmware_version[str_len] = '\0';
 
 	info->firmware_version = firmware_version;
+	info->opt_info = 0;
 
 	/* name_model_number */
 	item = JSON_GET_OBJECT_ITEM(profile, name_model_number);
@@ -699,25 +720,9 @@ iot_error_t iot_api_device_info_load(unsigned char *device_info,
 		strncpy(model_number, JSON_GET_STRING_VALUE(item), str_len);
 		model_number[str_len] = '\0';
 		info->model_number = model_number;
+		info->opt_info++;
 	} else {
 		info->model_number = NULL;
-	}
-
-	/* name_product_number */
-	item = JSON_GET_OBJECT_ITEM(profile, name_product_number);
-	if (item) {
-		str_len = strlen(JSON_GET_STRING_VALUE(item));
-		product_number = iot_os_malloc(str_len + 1);
-		if (!product_number) {
-			iot_err = IOT_ERROR_MEM_ALLOC;
-			goto load_out;
-		}
-		strncpy(product_number, JSON_GET_STRING_VALUE(item), str_len);
-		product_number[str_len] = '\0';
-
-		info->product_number = product_number;
-	} else {
-		info->product_number = NULL;
 	}
 
 	/* name_marketing */
@@ -733,6 +738,7 @@ iot_error_t iot_api_device_info_load(unsigned char *device_info,
 		marketing_name[str_len] = '\0';
 
 		info->marketing_name = marketing_name;
+		info->opt_info++;
 	} else {
 		info->marketing_name = NULL;
 	}
@@ -750,6 +756,7 @@ iot_error_t iot_api_device_info_load(unsigned char *device_info,
 		manufacturer_name[str_len] = '\0';
 
 		info->manufacturer_name = manufacturer_name;
+		info->opt_info++;
 	} else {
 		info->manufacturer_name = NULL;
 	}
@@ -767,6 +774,7 @@ iot_error_t iot_api_device_info_load(unsigned char *device_info,
 		manufacturer_code[str_len] = '\0';
 
 		info->manufacturer_code = manufacturer_code;
+		info->opt_info++;
 	} else {
 		info->manufacturer_code = NULL;
 	}
@@ -799,8 +807,6 @@ load_out:
 		iot_os_free(firmware_version);
 	if (manufacturer_code)
 		iot_os_free(manufacturer_code);
-	if (product_number)
-		iot_os_free(product_number);
 	if (marketing_name)
 		iot_os_free(marketing_name);
 	if (model_number)
@@ -934,12 +940,22 @@ iot_error_t iot_device_cleanup(struct iot_context *ctx)
 		IOT_ERROR("%s: failed to erase device ID: %d", __func__, iot_err);
 	}
 
-	if((iot_err = iot_es_disconnect(ctx, IOT_CONNECT_TYPE_COMMUNICATION)) != IOT_ERROR_NONE) {
-		IOT_ERROR("%s: mqtt disconnect failed %d", __func__, iot_err);
+	/* if there is previous connection, disconnect it first. */
+	if (ctx->evt_mqttcli != NULL) {
+		IOT_INFO("There is previous connecting, disconnect it first.\n");
+		iot_err = iot_es_disconnect(ctx, IOT_CONNECT_TYPE_COMMUNICATION);
+		if (iot_err != IOT_ERROR_NONE) {
+			IOT_ERROR("%s: evt_mqtt disconnect failed %d", __func__, iot_err);
+		}
 	}
 
-	config.mode = IOT_WIFI_MODE_OFF;
-	iot_bsp_wifi_set_mode(&config);
+	if (ctx->reg_mqttcli != NULL) {
+		IOT_INFO("There is active registering, disconnect it first.\n");
+		iot_err = iot_es_disconnect(ctx, IOT_CONNECT_TYPE_REGISTRATION);
+		if (iot_err != IOT_ERROR_NONE) {
+			IOT_ERROR("%s: reg_mqtt disconnect failed %d", __func__, iot_err);
+		}
+	}
 
 	if(ctx->lookup_id) {
 		free(ctx->lookup_id);
@@ -993,6 +1009,29 @@ static iot_error_t _get_dip_from_json(JSON_H *json, struct iot_dip_data *dip)
 	return iot_err;
 }
 
+static iot_error_t _get_location_from_json(JSON_H *json, struct iot_uuid *uuid)
+{
+	struct iot_uuid curr_uuid;
+	JSON_H *item = NULL;
+	iot_error_t iot_err;
+
+	item = JSON_GET_OBJECT_ITEM(json, "loId");
+	if (item == NULL) {
+		IOT_ERROR("There is no locationId in misc_info");
+		return IOT_ERROR_BAD_REQ;
+	}
+
+	iot_err = iot_util_convert_str_uuid(JSON_GET_STRING_VALUE(item),
+				&curr_uuid);
+	if (iot_err != IOT_ERROR_NONE) {
+		IOT_ERROR("Can't convert str to uuid(%d)", iot_err);
+		return iot_err;
+	}
+
+	memcpy(uuid, &curr_uuid, sizeof(curr_uuid));
+	return IOT_ERROR_NONE;
+}
+
 iot_error_t iot_misc_info_load(iot_misc_info_t type, void *out_data)
 {
 	char *misc_info = NULL;
@@ -1023,6 +1062,10 @@ iot_error_t iot_misc_info_load(iot_misc_info_t type, void *out_data)
 	switch (type) {
 	case IOT_MISC_INFO_DIP:
 		iot_err = _get_dip_from_json(json, (struct iot_dip_data *)out_data);
+		break;
+
+	case IOT_MISC_INFO_LOCATION:
+		iot_err = _get_location_from_json(json, (struct iot_uuid *)out_data);
 		break;
 
 	default:
@@ -1098,6 +1141,35 @@ static iot_error_t _set_dip_to_json(JSON_H *json, struct iot_dip_data *new_dip)
 	return iot_err;
 }
 
+static iot_error_t _set_location_to_json(JSON_H *json, struct iot_uuid *uuid)
+{
+	JSON_H *item = NULL;
+	char location_id[IOT_REG_UUID_STR_LEN + 1];
+	iot_error_t iot_err;
+
+	iot_err = iot_util_convert_uuid_str(uuid,
+				location_id, sizeof(location_id));
+	if (iot_err != IOT_ERROR_NONE) {
+		IOT_ERROR("Can't convert uuid to str(%d)", iot_err);
+		return iot_err;
+	}
+
+	item = JSON_CREATE_STRING(location_id);
+	if (item == NULL) {
+		IOT_ERROR("Can't make new string for locationId");
+		return IOT_ERROR_MEM_ALLOC;
+	}
+
+	if (JSON_GET_OBJECT_ITEM(json, "loId") == NULL) {
+		IOT_DEBUG("There is no locatinoId in misc_info");
+		JSON_ADD_ITEM_TO_OBJECT(json, "loId", item);
+	} else {
+		JSON_REPLACE_ITEM_IN_OBJ_CASESENS(json, "loId", item);
+	}
+
+	return IOT_ERROR_NONE;
+}
+
 iot_error_t iot_misc_info_store(iot_misc_info_t type, const void *in_data)
 {
 	char *old_misc_info = NULL;
@@ -1105,6 +1177,9 @@ iot_error_t iot_misc_info_store(iot_misc_info_t type, const void *in_data)
 	char *new_misc_info = NULL;
 	JSON_H *json = NULL;
 	iot_error_t iot_err = IOT_ERROR_NONE;
+	unsigned char old_hash[IOT_SECURITY_SHA256_LEN] = {0,};
+	unsigned char new_hash[IOT_SECURITY_SHA256_LEN] = {0,};
+	bool hash_chk = false;
 
 	if (!in_data) {
 		iot_err = IOT_ERROR_INVALID_ARGS;
@@ -1124,12 +1199,26 @@ iot_error_t iot_misc_info_store(iot_misc_info_t type, const void *in_data)
 		}
 	}
 
+	if ((old_misc_info != NULL) && (old_misc_info_len != 0)) {
+		iot_err = iot_security_sha256((const unsigned char *)old_misc_info,
+				old_misc_info_len, old_hash, sizeof(old_hash));
+		if (iot_err != IOT_ERROR_NONE) {
+			IOT_WARN("Can't make hash for old_misc_info!!");
+		} else {
+			hash_chk = true;
+		}
+	}
+
 	iot_os_free(old_misc_info);
 	old_misc_info = NULL;
 
 	switch (type) {
 	case IOT_MISC_INFO_DIP:
 		iot_err = _set_dip_to_json(json, (struct iot_dip_data *)in_data);
+		break;
+
+	case IOT_MISC_INFO_LOCATION:
+		iot_err = _set_location_to_json(json, (struct iot_uuid *)in_data);
 		break;
 
 	default:
@@ -1143,6 +1232,19 @@ iot_error_t iot_misc_info_store(iot_misc_info_t type, const void *in_data)
 
 	new_misc_info = JSON_PRINT(json);
 	IOT_DEBUG("Store raw msic_info str : %s", new_misc_info);
+
+	if (hash_chk) {
+		iot_err = iot_security_sha256((const unsigned char *)new_misc_info,
+				strlen(new_misc_info), new_hash, sizeof(new_hash));
+		if (iot_err != IOT_ERROR_NONE) {
+			IOT_WARN("Can't make hash for new_misc_info!!");
+		} else {
+			if (!memcmp(old_hash, new_hash, IOT_SECURITY_SHA256_LEN)) {
+				IOT_DEBUG("Same misc_info, skip NV update");
+				goto misc_info_store_out;
+			}
+		}
+	}
 
 	iot_err = iot_nv_set_misc_info(new_misc_info);
 	if (iot_err != IOT_ERROR_NONE) {

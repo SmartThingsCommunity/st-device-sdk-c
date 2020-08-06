@@ -37,8 +37,11 @@ const static struct iot_caps_energyMeter {
     const struct energyMeter_attr_energy {
         const char *name;
         const unsigned char property;
-        const unsigned char value_type;
+        const unsigned char valueType;
         const char *units[CAP_ENUM_ENERGYMETER_ENERGY_UNIT_MAX];
+        const char *unit_Wh;
+        const char *unit_kWh;
+        const char *unit_mWh;
         const double min;
     } attr_energy;
 } caps_helper_energyMeter = {
@@ -46,8 +49,11 @@ const static struct iot_caps_energyMeter {
     .attr_energy = {
         .name = "energy",
         .property = ATTR_SET_VALUE_MIN | ATTR_SET_VALUE_REQUIRED,
-        .value_type = VALUE_TYPE_NUMBER,
+        .valueType = VALUE_TYPE_NUMBER,
         .units = {"Wh", "kWh", "mWh"},
+        .unit_Wh = "Wh",
+        .unit_kWh = "kWh",
+        .unit_mWh = "mWh",
         .min = 0,
     },
 };

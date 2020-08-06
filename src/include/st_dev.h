@@ -21,6 +21,7 @@
 
 #include <stdint.h>
 #include <stdbool.h>
+#include <stddef.h>
 
 #include "st_dev_version.h"
 
@@ -178,6 +179,47 @@ typedef void (*st_cap_noti_cb)(iot_noti_data_t *noti_data, void *noti_usr_data);
 typedef void (*st_cap_cmd_cb)(IOT_CAP_HANDLE *cap_handle,
 	iot_cap_cmd_data_t *cmd_data, void *usr_data);
 
+/**
+ * @brief Contains data for extension options.
+ */
+typedef struct {
+	st_status_cb status_cb;	/**< @brief user callback function to receive status of st-iot-core */
+	iot_status_t maps;		/**< @brief status of st-iot-core interested to receive through status_cb */
+	void *usr_data;			/**< @brief user data(a pointer) to use in status_cb */
+	iot_pin_t *pin_num;		/**< @brief if PIN ownership validation type used, valid 8 digit pin should be set. otherwise set null. */
+
+	iot_status_t start_pt;	/**< @brief starting connection point, support only IOT_STATUS_PROVISIONING & IOT_STATUS_CONNECTING cases */
+	bool skip_usr_confirm;	/**< @brief set true to skip user-confirm, else false. */
+} iot_ext_args_t;
+
+/**
+ * @brief Contains a enumeration values for types of notification.
+ */
+typedef enum iot_info_type {
+	IOT_INFO_TYPE_IOT_STATUS_AND_STAT,		/**< @brief to get current st_status. */
+	IOT_INFO_TYPE_IOT_PROVISIONED,			/**< @brief to get provision state, provisioned or not */
+} iot_info_type_t;
+
+/**
+ * @brief Contains data for iot-core information.
+ */
+typedef union {
+	/* to get current iot_status case */
+	struct _st_status {
+		iot_status_t iot_status;	/**< @brief current reported status of st-iot-core. */
+		iot_stat_lv_t stat_lv;		/**< @brief current reported iot_status's level. */
+	} st_status;
+	/* to get provisioned state case */
+	bool provisioned;				/**< @brief to check provisoned or not */
+} iot_info_data_t;
+
+/**
+ * @brief Contains a enumeration values for mode of iot_dump
+ */
+typedef enum iot_dump_mode {
+    IOT_DUMP_MODE_NEED_BASE64 = (1 << 0),	    /**< @brief make log encoded to base64 */
+    IOT_DUMP_MODE_NEED_DUMP_STATE = (1 << 1),    /**< @brief add dump_state in log_dump */
+} iot_dump_mode_t;
 
 //////////////////////////////////////////////////////////////
 
@@ -221,6 +263,20 @@ IOT_EVENT* st_cap_attr_create_int(const char *attribute, int integer, const char
  */
 IOT_EVENT* st_cap_attr_create_number(const char *attribute, double number, const char *unit);
 
+#define ST_CAP_SEND_ATTR_NUMBER(cap_handle, attribute, value_number, unit, data, output_seq_num)\
+{\
+	IOT_EVENT *attr = NULL;\
+	iot_cap_val_t value;\
+\
+	value.type = IOT_CAP_VAL_TYPE_NUMBER;\
+	value.number = value_number;\
+	attr = st_cap_create_attr(cap_handle, attribute, &value, unit, data);\
+	if (attr != NULL){\
+		output_seq_num = st_cap_send_attr(&attr, 1);\
+		st_cap_attr_free(attr);\
+	}\
+}
+
 /**
  * @brief Create IOT_EVENT data with string `value`.
  *
@@ -240,6 +296,20 @@ IOT_EVENT* st_cap_attr_create_number(const char *attribute, double number, const
  * @see @ref st_cap_attr_send
  */
 IOT_EVENT* st_cap_attr_create_string(const char *attribute, char *string, const char *unit);
+
+#define ST_CAP_SEND_ATTR_STRING(cap_handle, attribute, value_string, unit, data, output_seq_num)\
+{\
+	IOT_EVENT *attr = NULL;\
+	iot_cap_val_t value;\
+\
+	value.type = IOT_CAP_VAL_TYPE_STRING;\
+	value.string = value_string;\
+	attr = st_cap_create_attr(cap_handle, attribute, &value, unit, data);\
+	if (attr != NULL){\
+		output_seq_num = st_cap_send_attr(&attr, 1);\
+		st_cap_attr_free(attr);\
+	}\
+}
 
 /**
  * @brief Create IOT_EVENT data with string array `value`.
@@ -262,6 +332,21 @@ IOT_EVENT* st_cap_attr_create_string(const char *attribute, char *string, const 
  */
 IOT_EVENT* st_cap_attr_create_string_array(const char *attribute,
 		uint8_t str_num, char *string_array[], const char *unit);
+
+#define ST_CAP_SEND_ATTR_STRINGS_ARRAY(cap_handle, attribute, value_string_array, array_num, unit, data, output_seq_num)\
+{\
+	IOT_EVENT *attr = NULL;\
+	iot_cap_val_t value;\
+\
+	value.type = IOT_CAP_VAL_TYPE_STR_ARRAY;\
+	value.str_num = array_num;\
+	value.strings = value_string_array;\
+	attr = st_cap_create_attr(cap_handle, attribute, &value, unit, data);\
+	if (attr != NULL){\
+		output_seq_num = st_cap_send_attr(&attr, 1);\
+		st_cap_attr_free(attr);\
+	}\
+}
 
 /**
  * @brief Create IOT_EVENT data.
@@ -286,6 +371,31 @@ IOT_EVENT* st_cap_attr_create(const char *attribute,
 			iot_cap_val_t *value, const char *unit, const char *data);
 
 /**
+ * @brief Create IOT_EVENT data.
+ *
+ * @details This function creates a new IOT_EVENT data with input parameters.
+ * Once it returns, user has full responsibility for deallocating event data
+ * by using [st_cap_free_attr](@ref st_cap_free_attr).
+ * NOTE:IOT_EVENT created in this function must be passed to st_cap_send_attr function
+ * to send evnets.
+ *
+ * @param[in] cap_handle Capability reference which the event is created in.
+ * @param[in] attribute The attribute string of IOT_EVENT data.
+ * @param[in] value The value to add to IOT_EVENT data.
+ * @param[in] unit The unit string if needed. Otherwise NULL.
+ * @param[in] data The data json object if needed. Otherwise NULL.
+ *
+ * @return Pointer of `IOT_EVENT` which is used to publish device status.
+ *
+ * @warning Must call [st_cap_free_attr](@ref st_cap_free_attr)
+ * to free IOT_EVENT data after using it.
+ *
+ * @see @ref st_cap_attr_send
+ */
+IOT_EVENT* st_cap_create_attr(IOT_CAP_HANDLE *cap_handle, const char *attribute,
+			iot_cap_val_t *value, const char *unit, const char *data);
+
+/**
  * @brief Free IOT_EVENT data.
  *
  * @details This function frees IOT_EVENT data.
@@ -293,6 +403,15 @@ IOT_EVENT* st_cap_attr_create(const char *attribute,
  * @param[in] event The IOT_EVENT data to free.
  */
 void st_cap_attr_free(IOT_EVENT* event);
+
+/**
+ * @brief Free IOT_EVENT data.
+ *
+ * @details This function frees IOT_EVENT data.
+ *
+ * @param[in] event The IOT_EVENT data to free.
+ */
+void st_cap_free_attr(IOT_EVENT* event);
 
 /**
  * @brief Request to publish deviceEvent.
@@ -311,6 +430,23 @@ void st_cap_attr_free(IOT_EVENT* event);
  */
 int st_cap_attr_send(IOT_CAP_HANDLE *cap_handle,
 		uint8_t evt_num, IOT_EVENT *event[]);
+
+/**
+ * @brief Request to publish deviceEvent.
+ *
+ * @details This function creates a deviceEvent with the list of IOT_EVENT data,
+ * and requests to publish it.
+ * When there is no error, this function returns sequence number,
+ * which is unique value to identify the deviceEvent message.
+ * NOTE:IOT_EVENT must be created from st_cap_create_attr
+ *
+ * @param[in] event The IOT_EVENT data list to create the deviceEvent.
+ * @param[in] evt_num The number of IOT_EVENT data in the event.
+ *
+ * @return return `sequence number`(which is positive integer) if successful,
+ * negative integer for error case.
+ */
+int st_cap_send_attr(IOT_EVENT *event[], uint8_t evt_num);
 
 /**
  * @brief Create and initialize a capability handle.
@@ -405,6 +541,41 @@ int st_conn_cleanup(IOT_CTX *iot_ctx, bool reboot);
 * @param[in]	confirm		user confirmation result
 */
 void st_conn_ownership_confirm(IOT_CTX *iot_ctx, bool confirm);
+
+/**
+* @brief	expanded st-iot-core server connection function
+* @details	This function tries to connect server with extension arguments
+* @param[in]	iot_ctx		iot_context handle generated by iot_main_init()
+* @param[in]	ext_args	extension arguments for sepcific connection control
+* @return 		return `(0)` if it works successfully, non-zero for error case.
+*/
+int st_conn_start_ex(IOT_CTX *iot_ctx, iot_ext_args_t *ext_args);
+
+/**
+* @brief	st-iot-core information getting function
+* @details	This function tries to get current iot-core's information
+* @param[in]	iot_ctx		iot_context handle generated by iot_main_init()
+* @param[in]	info_type	type of iot_info_types_t to get its value
+* @param[out]	info_data	A pointer to actual information data to get each type of iot_info_type_t
+* @return 		return `(0)` if it works successfully, non-zero for error case.
+ */
+int st_info_get(IOT_CTX *iot_ctx, iot_info_type_t info_type, iot_info_data_t *info_data);
+
+/**
+ * @brief create log_dump
+ * @param[in] iot_ctx - iot_core context
+ * @param[out] log_dump_output - a pointer of not allocated pointer for log dump buffer.
+ *         it will allocated in this function
+ * @param[in] max_log_dump_size - maximum size of log dump.
+ * @param[out] allocated_size - allocated memory size of log_dump_output
+ * @param[in] log_mode - log mode generated by OR operation of following values
+ *    IOT_DUMP_MODE_NEED_BASE64 : make log encoded to base64
+ *    IOT_DUMP_MODE_NEED_DUMP_STATE : add dump state in log
+ * @retval return `(0)` if it works successfully, non-zero for error case.
+ *
+ * @warning must free log_dump_output after using it.
+ */
+int st_create_log_dump(IOT_CTX *iot_ctx, char **log_dump_output, size_t max_log_dump_size, size_t *allocated_size, int log_mode);
 
 #ifdef __cplusplus
 }

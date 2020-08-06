@@ -46,9 +46,6 @@
 #define IOT_DUMP_MAIN_ARG2(LVL, LOGID, arg1, arg2) \
 	IOT_DUMP(IOT_DEBUG_LEVEL_##LVL, IOT_DUMP_MAIN_##LOGID, arg1, arg2)
 
-static int rcv_try_cnt;
-static iot_state_t rcv_fail_state;
-
 static iot_error_t _do_state_updating(struct iot_context *ctx,
 		iot_state_t new_state, int opt, unsigned int *timeout_ms);
 
@@ -213,7 +210,7 @@ void _do_status_report(struct iot_context *ctx,
 		break;
 
 	case IOT_STATE_PROV_DONE:
-		if (!is_final) {
+		if (is_final) {
 			fn_stat = IOT_STATUS_PROVISIONING;
 			fn_stat_lv = IOT_STAT_LV_DONE;
 			is_report = true;
@@ -313,6 +310,88 @@ static bool _unlikely_with_stored_dip(struct iot_dip_data *chk_dip)
 	return false;
 }
 
+static iot_error_t _prepare_self_reged(struct iot_context *ctx)
+{
+	iot_error_t err = IOT_ERROR_NONE;
+	struct iot_uuid old_location;
+	char *location_str = NULL;
+	char *lookup_str = NULL;
+
+	if (!ctx) {
+		return IOT_ERROR_INVALID_ARGS;
+	}
+
+	/* Make new lookup_id for self-registration */
+	lookup_str = (char *)iot_os_malloc(IOT_REG_UUID_STR_LEN + 1);
+	if (!lookup_str) {
+		IOT_ERROR("Failed to malloc for lookup_str");
+		IOT_DUMP_MAIN(ERROR, BASE, 0xDEADBEEF);
+		return IOT_ERROR_MEM_ALLOC;
+	}
+	memset(lookup_str, 0, (IOT_REG_UUID_STR_LEN +1));
+
+	err = iot_get_random_id_str(lookup_str,
+			(IOT_REG_UUID_STR_LEN + 1));
+	if (err != IOT_ERROR_NONE) {
+		IOT_ERROR("Failed to get new lookup_str(%d)", err);
+		IOT_DUMP_MAIN(ERROR, BASE, err);
+		goto error_prepare_self;
+	}
+
+	/* Load previous locationId from NV */
+	err = iot_misc_info_load(IOT_MISC_INFO_LOCATION,
+			(void *)&old_location);
+	if (err != IOT_ERROR_NONE) {
+		IOT_ERROR("Failed to load old_location(%d)", err);
+		IOT_DUMP_MAIN(ERROR, BASE, err);
+		goto error_prepare_self;
+	}
+
+	location_str = (char *)iot_os_malloc(IOT_REG_UUID_STR_LEN +1);
+	if (!location_str) {
+		IOT_ERROR("Failed to malloc for location_str");
+		IOT_DUMP_MAIN(ERROR, BASE, 0xDEADBEEF);
+		err = IOT_ERROR_MEM_ALLOC;
+		goto error_prepare_self;
+	}
+	memset(location_str, 0, (IOT_REG_UUID_STR_LEN +1));
+
+	err = iot_util_convert_uuid_str(&old_location, location_str,
+			(IOT_REG_UUID_STR_LEN + 1));
+	if (err != IOT_ERROR_NONE) {
+		IOT_ERROR("Failed to convert location_str(%d)", err);
+		IOT_DUMP_MAIN(ERROR, BASE, err);
+		goto error_prepare_self;
+	}
+
+	/* lookup_id & location are runtime allocated string
+	 * during D2D process, so free it first to avoid memory-leak
+	 */
+	if (ctx->lookup_id) {
+		iot_os_free(ctx->lookup_id);
+	}
+	ctx->lookup_id = lookup_str;
+
+	if (ctx->prov_data.cloud.location) {
+		iot_os_free(ctx->prov_data.cloud.location);
+	}
+	ctx->prov_data.cloud.location = location_str;
+
+	return IOT_ERROR_NONE;
+
+error_prepare_self:
+	if (lookup_str) {
+		iot_os_free(lookup_str);
+	}
+
+	if (location_str) {
+		iot_os_free(location_str);
+	}
+
+	return err;
+}
+
+
 static iot_error_t _do_iot_main_command(struct iot_context *ctx,
 	struct iot_command *cmd)
 {
@@ -326,7 +405,8 @@ static iot_error_t _do_iot_main_command(struct iot_context *ctx,
 	unsigned int needed_tout = 0;
 	iot_noti_data_t *noti = NULL;
 	bool is_diff_dip = false;
-	bool *reboot;
+	bool *reboot = NULL;
+	bool *cmd_only = NULL;
 
 	IOT_INFO("curr_main_cmd:%d, curr_main_state:%d/%d",
 		cmd->cmd_type, ctx->curr_state, ctx->req_state);
@@ -374,8 +454,8 @@ static iot_error_t _do_iot_main_command(struct iot_context *ctx,
 
 		/* For Resource control */
 		case IOT_COMMAND_READY_TO_CTL:
-			rcv_fail_state = IOT_STATE_INITIALIZED;
-			rcv_try_cnt = 0;
+			ctx->rcv_fail_state = IOT_STATE_INITIALIZED;
+			ctx->rcv_try_cnt = 0;
 			iot_cap_call_init_cb(ctx->cap_handle_list);
 			break;
 
@@ -385,25 +465,15 @@ static iot_error_t _do_iot_main_command(struct iot_context *ctx,
 			if (!conf) {
 				IOT_ERROR("failed to get iot_wifi_conf\n");
 				IOT_DUMP_MAIN(ERROR, BASE, 0xDEADBEEF);
-
-				if (ctx->req_state != IOT_STATE_CHANGE_FAILED) {
-					ctx->cmd_err |= (1u << cmd->cmd_type);
-					next_state = IOT_STATE_CHANGE_FAILED;
-					state_opt = ctx->req_state;
-					err = iot_state_update(ctx,
-							next_state, state_opt);
-				} else {
-					IOT_WARN("Duplicated error handling, skip updating!!");
-					err = IOT_ERROR_DUPLICATED_CMD;
+			} else {
+				err = iot_bsp_wifi_set_mode(conf);
+				if (err < 0) {
+					IOT_ERROR("failed to set wifi_set_mode\n");
+					IOT_DUMP_MAIN(ERROR, BASE, err);
 				}
-				break;
 			}
 
-			err = iot_bsp_wifi_set_mode(conf);
-			if (err < 0) {
-				IOT_ERROR("failed to set wifi_set_mode\n");
-				IOT_DUMP_MAIN(ERROR, BASE, err);
-
+			if (!conf || err < 0) {
 				if (ctx->req_state != IOT_STATE_CHANGE_FAILED) {
 					ctx->cmd_err |= (1u << cmd->cmd_type);
 					next_state = IOT_STATE_CHANGE_FAILED;
@@ -418,19 +488,6 @@ static iot_error_t _do_iot_main_command(struct iot_context *ctx,
 			}
 
 			switch (conf->mode) {
-			case IOT_WIFI_MODE_OFF:
-			case IOT_WIFI_MODE_STATION:
-				if (ctx->es_http_ready) {
-					ctx->es_http_ready = false;
-					iot_easysetup_deinit(ctx);
-				}
-
-				if (ctx->scan_result) {
-					free(ctx->scan_result);
-					ctx->scan_result = NULL;
-				}
-				ctx->scan_num = 0;
-				break;
 			case IOT_WIFI_MODE_SOFTAP:
 				if (ctx->req_state == IOT_STATE_PROV_ENTER) {
 					err = iot_easysetup_init(ctx);
@@ -462,6 +519,11 @@ static iot_error_t _do_iot_main_command(struct iot_context *ctx,
 
 		/* For state related control */
 		case IOT_COMMAND_CHECK_PROV_STATUS:
+			if (cmd->param) {
+				cmd_only = (bool *)cmd->param;
+			}
+			ctx->iot_reg_data.new_reged = false;
+
 			err = iot_nv_get_prov_data(&ctx->prov_data);
 			if (err != IOT_ERROR_NONE) {
 				IOT_WARN("There are no prov data in NV\n");
@@ -484,18 +546,26 @@ static iot_error_t _do_iot_main_command(struct iot_context *ctx,
 					ctx->iot_reg_data.new_reged = true;
 					next_state = IOT_STATE_PROV_ENTER;
 				} else {
-					/* Wakeup user interaction by provisioning done */
-					iot_os_eventgroup_set_bits(ctx->usr_events,
-						IOT_USR_INTERACT_BIT_PROV_DONE);
-
 					next_state = IOT_STATE_PROV_DONE;
 				}
 			}
 
-			err = iot_state_update(ctx, next_state, state_opt);
+			if (cmd_only && *cmd_only) {
+				iot_os_eventgroup_set_bits(ctx->usr_events,
+						IOT_USR_INTERACT_BIT_CMD_DONE);
+				/* We don't need recovering for command only case */
+				if (err != IOT_ERROR_NONE) {
+					IOT_WARN("Internal WARN(%d) happened for command only", err);
+					err = IOT_ERROR_NONE;
+				}
+			} else {
+				err = iot_state_update(ctx, next_state, state_opt);
+			}
 			break;
 
 		case IOT_COMMAND_CHECK_CLOUD_STATE:
+			ctx->iot_reg_data.self_reged = false;
+
 			if (ctx->iot_reg_data.new_reged) {
 				next_state = IOT_STATE_CLOUD_REGISTERING;
 			} else if (ctx->iot_reg_data.updated) {
@@ -553,20 +623,16 @@ static iot_error_t _do_iot_main_command(struct iot_context *ctx,
 					}
 
 					if (is_diff_dip) {
-						if (ctx->lookup_id == NULL) {
-							ctx->lookup_id = iot_os_malloc(IOT_REG_UUID_STR_LEN + 1);
-						}
-
-						err = iot_get_random_id_str(ctx->lookup_id,
-								(IOT_REG_UUID_STR_LEN + 1));
+						err = _prepare_self_reged(ctx);
 						if (err != IOT_ERROR_NONE) {
-							IOT_ERROR("Failed to get new lookup_id(%d)", err);
+							IOT_ERROR("Failed to prepare self registration(%d)", err);
 							IOT_DUMP_MAIN(ERROR, BASE, err);
 							is_diff_dip = false;
 						}
 					}
 
 					if (is_diff_dip) {
+						ctx->iot_reg_data.self_reged = true;
 						next_state = IOT_STATE_CLOUD_REGISTERING;
 					} else {
 						ctx->iot_reg_data.updated = true;
@@ -620,6 +686,16 @@ static iot_error_t _do_iot_main_command(struct iot_context *ctx,
 				IOT_ERROR("failed to _iot_es_disconnect for registration\n");
 			}
 
+			if (ctx->prov_data.cloud.location) {
+				iot_os_free(ctx->prov_data.cloud.location);
+				ctx->prov_data.cloud.location = NULL;
+			}
+
+			if (ctx->prov_data.cloud.room) {
+				iot_os_free(ctx->prov_data.cloud.room);
+				ctx->prov_data.cloud.room = NULL;
+			}
+
 			if (ctx->iot_reg_data.updated) {
 				if (ctx->iot_reg_data.dip) {
 					err = iot_misc_info_store(IOT_MISC_INFO_DIP,
@@ -631,6 +707,21 @@ static iot_error_t _do_iot_main_command(struct iot_context *ctx,
 
 					iot_os_free(ctx->iot_reg_data.dip);
 					ctx->iot_reg_data.dip = NULL;
+				}
+
+				if (ctx->iot_reg_data.locationId) {
+					err = iot_misc_info_store(IOT_MISC_INFO_LOCATION,
+							(const void *)ctx->iot_reg_data.locationId);
+					if (err != IOT_ERROR_NONE) {
+						IOT_ERROR("Store LocationId failed!! (%d)", err);
+						IOT_DUMP_MAIN(ERROR, BASE, err);
+					}
+
+					iot_os_free(ctx->iot_reg_data.locationId);
+					ctx->iot_reg_data.locationId = NULL;
+				} else {
+					IOT_WARN("There is no locationId!!");
+					IOT_DUMP_MAIN(WARN, BASE, 0xBAD2C1EA);
 				}
 
 				err = iot_nv_set_device_id(ctx->iot_reg_data.deviceId);
@@ -740,9 +831,12 @@ static iot_error_t _do_iot_main_command(struct iot_context *ctx,
 
 		case IOT_COMMAND_SELF_CLEANUP:
 			IOT_WARN("self device cleanup");
-			reboot = (bool *)cmd->param;
-
-			IOT_DUMP_MAIN(WARN, BASE, (int)*reboot);
+			if (cmd->param) {
+				reboot = (bool *)cmd->param;
+				IOT_DUMP_MAIN(WARN, BASE, (int)*reboot);
+			} else {
+				IOT_DUMP_MAIN(WARN, BASE, 0);
+			}
 
 			if (ctx->es_http_ready) {
 				ctx->es_http_ready = false;
@@ -754,10 +848,11 @@ static iot_error_t _do_iot_main_command(struct iot_context *ctx,
 
 			iot_device_cleanup(ctx);
 
-			if (*reboot) {
+			if (reboot && *reboot) {
 				IOT_REBOOT();
 			} else {
-				err = iot_state_update(ctx, IOT_STATE_UNKNOWN, 0);
+				err = iot_state_update(ctx, IOT_STATE_UNKNOWN,
+						IOT_STATE_OPT_CLEANUP);
 			}
 
 			break;
@@ -885,6 +980,39 @@ static void _throw_away_all_pub_queue(struct iot_context *ctx)
 	}
 }
 
+static void _throw_away_all_cmd_queue(struct iot_context *ctx)
+{
+	struct iot_command cmd;
+	enum iot_command_type cmd_type;
+
+	if (!ctx) {
+		IOT_ERROR("There is no ctx!!");
+		IOT_DUMP_MAIN(ERROR, BASE, 0xDEADBEEF);
+		return;
+	}
+
+	while (iot_os_queue_receive(ctx->cmd_queue,
+				&cmd, 0) == IOT_OS_TRUE) {
+		_clear_cmd_status(ctx, cmd.cmd_type);
+		if (cmd.param) {
+			free(cmd.param);
+		}
+	}
+
+	if (ctx->cmd_status) {
+		IOT_WARN("There are unfinished cmds : 0x%x", ctx->cmd_status);
+		for (cmd_type = IOT_COMMAND_READY_TO_CTL;
+				cmd_type <= IOT_COMMAND_TYPE_MAX; cmd_type++) {
+			if (ctx->cmd_count[cmd_type]) {
+				IOT_WARN("Remained cmd[%d] = %d", cmd_type,
+					ctx->cmd_count[cmd_type]);
+				ctx->cmd_count[cmd_type] = 0;
+			}
+		}
+		ctx->cmd_status = 0;
+	}
+}
+
 static void _iot_main_task(struct iot_context *ctx)
 {
 	struct iot_command cmd;
@@ -907,6 +1035,8 @@ static void _iot_main_task(struct iot_context *ctx)
 #endif
 		if (curr_events & IOT_EVENT_BIT_COMMAND) {
 			cmd.param = NULL;
+
+			iot_os_mutex_lock(&ctx->iot_cmd_lock);
 			if (iot_os_queue_receive(ctx->cmd_queue,
 					&cmd, 0) != IOT_OS_FALSE) {
 
@@ -926,6 +1056,7 @@ static void _iot_main_task(struct iot_context *ctx)
 				 */
 				iot_os_eventgroup_set_bits(ctx->iot_events, IOT_EVENT_BIT_COMMAND);
 			}
+			iot_os_mutex_unlock(&ctx->iot_cmd_lock);
 		}
 
 		if (curr_events & IOT_EVENT_BIT_CAPABILITY) {
@@ -1144,11 +1275,18 @@ IOT_CTX* st_conn_init(unsigned char *onboarding_config, unsigned int onboarding_
 	ctx->iot_reg_data.new_reged = false;
 	ctx->curr_state = ctx->req_state = IOT_STATE_UNKNOWN;
 
-	/* create mutext for user level st_conn_xxx APIs */
+	/* create mutex for iot-core's command handling */
+	if (iot_os_mutex_init(&ctx->iot_cmd_lock) != IOT_OS_TRUE) {
+		IOT_ERROR("failed to init iot_cmd_lock\n");
+		IOT_DUMP_MAIN(ERROR, BASE, 0xDEADBEEF);
+		goto error_main_cmd_mutex_init;
+	}
+
+	/* create mutex for user level st_conn_xxx APIs */
 	if (iot_os_mutex_init(&ctx->st_conn_lock) != IOT_OS_TRUE) {
 		IOT_ERROR("failed to init st_conn_lock\n");
 		IOT_DUMP_MAIN(ERROR, BASE, 0xDEADBEEF);
-		goto error_main_mutex_init;
+		goto error_main_conn_mutex_init;
 	}
 
 	/* create task */
@@ -1166,19 +1304,20 @@ IOT_CTX* st_conn_init(unsigned char *onboarding_config, unsigned int onboarding_
 	IOT_INFO("stdk_version : %d.%d.%d-%s",
 		VER_MAJOR, VER_MINOR, VER_PATCH, VER_EXTRA_STR);
 #else
-	IOT_INFO("stdk_version : %d.%d.%d",
-		VER_MAJOR, VER_MINOR, VER_PATCH);
+	IOT_INFO("stdk_version : %s", STDK_VERSION_STRING);
 #endif
 
-	IOT_DUMP_MAIN(INFO, BASE,
-		((VER_MAJOR << 24) | (VER_MINOR << 12) | VER_PATCH));
+	IOT_DUMP_MAIN(INFO, BASE, STDK_VERSION_CODE);
 
 	return (IOT_CTX*)ctx;
 
 error_main_task_init:
 	iot_os_mutex_destroy(&ctx->st_conn_lock);
 
-error_main_mutex_init:
+error_main_conn_mutex_init:
+	iot_os_mutex_destroy(&ctx->iot_cmd_lock);
+
+error_main_cmd_mutex_init:
 	iot_os_eventgroup_delete(ctx->iot_events);
 
 error_main_init_events:
@@ -1196,10 +1335,12 @@ error_main_init_cmd_q:
 error_main_load_device_info:
 	iot_api_onboarding_config_mem_free(devconf_prov);
 
+error_main_load_onboarding_config:
 #if defined(CONFIG_STDK_IOT_CORE_LOG_FILE)
+	iot_log_file_exit();
+
 error_main_log_file_init:
 #endif
-error_main_load_onboarding_config:
 	iot_nv_deinit();
 
 error_main_bsp_init:
@@ -1218,20 +1359,20 @@ static iot_error_t _do_recovery(struct iot_context *ctx,
 		fail_state, ctx->curr_state);
 
 	if ((fail_state != IOT_STATE_PROV_ENTER) && (fail_state != IOT_STATE_PROV_CONFIRM)) {
-		if (fail_state != rcv_fail_state) {
-			rcv_try_cnt = 0;
-			rcv_fail_state = fail_state;
+		if (fail_state != ctx->rcv_fail_state) {
+			ctx->rcv_try_cnt = 0;
+			ctx->rcv_fail_state = fail_state;
 		} else {
-			rcv_try_cnt++;
+			ctx->rcv_try_cnt++;
 		}
 	}
 
 	/* Repeated same exceptional cases
 	 * So try do something more first
 	 */
-	if (rcv_try_cnt > RECOVER_TRY_MAX) {
+	if (ctx->rcv_try_cnt > RECOVER_TRY_MAX) {
 		IOT_WARN("Recovery state:[%d] repeated MAX times(%d)",
-			fail_state, rcv_try_cnt);
+			fail_state, ctx->rcv_try_cnt);
 		IOT_DUMP_MAIN(WARN, BASE, fail_state);
 		switch (fail_state) {
 		case IOT_STATE_CLOUD_REGISTERING:
@@ -1252,19 +1393,18 @@ static iot_error_t _do_recovery(struct iot_context *ctx,
 				IOT_ERROR("Can't send WIFI station command(%d)",
 					iot_err);
 				IOT_DUMP_MAIN(ERROR, BASE, iot_err);
-				break;
 			}
-
-			/* reset rcv_try_cnt */
-			rcv_try_cnt = 0;
 			break;
 
 		default:
 			IOT_WARN("No action for repeating state:[%d] failure (%d)",
-				fail_state, rcv_try_cnt);
-			IOT_DUMP_MAIN(WARN, BASE, rcv_try_cnt);
+				fail_state, ctx->rcv_try_cnt);
+			IOT_DUMP_MAIN(WARN, BASE, ctx->rcv_try_cnt);
 			break;
 		}
+
+		/* reset rcv_try_cnt */
+		ctx->rcv_try_cnt = 0;
 	}
 
 	if (ctx->curr_state == fail_state) {
@@ -1282,15 +1422,6 @@ static iot_error_t _do_recovery(struct iot_context *ctx,
 				ctx->scan_result = NULL;
 			}
 			ctx->scan_num = 0;
-
-			/* wifi off, just keep idle state */
-			iot_err = iot_wifi_ctrl_request(ctx, IOT_WIFI_MODE_OFF);
-			if (iot_err != IOT_ERROR_NONE) {
-				IOT_ERROR("Can't send WIFI off command(%d)",
-					iot_err);
-				IOT_DUMP_MAIN(ERROR, BASE, iot_err);
-				break;
-			}
 
 			/* change its state by UNKNOWN to prevent self-reentrant */
 			iot_err = iot_state_update(ctx, IOT_STATE_UNKNOWN, 0);
@@ -1353,15 +1484,6 @@ static iot_error_t _do_recovery(struct iot_context *ctx,
 				ctx->scan_result = NULL;
 			}
 			ctx->scan_num = 0;
-
-			/* wifi off */
-			iot_err = iot_wifi_ctrl_request(ctx, IOT_WIFI_MODE_OFF);
-			if (iot_err != IOT_ERROR_NONE) {
-				IOT_ERROR("Can't send WIFI off command(%d)",
-					iot_err);
-				IOT_DUMP_MAIN(ERROR, BASE, iot_err);
-				break;
-			}
 
 			/* change its state by UNKNOWN to prevent self-reentrant */
 			iot_err = iot_state_update(ctx, IOT_STATE_UNKNOWN, 0);
@@ -1460,6 +1582,10 @@ static iot_error_t _do_state_updating(struct iot_context *ctx,
 		break;
 
 	case IOT_STATE_PROV_DONE:
+		/* Wakeup user interaction by provisioning done */
+		iot_os_eventgroup_set_bits(ctx->usr_events,
+			IOT_USR_INTERACT_BIT_PROV_DONE);
+
 		iot_os_delay(1000); /* delay for easysetup/httpd */
 
 		iot_err = iot_wifi_ctrl_request(ctx, IOT_WIFI_MODE_STATION);
@@ -1515,6 +1641,14 @@ static iot_error_t _do_state_updating(struct iot_context *ctx,
 		IOT_WARN("Iot-core task will be stopped, needed ext-triggering\n");
 		IOT_DUMP_MAIN_ARG2(WARN, STATE, new_state, iot_err);
 
+		/* wifi off */
+		iot_err = iot_wifi_ctrl_request(ctx, IOT_WIFI_MODE_OFF);
+		if (iot_err != IOT_ERROR_NONE) {
+			IOT_ERROR("Can't send WIFI off command(%d)",
+				iot_err);
+			IOT_DUMP_MAIN(ERROR, BASE, iot_err);
+		}
+
 		if (ctx->es_http_ready) {
 			ctx->es_http_ready = false;
 			iot_easysetup_deinit(ctx);
@@ -1523,8 +1657,25 @@ static iot_error_t _do_state_updating(struct iot_context *ctx,
 		if (ctx->es_res_created)
 			_delete_easysetup_resources_all(ctx);
 
-		iot_os_eventgroup_set_bits(ctx->usr_events,
-			IOT_USR_INTERACT_BIT_CONFIRM_FAILED);
+		/* This is final state of iot-core, so update it now */
+		ctx->curr_state = ctx->req_state = IOT_STATE_UNKNOWN;
+
+		/* clear reported_stat for the next connection */
+		if (ctx->status_cb) {
+			_do_status_report(ctx, IOT_STATE_CLOUD_DISCONNECTED, false);
+		}
+
+		/* Reset recovery flags */
+		ctx->rcv_fail_state = IOT_STATE_UNKNOWN;
+		ctx->rcv_try_cnt = 0;
+
+		if (opt == IOT_STATE_OPT_CLEANUP) {
+			iot_os_eventgroup_set_bits(ctx->usr_events,
+				IOT_USR_INTERACT_BIT_STATE_UNKNOWN | IOT_USR_INTERACT_BIT_CLEANUP_DONE);
+		} else {
+			iot_os_eventgroup_set_bits(ctx->usr_events,
+				IOT_USR_INTERACT_BIT_STATE_UNKNOWN);
+		}
 
 		*timeout_ms = IOT_OS_MAX_DELAY;
 		iot_err = IOT_ERROR_NONE;
@@ -1540,6 +1691,50 @@ static iot_error_t _do_state_updating(struct iot_context *ctx,
 	return iot_err;
 }
 
+#define WAIT_USR_INTERACT() \
+do { \
+	iot_os_mutex_unlock(&ctx->st_conn_lock); \
+	\
+	curr_events = iot_os_eventgroup_wait_bits(ctx->usr_events, \
+		IOT_USR_INTERACT_BITS_ST_CONN, true, IOT_OS_MAX_DELAY); \
+	\
+	iot_os_mutex_lock(&ctx->st_conn_lock); \
+	\
+	if (curr_events & IOT_USR_INTERACT_BIT_PROV_CONFIRM) { \
+		if (ctx->devconf.ownership_validation_type & IOT_OVF_TYPE_BUTTON) { \
+			_do_status_report(ctx, IOT_STATE_PROV_CONFIRM, false); \
+		} \
+	\
+		iot_err = IOT_ERROR_NONE; \
+	} else if (curr_events & IOT_USR_INTERACT_BIT_PROV_DONE) { \
+		iot_err = IOT_ERROR_NONE; \
+	} else { \
+		IOT_ERROR("Can't go to PROV_CONFIRM (0x%0x)", curr_events); \
+		iot_err = IOT_ERROR_TIMEOUT; \
+	} \
+} while(0)
+
+#define SET_STATUS_CB(cb, maps, usr_data) \
+do { \
+	ctx->status_cb = cb; \
+	ctx->status_maps = maps; \
+	ctx->status_usr_data = usr_data; \
+} while(0)
+
+#define UNSET_STATUS_CB() \
+do { \
+	ctx->status_cb = NULL; \
+	ctx->status_maps = 0; \
+	ctx->status_usr_data = NULL; \
+} while(0)
+
+#define IS_CTX_VALID(ctx) ( \
+	ctx ? ( \
+	ctx->cmd_queue ? ( \
+	ctx->pub_queue ? ( \
+	ctx->usr_events ? ( \
+	ctx->iot_events ? true : false) : false) : false) : false) : false)
+
 int st_conn_start(IOT_CTX *iot_ctx, st_status_cb status_cb,
 		iot_status_t maps, void *usr_data, iot_pin_t *pin_num)
 {
@@ -1548,16 +1743,30 @@ int st_conn_start(IOT_CTX *iot_ctx, st_status_cb status_cb,
 	struct iot_context *ctx = (struct iot_context*)iot_ctx;
 	unsigned char curr_events;
 
-	if (!ctx)
+	if (!IS_CTX_VALID(ctx))
+		return IOT_ERROR_INVALID_ARGS;
+
+	if (iot_os_mutex_lock(&ctx->st_conn_lock) != IOT_OS_TRUE)
 		return IOT_ERROR_BAD_REQ;
 
-	iot_os_mutex_lock(&ctx->st_conn_lock);
+	IOT_INFO("%s start (%s)", __func__, pin_num ? "pin" : "no-pin");
+	IOT_DUMP_MAIN(INFO, BASE, (pin_num ? 1 : 0));
+
 	if ((ctx->curr_state != IOT_STATE_UNKNOWN) || (ctx->req_state != IOT_STATE_UNKNOWN)) {
 		IOT_WARN("Can't start it, iot_main_task is already working(%d)", ctx->curr_state);
 		IOT_DUMP_MAIN(WARN, BASE, ctx->curr_state);
 
 		iot_err = IOT_ERROR_BAD_REQ;
 		goto end_st_conn_start;
+	}
+
+	if (ctx->devconf.ownership_validation_type & IOT_OVF_TYPE_BUTTON) {
+		if (!status_cb) {
+			IOT_ERROR("There is no status_cb for otm");
+			IOT_DUMP_MAIN(ERROR, BASE, 0);
+			iot_err = IOT_ERROR_BAD_REQ;
+			goto end_st_conn_start;
+		}
 	}
 
 	if (ctx->es_res_created) {
@@ -1571,68 +1780,34 @@ int st_conn_start(IOT_CTX *iot_ctx, st_status_cb status_cb,
 		}
 	}
 
-	if (status_cb) {
-		ctx->status_cb = status_cb;
-		ctx->status_maps = maps;
-		ctx->status_usr_data = usr_data;
-	}
-
 	state_data.iot_state = IOT_STATE_INITIALIZED;
 	state_data.opt = IOT_STATE_OPT_NONE;
 
+	ctx->add_justworks = false;
+
+	if (status_cb) {
+		SET_STATUS_CB(status_cb, maps, usr_data);
+	}
+
+	iot_os_eventgroup_clear_bits(ctx->usr_events, IOT_USR_INTERACT_BITS_ST_CONN);
+
 	iot_err = iot_command_send(ctx, IOT_COMMNAD_STATE_UPDATE,
-                               &state_data, sizeof(struct iot_state_data));
+				&state_data, sizeof(struct iot_state_data));
 
 	if (iot_err != IOT_ERROR_NONE) {
 		IOT_ERROR("failed to send command(%d)", iot_err);
 		IOT_DUMP_MAIN(ERROR, BASE, iot_err);
 		if (ctx->status_cb) {
-			ctx->status_cb = NULL;
-			ctx->status_maps = 0;
-			ctx->status_usr_data = NULL;
-		}
-
-		_delete_easysetup_resources_all(ctx);
-		goto end_st_conn_start;
-	}
-
-	if (ctx->devconf.ownership_validation_type & IOT_OVF_TYPE_BUTTON) {
-		if (!ctx->status_cb) {
-			IOT_ERROR("There is no status_cb for otm");
-			IOT_DUMP_MAIN(ERROR, BASE, 0);
-			_delete_easysetup_resources_all(ctx);
-			iot_err = IOT_ERROR_BAD_REQ;
-			goto end_st_conn_start;
-		}
-	}
-
-	iot_os_eventgroup_clear_bits(ctx->usr_events, IOT_USR_INTERACT_BIT_ALL);
-	curr_events = iot_os_eventgroup_wait_bits(ctx->usr_events,
-		IOT_USR_INTERACT_BIT_ALL, true, IOT_OS_MAX_DELAY);
-
-	if (curr_events & IOT_USR_INTERACT_BIT_PROV_CONFIRM) {
-		if (ctx->devconf.ownership_validation_type & IOT_OVF_TYPE_BUTTON) {
-			_do_status_report(ctx, IOT_STATE_PROV_CONFIRM, false);
-		}
-
-		iot_err = IOT_ERROR_NONE;
-	} else {
-		if (ctx->es_http_ready) {
-			ctx->es_http_ready = false;
-			iot_easysetup_deinit(ctx);
+			UNSET_STATUS_CB();
 		}
 
 		if (ctx->es_res_created) {
 			_delete_easysetup_resources_all(ctx);
 		}
-
-		if (curr_events & IOT_USR_INTERACT_BIT_PROV_DONE) {
-			iot_err = IOT_ERROR_NONE;
-		} else {
-			IOT_ERROR("Can't go to PROV_CONFIRM (0x%0x)", curr_events);
-			iot_err = IOT_ERROR_TIMEOUT;
-		}
+		goto end_st_conn_start;
 	}
+
+	WAIT_USR_INTERACT();
 
 	IOT_INFO("%s done (%d)", __func__, iot_err);
 	IOT_DUMP_MAIN(INFO, BASE, iot_err);
@@ -1645,20 +1820,290 @@ end_st_conn_start:
 int st_conn_cleanup(IOT_CTX *iot_ctx, bool reboot)
 {
 	iot_error_t iot_err;
+	unsigned char curr_events;
 	struct iot_context *ctx = (struct iot_context*)iot_ctx;
 
-	if (!ctx)
+	if (!IS_CTX_VALID(ctx))
+		return IOT_ERROR_INVALID_ARGS;
+
+	if (iot_os_mutex_lock(&ctx->st_conn_lock) != IOT_OS_TRUE)
 		return IOT_ERROR_BAD_REQ;
+
+	IOT_INFO("%s start (%d)", __func__, reboot);
+	IOT_DUMP_MAIN(INFO, BASE, reboot);
+
+	/* remove all queued commands */
+	iot_os_mutex_lock(&ctx->iot_cmd_lock);
+	_throw_away_all_cmd_queue(ctx);
+	iot_os_mutex_unlock(&ctx->iot_cmd_lock);
+
+	iot_os_eventgroup_clear_bits(ctx->usr_events, IOT_USR_INTERACT_BIT_CLEANUP_DONE);
 
 	iot_err = iot_command_send(ctx,
 			IOT_COMMAND_SELF_CLEANUP, &reboot, sizeof(bool));
-
-	if ((iot_err == IOT_ERROR_NONE) && reboot) {
-		/* reboot case : infinite waiting for system reboot */
-		iot_os_delay(IOT_OS_MAX_DELAY);
-	} else if (iot_err == IOT_ERROR_NONE) {
-		iot_os_delay(1000);
+	if (iot_err != IOT_ERROR_NONE) {
+		IOT_ERROR("failed to send cleanup(%d)", iot_err);
+		IOT_DUMP_MAIN(ERROR, BASE, iot_err);
+		goto err_cleanup;
 	}
 
+	curr_events = iot_os_eventgroup_wait_bits(ctx->usr_events,
+		IOT_USR_INTERACT_BIT_CLEANUP_DONE, true, (NEXT_STATE_TIMEOUT_MS * 2));
+
+	if (!(curr_events & IOT_USR_INTERACT_BIT_CLEANUP_DONE)) {
+		IOT_ERROR("Timeout happened for st_conn_cleanup");
+		IOT_DUMP_MAIN(ERROR, BASE, 0x8BADF00D);
+		iot_err = IOT_ERROR_TIMEOUT;
+	}
+
+	IOT_INFO("%s done (%d)", __func__, iot_err);
+	IOT_DUMP_MAIN(INFO, BASE, iot_err);
+
+err_cleanup:
+	iot_os_mutex_unlock(&ctx->st_conn_lock);
+
+	return iot_err;
+}
+
+int st_conn_start_ex(IOT_CTX *iot_ctx, iot_ext_args_t *ext_args)
+{
+	struct iot_state_data state_data;
+	iot_error_t iot_err;
+	struct iot_context *ctx = (struct iot_context*)iot_ctx;
+	unsigned char curr_events;
+	bool cmd_only;
+
+	if (!IS_CTX_VALID(ctx) || !ext_args) {
+		IOT_ERROR("invalid parameters\n");
+		return IOT_ERROR_INVALID_ARGS;
+	}
+
+	if ((ext_args->start_pt != IOT_STATUS_CONNECTING) &&
+			(ext_args->start_pt != IOT_STATUS_PROVISIONING)) {
+		IOT_ERROR("Unsupported request (%d)\n", ext_args->start_pt);
+		return IOT_ERROR_BAD_REQ;
+	}
+
+	if (!(ext_args->skip_usr_confirm) &&
+			(ctx->devconf.ownership_validation_type & IOT_OVF_TYPE_BUTTON)) {
+		if (!ext_args->status_cb && (ext_args->start_pt == IOT_STATUS_PROVISIONING)) {
+			IOT_ERROR("There is no status_cb for otm");
+			return IOT_ERROR_BAD_REQ;
+		}
+	}
+
+	if (iot_os_mutex_lock(&ctx->st_conn_lock) != IOT_OS_TRUE)
+		return IOT_ERROR_BAD_REQ;
+
+	IOT_INFO("%s start (%d/%d)", __func__,
+		ext_args->start_pt, ext_args->skip_usr_confirm);
+	IOT_DUMP_MAIN(INFO, BASE, ((ext_args->start_pt << 8u) | ext_args->skip_usr_confirm));
+
+	if ((ctx->curr_state != IOT_STATE_UNKNOWN) || (ctx->req_state != IOT_STATE_UNKNOWN)) {
+		IOT_WARN("iot-core is already working(%d), stop & remove all cmd first",
+			ctx->curr_state);
+		IOT_DUMP_MAIN(WARN, BASE, ctx->curr_state);
+
+		/* remove all queued commands */
+		iot_os_mutex_lock(&ctx->iot_cmd_lock);
+		_throw_away_all_cmd_queue(ctx);
+		iot_os_mutex_unlock(&ctx->iot_cmd_lock);
+
+		/* if there is previous connection, disconnect it first. */
+		if (ctx->evt_mqttcli != NULL) {
+			IOT_INFO("There is previous connecting, disconnect it first.\n");
+			iot_es_disconnect(ctx, IOT_CONNECT_TYPE_COMMUNICATION);
+		}
+
+		if (ctx->reg_mqttcli != NULL) {
+			IOT_INFO("There is active registering, disconnect it first.\n");
+			iot_es_disconnect(ctx, IOT_CONNECT_TYPE_REGISTRATION);
+		}
+
+		iot_os_eventgroup_clear_bits(ctx->usr_events, IOT_USR_INTERACT_BIT_STATE_UNKNOWN);
+
+		/* change its state by UNKNOWN to reset all */
+		iot_err = iot_state_update(ctx, IOT_STATE_UNKNOWN, 0);
+		if (iot_err != IOT_ERROR_NONE) {
+			IOT_ERROR("failed to change IOT_STATE_UNKNOWN(%d)", iot_err);
+			IOT_DUMP_MAIN(ERROR, BASE, iot_err);
+			goto end_st_conn_start_ex;
+		}
+
+		/* Wait until IOT_STATE_UNKNOWN changing done */
+		curr_events = iot_os_eventgroup_wait_bits(ctx->usr_events,
+			IOT_USR_INTERACT_BIT_STATE_UNKNOWN, true, (NEXT_STATE_TIMEOUT_MS * 2));
+
+		if (!(curr_events & IOT_USR_INTERACT_BIT_STATE_UNKNOWN)) {
+			IOT_ERROR("Timeout happened to change IOT_STATE_UNKNOWN");
+			IOT_DUMP_MAIN(ERROR, BASE, 0x8BADF00D);
+			iot_err = IOT_ERROR_TIMEOUT;
+			goto end_st_conn_start_ex;
+		}
+	}
+
+	/* Forcely set iot_state by initialized */
+	ctx->curr_state = ctx->req_state = IOT_STATE_INITIALIZED;
+
+	if (ext_args->start_pt == IOT_STATUS_CONNECTING) {
+		iot_os_eventgroup_clear_bits(ctx->usr_events, IOT_USR_INTERACT_BIT_CMD_DONE);
+		cmd_only = true;
+
+		/* Check if STDK can try to connect to sever */
+		iot_err = iot_command_send(ctx,
+				IOT_COMMAND_CHECK_PROV_STATUS, &cmd_only, sizeof(bool));
+		if (iot_err != IOT_ERROR_NONE) {
+			IOT_ERROR("failed to send check_prov(%d)", iot_err);
+			IOT_DUMP_MAIN(ERROR, BASE, iot_err);
+			goto end_st_conn_start_ex;
+		}
+
+		curr_events = iot_os_eventgroup_wait_bits(ctx->usr_events,
+			IOT_USR_INTERACT_BIT_CMD_DONE, true, (NEXT_STATE_TIMEOUT_MS * 2));
+
+		if (!(curr_events & IOT_USR_INTERACT_BIT_CMD_DONE)) {
+			IOT_ERROR("Timeout happened for check_prov");
+			iot_err = IOT_ERROR_TIMEOUT;
+			goto end_st_conn_start_ex;
+		}
+
+		if (ctx->iot_reg_data.new_reged) {
+			IOT_ERROR("Can't support request to go to connecting");
+			iot_err = IOT_ERROR_BAD_REQ;
+			goto end_st_conn_start_ex;
+		}
+
+		ctx->iot_reg_data.updated = false;
+		state_data.iot_state = IOT_STATE_PROV_DONE;
+		state_data.opt = IOT_STATE_OPT_NONE;
+	} else {
+		if (ctx->es_res_created) {
+			IOT_WARN("Already easysetup resources are created!!");
+		} else {
+			iot_err = _create_easysetup_resources(ctx, ext_args->pin_num);
+			if (iot_err != IOT_ERROR_NONE) {
+				IOT_ERROR("failed to create easysetup resources(%d)", iot_err);
+				IOT_DUMP_MAIN(ERROR, BASE, iot_err);
+				goto end_st_conn_start_ex;
+			}
+		}
+
+		ctx->iot_reg_data.new_reged = true;
+		state_data.iot_state = IOT_STATE_PROV_ENTER;
+		state_data.opt = IOT_STATE_OPT_NONE;
+
+		if (ext_args->skip_usr_confirm) {
+			ctx->add_justworks = true;
+			IOT_DEBUG("Skip user confirm adding by JUSTWORK");
+		} else {
+			ctx->add_justworks = false;
+		}
+	}
+
+	if (ext_args->status_cb) {
+		SET_STATUS_CB(ext_args->status_cb, ext_args->maps, ext_args->usr_data);
+	}
+
+	if (ext_args->start_pt == IOT_STATUS_PROVISIONING) {
+		iot_os_eventgroup_clear_bits(ctx->usr_events, IOT_USR_INTERACT_BITS_ST_CONN);
+	}
+
+	iot_err = iot_command_send(ctx, IOT_COMMNAD_STATE_UPDATE,
+				&state_data, sizeof(struct iot_state_data));
+
+	if (iot_err != IOT_ERROR_NONE) {
+		IOT_ERROR("failed to send command(%d)", iot_err);
+		IOT_DUMP_MAIN(ERROR, BASE, iot_err);
+		if (ctx->status_cb) {
+			UNSET_STATUS_CB();
+		}
+
+		if (ctx->es_res_created) {
+			_delete_easysetup_resources_all(ctx);
+		}
+		goto end_st_conn_start_ex;
+	}
+
+	if (ext_args->start_pt == IOT_STATUS_PROVISIONING) {
+		WAIT_USR_INTERACT();
+	}
+
+	IOT_INFO("%s done (%d)", __func__, iot_err);
+	IOT_DUMP_MAIN(INFO, BASE, iot_err);
+
+end_st_conn_start_ex:
+	iot_os_mutex_unlock(&ctx->st_conn_lock);
+	return iot_err;
+}
+
+int st_info_get(IOT_CTX *iot_ctx, iot_info_type_t info_type, iot_info_data_t *info_data)
+{
+	iot_error_t iot_err = IOT_ERROR_NONE;
+	struct iot_context *ctx = (struct iot_context*)iot_ctx;
+	unsigned char curr_events;
+	bool cmd_only;
+
+	if (!IS_CTX_VALID(ctx) || !info_data) {
+		IOT_ERROR("invalid parameters\n");
+		return IOT_ERROR_INVALID_ARGS;
+	}
+
+	if (iot_os_mutex_lock(&ctx->st_conn_lock) != IOT_OS_TRUE)
+		return IOT_ERROR_BAD_REQ;
+
+	IOT_INFO("%s start (%d)", __func__, info_type);
+	IOT_DUMP_MAIN(INFO, BASE, info_type);
+
+	switch (info_type) {
+	case IOT_INFO_TYPE_IOT_STATUS_AND_STAT:
+		if (ctx->reported_stat) {
+			info_data->st_status.iot_status = (ctx->reported_stat & IOT_STATUS_ALL);
+			info_data->st_status.stat_lv = (ctx->reported_stat >> 8u);
+		} else {
+			IOT_WARN("There is no reported_stat!!");
+			iot_err = IOT_ERROR_BAD_REQ;
+		}
+		break;
+
+	case IOT_INFO_TYPE_IOT_PROVISIONED:
+		iot_os_eventgroup_clear_bits(ctx->usr_events, IOT_USR_INTERACT_BIT_CMD_DONE);
+		cmd_only = true;
+
+		/* Check if STDK can try to connect to sever */
+		iot_err = iot_command_send(ctx,
+				IOT_COMMAND_CHECK_PROV_STATUS, &cmd_only, sizeof(bool));
+		if (iot_err != IOT_ERROR_NONE) {
+			IOT_ERROR("failed to send check_prov(%d)", iot_err);
+			IOT_DUMP_MAIN(ERROR, BASE, iot_err);
+			goto end_st_info_get;
+		}
+
+		curr_events = iot_os_eventgroup_wait_bits(ctx->usr_events,
+			IOT_USR_INTERACT_BIT_CMD_DONE, true, (NEXT_STATE_TIMEOUT_MS * 2));
+
+		if (!(curr_events & IOT_USR_INTERACT_BIT_CMD_DONE)) {
+			IOT_ERROR("Timeout happened for check_prov");
+			iot_err = IOT_ERROR_TIMEOUT;
+			goto end_st_info_get;
+		}
+
+		if (ctx->iot_reg_data.new_reged) {
+			info_data->provisioned = false;
+		} else {
+			info_data->provisioned = true;
+		}
+		break;
+
+	default:
+		IOT_ERROR("Unsupported iot_info_type!!(%d)\n", info_type);
+		iot_err = IOT_ERROR_INVALID_ARGS;
+		break;
+	}
+
+	IOT_INFO("%s done (%d)", __func__, iot_err);
+	IOT_DUMP_MAIN(INFO, BASE, iot_err);
+
+end_st_info_get:
+	iot_os_mutex_unlock(&ctx->st_conn_lock);
 	return iot_err;
 }

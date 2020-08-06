@@ -53,14 +53,50 @@ const static struct iot_caps_mediaInputSource {
     const struct mediaInputSource_attr_inputSource {
         const char *name;
         const unsigned char property;
-        const unsigned char value_type;
+        const unsigned char valueType;
         const char *values[CAP_ENUM_MEDIAINPUTSOURCE_INPUTSOURCE_VALUE_MAX];
+        const char *value_AM;
+        const char *value_CD;
+        const char *value_FM;
+        const char *value_HDMI;
+        const char *value_HDMI1;
+        const char *value_HDMI2;
+        const char *value_HDMI3;
+        const char *value_HDMI4;
+        const char *value_HDMI5;
+        const char *value_HDMI6;
+        const char *value_digitalTv;
+        const char *value_USB;
+        const char *value_YouTube;
+        const char *value_aux;
+        const char *value_bluetooth;
+        const char *value_digital;
+        const char *value_melon;
+        const char *value_wifi;
     } attr_inputSource;
     const struct mediaInputSource_attr_supportedInputSources {
         const char *name;
         const unsigned char property;
-        const unsigned char value_type;
+        const unsigned char valueType;
         const char *values[CAP_ENUM_MEDIAINPUTSOURCE_SUPPORTEDINPUTSOURCES_VALUE_MAX];
+        const char *value_AM;
+        const char *value_CD;
+        const char *value_FM;
+        const char *value_HDMI;
+        const char *value_HDMI1;
+        const char *value_HDMI2;
+        const char *value_HDMI3;
+        const char *value_HDMI4;
+        const char *value_HDMI5;
+        const char *value_HDMI6;
+        const char *value_digitalTv;
+        const char *value_USB;
+        const char *value_YouTube;
+        const char *value_aux;
+        const char *value_bluetooth;
+        const char *value_digital;
+        const char *value_melon;
+        const char *value_wifi;
     } attr_supportedInputSources;
     const struct mediaInputSource_cmd_setInputSource { const char* name; } cmd_setInputSource;
 } caps_helper_mediaInputSource = {
@@ -68,14 +104,50 @@ const static struct iot_caps_mediaInputSource {
     .attr_inputSource = {
         .name = "inputSource",
         .property = ATTR_SET_VALUE_REQUIRED,
-        .value_type = VALUE_TYPE_STRING,
+        .valueType = VALUE_TYPE_STRING,
         .values = {"AM", "CD", "FM", "HDMI", "HDMI1", "HDMI2", "HDMI3", "HDMI4", "HDMI5", "HDMI6", "digitalTv", "USB", "YouTube", "aux", "bluetooth", "digital", "melon", "wifi"},
+        .value_AM = "AM",
+        .value_CD = "CD",
+        .value_FM = "FM",
+        .value_HDMI = "HDMI",
+        .value_HDMI1 = "HDMI1",
+        .value_HDMI2 = "HDMI2",
+        .value_HDMI3 = "HDMI3",
+        .value_HDMI4 = "HDMI4",
+        .value_HDMI5 = "HDMI5",
+        .value_HDMI6 = "HDMI6",
+        .value_digitalTv = "digitalTv",
+        .value_USB = "USB",
+        .value_YouTube = "YouTube",
+        .value_aux = "aux",
+        .value_bluetooth = "bluetooth",
+        .value_digital = "digital",
+        .value_melon = "melon",
+        .value_wifi = "wifi",
     },
     .attr_supportedInputSources = {
         .name = "supportedInputSources",
         .property = ATTR_SET_VALUE_REQUIRED | ATTR_SET_VALUE_ARRAY,
-        .value_type = VALUE_TYPE_STRING,
+        .valueType = VALUE_TYPE_STRING,
         .values = {"AM", "CD", "FM", "HDMI", "HDMI1", "HDMI2", "HDMI3", "HDMI4", "HDMI5", "HDMI6", "digitalTv", "USB", "YouTube", "aux", "bluetooth", "digital", "melon", "wifi"},
+        .value_AM = "AM",
+        .value_CD = "CD",
+        .value_FM = "FM",
+        .value_HDMI = "HDMI",
+        .value_HDMI1 = "HDMI1",
+        .value_HDMI2 = "HDMI2",
+        .value_HDMI3 = "HDMI3",
+        .value_HDMI4 = "HDMI4",
+        .value_HDMI5 = "HDMI5",
+        .value_HDMI6 = "HDMI6",
+        .value_digitalTv = "digitalTv",
+        .value_USB = "USB",
+        .value_YouTube = "YouTube",
+        .value_aux = "aux",
+        .value_bluetooth = "bluetooth",
+        .value_digital = "digital",
+        .value_melon = "melon",
+        .value_wifi = "wifi",
     },
     .cmd_setInputSource = { .name = "setInputSource" }, // arguments: mode(string) 
 };

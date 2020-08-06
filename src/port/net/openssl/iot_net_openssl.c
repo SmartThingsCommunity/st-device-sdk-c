@@ -71,12 +71,16 @@ static int _iot_net_select(iot_net_interface_t *n, unsigned int timeout_ms)
 	return ret;
 }
 
-static int _iot_net_ssl_read(iot_net_interface_t *n, unsigned char *buffer, int len, iot_os_timer timer)
+static int _iot_net_ssl_read(iot_net_interface_t *n, unsigned char *buffer, size_t len, iot_os_timer timer)
 {
 	int recvLen = 0, rc = 0;
 
 	struct timeval timeout;
 	fd_set fdset;
+
+	if (n == NULL || buffer == NULL || timer == NULL) {
+		return -1;
+	}
 
 	FD_ZERO(&fdset);
 	FD_SET(n->context.socket, &fdset);
@@ -84,7 +88,7 @@ static int _iot_net_ssl_read(iot_net_interface_t *n, unsigned char *buffer, int 
 	timeout.tv_sec =  iot_os_timer_left_ms(timer) / 1000;
 	timeout.tv_usec = (iot_os_timer_left_ms(timer) % 1000) * 1000;
 
-	if (SSL_pending(n->context.ssl) > 0 || select(n->context.socket + 1, &fdset, NULL, NULL, &timeout) > 0) {
+	if (len > 0 && (SSL_pending(n->context.ssl) > 0 || select(n->context.socket + 1, &fdset, NULL, NULL, &timeout) > 0)) {
 		do {
 			rc = SSL_read(n->context.ssl, buffer + recvLen, len - recvLen);
 

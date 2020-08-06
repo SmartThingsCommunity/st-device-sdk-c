@@ -39,7 +39,10 @@ SRCS	+= $(wildcard $(SECURITY_DIR)/*.c)
 ifneq ($(findstring, "CONFIG_STDK_IOT_CORE_SECURITY_BACKEND_SOFTWARE", $(CFLAGS_CONFIG)), '')
 SRCS	+= $(wildcard $(SECURITY_DIR)/backend/software/*.c)
 endif
-
+SRCS	+= $(wildcard $(SECURITY_DIR)/helper/libsodium/*.c)
+ifneq ($(findstring, "CONFIG_STDK_IOT_CORE_USE_MBEDTLS", $(CFLAGS_CONFIG)), '')
+SRCS	+= $(wildcard $(SECURITY_DIR)/helper/mbedtls/*.c)
+endif
 
 OBJS	= $(SRCS:%.c=%.o)
 TARGET	= libiotcore.a
@@ -66,10 +69,6 @@ INCS	+= -I$(JSON_DIR)/cJSON
 INCS	+= -I$(CURL_DIR)/curl/include
 INCS	+= -I$(MBEDTLS_DIR)/mbedtls/include
 INCS	+= -I$(LIBSODIUM_DIR)/libsodium/src/libsodium/include -I$(LIBSODIUM_DIR)/libsodium/src/libsodium/include/sodium -I$(LIBSODIUM_DIR)/port/include
-
-ifneq ($(findstring, "CONFIG_STDK_IOT_CORE_USE_MBEDTLS", $(CFLAGS_CONFIG)), '')
-	SRCS += $(wildcard $(CRYPTO_DIR)/mbedtls/*.c)
-endif
 
 LOCAL_CFLAGS := $(INCS)
 PREFIX := stdk_

@@ -44,8 +44,18 @@ const static struct iot_caps_robotCleanerMovement {
     const struct robotCleanerMovement_attr_robotCleanerMovement {
         const char *name;
         const unsigned char property;
-        const unsigned char value_type;
+        const unsigned char valueType;
         const char *values[CAP_ENUM_ROBOTCLEANERMOVEMENT_ROBOTCLEANERMOVEMENT_VALUE_MAX];
+        const char *value_homing;
+        const char *value_idle;
+        const char *value_charging;
+        const char *value_alarm;
+        const char *value_powerOff;
+        const char *value_reserve;
+        const char *value_point;
+        const char *value_after;
+        const char *value_cleaning;
+        const char *value_pause;
     } attr_robotCleanerMovement;
     const struct robotCleanerMovement_cmd_setRobotCleanerMovement { const char* name; } cmd_setRobotCleanerMovement;
 } caps_helper_robotCleanerMovement = {
@@ -53,8 +63,18 @@ const static struct iot_caps_robotCleanerMovement {
     .attr_robotCleanerMovement = {
         .name = "robotCleanerMovement",
         .property = ATTR_SET_VALUE_REQUIRED,
-        .value_type = VALUE_TYPE_STRING,
+        .valueType = VALUE_TYPE_STRING,
         .values = {"homing", "idle", "charging", "alarm", "powerOff", "reserve", "point", "after", "cleaning", "pause"},
+        .value_homing = "homing",
+        .value_idle = "idle",
+        .value_charging = "charging",
+        .value_alarm = "alarm",
+        .value_powerOff = "powerOff",
+        .value_reserve = "reserve",
+        .value_point = "point",
+        .value_after = "after",
+        .value_cleaning = "cleaning",
+        .value_pause = "pause",
     },
     .cmd_setRobotCleanerMovement = { .name = "setRobotCleanerMovement" }, // arguments: mode(string) 
 };

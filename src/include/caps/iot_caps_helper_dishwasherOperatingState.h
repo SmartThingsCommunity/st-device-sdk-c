@@ -53,25 +53,42 @@ const static struct iot_caps_dishwasherOperatingState {
     const struct dishwasherOperatingState_attr_completionTime {
         const char *name;
         const unsigned char property;
-        const unsigned char value_type;
+        const unsigned char valueType;
     } attr_completionTime;
     const struct dishwasherOperatingState_attr_supportedMachineStates {
         const char *name;
         const unsigned char property;
-        const unsigned char value_type;
+        const unsigned char valueType;
         const char *values[CAP_ENUM_DISHWASHEROPERATINGSTATE_SUPPORTEDMACHINESTATES_VALUE_MAX];
+        const char *value_pause;
+        const char *value_run;
+        const char *value_stop;
     } attr_supportedMachineStates;
     const struct dishwasherOperatingState_attr_machineState {
         const char *name;
         const unsigned char property;
-        const unsigned char value_type;
+        const unsigned char valueType;
         const char *values[CAP_ENUM_DISHWASHEROPERATINGSTATE_MACHINESTATE_VALUE_MAX];
+        const char *value_pause;
+        const char *value_run;
+        const char *value_stop;
     } attr_machineState;
     const struct dishwasherOperatingState_attr_dishwasherJobState {
         const char *name;
         const unsigned char property;
-        const unsigned char value_type;
+        const unsigned char valueType;
         const char *values[CAP_ENUM_DISHWASHEROPERATINGSTATE_DISHWASHERJOBSTATE_VALUE_MAX];
+        const char *value_airwash;
+        const char *value_cooling;
+        const char *value_drying;
+        const char *value_finish;
+        const char *value_preDrain;
+        const char *value_prewash;
+        const char *value_rinse;
+        const char *value_spin;
+        const char *value_unknown;
+        const char *value_wash;
+        const char *value_wrinklePrevent;
     } attr_dishwasherJobState;
     const struct dishwasherOperatingState_cmd_setMachineState { const char* name; } cmd_setMachineState;
 } caps_helper_dishwasherOperatingState = {
@@ -79,25 +96,42 @@ const static struct iot_caps_dishwasherOperatingState {
     .attr_completionTime = {
         .name = "completionTime",
         .property = ATTR_SET_VALUE_REQUIRED,
-        .value_type = VALUE_TYPE_STRING,
+        .valueType = VALUE_TYPE_STRING,
     },
     .attr_supportedMachineStates = {
         .name = "supportedMachineStates",
         .property = ATTR_SET_VALUE_REQUIRED | ATTR_SET_VALUE_ARRAY,
-        .value_type = VALUE_TYPE_STRING,
+        .valueType = VALUE_TYPE_STRING,
         .values = {"pause", "run", "stop"},
+        .value_pause = "pause",
+        .value_run = "run",
+        .value_stop = "stop",
     },
     .attr_machineState = {
         .name = "machineState",
         .property = ATTR_SET_VALUE_REQUIRED,
-        .value_type = VALUE_TYPE_STRING,
+        .valueType = VALUE_TYPE_STRING,
         .values = {"pause", "run", "stop"},
+        .value_pause = "pause",
+        .value_run = "run",
+        .value_stop = "stop",
     },
     .attr_dishwasherJobState = {
         .name = "dishwasherJobState",
         .property = ATTR_SET_VALUE_REQUIRED,
-        .value_type = VALUE_TYPE_STRING,
+        .valueType = VALUE_TYPE_STRING,
         .values = {"airwash", "cooling", "drying", "finish", "preDrain", "prewash", "rinse", "spin", "unknown", "wash", "wrinklePrevent"},
+        .value_airwash = "airwash",
+        .value_cooling = "cooling",
+        .value_drying = "drying",
+        .value_finish = "finish",
+        .value_preDrain = "preDrain",
+        .value_prewash = "prewash",
+        .value_rinse = "rinse",
+        .value_spin = "spin",
+        .value_unknown = "unknown",
+        .value_wash = "wash",
+        .value_wrinklePrevent = "wrinklePrevent",
     },
     .cmd_setMachineState = { .name = "setMachineState" }, // arguments: state(string) 
 };

@@ -35,8 +35,9 @@ const static struct iot_caps_relativeHumidityMeasurement {
     const struct relativeHumidityMeasurement_attr_humidity {
         const char *name;
         const unsigned char property;
-        const unsigned char value_type;
+        const unsigned char valueType;
         const char *units[CAP_ENUM_RELATIVEHUMIDITYMEASUREMENT_HUMIDITY_UNIT_MAX];
+        const char *unit_percent;
         const double min;
         const double max;
     } attr_humidity;
@@ -45,8 +46,9 @@ const static struct iot_caps_relativeHumidityMeasurement {
     .attr_humidity = {
         .name = "humidity",
         .property = ATTR_SET_VALUE_MIN | ATTR_SET_VALUE_MAX | ATTR_SET_VALUE_REQUIRED,
-        .value_type = VALUE_TYPE_NUMBER,
+        .valueType = VALUE_TYPE_NUMBER,
         .units = {"%"},
+        .unit_percent = "%",
         .min = 0,
         .max = 100,
     },

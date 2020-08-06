@@ -30,12 +30,12 @@ const static struct iot_caps_imageCapture {
     const struct imageCapture_attr_image {
         const char *name;
         const unsigned char property;
-        const unsigned char value_type;
+        const unsigned char valueType;
     } attr_image;
     const struct imageCapture_attr_captureTime {
         const char *name;
         const unsigned char property;
-        const unsigned char value_type;
+        const unsigned char valueType;
     } attr_captureTime;
     const struct imageCapture_cmd_take { const char* name; } cmd_take;
 } caps_helper_imageCapture = {
@@ -43,12 +43,12 @@ const static struct iot_caps_imageCapture {
     .attr_image = {
         .name = "image",
         .property = ATTR_SET_VALUE_REQUIRED,
-        .value_type = VALUE_TYPE_STRING,
+        .valueType = VALUE_TYPE_STRING,
     },
     .attr_captureTime = {
         .name = "captureTime",
         .property = ATTR_SET_VALUE_REQUIRED,
-        .value_type = VALUE_TYPE_STRING,
+        .valueType = VALUE_TYPE_STRING,
     },
     .cmd_take = { .name = "take" }, // arguments: correlationId(string) reason(string) 
 };

@@ -9,13 +9,13 @@ This product includes software under Apache License 2.0 developed by Samsung Ele
 This software includes third party software subject to the following licensing:
  - Embedded C MQTT Client - From the Paho project - [ Dual License : EPL 1.0 or EDL 1.0 ]
    : st-device-sdk-c/src/mqtt/, st-device-sdk-c/src/include/mqtt/, st-device-sdk-c/src/port/os/
- - http daemon - From LWIP - [ BSD 3-clause License ]
-   : st-device-sdk-c/src/easysetup/http/lwip_httpd/
+ - http parser - From Pico HTTP server - [ MIT License ]
+   : st-device-sdk-c/src/easysetup/http/iot_easysetup_http_parser.c
  - mbedtls - [ Apache License 2.0 ]
    : st-iot-device-sdk-c/src/deps/mbedtls/port/posix/include/mbedtls/posix_config.h
 
 
-Copyright (c) 2019 Samsung Electronics All Rights Reserved.
+Copyright (c) 2019-2020 Samsung Electronics All Rights Reserved.
 
 Licensed under the Apache License, Version 2.0 (the "License");
 you may not use this file except in compliance with the License.
@@ -290,3 +290,31 @@ INTERRUPTION) HOWEVER CAUSED AND ON ANY THEORY OF LIABILITY, WHETHER IN
 CONTRACT, STRICT LIABILITY, OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING
 IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY
 OF SUCH DAMAGE.
+
+
+
+
+MIT License
+
+Copyright (c) 2020 Samsung Electronics
+Copyright (c) 2019 Aleksey Kurepin
+
+Permission is hereby granted, free of charge, to any person obtaining a copy
+of this software and associated documentation files (the "Software"), to deal
+in the Software without restriction, including without limitation the rights
+to use, copy, modify, merge, publish, distribute, sublicense, and/or sell
+copies of the Software, and to permit persons to whom the Software is
+furnished to do so, subject to the following conditions:
+
+The above copyright notice and this permission notice shall be included in all
+copies or substantial portions of the Software.
+
+THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR
+IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY,
+FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL THE
+AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER
+LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM,
+OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
+SOFTWARE.
+
+http message parser has come from Pico HTTP Server (https://github.com/foxweb/pico)

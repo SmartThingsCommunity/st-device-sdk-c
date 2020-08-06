@@ -39,7 +39,8 @@ static char sample_device_info[] = {
 	"}"
 };
 
-static const char *sample_device_num = "STDKtestc77078cc";
+static const char *sample_mnid = "test";
+static const char *sample_sn = "STDKtestc77078cc";
 
 int TC_iot_wt_create_memleak_detect_setup(void **state)
 {
@@ -67,33 +68,60 @@ int TC_iot_wt_create_memleak_detect_teardown(void **state)
 void TC_iot_wt_create_null_parameters(void **state)
 {
 	iot_error_t err;
+	iot_wt_params_t wt_params;
 	iot_security_buffer_t token_buf = { 0 };
-	iot_security_buffer_t sn_buf = { 0 };
 	UNUSED(state);
 
-	// Given: All parameters are null
-	// When
+	// When: All parameters are null
 	err = iot_wt_create(NULL, NULL);
 	// Then: returns error
 	assert_int_not_equal(err, IOT_ERROR_NONE);
 
-	// Given
-	// When: token, sn is null
-	err = iot_wt_create(NULL, NULL);
-	// Then: returns error
-	assert_int_not_equal(err, IOT_ERROR_NONE);
-
-	// Given
-	sn_buf.p = (unsigned char *)sample_device_num;
-	sn_buf.len = strlen(sample_device_num);
 	// When: token is null
-	err = iot_wt_create(&sn_buf, NULL);
+	err = iot_wt_create(&wt_params, NULL);
 	// Then: returns error
 	assert_int_not_equal(err, IOT_ERROR_NONE);
 
-	// Given: All parameters
+	// Given: sn and mnid are null
+	memset(&wt_params, 0, sizeof(wt_params));
 	// When
-	err = iot_wt_create(&sn_buf, &token_buf);
+	err = iot_wt_create(&wt_params, &token_buf);
+	// Then: returns error
+	assert_int_not_equal(err, IOT_ERROR_NONE);
+
+	// Given: sn is null
+	memset(&wt_params, 0, sizeof(wt_params));
+	wt_params.mnid = (char *)sample_mnid;
+	wt_params.mnid_len = strlen(sample_mnid);
+	// When
+	err = iot_wt_create(&wt_params, &token_buf);
+	// Then: returns error
+	assert_int_not_equal(err, IOT_ERROR_NONE);
+
+	// Given: mnid is null
+	memset(&wt_params, 0, sizeof(wt_params));
+	wt_params.sn = (char *)sample_sn;
+	wt_params.sn_len = strlen(sample_sn);
+	// When
+	err = iot_wt_create(&wt_params, &token_buf);
+	// Then: returns error
+	assert_int_not_equal(err, IOT_ERROR_NONE);
+}
+
+void TC_iot_wt_create_success(void **state)
+{
+	iot_error_t err;
+	iot_wt_params_t wt_params;
+	iot_security_buffer_t token_buf = { 0 };
+	UNUSED(state);
+
+	// Given
+	wt_params.sn = (char *)sample_sn;
+	wt_params.sn_len = strlen(sample_sn);
+	wt_params.mnid = (char *)sample_mnid;
+	wt_params.mnid_len = strlen(sample_mnid);
+	// When
+	err = iot_wt_create(&wt_params, &token_buf);
 	// Then: returns success
 	assert_int_equal(err, IOT_ERROR_NONE);
 	assert_non_null(token_buf.p);

@@ -25,7 +25,11 @@
 #include "iot_easysetup.h"
 #include "iot_bsp_wifi.h"
 
+#if defined(CONFIG_STDK_IOT_CORE_EASYSETUP_X509)
 #define CONNECTION_TYPE "close"
+#else
+#define CONNECTION_TYPE "keep-alive"
+#endif
 #define MAX_PAYLOAD_LENGTH	1024
 #define ARRAY_SIZE(x) (int)(sizeof(x)/sizeof(x[0]))
 
@@ -125,6 +129,8 @@ iot_error_t _iot_easysetup_gen_get_payload(struct iot_context *ctx, int cmd, cha
 
 	if (cur_step < IOT_EASYSETUP_STEP_LOG_SYSTEMINFO)
 		ref_step++;
+	else
+		ref_step = 0;
 
 	err = iot_easysetup_request(ctx, cur_step, NULL);
 	if (err) {
@@ -232,6 +238,8 @@ iot_error_t _iot_easysetup_gen_post_payload(struct iot_context *ctx, int cmd, ch
 
 	if (cur_step < IOT_EASYSETUP_STEP_LOG_SYSTEMINFO)
 		ref_step++;
+	else
+		ref_step = 0;
 
 	err = iot_easysetup_request(ctx, cur_step, in_payload);
 	if (err) {

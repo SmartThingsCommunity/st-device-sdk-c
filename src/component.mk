@@ -23,6 +23,9 @@ else ifeq ($(CONFIG_STDK_IOT_CORE_BSP_SUPPORT_RTL8720C),y)
 else ifeq ($(CONFIG_STDK_IOT_CORE_BSP_SUPPORT_RTL8721C),y)
 	COMPONENT_SRCDIRS += port/bsp/rtl8721c
 	COMPONENT_ADD_INCLUDEDIRS += include/bsp/rtl8721c
+else ifeq ($(CONFIG_STDK_IOT_CORE_BSP_SUPPORT_EMW3166),y)
+	COMPONENT_SRCDIRS += port/bsp/emw3166
+	COMPONENT_ADD_INCLUDEDIRS += include/bsp/emw3166
 else ifeq ($(CONFIG_STDK_IOT_CORE_BSP_SUPPORT_TIZENRT),y)
 	COMPONENT_SRCDIRS += port/bsp/tizenrt
 	COMPONENT_ADD_INCLUDEDIRS += include/bsp/tizenrt
@@ -73,7 +76,11 @@ ifdef CONFIG_STDK_IOT_CORE_EASYSETUP_POSIX_TESTING
 COMPONENT_SRCDIRS += easysetup/posix_testing
 endif
 
+ifdef CONFIG_STDK_IOT_CORE_EASYSETUP_X509
+COMPONENT_SRCDIRS += easysetup/http/tls
+else
 COMPONENT_SRCDIRS += easysetup/http/tcp
+endif
 
 CPPFLAGS += -include $(COMPONENT_PATH)/include/iot_common.h
 

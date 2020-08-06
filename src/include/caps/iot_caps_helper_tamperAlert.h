@@ -36,16 +36,20 @@ const static struct iot_caps_tamperAlert {
     const struct tamperAlert_attr_tamper {
         const char *name;
         const unsigned char property;
-        const unsigned char value_type;
+        const unsigned char valueType;
         const char *values[CAP_ENUM_TAMPERALERT_TAMPER_VALUE_MAX];
+        const char *value_clear;
+        const char *value_detected;
     } attr_tamper;
 } caps_helper_tamperAlert = {
     .id = "tamperAlert",
     .attr_tamper = {
         .name = "tamper",
         .property = ATTR_SET_VALUE_REQUIRED,
-        .value_type = VALUE_TYPE_STRING,
+        .valueType = VALUE_TYPE_STRING,
         .values = {"clear", "detected"},
+        .value_clear = "clear",
+        .value_detected = "detected",
     },
 };
 

@@ -35,8 +35,9 @@ const static struct iot_caps_voltageMeasurement {
     const struct voltageMeasurement_attr_voltage {
         const char *name;
         const unsigned char property;
-        const unsigned char value_type;
+        const unsigned char valueType;
         const char *units[CAP_ENUM_VOLTAGEMEASUREMENT_VOLTAGE_UNIT_MAX];
+        const char *unit_V;
         const double min;
     } attr_voltage;
 } caps_helper_voltageMeasurement = {
@@ -44,8 +45,9 @@ const static struct iot_caps_voltageMeasurement {
     .attr_voltage = {
         .name = "voltage",
         .property = ATTR_SET_VALUE_MIN | ATTR_SET_VALUE_REQUIRED,
-        .value_type = VALUE_TYPE_NUMBER,
+        .valueType = VALUE_TYPE_NUMBER,
         .units = {"V"},
+        .unit_V = "V",
         .min = 0,
     },
 };

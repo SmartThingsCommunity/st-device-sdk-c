@@ -32,10 +32,11 @@
 #include "security/iot_security_storage.h"
 
 #define IOT_NVD_MAX_DATA_LEN (2048)
-#define IOT_NVD_MAX_ID_LEN (36) // Device/Location/Profile ID, SSID, SN
+#define IOT_NVD_MAX_ID_LEN (36)
 #define IOT_NVD_MAX_PW_LEN (64)
 #define IOT_NVD_MAX_BSSID_LEN (6)
 #define IOT_NVD_MAX_UID_LEN (128)
+#define IOT_NVD_MAX_SN_LEN (64)
 
 typedef enum iot_nv_io_mode {
 	IOT_NV_MODE_READ = 1,
@@ -98,7 +99,6 @@ iot_error_t _iot_nv_io_storage(const iot_nvd_t nv_id, iot_nv_io_mode_t mode, cha
 	iot_error_t err = IOT_ERROR_NONE;
 	iot_security_context_t *security_context;
 	iot_security_buffer_t data_buf = {0};
-	bool nv_append_null_terminated = 1;
 
 	IOT_DEBUG("id = %d, mode = %d", nv_id, mode);
 
@@ -137,7 +137,7 @@ iot_error_t _iot_nv_io_storage(const iot_nvd_t nv_id, iot_nv_io_mode_t mode, cha
 		}
 
 		memcpy(data, data_buf.p, data_buf.len);
-		/* null terminated string */
+		/* make null terminated string */
 		if (data_buf.len < data_len) {
 			data[data_buf.len] = '\0';
 		}
@@ -147,10 +147,6 @@ iot_error_t _iot_nv_io_storage(const iot_nvd_t nv_id, iot_nv_io_mode_t mode, cha
 	case IOT_NV_MODE_WRITE:
 		data_buf.p = (unsigned char *)data;
 		data_buf.len = data_len;
-
-		if (nv_append_null_terminated) {
-			data_buf.len += 1;
-		}
 
 		err = iot_security_storage_write(security_context, nv_id, &data_buf);
 		if (err != IOT_ERROR_NONE) {
@@ -834,7 +830,7 @@ iot_error_t iot_nv_get_serial_number(char** sn, size_t* len)
 
 	iot_error_t ret;
 	unsigned int size;
-	const int DATA_SIZE = IOT_NVD_MAX_ID_LEN + 1;
+	const int DATA_SIZE = IOT_NVD_MAX_SN_LEN + 1;
 	char* data = NULL;
 	char* new_buff = NULL;
 

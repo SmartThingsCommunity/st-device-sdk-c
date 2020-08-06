@@ -36,16 +36,20 @@ const static struct iot_caps_presenceSensor {
     const struct presenceSensor_attr_presence {
         const char *name;
         const unsigned char property;
-        const unsigned char value_type;
+        const unsigned char valueType;
         const char *values[CAP_ENUM_PRESENCESENSOR_PRESENCE_VALUE_MAX];
+        const char *value_present;
+        const char *value_not_present;
     } attr_presence;
 } caps_helper_presenceSensor = {
     .id = "presenceSensor",
     .attr_presence = {
         .name = "presence",
         .property = ATTR_SET_VALUE_REQUIRED,
-        .value_type = VALUE_TYPE_STRING,
+        .valueType = VALUE_TYPE_STRING,
         .values = {"present", "not present"},
+        .value_present = "present",
+        .value_not_present = "not present",
     },
 };
 

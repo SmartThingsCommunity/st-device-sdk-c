@@ -35,8 +35,9 @@ const static struct iot_caps_tvocMeasurement {
     const struct tvocMeasurement_attr_tvocLevel {
         const char *name;
         const unsigned char property;
-        const unsigned char value_type;
+        const unsigned char valueType;
         const char *units[CAP_ENUM_TVOCMEASUREMENT_TVOCLEVEL_UNIT_MAX];
+        const char *unit_ppm;
         const double min;
         const double max;
     } attr_tvocLevel;
@@ -45,8 +46,9 @@ const static struct iot_caps_tvocMeasurement {
     .attr_tvocLevel = {
         .name = "tvocLevel",
         .property = ATTR_SET_VALUE_MIN | ATTR_SET_VALUE_MAX | ATTR_SET_VALUE_REQUIRED | ATTR_SET_UNIT_REQUIRED,
-        .value_type = VALUE_TYPE_NUMBER,
+        .valueType = VALUE_TYPE_NUMBER,
         .units = {"ppm"},
+        .unit_ppm = "ppm",
         .min = 0,
         .max = 1000000,
     },
