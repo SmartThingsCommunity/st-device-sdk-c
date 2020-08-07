@@ -21,6 +21,11 @@
 
 #include "iot_main.h"
 
+#define SERVER_NOTI_TYPE_DEVICE_DELETED "device.deleted"
+#define SERVER_NOTI_TYPE_EXPIRED_JWT "expired.jwt"
+#define SERVER_NOTI_TYPE_RATE_LIMIT_REACHED "rate.limit.reached"
+#define SERVER_NOTI_TYPE_QUOTA_REACHED "quota.reached"
+
 enum iot_cap_unit_type {
 	IOT_CAP_UNIT_TYPE_UNUSED,
 	IOT_CAP_UNIT_TYPE_STRING,
