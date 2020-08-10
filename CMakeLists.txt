@@ -50,6 +50,7 @@ if(CMAKE_C_COMPILER_ID STREQUAL "GNU" AND CMAKE_BUILD_TYPE MATCHES UnitTest)
         iot_bsp_system_set_time_in_sec
         iot_os_delay
         iot_net_init
+        iot_bsp_wifi_set_mode
         )
 else()
     foreach(stdk_extra_cflags ${STDK_EXTRA_CFLAGS})
