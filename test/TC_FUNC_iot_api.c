@@ -626,3 +626,29 @@ void TC_iot_wifi_ctrl_request_IOT_WIFI_MODE_OFF(void **state) {
     // Teardown
     free(context);
 }
+
+void TC_iot_wifi_ctrl_request_IOT_WIFI_MODE_SCAN(void **state) {
+    iot_error_t err;
+    struct iot_context *context;
+    UNUSED(state);
+
+    // Given
+    context = (struct iot_context*) malloc(sizeof(struct iot_context));
+    assert_non_null(context);
+    memset(context, '\0', sizeof(struct iot_context));
+    will_return(__wrap_iot_bsp_wifi_get_scan_result, 5);
+    expect_value(__wrap_iot_bsp_wifi_set_mode, conf->mode, IOT_WIFI_MODE_SCAN);
+    will_return(__wrap_iot_bsp_wifi_set_mode, IOT_ERROR_NONE);
+
+    // When
+    err = iot_wifi_ctrl_request(context, IOT_WIFI_MODE_SCAN);
+
+    // Then
+    assert_int_equal(err, IOT_ERROR_NONE);
+    assert_int_equal(context->scan_num, 5);
+    assert_non_null(context->scan_result);
+
+    // Teardown
+    iot_os_free(context->scan_result);
+    free(context);
+}

@@ -56,6 +56,7 @@ void TC_iot_misc_info_load_success(void **state);
 void TC_iot_misc_info_store_invalid_parameters(void **state);
 void TC_iot_misc_info_store_success(void **state);
 void TC_iot_wifi_ctrl_request_IOT_WIFI_MODE_OFF(void **state);
+void TC_iot_wifi_ctrl_request_IOT_WIFI_MODE_SCAN(void **state);
 
 // TCs for iot_uuid.c
 void TC_iot_uuid_from_mac(void **state);
