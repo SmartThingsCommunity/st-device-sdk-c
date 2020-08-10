@@ -440,6 +440,9 @@ void TC_STATIC_es_wifiscaninfo_handler_success(void **state)
     server_cipher = _generate_server_cipher(device_cipher->iv.p, device_cipher->iv.len);
     assert_non_null(server_cipher);
     will_return(__wrap_iot_bsp_wifi_get_scan_result, 20);
+    expect_value(__wrap_iot_bsp_wifi_set_mode, conf->mode, IOT_WIFI_MODE_SCAN);
+    will_return(__wrap_iot_bsp_wifi_set_mode, IOT_ERROR_NONE);
+
     // When
     err = _es_wifiscaninfo_handler(context, &out_payload);
     // Then
