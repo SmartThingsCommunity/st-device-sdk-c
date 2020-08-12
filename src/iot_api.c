@@ -33,6 +33,7 @@
 #include "security/iot_security_helper.h"
 
 #include "JSON.h"
+#define ONBOARDINGID_MAX_LEN	13
 
 static void _set_cmd_status(struct iot_context *ctx, enum iot_command_type cmd_type)
 {
@@ -307,21 +308,17 @@ iot_error_t iot_api_onboarding_config_load(unsigned char *onboarding_config,
 
 	/* device_onboarding_id */
 	item = JSON_GET_OBJECT_ITEM(config, name_deviceOnboardingId);
-	if (!item) {
+	if (item) {
+		str_len = strlen(JSON_GET_STRING_VALUE(item));
+	}
+	if(!item || str_len > ONBOARDINGID_MAX_LEN) {
 #if defined(CONFIG_STDK_IOT_CORE_LOG_LEVEL_ERROR)
 		current_name = (char *)name_deviceOnboardingId;
 #endif
 		iot_err = IOT_ERROR_UNINITIALIZED;
 		goto load_out;
 	}
-	str_len = strlen(JSON_GET_STRING_VALUE(item));
-	if (str_len > 13) {
-#if defined(CONFIG_STDK_IOT_CORE_LOG_LEVEL_ERROR)
-		current_name = (char *)name_deviceOnboardingId;
-#endif
-		iot_err = IOT_ERROR_UNINITIALIZED;
-		goto load_out;
-	}
+
 	device_onboarding_id = iot_os_malloc(str_len + 1);
 	if (!device_onboarding_id) {
 		iot_err = IOT_ERROR_MEM_ALLOC;

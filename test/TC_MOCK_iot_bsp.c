@@ -83,3 +83,9 @@ iot_error_t __wrap_iot_bsp_system_set_time_in_sec(const char* time_in_sec)
     check_expected(time_in_sec);
     return IOT_ERROR_NONE;
 }
+
+iot_error_t __wrap_iot_bsp_wifi_set_mode(iot_wifi_conf *conf)
+{
+    check_expected(conf->mode);
+    return (int)mock();
+}

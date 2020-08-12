@@ -26,12 +26,14 @@ set(CMAKE_BUILD_TYPE "${CMAKE_BUILD_TYPE}" CACHE STRING
     FORCE
     )
 
-if(EXISTS ${stdk_config})
-    message("include stdk_config : ${stdk_config}")
-    include("${stdk_config}")
-else()
-    message("include default stdk_config")
-    include("stdkconfig.cmake")
+if(NOT STDK_IOT_CORE_USE_DEFINED_CONFIG)
+    if(EXISTS ${stdk_config})
+        message("include stdk_config : ${stdk_config}")
+        include("${stdk_config}")
+    else()
+        message("include default stdk_config")
+        include("stdkconfig.cmake")
+    endif()
 endif()
 
 if(CMAKE_C_COMPILER_ID STREQUAL "GNU" AND CMAKE_BUILD_TYPE MATCHES UnitTest)
@@ -50,6 +52,7 @@ if(CMAKE_C_COMPILER_ID STREQUAL "GNU" AND CMAKE_BUILD_TYPE MATCHES UnitTest)
         iot_bsp_system_set_time_in_sec
         iot_os_delay
         iot_net_init
+        iot_bsp_wifi_set_mode
         )
 else()
     foreach(stdk_extra_cflags ${STDK_EXTRA_CFLAGS})
