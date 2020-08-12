@@ -26,12 +26,14 @@ set(CMAKE_BUILD_TYPE "${CMAKE_BUILD_TYPE}" CACHE STRING
     FORCE
     )
 
-if(EXISTS ${stdk_config})
-    message("include stdk_config : ${stdk_config}")
-    include("${stdk_config}")
-else()
-    message("include default stdk_config")
-    include("stdkconfig.cmake")
+if(NOT STDK_IOT_CORE_USE_DEFINED_CONFIG)
+    if(EXISTS ${stdk_config})
+        message("include stdk_config : ${stdk_config}")
+        include("${stdk_config}")
+    else()
+        message("include default stdk_config")
+        include("stdkconfig.cmake")
+    endif()
 endif()
 
 if(CMAKE_C_COMPILER_ID STREQUAL "GNU" AND CMAKE_BUILD_TYPE MATCHES UnitTest)
