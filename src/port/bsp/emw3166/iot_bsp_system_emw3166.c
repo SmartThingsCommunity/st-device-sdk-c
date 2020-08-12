@@ -18,6 +18,7 @@
 
 #include "iot_bsp_system.h"
 #include <mico_platform.h>
+#include <mico_system.h>
 
 const char* iot_bsp_get_bsp_name()
 {

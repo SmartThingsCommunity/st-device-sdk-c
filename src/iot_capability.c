@@ -518,10 +518,10 @@ STATIC_FUNCTION
 iot_error_t _iot_parse_noti_data(void *data, iot_noti_data_t *noti_data)
 {
 	iot_error_t err = IOT_ERROR_NONE;
-	size_t noti_str_len;
 	JSON_H *json = NULL;
 	JSON_H *noti_type = NULL;
 	JSON_H *item = NULL;
+	char *noti_type_string = NULL;
 	char *payload = NULL;
 	char time_str[11] = {0,};
 
@@ -560,28 +560,16 @@ iot_error_t _iot_parse_noti_data(void *data, iot_noti_data_t *noti_data)
 		goto out_noti_parse;
 	}
 
-	noti_str_len = strlen(noti_type->valuestring);
-	switch (noti_type->valuestring[0]) {
-	case 'd':	/* device.deleted */
-		if (noti_str_len != 14) {
-			IOT_ERROR("Untargeted event str_len : %s",
-				noti_type->valuestring);
-			err = IOT_ERROR_BAD_REQ;
-			break;
-		}
+	noti_type_string = JSON_GET_STRING_VALUE(noti_type);
+	if (noti_type_string == NULL) {
+		IOT_ERROR("there is no event type string");
+		goto out_noti_parse;
+	}
+	if (!strncmp(noti_type_string, SERVER_NOTI_TYPE_DEVICE_DELETED, strlen(SERVER_NOTI_TYPE_DEVICE_DELETED))) {
 		IOT_DUMP(IOT_DEBUG_LEVEL_INFO, IOT_DUMP_CAPABILITY_DEVICE_DELETED_RECEIVED, 0, 0);
 
 		noti_data->type = _IOT_NOTI_TYPE_DEV_DELETED;
-		break;
-
-	case 'e':	/* expired.jwt */
-		if (noti_str_len != 11) {
-			IOT_ERROR("Untargeted event str_len : %s",
-				noti_type->valuestring);
-			err = IOT_ERROR_BAD_REQ;
-			break;
-		}
-
+	} else if (!strncmp(noti_type_string, SERVER_NOTI_TYPE_EXPIRED_JWT, strlen(SERVER_NOTI_TYPE_EXPIRED_JWT))) {
 		noti_data->type = _IOT_NOTI_TYPE_JWT_EXPIRED;
 
 		item = JSON_GET_OBJECT_ITEM(json, "currentTime");
@@ -595,16 +583,7 @@ iot_error_t _iot_parse_noti_data(void *data, iot_noti_data_t *noti_data)
 		IOT_INFO("Set SNTP with current time %s", time_str);
 		iot_bsp_system_set_time_in_sec(time_str);
 		IOT_DUMP(IOT_DEBUG_LEVEL_INFO, IOT_DUMP_CAPABILITY_EXPIRED_JWT_RECEIVED, item->valueint, 0);
-		break;
-
-	case 'r':	/* rate.limit.reached */
-		if (noti_str_len != 18) {
-			IOT_ERROR("Untargeted event str_len : %s",
-				noti_type->valuestring);
-			err = IOT_ERROR_BAD_REQ;
-			break;
-		}
-
+	} else if (!strncmp(noti_type_string, SERVER_NOTI_TYPE_RATE_LIMIT_REACHED, strlen(SERVER_NOTI_TYPE_RATE_LIMIT_REACHED))) {
 		noti_data->type = _IOT_NOTI_TYPE_RATE_LIMIT;
 
 		item = JSON_GET_OBJECT_ITEM(json, "count");
@@ -639,15 +618,7 @@ iot_error_t _iot_parse_noti_data(void *data, iot_noti_data_t *noti_data)
 		}
 		noti_data->raw.rate_limit.sequenceNumber = item->valueint;
 		IOT_DUMP(IOT_DEBUG_LEVEL_INFO, IOT_DUMP_CAPABILITY_RATE_LIMIT_RECEIVED, noti_data->raw.rate_limit.sequenceNumber, 0);
-		break;
-	case 'q':	/* quota.reached */
-		if (noti_str_len != 13) {
-			IOT_ERROR("Untargeted event str_len : %s",
-				noti_type->valuestring);
-			err = IOT_ERROR_BAD_REQ;
-			break;
-		}
-
+	} else if (!strncmp(noti_type_string, SERVER_NOTI_TYPE_QUOTA_REACHED, strlen(SERVER_NOTI_TYPE_QUOTA_REACHED))) {
 		noti_data->type = _IOT_NOTI_TYPE_QUOTA_REACHED;
 
 		item = JSON_GET_OBJECT_ITEM(json, "used");
@@ -666,7 +637,9 @@ iot_error_t _iot_parse_noti_data(void *data, iot_noti_data_t *noti_data)
 		}
 		noti_data->raw.quota.limit = item->valueint;
 		IOT_DUMP(IOT_DEBUG_LEVEL_INFO, IOT_DUMP_CAPABILITY_QUOTA_LIMIT_RECEIVED, noti_data->raw.quota.used, noti_data->raw.quota.limit);
-		break;
+	} else {
+		IOT_WARN("There is no noti_type matched");
+		err = IOT_ERROR_BAD_REQ;
 	}
 
 out_noti_parse:

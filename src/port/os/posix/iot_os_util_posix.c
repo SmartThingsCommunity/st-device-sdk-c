@@ -69,7 +69,7 @@ int iot_os_thread_create(void * thread_function, const char* name, int stack_siz
 		*thread_handle = (iot_os_thread*)thread;
 	}
 
-	return iot_os_true;
+	return IOT_OS_TRUE;
 }
 
 void iot_os_thread_delete(iot_os_thread thread_handle)
@@ -135,10 +135,10 @@ int iot_os_queue_reset(iot_os_queue* queue_handle)
 
 	queue->mqd = mq_open(queue->name, O_CREAT | O_RDWR, 0644, &attr);
 	if (queue->mqd == -1) {
-		return iot_os_false;
+		return IOT_OS_FALSE;
 	}
 
-	return iot_os_true;
+	return IOT_OS_TRUE;
 }
 
 void iot_os_queue_delete(iot_os_queue* queue_handle)
@@ -156,17 +156,17 @@ int iot_os_queue_send(iot_os_queue* queue_handle, void * data, unsigned int wait
 	struct timespec ts = {0,};
 
 	if (!queue || !data)
-	    return iot_os_false;
+	    return IOT_OS_FALSE;
 
 	ts.tv_sec = wait_time_ms / 1000;
 	ts.tv_nsec = (wait_time_ms % 1000) * 1000000;
 
 	int ret = mq_timedsend(queue->mqd, data, queue->msg_size, 0, &ts);
 	if (ret == -1) {
-		return iot_os_false;
+		return IOT_OS_FALSE;
 	}
 
-	return iot_os_true;
+	return IOT_OS_TRUE;
 }
 
 int iot_os_queue_receive(iot_os_queue* queue_handle, void * data, unsigned int wait_time_ms)
@@ -179,10 +179,10 @@ int iot_os_queue_receive(iot_os_queue* queue_handle, void * data, unsigned int w
 
 	int ret = mq_timedreceive(queue->mqd, data, queue->msg_size, NULL, &ts);
 	if (ret == -1) {
-		return iot_os_false;
+		return IOT_OS_FALSE;
 	}
 
-	return iot_os_true;
+	return IOT_OS_TRUE;
 }
 
 /* Event Group */
@@ -324,11 +324,17 @@ int iot_os_eventgroup_clear_bits(iot_os_eventgroup* eventgroup_handle,
 
 int iot_os_mutex_init(iot_os_mutex* mutex)
 {
+	if (!mutex) {
+		return IOT_OS_FALSE;
+	}
+
 	pthread_mutex_t* mutex_p = malloc(sizeof(pthread_mutex_t));
-
-	pthread_mutex_init(mutex_p, NULL);
-	mutex->sem = mutex_p;
-
+	if (!mutex_p) {
+		return IOT_OS_FALSE;
+	} else {
+		pthread_mutex_init(mutex_p, NULL);
+		mutex->sem = mutex_p;
+	}
 	return IOT_OS_TRUE;
 }
 
@@ -416,13 +422,13 @@ char iot_os_timer_isexpired(iot_os_timer timer)
 
 	int ret = timer_gettime(timer_id, &it);
 	if (ret == -1) {
-		return iot_os_true;
+		return IOT_OS_TRUE;
 	}
 
 	if (it.it_value.tv_sec == 0 && it.it_value.tv_nsec == 0) {
-		return iot_os_true;
+		return IOT_OS_TRUE;
 	} else {
-		return iot_os_false;
+		return IOT_OS_FALSE;
 	}
 }
 

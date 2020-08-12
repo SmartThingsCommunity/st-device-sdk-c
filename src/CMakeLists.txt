@@ -40,6 +40,8 @@ if(CMAKE_C_COMPILER_ID STREQUAL "GNU" AND CMAKE_BUILD_TYPE MATCHES UnitTest)
     endforeach()
 endif()
 
+set(CMAKE_C_FLAGS "${CMAKE_C_FLAGS} -include ${CMAKE_CURRENT_LIST_DIR}/include/iot_common.h")
+
 add_library(iotcore
         iot_api.c
         iot_capability.c
@@ -49,6 +51,7 @@ add_library(iotcore
         iot_util.c
         iot_uuid.c
         iot_root_ca.c
+        iot_log_file.c
         iot_dump_log.c
         )
 
