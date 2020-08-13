@@ -299,6 +299,8 @@ struct iot_context {
 
 	unsigned char rcv_try_cnt;	/**< @brief to check current recovery repeated counts */
 	iot_state_t rcv_fail_state;	/**< @brief to check current failed state for recovery */
+
+	int event_sequence_num;	/**< @brief Last event's sequence number */
 };
 
 #endif /* _IOT_MAIN_H_ */
