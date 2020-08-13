@@ -262,6 +262,71 @@ void _iot_mqtt_registration_client_callback(st_mqtt_event event, void *event_dat
 }
 
 STATIC_FUNCTION
+int _iot_parse_sequence_num(char *payload)
+{
+	JSON_H *json = NULL;
+	JSON_H *device_events = NULL;
+	JSON_H *first_event = NULL;
+	JSON_H *provider_data = NULL;
+	JSON_H *sequence_number = NULL;
+	int seq_num = 0;
+#if defined(STDK_IOT_CORE_SERIALIZE_CBOR)
+	char *payload_json = NULL;
+	size_t payload_json_len = 0;
+
+	if (iot_serialize_cbor2json((uint8_t *)payload, strlen(payload), &payload_json, &payload_json_len)) {
+		IOT_ERROR("cbor2json failed");
+		return 0;
+	}
+
+	if ((payload_json == NULL) || (payload_json_len == 0)) {
+		IOT_ERROR("json buffer is null");
+		return 0;
+	}
+
+	json = JSON_PARSE(payload_json);
+	free(payload_json);
+#else
+	json = JSON_PARSE(payload);
+#endif
+	if (json == NULL) {
+		IOT_ERROR("Cannot parse by json");
+		return 0;
+	}
+
+	device_events = JSON_GET_OBJECT_ITEM(json, "deviceEvents");
+	if (device_events == NULL) {
+		IOT_ERROR("there is no events in raw_msgn");
+		goto out;
+	}
+
+	first_event = JSON_GET_CHILD_ITEM(device_events);
+	if (first_event == NULL) {
+		IOT_ERROR("there is no event in raw_msgn");
+		goto out;
+	}
+
+	provider_data = JSON_GET_OBJECT_ITEM(first_event, "providerData");
+	if (provider_data == NULL) {
+		IOT_ERROR("there is no provider_data in raw_msgn");
+		goto out;
+	}
+
+	sequence_number = JSON_GET_OBJECT_ITEM(provider_data, "sequenceNumber");
+	if (sequence_number == NULL) {
+		IOT_ERROR("there is no sequence number in raw_msgn");
+		goto out;
+	}
+
+	seq_num = JSON_GET_NUMBER_VALUE(sequence_number);
+out:
+	if (json)
+		JSON_DELETE(json);
+
+	return seq_num;
+}
+
+STATIC_FUNCTION
 void _iot_mqtt_signin_client_callback(st_mqtt_event event, void *event_data, void *user_data)
 {
 	struct iot_context *ctx = (struct iot_context *)user_data;
@@ -278,6 +343,25 @@ void _iot_mqtt_signin_client_callback(st_mqtt_event event, void *event_data, voi
 				} else {
 					IOT_WARN("No msg delivery handler for %s", md->topic);
 				}
+				IOT_DEBUG("raw msg (len:%d) : %s", md->payloadlen, mqtt_payload);
+				break;
+			}
+			break;
+		case ST_MQTT_EVENT_PUBLISH_FAILED:
+			{
+				st_mqtt_msg *md = event_data;
+				char *mqtt_payload = md->payload;
+				iot_noti_data_t noti_data;
+
+				noti_data.type = IOT_NOTI_TYPE_SEND_FAILED;
+				noti_data.raw.failed_sequence_num = _iot_parse_sequence_num(mqtt_payload);
+
+				if (noti_data.raw.failed_sequence_num < 0) {
+					IOT_ERROR("No sequence number");
+					break;
+				}
+				iot_command_send(ctx, IOT_COMMAND_NOTIFICATION_RECEIVED,
+					&noti_data, sizeof(noti_data));
 				IOT_DEBUG("raw msg (len:%d) : %s", md->payloadlen, mqtt_payload);
 				break;
 			}

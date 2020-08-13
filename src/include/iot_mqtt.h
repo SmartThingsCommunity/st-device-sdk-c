@@ -79,6 +79,7 @@ typedef struct st_mqtt_msg {
 
 typedef enum {
 	ST_MQTT_EVENT_MSG_DELIVERED = 1,
+	ST_MQTT_EVENT_PUBLISH_FAILED = 2,
 } st_mqtt_event;
 
 typedef void (*st_mqtt_event_callback)(st_mqtt_event event, void *event_data, void *usr_data);
