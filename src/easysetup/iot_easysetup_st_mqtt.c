@@ -354,9 +354,9 @@ void _iot_mqtt_signin_client_callback(st_mqtt_event event, void *event_data, voi
 				iot_noti_data_t noti_data;
 
 				noti_data.type = IOT_NOTI_TYPE_SEND_FAILED;
-				noti_data.raw.failed_sequence_num = _iot_parse_sequence_num(mqtt_payload);
+				noti_data.raw.send_fail.failed_sequence_num = _iot_parse_sequence_num(mqtt_payload);
 
-				if (noti_data.raw.failed_sequence_num < 0) {
+				if (noti_data.raw.send_fail.failed_sequence_num < 0) {
 					IOT_ERROR("No sequence number");
 					break;
 				}

@@ -164,7 +164,9 @@ typedef union {
 		int limit;			/**< @brief Current data limit in bytes. */
 	} quota;
 	/* send fail case */
-	int failed_sequence_num;		/**< @brief Send failed events sequence number. */
+	struct _send_fail {
+		int failed_sequence_num;		/**< @brief Send failed events sequence number. */
+	} send_fail;
 } noti_data_raw_t;
 
 /**
