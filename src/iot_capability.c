@@ -39,7 +39,7 @@ iot_error_t _iot_parse_noti_data(void *data, iot_noti_data_t *noti_data);
 
 static iot_error_t _iot_parse_cmd_data(JSON_H* cmditem, char** component,
 			char** capability, char** command, iot_cap_cmd_data_t* cmd_data);
-static JSON_H *_iot_make_evt_data(const char* component, const char* capability, iot_cap_evt_data_t* evt_data);
+static JSON_H *_iot_make_evt_data(const char* component, const char* capability, iot_cap_evt_data_t* evt_data, int seq_num);
 static void _iot_free_val(iot_cap_val_t* val);
 static void _iot_free_unit(iot_cap_unit_t* unit);
 static void _iot_free_cmd_data(iot_cap_cmd_data_t* cmd_data);
@@ -391,7 +391,10 @@ int st_cap_attr_send(IOT_CAP_HANDLE *cap_handle,
 		return IOT_ERROR_BAD_REQ;
 	}
 
-	sqnum = (sqnum + 1) & MAX_SQNUM;	// Use only positive number
+	if (ctx->event_sequence_num == MAX_SQNUM) {
+		ctx->event_sequence_num = 0;
+	}
+	ctx->event_sequence_num = (ctx->event_sequence_num + 1) & MAX_SQNUM;
 
 	evt_root = JSON_CREATE_OBJECT();
 	evt_arr = JSON_CREATE_ARRAY();
@@ -400,7 +403,7 @@ int st_cap_attr_send(IOT_CAP_HANDLE *cap_handle,
 
 	/* Make event data format & enqueue data */
 	for (i = 0; i < evt_num; i++) {
-		evt_item = _iot_make_evt_data(handle->component, handle->capability, evt_data[i]);
+		evt_item = _iot_make_evt_data(handle->component, handle->capability, evt_data[i], ctx->event_sequence_num);
 		if (evt_item == NULL) {
 			IOT_ERROR("Cannot make evt_data!!");
 			JSON_DELETE(evt_root);
@@ -433,7 +436,7 @@ int st_cap_attr_send(IOT_CAP_HANDLE *cap_handle,
 		iot_os_eventgroup_set_bits(ctx->iot_events,
 			IOT_EVENT_BIT_CAPABILITY);
 
-		return sqnum;
+		return ctx->event_sequence_num;
 	}
 }
 
@@ -461,7 +464,10 @@ int st_cap_send_attr(IOT_EVENT *event[], uint8_t evt_num)
 		return IOT_ERROR_BAD_REQ;
 	}
 
-	sqnum = (sqnum + 1) & MAX_SQNUM;	// Use only positive number
+	if (ctx->event_sequence_num == MAX_SQNUM) {
+		ctx->event_sequence_num = 0;
+	}
+	ctx->event_sequence_num = (ctx->event_sequence_num + 1) & MAX_SQNUM;
 
 	evt_root = JSON_CREATE_OBJECT();
 	evt_arr = JSON_CREATE_ARRAY();
@@ -475,7 +481,8 @@ int st_cap_send_attr(IOT_EVENT *event[], uint8_t evt_num)
 			JSON_DELETE(evt_root);
 			return IOT_ERROR_BAD_REQ;
 		}
-		evt_item = _iot_make_evt_data(evt_data[i]->ref_cap->component, evt_data[i]->ref_cap->capability, evt_data[i]);
+		evt_item = _iot_make_evt_data(evt_data[i]->ref_cap->component, evt_data[i]->ref_cap->capability,
+				evt_data[i], ctx->event_sequence_num);
 		if (evt_item == NULL) {
 			IOT_ERROR("Cannot make evt_data!!");
 			JSON_DELETE(evt_root);
@@ -510,7 +517,7 @@ int st_cap_send_attr(IOT_EVENT *event[], uint8_t evt_num)
 		iot_os_eventgroup_set_bits(ctx->iot_events,
 			IOT_EVENT_BIT_CAPABILITY);
 
-		return sqnum;
+		return ctx->event_sequence_num;
 	}
 }
 
@@ -905,7 +912,7 @@ static iot_error_t _iot_parse_cmd_data(JSON_H* cmditem, char** component,
 	return IOT_ERROR_NONE;
 }
 
-static JSON_H *_iot_make_evt_data(const char* component, const char* capability, iot_cap_evt_data_t* evt_data)
+static JSON_H *_iot_make_evt_data(const char* component, const char* capability, iot_cap_evt_data_t* evt_data, int seq_num)
 {
 	JSON_H *evt_item = NULL;
 	JSON_H *evt_subarr = NULL;
@@ -963,7 +970,7 @@ static JSON_H *_iot_make_evt_data(const char* component, const char* capability,
 
 	/* providerData */
 	prov_data = JSON_CREATE_OBJECT();
-	JSON_ADD_NUMBER_TO_OBJECT(prov_data, "sequenceNumber", sqnum);
+	JSON_ADD_NUMBER_TO_OBJECT(prov_data, "sequenceNumber", seq_num);
 
 	if (iot_get_time_in_ms(time_in_ms, sizeof(time_in_ms)) != IOT_ERROR_NONE)
 		IOT_WARN("Cannot add optional timestamp value");
@@ -973,11 +980,6 @@ static JSON_H *_iot_make_evt_data(const char* component, const char* capability,
 	JSON_ADD_ITEM_TO_OBJECT(evt_item, "providerData", prov_data);
 
 	return evt_item;
-}
-
-int iot_cap_get_sqnum(void)
-{
-	return sqnum;
 }
 
 void iot_cap_call_init_cb(iot_cap_handle_list_t *cap_handle_list)

@@ -47,7 +47,7 @@ static struct iot_dump_state* _iot_dump_create_dump_state(struct iot_context *io
 
     dump_state->stdk_version_code = STDK_VERSION_CODE;
     dump_state->clock_time = clock();
-    dump_state->sequence_number = iot_cap_get_sqnum();
+    dump_state->sequence_number = iot_ctx->event_sequence_num;
     strncpy(dump_state->os_name, iot_os_get_os_name(), sizeof(dump_state->os_name));
     strncpy(dump_state->os_version, iot_os_get_os_version_string(), sizeof(dump_state->os_version));
     strncpy(dump_state->bsp_name, iot_bsp_get_bsp_name(), sizeof(dump_state->bsp_name));

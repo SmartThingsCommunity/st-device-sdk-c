@@ -951,6 +951,23 @@ static void _iot_mqtt_deliver_publish(MQTTClient *client, iot_mqtt_packet_chunk_
 	client->user_callback_fp(ST_MQTT_EVENT_MSG_DELIVERED, &msg, client->user_callback_user_data);
 }
 
+static void _iot_mqtt_notify_publish_failed(MQTTClient *client, iot_mqtt_packet_chunk_t *chunk)
+{
+	st_mqtt_msg msg;
+	MQTTString topic_name;
+	int qos;
+	unsigned char dup;
+	unsigned short id;
+
+	MQTTDeserialize_publish(&dup, &qos, &msg.retained, &id, &topic_name,
+							(unsigned char **)&msg.payload, (int *)&msg.payloadlen, chunk->chunk_data, chunk->chunk_size);
+
+	msg.qos = qos;
+	msg.topic = topic_name.lenstring.data;
+	msg.topiclen = topic_name.lenstring.len;
+	client->user_callback_fp(ST_MQTT_EVENT_PUBLISH_FAILED, &msg, client->user_callback_user_data);
+}
+
 static void _iot_mqtt_process_user_callback(MQTTClient *client)
 {
 	iot_mqtt_packet_chunk_t *w_chunk = NULL;
@@ -966,11 +983,15 @@ static void _iot_mqtt_process_user_callback(MQTTClient *client)
 		switch (w_chunk->chunk_state) {
 			case PACKET_CHUNK_TIMEOUT:
 			case PACKET_CHUNK_WRITE_FAIL:
-					/* TODO callback fail */
+				if (w_chunk->packet_type == PUBLISH) {
+					_iot_mqtt_notify_publish_failed(client, w_chunk);
+				}
+				break;
 			case PACKET_CHUNK_READ_COMPLETED:
 				if (w_chunk->packet_type == PUBLISH) {
 					_iot_mqtt_deliver_publish(client, w_chunk);
 				}
+				break;
 			default :
 				break;
 		}

@@ -58,6 +58,7 @@ enum _iot_noti_type {
 	_IOT_NOTI_TYPE_DEV_DELETED = IOT_NOTI_TYPE_DEV_DELETED,
 	_IOT_NOTI_TYPE_RATE_LIMIT = IOT_NOTI_TYPE_RATE_LIMIT,
 	_IOT_NOTI_TYPE_QUOTA_REACHED = IOT_NOTI_TYPE_QUOTA_REACHED,
+	_IOT_NOTI_TYPE_SEND_FAILED = IOT_NOTI_TYPE_SEND_FAILED,
 
 	/* Internal only notifications */
 	_IOT_NOTI_TYPE_JWT_EXPIRED,
@@ -298,6 +299,8 @@ struct iot_context {
 
 	unsigned char rcv_try_cnt;	/**< @brief to check current recovery repeated counts */
 	iot_state_t rcv_fail_state;	/**< @brief to check current failed state for recovery */
+
+	int event_sequence_num;	/**< @brief Last event's sequence number */
 };
 
 #endif /* _IOT_MAIN_H_ */
