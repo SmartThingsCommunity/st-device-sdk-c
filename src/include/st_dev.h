@@ -142,7 +142,8 @@ typedef enum iot_noti_type {
 
 	IOT_NOTI_TYPE_DEV_DELETED,		/**< @brief For device deleted event. */
 	IOT_NOTI_TYPE_RATE_LIMIT,		/**< @brief For rate limit event. */
-	IOT_NOTI_TYPE_QUOTA_REACHED		/**< @brief For data quota reached event. */
+	IOT_NOTI_TYPE_QUOTA_REACHED,		/**< @brief For data quota reached event. */
+	IOT_NOTI_TYPE_SEND_FAILED		/**< @brief For send failed event. */
 } iot_noti_type_t;
 
 
@@ -162,6 +163,10 @@ typedef union {
 		int used;			/**< @brief Current used data usage in bytes. */
 		int limit;			/**< @brief Current data limit in bytes. */
 	} quota;
+	/* send fail case */
+	struct _send_fail {
+		int failed_sequence_num;		/**< @brief Send failed events sequence number. */
+	} send_fail;
 } noti_data_raw_t;
 
 /**
