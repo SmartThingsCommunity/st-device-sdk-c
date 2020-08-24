@@ -411,6 +411,7 @@ int TEST_FUNC_iot_easysetup_st_mqtt(void)
             cmocka_unit_test(TC_STATIC_iot_es_mqtt_registration_SUCCESS),
             cmocka_unit_test(TC_STATIC_iot_parse_sequence_num_SUCCESS),
             cmocka_unit_test(TC_STATIC_iot_parse_sequence_num_FAILURE),
+            cmocka_unit_test(TC_STATIC_iot_mqtt_registration_client_callback_SUCCESS),
     };
     return cmocka_run_group_tests_name("iot_easysetup_st_mqtt.c", tests, NULL, NULL);
 }

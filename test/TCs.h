@@ -336,5 +336,6 @@ void TC_iot_dump_log(void **state);
 void TC_STATIC_iot_es_mqtt_registration_SUCCESS(void **state);
 void TC_STATIC_iot_parse_sequence_num_SUCCESS(void **state);
 void TC_STATIC_iot_parse_sequence_num_FAILURE(void **state);
+void TC_STATIC_iot_mqtt_registration_client_callback_SUCCESS(void **state);
 
 #endif //ST_DEVICE_SDK_C_TCS_H
