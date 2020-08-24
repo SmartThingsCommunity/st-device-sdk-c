@@ -409,6 +409,8 @@ int TEST_FUNC_iot_easysetup_st_mqtt(void)
 {
     const struct CMUnitTest tests[] = {
             cmocka_unit_test(TC_STATIC_iot_es_mqtt_registration_success),
+            cmocka_unit_test(TC_STATIC_iot_parse_sequence_num_SUCCESS),
+            cmocka_unit_test(TC_STATIC_iot_parse_sequence_num_FAILURE),
     };
     return cmocka_run_group_tests_name("iot_easysetup_st_mqtt.c", tests, NULL, NULL);
 }

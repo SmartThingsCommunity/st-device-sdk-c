@@ -217,4 +217,36 @@ void assert_es_mqtt_registration_json(struct iot_context *context, char *payload
                          JSON_GET_OBJECT_ITEM(dip_item, "minorVersion")->valueint);
     }
 }
+
+extern int _iot_parse_sequence_num(char *payload);
+
+void TC_STATIC_iot_parse_sequence_num_SUCCESS(void **state)
+{
+    const char *mqtt_payload[3] = {
+            "{\"deviceEvents\":[{\"component\":\"main\",\"capability\":\"switch\",\"attribute\":\"switch\",\"value\":\"on\",\"providerData\":{\"sequenceNumber\":1,\"timestamp\":\"1598246160400\"}}]}",
+            "{\"deviceEvents\":[{\"component\":\"main\",\"capability\":\"switchLevel\",\"attribute\":\"level\",\"value\":50,\"unit\":\"%\",\"providerData\":{\"sequenceNumber\":2,\"timestamp\":\"1598246160419\"}}]}",
+            "{\"deviceEvents\":[{\"component\":\"main\",\"capability\":\"colorTemperature\",\"attribute\":\"colorTemperature\",\"value\":2000,\"providerData\":{\"sequenceNumber\":3,\"timestamp\":\"1598246160437\"}}]}"
+    };
+    int expected_sequence_num[3] = { 1, 2, 3 };
+
+    for (int i = 0; i < 3; i++) {
+        int seq = _iot_parse_sequence_num((char *) mqtt_payload[i]);
+        assert_int_equal(seq, expected_sequence_num[i]);
+    }
+}
+
+void TC_STATIC_iot_parse_sequence_num_FAILURE(void **state)
+{
+    const char *mqtt_payload[4] = {
+            NULL,
+            "{}",
+            "{\"deviceEvents\":[{\"component\":\"main\",\"capability\":\"switch\",\"attribute\":\"switch\",\"value\":\"on\"}]}",
+            "{\"deviceEvents\":[{\"component\":\"main\",\"capability\":\"colorTemperature\",\"attribute\":\"colorTemperature\",\"value\":2000,\"providerData\":{\"timestamp\":\"1598246160437\"}}]}"
+    };
+
+    for (int i = 0; i < 4; i++) {
+        int seq = _iot_parse_sequence_num((char *) mqtt_payload[i]);
+        assert_int_equal(seq, 0);
+    }
+}
 #endif
