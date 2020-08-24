@@ -59,7 +59,7 @@ struct registration_test_condition {
     bool use_d2d;
 };
 
-void TC_STATIC_iot_es_mqtt_registration_success(void **state)
+void TC_STATIC_iot_es_mqtt_registration_SUCCESS(void **state)
 {
     char *output_str;
     size_t msglen;

@@ -333,7 +333,7 @@ void TC_iot_dump_create_dump_state_success(void **state);
 void TC_iot_dump_log(void **state);
 
 // TCs for iot_easysetup_st_mqtt.c
-void TC_STATIC_iot_es_mqtt_registration_success(void **state);
+void TC_STATIC_iot_es_mqtt_registration_SUCCESS(void **state);
 void TC_STATIC_iot_parse_sequence_num_SUCCESS(void **state);
 void TC_STATIC_iot_parse_sequence_num_FAILURE(void **state);
 
