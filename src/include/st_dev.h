@@ -142,7 +142,8 @@ typedef enum iot_noti_type {
 
 	IOT_NOTI_TYPE_DEV_DELETED,		/**< @brief For device deleted event. */
 	IOT_NOTI_TYPE_RATE_LIMIT,		/**< @brief For rate limit event. */
-	IOT_NOTI_TYPE_QUOTA_REACHED		/**< @brief For data quota reached event. */
+	IOT_NOTI_TYPE_QUOTA_REACHED,		/**< @brief For data quota reached event. */
+	IOT_NOTI_TYPE_SEND_FAILED		/**< @brief For send failed event. */
 } iot_noti_type_t;
 
 
@@ -162,6 +163,10 @@ typedef union {
 		int used;			/**< @brief Current used data usage in bytes. */
 		int limit;			/**< @brief Current data limit in bytes. */
 	} quota;
+	/* send fail case */
+	struct _send_fail {
+		int failed_sequence_num;		/**< @brief Send failed events sequence number. */
+	} send_fail;
 } noti_data_raw_t;
 
 /**
@@ -263,6 +268,15 @@ IOT_EVENT* st_cap_attr_create_int(const char *attribute, int integer, const char
  */
 IOT_EVENT* st_cap_attr_create_number(const char *attribute, double number, const char *unit);
 
+#define ST_CAP_CREATE_ATTR_NUMBER(cap_handle, attribute, value_number, unit, data, output_attr)\
+{\
+	iot_cap_val_t value;\
+\
+	value.type = IOT_CAP_VAL_TYPE_NUMBER;\
+	value.number = value_number;\
+	output_attr = st_cap_create_attr(cap_handle, attribute, &value, unit, data);\
+}
+
 #define ST_CAP_SEND_ATTR_NUMBER(cap_handle, attribute, value_number, unit, data, output_seq_num)\
 {\
 	IOT_EVENT *attr = NULL;\
@@ -296,6 +310,15 @@ IOT_EVENT* st_cap_attr_create_number(const char *attribute, double number, const
  * @see @ref st_cap_attr_send
  */
 IOT_EVENT* st_cap_attr_create_string(const char *attribute, char *string, const char *unit);
+
+#define ST_CAP_CREATE_ATTR_STRING(cap_handle, attribute, value_string, unit, data, output_attr)\
+{\
+	iot_cap_val_t value;\
+\
+	value.type = IOT_CAP_VAL_TYPE_STRING;\
+	value.string = value_string;\
+	output_attr = st_cap_create_attr(cap_handle, attribute, &value, unit, data);\
+}
 
 #define ST_CAP_SEND_ATTR_STRING(cap_handle, attribute, value_string, unit, data, output_seq_num)\
 {\
@@ -332,6 +355,16 @@ IOT_EVENT* st_cap_attr_create_string(const char *attribute, char *string, const 
  */
 IOT_EVENT* st_cap_attr_create_string_array(const char *attribute,
 		uint8_t str_num, char *string_array[], const char *unit);
+
+#define ST_CAP_CREATE_ATTR_STRINGS_ARRAY(cap_handle, attribute, value_string_array, array_num, unit, data, output_attr)\
+{\
+	iot_cap_val_t value;\
+\
+	value.type = IOT_CAP_VAL_TYPE_STR_ARRAY;\
+	value.str_num = array_num;\
+	value.strings = value_string_array;\
+	output_attr = st_cap_create_attr(cap_handle, attribute, &value, unit, data);\
+}
 
 #define ST_CAP_SEND_ATTR_STRINGS_ARRAY(cap_handle, attribute, value_string_array, array_num, unit, data, output_seq_num)\
 {\

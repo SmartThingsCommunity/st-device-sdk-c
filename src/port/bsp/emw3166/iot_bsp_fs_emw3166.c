@@ -180,6 +180,7 @@ iot_error_t iot_bsp_fs_read(iot_bsp_fs_handle_t handle, char* buffer, size_t *le
 	OSStatus err = kNoErr;
 	mico_file_t *fh;
 	unsigned int bytesread = 0;
+	uint64_t mico_len = 0;
 	char* data = NULL;
 
 	IOT_ERROR_CHECK(handle.fd >= EMW_IOT_FD_NUM, IOT_ERROR_INVALID_ARGS, "Invalid fd %d", handle.fd);
@@ -190,14 +191,15 @@ iot_error_t iot_bsp_fs_read(iot_bsp_fs_handle_t handle, char* buffer, size_t *le
 	IOT_ERROR_CHECK(data == NULL, IOT_ERROR_MEM_ALLOC, "malloc data buffer failed");
 	memset(data, 0, fh->data.fatfs.fsize);
 
-	err = mico_filesystem_file_read(fh, data, fh->data.fatfs.fsize, &bytesread);
+	err = mico_filesystem_file_read(fh, data, fh->data.fatfs.fsize, &mico_len);
+	bytesread = mico_len;
 	if (err == kNoErr) {
 		bytesread = ((strlen(data) + 1) < bytesread)? (strlen(data) + 1) : bytesread;
 		memcpy(buffer, data, bytesread);
 		IOT_INFO("bsp fs read %u bytes, data length %d", bytesread, strlen(data));
 		*length = bytesread;
 	} else {
-		IOT_ERROR("mico fs ret %d, read bytes %d", err, bytesread);
+		IOT_ERROR("mico fs return %d, read bytes %d", err, bytesread);
 		ret = IOT_ERROR_FS_READ_FAIL;
 	}
 
@@ -210,14 +212,14 @@ iot_error_t iot_bsp_fs_write(iot_bsp_fs_handle_t handle, const char* data, size_
 {
 	mico_file_t *fh;
 	OSStatus err = kNoErr;
-	unsigned int byteswritten;
+	uint64_t byteswritten = 0;
 
 	IOT_ERROR_CHECK(handle.fd >= EMW_IOT_FD_NUM, IOT_ERROR_INVALID_ARGS, "Invalid fd %d", handle.fd);
 	fh = _get_mico_fh(handle.fd);
 	IOT_ERROR_CHECK(fh == NULL, IOT_ERROR_FS_WRITE_FAIL, "no mico file handle for fd");
 
 	err = mico_filesystem_file_write(fh, data, length, &byteswritten);
-	IOT_INFO("ret %d, length %d, fs write %u bytes", err, length, byteswritten);
+	IOT_INFO("return %d, length %d, fs write %llu bytes", err, length, byteswritten);
 
 	return (err == kNoErr)? IOT_ERROR_NONE : IOT_ERROR_FS_WRITE_FAIL;
 }

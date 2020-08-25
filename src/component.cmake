@@ -45,9 +45,6 @@ if(CONFIG_STDK_IOT_CORE)
 		set(STDK_INCLUDE_PATH "${STDK_INCLUDE_PATH}" port/net/openssl)
 	endif()
 
-
-
-
 	if(CONFIG_STDK_IOT_CORE_OS_SUPPORT_FREERTOS)
 		set(STDK_SRC_PATH "${STDK_SRC_PATH}" port/os/freertos)
 	elseif(CONFIG_STDK_IOT_CORE_OS_SUPPORT_TIZENRT)
@@ -59,11 +56,6 @@ if(CONFIG_STDK_IOT_CORE)
 	set(STDK_SRC_PATH "${STDK_SRC_PATH}" security)
 	set(STDK_SRC_PATH "${STDK_SRC_PATH}" easysetup)
 	set(STDK_SRC_PATH "${STDK_SRC_PATH}" mqtt)
-
-
-	#include_directories(include/iot_common.h)
-
-
 
 	set(CMAKE_C_STANDARD 99)
 else()

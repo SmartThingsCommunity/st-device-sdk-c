@@ -276,12 +276,6 @@ void iot_noti_sub_cb(struct iot_context *ctx, char *payload);
  */
 void iot_cap_call_init_cb(iot_cap_handle_list_t *cap_handle_list);
 
-/**
- * @brief get sequence number
- * @details this function return sequence number
- */
-int iot_cap_get_sqnum(void);
-
 /* For universal purpose */
 /**
  * @brief	get time data by sec

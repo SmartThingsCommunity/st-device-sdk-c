@@ -49,7 +49,7 @@ static struct bsp_scan_result_s g_scan_result;
 static void _time_synced_cb(void)
 {
 	IOT_INFO("time is updated to system.");
-	sntp_stop_auto_time_sync();
+	
 	xEventGroupSetBits(wifi_event_group, WIFI_TIME_SET_BIT);
 }
 
@@ -101,6 +101,7 @@ static void _obtain_time(void)
 		return;
 	}
 
+	sntp_stop_auto_time_sync();
 	time(&now);
 	timeinfo = localtime(&now);
 	if (timeinfo) {

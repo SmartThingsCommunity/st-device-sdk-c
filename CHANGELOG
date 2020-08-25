@@ -1,11 +1,35 @@
 # HISTORY
 
-## 1.3.3 :  Changes until v1.3.3
-
  * Please use SmartThings mobile application v1.7.51 (for Android), v1.6.51 (for iOS) or later
   For detailed information, please refer to 'Announcements' of the README.md
  ** The server's root certificate has changed to increase the validity until Jan 15 12:00:00 2038 GMT
   Please use SmartThings Device SDK v1.3.3 or later to verify it normally
+
+## 1.3.6 :  Changes until v1.3.3
+
+New Improvements or features:
+
+ - Support to use predefined config to cmake build
+ - Adding a firmwareUpdate helper file
+ - Add ST_CAP_CREATE_ATTR_xxx macros to help creating attr events
+ - Implement notifying send fail event to app.
+
+Enhancements or amendments:
+
+ - Refactoring internal _iot_parse_noti_data function to make it straight
+ - Add & update TC for
+  * TC_iot_wifi_ctrl_request_IOT_WIFI_MODE_SCAN
+  * TC_iot_wifi_ctrl_request_IOT_WIFI_MODE_OFF
+  * TC_STATIC_esp_wifiscaninfo_handler_success
+  * __wrap_iot_bsp_wifi_set_mode mock
+ - Change d2d time info to be optional supporting
+ - Refine fs and system codes for emw3166
+  * Refine codes for build warning
+  * Do not stop sntp in time_synced_cb to avoid crash issue
+ - Change event sequence number external variable to st context's variable
+ - Merge the same error handling code to reduce duplication of code iot_os_util_posix.c
+
+## 1.3.3 :  Changes until v1.3.3
 
 New Improvements or features:
 
