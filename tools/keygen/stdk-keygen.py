@@ -163,7 +163,8 @@ class Nv():
         cmd += " --input " + self._csvfile
         cmd += " --output " + self._imagefile
         cmd += " --size 0x4000"
-        cmd += " --version v1"
+        if "esp32" in esp_tools_dir:
+            cmd += " --version v1"
         cmd += " > /dev/null"
         result = os.system(cmd)
         if result != 0:
