@@ -154,9 +154,7 @@ class Nv():
 
     def generate_image(self):
         esp_tools_dir = os.environ.get('IDF_PATH')
-        if esp_tools_dir is None:
-            raise TypeError("ERROR: set IDF_PATH for stnv image")
-        elif esp_tools_dir is "":
+        if (esp_tools_dir is None) or (esp_tools_dir == ""):
             raise TypeError("ERROR: set IDF_PATH for stnv image")
         else:
             nv_gen_tools = os.path.join(esp_tools_dir, "components/nvs_flash/nvs_partition_generator/nvs_partition_gen.py")
@@ -168,7 +166,7 @@ class Nv():
         cmd += " --version v1"
         cmd += " > /dev/null"
         result = os.system(cmd)
-        if result is not 0:
+        if result != 0:
             raise TypeError("failed to generate NV images")
 
 def get_random(mnid, length):
@@ -176,7 +174,7 @@ def get_random(mnid, length):
     pool = string.ascii_letters + string.digits
     if mnid is None:
         length += 4
-    elif len(mnid) is not 4:
+    elif len(mnid) != 4:
         raise TypeError("ERROR: MNID length is not 4")
     else:
         random_string = mnid
