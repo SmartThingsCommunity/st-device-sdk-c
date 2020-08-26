@@ -158,6 +158,7 @@ int TEST_FUNC_iot_easysetup_d2d(void)
             cmocka_unit_test_setup_teardown(TC_STATIC_es_confirm_handler_non_pin_otm, TC_iot_easysetup_common_setup, TC_iot_easysetup_common_teardown),
             cmocka_unit_test_setup_teardown(TC_STATIC_es_confirm_handler_invalid_payload, TC_iot_easysetup_common_setup, TC_iot_easysetup_common_teardown),
             cmocka_unit_test_setup_teardown(TC_STATIC_es_setupcomplete_handler_success, TC_iot_easysetup_common_setup, TC_iot_easysetup_common_teardown),
+            cmocka_unit_test(TC_st_conn_ownership_confirm_SUCCESS),
     };
     return cmocka_run_group_tests_name("iot_easysetup_d2d.c", tests, NULL, NULL);
 }
@@ -407,7 +408,10 @@ int TEST_FUNC_iot_dump_log(void)
 int TEST_FUNC_iot_easysetup_st_mqtt(void)
 {
     const struct CMUnitTest tests[] = {
-            cmocka_unit_test(TC_STATIC_iot_es_mqtt_registration_success),
+            cmocka_unit_test(TC_STATIC_iot_es_mqtt_registration_SUCCESS),
+            cmocka_unit_test(TC_STATIC_iot_parse_sequence_num_SUCCESS),
+            cmocka_unit_test(TC_STATIC_iot_parse_sequence_num_FAILURE),
+            cmocka_unit_test(TC_STATIC_iot_mqtt_registration_client_callback_SUCCESS),
     };
     return cmocka_run_group_tests_name("iot_easysetup_st_mqtt.c", tests, NULL, NULL);
 }

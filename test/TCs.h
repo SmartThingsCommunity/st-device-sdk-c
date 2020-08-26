@@ -139,6 +139,7 @@ void TC_STATIC_es_confirm_handler_invalid_pin(void** state);
 void TC_STATIC_es_confirm_handler_non_pin_otm(void** state);
 void TC_STATIC_es_confirm_handler_invalid_payload(void** state);
 void TC_STATIC_es_setupcomplete_handler_success(void** state);
+void TC_st_conn_ownership_confirm_SUCCESS(void **state);
 
 // TCs for iot_main.c
 void TC_st_conn_init_null_parameters(void **state);
@@ -332,6 +333,9 @@ void TC_iot_dump_create_dump_state_success(void **state);
 void TC_iot_dump_log(void **state);
 
 // TCs for iot_easysetup_st_mqtt.c
-void TC_STATIC_iot_es_mqtt_registration_success(void **state);
+void TC_STATIC_iot_es_mqtt_registration_SUCCESS(void **state);
+void TC_STATIC_iot_parse_sequence_num_SUCCESS(void **state);
+void TC_STATIC_iot_parse_sequence_num_FAILURE(void **state);
+void TC_STATIC_iot_mqtt_registration_client_callback_SUCCESS(void **state);
 
 #endif //ST_DEVICE_SDK_C_TCS_H

@@ -1269,6 +1269,29 @@ static void assert_empty_json(iot_security_cipher_params_t *cipher, char *payloa
     free(plain_message);
 }
 
+void TC_st_conn_ownership_confirm_SUCCESS(void **state)
+{
+    struct iot_context *internal_context;
+    IOT_CTX *context;
+    unsigned char events = 0;
 
+    // Given
+    internal_context = (struct iot_context*) malloc(sizeof(struct iot_context));
+    memset(internal_context, '\0', sizeof(struct iot_context));
+    internal_context->curr_otm_feature = OVF_BIT_BUTTON;
+    internal_context->iot_events = iot_os_eventgroup_create();
+    context = (IOT_CTX*) internal_context;
+    // When
+    st_conn_ownership_confirm(context, true);
+
+    // Then
+    events = iot_os_eventgroup_wait_bits(internal_context->iot_events,
+                                         IOT_EVENT_BIT_EASYSETUP_CONFIRM, false, 100000);
+    assert_true(events & IOT_EVENT_BIT_EASYSETUP_CONFIRM);
+
+    // Teardown
+    iot_os_eventgroup_delete(internal_context->iot_events);
+    free(internal_context);
+}
 
 
