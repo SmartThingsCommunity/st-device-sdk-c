@@ -140,6 +140,7 @@ void TC_STATIC_es_confirm_handler_non_pin_otm(void** state);
 void TC_STATIC_es_confirm_handler_invalid_payload(void** state);
 void TC_STATIC_es_setupcomplete_handler_success(void** state);
 void TC_st_conn_ownership_confirm_SUCCESS(void **state);
+void TC_st_conn_ownership_confirm_DENY(void **state);
 
 // TCs for iot_main.c
 void TC_st_conn_init_null_parameters(void **state);

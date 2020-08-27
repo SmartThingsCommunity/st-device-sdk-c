@@ -159,6 +159,7 @@ int TEST_FUNC_iot_easysetup_d2d(void)
             cmocka_unit_test_setup_teardown(TC_STATIC_es_confirm_handler_invalid_payload, TC_iot_easysetup_common_setup, TC_iot_easysetup_common_teardown),
             cmocka_unit_test_setup_teardown(TC_STATIC_es_setupcomplete_handler_success, TC_iot_easysetup_common_setup, TC_iot_easysetup_common_teardown),
             cmocka_unit_test(TC_st_conn_ownership_confirm_SUCCESS),
+            cmocka_unit_test(TC_st_conn_ownership_confirm_DENY),
     };
     return cmocka_run_group_tests_name("iot_easysetup_d2d.c", tests, NULL, NULL);
 }
