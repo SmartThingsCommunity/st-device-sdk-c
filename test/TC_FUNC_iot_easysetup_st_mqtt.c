@@ -27,6 +27,7 @@
 #include <security/iot_security_helper.h>
 #include <iot_util.h>
 #include <external/JSON.h>
+#include <iot_internal.h>
 
 #define REG_TEST_LOOKUP_ID "c37e0475-b727-49ca-bdfe-33bda78c28a7";
 #define REG_TEST_LOCATION_ID "9400c47a-5d29-452c-bb36-0a44c08eba19";
@@ -59,7 +60,7 @@ struct registration_test_condition {
     bool use_d2d;
 };
 
-void TC_STATIC_iot_es_mqtt_registration_success(void **state)
+void TC_STATIC_iot_es_mqtt_registration_SUCCESS(void **state)
 {
     char *output_str;
     size_t msglen;
@@ -217,4 +218,92 @@ void assert_es_mqtt_registration_json(struct iot_context *context, char *payload
                          JSON_GET_OBJECT_ITEM(dip_item, "minorVersion")->valueint);
     }
 }
+
+extern int _iot_parse_sequence_num(char *payload);
+
+void TC_STATIC_iot_parse_sequence_num_SUCCESS(void **state)
+{
+    const char *mqtt_payload[3] = {
+            "{\"deviceEvents\":[{\"component\":\"main\",\"capability\":\"switch\",\"attribute\":\"switch\",\"value\":\"on\",\"providerData\":{\"sequenceNumber\":1,\"timestamp\":\"1598246160400\"}}]}",
+            "{\"deviceEvents\":[{\"component\":\"main\",\"capability\":\"switchLevel\",\"attribute\":\"level\",\"value\":50,\"unit\":\"%\",\"providerData\":{\"sequenceNumber\":2,\"timestamp\":\"1598246160419\"}}]}",
+            "{\"deviceEvents\":[{\"component\":\"main\",\"capability\":\"colorTemperature\",\"attribute\":\"colorTemperature\",\"value\":2000,\"providerData\":{\"sequenceNumber\":3,\"timestamp\":\"1598246160437\"}}]}"
+    };
+    int expected_sequence_num[3] = { 1, 2, 3 };
+
+    for (int i = 0; i < 3; i++) {
+        int seq = _iot_parse_sequence_num((char *) mqtt_payload[i]);
+        assert_int_equal(seq, expected_sequence_num[i]);
+    }
+}
+
+void TC_STATIC_iot_parse_sequence_num_FAILURE(void **state)
+{
+    const char *mqtt_payload[4] = {
+            NULL,
+            "{}",
+            "{\"deviceEvents\":[{\"component\":\"main\",\"capability\":\"switch\",\"attribute\":\"switch\",\"value\":\"on\"}]}",
+            "{\"deviceEvents\":[{\"component\":\"main\",\"capability\":\"colorTemperature\",\"attribute\":\"colorTemperature\",\"value\":2000,\"providerData\":{\"timestamp\":\"1598246160437\"}}]}"
+    };
+
+    for (int i = 0; i < 4; i++) {
+        int seq = _iot_parse_sequence_num((char *) mqtt_payload[i]);
+        assert_int_equal(seq, 0);
+    }
+}
+
+#define DIP_MAJOR_VERSION   "0"
+#define DIP_MINOR_VERSION   "1"
+#define DIP_KEY "123e4567-e89b-12d3-a456-426614174000"
+#define REG_DEVICE_ID "123e4567-e89b-12d3-a456-426614174000"
+#define REG_LOCATION_ID "123e4567-e89b-12d3-a456-426614174000"
+extern void _iot_mqtt_registration_client_callback(st_mqtt_event event, void *event_data, void *user_data);
+
+void TC_STATIC_iot_mqtt_registration_client_callback_SUCCESS(void **state)
+{
+    st_mqtt_msg msg;
+    struct iot_uuid uuid;
+    struct iot_context *context;
+    char *reg_payload = "{\"deviceId\":\""REG_DEVICE_ID"\",\n"
+                              "\"name\":\"Light\",\n"
+                              "\"label\":\"Light\",\n"
+                              "\"locationId\":\""REG_LOCATION_ID"\",\n"
+                              "\"roomId\":\"123e4567-e89b-12d3-a456-426614174000\",\n"
+                              "\"type\":\"MQTT\",\n"
+                              "\"deviceIntegrationProfileKey\":{\"id\":\""DIP_KEY"\",\"majorVersion\":"DIP_MAJOR_VERSION",\"minorVersion\":"DIP_MINOR_VERSION"},\n"
+                              "\"routingKey\":\"us\",\n"
+                              "\"metadata\":{\"serialNumber\":\"SERIALNUMBER\",\"mnId\":\"MNID\",\"vid\":\"VIDTEST\",\"deviceTypeId\":\"Light\",\n"
+                              "             \"lookupId\":\"bb000ddd-92a0-42a3-86f0-b531f278af06\",\"registrationPayloadType\":\"json\",\"stack\":\"K8\",\n"
+                              "             \"serialHash\":\"rpSpVp9nOkPowHrwBzA6UqyC48cJdYyBpyfZFqbZeh0\",\"provisioningTs\":1598256474,\n"
+                              "             \"manufacturerName\":\"Opensource\",\"manufacturerCode\":\"101\",\"marketingName\":\"Light Device\",\n"
+                              "             \"modelNumber\":\"TEST\",\"firmwareVersion\":\"1.3.6\",\"osType\":\"FreeRTOS\",\"osVersion\":\"V8.2.0\",\"stdkVersion\":\"1.3.6\"}}";
+
+    // Given
+    context = (struct iot_context*) malloc(sizeof(struct iot_context));
+    memset(context, '\0', sizeof(struct iot_context));
+    context->cmd_queue = iot_os_queue_create(IOT_QUEUE_LENGTH, sizeof(struct iot_command));
+    context->iot_events = iot_os_eventgroup_create();
+
+    msg.payload = reg_payload;
+    msg.payloadlen = strlen(reg_payload);
+    msg.topic = IOT_SUB_TOPIC_REGISTRATION_PREFIX;
+    // When
+    _iot_mqtt_registration_client_callback(ST_MQTT_EVENT_MSG_DELIVERED, (void*) &msg, (void *)context);
+
+    // Then
+    assert_int_equal(context->iot_reg_data.dip->dip_major_version, atoi(DIP_MAJOR_VERSION));
+    assert_int_equal(context->iot_reg_data.dip->dip_minor_version, atoi(DIP_MINOR_VERSION));
+    iot_util_convert_str_uuid(DIP_KEY, &uuid);
+    assert_memory_equal(&context->iot_reg_data.dip->dip_id, &uuid, sizeof(struct iot_uuid));
+    iot_util_convert_str_uuid(REG_LOCATION_ID, &uuid);
+    assert_memory_equal(context->iot_reg_data.locationId, &uuid, sizeof(struct iot_uuid));
+    assert_string_equal(REG_DEVICE_ID, context->iot_reg_data.deviceId);
+
+    // Teardown
+    iot_os_eventgroup_delete(context->iot_events);
+    iot_os_queue_delete(context->cmd_queue);
+    iot_os_free(context->iot_reg_data.dip);
+    iot_os_free(context->iot_reg_data.locationId);
+    free(context);
+}
+
 #endif
