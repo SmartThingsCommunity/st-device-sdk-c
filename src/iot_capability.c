@@ -32,8 +32,6 @@
 
 #define MAX_SQNUM 0x7FFFFFFF
 
-static int32_t sqnum = 0;
-
 STATIC_FUNCTION
 iot_error_t _iot_parse_noti_data(void *data, iot_noti_data_t *noti_data);
 
