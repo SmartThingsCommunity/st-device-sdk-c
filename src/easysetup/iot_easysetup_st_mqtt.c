@@ -37,24 +37,6 @@
 #include <cbor.h>
 #endif
 
-void _iot_mqtt_noti_sub_callback(st_mqtt_msg *md, void *userData)
-{
-	struct iot_context *ctx = (struct iot_context *)userData;
-	char *mqtt_payload = md->payload;
-
-	iot_noti_sub_cb(ctx, mqtt_payload);
-	IOT_DEBUG("raw msg (len:%d) : %s", md->payloadlen, mqtt_payload);
-}
-
-void _iot_mqtt_cmd_sub_callback(st_mqtt_msg *md, void *userData)
-{
-	struct iot_context *ctx = (struct iot_context *)userData;
-	char *mqtt_payload = md->payload;
-
-	iot_cap_sub_cb(ctx->cap_handle_list, mqtt_payload);
-	IOT_DEBUG("raw msg (len:%d) : %s", md->payloadlen, mqtt_payload);
-}
-
 static void mqtt_reg_sub_cb(st_mqtt_msg *md, void *userData)
 {
 	struct iot_context *ctx = (struct iot_context *)userData;
