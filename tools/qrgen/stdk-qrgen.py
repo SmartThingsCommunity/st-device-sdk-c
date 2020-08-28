@@ -36,7 +36,6 @@ def main():
 
     parser.add_argument(
         '--folder',
-        type=Path,
         default=os.getcwd(),
         help="Folder containing %s and %s (if not supplied uses current folder)"
         % (onboardingFile, deviceInfoFile))
