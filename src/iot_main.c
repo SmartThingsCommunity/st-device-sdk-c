@@ -563,7 +563,7 @@ static iot_error_t _do_iot_main_command(struct iot_context *ctx,
 
 			err = iot_nv_get_prov_data(&ctx->prov_data);
 			if (err != IOT_ERROR_NONE) {
-				IOT_WARN("There are no prov data in NV\n");
+				IOT_DEBUG("There are no prov data in NV\n");
 				err = iot_nv_erase(IOT_NVD_DEVICE_ID);
 				if ((err != IOT_ERROR_NONE) && (err != IOT_ERROR_NV_DATA_NOT_EXIST)) {
 					IOT_ERROR("Can't remove deviceId for new registraiton");
