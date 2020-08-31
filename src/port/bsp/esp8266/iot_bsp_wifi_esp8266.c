@@ -88,6 +88,9 @@ static esp_err_t event_handler(void *ctx, system_event_t *event)
 	wifi_ap_record_t ap_info;
 	memset(&ap_info, 0x0, sizeof(wifi_ap_record_t));
 
+	/* For accessing reason codes in case of disconnection */
+	system_event_info_t *info = &event->event_info;
+
 	switch(event->event_id) {
 	case SYSTEM_EVENT_STA_START:
 		xEventGroupSetBits(wifi_event_group, WIFI_STA_START_BIT);
@@ -103,6 +106,10 @@ static esp_err_t event_handler(void *ctx, system_event_t *event)
 		IOT_INFO("Disconnect reason : %d", event->event_info.disconnected.reason);
 		IOT_DUMP(IOT_DEBUG_LEVEL_ERROR, IOT_DUMP_BSP_WIFI_EVENT_DEAUTH, event->event_info.disconnected.reason, 0);
 		xEventGroupSetBits(wifi_event_group, WIFI_STA_DISCONNECT_BIT);
+	        if (info->disconnected.reason == WIFI_REASON_BASIC_RATE_NOT_SUPPORT) {
+	            /*Switch to 802.11 bgn mode */
+	            esp_wifi_set_protocol(ESP_IF_WIFI_STA, WIFI_PROTOCAL_11B | WIFI_PROTOCAL_11G | WIFI_PROTOCAL_11N);
+	        }
 		esp_wifi_connect();
 		xEventGroupClearBits(wifi_event_group, WIFI_STA_CONNECT_BIT);
 		break;
