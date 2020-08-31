@@ -51,6 +51,7 @@
 
 #define IOT_MAIN_TASK_DEFAULT_CYCLE			100		/* in ms */
 #define IOT_MQTT_CONNECT_CRITICAL_REJECT_MAX	3
+#define IOT_SERVER_UNAVAILABLE_INTERMISSION		60000
 
 enum _iot_noti_type {
 	/* Common notifications */

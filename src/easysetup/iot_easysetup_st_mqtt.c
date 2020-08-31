@@ -823,12 +823,16 @@ iot_error_t _iot_es_mqtt_connect(struct iot_context *ctx, st_mqtt_client target_
 		IOT_ERROR("%s error(%d)", __func__, ret);
 		switch (ret) {
 		case E_ST_MQTT_UNNACCEPTABLE_PROTOCOL:
-			/* fall through */
+			ctx->mqtt_connect_critical_reject_count = 0;
+			iot_ret = IOT_ERROR_MQTT_SERVER_UNAVAIL;
+			break;
 		case E_ST_MQTT_SERVER_UNAVAILABLE:
 			/* This case means Server can't start service for MQTT Things
 			 * This case is totally server-side issue, so we just report it to Apps
 			 */
 			ctx->mqtt_connect_critical_reject_count = 0;
+			IOT_WARN("Server unavailable now.. please wait 60 seconds to reconnect");
+			iot_os_delay(IOT_SERVER_UNAVAILABLE_INTERMISSION);
 			iot_ret = IOT_ERROR_MQTT_SERVER_UNAVAIL;
 			break;
 
