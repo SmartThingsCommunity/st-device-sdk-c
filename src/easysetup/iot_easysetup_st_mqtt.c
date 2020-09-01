@@ -823,16 +823,12 @@ iot_error_t _iot_es_mqtt_connect(struct iot_context *ctx, st_mqtt_client target_
 		IOT_ERROR("%s error(%d)", __func__, ret);
 		switch (ret) {
 		case E_ST_MQTT_UNNACCEPTABLE_PROTOCOL:
-			ctx->mqtt_connect_critical_reject_count = 0;
-			iot_ret = IOT_ERROR_MQTT_SERVER_UNAVAIL;
-			break;
+			/* fall through */
 		case E_ST_MQTT_SERVER_UNAVAILABLE:
 			/* This case means Server can't start service for MQTT Things
 			 * This case is totally server-side issue, so we just report it to Apps
 			 */
 			ctx->mqtt_connect_critical_reject_count = 0;
-			IOT_WARN("Server unavailable now.. please wait 60 seconds to reconnect");
-			iot_os_delay(IOT_SERVER_UNAVAILABLE_INTERMISSION);
 			iot_ret = IOT_ERROR_MQTT_SERVER_UNAVAIL;
 			break;
 
@@ -900,6 +896,15 @@ iot_error_t iot_es_connect(struct iot_context *ctx, int conn_type)
 		IOT_ERROR("invalid args");
 		return IOT_ERROR_INVALID_ARGS;
 	}
+
+	if (ctx->rate_limit) {
+		if (!(iot_os_timer_isexpired(ctx->rate_limit_timeout))) {
+			unsigned int remaining_time = iot_os_timer_left_ms(ctx->rate_limit_timeout);
+			IOT_WARN("Server rate limt break times.. please wait %d seconds to connect", remaining_time/1000);
+			iot_os_delay(remaining_time);
+		}
+	}
+	ctx->rate_limit = false;
 
 	iot_ret = iot_nv_get_serial_number((char **)&wt_params.sn, &wt_params.sn_len);
 	if (iot_ret != IOT_ERROR_NONE) {

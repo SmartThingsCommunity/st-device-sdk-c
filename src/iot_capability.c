@@ -389,6 +389,15 @@ int st_cap_attr_send(IOT_CAP_HANDLE *cap_handle,
 		return IOT_ERROR_BAD_REQ;
 	}
 
+	if (ctx->rate_limit) {
+		if ((iot_os_timer_isexpired(ctx->rate_limit_timeout))) {
+			ctx->rate_limit = false;
+		} else {
+			IOT_WARN("Exceed rate limit. Can't send attributes for a while");
+			return IOT_ERROR_BAD_REQ;
+		}
+	}
+
 	if (ctx->event_sequence_num == MAX_SQNUM) {
 		ctx->event_sequence_num = 0;
 	}
@@ -460,6 +469,15 @@ int st_cap_send_attr(IOT_EVENT *event[], uint8_t evt_num)
 		IOT_DUMP(IOT_DEBUG_LEVEL_ERROR, IOT_DUMP_CAPABILITY_SEND_EVENT_NO_CONNECT_ERROR, ctx->curr_state, 0);
 		IOT_ERROR("Target has not connected to server yet!!");
 		return IOT_ERROR_BAD_REQ;
+	}
+
+	if (ctx->rate_limit) {
+		if ((iot_os_timer_isexpired(ctx->rate_limit_timeout))) {
+			ctx->rate_limit = false;
+		} else {
+			IOT_WARN("Exceed rate limit. Can't send attributes for a while");
+			return IOT_ERROR_BAD_REQ;
+		}
 	}
 
 	if (ctx->event_sequence_num == MAX_SQNUM) {
@@ -673,6 +691,10 @@ void iot_noti_sub_cb(struct iot_context *ctx, char *payload)
 	if (err != IOT_ERROR_NONE) {
 		IOT_ERROR("Cannot parse notification data");
 		return;
+	}
+	if (noti_data.type == IOT_NOTI_TYPE_RATE_LIMIT) {
+		ctx->rate_limit = true;
+		iot_os_timer_count_ms(ctx->rate_limit_timeout, IOT_RATE_LIMIT_BREAK_TIME);
 	}
 
 	iot_command_send(ctx, IOT_COMMAND_NOTIFICATION_RECEIVED,

@@ -1237,6 +1237,14 @@ IOT_CTX* st_conn_init(unsigned char *onboarding_config, unsigned int onboarding_
 		return NULL;
 	}
 
+	iot_err = iot_os_timer_init(&ctx->rate_limit_timeout);
+	if (iot_err != IOT_ERROR_NONE) {
+		IOT_ERROR("failed to malloc for rate_limit_timeout\n");
+		iot_os_timer_destroy(&ctx->state_timer);
+		free(ctx);
+		return NULL;
+	}
+
 	// Initialize device nv section
 	iot_err = iot_nv_init(device_info, device_info_len);
 	if (iot_err != IOT_ERROR_NONE) {
@@ -1387,6 +1395,7 @@ error_main_log_file_init:
 	iot_nv_deinit();
 
 error_main_bsp_init:
+	iot_os_timer_destroy(&ctx->rate_limit_timeout);
 	iot_os_timer_destroy(&ctx->state_timer);
 	free(ctx);
 

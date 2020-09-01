@@ -51,7 +51,7 @@
 
 #define IOT_MAIN_TASK_DEFAULT_CYCLE			100		/* in ms */
 #define IOT_MQTT_CONNECT_CRITICAL_REJECT_MAX	3
-#define IOT_SERVER_UNAVAILABLE_INTERMISSION		60000
+#define IOT_RATE_LIMIT_BREAK_TIME		60000
 
 enum _iot_noti_type {
 	/* Common notifications */
@@ -303,6 +303,9 @@ struct iot_context {
 	iot_state_t rcv_fail_state;	/**< @brief to check current failed state for recovery */
 
 	int event_sequence_num;	/**< @brief Last event's sequence number */
+
+	bool rate_limit; 	/**< @brief whether rate limit occurs */
+	iot_os_timer rate_limit_timeout;	/**< @brief timeout for rate limit penalty */
 };
 
 #endif /* _IOT_MAIN_H_ */
