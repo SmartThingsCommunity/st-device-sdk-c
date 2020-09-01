@@ -296,7 +296,7 @@ DEPRECATED IOT_EVENT* st_cap_attr_create_number(const char *attribute, double nu
 	attr = st_cap_create_attr(cap_handle, attribute, &value, unit, data);\
 	if (attr != NULL){\
 		output_seq_num = st_cap_send_attr(&attr, 1);\
-		st_cap_attr_free(attr);\
+		st_cap_free_attr(attr);\
 	}\
 }
 
@@ -339,7 +339,7 @@ DEPRECATED IOT_EVENT* st_cap_attr_create_string(const char *attribute, char *str
 	attr = st_cap_create_attr(cap_handle, attribute, &value, unit, data);\
 	if (attr != NULL){\
 		output_seq_num = st_cap_send_attr(&attr, 1);\
-		st_cap_attr_free(attr);\
+		st_cap_free_attr(attr);\
 	}\
 }
 
@@ -386,7 +386,7 @@ DEPRECATED IOT_EVENT* st_cap_attr_create_string_array(const char *attribute,
 	attr = st_cap_create_attr(cap_handle, attribute, &value, unit, data);\
 	if (attr != NULL){\
 		output_seq_num = st_cap_send_attr(&attr, 1);\
-		st_cap_attr_free(attr);\
+		st_cap_free_attr(attr);\
 	}\
 }
 
