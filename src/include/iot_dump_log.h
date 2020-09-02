@@ -49,10 +49,11 @@ struct iot_dump_state {
     char model_number[16];
     char manufacturer_name[16];
     char dip_id[16];
-
     char device_id[8];
     unsigned int mqtt_connection_success_count;
     unsigned int mqtt_connection_try_count;
+
+    long log_time;
 };
 
 #define IOT_DUMP_LOG_VERSION 0

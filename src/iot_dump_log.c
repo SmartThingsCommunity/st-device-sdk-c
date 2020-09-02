@@ -35,6 +35,7 @@
 static struct iot_dump_state* _iot_dump_create_dump_state(struct iot_context *iot_ctx)
 {
     struct iot_dump_state* dump_state;
+    struct timeval time;
 
     IOT_INFO("log version : %x", IOT_DUMP_LOG_VERSION);
 
@@ -52,6 +53,10 @@ static struct iot_dump_state* _iot_dump_create_dump_state(struct iot_context *io
     strncpy(dump_state->os_version, iot_os_get_os_version_string(), sizeof(dump_state->os_version));
     strncpy(dump_state->bsp_name, iot_bsp_get_bsp_name(), sizeof(dump_state->bsp_name));
     strncpy(dump_state->bsp_version, iot_bsp_get_bsp_version_string(), sizeof(dump_state->bsp_version));
+
+
+    gettimeofday(&time, NULL);
+    dump_state->log_time = time.tv_sec;
 
     if (iot_ctx) {
         if (iot_ctx->iot_reg_data.deviceId) {
