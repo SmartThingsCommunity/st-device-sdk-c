@@ -563,7 +563,7 @@ static iot_error_t _do_iot_main_command(struct iot_context *ctx,
 
 			err = iot_nv_get_prov_data(&ctx->prov_data);
 			if (err != IOT_ERROR_NONE) {
-				IOT_WARN("There are no prov data in NV\n");
+				IOT_DEBUG("There are no prov data in NV\n");
 				err = iot_nv_erase(IOT_NVD_DEVICE_ID);
 				if ((err != IOT_ERROR_NONE) && (err != IOT_ERROR_NV_DATA_NOT_EXIST)) {
 					IOT_ERROR("Can't remove deviceId for new registraiton");
@@ -1237,6 +1237,14 @@ IOT_CTX* st_conn_init(unsigned char *onboarding_config, unsigned int onboarding_
 		return NULL;
 	}
 
+	iot_err = iot_os_timer_init(&ctx->rate_limit_timeout);
+	if (iot_err != IOT_ERROR_NONE) {
+		IOT_ERROR("failed to malloc for rate_limit_timeout\n");
+		iot_os_timer_destroy(&ctx->state_timer);
+		free(ctx);
+		return NULL;
+	}
+
 	// Initialize device nv section
 	iot_err = iot_nv_init(device_info, device_info_len);
 	if (iot_err != IOT_ERROR_NONE) {
@@ -1387,6 +1395,7 @@ error_main_log_file_init:
 	iot_nv_deinit();
 
 error_main_bsp_init:
+	iot_os_timer_destroy(&ctx->rate_limit_timeout);
 	iot_os_timer_destroy(&ctx->state_timer);
 	free(ctx);
 

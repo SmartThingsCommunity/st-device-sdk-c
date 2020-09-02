@@ -702,7 +702,6 @@ int st_mqtt_create(st_mqtt_client *client, st_mqtt_event_callback callback_fp, v
 	c->ping_packet->packet_type = PINGREQ;
 	c->ping_packet->have_owner = 1;
 
-	IOT_DUMP(IOT_DEBUG_LEVEL_INFO, IOT_DUMP_MQTT_CREATE_SUCCESS, MQTT_RETRY_TIMEOUT, 0);
 	return 0;
 error_handle:
 	if (c) {
@@ -797,7 +796,6 @@ static int _iot_mqtt_connect_net(MQTTClient *client, st_mqtt_broker_info_t *brok
 	} while ((iot_err != IOT_ERROR_NONE) && connect_retry);
 
 	if (iot_err != IOT_ERROR_NONE) {
-		IOT_DUMP(IOT_DEBUG_LEVEL_ERROR, IOT_DUMP_MQTT_CONNECT_NETWORK_FAIL, 0, 0);
 		IOT_ERROR("MQTT net connection failed");
 		rc = E_ST_MQTT_FAILURE;
 		goto exit;
@@ -845,7 +843,6 @@ void st_mqtt_destroy(st_mqtt_client client)
 skip_manage_lock:
 	c->thread = NULL;
 	iot_os_free(c);
-	IOT_DUMP(IOT_DEBUG_LEVEL_INFO, IOT_DUMP_MQTT_DESTROY, 0, 0);
 }
 
 static int _iot_mqtt_check_alive(MQTTClient *client)

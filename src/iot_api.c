@@ -929,11 +929,13 @@ iot_error_t iot_device_cleanup(struct iot_context *ctx)
 	iot_api_prov_data_mem_free(&(ctx->prov_data));
 	memset(&(ctx->prov_data), 0x0, sizeof(ctx->prov_data));
 
-	if ((iot_err = iot_nv_erase_prov_data()) != IOT_ERROR_NONE) {
+	iot_err = iot_nv_erase_prov_data();
+	if ((iot_err != IOT_ERROR_NONE) && (iot_err != IOT_ERROR_NV_DATA_NOT_EXIST)) {
 		IOT_ERROR("%s: failed to erase provisioning data: %d", __func__, iot_err);
 	}
 
-	if ((iot_err = iot_nv_erase(IOT_NVD_DEVICE_ID)) != IOT_ERROR_NONE) {
+	iot_err = iot_nv_erase(IOT_NVD_DEVICE_ID);
+	if ((iot_err != IOT_ERROR_NONE) && (iot_err != IOT_ERROR_NV_DATA_NOT_EXIST)) {
 		IOT_ERROR("%s: failed to erase device ID: %d", __func__, iot_err);
 	}
 

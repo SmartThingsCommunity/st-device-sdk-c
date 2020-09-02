@@ -286,7 +286,7 @@ iot_error_t iot_bsp_fs_read(iot_bsp_fs_handle_t handle, char *buffer, size_t *le
 	if (!buffer || *length <= 0 || *length > FLASH_SECTOR_SIZE)
 		return IOT_ERROR_FS_READ_FAIL;
 	ret = nv_storage_read(handle.filename, buffer, length);
-	IOT_ERROR_CHECK(ret < -1, IOT_ERROR_FS_NO_FILE, "nvs no file");
+	IOT_DEBUG_CHECK(ret < -1, IOT_ERROR_FS_NO_FILE, "nvs no file");
 	IOT_ERROR_CHECK(ret < 0, IOT_ERROR_FS_READ_FAIL, "nvs read fail ");
 
 	return IOT_ERROR_NONE;
