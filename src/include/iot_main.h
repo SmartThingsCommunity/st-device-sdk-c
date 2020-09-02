@@ -306,6 +306,9 @@ struct iot_context {
 
 	bool rate_limit; 	/**< @brief whether rate limit occurs */
 	iot_os_timer rate_limit_timeout;	/**< @brief timeout for rate limit penalty */
+
+	unsigned int mqtt_connection_success_count; /**< @brief MQTT connection success count */
+	unsigned int mqtt_connection_try_count; /**< @brief MQTT connection try count */
 };
 
 #endif /* _IOT_MAIN_H_ */

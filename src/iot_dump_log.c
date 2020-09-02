@@ -79,6 +79,9 @@ static struct iot_dump_state* _iot_dump_create_dump_state(struct iot_context *io
             strncpy(dump_state->manufacturer_name, iot_ctx->device_info.manufacturer_name,
                     sizeof(dump_state->manufacturer_name));
         }
+
+        dump_state->mqtt_connection_success_count = iot_ctx->mqtt_connection_success_count;
+        dump_state->mqtt_connection_try_count = iot_ctx->mqtt_connection_try_count;
     }
     return dump_state;
 }
