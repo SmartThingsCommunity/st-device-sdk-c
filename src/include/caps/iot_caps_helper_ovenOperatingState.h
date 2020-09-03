@@ -109,7 +109,7 @@ const static struct iot_caps_ovenOperatingState {
     .id = "ovenOperatingState",
     .attr_ovenJobState = {
         .name = "ovenJobState",
-        .property = NULL,
+        .property = 0,
         .valueType = VALUE_TYPE_STRING,
         .values = {"cleaning", "cooking", "cooling", "draining", "preheat", "ready", "rinsing"},
         .value_cleaning = "cleaning",
@@ -151,7 +151,7 @@ const static struct iot_caps_ovenOperatingState {
     },
     .attr_machineState = {
         .name = "machineState",
-        .property = NULL,
+        .property = 0,
         .valueType = VALUE_TYPE_STRING,
         .values = {"ready", "running", "paused"},
         .value_ready = "ready",

@@ -126,12 +126,12 @@ const static struct iot_caps_samsungTV {
     },
     .attr_messageButton = {
         .name = "messageButton",
-        .property = NULL,
+        .property = 0,
         .valueType = VALUE_TYPE_OBJECT,
     },
     .attr_switch = {
         .name = "switch",
-        .property = NULL,
+        .property = 0,
         .valueType = VALUE_TYPE_STRING,
         .values = {"on", "off"},
         .value_on = "on",
@@ -139,7 +139,7 @@ const static struct iot_caps_samsungTV {
     },
     .attr_mute = {
         .name = "mute",
-        .property = NULL,
+        .property = 0,
         .valueType = VALUE_TYPE_STRING,
         .values = {"muted", "unknown", "unmuted"},
         .value_muted = "muted",
@@ -148,7 +148,7 @@ const static struct iot_caps_samsungTV {
     },
     .attr_pictureMode = {
         .name = "pictureMode",
-        .property = NULL,
+        .property = 0,
         .valueType = VALUE_TYPE_STRING,
         .values = {"dynamic", "movie", "standard", "unknown"},
         .value_dynamic = "dynamic",
@@ -158,7 +158,7 @@ const static struct iot_caps_samsungTV {
     },
     .attr_soundMode = {
         .name = "soundMode",
-        .property = NULL,
+        .property = 0,
         .valueType = VALUE_TYPE_STRING,
         .values = {"clear voice", "movie", "music", "standard", "unknown"},
         .value_clear_voice = "clear voice",
