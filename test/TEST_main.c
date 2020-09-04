@@ -77,7 +77,7 @@ int TEST_FUNC_iot_capability(void)
             cmocka_unit_test_setup_teardown(TC_st_cap_attr_send_success, TC_iot_capability_setup, TC_iot_capability_teardown),
             cmocka_unit_test_setup_teardown(TC_st_cap_attr_send_invalid_parameter, TC_iot_capability_setup, TC_iot_capability_teardown),
             cmocka_unit_test_setup_teardown(TC_iot_cap_sub_cb_success, TC_iot_capability_setup, TC_iot_capability_teardown),
-            cmocka_unit_test_setup_teardown(TC_iot_noti_sub_cb_rate_limit_reached_success, TC_iot_capability_setup, TC_iot_capability_teardown),
+            cmocka_unit_test_setup_teardown(TC_iot_noti_sub_cb_rate_limit_reached_SUCCESS, TC_iot_capability_setup, TC_iot_capability_teardown),
             cmocka_unit_test(TC_iot_parse_noti_data_device_deleted),
             cmocka_unit_test(TC_iot_parse_noti_data_expired_jwt),
             cmocka_unit_test(TC_iot_parse_noti_data_quota_reached),

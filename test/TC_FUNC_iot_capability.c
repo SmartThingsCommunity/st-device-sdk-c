@@ -820,9 +820,10 @@ void TC_iot_cap_sub_cb_success(void **state)
     free(cap_handle_list.handle);
 }
 
-void TC_iot_noti_sub_cb_rate_limit_reached_success(void **state)
+void TC_iot_noti_sub_cb_rate_limit_reached_SUCCESS(void **state)
 {
     IOT_CTX *context;
+    iot_error_t err;
     struct iot_context *internal_context;
     struct iot_command noti_cmd;
     iot_noti_data_t *noti_data;
@@ -837,6 +838,8 @@ void TC_iot_noti_sub_cb_rate_limit_reached_success(void **state)
     internal_context->curr_state = IOT_STATE_CLOUD_CONNECTED;
     internal_context->cmd_queue = iot_os_queue_create(IOT_QUEUE_LENGTH, sizeof(struct iot_command));
     internal_context->iot_events = iot_os_eventgroup_create();
+    err = iot_os_timer_init(&internal_context->rate_limit_timeout);
+    assert_int_equal(err, IOT_ERROR_NONE);
     // When
     iot_noti_sub_cb(internal_context, payload);
     // Then
@@ -850,6 +853,7 @@ void TC_iot_noti_sub_cb_rate_limit_reached_success(void **state)
     // Teardown
     if (noti_cmd.param)
         free(noti_cmd.param);
+    iot_os_timer_destroy(&internal_context->rate_limit_timeout);
     iot_os_eventgroup_delete(internal_context->iot_events);
     iot_os_queue_delete(internal_context->cmd_queue);
     free(context);
