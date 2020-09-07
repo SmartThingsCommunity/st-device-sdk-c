@@ -1,11 +1,34 @@
 # HISTORY
 
- * Please use SmartThings mobile application v1.7.51 (for Android), v1.6.51 (for iOS) or later
-  For detailed information, please refer to 'Announcements' of the README.md
- ** The server's root certificate has changed to increase the validity until Jan 15 12:00:00 2038 GMT
-  Please use SmartThings Device SDK v1.3.3 or later to verify it normally
+## 1.4.0 :  Changes until v1.4.0
 
-## 1.3.6 :  Changes until v1.3.3
+New Improvements or features:
+
+ - Supporting ESP32S2 chip BSP : Added new port-layer files for ESP32S2
+ - Support EMW3080 chipset from MXCHIP : Added new port-layer files for EMW3080
+
+Enhancements or amendments:
+
+ - Add new internal _iot_command_peek() func. to prevent unwnated interference
+ - Add & update TC for
+  * TC_STATIC_iot_mqtt_registration_client_callback_SUCCESS()
+  * TC_STATIC_iot_parse_sequence_num_SUCCESS/FAILURE()
+  * TC_st_conn_ownership_confirm_SUCCESS()
+  * Some TC naming convention
+ - Logging enhancements
+  * Add 'log_time' member into struct iot_dump_state
+  * Add mqtt connection success/try counts flags
+  * Change some general case log from WARN to DEBUG
+ - Add DEPRECATED indicator for deprecated functions in iot_capability
+ - Add 'rate_limit_timeout' for delayed connection when the server send 'RATE_LIMIT' event
+ - Delete unused global variable & functions
+
+Bug fixed:
+
+ - Fix comapatibility issue with AP which configured to 11n only on ESP8266
+ - Fix stdk-keygen.py tool for nv parameter handling
+
+## 1.3.6 :  Changes until v1.3.6
 
 New Improvements or features:
 
