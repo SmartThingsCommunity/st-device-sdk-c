@@ -29,6 +29,15 @@
 extern "C" {
 #endif
 
+#if defined(__GNUC__) || defined(__clang__)
+#define DEPRECATED __attribute__((deprecated))
+#elif defined(_MSC_VER)
+#define DEPRECATED __declspec(deprecated)
+#else
+#pragma message("WARNING: You need to implement DEPRECATED for this compiler")
+#define DEPRECATED
+#endif
+
 /**
  * @brief Contains a enumeration values for types of iot_status.
  */
@@ -246,7 +255,7 @@ typedef enum iot_dump_mode {
  *
  * @see @ref st_cap_attr_send
  */
-IOT_EVENT* st_cap_attr_create_int(const char *attribute, int integer, const char *unit);
+DEPRECATED IOT_EVENT* st_cap_attr_create_int(const char *attribute, int integer, const char *unit);
 
 /**
  * @brief Create IOT_EVENT data with real number(double) `value`.
@@ -266,7 +275,7 @@ IOT_EVENT* st_cap_attr_create_int(const char *attribute, int integer, const char
  *
  * @see @ref st_cap_attr_send
  */
-IOT_EVENT* st_cap_attr_create_number(const char *attribute, double number, const char *unit);
+DEPRECATED IOT_EVENT* st_cap_attr_create_number(const char *attribute, double number, const char *unit);
 
 #define ST_CAP_CREATE_ATTR_NUMBER(cap_handle, attribute, value_number, unit, data, output_attr)\
 {\
@@ -287,7 +296,7 @@ IOT_EVENT* st_cap_attr_create_number(const char *attribute, double number, const
 	attr = st_cap_create_attr(cap_handle, attribute, &value, unit, data);\
 	if (attr != NULL){\
 		output_seq_num = st_cap_send_attr(&attr, 1);\
-		st_cap_attr_free(attr);\
+		st_cap_free_attr(attr);\
 	}\
 }
 
@@ -309,7 +318,7 @@ IOT_EVENT* st_cap_attr_create_number(const char *attribute, double number, const
  *
  * @see @ref st_cap_attr_send
  */
-IOT_EVENT* st_cap_attr_create_string(const char *attribute, char *string, const char *unit);
+DEPRECATED IOT_EVENT* st_cap_attr_create_string(const char *attribute, char *string, const char *unit);
 
 #define ST_CAP_CREATE_ATTR_STRING(cap_handle, attribute, value_string, unit, data, output_attr)\
 {\
@@ -330,7 +339,7 @@ IOT_EVENT* st_cap_attr_create_string(const char *attribute, char *string, const 
 	attr = st_cap_create_attr(cap_handle, attribute, &value, unit, data);\
 	if (attr != NULL){\
 		output_seq_num = st_cap_send_attr(&attr, 1);\
-		st_cap_attr_free(attr);\
+		st_cap_free_attr(attr);\
 	}\
 }
 
@@ -353,7 +362,7 @@ IOT_EVENT* st_cap_attr_create_string(const char *attribute, char *string, const 
  *
  * @see @ref st_cap_attr_send
  */
-IOT_EVENT* st_cap_attr_create_string_array(const char *attribute,
+DEPRECATED IOT_EVENT* st_cap_attr_create_string_array(const char *attribute,
 		uint8_t str_num, char *string_array[], const char *unit);
 
 #define ST_CAP_CREATE_ATTR_STRINGS_ARRAY(cap_handle, attribute, value_string_array, array_num, unit, data, output_attr)\
@@ -377,7 +386,7 @@ IOT_EVENT* st_cap_attr_create_string_array(const char *attribute,
 	attr = st_cap_create_attr(cap_handle, attribute, &value, unit, data);\
 	if (attr != NULL){\
 		output_seq_num = st_cap_send_attr(&attr, 1);\
-		st_cap_attr_free(attr);\
+		st_cap_free_attr(attr);\
 	}\
 }
 
@@ -400,7 +409,7 @@ IOT_EVENT* st_cap_attr_create_string_array(const char *attribute,
  *
  * @see @ref st_cap_attr_send
  */
-IOT_EVENT* st_cap_attr_create(const char *attribute,
+DEPRECATED IOT_EVENT* st_cap_attr_create(const char *attribute,
 			iot_cap_val_t *value, const char *unit, const char *data);
 
 /**
@@ -435,7 +444,7 @@ IOT_EVENT* st_cap_create_attr(IOT_CAP_HANDLE *cap_handle, const char *attribute,
  *
  * @param[in] event The IOT_EVENT data to free.
  */
-void st_cap_attr_free(IOT_EVENT* event);
+DEPRECATED void st_cap_attr_free(IOT_EVENT* event);
 
 /**
  * @brief Free IOT_EVENT data.
@@ -461,7 +470,7 @@ void st_cap_free_attr(IOT_EVENT* event);
  * @return return `sequence number`(which is positive integer) if successful,
  * negative integer for error case.
  */
-int st_cap_attr_send(IOT_CAP_HANDLE *cap_handle,
+DEPRECATED int st_cap_attr_send(IOT_CAP_HANDLE *cap_handle,
 		uint8_t evt_num, IOT_EVENT *event[]);
 
 /**
