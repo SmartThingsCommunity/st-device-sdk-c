@@ -37,6 +37,7 @@
 #define IOT_EVENT_BIT_EASYSETUP_REQ	(1u << 2u)
 #define IOT_EVENT_BIT_EASYSETUP_RESP	(1u << 3u)
 #define IOT_EVENT_BIT_EASYSETUP_CONFIRM	(1u << 4u)
+#define IOT_EVENT_BIT_EASYSETUP_CONFIRM_DENY	(1u << 5u)
 #define IOT_EVENT_BIT_ALL	(IOT_EVENT_BIT_COMMAND | IOT_EVENT_BIT_CAPABILITY | IOT_EVENT_BIT_EASYSETUP_REQ)
 
 #define IOT_USR_INTERACT_BIT_PROV_CONFIRM	(1u << 0u)
@@ -50,6 +51,7 @@
 
 #define IOT_MAIN_TASK_DEFAULT_CYCLE			100		/* in ms */
 #define IOT_MQTT_CONNECT_CRITICAL_REJECT_MAX	3
+#define IOT_RATE_LIMIT_BREAK_TIME		60000
 
 enum _iot_noti_type {
 	/* Common notifications */
@@ -301,6 +303,12 @@ struct iot_context {
 	iot_state_t rcv_fail_state;	/**< @brief to check current failed state for recovery */
 
 	int event_sequence_num;	/**< @brief Last event's sequence number */
+
+	bool rate_limit; 	/**< @brief whether rate limit occurs */
+	iot_os_timer rate_limit_timeout;	/**< @brief timeout for rate limit penalty */
+
+	unsigned int mqtt_connection_success_count; /**< @brief MQTT connection success count */
+	unsigned int mqtt_connection_try_count; /**< @brief MQTT connection try count */
 };
 
 #endif /* _IOT_MAIN_H_ */

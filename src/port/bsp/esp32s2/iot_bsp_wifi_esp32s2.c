@@ -21,7 +21,6 @@
 
 #include "freertos/FreeRTOS.h"
 #include "freertos/event_groups.h"
-#include "rom/ets_sys.h"
 #include "esp_wifi.h"
 #include "esp_event_loop.h"
 #include "esp_log.h"
@@ -88,9 +87,6 @@ static esp_err_t event_handler(void *ctx, system_event_t *event)
 	wifi_ap_record_t ap_info;
 	memset(&ap_info, 0x0, sizeof(wifi_ap_record_t));
 
-	/* For accessing reason codes in case of disconnection */
-	system_event_info_t *info = &event->event_info;
-
 	switch(event->event_id) {
 	case SYSTEM_EVENT_STA_START:
 		xEventGroupSetBits(wifi_event_group, WIFI_STA_START_BIT);
@@ -106,10 +102,6 @@ static esp_err_t event_handler(void *ctx, system_event_t *event)
 		IOT_INFO("Disconnect reason : %d", event->event_info.disconnected.reason);
 		IOT_DUMP(IOT_DEBUG_LEVEL_ERROR, IOT_DUMP_BSP_WIFI_EVENT_DEAUTH, event->event_info.disconnected.reason, 0);
 		xEventGroupSetBits(wifi_event_group, WIFI_STA_DISCONNECT_BIT);
-	        if (info->disconnected.reason == WIFI_REASON_BASIC_RATE_NOT_SUPPORT) {
-	            /*Switch to 802.11 bgn mode */
-	            esp_wifi_set_protocol(ESP_IF_WIFI_STA, WIFI_PROTOCAL_11B | WIFI_PROTOCAL_11G | WIFI_PROTOCAL_11N);
-	        }
 		esp_wifi_connect();
 		xEventGroupClearBits(wifi_event_group, WIFI_STA_CONNECT_BIT);
 		break;
@@ -160,7 +152,7 @@ iot_error_t iot_bsp_wifi_init()
 {
 	esp_err_t esp_ret;
 
-	IOT_INFO("[esp8266] iot_bsp_wifi_init");
+	IOT_INFO("[esp32s2] iot_bsp_wifi_init");
 
 	if(WIFI_INITIALIZED)
 		return IOT_ERROR_NONE;
@@ -198,7 +190,7 @@ iot_error_t iot_bsp_wifi_init()
 	}
 
 	WIFI_INITIALIZED = true;
-	IOT_INFO("[esp8266] iot_bsp_wifi_init done");
+	IOT_INFO("[esp32s2] iot_bsp_wifi_init done");
 	IOT_DUMP(IOT_DEBUG_LEVEL_DEBUG, IOT_DUMP_BSP_WIFI_INIT_SUCCESS, 0, 0);
 
 	return IOT_ERROR_NONE;
@@ -268,7 +260,7 @@ iot_error_t iot_bsp_wifi_set_mode(iot_wifi_conf *conf)
 
 		/*AP connection is not allowed in WIFI_MODE_APSTA and WIFI_MODE_AP*/
 		if(mode == WIFI_MODE_AP || mode == WIFI_MODE_APSTA) {
-			IOT_INFO("[esp8266] current mode=%d need to call esp_wifi_stop", mode);
+			IOT_INFO("[esp32s2] current mode=%d need to call esp_wifi_stop", mode);
 			ESP_ERROR_CHECK(esp_wifi_stop());
 
 			uxBits = xEventGroupWaitBits(wifi_event_group, WIFI_AP_STOP_BIT,
@@ -375,7 +367,7 @@ iot_error_t iot_bsp_wifi_set_mode(iot_wifi_conf *conf)
 		break;
 
 	default:
-		IOT_ERROR("esp8266 cannot support this mode = %d", conf->mode);
+		IOT_ERROR("esp32s2 cannot support this mode = %d", conf->mode);
 		IOT_DUMP(IOT_DEBUG_LEVEL_ERROR, IOT_DUMP_BSP_WIFI_ERROR, conf->mode, __LINE__);
 		return IOT_ERROR_CONN_OPERATE_FAIL;
 	}
@@ -416,7 +408,7 @@ uint16_t iot_bsp_wifi_get_scan_result(iot_wifi_scan_result_t *scan_result)
 					scan_result[i].freq = iot_util_convert_channel_freq(ap_list[i].primary);
 					scan_result[i].authmode = ap_list[i].authmode;
 
-					IOT_DEBUG("esp8266 ssid=%s, mac=%02X:%02X:%02X:%02X:%02X:%02X, rssi=%d, freq=%d, authmode=%d chan=%d",
+					IOT_DEBUG("scan result ssid=%s, mac=%02X:%02X:%02X:%02X:%02X:%02X, rssi=%d, freq=%d, authmode=%d chan=%d",
 							scan_result[i].ssid,
 							scan_result[i].bssid[0], scan_result[i].bssid[1], scan_result[i].bssid[2],
 							scan_result[i].bssid[3], scan_result[i].bssid[4], scan_result[i].bssid[5], scan_result[i].rssi,

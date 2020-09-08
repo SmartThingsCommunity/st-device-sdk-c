@@ -37,24 +37,6 @@
 #include <cbor.h>
 #endif
 
-void _iot_mqtt_noti_sub_callback(st_mqtt_msg *md, void *userData)
-{
-	struct iot_context *ctx = (struct iot_context *)userData;
-	char *mqtt_payload = md->payload;
-
-	iot_noti_sub_cb(ctx, mqtt_payload);
-	IOT_DEBUG("raw msg (len:%d) : %s", md->payloadlen, mqtt_payload);
-}
-
-void _iot_mqtt_cmd_sub_callback(st_mqtt_msg *md, void *userData)
-{
-	struct iot_context *ctx = (struct iot_context *)userData;
-	char *mqtt_payload = md->payload;
-
-	iot_cap_sub_cb(ctx->cap_handle_list, mqtt_payload);
-	IOT_DEBUG("raw msg (len:%d) : %s", md->payloadlen, mqtt_payload);
-}
-
 static void mqtt_reg_sub_cb(st_mqtt_msg *md, void *userData)
 {
 	struct iot_context *ctx = (struct iot_context *)userData;
@@ -915,6 +897,15 @@ iot_error_t iot_es_connect(struct iot_context *ctx, int conn_type)
 		return IOT_ERROR_INVALID_ARGS;
 	}
 
+	if (ctx->rate_limit) {
+		if (!(iot_os_timer_isexpired(ctx->rate_limit_timeout))) {
+			unsigned int remaining_time = iot_os_timer_left_ms(ctx->rate_limit_timeout);
+			IOT_WARN("Server rate limt break times.. please wait %d seconds to connect", remaining_time/1000);
+			iot_os_delay(remaining_time);
+		}
+	}
+	ctx->rate_limit = false;
+
 	iot_ret = iot_nv_get_serial_number((char **)&wt_params.sn, &wt_params.sn_len);
 	if (iot_ret != IOT_ERROR_NONE) {
 		IOT_ERROR("failed to get serial num");
@@ -955,12 +946,14 @@ iot_error_t iot_es_connect(struct iot_context *ctx, int conn_type)
 			goto out;
 		}
 
+		ctx->mqtt_connection_try_count++;
 		iot_ret = _iot_es_mqtt_connect(ctx, mqtt_cli, (char *)ctx->iot_reg_data.deviceId, (char *)token_buf.p);
 		if (iot_ret != IOT_ERROR_NONE) {
 			IOT_ERROR("failed to connect");
 			goto out;
 		} else {
-			IOT_INFO("MQTT connect success");
+			ctx->mqtt_connection_success_count++;
+			IOT_INFO("MQTT connect success sucess/try : %d/%d", ctx->mqtt_connection_success_count, ctx->mqtt_connection_try_count);
 		}
 
 		snprintf(topicfilter, IOT_TOPIC_SIZE, IOT_SUB_TOPIC_NOTIFICATION, ctx->iot_reg_data.deviceId);

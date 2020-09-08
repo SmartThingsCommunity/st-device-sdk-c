@@ -50,6 +50,43 @@ static iot_error_t _do_state_updating(struct iot_context *ctx,
 		iot_state_t new_state, int opt, unsigned int *timeout_ms);
 
 STATIC_FUNCTION
+iot_error_t _iot_command_peek(struct iot_context *ctx, enum iot_command_type peek_cmd)
+{
+	struct iot_command cmd_data;
+	int ret;
+	iot_error_t err;
+	bool *cmd_only = NULL;
+
+	if (peek_cmd != IOT_COMMAND_CHECK_PROV_STATUS) {
+		IOT_ERROR("Unsupported peek cmd(%d)", peek_cmd);
+		return IOT_ERROR_INVALID_ARGS;
+	}
+
+	cmd_only = iot_os_malloc(sizeof(bool));
+	if (!cmd_only) {
+		IOT_ERROR("failed to malloc for iot_command_peek param");
+		return IOT_ERROR_MEM_ALLOC;
+	}
+	*cmd_only = true;
+
+	cmd_data.param = cmd_only;
+	cmd_data.cmd_type = peek_cmd;
+
+	ret = iot_os_queue_send(ctx->cmd_queue, &cmd_data, 0);
+	if (ret != IOT_OS_TRUE) {
+		IOT_ERROR("Cannot put the cmd into cmd_queue");
+		iot_os_free(cmd_data.param);
+		err = IOT_ERROR_BAD_REQ;
+	} else {
+		iot_os_eventgroup_set_bits(ctx->iot_events,
+			IOT_EVENT_BIT_COMMAND);
+		err = IOT_ERROR_NONE;
+	}
+
+	return err;
+}
+
+STATIC_FUNCTION
 iot_error_t _check_prov_data_validation(struct iot_device_prov_data *prov_data)
 {
 	struct iot_wifi_prov_data *wifi = &(prov_data->wifi);
@@ -526,7 +563,7 @@ static iot_error_t _do_iot_main_command(struct iot_context *ctx,
 
 			err = iot_nv_get_prov_data(&ctx->prov_data);
 			if (err != IOT_ERROR_NONE) {
-				IOT_WARN("There are no prov data in NV\n");
+				IOT_DEBUG("There are no prov data in NV\n");
 				err = iot_nv_erase(IOT_NVD_DEVICE_ID);
 				if ((err != IOT_ERROR_NONE) && (err != IOT_ERROR_NV_DATA_NOT_EXIST)) {
 					IOT_ERROR("Can't remove deviceId for new registraiton");
@@ -556,8 +593,9 @@ static iot_error_t _do_iot_main_command(struct iot_context *ctx,
 				/* We don't need recovering for command only case */
 				if (err != IOT_ERROR_NONE) {
 					IOT_WARN("Internal WARN(%d) happened for command only", err);
-					err = IOT_ERROR_NONE;
 				}
+
+				return IOT_ERROR_NONE;
 			} else {
 				err = iot_state_update(ctx, next_state, state_opt);
 			}
@@ -1199,6 +1237,14 @@ IOT_CTX* st_conn_init(unsigned char *onboarding_config, unsigned int onboarding_
 		return NULL;
 	}
 
+	iot_err = iot_os_timer_init(&ctx->rate_limit_timeout);
+	if (iot_err != IOT_ERROR_NONE) {
+		IOT_ERROR("failed to malloc for rate_limit_timeout\n");
+		iot_os_timer_destroy(&ctx->state_timer);
+		free(ctx);
+		return NULL;
+	}
+
 	// Initialize device nv section
 	iot_err = iot_nv_init(device_info, device_info_len);
 	if (iot_err != IOT_ERROR_NONE) {
@@ -1349,6 +1395,7 @@ error_main_log_file_init:
 	iot_nv_deinit();
 
 error_main_bsp_init:
+	iot_os_timer_destroy(&ctx->rate_limit_timeout);
 	iot_os_timer_destroy(&ctx->state_timer);
 	free(ctx);
 
@@ -1876,7 +1923,6 @@ int st_conn_start_ex(IOT_CTX *iot_ctx, iot_ext_args_t *ext_args)
 	iot_error_t iot_err;
 	struct iot_context *ctx = (struct iot_context*)iot_ctx;
 	unsigned char curr_events;
-	bool cmd_only;
 
 	if (!IS_CTX_VALID(ctx) || !ext_args) {
 		IOT_ERROR("invalid parameters\n");
@@ -1952,11 +1998,9 @@ int st_conn_start_ex(IOT_CTX *iot_ctx, iot_ext_args_t *ext_args)
 
 	if (ext_args->start_pt == IOT_STATUS_CONNECTING) {
 		iot_os_eventgroup_clear_bits(ctx->usr_events, IOT_USR_INTERACT_BIT_CMD_DONE);
-		cmd_only = true;
 
 		/* Check if STDK can try to connect to sever */
-		iot_err = iot_command_send(ctx,
-				IOT_COMMAND_CHECK_PROV_STATUS, &cmd_only, sizeof(bool));
+		iot_err = _iot_command_peek(ctx, IOT_COMMAND_CHECK_PROV_STATUS);
 		if (iot_err != IOT_ERROR_NONE) {
 			IOT_ERROR("failed to send check_prov(%d)", iot_err);
 			IOT_DUMP_MAIN(ERROR, BASE, iot_err);
@@ -2046,7 +2090,6 @@ int st_info_get(IOT_CTX *iot_ctx, iot_info_type_t info_type, iot_info_data_t *in
 	iot_error_t iot_err = IOT_ERROR_NONE;
 	struct iot_context *ctx = (struct iot_context*)iot_ctx;
 	unsigned char curr_events;
-	bool cmd_only;
 
 	if (!IS_CTX_VALID(ctx) || !info_data) {
 		IOT_ERROR("invalid parameters\n");
@@ -2072,11 +2115,9 @@ int st_info_get(IOT_CTX *iot_ctx, iot_info_type_t info_type, iot_info_data_t *in
 
 	case IOT_INFO_TYPE_IOT_PROVISIONED:
 		iot_os_eventgroup_clear_bits(ctx->usr_events, IOT_USR_INTERACT_BIT_CMD_DONE);
-		cmd_only = true;
 
 		/* Check if STDK can try to connect to sever */
-		iot_err = iot_command_send(ctx,
-				IOT_COMMAND_CHECK_PROV_STATUS, &cmd_only, sizeof(bool));
+		iot_err = _iot_command_peek(ctx, IOT_COMMAND_CHECK_PROV_STATUS);
 		if (iot_err != IOT_ERROR_NONE) {
 			IOT_ERROR("failed to send check_prov(%d)", iot_err);
 			IOT_DUMP_MAIN(ERROR, BASE, iot_err);

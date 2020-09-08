@@ -122,9 +122,13 @@ void st_conn_ownership_confirm(IOT_CTX *iot_ctx, bool confirm)
 
 	if (ctx->curr_otm_feature == OVF_BIT_BUTTON) {
 		if (confirm == true) {
-			IOT_INFO("To confirm is reported!!");
+			IOT_INFO("button confirm asserted");
 			IOT_ES_DUMP(IOT_DEBUG_LEVEL_INFO, IOT_DUMP_EASYSETUP_GET_OWNER_CONFIRM, 0);
 			iot_os_eventgroup_set_bits(ctx->iot_events, IOT_EVENT_BIT_EASYSETUP_CONFIRM);
+		} else if (confirm == false) {
+			IOT_INFO("button confirm denied");
+			IOT_ES_DUMP(IOT_DEBUG_LEVEL_INFO, IOT_DUMP_EASYSETUP_CONFIRM_DENIED, 0);
+			iot_os_eventgroup_set_bits(ctx->iot_events, IOT_EVENT_BIT_EASYSETUP_CONFIRM_DENY);
 		}
 	}
 }
@@ -749,7 +753,7 @@ iot_error_t _es_confirm_check_manager(struct iot_context *ctx, enum ownership_va
 	size_t devsn_len;
 	iot_error_t err = IOT_ERROR_NONE;
 
-	iot_os_eventgroup_clear_bits(ctx->iot_events, IOT_EVENT_BIT_EASYSETUP_CONFIRM);
+	iot_os_eventgroup_clear_bits(ctx->iot_events, IOT_EVENT_BIT_EASYSETUP_CONFIRM | IOT_EVENT_BIT_EASYSETUP_CONFIRM_DENY);
 	ctx->curr_otm_feature = confirm_feature;
 
 	IOT_REMARK("IOT_STATE_PROV_CONFIRMING");
@@ -801,7 +805,7 @@ iot_error_t _es_confirm_check_manager(struct iot_context *ctx, enum ownership_va
 			IOT_INFO("The button confirmation is requested");
 			IOT_ES_DUMP(IOT_DEBUG_LEVEL_INFO, IOT_DUMP_EASYSETUP_OTMTYPE_BUTTON, 0);
 
-			curr_event = iot_os_eventgroup_wait_bits(ctx->iot_events, IOT_EVENT_BIT_EASYSETUP_CONFIRM, false, ES_CONFIRM_MAX_DELAY);
+			curr_event = iot_os_eventgroup_wait_bits(ctx->iot_events, IOT_EVENT_BIT_EASYSETUP_CONFIRM | IOT_EVENT_BIT_EASYSETUP_CONFIRM_DENY, false, ES_CONFIRM_MAX_DELAY);
 			IOT_DEBUG("curr_event = 0x%x", curr_event);
 
 			if (curr_event & IOT_EVENT_BIT_EASYSETUP_CONFIRM) {

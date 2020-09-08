@@ -294,7 +294,7 @@ iot_error_t iot_bsp_fs_read(iot_bsp_fs_handle_t handle, char* buffer, size_t *le
 
 	ret = nvs_get_blob(handle.fd, handle.filename, NULL, &required_size);
 	if (ret == ESP_ERR_NVS_NOT_FOUND) {
-		IOT_WARN("not found '%s'", handle.filename);
+		IOT_DEBUG("not found '%s'", handle.filename);
 		return IOT_ERROR_FS_NO_FILE;
 	} else if (ret != ESP_OK) {
 		return IOT_ERROR_FS_READ_FAIL;

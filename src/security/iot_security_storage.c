@@ -138,7 +138,7 @@ iot_error_t iot_security_storage_read(iot_security_context_t *context, iot_secur
 	err = context->be_context->fn->storage_read(context, output_buf);
 	if (err) {
 		if (err == IOT_ERROR_SECURITY_FS_NOT_FOUND) {
-			IOT_WARN("id:%d not found", context->storage_params->storage_id);
+			IOT_DEBUG("id:%d not found", context->storage_params->storage_id);
 		}
 		return err;
 	}
@@ -208,7 +208,7 @@ iot_error_t iot_security_storage_remove(iot_security_context_t *context, iot_sec
 	err = context->be_context->fn->storage_remove(context);
 	if (err) {
 		if (err == IOT_ERROR_SECURITY_FS_NOT_FOUND) {
-			IOT_WARN("id:%d not found", context->storage_params->storage_id);
+			IOT_DEBUG("id:%d not found", context->storage_params->storage_id);
 		}
 		return err;
 	}
