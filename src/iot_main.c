@@ -192,7 +192,8 @@ create_fail:
 
 static void _do_update_timeout(struct iot_context *ctx, unsigned int needed_tout)
 {
-	IOT_INFO("Current timeout : %u for %d", needed_tout, ctx->req_state);
+	IOT_INFO("Current timeout : %u for %d/%d", needed_tout,
+		ctx->curr_state, ctx->req_state);
 	iot_os_timer_count_ms(ctx->state_timer, needed_tout);
 }
 
@@ -870,6 +871,18 @@ static iot_error_t _do_iot_main_command(struct iot_context *ctx,
 				iot_es_connect(ctx, IOT_CONNECT_TYPE_COMMUNICATION);
 			}
 
+			break;
+
+		case IOT_COMMAND_CHANGE_STATE_TIMEOUT:
+			state_data = (struct iot_state_data *)cmd->param;
+			if ((ctx->curr_state == ctx->req_state) || (state_data->iot_state != ctx->req_state)) {
+				IOT_INFO("Already iot-stat updated or mis-matched, can't change timeout : %d for %d",
+					state_data->opt, state_data->iot_state);
+			} else {
+				IOT_INFO("We've got timemout changing cmd for %d", state_data->iot_state);
+				IOT_DUMP_MAIN(INFO, BASE, ((state_data->iot_state << 8u) | state_data->opt));
+				_do_update_timeout(ctx, (unsigned int)state_data->opt);
+			}
 			break;
 
 		case IOT_COMMAND_SELF_CLEANUP:
