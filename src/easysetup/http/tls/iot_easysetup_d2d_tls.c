@@ -35,6 +35,7 @@
 #define URL_BUFFER_SIZE		64
 #define WIFIINFO_BUFFER_SIZE	20
 #define ES_CONFIRM_MAX_DELAY	100000
+#define ES_CONFIRM_FAIL_TIMEOUT	(10000)
 
 iot_error_t iot_easysetup_create_ssid(struct iot_devconf_prov_data *devconf, char *ssid, size_t ssid_len)
 {
@@ -402,6 +403,12 @@ iot_error_t _es_confirm_check_manager(struct iot_context *ctx, enum ownership_va
 			} else {
 				IOT_ERROR("confirm failed");
 				IOT_ES_DUMP(IOT_DEBUG_LEVEL_ERROR, IOT_DUMP_EASYSETUP_CONFIRM_DENIED, 0);
+
+				/* To report confirm failure to user, try to change iot-state timeout value shortly */
+				if (iot_state_timeout_change(ctx, IOT_STATE_PROV_CONFIRM, ES_CONFIRM_FAIL_TIMEOUT) != IOT_ERROR_NONE) {
+					IOT_ERROR("Can't update prov_confirm state timeout");
+				}
+
 				err = IOT_ERROR_EASYSETUP_CONFIRM_DENIED;
 				goto out;
 			}
