@@ -900,7 +900,7 @@ iot_error_t iot_es_connect(struct iot_context *ctx, int conn_type)
 	if (ctx->rate_limit) {
 		if (!(iot_os_timer_isexpired(ctx->rate_limit_timeout))) {
 			unsigned int remaining_time = iot_os_timer_left_ms(ctx->rate_limit_timeout);
-			IOT_WARN("Server rate limt break times.. please wait %d seconds to connect", remaining_time/1000);
+			IOT_WARN("Server rate limit break times.. please wait %d seconds to connect", remaining_time/1000);
 			iot_os_delay(remaining_time);
 		}
 	}
