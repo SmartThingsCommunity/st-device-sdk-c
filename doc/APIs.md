@@ -1,4 +1,4 @@
-# SmartThings Device SDK - C APIs
+# SmartThings SDK for Direct Connected Devices - C APIs
 *****
 * [Connection APIs](#connection-apis)
   * [st_conn_init](#st_conn_init)
