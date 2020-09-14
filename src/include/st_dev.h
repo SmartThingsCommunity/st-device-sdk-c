@@ -419,7 +419,7 @@ DEPRECATED IOT_EVENT* st_cap_attr_create(const char *attribute,
  * Once it returns, user has full responsibility for deallocating event data
  * by using [st_cap_free_attr](@ref st_cap_free_attr).
  * NOTE:IOT_EVENT created in this function must be passed to st_cap_send_attr function
- * to send evnets.
+ * for sending events.
  *
  * @param[in] cap_handle Capability reference which the event is created in.
  * @param[in] attribute The attribute string of IOT_EVENT data.
