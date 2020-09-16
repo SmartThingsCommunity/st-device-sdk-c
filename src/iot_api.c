@@ -817,15 +817,9 @@ load_out:
 			IOT_ERROR("[%s] wrong device info value detected", current_name);
 		}
 	}
-	if (iot_err == IOT_ERROR_INVALID_ARGS) {
-		if (item && JSON_IS_NUMBER(item)) {
-			IOT_ERROR("invalid device info value: %d", item->valueint);
-		}
-	}
+
 	if (firmware_version)
 		iot_os_free(firmware_version);
-	if (manufacturer_code)
-		iot_os_free(manufacturer_code);
 	if (marketing_name)
 		iot_os_free(marketing_name);
 	if (model_number)
