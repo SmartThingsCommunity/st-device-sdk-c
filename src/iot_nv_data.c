@@ -317,6 +317,8 @@ iot_error_t iot_nv_get_wifi_prov_data(struct iot_wifi_prov_data* wifi_prov)
 		memcpy(wifi_prov->ssid, data, size);
 		if (size < IOT_WIFI_PROV_SSID_LEN) {
 			wifi_prov->ssid[size] = '\0';
+		} else {
+			wifi_prov->ssid[IOT_WIFI_PROV_SSID_LEN - 1] = '\0';
 		}
 	} else if (ret == IOT_ERROR_NV_DATA_NOT_EXIST) {
 		wifi_prov->ssid[0] = '\0';
@@ -335,6 +337,8 @@ iot_error_t iot_nv_get_wifi_prov_data(struct iot_wifi_prov_data* wifi_prov)
 		memcpy(wifi_prov->password, data, size);
 		if (size < IOT_WIFI_PROV_PASSWORD_LEN) {
 			wifi_prov->password[size] = '\0';
+		} else {
+			wifi_prov->password[IOT_WIFI_PROV_PASSWORD_LEN - 1] = '\0';
 		}
 	} else if (ret == IOT_ERROR_NV_DATA_NOT_EXIST) {
 		wifi_prov->password[0] = '\0';
@@ -353,6 +357,8 @@ iot_error_t iot_nv_get_wifi_prov_data(struct iot_wifi_prov_data* wifi_prov)
 		memcpy(wifi_prov->bssid.addr, data, size);
 		if (size < IOT_NVD_MAX_BSSID_LEN) {
 			wifi_prov->bssid.addr[size] = '\0';
+		} else {
+			wifi_prov->bssid.addr[IOT_NVD_MAX_BSSID_LEN - 1] = '\0';
 		}
 	} else if (ret == IOT_ERROR_NV_DATA_NOT_EXIST) {
 		wifi_prov->bssid.addr[0] = '\0';
