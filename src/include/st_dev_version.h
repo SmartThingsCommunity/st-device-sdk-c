@@ -1,6 +1,6 @@
 /* ***************************************************************************
  *
- * Copyright 2019 Samsung Electronics All Rights Reserved.
+ * Copyright 2019-2020 Samsung Electronics All Rights Reserved.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -26,7 +26,7 @@
 #define VER_MINOR	4
 
 /* patch: bug fix */
-#define VER_PATCH	1
+#define VER_PATCH	2
 
 #define _STDK_STR(s) #s
 #define _STDK_VERSION_STR(a, b, c)	_STDK_STR(a) "." _STDK_STR(b) "." _STDK_STR(c)
@@ -35,5 +35,10 @@
 #define STDK_VERSION(a,b,c)	(((a) << 16) + ((b) << 8) + (c))
 #define STDK_VERSION_CODE	(STDK_VERSION(VER_MAJOR,VER_MINOR,VER_PATCH))
 #define STDK_VERSION_STRING	_STDK_VERSION_STR(VER_MAJOR, VER_MINOR, VER_PATCH)
+
+/* Protocol Version */
+#define STDK_D2D_PROTOCOL_VERSION	_STDK_VERSION_STR(1, 0, 0)
+#define STDK_D2S_PROTOCOL_VERSION	_STDK_VERSION_STR(1, 0, 0)
+#define STDK_DWS_PROTOCOL_VERSION	_STDK_VERSION_STR(1, 0, 0)
 
 #endif /* _ST_DEV_VERSION_H_ */
