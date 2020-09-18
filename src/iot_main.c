@@ -2131,30 +2131,7 @@ int st_info_get(IOT_CTX *iot_ctx, iot_info_type_t info_type, iot_info_data_t *in
 		break;
 
 	case IOT_INFO_TYPE_IOT_PROVISIONED:
-		iot_os_eventgroup_clear_bits(ctx->usr_events, IOT_USR_INTERACT_BIT_CMD_DONE);
-
-		/* Check if STDK can try to connect to sever */
-		iot_err = _iot_command_peek(ctx, IOT_COMMAND_CHECK_PROV_STATUS);
-		if (iot_err != IOT_ERROR_NONE) {
-			IOT_ERROR("failed to send check_prov(%d)", iot_err);
-			IOT_DUMP_MAIN(ERROR, BASE, iot_err);
-			goto end_st_info_get;
-		}
-
-		curr_events = iot_os_eventgroup_wait_bits(ctx->usr_events,
-			IOT_USR_INTERACT_BIT_CMD_DONE, true, (NEXT_STATE_TIMEOUT_MS * 2));
-
-		if (!(curr_events & IOT_USR_INTERACT_BIT_CMD_DONE)) {
-			IOT_ERROR("Timeout happened for check_prov");
-			iot_err = IOT_ERROR_TIMEOUT;
-			goto end_st_info_get;
-		}
-
-		if (ctx->iot_reg_data.new_reged) {
-			info_data->provisioned = false;
-		} else {
-			info_data->provisioned = true;
-		}
+		info_data->provisioned = iot_nv_prov_data_exist();
 		break;
 
 	default:
