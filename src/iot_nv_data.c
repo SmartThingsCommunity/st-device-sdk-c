@@ -214,6 +214,44 @@ iot_error_t iot_nv_deinit()
 	return IOT_ERROR_NONE;
 }
 
+bool iot_nv_prov_data_exist(void)
+{
+	iot_error_t ret;
+	char nv_status[5];
+
+	memset(nv_status, 0, sizeof(nv_status));
+
+	/* CHECK IOT_NVD_WIFI_PROV_STATUS */
+	ret = _iot_nv_read_data(IOT_NVD_WIFI_PROV_STATUS, nv_status, sizeof(nv_status) - 1);
+	if (ret != IOT_ERROR_NONE) {
+		IOT_DEBUG("Wifi Prov Status : read failed");
+		IOT_DUMP(IOT_DEBUG_LEVEL_DEBUG, IOT_DUMP_NV_DATA_READ_FAIL, IOT_NVD_WIFI_PROV_STATUS, __LINE__);
+		return false;
+	}
+
+	if (strncmp(nv_status, "DONE", 4)) {
+		IOT_DEBUG("No wifi provisioning data");
+		return false;
+	}
+
+	memset(nv_status, 0, sizeof(nv_status));
+
+	/* CHECK IOT_NVD_CLOUD_PROV_STATUS */
+	ret = _iot_nv_read_data(IOT_NVD_CLOUD_PROV_STATUS, nv_status, sizeof(nv_status) - 1);
+	if (ret != IOT_ERROR_NONE) {
+		IOT_DEBUG("Cloud Prov Status : read failed");
+		IOT_DUMP(IOT_DEBUG_LEVEL_DEBUG, IOT_DUMP_NV_DATA_READ_FAIL, IOT_NVD_CLOUD_PROV_STATUS, __LINE__);
+		return false;
+	}
+
+	if (strncmp(nv_status, "DONE", 4)) {
+		IOT_DEBUG("No cloud provisioning data");
+		return false;
+	}
+
+	return true;
+}
+
 iot_error_t iot_nv_get_prov_data(struct iot_device_prov_data* prov_data)
 {
 	HIT();
