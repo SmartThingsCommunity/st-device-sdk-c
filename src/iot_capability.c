@@ -361,6 +361,7 @@ int st_cap_cmd_set_cb(IOT_CAP_HANDLE *cap_handle, const char *cmd_type,
 	new_list = (iot_cap_cmd_set_list_t *)iot_os_malloc(sizeof(iot_cap_cmd_set_list_t));
 	if (!new_list) {
 		IOT_ERROR("failed to malloc for cmd set list");
+		iot_os_free(command->cmd_type);
 		iot_os_free(command);
 		return IOT_ERROR_MEM_ALLOC;
 	}
@@ -430,8 +431,10 @@ DEPRECATED int st_cap_attr_send(IOT_CAP_HANDLE *cap_handle,
 #if defined(STDK_IOT_CORE_SERIALIZE_CBOR)
 	iot_serialize_json2cbor(evt_root, (uint8_t **)&final_msg.msg, (size_t *)&final_msg.msglen);
 #else
-	final_msg.msg = JSON_PRINT(evt_root);;
-	final_msg.msglen = strlen(final_msg.msg);
+	final_msg.msg = JSON_PRINT(evt_root);
+	if (final_msg.msg != NULL) {
+		final_msg.msglen = strlen(final_msg.msg);
+	}
 #endif
 	JSON_DELETE(evt_root);
 	if (final_msg.msg == NULL) {
@@ -881,7 +884,7 @@ static iot_error_t _iot_parse_cmd_data(JSON_H* cmditem, char** component,
 	cap_command = JSON_GET_OBJECT_ITEM(cmditem, "command");
 	cap_args = JSON_GET_OBJECT_ITEM(cmditem, "arguments");
 
-	if (cap_capability == NULL || cap_command == NULL) {
+	if (cap_component == NULL || cap_capability == NULL || cap_command == NULL) {
 		IOT_ERROR("Cannot find value index!!");
 		return IOT_ERROR_BAD_REQ;
 	}
