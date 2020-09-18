@@ -562,6 +562,10 @@ static iot_error_t _do_iot_main_command(struct iot_context *ctx,
 			}
 			ctx->iot_reg_data.new_reged = false;
 
+			/* Now we allow D2D process reentrant and prov_data could be loaded
+			 * at the init state or previous D2D, so free it first to avoid memory-leak
+			 */
+			iot_api_prov_data_mem_free(&ctx->prov_data);
 			err = iot_nv_get_prov_data(&ctx->prov_data);
 			if (err != IOT_ERROR_NONE) {
 				IOT_DEBUG("There are no prov data in NV\n");

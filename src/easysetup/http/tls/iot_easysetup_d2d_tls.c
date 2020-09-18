@@ -1015,6 +1015,10 @@ iot_error_t _es_wifiprovisioninginfo_handler(struct iot_context *ctx, char *in_p
 
 	*out_payload = final_msg;
 
+	/* Now we allow D2D process reentrant and prov_data could be loaded
+	 * at the init state or previous D2D, so free it first to avoid memory-leak
+	 */
+	iot_api_prov_data_mem_free(&ctx->prov_data);
 	err = iot_nv_get_prov_data(&ctx->prov_data);
 	if (err) {
 		IOT_ES_DUMP(IOT_DEBUG_LEVEL_ERROR, IOT_DUMP_EASYSETUP_WIFI_DATA_READ_FAIL, err);
