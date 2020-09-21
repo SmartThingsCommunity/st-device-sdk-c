@@ -108,6 +108,19 @@ iot_error_t iot_state_update(struct iot_context *ctx,
 	iot_state_t new_state, int opt);
 
 /**
+ * @brief	change iot_state timeout value
+ * @details	this function tries to change iot-state-timeout value using iot_command_send internally
+ * @param[in]	ctx					iot-core context
+ * @param[in]	target_state		target iot-state for changing timeout
+ * @param[in]	new_timeout_ms		new timeout value for target iot-state
+ * @retval	IOT_ERROR_NONE			success.
+ * @retval	IOT_ERROR_INVALID_ARGS	unsupported or invalid params
+ * @retval	IOT_ERROR_BAD_REQ		queue send error
+ */
+iot_error_t iot_state_timeout_change(struct iot_context *ctx,
+	iot_state_t target_state, unsigned int new_timeout_ms);
+
+/**
  * @brief	send easysetup cgi payload manipulation request
  * @details	easysetup cgi payload manipulation should be done at iot-task. This function sends payload to iot-task via queue
  * @param[in]	ctx				iot-core context

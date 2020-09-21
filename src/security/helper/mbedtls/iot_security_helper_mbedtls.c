@@ -248,6 +248,7 @@ iot_error_t iot_security_base64_decode_urlsafe(const unsigned char *src, size_t 
 		IOT_ERROR_DUMP_AND_RETURN(BASE64_URL_DECODE, -ret);
 	}
 
+	iot_os_free(src_dup);
 	IOT_DEBUG("done: %d@%p", (int)*out_len, dst);
 
 	return IOT_ERROR_NONE;

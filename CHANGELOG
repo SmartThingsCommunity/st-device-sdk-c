@@ -1,5 +1,27 @@
 # HISTORY
 
+## 1.4.2 :  Changes until v1.4.2
+
+New Improvements or features:
+
+ - Add protocol version to distinguish each protocol Easysetup process, Server connection & Developer Workspace
+  * STDK_D2D_PROTOCOL_VERSION : 1.0.0 (for Easysetup process)
+  * STDK_D2S_PROTOCOL_VERSION : 1.0.0  (for Server connection)
+  * STDK_DWS_PROTOCOL_VERSION : 1.0.0 (for Developer Workspace)
+ - Add QR generation tools : stdk-qrgen.py
+ - Add new internal API to change iot-state timeout value : iot_state_timeout_change()
+
+Enhancements or amendments:
+
+ - Remove unreachable or unused codes in iot_api.c & stdk-qrgen.py
+ - Update iot_capability TC & iot_noti_sub_cb_rate_limit_reached_SUCCESS()
+ - Update capability helper files for fanOscillationMode, mediaPlayback and ovenOperationState
+ - Docs & internal comments update
+
+Bug fixed:
+
+ - Fix memleak on iot_security_base64_decode_urlsafe()
+
 ## 1.4.0 :  Changes until v1.4.0
 
 New Improvements or features:
