@@ -62,7 +62,7 @@ const static struct iot_caps_fanOscillationMode {
     .id = "fanOscillationMode",
     .attr_fanOscillationMode = {
         .name = "fanOscillationMode",
-        .property = NULL,
+        .property = 0,
         .valueType = VALUE_TYPE_STRING,
         .values = {"fixed", "vertical", "horizontal", "all", "indirect", "direct", "fixedCenter", "fixedLeft", "fixedRight", "far"},
         .value_fixed = "fixed",

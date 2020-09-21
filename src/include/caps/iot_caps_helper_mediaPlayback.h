@@ -80,7 +80,7 @@ const static struct iot_caps_mediaPlayback {
     },
     .attr_playbackStatus = {
         .name = "playbackStatus",
-        .property = NULL,
+        .property = 0,
         .valueType = VALUE_TYPE_STRING,
         .values = {"paused", "playing", "stopped", "fast forwarding", "rewinding"},
         .value_paused = "paused",

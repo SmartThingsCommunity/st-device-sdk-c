@@ -34,6 +34,7 @@
 
 #include "JSON.h"
 #define ONBOARDINGID_MAX_LEN	13
+#define IOT_STATE_TIMEOUT_MAX_MS	(900000) /* 15 min */
 
 static void _set_cmd_status(struct iot_context *ctx, enum iot_command_type cmd_type)
 {
@@ -228,6 +229,27 @@ iot_error_t iot_state_update(struct iot_context *ctx,
 	state_data.opt = opt;
 
 	err = iot_command_send(ctx, IOT_COMMNAD_STATE_UPDATE,
+                           &state_data, sizeof(struct iot_state_data));
+
+	return err;
+}
+
+iot_error_t iot_state_timeout_change(struct iot_context *ctx, iot_state_t target_state,
+	unsigned int new_timeout_ms)
+{
+	struct iot_state_data state_data;
+	iot_error_t err;
+
+	if (target_state <= IOT_STATE_INITIALIZED)
+		return IOT_ERROR_INVALID_ARGS;
+
+	if (new_timeout_ms > IOT_STATE_TIMEOUT_MAX_MS)
+		return IOT_ERROR_INVALID_ARGS;
+
+	state_data.iot_state = target_state;
+	state_data.opt = (int)new_timeout_ms;
+
+	err = iot_command_send(ctx, IOT_COMMAND_CHANGE_STATE_TIMEOUT,
                            &state_data, sizeof(struct iot_state_data));
 
 	return err;
@@ -795,15 +817,9 @@ load_out:
 			IOT_ERROR("[%s] wrong device info value detected", current_name);
 		}
 	}
-	if (iot_err == IOT_ERROR_INVALID_ARGS) {
-		if (item && JSON_IS_NUMBER(item)) {
-			IOT_ERROR("invalid device info value: %d", item->valueint);
-		}
-	}
+
 	if (firmware_version)
 		iot_os_free(firmware_version);
-	if (manufacturer_code)
-		iot_os_free(manufacturer_code);
 	if (marketing_name)
 		iot_os_free(marketing_name);
 	if (model_number)
