@@ -21,7 +21,13 @@
 
 #include "freertos/FreeRTOS.h"
 #include "freertos/event_groups.h"
+
+#include "esp_idf_version.h"
+#if (ESP_IDF_VERSION >= ESP_IDF_VERSION_VAL(4,0,0))
+#include "esp32/rom/ets_sys.h"
+#else
 #include "rom/ets_sys.h"
+#endif
 #include "esp_wifi.h"
 #include "esp_event_loop.h"
 #include "esp_log.h"
