@@ -325,15 +325,15 @@ unsigned int digit_count_payload (unsigned int payload_len)
 {
 	unsigned int count = 0;
 
-    while (1)
-    {
-        payload_len /= 10;
-        count++;
-        if (!payload_len)
-        {
-            break;
-        }
-    }
+	while (1)
+	{
+		payload_len /= 10;
+		count++;
+		if (!payload_len)
+		{
+			break;
+		}
+	}
 	return count;
 }
 
@@ -358,8 +358,8 @@ void http_msg_handler(int cmd, char **buffer, enum cgi_type type, char* data_buf
 				IOT_ES_DUMP(IOT_DEBUG_LEVEL_ERROR, IOT_DUMP_EASYSETUP_MEM_ALLOC_ERROR, 0);
 				goto cgi_out;
 			}
-			snprintf(buf, buffer_len, "%s%s%d\r\n\r\n%s",
-					http_status_200, http_header, (int) payload_len, payload);
+			snprintf(buf, buffer_len, "%s%s%u\r\n\r\n%s",
+					http_status_200, http_header, payload_len, payload);
 			IOT_INFO("post cmd[%d] ok", cmd);
 			IOT_ES_DUMP(IOT_DEBUG_LEVEL_INFO, IOT_DUMP_EASYSETUP_CMD_SUCCESS, cmd);
 		} else {
@@ -377,8 +377,8 @@ void http_msg_handler(int cmd, char **buffer, enum cgi_type type, char* data_buf
 				IOT_ES_DUMP(IOT_DEBUG_LEVEL_ERROR, IOT_DUMP_EASYSETUP_MEM_ALLOC_ERROR, 0);
 				goto cgi_out;
 			}
-			snprintf(buf, buffer_len, "%s%s%d\r\n\r\n%s",
-						http_status_200, http_header, (int) payload_len, payload);
+			snprintf(buf, buffer_len, "%s%s%u\r\n\r\n%s",
+						http_status_200, http_header, payload_len, payload);
 			IOT_INFO("get cmd[%d] ok", cmd);
 			IOT_ES_DUMP(IOT_DEBUG_LEVEL_INFO, IOT_DUMP_EASYSETUP_CMD_SUCCESS, cmd);
 		} else {
@@ -420,11 +420,11 @@ void http_msg_handler(int cmd, char **buffer, enum cgi_type type, char* data_buf
 			goto cgi_out;
 		}
 		if (_is_400_error(err)) {
-			snprintf(buf, buffer_len, "%s%s%d\r\n\r\n%s",
-				http_status_400, http_header, (int) payload_len, ptr);
+			snprintf(buf, buffer_len, "%s%s%u\r\n\r\n%s",
+				http_status_400, http_header, payload_len, ptr);
 		} else {
-			snprintf(buf, buffer_len, "%s%s%d\r\n\r\n%s",
-				http_status_500, http_header, (int) payload_len, ptr);
+			snprintf(buf, buffer_len, "%s%s%u\r\n\r\n%s",
+				http_status_500, http_header, payload_len, ptr);
 		}
 	}
 	IOT_DEBUG("%s", buf);
