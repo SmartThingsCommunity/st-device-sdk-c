@@ -928,7 +928,7 @@ static iot_error_t _iot_parse_cmd_data(JSON_H* cmditem, char** component,
 				cmd_data->cmd_data[num_args].string = iot_os_strdup(JSON_GET_STRING_VALUE(subitem));
 				num_args++;
 			}
-			else if (JSON_IS_OBJECT(subitem)) {
+			else if (JSON_IS_OBJECT(subitem) || JSON_IS_ARRAY(subitem)) {
 				cmd_data->args_str[num_args] = NULL;
 				cmd_data->cmd_data[num_args].type = IOT_CAP_VAL_TYPE_JSON_OBJECT;
 				cmd_data->cmd_data[num_args].json_object = JSON_PRINT(subitem);
