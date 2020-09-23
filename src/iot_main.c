@@ -2143,7 +2143,6 @@ int st_info_get(IOT_CTX *iot_ctx, iot_info_type_t info_type, iot_info_data_t *in
 	IOT_INFO("%s done (%d)", __func__, iot_err);
 	IOT_DUMP_MAIN(INFO, BASE, iot_err);
 
-end_st_info_get:
 	iot_os_mutex_unlock(&ctx->st_conn_lock);
 	return iot_err;
 }
