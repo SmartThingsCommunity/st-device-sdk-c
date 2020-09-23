@@ -239,6 +239,7 @@ iot_error_t iot_util_convert_uuid_str(struct iot_uuid* uuid, char* str, size_t m
 	char* ref_id = "42365732-c6db-4bc9-8945-2a7ca10d6f23";
 	int i, written = 0, wrt;
 	char pvt ='-';
+	char str_tmp[3];
 
 	if (!uuid || !str) {
 		IOT_ERROR("Invalid args");
@@ -252,7 +253,15 @@ iot_error_t iot_util_convert_uuid_str(struct iot_uuid* uuid, char* str, size_t m
 
 	/* dump random uuid */
 	for (i = 0; i < 16; i++) {
-		wrt = sprintf(&str[written], "%02x", (unsigned char)uuid->id[i]);
+		wrt = snprintf(str_tmp, sizeof(str_tmp),
+				"%02x", (unsigned char)uuid->id[i]);
+		if (wrt != 2) {
+			IOT_ERROR("Can't convert id:%02x to str",
+				(unsigned char)uuid->id[i]);
+			return IOT_ERROR_BAD_REQ;
+		}
+
+		memcpy(&str[written], str_tmp, wrt);
 		written += wrt;
 
 		if (ref_id[written] == pvt) {
@@ -340,6 +349,7 @@ iot_error_t iot_util_convert_mac_str(struct iot_mac* mac, char* str, int max_sz)
 	char* ref_addr = "a1:b2:c3:d4:e5:f6";
 	int i, written = 0, wrt;
 	char pvt =':';
+	char str_tmp[3];
 
 	if (!mac || !str) {
 		IOT_ERROR("Invalid args");
@@ -352,7 +362,15 @@ iot_error_t iot_util_convert_mac_str(struct iot_mac* mac, char* str, int max_sz)
 	}
 
 	for (i = 0; i < 6; i++) {
-		wrt = sprintf(&str[written], "%02x", (unsigned char)mac->addr[i]);
+		wrt = snprintf(str_tmp, sizeof(str_tmp),
+				"%02x", (unsigned char)mac->addr[i]);
+		if (wrt != 2) {
+			IOT_ERROR("Can't convert mac_addr:%02x to str",
+				(unsigned char)mac->addr[i]);
+			return IOT_ERROR_BAD_REQ;
+		}
+
+		memcpy(&str[written], str_tmp, wrt);
 		written += wrt;
 
 		if (ref_addr[written] == pvt) {
