@@ -90,6 +90,11 @@ typedef struct
 #define MQTT_PINGREQ_PACKET_SIZE 2	/* header:1byte length:1byte */
 #define MQTT_DISCONNECT_PACKET_SIZE 2	/* header:1byte length:1byte */
 
+#define MQTT_FIXED_HEADER_PACKET_TYPE_MASK		0xf0
+#define MQTT_FIXED_HEADER_PACKET_TYPE_OFFSET		4
+#define MQTT_FIXED_HEADER_QOS_MASK		0x06
+#define MQTT_FIXED_HEADER_QOS_OFFSET		1
+
 int MQTTstrlen(MQTTString mqttstring);
 
 #include "iot_mqtt_connect.h"

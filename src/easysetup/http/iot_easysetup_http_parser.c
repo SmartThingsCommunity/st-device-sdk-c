@@ -96,6 +96,9 @@ iot_error_t es_msg_parser(char *rx_buffer, size_t rx_buffer_len, char **payload,
 			break;
 
 		v = strtok(NULL, "\r\n");
+		if (!v)
+			break;
+
 		while (*v && *v == ' ')
 			v++;
 
