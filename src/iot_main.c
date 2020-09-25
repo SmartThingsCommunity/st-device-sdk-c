@@ -2106,7 +2106,6 @@ int st_info_get(IOT_CTX *iot_ctx, iot_info_type_t info_type, iot_info_data_t *in
 {
 	iot_error_t iot_err = IOT_ERROR_NONE;
 	struct iot_context *ctx = (struct iot_context*)iot_ctx;
-	unsigned char curr_events;
 
 	if (!IS_CTX_VALID(ctx) || !info_data) {
 		IOT_ERROR("invalid parameters\n");
