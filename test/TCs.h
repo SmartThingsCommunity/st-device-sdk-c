@@ -332,5 +332,7 @@ void TC_STATIC_iot_mqtt_registration_client_callback_SUCCESS(void **state);
 // TCs for iot_easysetup_http_parser.c
 void TC_es_msg_parser_VALID_GET_METHOD(void **state);
 void TC_es_msg_parser_INVALID_GET_METHOD(void **state);
+void TC_es_msg_parser_VALID_POST_METHOD(void** state);
+void TC_es_msg_parser_INVALID_POST_METHOD(void **state);
 
 #endif //ST_DEVICE_SDK_C_TCS_H

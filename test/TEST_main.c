@@ -412,6 +412,8 @@ int TEST_FUNC_iot_easysetup_http_parser(void)
     const struct CMUnitTest tests[] = {
             cmocka_unit_test(TC_es_msg_parser_VALID_GET_METHOD),
             cmocka_unit_test(TC_es_msg_parser_INVALID_GET_METHOD),
+            cmocka_unit_test(TC_es_msg_parser_VALID_POST_METHOD),
+            cmocka_unit_test(TC_es_msg_parser_INVALID_POST_METHOD),
     };
     return cmocka_run_group_tests_name("iot_easysetup_http_parser.c", tests, NULL, NULL);
 }
