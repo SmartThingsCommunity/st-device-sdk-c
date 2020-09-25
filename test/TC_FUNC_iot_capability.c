@@ -533,7 +533,6 @@ void TC_st_cap_send_attr_success(void **state)
     memset(internal_context, '\0', sizeof(struct iot_context));
     context = (IOT_CTX*) internal_context;
     internal_context->curr_state = IOT_STATE_CLOUD_CONNECTED;
-    internal_context->pub_queue = iot_os_queue_create(IOT_PUB_QUEUE_LENGTH, sizeof(iot_cap_msg_t));
     internal_context->iot_events = iot_os_eventgroup_create();
     internal_context->mqtt_event_topic = "TCtest";
     st_mqtt_create(&internal_context->evt_mqttcli, dummy_mqtt_callback, NULL);
@@ -567,7 +566,6 @@ void TC_st_cap_send_attr_success(void **state)
     }
     iot_os_free(cap_handle);
     iot_os_eventgroup_delete(internal_context->iot_events);
-    iot_os_queue_delete(internal_context->pub_queue);
     free(context);
 }
 
