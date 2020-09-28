@@ -742,7 +742,6 @@ STATIC_FUNCTION
 iot_error_t _es_wifi_prov_parse(struct iot_context *ctx, char *in_payload)
 {
 	struct iot_wifi_prov_data *wifi_prov = NULL;
-	char bssid[] = "00:00:00:00:00:00";
 	JSON_H *item = NULL;
 	JSON_H *root = NULL;
 	JSON_H *wifi_credential = NULL;
@@ -786,17 +785,19 @@ iot_error_t _es_wifi_prov_parse(struct iot_context *ctx, char *in_payload)
 	else
 		strncpy(wifi_prov->password, JSON_GET_STRING_VALUE(item), sizeof(wifi_prov->password) - 1);
 
-	if ((item = JSON_GET_OBJECT_ITEM(wifi_credential, "macAddress")) == NULL)
+	if ((item = JSON_GET_OBJECT_ITEM(wifi_credential, "macAddress")) == NULL) {
 		IOT_INFO("no macAddress");
-	else
-		strncpy(bssid, JSON_GET_STRING_VALUE(item), sizeof(bssid));
+	} else {
+		strncpy(wifi_prov->mac_str, JSON_GET_STRING_VALUE(item), IOT_WIFI_PROV_MAC_STR_LEN);
+		wifi_prov->mac_str[IOT_WIFI_PROV_MAC_STR_LEN] = '\0';
 
-	err = iot_util_convert_str_mac(bssid, &wifi_prov->bssid);
-	if (err) {
-		IOT_ERROR("Failed to convert str to mac address (error : %d) : %s", err, bssid);
-		IOT_ES_DUMP(IOT_DEBUG_LEVEL_ERROR, IOT_DUMP_EASYSETUP_INVALID_MAC, err);
-		err = IOT_ERROR_EASYSETUP_INVALID_MAC;
-		goto wifi_parse_out;
+		err = iot_util_convert_str_mac(wifi_prov->mac_str, &wifi_prov->bssid);
+		if (err) {
+			IOT_ERROR("Failed to convert str to mac address (error : %d) : %s", err, wifi_prov->mac_str);
+			IOT_ES_DUMP(IOT_DEBUG_LEVEL_ERROR, IOT_DUMP_EASYSETUP_INVALID_MAC, err);
+			err = IOT_ERROR_EASYSETUP_INVALID_MAC;
+			goto wifi_parse_out;
+		}
 	}
 
 	wifi_prov->security_type =
@@ -812,7 +813,7 @@ iot_error_t _es_wifi_prov_parse(struct iot_context *ctx, char *in_payload)
 
 	IOT_INFO("ssid: %s", wifi_prov->ssid);
 	IOT_DEBUG("password: %s", wifi_prov->password);
-	IOT_INFO("mac addr: %s", bssid);
+	IOT_INFO("mac addr: %s", wifi_prov->mac_str);
 
 wifi_parse_out:
 	if (wifi_prov)
