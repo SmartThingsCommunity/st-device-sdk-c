@@ -202,7 +202,7 @@ iot_error_t _iot_easysetup_gen_post_payload(struct iot_context *ctx, int cmd, ch
 	unsigned char curr_event;
 	int ret;
 
-	if (!in_payload) {
+	if (!in_payload && cmd != IOT_EASYSETUP_STEP_SETUPCOMPLETE && cmd != IOT_EASYSETUP_STEP_LOG_CREATE_DUMP) {
 		IOT_ERROR("Invalid payload");
 		IOT_ES_DUMP(IOT_DEBUG_LEVEL_ERROR, IOT_DUMP_EASYSETUP_INVALID_REQUEST, 0);
 		err = IOT_ERROR_EASYSETUP_INVALID_REQUEST;
