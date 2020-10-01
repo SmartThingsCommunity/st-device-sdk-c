@@ -1,4 +1,4 @@
-# SmartThings Device SDK
+# Smart Things Device SDK
 
 [![License](https://img.shields.io/badge/licence-Apache%202.0-brightgreen.svg?style=flat)](LICENSE)
 
