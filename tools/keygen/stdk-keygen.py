@@ -208,7 +208,7 @@ class Qr():
     def prepare_repo(self, sub_path, args, mnid, onboardingId, sn):
         image_file = "qr-" + sn + ".png"
 
-        if args.qr == 'bulk':
+        if args.qr == 'commercial':
             repo_dir = os.path.join(sub_path, sn)
             if not os.path.isdir(repo_dir):
                 os.makedirs(repo_dir, exist_ok=True)
@@ -268,7 +268,7 @@ def bulk(args):
 
     print("Loading " + args.input + "...")
 
-    if args.qr == 'bulk':
+    if args.qr == 'commercial':
         file = os.path.join(args.folder, onboardingFile)
         data = safeOpenJSONFile(file)
         safeReadJSON("onboardingConfig", data, file)
@@ -298,7 +298,7 @@ def bulk(args):
                 nv.generate_csv(edkey.get_pubkey_b64(), edkey.get_seckey_b64())
                 nv.generate_image()
 
-            if args.qr == 'bulk':
+            if args.qr == 'commercial':
                 #Generate QRcode image
                 qr = Qr()
                 qr.prepare_repo(sub_path, args, mnid, onboardingId, sn)
@@ -338,8 +338,8 @@ def main():
 
     parser.add_argument(
         '--qr',
-        choices=['individual', 'bulk'],
-        help="generate qrcode image for individual or bulk")
+        choices=['individual', 'commercial'],
+        help="generate qrcode image for individual or commercial")
 
     parser.add_argument(
         '--folder',

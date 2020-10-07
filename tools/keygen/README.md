@@ -23,7 +23,7 @@ pip install pynacl --user
 ## Usage
 
 ```sh
-stdk-keygen.py [-h] [--mnid MNID] [--firmware version] [--input csv] [--output csv] [--nv {esp}]
+stdk-keygen.py [-h] [--mnid MNID] [--firmware version] [--input csv] [--output csv] [--nv {esp}] [--qr {individual,commercial}] [--folder FOLDER]
 ```
 
 ### Individual
@@ -70,6 +70,31 @@ $ cat output_STDKTEST****7KXw/device_info.json
 	}
 }
 ```
+
+You can generate QR code which could be helpful to add your device in ST app.
+```sh
+$ python stdk-keygen.py --qr individual --folder [location of onboarding_config.json]
+Use following serial number and public key
+for the identity of your device in Developer Workspace.
+
+Serial Number:
+STDKTEST****7KXw
+
+Public Key:
+Fqj6************************************hp0=
+
+File:	output_STDKTEST****7KXw/qr-STDKTEST****7KXw.png 
+QR url:	https://qr.samsungiots.com/?m=****&s=***&r=STDKTEST****7KXw
+
+$ tree output_STDKTEST****7KXw/
+output_STDKTEST****7KXw/
+├── device_info.json
+├── device.pubkey.b64
+├── device.seckey.b64
+└── qr-STDKTEST****7KXw.png
+
+```
+
 Copy the Serial Number and Public Key after running the command. You will need to upload these values to the SmartThings Cloud via [Developer Workspace](https://smartthings.developer.samsung.com/workspace/projects) during the next phase.
 
 If you create a device identity with a command with an option like above,  You can get the ready-to-use `device_info.json` file directly.
@@ -99,6 +124,34 @@ output_bulk/
     └── TEST34567890
         ├── device.pubkey.b64
         └── device.seckey.b64
+```
+You can generate QR code for commercial
+```sh
+$ python stdk-keygen.py --input sn.csv --qr commercial --folder [location of onboarding_config.json]
+Loading sn.csv...
+...
+Batch file has been saved: output_bulk/2020****_193746/DI_Batch_2020****_193746.csv
+```
+Output files
+output csv file (DI_Batch_20200722_193746.csv in below example)
+serial number named sub directory which contains key pair and QR code image
+```sh
+$ tree output_bulk/
+output_bulk/
+└── 20200722_193746
+    ├── DI_Batch_20200722_193746.csv
+    ├── TEST12345678
+    │   ├── device.pubkey.b64
+    │   └── device.seckey.b64
+    │   └── qr-TEST12345678.png
+    ├── TEST23456789
+    │   ├── device.pubkey.b64
+    │   └── device.seckey.b64
+    │   └── qr-TEST23456789.png
+    └── TEST34567890
+        ├── device.pubkey.b64
+        └── device.seckey.b64
+        └── qr-TEST34567890.png
 ```
 Change the output batch file location
 ```sh

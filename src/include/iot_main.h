@@ -31,6 +31,7 @@
 
 #define IOT_WIFI_PROV_SSID_LEN		(31 + 1)
 #define IOT_WIFI_PROV_PASSWORD_LEN 	(63 + 1)
+#define IOT_WIFI_PROV_MAC_STR_LEN 	(17)
 
 #define IOT_EVENT_BIT_COMMAND		(1u << 0u)
 #define IOT_EVENT_BIT_CAPABILITY	(1u << 1u)
@@ -141,7 +142,8 @@ struct iot_uuid {
 struct iot_wifi_prov_data {
 	char ssid[IOT_WIFI_PROV_SSID_LEN];			/**< @brief wifi SSID string */
 	char password[IOT_WIFI_PROV_PASSWORD_LEN];	/**< @brief wifi password string */
-	struct iot_mac bssid;						/**< @brief wifi mac addresss struct */
+	char mac_str[IOT_WIFI_PROV_MAC_STR_LEN + 1];/**< @brief wifi mac address string */
+	struct iot_mac bssid;						/**< @brief wifi bssid raw value */
 	iot_wifi_auth_mode_t security_type;			/**< @brief wifi security type such as WEP, PSK2.. */
 };
 
