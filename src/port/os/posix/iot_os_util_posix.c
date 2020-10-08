@@ -88,6 +88,16 @@ void iot_os_thread_yield()
 	sched_yield();
 }
 
+int iot_os_thread_get_current_handle(iot_os_thread* thread_handle);
+{
+    if (thread_handle == NULL) {
+        return IOT_OS_FALSE;
+    }
+
+    *thread_handle = (iot_os_thread)pthread_self();
+    return IOT_OS_TRUE;
+}
+
 /* Queue */
 typedef struct {
 	char name[20];
