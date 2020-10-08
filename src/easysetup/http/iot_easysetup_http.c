@@ -411,18 +411,26 @@ void http_msg_handler(int cmd, char **buffer, enum cgi_type type, char* data_buf
 		ptr = cJSON_PrintUnformatted(root);
 		IOT_DEBUG("%s", ptr);
 
-		payload_len = strlen(payload);
-		buffer_len = payload_len + strlen(http_status_500) + digit_count_payload(payload_len) + 5;
-		buf = malloc(buffer_len);
-		if (!buf) {
-			IOT_ERROR("failed to malloc buffer for the error msg");
-			IOT_ES_DUMP(IOT_DEBUG_LEVEL_ERROR, IOT_DUMP_EASYSETUP_MEM_ALLOC_ERROR, 0);
-			goto cgi_out;
-		}
+		payload_len = strlen(ptr);
+		buffer_len = strlen(http_header) + digit_count_payload(payload_len) + payload_len + strlen("\r\n\r\n") + 1;
 		if (_is_400_error(err)) {
+			buffer_len += strlen(http_status_400);
+			buf = malloc(buffer_len);
+			if (!buf) {
+				IOT_ERROR("failed to malloc buffer for the error msg");
+				IOT_ES_DUMP(IOT_DEBUG_LEVEL_ERROR, IOT_DUMP_EASYSETUP_MEM_ALLOC_ERROR, 0);
+				goto cgi_out;
+			}
 			snprintf(buf, buffer_len, "%s%s%u\r\n\r\n%s",
 				http_status_400, http_header, payload_len, ptr);
 		} else {
+			buffer_len += strlen(http_status_500);
+			buf = malloc(buffer_len);
+			if (!buf) {
+				IOT_ERROR("failed to malloc buffer for the error msg");
+				IOT_ES_DUMP(IOT_DEBUG_LEVEL_ERROR, IOT_DUMP_EASYSETUP_MEM_ALLOC_ERROR, 0);
+				goto cgi_out;
+			}
 			snprintf(buf, buffer_len, "%s%s%u\r\n\r\n%s",
 				http_status_500, http_header, payload_len, ptr);
 		}
