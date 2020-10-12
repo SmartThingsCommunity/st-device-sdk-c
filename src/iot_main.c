@@ -1017,10 +1017,9 @@ static void _iot_main_task(struct iot_context *ctx)
 	struct iot_command cmd;
 	unsigned char curr_events;
 	iot_error_t err = IOT_ERROR_NONE;
-	iot_cap_msg_t final_msg;
 	struct iot_easysetup_payload easysetup_req;
-	iot_state_t next_state;
 #if !defined(STDK_MQTT_TASK)
+	iot_state_t next_state;
 	unsigned int task_cycle = IOT_MAIN_TASK_DEFAULT_CYCLE;
 #endif
 
