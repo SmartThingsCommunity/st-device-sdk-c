@@ -66,7 +66,7 @@ typedef enum {
 	IOT_DUMP_MQTT_CREATE_SUCCESS = 0x0101,	/* arg1: command_timeout_ms */
 	IOT_DUMP_MQTT_CREATE_FAIL = 0x0102, /* arg1: return code(rc) */
 	IOT_DUMP_MQTT_DESTROY = 0x0103,
-	IOT_DUMP_MQTT_PING_FAIL = 0x0104,
+	IOT_DUMP_MQTT_PING_FAIL = 0x0104, /* arg1: error code */
 	IOT_DUMP_MQTT_CONNECT_NETWORK_FAIL = 0x0105,
 	IOT_DUMP_MQTT_CONNECT_RESULT = 0x0106, /* arg1: return code(rc), arg2: keepalive interval */
 	IOT_DUMP_MQTT_SEND_FAIL = 0x0107, /* arg1: return code(rc) */
@@ -75,6 +75,8 @@ typedef enum {
 	IOT_DUMP_MQTT_PUBLISH = 0x010A, /* arg1: return code(rc), arg2: packet id */
 	IOT_DUMP_MQTT_UNSUBSCRIBE = 0x010B, /* arg1: return code(rc) */
 	IOT_DUMP_MQTT_SUBSCRIBE = 0x010C, /* arg1: return code(rc) */
+	IOT_DUMP_MQTT_WRITE_STREAM_FAIL = 0x010D, /* arg1: error code */
+	IOT_DUMP_MQTT_READ_STREAM_FAIL = 0x010E, /* arg1: error code */
 	IOT_DUMP_CAPABILITY_BASE = 0x0200,
 	IOT_DUMP_CAPABILITY_COMMANDS_RECEIVED = 0x0201,
 	IOT_DUMP_CAPABILITY_PROCESS_COMMAND = 0x0202,
