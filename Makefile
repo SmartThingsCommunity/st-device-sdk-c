@@ -60,11 +60,10 @@ export BUILD_DIR
 export PREFIX
 
 JSON_DIR = src/deps/json
-CURL_DIR = src/deps/curl
 LIBSODIUM_DIR = src/deps/libsodium
 MBEDTLS_DIR = src/deps/mbedtls
 
-DEPS_DIRS = $(JSON_DIR) $(CURL_DIR) $(LIBSODIUM_DIR) $(MBEDTLS_DIR)
+DEPS_DIRS = $(JSON_DIR) $(LIBSODIUM_DIR) $(MBEDTLS_DIR)
 
 result	:= $(shell git submodule update --init $(JSON_DIR))
 result	:= $(shell git submodule update --init $(CURL_DIR))
