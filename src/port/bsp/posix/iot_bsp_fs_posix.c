@@ -80,7 +80,11 @@ iot_error_t iot_bsp_fs_read(iot_bsp_fs_handle_t handle, char* buffer, size_t *le
 
 	char* data = malloc(*length + 1);
 	ssize_t size = read(handle.fd, data, *length);
-	IOT_DEBUG_CHECK(size < 0, IOT_ERROR_FS_READ_FAIL, "read fail [%s]", strerror(errno));
+	if (size < 0) {
+		free(data);
+		IOT_DEBUG("read fail [%s]", strerror(errno));
+		return IOT_ERROR_FS_READ_FAIL;
+	}
 
 	memcpy(buffer, data, size);
 	if (size < *length) {
