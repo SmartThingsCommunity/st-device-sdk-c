@@ -1337,9 +1337,7 @@ iot_error_t _es_wifi_prov_parse(struct iot_context *ctx, char *in_payload)
 	if ((item = JSON_GET_OBJECT_ITEM(wifi_credential, "macAddress")) == NULL) {
 		IOT_INFO("no macAddress");
 	} else {
-		strncpy(wifi_prov->mac_str, JSON_GET_STRING_VALUE(item), IOT_WIFI_PROV_MAC_STR_LEN);
-		wifi_prov->mac_str[IOT_WIFI_PROV_MAC_STR_LEN] = '\0';
-
+		strncpy(wifi_prov->mac_str, JSON_GET_STRING_VALUE(item), sizeof(wifi_prov->mac_str));
 		err = iot_util_convert_str_mac(wifi_prov->mac_str, &wifi_prov->bssid);
 		if (err) {
 			IOT_ERROR("Failed to convert str to mac address (error : %d) : %s", err, wifi_prov->mac_str);
