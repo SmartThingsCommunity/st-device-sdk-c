@@ -437,6 +437,7 @@ int iot_os_timer_init(iot_os_timer *timer)
 	timer_t* timer_id = malloc(sizeof(timer_t));
 	struct sigevent sig;
 
+	memset(&sig, '\0', sizeof(struct sigevent));
 	sig.sigev_notify = SIGEV_NONE;
 	sig.sigev_value.sival_ptr = timer_id;
 	int ret = timer_create(CLOCK_REALTIME, &sig, timer_id);
