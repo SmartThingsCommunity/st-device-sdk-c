@@ -1002,11 +1002,13 @@ static void _throw_away_all_cmd_queue(struct iot_context *ctx)
 		return;
 	}
 
+	cmd.param = NULL;
 	while (iot_os_queue_receive(ctx->cmd_queue,
 				&cmd, 0) == IOT_OS_TRUE) {
 		_clear_cmd_status(ctx, cmd.cmd_type);
 		if (cmd.param) {
 			free(cmd.param);
+			cmd.param = NULL;
 		}
 	}
 
