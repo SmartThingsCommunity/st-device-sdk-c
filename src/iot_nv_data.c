@@ -1066,7 +1066,7 @@ iot_error_t iot_nv_get_data_from_device_info(iot_nvd_t nv_id, iot_security_buffe
 		di_name = name_serialNumber;
 		break;
 	default:
-		IOT_ERROR("'%s' is not a device info nv");
+		IOT_ERROR("%d is not a device info nv", nv_id);
 		return IOT_ERROR_NV_DATA_ERROR;
 	}
 
