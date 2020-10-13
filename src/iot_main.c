@@ -464,6 +464,12 @@ static iot_error_t _do_iot_main_command(struct iot_context *ctx,
 	switch (cmd->cmd_type) {
 		case IOT_COMMNAD_STATE_UPDATE:
 			state_data = (struct iot_state_data *)cmd->param;
+			if (!state_data) {
+				IOT_ERROR("There is no state_data for cmd :%d", cmd->cmd_type);
+				IOT_DUMP_MAIN(ERROR, BASE, 0xDEADBEEF);
+				break;
+			}
+
 			if ((ctx->curr_state > IOT_STATE_UNKNOWN) &&
 					(ctx->curr_state == state_data->iot_state)) {
 				IOT_WARN("Redundant command. state update in progress !");
@@ -879,6 +885,12 @@ static iot_error_t _do_iot_main_command(struct iot_context *ctx,
 
 		case IOT_COMMAND_CHANGE_STATE_TIMEOUT:
 			state_data = (struct iot_state_data *)cmd->param;
+			if (!state_data) {
+				IOT_ERROR("There is no state_data for cmd :%d", cmd->cmd_type);
+				IOT_DUMP_MAIN(ERROR, BASE, 0xDEADBEEF);
+				break;
+			}
+
 			if ((ctx->curr_state == ctx->req_state) || (state_data->iot_state != ctx->req_state)) {
 				IOT_INFO("Already iot-stat updated or mis-matched, can't change timeout : %d for %d",
 					state_data->opt, state_data->iot_state);
