@@ -66,12 +66,10 @@ MBEDTLS_DIR = src/deps/mbedtls
 DEPS_DIRS = $(JSON_DIR) $(LIBSODIUM_DIR) $(MBEDTLS_DIR)
 
 result	:= $(shell git submodule update --init $(JSON_DIR))
-result	:= $(shell git submodule update --init $(CURL_DIR))
 result	:= $(shell git submodule update --init $(LIBSODIUM_DIR))
 result	:= $(shell git submodule update --init $(MBEDTLS_DIR))
 
 INCS	+= -I$(JSON_DIR)/cJSON
-INCS	+= -I$(CURL_DIR)/curl/include
 INCS	+= -I$(MBEDTLS_DIR)/mbedtls/include
 INCS	+= -I$(LIBSODIUM_DIR)/libsodium/src/libsodium/include -I$(LIBSODIUM_DIR)/libsodium/src/libsodium/include/sodium -I$(LIBSODIUM_DIR)/port/include
 
