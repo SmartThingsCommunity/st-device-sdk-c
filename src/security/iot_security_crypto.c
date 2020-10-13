@@ -305,6 +305,11 @@ size_t iot_security_cipher_get_align_size(iot_security_key_type_t key_type, size
 	}
 
 	block_size = mbedtls_cipher_get_block_size(&cipher_ctx);
+	if (block_size == 0) {
+		IOT_ERROR("mbedtls_cipher_get_block_size returned zero");
+		mbedtls_cipher_free(&cipher_ctx);
+		return 0;
+	}
 
 	data_size = data_size + (block_size - (data_size % block_size));
 
