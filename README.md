@@ -1,8 +1,10 @@
-# SmartThings Device SDK
+# SmartThings SDK for Direct Connected Devices for C
 
 [![License](https://img.shields.io/badge/licence-Apache%202.0-brightgreen.svg?style=flat)](LICENSE)
 
-The SmartThings Device SDK is the IoT core device library that allow device applications to securely connect to the SmartThings Cloud. To facilitate the development of device application in your  original chipset SDK that installed before, we provide this core device library as a separate repository. You may simply link it to develop a device application in your existing development environment.
+The SmartThings SDK for Direct Connected Devices for C is the IoT core device library that allow device applications to securely connect to the SmartThings Cloud.
+To facilitate the development of device application in your original chipset SDK that installed before, we provide this core device library as a separate repository.
+You may simply link it to develop a device application in your existing development environment.
 
 We also provide the additional Reference repository so that you can refer to how this core device library can be linked in existing original chipset SDKs and device applications can be developed.
 
@@ -14,8 +16,8 @@ It is distributed in source form and written in C99 for the purpose of portabili
 
 Good news! We have launched the new commercial program for MQTT devices. You will be able to submit for certification into the SmartThings mobile app later this month. To prepare for submission, please perform the necessary steps with your current integrations:
 
- - Update to the latest SmartThings Device SDK
-   - Please use SmartThings Device SDK v1.3.3 or later
+ - Update to the latest SmartThings SDK for Direct Connected Devices for C
+   - Please use the SDK v1.3.3 or later
  - Downlaod the updated onboarding_config.json for your devices.
  - Re-register any test devices you have registered previously.
  - Update to the latest SmartThings mobile app to test your device
@@ -25,7 +27,7 @@ Good news! We have launched the new commercial program for MQTT devices. You wil
 
 This core device library provides the following features :
 
-- Customized MQTT  in order to reduce memory consumption and enhance stability
+- Customized MQTT in order to reduce memory consumption and enhance stability
 - Easy and efficient APIs
   - Connection APIs : You can do onboarding & MQTT connection by just calling only a few these APIs.
   - [Capability](https://smartthings.developer.samsung.com/docs/api-ref/capabilities.html) APIs : More than hundred different capabilities can be implemented as only a few APIs.
@@ -40,13 +42,14 @@ After porting, you can use this library completely under the specific environmen
 - Register a Device
 - Develop a Device Application
 
-## Porting SmartThings Device SDK
+## Porting SmartThings SDK for Direct Connected Devices for C
 
-This core device library has platform-dependent directories. In current SDK version, those that must be ported are present in `src/port/bsp`, `src/port/net` and `src/port/os`. By default, we have already provided several implementations based on some operating systems(e.g. FreeRTOS) and chipsets(e.g. ESPRESSIF, REALTEK). These porting examples in those directories make it easier for you to port to additional chipsets and operating systems. As of now, this release can also be cross-compiled directly through several chipset SDK environments that have already been ported in the [Reference repository](https://github.com/SmartThingsCommunity/st-device-sdk-c-ref).
+This core device library has platform-dependent directories. In current SDK version, those that must be ported are present in `src/port/bsp`, `src/port/net` and `src/port/os`.
+By default, we have already provided several implementations based on some operating systems(e.g. FreeRTOS) and chipsets(e.g. ESPRESSIF, REALTEK). These porting examples in those directories make it easier for you to port to additional chipsets and operating systems. As of now, this release can also be cross-compiled directly through several chipset SDK environments that have already been ported in the [Reference repository](https://github.com/SmartThingsCommunity/st-device-sdk-c-ref).
 
 For instructions on how to port this SDK, please see the [Porting Guide](https://github.com/SmartThingsCommunity/st-device-sdk-c/blob/master/doc/porting_guide.md).
 
-## Building SmartThings Device SDK
+## Building SmartThings SDK for Direct Connected Devices for C
 
 This core device library should be built according to the chipset development environment to be applied. If this environment is not ready yet, you can build it in the POSIX environment based on Ubuntu as shown below.
 
@@ -95,7 +98,7 @@ For more information, please review the following documents:
 - [SmartThings Direct-connected devices](https://smartthings.developer.samsung.com/docs/devices/direct-connected-devices/overview.html) : It covers the overall workflow and detailed steps for connecting devices to the SmartThings Cloud directly.
 - [Capabilities Reference](https://smartthings.developer.samsung.com/docs/api-ref/capabilities.html) : This page serves as a reference for the supported capabilities.
 - [Developer Workspace](https://smartthings.developer.samsung.com/workspace/) : It provides functions related to device information registration and device integration in the SmartThings cloud.
-- [SmartThings Device SDK Code Lab](https://developer.samsung.com/codelab/smartthings/smartthings-device-sdk/overview.html) : The code lab data of the 2019 Samsung Developer Conference. It includes a demo video and a tutorial.
+- [Samsung Developer Code Lab](https://developer.samsung.com/codelab/smartthings/smartthings-device-sdk/overview.html) : The code lab data of the 2019 Samsung Developer Conference. It includes a demo video and a tutorial.
 
 ## License
 
