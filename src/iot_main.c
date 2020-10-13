@@ -562,6 +562,10 @@ static iot_error_t _do_iot_main_command(struct iot_context *ctx,
 			}
 			ctx->iot_reg_data.new_reged = false;
 
+			/* Now we allow D2D process reentrant and prov_data could be loaded
+			 * at the init state or previous D2D, so free it first to avoid memory-leak
+			 */
+			iot_api_prov_data_mem_free(&ctx->prov_data);
 			err = iot_nv_get_prov_data(&ctx->prov_data);
 			if (err != IOT_ERROR_NONE) {
 				IOT_DEBUG("There are no prov data in NV\n");
@@ -2102,7 +2106,6 @@ int st_info_get(IOT_CTX *iot_ctx, iot_info_type_t info_type, iot_info_data_t *in
 {
 	iot_error_t iot_err = IOT_ERROR_NONE;
 	struct iot_context *ctx = (struct iot_context*)iot_ctx;
-	unsigned char curr_events;
 
 	if (!IS_CTX_VALID(ctx) || !info_data) {
 		IOT_ERROR("invalid parameters\n");
@@ -2127,30 +2130,7 @@ int st_info_get(IOT_CTX *iot_ctx, iot_info_type_t info_type, iot_info_data_t *in
 		break;
 
 	case IOT_INFO_TYPE_IOT_PROVISIONED:
-		iot_os_eventgroup_clear_bits(ctx->usr_events, IOT_USR_INTERACT_BIT_CMD_DONE);
-
-		/* Check if STDK can try to connect to sever */
-		iot_err = _iot_command_peek(ctx, IOT_COMMAND_CHECK_PROV_STATUS);
-		if (iot_err != IOT_ERROR_NONE) {
-			IOT_ERROR("failed to send check_prov(%d)", iot_err);
-			IOT_DUMP_MAIN(ERROR, BASE, iot_err);
-			goto end_st_info_get;
-		}
-
-		curr_events = iot_os_eventgroup_wait_bits(ctx->usr_events,
-			IOT_USR_INTERACT_BIT_CMD_DONE, true, (NEXT_STATE_TIMEOUT_MS * 2));
-
-		if (!(curr_events & IOT_USR_INTERACT_BIT_CMD_DONE)) {
-			IOT_ERROR("Timeout happened for check_prov");
-			iot_err = IOT_ERROR_TIMEOUT;
-			goto end_st_info_get;
-		}
-
-		if (ctx->iot_reg_data.new_reged) {
-			info_data->provisioned = false;
-		} else {
-			info_data->provisioned = true;
-		}
+		info_data->provisioned = iot_nv_prov_data_exist();
 		break;
 
 	default:
@@ -2162,7 +2142,6 @@ int st_info_get(IOT_CTX *iot_ctx, iot_info_type_t info_type, iot_info_data_t *in
 	IOT_INFO("%s done (%d)", __func__, iot_err);
 	IOT_DUMP_MAIN(INFO, BASE, iot_err);
 
-end_st_info_get:
 	iot_os_mutex_unlock(&ctx->st_conn_lock);
 	return iot_err;
 }

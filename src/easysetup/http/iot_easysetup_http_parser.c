@@ -35,7 +35,8 @@
 
 typedef struct { char *name, *value; } header_t;
 
-static header_t reqhdr[17] = {{"\0", "\0"}};
+#define MAX_HEADER_SUPPORT (16)
+static header_t reqhdr[MAX_HEADER_SUPPORT + 1] = {{"\0", "\0"}};
 
 static bool is_header_content_length(char *header_key)
 {
@@ -85,41 +86,6 @@ iot_error_t es_msg_parser(char *rx_buffer, size_t rx_buffer_len, char **payload,
 		return IOT_ERROR_INVALID_ARGS;
 	}
 
-	header_t *h = reqhdr;
-	char *t = NULL;
-
-	while (h < reqhdr + 16) {
-		char *k, *v;
-
-		k = strtok(NULL, "\r\n: \t");
-		if (!k)
-			break;
-
-		v = strtok(NULL, "\r\n");
-		while (*v && *v == ' ')
-			v++;
-
-		h->name = k;
-		h->value = v;
-
-		if (is_header_content_length(h->name)) {
-			*content_len = atoi(h->value);
-		}
-
-		h++;
-
-		t = v + 1 + strlen(v);
-
-		if (t[1] == '\r' && t[2] == '\n')
-			break;
-	}
-
-	if (t == NULL) {
-		t = prot + strlen(prot) + 3;
-	} else {
-		t++;
-	}
-
 	if (!strcmp(method,  "GET")) {
 		*type = D2D_GET;
 		if (!strcmp(uri, IOT_ES_URI_GET_DEVICEINFO)) {
@@ -134,10 +100,61 @@ iot_error_t es_msg_parser(char *rx_buffer, size_t rx_buffer_len, char **payload,
 			IOT_ERROR("[GET] invalid step : %s", uri);
 			*cmd = IOT_EASYSETUP_INVALID_STEP;
 		}
-	}
-	else if (!strcmp(method,  "POST")) {
-		if ((t + 2) < (rx_buffer + rx_buffer_len)) {
-			*payload = t + 2;
+	} else if (!strcmp(method,  "POST")) {
+		int post_content_len = -1;
+		header_t *p_hdr = reqhdr;
+		char *p_body = NULL;
+
+		while (p_hdr < reqhdr + MAX_HEADER_SUPPORT) {
+			char *key, *value;
+
+			key = strtok(NULL, "\r\n: \t");
+			if (!key)
+				break;
+
+			value = strtok(NULL, "\r\n");
+			if (!value)
+				break;
+
+			while (*value && *value == ' ')
+				value++;
+
+			p_hdr->name = key;
+			p_hdr->value = value;
+			if (is_header_content_length(p_hdr->name)) {
+				char *p_end;
+				long val;
+				val = strtol(p_hdr->value, &p_end, 10);
+				if (val == LONG_MAX || val == LONG_MIN || p_hdr->value == p_end) {
+					break;
+				}
+				post_content_len = (int) val;
+			}
+			p_hdr++;
+
+			p_body = value + strlen(value);
+			if (p_body[1] == '\n' && p_body[2] == '\r' && p_body[3] == '\n') {
+				// end of header
+				p_body += 3;
+				break;
+			}
+		}
+
+		if (p_body == NULL || post_content_len < 0) {
+			return IOT_ERROR_INVALID_ARGS;
+		}
+
+		if (post_content_len == 0) {
+			*payload = NULL;
+		} else {
+			p_body++;
+			if ((p_body) < (rx_buffer + rx_buffer_len)) {
+				*payload = p_body;
+				*content_len = post_content_len;
+			} else {
+				IOT_ERROR("[POST] out-of-range");
+				return IOT_ERROR_INVALID_ARGS;
+			}
 		}
 		*type = D2D_POST;
 		if (!strcmp(uri, IOT_ES_URI_POST_KEYINFO)) {

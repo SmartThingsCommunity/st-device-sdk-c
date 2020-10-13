@@ -285,8 +285,8 @@ struct test_wifi_provisioning_data {
     char *mac_address;
     int auth_type;
     char *broker_url;
-    char *location_id;
-    char *room_id;
+    char *broker_domain;
+    int broker_port;
     char *device_name;
 };
 
@@ -313,8 +313,15 @@ void TC_STATIC_es_wifiprovisioninginfo_handler_success(void **state)
             .mac_address = "21:32:43:54:65:76",
             .auth_type = IOT_WIFI_AUTH_WPA_WPA2_PSK,
             .broker_url = "https://test.domain.com:5676",
-            .location_id = "123e4567-e89b-12d3-a456-426655440000",
-            .room_id = "123e4567-e89b-12d3-a456-426655440000",
+            .device_name = "fakeDevice",
+    };
+    struct test_wifi_provisioning_data expected_wifi_prov = {
+            .ssid = "fakeSsid_05_XXXXXX",
+            .password = "fakePassword",
+            .mac_address = "21:32:43:54:65:76",
+            .auth_type = IOT_WIFI_AUTH_WPA_WPA2_PSK,
+            .broker_domain = "test.domain.com",
+            .broker_port = 5676,
             .device_name = "fakeDevice",
     };
 
@@ -335,7 +342,7 @@ void TC_STATIC_es_wifiprovisioninginfo_handler_success(void **state)
     assert_int_equal(err, IOT_ERROR_NONE);
     assert_non_null(out_payload);
     assert_lookup_id(out_payload, server_cipher);
-    assert_wifi_provisioning(context, wifi_prov);
+    assert_wifi_provisioning(context, expected_wifi_prov);
 
     // Local teardown
     _free_cipher(device_cipher);
@@ -360,8 +367,6 @@ void TC_STATIC_es_wifiprovisioninginfo_handler_success_without_authtype(void **s
             .mac_address = "21:32:43:54:65:76",
             .auth_type = -1,
             .broker_url = "https://test.domain.com:5676",
-            .location_id = "123e4567-e89b-12d3-a456-426655440000",
-            .room_id = "123e4567-e89b-12d3-a456-426655440000",
             .device_name = "fakeDevice",
     };
 
@@ -370,9 +375,8 @@ void TC_STATIC_es_wifiprovisioninginfo_handler_success_without_authtype(void **s
             .password = "fakePassword",
             .mac_address = "21:32:43:54:65:76",
             .auth_type = IOT_WIFI_AUTH_WPA_WPA2_PSK,
-            .broker_url = "https://test.domain.com:5676",
-            .location_id = "123e4567-e89b-12d3-a456-426655440000",
-            .room_id = "123e4567-e89b-12d3-a456-426655440000",
+            .broker_domain = "test.domain.com",
+            .broker_port = 5676,
             .device_name = "fakeDevice",
     };
 
@@ -1074,12 +1078,6 @@ static char* _generate_post_wifiprovisioninginfo_payload(iot_security_cipher_par
     if (prov.broker_url) {
         JSON_ADD_ITEM_TO_OBJECT(root, "brokerUrl", JSON_CREATE_STRING(prov.broker_url));
     }
-    if (prov.location_id) {
-        JSON_ADD_ITEM_TO_OBJECT(root, "locationId", JSON_CREATE_STRING(prov.location_id));
-    }
-    if (prov.room_id) {
-        JSON_ADD_ITEM_TO_OBJECT(root, "roomId", JSON_CREATE_STRING(prov.room_id));
-    }
     if (prov.device_name) {
         JSON_ADD_ITEM_TO_OBJECT(root, "deviceName", JSON_CREATE_STRING(prov.device_name));
     }
@@ -1172,6 +1170,10 @@ static void assert_wifi_provisioning(struct iot_context *context, struct test_wi
     assert_string_equal(context->prov_data.wifi.password, prov.password);
     assert_int_equal(context->prov_data.wifi.security_type, prov.auth_type);
     assert_string_equal(context->prov_data.wifi.ssid, prov.ssid);
+
+    assert_string_equal(context->prov_data.cloud.broker_url, prov.broker_domain);
+    assert_int_equal(context->prov_data.cloud.broker_port, prov.broker_port);
+    assert_string_equal(context->prov_data.cloud.label, prov.device_name);
 }
 
 extern const iot_wifi_scan_result_t mock_wifi_scan_result[IOT_WIFI_MAX_SCAN_RESULT];

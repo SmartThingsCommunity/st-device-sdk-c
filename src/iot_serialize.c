@@ -31,20 +31,23 @@
 #include <inttypes.h>
 #include "compilersupport_p.h"
 
-static CborError _iot_cbor_value_to_json(CborValue *it, char *out, size_t *olen);
+static CborError _iot_cbor_value_to_json(CborValue *it, char *out, size_t len, size_t *olen);
 
-static CborError _iot_cbor_array_to_json(CborValue *it, char *out, size_t *olen)
+static CborError _iot_cbor_array_to_json(CborValue *it, char *out, size_t len, size_t *olen)
 {
 	CborError err;
-	const char *comma = "";
+	char comma = 0;
 	size_t n = 0;
 	int c = 0;
 
 	while (!cbor_value_at_end(it)) {
-		c += sprintf(out + c, "%s", comma);
-		comma = ",";
+		if (comma) {
+			out[c++] = comma;
+		} else {
+			comma = ',';
+		}
 
-		err = _iot_cbor_value_to_json(it, out + c, &n);
+		err = _iot_cbor_value_to_json(it, out + c, len - c, &n);
 		if (err) {
 			return err;
 		}
@@ -57,18 +60,21 @@ static CborError _iot_cbor_array_to_json(CborValue *it, char *out, size_t *olen)
 	return CborNoError;
 }
 
-static CborError _iot_cbor_map_to_json(CborValue *it, char *out, size_t *olen)
+static CborError _iot_cbor_map_to_json(CborValue *it, char *out, size_t len, size_t *olen)
 {
 	CborError err;
 	CborType key_type;
-	const char *comma = "";
+	char comma = 0;
 	char *key;
 	size_t n = 0;
 	int c = 0;
 
 	while (!cbor_value_at_end(it)) {
-		c += sprintf(out + c, "%s", comma);
-		comma = ",";
+		if (comma) {
+			out[c++] = comma;
+		} else {
+			comma = ',';
+		}
 
 		key_type = cbor_value_get_type(it);
 		if (key_type != CborTextStringType) {
@@ -81,11 +87,11 @@ static CborError _iot_cbor_map_to_json(CborValue *it, char *out, size_t *olen)
 			return err;
 		}
 
-		c += sprintf(out + c, "\"%s\":", key);
+		c += snprintf(out + c, len - c, "\"%s\":", key);
 		free(key);
 
 		/* value */
-		err = _iot_cbor_value_to_json(it, out + c, &n);
+		err = _iot_cbor_value_to_json(it, out + c, len - c, &n);
 		c += (int)n;
 
 		if (err) {
@@ -98,7 +104,7 @@ static CborError _iot_cbor_map_to_json(CborValue *it, char *out, size_t *olen)
 	return CborNoError;
 }
 
-static CborError _iot_cbor_value_to_json(CborValue *it, char *out, size_t *olen)
+static CborError _iot_cbor_value_to_json(CborValue *it, char *out, size_t len, size_t *olen)
 {
 	CborError err;
 	CborType type;
@@ -123,12 +129,12 @@ static CborError _iot_cbor_value_to_json(CborValue *it, char *out, size_t *olen)
 			return err;
 		}
 
-		c += sprintf(out + c, "%c", type == CborArrayType ? '[' : '{');
+		c += snprintf(out + c, len - c, "%c", type == CborArrayType ? '[' : '{');
 
 		if (type == CborArrayType)
-			err = _iot_cbor_array_to_json(&recursed, out + c, &n);
+			err = _iot_cbor_array_to_json(&recursed, out + c, len - c, &n);
 		else
-			err = _iot_cbor_map_to_json(&recursed, out + c, &n);
+			err = _iot_cbor_map_to_json(&recursed, out + c, len - c, &n);
 
 		if (err) {
 			it->ptr = recursed.ptr;
@@ -137,7 +143,7 @@ static CborError _iot_cbor_value_to_json(CborValue *it, char *out, size_t *olen)
 
 		c += (int)n;
 
-		c += sprintf(out + c, "%c", type == CborArrayType ? ']' : '}');
+		c += snprintf(out + c, len - c, "%c", type == CborArrayType ? ']' : '}');
 
 		err = cbor_value_leave_container(it, &recursed);
 		if (err) {
@@ -154,7 +160,7 @@ static CborError _iot_cbor_value_to_json(CborValue *it, char *out, size_t *olen)
 			return err;
 		}
 
-		c += sprintf(out + c, "\"%s\"", str);
+		c += snprintf(out + c, len - c, "\"%s\"", str);
 		free(str);
 
 		*olen = (size_t)c;
@@ -169,7 +175,7 @@ static CborError _iot_cbor_value_to_json(CborValue *it, char *out, size_t *olen)
 			val_dbl = -val_dbl - 1;
 		}
 
-		c += sprintf(out + c, "%d", (int)val_dbl);
+		c += snprintf(out + c, len - c, "%d", (int)val_dbl);
 
 		break;
 	case CborDoubleType:
@@ -182,23 +188,23 @@ static CborError _iot_cbor_value_to_json(CborValue *it, char *out, size_t *olen)
 		val_i64 = (uint64_t)fabs(val_dbl);
 		if ((double)val_i64 == fabs(val_dbl)) {
 			/* print as integer so we get the full precision */
-			c += sprintf(out + c, "%s%" PRIu64, val_dbl < 0 ? "-" : "", val_i64);
+			c += snprintf(out + c, len - c, "%s%" PRIu64, val_dbl < 0 ? "-" : "", val_i64);
 		} else {
 			/* this number is definitely not a 64-bit integer */
-			c += sprintf(out + c, "%." DBL_DECIMAL_DIG_STR "g", val_dbl);
+			c += snprintf(out + c, len - c, "%." DBL_DECIMAL_DIG_STR "g", val_dbl);
 		}
 #else
 		fracpart = modf(val_dbl, &intpart);
-		c += sprintf(out + c, "%d", (int)intpart);
+		c += snprintf(out + c, len - c, "%d", (int)intpart);
 		if (fracpart != 0) {
-			c += sprintf(out + c, ".");
+			c += snprintf(out + c, len - c, ".");
 			fracpart = round(fracpart * IOT_SERIALIZE_DECIMAL_PRECISION) / IOT_SERIALIZE_DECIMAL_PRECISION;
 			if (fracpart < 0) {
 				fracpart *= -1;
 			}
 			while(fracpart != (int)fracpart) {
 				fracpart *= 10;
-				c += sprintf(out + c, "%d", ((int)fracpart) % 10);
+				c += snprintf(out + c, len - c, "%d", ((int)fracpart) % 10);
 			}
 		}
 #endif
@@ -246,7 +252,7 @@ iot_error_t iot_serialize_cbor2json(uint8_t *cbor, size_t cborlen, char **json, 
 
 	memset(buf, 0, len);
 
-	err = _iot_cbor_value_to_json(&it, buf, &olen);
+	err = _iot_cbor_value_to_json(&it, buf, len, &olen);
 	if (err) {
 		IOT_ERROR("_iot_cbor_value_to_json_advance = %d", err);
 		free(buf);

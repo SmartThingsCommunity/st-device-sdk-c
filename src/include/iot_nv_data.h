@@ -96,6 +96,14 @@ iot_error_t iot_nv_init(unsigned char *device_info, size_t device_info_len);
 iot_error_t iot_nv_deinit();
 
 /**
+ * @brief Check provisioning data existence in the nv file-system.
+ *
+ * @retval true provisioning data exist in the nv file-system
+ * @retval false provisioning data does not exist in the nv file-system
+ */
+bool iot_nv_prov_data_exist(void);
+
+/**
  * @brief Get provisioning data from the nv file-system.
  *
  * @param[out] prov_data A pointer to data structure to store the provisioning data from the nv file-system.

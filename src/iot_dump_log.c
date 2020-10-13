@@ -64,7 +64,7 @@ static struct iot_dump_state* _iot_dump_create_dump_state(struct iot_context *io
                     sizeof(dump_state->device_id));
         }
 
-        if (iot_ctx->devconf.dip && iot_ctx->devconf.dip->dip_id.id) {
+        if (iot_ctx->devconf.dip) {
             memcpy(dump_state->dip_id, iot_ctx->devconf.dip->dip_id.id,
                     sizeof(dump_state->dip_id));
 
