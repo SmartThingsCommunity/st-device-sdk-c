@@ -71,23 +71,37 @@ static int _process_accept_socket(int sock)
 	// if ST app WiFi disconnect coincidentally during easysetup, 
 	// we need short time tcp keepalive here.
 	int keep_alive = 1;
-	setsockopt(sock, SOL_SOCKET, SO_KEEPALIVE, &keep_alive, sizeof(int));
+	ret = setsockopt(sock, SOL_SOCKET, SO_KEEPALIVE, &keep_alive, sizeof(int));
+	if (ret < 0) {
+		IOT_INFO("socket set keep-alive failed %d", errno);
+	}
 
 	int idle = 10;
-	setsockopt(sock, IPPROTO_TCP, TCP_KEEPIDLE, &idle, sizeof(int));
+	ret = setsockopt(sock, IPPROTO_TCP, TCP_KEEPIDLE, &idle, sizeof(int));
+	if (ret < 0) {
+		IOT_INFO("socket set keep-idle failed %d", errno);
+	}
 
 	int interval = 5;
-	setsockopt(sock, IPPROTO_TCP, TCP_KEEPINTVL, &interval, sizeof(int));
+	ret = setsockopt(sock, IPPROTO_TCP, TCP_KEEPINTVL, &interval, sizeof(int));
+	if (ret < 0) {
+		IOT_INFO("socket set keep-interval failed %d", errno);
+	}
 
 	int maxpkt = 3;
-	setsockopt(sock, IPPROTO_TCP, TCP_KEEPCNT, &maxpkt, sizeof(int));
-
+	ret = setsockopt(sock, IPPROTO_TCP, TCP_KEEPCNT, &maxpkt, sizeof(int));
+	if (ret < 0) {
+		IOT_INFO("socket set keep-count failed %d", errno);
+	}
 
 	// HTTP response as tcp payload is sent once, and mostly less than MTU.
 	// There is no need for tcp packet coalesced.
 	// To enhance throughput, disable TCP Nagle's algorithm here.
 	int no_delay = 1;
-	setsockopt(sock, IPPROTO_TCP, TCP_NODELAY, &no_delay, sizeof(int));
+	ret = setsockopt(sock, IPPROTO_TCP, TCP_NODELAY, &no_delay, sizeof(int));
+	if (ret < 0) {
+		IOT_INFO("socket set no-delay failed %d", errno);
+	}
 
 	while (1)
 	{
