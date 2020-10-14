@@ -1291,7 +1291,6 @@ STATIC_FUNCTION
 iot_error_t _es_wifi_prov_parse(struct iot_context *ctx, char *in_payload)
 {
 	struct iot_wifi_prov_data *wifi_prov = NULL;
-	char bssid[] = "00:00:00:00:00:00";
 	JSON_H *item = NULL;
 	JSON_H *root = NULL;
 	JSON_H *wifi_credential = NULL;
@@ -1335,18 +1334,21 @@ iot_error_t _es_wifi_prov_parse(struct iot_context *ctx, char *in_payload)
 	else
 		strncpy(wifi_prov->password, JSON_GET_STRING_VALUE(item), sizeof(wifi_prov->password) - 1);
 
-	if ((item = JSON_GET_OBJECT_ITEM(wifi_credential, "macAddress")) == NULL)
+	if ((item = JSON_GET_OBJECT_ITEM(wifi_credential, "macAddress")) == NULL) {
 		IOT_INFO("no macAddress");
-	else
-		strncpy(bssid, JSON_GET_STRING_VALUE(item), sizeof(bssid));
+	} else {
+		strncpy(wifi_prov->mac_str, JSON_GET_STRING_VALUE(item), IOT_WIFI_PROV_MAC_STR_LEN);
+		wifi_prov->mac_str[IOT_WIFI_PROV_MAC_STR_LEN] = '\0';
 
-	err = iot_util_convert_str_mac(bssid, &wifi_prov->bssid);
-	if (err) {
-		IOT_ERROR("Failed to convert str to mac address (error : %d) : %s", err, bssid);
-		IOT_ES_DUMP(IOT_DEBUG_LEVEL_ERROR, IOT_DUMP_EASYSETUP_INVALID_MAC, err);
-		err = IOT_ERROR_EASYSETUP_INVALID_MAC;
-		goto wifi_parse_out;
+		err = iot_util_convert_str_mac(wifi_prov->mac_str, &wifi_prov->bssid);
+		if (err) {
+			IOT_ERROR("Failed to convert str to mac address (error : %d) : %s", err, wifi_prov->mac_str);
+			IOT_ES_DUMP(IOT_DEBUG_LEVEL_ERROR, IOT_DUMP_EASYSETUP_INVALID_MAC, err);
+			err = IOT_ERROR_EASYSETUP_INVALID_MAC;
+			goto wifi_parse_out;
+		}
 	}
+
 
 	wifi_prov->security_type =
 		_decide_wifi_auth_mode(JSON_GET_OBJECT_ITEM(wifi_credential, "authType"), wifi_prov, ctx);
@@ -1361,7 +1363,7 @@ iot_error_t _es_wifi_prov_parse(struct iot_context *ctx, char *in_payload)
 
 	IOT_INFO("ssid: %s", wifi_prov->ssid);
 	IOT_DEBUG("password: %s", wifi_prov->password);
-	IOT_INFO("mac addr: %s", bssid);
+	IOT_INFO("mac addr: %s", wifi_prov->mac_str);
 
 wifi_parse_out:
 	if (wifi_prov)
@@ -1376,12 +1378,9 @@ iot_error_t _es_cloud_prov_parse(struct iot_context *ctx, char *in_payload)
 {
 	struct iot_cloud_prov_data *cloud_prov = NULL;
 	char *full_url = NULL;
-	char *location_id_str = NULL;
-	char *room_id_str = NULL;
 	JSON_H *root = NULL;
 	iot_error_t err = IOT_ERROR_NONE;
 	url_parse_t url = { .protocol = NULL, .domain = NULL, .port = 0};
-	size_t str_id_len = 40;
 
 	root = JSON_PARSE(in_payload);
 	if (!root) {
@@ -1415,49 +1414,6 @@ iot_error_t _es_cloud_prov_parse(struct iot_context *ctx, char *in_payload)
 		goto cloud_parse_out;
 	}
 
-	location_id_str = _es_json_parse_string(root, "locationId");
-
-	/* location id is optional */
-	if (location_id_str) {
-		err = validate_uuid_format(location_id_str, strlen(location_id_str));
-		if (err) {
-			IOT_ERROR("invalid locationid format : %d", err);
-			err = IOT_ERROR_EASYSETUP_INVALID_REQUEST;
-			goto cloud_parse_out;
-		}
-		if ((ctx->prov_data.cloud.location = (char *)malloc(str_id_len)) == NULL) {
-			IOT_ERROR("failed to alloc mem for location_id");
-			IOT_ES_DUMP(IOT_DEBUG_LEVEL_ERROR, IOT_DUMP_EASYSETUP_MEM_ALLOC_ERROR, 0);
-			err = IOT_ERROR_EASYSETUP_MEM_ALLOC_ERROR;
-			goto cloud_parse_out;
-		}
-		memset(ctx->prov_data.cloud.location, 0, str_id_len);
-		memcpy((char *)ctx->prov_data.cloud.location,location_id_str, str_id_len);
-	} else {
-		IOT_INFO("no locationId");
-	}
-
-	room_id_str = _es_json_parse_string(root, "roomId");
-	/* roomId is optional */
-	if (room_id_str) {
-		err = validate_uuid_format(room_id_str, strlen(room_id_str));
-		if (err) {
-			IOT_ERROR("invalid roomid format : %d", err);
-			err = IOT_ERROR_EASYSETUP_INVALID_REQUEST;
-			goto cloud_parse_out;
-		}
-		if ((ctx->prov_data.cloud.room = (char *)malloc(str_id_len)) == NULL) {
-			IOT_ERROR("failed to for room_id");
-			IOT_ES_DUMP(IOT_DEBUG_LEVEL_ERROR, IOT_DUMP_EASYSETUP_MEM_ALLOC_ERROR, 0);
-			err = IOT_ERROR_EASYSETUP_MEM_ALLOC_ERROR;
-			goto cloud_parse_out;
-		}
-		memset(ctx->prov_data.cloud.room, 0, str_id_len);
-		memcpy((char *)ctx->prov_data.cloud.room,room_id_str, str_id_len);
-	} else {
-		IOT_INFO("no roomId");
-	}
-
 	if ((cloud_prov->label = _es_json_parse_string(root, "deviceName")) == NULL) {
 		IOT_INFO("No deviceName");
 	}
@@ -1484,7 +1440,6 @@ cloud_parse_out:
 			iot_os_free(url.domain);
 		}
 	}
-
 	if (url.protocol) {
 		iot_os_free(url.protocol);
 	}
@@ -1493,12 +1448,6 @@ cloud_parse_out:
 	}
 	if (cloud_prov) {
 		iot_os_free(cloud_prov);
-	}
-	if (location_id_str) {
-		iot_os_free(location_id_str);
-	}
-	if (room_id_str) {
-		iot_os_free(room_id_str);
 	}
 	if (root) {
 		JSON_DELETE(root);
@@ -1597,6 +1546,10 @@ iot_error_t _es_wifiprovisioninginfo_handler(struct iot_context *ctx, char *in_p
 
 	*out_payload = final_msg;
 
+	/* Now we allow D2D process reentrant and prov_data could be loaded
+	 * at the init state or previous D2D, so free it first to avoid memory-leak
+	 */
+	iot_api_prov_data_mem_free(&ctx->prov_data);
 	err = iot_nv_get_prov_data(&ctx->prov_data);
 	if (err) {
 		IOT_ES_DUMP(IOT_DEBUG_LEVEL_ERROR, IOT_DUMP_EASYSETUP_WIFI_DATA_READ_FAIL, err);

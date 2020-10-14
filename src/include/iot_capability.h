@@ -80,7 +80,7 @@ typedef struct iot_cap_cmd_set {
 	/**
 	 * @brief NULL-terminated string, which is name of `commands`.
 	 */
-	const char *cmd_type;
+	char *cmd_type;
 
 	st_cap_cmd_cb cmd_cb;	/**< @brief User callback function. */
 	void *usr_data;		/**< @brief User data for cmd_cb. */

@@ -13,8 +13,29 @@ from datetime import datetime
 from nacl.signing import SigningKey, VerifyKey
 from nacl.encoding import HexEncoder
 
+import json
+import qrcode
+from pathlib import Path
+
 __version__ = "1.4.0"
 ROOT_PATH = "output"
+
+onboardingFile = "onboarding_config.json"
+
+def safeOpenJSONFile(file):
+    with open(file) as f:
+        try:
+            return json.load(f)
+        except:
+            raise TypeError("Unable to parse %s" % (file))
+
+def safeReadJSON(key, data, file):
+    if not key in data:
+        raise KeyError("%s not found in %s" % (key, file))
+    elif data[key] is None or data[key] == "":
+        raise ValueError("%s value is empty in %s" % (key, file))
+    else:
+        return data[key]
 
 class Ed25519Key():
     def __init__(self, sn):
@@ -183,6 +204,28 @@ def get_random(mnid, length):
     random_string += ''.join(random.choice(pool) for i in range(length))
     return random_string
 
+class Qr():
+    def prepare_repo(self, sub_path, args, mnid, onboardingId, sn):
+        image_file = "qr-" + sn + ".png"
+
+        if args.qr == 'commercial':
+            repo_dir = os.path.join(sub_path, sn)
+            if not os.path.isdir(repo_dir):
+                os.makedirs(repo_dir, exist_ok=True)
+            self._imagefile = os.path.join(repo_dir, image_file)
+        elif args.qr == 'individual':
+            self._imagefile = os.path.join(sub_path, image_file)
+
+        qrUrl = "https://qr.samsungiots.com/?m=%s&s=%s&r=%s" % (
+                mnid, onboardingId, sn)
+        self._qrurl = qrUrl
+
+    def generate_image(self):
+            imgFP = self._imagefile
+            img = qrcode.make(self._qrurl)
+            img.save(imgFP)
+            print("File:\t%s \nQR url:\t%s" % (imgFP, self._qrurl))
+
 def individual(args):
     root_path = ROOT_PATH
     sn = 'STDK' + get_random(args.mnid, 8)
@@ -203,6 +246,16 @@ def individual(args):
         nv.prepare_repo(sub_path, sn)
         nv.generate_csv(edkey.get_pubkey_b64(), edkey.get_seckey_b64())
         nv.generate_image()
+    if args.qr == 'individual':
+        #Generate QRcode image
+        file = os.path.join(args.folder, onboardingFile)
+        data = safeOpenJSONFile(file)
+        safeReadJSON("onboardingConfig", data, file)
+        mnid = safeReadJSON("mnId", data["onboardingConfig"], file)
+        onboardingId = safeReadJSON("setupId", data["onboardingConfig"], file)
+        qr = Qr()
+        qr.prepare_repo(sub_path, args, mnid, onboardingId, sn)
+        qr.generate_image()
 
 def bulk(args):
     root_path = ROOT_PATH + "_bulk"
@@ -214,6 +267,13 @@ def bulk(args):
         raise TypeError("not found '%s'" % args.input)
 
     print("Loading " + args.input + "...")
+
+    if args.qr == 'commercial':
+        file = os.path.join(args.folder, onboardingFile)
+        data = safeOpenJSONFile(file)
+        safeReadJSON("onboardingConfig", data, file)
+        mnid = safeReadJSON("mnId", data["onboardingConfig"], file)
+        onboardingId = safeReadJSON("setupId", data["onboardingConfig"], file)
 
     with open(args.input, newline='') as csvinput:
         reader = csv.DictReader(csvinput)
@@ -237,6 +297,12 @@ def bulk(args):
                 nv.prepare_repo(os.path.join(sub_path, sn), sn)
                 nv.generate_csv(edkey.get_pubkey_b64(), edkey.get_seckey_b64())
                 nv.generate_image()
+
+            if args.qr == 'commercial':
+                #Generate QRcode image
+                qr = Qr()
+                qr.prepare_repo(sub_path, args, mnid, onboardingId, sn)
+                qr.generate_image()
 
     batch = Batch(time, args.output)
     batch.generate_csv(sub_path, batch_items)
@@ -269,6 +335,17 @@ def main():
         '--nv',
         choices=['esp'],
         help="generate nv image for choiced chipset")
+
+    parser.add_argument(
+        '--qr',
+        choices=['individual', 'commercial'],
+        help="generate qrcode image for individual or commercial")
+
+    parser.add_argument(
+        '--folder',
+        default=os.getcwd(),
+        help="Folder containing %s (if not supplied uses current folder) Need for generating qrcode"
+        % (onboardingFile))
 
     args = parser.parse_args()
 
