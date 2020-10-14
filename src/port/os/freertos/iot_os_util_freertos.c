@@ -58,6 +58,20 @@ void iot_os_thread_yield()
 	taskYIELD();
 }
 
+int iot_os_thread_get_current_handle(iot_os_thread* thread_handle)
+{
+    if (thread_handle == NULL) {
+        return IOT_OS_FALSE;
+    }
+
+#if ( ( INCLUDE_xTaskGetCurrentTaskHandle == 1 ) || ( configUSE_MUTEXES == 1 ) )
+    *thread_handle = (iot_os_thread)xTaskGetCurrentTaskHandle();
+    return IOT_OS_TRUE;
+#else
+    return IOT_OS_FALSE;
+#endif
+}
+
 /* Queue */
 iot_os_queue* iot_os_queue_create(int queue_length, int item_size)
 {

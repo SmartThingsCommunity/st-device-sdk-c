@@ -1,6 +1,6 @@
-SmartThings Device SDK is for IoT devices to communicate with SmartThings Cloud Server.
+SmartThings SDK for Direct Connected Devices for C is for IoT devices to communicate with SmartThings Cloud Server.
 
-Copyright (c) 2019 Samsung Electronics All Rights Reserved.
+Copyright (c) 2019-2020 Samsung Electronics All Rights Reserved.
 This product includes software under Apache License 2.0 developed by Samsung Electronics Inc.
 
 ************************

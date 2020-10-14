@@ -98,6 +98,19 @@ void iot_os_thread_delete(iot_os_thread thread_handle);
 void iot_os_thread_yield();
 
 /**
+ * @brief	get curruent thread handle
+ *
+ * This function will return current thread handle
+ *
+ * @param[out] thread_handle	thread handle of current thread
+ *
+ * @return
+ *	IOT_OS_TRUE : success
+ *	otherwise :  fail
+ */
+int iot_os_thread_get_current_handle(iot_os_thread* thread_handle);
+
+/**
  * @brief	create queue
  *
  * This function create queue and return queue handle

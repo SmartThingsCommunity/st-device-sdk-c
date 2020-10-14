@@ -31,8 +31,14 @@ SRCS	+= $(wildcard $(BSP_DIR)/*.c)
 SRCS	+= $(wildcard $(OS_DIR)/*.c)
 SRCS	+= $(wildcard $(NET_DIR)/*.c)
 SRCS	+= $(wildcard $(CRYPTO_DIR)/*.c)
+ifneq ($(findstring, CONFIG_STDK_IOT_CORE_EASYSETUP_POSIX_TESTING, $(CFLAGS_CONFIG)),)
 SRCS	+= $(EASYSETUP_DIR)/iot_easysetup_st_mqtt.c \
 			$(wildcard $(EASYSETUP_DIR)/posix_testing/*.c)
+else
+SRCS	+= $(EASYSETUP_DIR)/iot_easysetup_st_mqtt.c \
+			$(wildcard $(EASYSETUP_DIR)/http/*.c) \
+			$(wildcard $(EASYSETUP_DIR)/http/tcp/*.c)
+endif
 SRCS	+= $(wildcard $(MQTT_DIR)/client/*.c)
 SRCS	+= $(wildcard $(MQTT_DIR)/packet/*.c)
 SRCS	+= $(wildcard $(SECURITY_DIR)/*.c)
@@ -54,19 +60,16 @@ export BUILD_DIR
 export PREFIX
 
 JSON_DIR = src/deps/json
-CURL_DIR = src/deps/curl
 LIBSODIUM_DIR = src/deps/libsodium
 MBEDTLS_DIR = src/deps/mbedtls
 
-DEPS_DIRS = $(JSON_DIR) $(CURL_DIR) $(LIBSODIUM_DIR) $(MBEDTLS_DIR)
+DEPS_DIRS = $(JSON_DIR) $(LIBSODIUM_DIR) $(MBEDTLS_DIR)
 
 result	:= $(shell git submodule update --init $(JSON_DIR))
-result	:= $(shell git submodule update --init $(CURL_DIR))
 result	:= $(shell git submodule update --init $(LIBSODIUM_DIR))
 result	:= $(shell git submodule update --init $(MBEDTLS_DIR))
 
 INCS	+= -I$(JSON_DIR)/cJSON
-INCS	+= -I$(CURL_DIR)/curl/include
 INCS	+= -I$(MBEDTLS_DIR)/mbedtls/include
 INCS	+= -I$(LIBSODIUM_DIR)/libsodium/src/libsodium/include -I$(LIBSODIUM_DIR)/libsodium/src/libsodium/include/sodium -I$(LIBSODIUM_DIR)/port/include
 

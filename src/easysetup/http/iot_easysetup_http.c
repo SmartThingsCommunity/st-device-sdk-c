@@ -38,6 +38,7 @@ static const char http_status_200[] = "HTTP/1.1 200 OK";
 static const char http_status_400[] = "HTTP/1.1 400 Bad Request";
 static const char http_status_500[] = "HTTP/1.1 500 Internal Server Error";
 static const char http_header[] = "\r\nServer: SmartThings Device SDK\r\nConnection: "CONNECTION_TYPE"\r\nContent-Type: application/json\r\nContent-Length: ";
+#define END_OF_HTTP_HEADER	"\r\n\r\n"
 STATIC_VARIABLE int ref_step;
 #if defined(CONFIG_STDK_IOT_CORE_EASYSETUP_LOG_SUPPORT_NO_USE_LOGFILE)
 static bool dump_enable;
@@ -358,8 +359,8 @@ void http_msg_handler(int cmd, char **buffer, enum cgi_type type, char* data_buf
 				IOT_ES_DUMP(IOT_DEBUG_LEVEL_ERROR, IOT_DUMP_EASYSETUP_MEM_ALLOC_ERROR, 0);
 				goto cgi_out;
 			}
-			snprintf(buf, buffer_len, "%s%s%u\r\n\r\n%s",
-					http_status_200, http_header, payload_len, payload);
+			snprintf(buf, buffer_len, "%s%s%u%s%s",
+					http_status_200, http_header, payload_len, END_OF_HTTP_HEADER, payload);
 			IOT_INFO("post cmd[%d] ok", cmd);
 			IOT_ES_DUMP(IOT_DEBUG_LEVEL_INFO, IOT_DUMP_EASYSETUP_CMD_SUCCESS, cmd);
 		} else {
@@ -377,8 +378,8 @@ void http_msg_handler(int cmd, char **buffer, enum cgi_type type, char* data_buf
 				IOT_ES_DUMP(IOT_DEBUG_LEVEL_ERROR, IOT_DUMP_EASYSETUP_MEM_ALLOC_ERROR, 0);
 				goto cgi_out;
 			}
-			snprintf(buf, buffer_len, "%s%s%u\r\n\r\n%s",
-						http_status_200, http_header, payload_len, payload);
+			snprintf(buf, buffer_len, "%s%s%u%s%s",
+						http_status_200, http_header, payload_len, END_OF_HTTP_HEADER, payload);
 			IOT_INFO("get cmd[%d] ok", cmd);
 			IOT_ES_DUMP(IOT_DEBUG_LEVEL_INFO, IOT_DUMP_EASYSETUP_CMD_SUCCESS, cmd);
 		} else {
@@ -411,20 +412,28 @@ void http_msg_handler(int cmd, char **buffer, enum cgi_type type, char* data_buf
 		ptr = cJSON_PrintUnformatted(root);
 		IOT_DEBUG("%s", ptr);
 
-		payload_len = strlen(payload);
-		buffer_len = payload_len + strlen(http_status_500) + digit_count_payload(payload_len) + 5;
-		buf = malloc(buffer_len);
-		if (!buf) {
-			IOT_ERROR("failed to malloc buffer for the error msg");
-			IOT_ES_DUMP(IOT_DEBUG_LEVEL_ERROR, IOT_DUMP_EASYSETUP_MEM_ALLOC_ERROR, 0);
-			goto cgi_out;
-		}
+		payload_len = strlen(ptr);
+		buffer_len = strlen(http_header) + digit_count_payload(payload_len) + payload_len + strlen(END_OF_HTTP_HEADER) + 1;
 		if (_is_400_error(err)) {
-			snprintf(buf, buffer_len, "%s%s%u\r\n\r\n%s",
-				http_status_400, http_header, payload_len, ptr);
+			buffer_len += strlen(http_status_400);
+			buf = malloc(buffer_len);
+			if (!buf) {
+				IOT_ERROR("failed to malloc buffer for the error msg");
+				IOT_ES_DUMP(IOT_DEBUG_LEVEL_ERROR, IOT_DUMP_EASYSETUP_MEM_ALLOC_ERROR, 0);
+				goto cgi_out;
+			}
+			snprintf(buf, buffer_len, "%s%s%u%s%s",
+				http_status_400, http_header, payload_len, END_OF_HTTP_HEADER, ptr);
 		} else {
-			snprintf(buf, buffer_len, "%s%s%u\r\n\r\n%s",
-				http_status_500, http_header, payload_len, ptr);
+			buffer_len += strlen(http_status_500);
+			buf = malloc(buffer_len);
+			if (!buf) {
+				IOT_ERROR("failed to malloc buffer for the error msg");
+				IOT_ES_DUMP(IOT_DEBUG_LEVEL_ERROR, IOT_DUMP_EASYSETUP_MEM_ALLOC_ERROR, 0);
+				goto cgi_out;
+			}
+			snprintf(buf, buffer_len, "%s%s%u%s%s",
+				http_status_500, http_header, payload_len, END_OF_HTTP_HEADER, ptr);
 		}
 	}
 	IOT_DEBUG("%s", buf);

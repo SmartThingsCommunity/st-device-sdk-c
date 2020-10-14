@@ -979,67 +979,6 @@ static void _do_cmd_tout_check(struct iot_context *ctx)
 	}
 }
 
-static iot_error_t _publish_event(struct iot_context *ctx, iot_cap_msg_t *cap_msg)
-{
-	int ret;
-	iot_error_t result = IOT_ERROR_NONE;
-	st_mqtt_msg msg;
-
-	if (ctx == NULL) {
-		IOT_ERROR("ctx is not intialized");
-		IOT_DUMP_MAIN(ERROR, BASE, 0xDEADBEEF);
-		return IOT_ERROR_INVALID_ARGS;
-	}
-
-	if (!ctx->iot_reg_data.updated) {
-		IOT_ERROR("Failed as there is no deviceID");
-		IOT_DUMP_MAIN(ERROR, BASE, 0xDEADBEEF);
-		return IOT_ERROR_INVALID_ARGS;
-	}
-
-	if (!cap_msg) {
-		IOT_ERROR("capability msg is NULL");
-		IOT_DUMP_MAIN(ERROR, BASE, 0xDEADBEEF);
-		return IOT_ERROR_INVALID_ARGS;
-	}
-
-	msg.qos = st_mqtt_qos1;
-	msg.retained = false;
-
-	msg.payload = cap_msg->msg;
-	msg.payloadlen = cap_msg->msglen;
-	msg.topic = ctx->mqtt_event_topic;
-
-	IOT_INFO("publish event, topic : %s, payload :\n%s", ctx->mqtt_event_topic, msg.payload);
-
-	ret = st_mqtt_publish_async(ctx->evt_mqttcli, &msg);
-	if (ret) {
-		IOT_WARN("MQTT pub error(%d)", ret);
-		IOT_DUMP_MAIN(WARN, BASE, ret);
-		result = IOT_ERROR_MQTT_PUBLISH_FAIL;
-	}
-
-	return result;
-}
-
-static void _throw_away_all_pub_queue(struct iot_context *ctx)
-{
-	iot_cap_msg_t final_msg;
-
-	if (!ctx) {
-		IOT_ERROR("There is no ctx!!");
-		IOT_DUMP_MAIN(ERROR, BASE, 0xDEADBEEF);
-		return;
-	}
-
-	while (iot_os_queue_receive(ctx->pub_queue,
-				&final_msg, 0) == IOT_OS_TRUE) {
-		if (final_msg.msg) {
-			free(final_msg.msg);
-		}
-	}
-}
-
 static void _throw_away_all_cmd_queue(struct iot_context *ctx)
 {
 	struct iot_command cmd;
@@ -1078,10 +1017,9 @@ static void _iot_main_task(struct iot_context *ctx)
 	struct iot_command cmd;
 	unsigned char curr_events;
 	iot_error_t err = IOT_ERROR_NONE;
-	iot_cap_msg_t final_msg;
 	struct iot_easysetup_payload easysetup_req;
-	iot_state_t next_state;
 #if !defined(STDK_MQTT_TASK)
+	iot_state_t next_state;
 	unsigned int task_cycle = IOT_MAIN_TASK_DEFAULT_CYCLE;
 #endif
 
@@ -1117,48 +1055,6 @@ static void _iot_main_task(struct iot_context *ctx)
 				iot_os_eventgroup_set_bits(ctx->iot_events, IOT_EVENT_BIT_COMMAND);
 			}
 			iot_os_mutex_unlock(&ctx->iot_cmd_lock);
-		}
-
-		if (curr_events & IOT_EVENT_BIT_CAPABILITY) {
-			final_msg.msg = NULL;
-			final_msg.msglen = 0;
-
-			if (iot_os_queue_receive(ctx->pub_queue,
-					&final_msg, 0) != IOT_OS_FALSE) {
-
-				if (ctx->curr_state < IOT_STATE_CLOUD_CONNECTING) {
-					IOT_WARN("MQTT already disconnected. publish event dropped!!");
-					IOT_WARN("Dropped paylod(size:%d):%s", final_msg.msglen, final_msg.msg);
-					IOT_DUMP_MAIN(WARN, BASE, final_msg.msglen);
-				} else {
-					err = _publish_event(ctx, &final_msg);
-					if (err != IOT_ERROR_NONE) {
-						IOT_ERROR("failed publish event_data : %d", err);
-						IOT_DUMP_MAIN(ERROR, BASE, err);
-
-						if (err == IOT_ERROR_MQTT_PUBLISH_FAIL) {
-							iot_es_disconnect(ctx, IOT_CONNECT_TYPE_COMMUNICATION);
-							IOT_WARN("Report Disconnected..");
-							next_state = IOT_STATE_CLOUD_DISCONNECTED;
-							err = iot_state_update(ctx, next_state, 0);
-							IOT_DUMP_MAIN(WARN, BASE, err);
-
-							IOT_WARN("Try MQTT reconnecting..");
-							_throw_away_all_pub_queue(ctx);
-							next_state = IOT_STATE_CLOUD_CONNECTING;
-							err = iot_state_update(ctx, next_state, 0);
-							IOT_DUMP_MAIN(WARN, BASE, err);
-						}
-					}
-				}
-				if (final_msg.msg)
-					free(final_msg.msg);
-
-				/* Set bit again to check whether the several cmds are already
-				 * stacked up in the queue.
-				 */
-				iot_os_eventgroup_set_bits(ctx->iot_events, IOT_EVENT_BIT_CAPABILITY);
-			}
 		}
 
 		if ((curr_events & IOT_EVENT_BIT_EASYSETUP_REQ) &&
@@ -1198,7 +1094,6 @@ static void _iot_main_task(struct iot_context *ctx)
 				next_state = IOT_STATE_CLOUD_REGISTERING;
 				err = iot_state_update(ctx, next_state, 0);
 				IOT_DUMP_MAIN(WARN, BASE, err);
-				_throw_away_all_pub_queue(ctx);
 			} else if (rc > 0) {
 				task_cycle = 0;
 			}
@@ -1215,7 +1110,6 @@ static void _iot_main_task(struct iot_context *ctx)
 				next_state = IOT_STATE_CLOUD_CONNECTING;
 				err = iot_state_update(ctx, next_state, 0);
 				IOT_DUMP_MAIN(WARN, BASE, err);
-				_throw_away_all_pub_queue(ctx);
 			} else if (rc > 0) {
 				task_cycle = 0;
 			}
@@ -1322,16 +1216,6 @@ IOT_CTX* st_conn_init(unsigned char *onboarding_config, unsigned int onboarding_
 		goto error_main_init_usr_evts;
 	}
 
-	/* create msg queue for publish */
-	ctx->pub_queue = iot_os_queue_create(IOT_PUB_QUEUE_LENGTH,
-		sizeof(iot_cap_msg_t));
-
-	if (!ctx->pub_queue) {
-		IOT_ERROR("failed to create Queue for publish data\n");
-		IOT_DUMP_MAIN(ERROR, BASE, IOT_PUB_QUEUE_LENGTH);
-		goto error_main_init_pub_q;
-	}
-
 	/* create msg eventgroup for each queue handling */
 	ctx->iot_events = iot_os_eventgroup_create();
 	if (!ctx->iot_events) {
@@ -1389,9 +1273,6 @@ error_main_cmd_mutex_init:
 	iot_os_eventgroup_delete(ctx->iot_events);
 
 error_main_init_events:
-	iot_os_queue_delete(ctx->pub_queue);
-
-error_main_init_pub_q:
 	iot_os_eventgroup_delete(ctx->usr_events);
 
 error_main_init_usr_evts:
@@ -1800,9 +1681,8 @@ do { \
 #define IS_CTX_VALID(ctx) ( \
 	ctx ? ( \
 	ctx->cmd_queue ? ( \
-	ctx->pub_queue ? ( \
 	ctx->usr_events ? ( \
-	ctx->iot_events ? true : false) : false) : false) : false) : false)
+	ctx->iot_events ? true : false) : false) : false) : false)
 
 int st_conn_start(IOT_CTX *iot_ctx, st_status_cb status_cb,
 		iot_status_t maps, void *usr_data, iot_pin_t *pin_num)
