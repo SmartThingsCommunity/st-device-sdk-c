@@ -48,8 +48,8 @@ static char sample_device_info[] = {
 
 static const char *sample_wifi_ssid = "fakeSsid_04_XXXXXX";
 static const char *sample_wifi_password = "fakePassword1";
+static const char *sample_wifi_bssid_str = "42:00:43:54:00:76";
 static struct iot_mac sample_wifi_bssid;
-static char sample_bssid[] = "42:32:43:54:65:76";
 static const iot_wifi_auth_mode_t sample_security_type = IOT_WIFI_AUTH_WPA2_PSK;
 
 static void _setup_wifi_prov_status(wifi_status_cmd_t cmd);
@@ -103,6 +103,7 @@ void TC_iot_nv_get_wifi_prov_data_success(void **state)
     assert_int_equal(err, IOT_ERROR_NONE);
     assert_memory_equal(wifi_prov->ssid, sample_wifi_ssid, strlen(sample_wifi_ssid));
     assert_memory_equal(wifi_prov->password, sample_wifi_password, strlen(sample_wifi_password));
+    assert_memory_equal(wifi_prov->mac_str, sample_wifi_bssid_str, strlen(sample_wifi_bssid_str));
     assert_memory_equal(wifi_prov->bssid.addr, sample_wifi_bssid.addr, IOT_WIFI_MAX_BSSID_LEN);
     assert_int_equal(wifi_prov->security_type, sample_security_type);
 
@@ -416,11 +417,11 @@ static void _setup_wifi_prov_data(iot_nvd_t nv_type)
             break;
         }
         case IOT_NVD_AP_BSSID: {
-            err = iot_util_convert_str_mac(sample_bssid, &sample_wifi_bssid);
+            err = iot_util_convert_str_mac((char *)sample_wifi_bssid_str, &sample_wifi_bssid);
             assert_int_equal(err, IOT_ERROR_NONE);
 
-            err = _iot_nv_write_data(IOT_NVD_AP_BSSID, sample_wifi_bssid.addr,
-                                     strlen(sample_wifi_bssid.addr));
+            err = _iot_nv_write_data(IOT_NVD_AP_BSSID, sample_wifi_bssid_str,
+                                     strlen(sample_wifi_bssid_str));
             assert_int_equal(err, IOT_ERROR_NONE);
             break;
         }

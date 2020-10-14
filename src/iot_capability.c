@@ -378,7 +378,7 @@ DEPRECATED int st_cap_attr_send(IOT_CAP_HANDLE *cap_handle,
 	iot_cap_evt_data_t** evt_data = (iot_cap_evt_data_t**)event;
 	int ret;
 	struct iot_context *ctx;
-	iot_cap_msg_t final_msg = {0};
+	st_mqtt_msg msg = {0};
 	struct iot_cap_handle *handle = (struct iot_cap_handle*)cap_handle;
 	int i;
 	JSON_H *evt_root = NULL;
@@ -429,33 +429,38 @@ DEPRECATED int st_cap_attr_send(IOT_CAP_HANDLE *cap_handle,
 	}
 
 #if defined(STDK_IOT_CORE_SERIALIZE_CBOR)
-	iot_serialize_json2cbor(evt_root, (uint8_t **)&final_msg.msg, (size_t *)&final_msg.msglen);
+	iot_serialize_json2cbor(evt_root, (uint8_t **)&msg.payload, (size_t *)&msg.payloadlen);
 #else
-	final_msg.msg = JSON_PRINT(evt_root);
-	if (final_msg.msg != NULL) {
-		final_msg.msglen = strlen(final_msg.msg);
+	msg.payload = JSON_PRINT(evt_root);
+	if (msg.payload != NULL) {
+		msg.payloadlen = strlen(msg.payload);
 	}
 #endif
 	JSON_DELETE(evt_root);
-	if (final_msg.msg == NULL) {
+	if (msg.payload == NULL) {
 		IOT_ERROR("Fail to transfer to payload");
 		return IOT_ERROR_BAD_REQ;
 	}
+	msg.qos = st_mqtt_qos1;
+	msg.retained = false;
+	msg.topic = ctx->mqtt_event_topic;
 
-	ret = iot_os_queue_send(ctx->pub_queue, &final_msg, 0);
-	if (ret != IOT_OS_TRUE) {
-		IOT_DUMP(IOT_DEBUG_LEVEL_ERROR, IOT_DUMP_CAPABILITY_SEND_EVENT_QUEUE_FAIL_ERROR, ret, 0);
-		IOT_WARN("Cannot put the paylod into pub_queue");
-		free(final_msg.msg);
+	IOT_INFO("publish event, topic : %s, payload :\n%s", ctx->mqtt_event_topic, msg.payload);
 
-		return IOT_ERROR_BAD_REQ;
-	} else {
-		IOT_DUMP(IOT_DEBUG_LEVEL_INFO, IOT_DUMP_CAPABILITY_SEND_EVENT_SUCCESS, evt_num, 0);
-		iot_os_eventgroup_set_bits(ctx->iot_events,
-			IOT_EVENT_BIT_CAPABILITY);
-
-		return ctx->event_sequence_num;
+	ret = st_mqtt_publish_async(ctx->evt_mqttcli, &msg);
+	if (ret) {
+		IOT_WARN("MQTT pub error(%d)", ret);
+		free(msg.payload);
+		return IOT_ERROR_MQTT_PUBLISH_FAIL;
 	}
+
+#if !defined(STDK_MQTT_TASK)
+	iot_os_eventgroup_set_bits(ctx->iot_events, IOT_EVENT_BIT_CAPABILITY);
+#endif
+	IOT_DUMP(IOT_DEBUG_LEVEL_INFO, IOT_DUMP_CAPABILITY_SEND_EVENT_SUCCESS, evt_num, 0);
+
+	free(msg.payload);
+	return ctx->event_sequence_num;
 }
 
 int st_cap_send_attr(IOT_EVENT *event[], uint8_t evt_num)
@@ -463,7 +468,7 @@ int st_cap_send_attr(IOT_EVENT *event[], uint8_t evt_num)
 	iot_cap_evt_data_t** evt_data = (iot_cap_evt_data_t**)event;
 	int ret;
 	struct iot_context *ctx = NULL;
-	iot_cap_msg_t final_msg = {0};
+	st_mqtt_msg msg = {0};
 	int i;
 	JSON_H *evt_root = NULL;
 	JSON_H *evt_arr = NULL;
@@ -519,33 +524,38 @@ int st_cap_send_attr(IOT_EVENT *event[], uint8_t evt_num)
 	}
 
 #if defined(STDK_IOT_CORE_SERIALIZE_CBOR)
-	iot_serialize_json2cbor(evt_root, (uint8_t **)&final_msg.msg, (size_t *)&final_msg.msglen);
+	iot_serialize_json2cbor(evt_root, (uint8_t **)&msg.payload, (size_t *)&msg.payloadlen);
 #else
-	final_msg.msg = JSON_PRINT(evt_root);
-	if (final_msg.msg != NULL) {
-		final_msg.msglen = strlen(final_msg.msg);
+	msg.payload = JSON_PRINT(evt_root);
+	if (msg.payload != NULL) {
+		msg.payloadlen = strlen(msg.payload);
 	}
 #endif
 	JSON_DELETE(evt_root);
-	if (final_msg.msg == NULL) {
+	if (msg.payload == NULL) {
 		IOT_ERROR("Fail to transfer to payload");
 		return IOT_ERROR_BAD_REQ;
 	}
+	msg.qos = st_mqtt_qos1;
+	msg.retained = false;
+	msg.topic = ctx->mqtt_event_topic;
 
-	ret = iot_os_queue_send(ctx->pub_queue, &final_msg, 0);
-	if (ret != IOT_OS_TRUE) {
-		IOT_DUMP(IOT_DEBUG_LEVEL_ERROR, IOT_DUMP_CAPABILITY_SEND_EVENT_QUEUE_FAIL_ERROR, ret, 0);
-		IOT_WARN("Cannot put the paylod into pub_queue");
-		free(final_msg.msg);
+	IOT_INFO("publish event, topic : %s, payload :\n%s", ctx->mqtt_event_topic, msg.payload);
 
-		return IOT_ERROR_BAD_REQ;
-	} else {
-		IOT_DUMP(IOT_DEBUG_LEVEL_INFO, IOT_DUMP_CAPABILITY_SEND_EVENT_SUCCESS, evt_num, 0);
-		iot_os_eventgroup_set_bits(ctx->iot_events,
-			IOT_EVENT_BIT_CAPABILITY);
-
-		return ctx->event_sequence_num;
+	ret = st_mqtt_publish_async(ctx->evt_mqttcli, &msg);
+	if (ret) {
+		IOT_WARN("MQTT pub error(%d)", ret);
+		free(msg.payload);
+		return IOT_ERROR_MQTT_PUBLISH_FAIL;
 	}
+
+#if !defined(STDK_MQTT_TASK)
+	iot_os_eventgroup_set_bits(ctx->iot_events, IOT_EVENT_BIT_CAPABILITY);
+#endif
+	IOT_DUMP(IOT_DEBUG_LEVEL_INFO, IOT_DUMP_CAPABILITY_SEND_EVENT_SUCCESS, evt_num, 0);
+
+	free(msg.payload);
+	return ctx->event_sequence_num;
 }
 
 STATIC_FUNCTION

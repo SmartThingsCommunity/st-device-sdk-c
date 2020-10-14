@@ -25,6 +25,7 @@
 #include <iot_capability.h>
 #include <iot_internal.h>
 #include <external/JSON.h>
+#include <mqtt/iot_mqtt_client.h>
 #include "TC_MOCK_functions.h"
 
 #define UNUSED(x) (void*)(x)
@@ -509,6 +510,11 @@ static void assert_st_cap_attr_send(char *message, char *expected_component, cha
     JSON_DELETE(root);
 }
 
+static void dummy_mqtt_callback(st_mqtt_event event, void *event_data, void *user_data)
+{
+    return;
+}
+
 void TC_st_cap_send_attr_success(void **state)
 {
     int sequence_number;
@@ -517,7 +523,8 @@ void TC_st_cap_send_attr_success(void **state)
     IOT_EVENT* event;
     struct iot_cap_handle *internal_handle;
     struct iot_context *internal_context;
-    iot_cap_msg_t final_msg;
+    iot_mqtt_packet_chunk_t *final_chunk;
+    MQTTClient *c;
     UNUSED(state);
 
     // Given
@@ -526,8 +533,9 @@ void TC_st_cap_send_attr_success(void **state)
     memset(internal_context, '\0', sizeof(struct iot_context));
     context = (IOT_CTX*) internal_context;
     internal_context->curr_state = IOT_STATE_CLOUD_CONNECTED;
-    internal_context->pub_queue = iot_os_queue_create(IOT_PUB_QUEUE_LENGTH, sizeof(iot_cap_msg_t));
     internal_context->iot_events = iot_os_eventgroup_create();
+    internal_context->mqtt_event_topic = "TCtest";
+    st_mqtt_create(&internal_context->evt_mqttcli, dummy_mqtt_callback, NULL);
     cap_handle = st_cap_handle_init(context, "main", "testCap", test_cap_init_callback, NULL);
     assert_non_null(cap_handle);
     ST_CAP_CREATE_ATTR_NUMBER(cap_handle, "testAttr", 10, "testUnit", NULL, event);
@@ -536,10 +544,11 @@ void TC_st_cap_send_attr_success(void **state)
     sequence_number = st_cap_send_attr(&event, 1);
     // Then
     assert_true(sequence_number > 0);
-    assert_int_equal(iot_os_queue_receive(internal_context->pub_queue, &final_msg, 0), IOT_OS_TRUE);
-    assert_st_cap_attr_send(final_msg.msg, "main", "testCap", event, sequence_number);
+    c = internal_context->evt_mqttcli;
+    final_chunk = c->write_pending_queue.head;
+    /* packet header(2bytes) + MQTTTopiclength(2bytes) + MQTTTopicstring("TCTEST", 6bytes) + packetId(2bytes) = 12 */
+    assert_st_cap_attr_send(final_chunk->chunk_data + 12, "main", "testCap", event, sequence_number);
     // Teardown
-    free(final_msg.msg);
     st_cap_free_attr(event);
     internal_handle = (struct iot_cap_handle*) cap_handle;
     if (internal_handle->capability) {
@@ -548,6 +557,7 @@ void TC_st_cap_send_attr_success(void **state)
     if (internal_handle->component) {
         iot_os_free((void*)internal_handle->component);
     }
+    st_mqtt_destroy(internal_context->evt_mqttcli);
     if (internal_context->cap_handle_list->next) {
         iot_os_free(internal_context->cap_handle_list->next);
     }
@@ -556,7 +566,6 @@ void TC_st_cap_send_attr_success(void **state)
     }
     iot_os_free(cap_handle);
     iot_os_eventgroup_delete(internal_context->iot_events);
-    iot_os_queue_delete(internal_context->pub_queue);
     free(context);
 }
 

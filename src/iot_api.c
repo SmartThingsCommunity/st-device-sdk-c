@@ -118,6 +118,10 @@ iot_error_t iot_wifi_ctrl_request(struct iot_context *ctx,
 				strlen(ctx->prov_data.wifi.ssid));
 			memcpy(wifi_conf.pass, ctx->prov_data.wifi.password,
 				strlen(ctx->prov_data.wifi.password));
+			if (ctx->prov_data.wifi.mac_str[0] != '\0') {
+				memcpy(wifi_conf.bssid, ctx->prov_data.wifi.bssid.addr,
+					IOT_WIFI_MAX_BSSID_LEN);
+			}
 			wifi_conf.authmode = ctx->prov_data.wifi.security_type;
 		} else {	/* For IOT_WIFI_MODE_OFF case */
 			send_cmd = false;
