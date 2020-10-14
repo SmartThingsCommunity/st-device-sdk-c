@@ -1,5 +1,35 @@
 # HISTORY
 
+## 1.4.4 :  Changes until v1.4.4
+
+New Improvements or features:
+
+ - Add qr-code generator for individual and bulk
+
+Enhancements or amendments:
+
+ - Support JSON Array type agument for command-event handling
+ - Add & Update wifi bssid information handling & saving routine
+  * Add 'read_len' parameter to update length of the actual read data on iot_nv_data layer
+  * Add string type member variable for mac address in struct iot_wifi_prov_data
+ - Update es_msg_parser for post message handling, to have more stability
+ - Add & update TCs : TC_FUNC_iot_easysetup_http_parser.c, es_msg_parser(), _es_wifiprovisioninginfo_handler()
+ - Change st_info_get() usage for IOT_INFO_TYPE_IOT_PROVISIONED
+  * Support its calling on the user-cb condition
+  * Add new internal iot_nv_prov_data_exist() function
+ - Modify docs : remove STDK_APIs.pdf, add hyper link in APIs.md
+ - Add invalidate chunk variable checking on iot_MQTT read, write functions to avoid reuse it
+ - Update Static Code Analysis tool checked items
+  * Use safety 'snprintf' func. instead of 'sprintf'
+  * Modify & remove unreachable & meaningless condition check codes
+  * Prevent buffer overflow vulnerability case
+  * Prevent 'copying string without null termination' case
+  * Prevent memory-leak & add null checking for some exceptional cases
+
+Bug fixed:
+
+ - Remove unused variable, goto label and deprecated header including to prevent build-warning
+
 ## 1.4.2 :  Changes until v1.4.2
 
 New Improvements or features:
