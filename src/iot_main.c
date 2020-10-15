@@ -1083,6 +1083,14 @@ static void _iot_main_task(struct iot_context *ctx)
 				if (err != IOT_ERROR_NONE) {
 					IOT_ERROR("failed handle easysetup request step %d: %d\n", easysetup_req.step, err);
 					IOT_DUMP_MAIN(ERROR, BASE, err);
+				} else {
+					/* The SDK can't detect mobile's disconnecting after easy-setupcomplete
+					 * so to guarantee final msg sending to mobile before disconnecting
+					 * add some experiential delay after easy-setupcomplete
+					 */
+					if (easysetup_req.step == IOT_EASYSETUP_STEP_SETUPCOMPLETE) {
+						iot_os_delay(1000); /* delay for easysetup/httpd */
+					}
 				}
 
 				/* Set bit again to check whether the several cmds are already
@@ -1549,8 +1557,6 @@ static iot_error_t _do_state_updating(struct iot_context *ctx,
 		/* Wakeup user interaction by provisioning done */
 		iot_os_eventgroup_set_bits(ctx->usr_events,
 			IOT_USR_INTERACT_BIT_PROV_DONE);
-
-		iot_os_delay(1000); /* delay for easysetup/httpd */
 
 		iot_err = iot_wifi_ctrl_request(ctx, IOT_WIFI_MODE_STATION);
 		if (iot_err != IOT_ERROR_NONE) {
