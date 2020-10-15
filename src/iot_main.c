@@ -1711,9 +1711,21 @@ int st_conn_start(IOT_CTX *iot_ctx, st_status_cb status_cb,
 	iot_error_t iot_err;
 	struct iot_context *ctx = (struct iot_context*)iot_ctx;
 	unsigned char curr_events;
+	iot_os_thread curr_thread;
 
 	if (!IS_CTX_VALID(ctx))
 		return IOT_ERROR_INVALID_ARGS;
+
+	if (iot_os_thread_get_current_handle(&curr_thread) == IOT_OS_TRUE) {
+		if (curr_thread == ctx->main_thread) {
+			IOT_WARN("Can't support it on same thread!!");
+			IOT_DUMP_MAIN(ERROR, BASE, 0xDEADBABE);
+			return IOT_ERROR_BAD_REQ;
+		}
+	} else {
+		IOT_WARN("Can't get thread info. Please check it called same thread or not!!");
+		IOT_DUMP_MAIN(WARN, BASE, 0xDEADBABE);
+	}
 
 	if (iot_os_mutex_lock(&ctx->st_conn_lock) != IOT_OS_TRUE)
 		return IOT_ERROR_BAD_REQ;
@@ -1791,9 +1803,21 @@ int st_conn_cleanup(IOT_CTX *iot_ctx, bool reboot)
 	iot_error_t iot_err;
 	unsigned char curr_events;
 	struct iot_context *ctx = (struct iot_context*)iot_ctx;
+	iot_os_thread curr_thread;
 
 	if (!IS_CTX_VALID(ctx))
 		return IOT_ERROR_INVALID_ARGS;
+
+	if (iot_os_thread_get_current_handle(&curr_thread) == IOT_OS_TRUE) {
+		if (curr_thread == ctx->main_thread) {
+			IOT_WARN("Can't support it on same thread!!");
+			IOT_DUMP_MAIN(ERROR, BASE, 0xDEADBABE);
+			return IOT_ERROR_BAD_REQ;
+		}
+	} else {
+		IOT_WARN("Can't get thread info. Please check it called same thread or not!!");
+		IOT_DUMP_MAIN(WARN, BASE, 0xDEADBABE);
+	}
 
 	if (iot_os_mutex_lock(&ctx->st_conn_lock) != IOT_OS_TRUE)
 		return IOT_ERROR_BAD_REQ;
@@ -1840,10 +1864,22 @@ int st_conn_start_ex(IOT_CTX *iot_ctx, iot_ext_args_t *ext_args)
 	iot_error_t iot_err;
 	struct iot_context *ctx = (struct iot_context*)iot_ctx;
 	unsigned char curr_events;
+	iot_os_thread curr_thread;
 
 	if (!IS_CTX_VALID(ctx) || !ext_args) {
 		IOT_ERROR("invalid parameters\n");
 		return IOT_ERROR_INVALID_ARGS;
+	}
+
+	if (iot_os_thread_get_current_handle(&curr_thread) == IOT_OS_TRUE) {
+		if (curr_thread == ctx->main_thread) {
+			IOT_WARN("Can't support it on same thread!!");
+			IOT_DUMP_MAIN(ERROR, BASE, 0xDEADBABE);
+			return IOT_ERROR_BAD_REQ;
+		}
+	} else {
+		IOT_WARN("Can't get thread info. Please check it called same thread or not!!");
+		IOT_DUMP_MAIN(WARN, BASE, 0xDEADBABE);
 	}
 
 	if ((ext_args->start_pt != IOT_STATUS_CONNECTING) &&
