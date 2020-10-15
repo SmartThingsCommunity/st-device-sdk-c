@@ -60,10 +60,8 @@ static struct iot_dump_state* _iot_dump_create_dump_state(struct iot_context *io
     if (iot_ctx) {
         dump_state->sequence_number = iot_ctx->event_sequence_num;
 
-        if (iot_ctx->iot_reg_data.deviceId) {
-            strncpy(dump_state->device_id, iot_ctx->iot_reg_data.deviceId,
-                    sizeof(dump_state->device_id));
-        }
+        strncpy(dump_state->device_id, iot_ctx->iot_reg_data.deviceId,
+                sizeof(dump_state->device_id));
 
         if (iot_ctx->devconf.dip) {
             memcpy(dump_state->dip_id, iot_ctx->devconf.dip->dip_id.id,
