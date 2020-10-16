@@ -469,6 +469,10 @@ iot_error_t _es_confirminfo_handler(struct iot_context *ctx, char *in_payload, c
 			sn = _es_json_parse_string(root, "sn");
 
 		err = _es_confirm_check_manager(ctx, recv->valueint, sn);
+
+		if (sn) {
+			free(sn);
+		}
 		if (err != IOT_ERROR_NONE)
 			goto out;
 	} else {
@@ -1121,6 +1125,12 @@ static iot_error_t _es_log_get_dump_handler(struct iot_context *ctx, char **out_
 
 	*out_payload = output_ptr;
 out:
+#if !defined(CONFIG_STDK_IOT_CORE_EASYSETUP_LOG_SUPPORT_NO_USE_LOGFILE)
+		if (log_dump)
+			free(log_dump);
+		if (sumo_dump)
+			free(sumo_dump);
+#endif
 	if (root)
 		JSON_DELETE(root);
 	return err;
