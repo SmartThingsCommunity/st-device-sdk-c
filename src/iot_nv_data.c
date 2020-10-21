@@ -1043,7 +1043,7 @@ iot_error_t iot_nv_get_static_certificate(iot_security_cert_id_t cert_id, iot_se
 		cert_len = st_root_ca_len;
 		break;
 	default:
-		IOT_ERROR("'%s' is not a supported static certificate");
+		IOT_ERROR("%d is not a supported static certificate", cert_id);
 		return IOT_ERROR_NV_DATA_ERROR;
 	}
 

@@ -47,6 +47,11 @@ void TC_iot_dump_create_dump_state_failure(void **state)
     size_t max_log_dump_size = 0;
     int mode = 0;
     iot_error_t err;
+#ifdef CONFIG_STDK_IOT_CORE_LOG_FILE
+    int malloc_test_count = 4;
+#else
+    int malloc_test_count = 3;
+#endif
 
     // Given :  max_log_dump_size is smaller than minimum
     max_log_dump_size = 1;
@@ -57,7 +62,7 @@ void TC_iot_dump_create_dump_state_failure(void **state)
 
     mode = IOT_DUMP_MODE_NEED_BASE64 | IOT_DUMP_MODE_NEED_DUMP_STATE;
     max_log_dump_size = 500;
-    for (int i = 0; i < 3; i++) {
+    for (int i = 0; i < malloc_test_count; i++) {
         // Given: malloc failure
         do_not_use_mock_iot_os_malloc_failure();
         set_mock_iot_os_malloc_failure_with_index(i);

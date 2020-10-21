@@ -812,15 +812,11 @@ iot_error_t iot_api_device_info_load(unsigned char *device_info,
 	return iot_err;
 
 load_out:
+#if defined(CONFIG_STDK_IOT_CORE_LOG_LEVEL_ERROR)
 	if (iot_err == IOT_ERROR_UNINITIALIZED) {
-		if (item && JSON_IS_STRING(item)) {
-			IOT_ERROR("[%s] wrong device info value detected: %s",
-					current_name, JSON_GET_STRING_VALUE(item));
-		}
-		else {
-			IOT_ERROR("[%s] wrong device info value detected", current_name);
-		}
+		IOT_ERROR("[%s] wrong device info value detected", current_name);
 	}
+#endif
 
 	if (firmware_version)
 		iot_os_free(firmware_version);

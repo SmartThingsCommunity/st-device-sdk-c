@@ -31,6 +31,7 @@
 #endif
 
 #define GET_LARGEST_MULTIPLE(x, n) (((x)/(n))*(n))
+#define COPY_STR_TO_BYTE(dest, src, len) memcpy(dest, src, (len < strlen(src) ? len : strlen(src)))
 
 static struct iot_dump_state* _iot_dump_create_dump_state(struct iot_context *iot_ctx)
 {
@@ -48,21 +49,19 @@ static struct iot_dump_state* _iot_dump_create_dump_state(struct iot_context *io
 
     dump_state->stdk_version_code = STDK_VERSION_CODE;
     dump_state->clock_time = clock();
-    dump_state->sequence_number = iot_ctx->event_sequence_num;
-    strncpy(dump_state->os_name, iot_os_get_os_name(), sizeof(dump_state->os_name));
-    strncpy(dump_state->os_version, iot_os_get_os_version_string(), sizeof(dump_state->os_version));
-    strncpy(dump_state->bsp_name, iot_bsp_get_bsp_name(), sizeof(dump_state->bsp_name));
-    strncpy(dump_state->bsp_version, iot_bsp_get_bsp_version_string(), sizeof(dump_state->bsp_version));
-
+    COPY_STR_TO_BYTE(dump_state->os_name, iot_os_get_os_name(), sizeof(dump_state->os_name));
+    COPY_STR_TO_BYTE(dump_state->os_version, iot_os_get_os_version_string(), sizeof(dump_state->os_version));
+    COPY_STR_TO_BYTE(dump_state->bsp_name, iot_bsp_get_bsp_name(), sizeof(dump_state->bsp_name));
+    COPY_STR_TO_BYTE(dump_state->bsp_version, iot_bsp_get_bsp_version_string(), sizeof(dump_state->bsp_version));
 
     gettimeofday(&time, NULL);
     dump_state->log_time = time.tv_sec;
 
     if (iot_ctx) {
-        if (iot_ctx->iot_reg_data.deviceId) {
-            strncpy(dump_state->device_id, iot_ctx->iot_reg_data.deviceId,
-                    sizeof(dump_state->device_id));
-        }
+        dump_state->sequence_number = iot_ctx->event_sequence_num;
+
+        COPY_STR_TO_BYTE(dump_state->device_id, iot_ctx->iot_reg_data.deviceId,
+                sizeof(dump_state->device_id));
 
         if (iot_ctx->devconf.dip) {
             memcpy(dump_state->dip_id, iot_ctx->devconf.dip->dip_id.id,
@@ -73,15 +72,15 @@ static struct iot_dump_state* _iot_dump_create_dump_state(struct iot_context *io
                             | (iot_ctx->devconf.dip->dip_minor_version & 0xffff);
         }
         if (iot_ctx->device_info.firmware_version) {
-            strncpy(dump_state->firmware_version, iot_ctx->device_info.firmware_version,
+            COPY_STR_TO_BYTE(dump_state->firmware_version, iot_ctx->device_info.firmware_version,
                     sizeof(dump_state->firmware_version));
         }
         if (iot_ctx->device_info.model_number) {
-            strncpy(dump_state->model_number, iot_ctx->device_info.model_number,
+            COPY_STR_TO_BYTE(dump_state->model_number, iot_ctx->device_info.model_number,
                     sizeof(dump_state->model_number));
         }
         if (iot_ctx->device_info.manufacturer_name) {
-            strncpy(dump_state->manufacturer_name, iot_ctx->device_info.manufacturer_name,
+            COPY_STR_TO_BYTE(dump_state->manufacturer_name, iot_ctx->device_info.manufacturer_name,
                     sizeof(dump_state->manufacturer_name));
         }
 
@@ -207,6 +206,10 @@ int st_create_log_dump(IOT_CTX *iot_ctx, char **log_dump_output, size_t max_log_
 #else
 #error "Need to choice STDK_IOT_CORE_LOG_FILE_TYPE first"
 #endif
+    if (!logfile) {
+        IOT_ERROR("fail to open log file");
+        return IOT_ERROR_BAD_REQ;
+    }
 #endif
 
     if (need_base64) {
