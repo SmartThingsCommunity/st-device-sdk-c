@@ -71,12 +71,18 @@ static void _iot_net_show_status(iot_net_interface_t *net)
 	FD_SET(socket, &rfdset);
 	FD_SET(socket, &wfdset);
 
-	select(socket + 1, &rfdset, &wfdset, NULL, &timeout);
-	getsockopt(socket, SOL_SOCKET, SO_ERROR, &sock_err, &err_len);
-	gettimeofday(&tv, NULL);
+	if (select(socket + 1, &rfdset, &wfdset, NULL, &timeout) < 0) {
+		IOT_ERROR("failed to select :%d/%d", (socket + 1), errno);
+	}
+	if (getsockopt(socket, SOL_SOCKET, SO_ERROR, &sock_err, &err_len) < 0) {
+		IOT_ERROR("failed to getsockopt :%d/%d", socket, errno);
+	}
+	if (gettimeofday(&tv, NULL) < 0) {
+		IOT_ERROR("failed to gettimeofday :%d", errno);
+	}
 
-	IOT_INFO("[%ld] network socket status: readable %d writable %d sock_err %d errno %d",
-				tv.tv_sec,
+	IOT_INFO("[%ld] network socket status: sockfd %d readable %d writable %d sock_err %d errno %d",
+				tv.tv_sec, socket,
 				FD_ISSET(socket, &rfdset),
 				FD_ISSET(socket, &wfdset), sock_err, errno);
 }

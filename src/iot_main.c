@@ -464,6 +464,12 @@ static iot_error_t _do_iot_main_command(struct iot_context *ctx,
 	switch (cmd->cmd_type) {
 		case IOT_COMMNAD_STATE_UPDATE:
 			state_data = (struct iot_state_data *)cmd->param;
+			if (!state_data) {
+				IOT_ERROR("There is no state_data for cmd :%d", cmd->cmd_type);
+				IOT_DUMP_MAIN(ERROR, BASE, 0xDEADBEEF);
+				break;
+			}
+
 			if ((ctx->curr_state > IOT_STATE_UNKNOWN) &&
 					(ctx->curr_state == state_data->iot_state)) {
 				IOT_WARN("Redundant command. state update in progress !");
@@ -879,6 +885,12 @@ static iot_error_t _do_iot_main_command(struct iot_context *ctx,
 
 		case IOT_COMMAND_CHANGE_STATE_TIMEOUT:
 			state_data = (struct iot_state_data *)cmd->param;
+			if (!state_data) {
+				IOT_ERROR("There is no state_data for cmd :%d", cmd->cmd_type);
+				IOT_DUMP_MAIN(ERROR, BASE, 0xDEADBEEF);
+				break;
+			}
+
 			if ((ctx->curr_state == ctx->req_state) || (state_data->iot_state != ctx->req_state)) {
 				IOT_INFO("Already iot-stat updated or mis-matched, can't change timeout : %d for %d",
 					state_data->opt, state_data->iot_state);
@@ -990,11 +1002,13 @@ static void _throw_away_all_cmd_queue(struct iot_context *ctx)
 		return;
 	}
 
+	cmd.param = NULL;
 	while (iot_os_queue_receive(ctx->cmd_queue,
 				&cmd, 0) == IOT_OS_TRUE) {
 		_clear_cmd_status(ctx, cmd.cmd_type);
 		if (cmd.param) {
 			free(cmd.param);
+			cmd.param = NULL;
 		}
 	}
 
@@ -1069,6 +1083,14 @@ static void _iot_main_task(struct iot_context *ctx)
 				if (err != IOT_ERROR_NONE) {
 					IOT_ERROR("failed handle easysetup request step %d: %d\n", easysetup_req.step, err);
 					IOT_DUMP_MAIN(ERROR, BASE, err);
+				} else {
+					/* The SDK can't detect mobile's disconnecting after easy-setupcomplete
+					 * so to guarantee final msg sending to mobile before disconnecting
+					 * add some experiential delay after easy-setupcomplete
+					 */
+					if (easysetup_req.step == IOT_EASYSETUP_STEP_SETUPCOMPLETE) {
+						iot_os_delay(1000); /* delay for easysetup/httpd */
+					}
 				}
 
 				/* Set bit again to check whether the several cmds are already
@@ -1536,8 +1558,6 @@ static iot_error_t _do_state_updating(struct iot_context *ctx,
 		iot_os_eventgroup_set_bits(ctx->usr_events,
 			IOT_USR_INTERACT_BIT_PROV_DONE);
 
-		iot_os_delay(1000); /* delay for easysetup/httpd */
-
 		iot_err = iot_wifi_ctrl_request(ctx, IOT_WIFI_MODE_STATION);
 		if (iot_err != IOT_ERROR_NONE) {
 			IOT_ERROR("Can't send WIFI mode command(%d)", iot_err);
@@ -1691,9 +1711,21 @@ int st_conn_start(IOT_CTX *iot_ctx, st_status_cb status_cb,
 	iot_error_t iot_err;
 	struct iot_context *ctx = (struct iot_context*)iot_ctx;
 	unsigned char curr_events;
+	iot_os_thread curr_thread;
 
 	if (!IS_CTX_VALID(ctx))
 		return IOT_ERROR_INVALID_ARGS;
+
+	if (iot_os_thread_get_current_handle(&curr_thread) == IOT_OS_TRUE) {
+		if (curr_thread == ctx->main_thread) {
+			IOT_WARN("Can't support it on same thread!!");
+			IOT_DUMP_MAIN(ERROR, BASE, 0xDEADBABE);
+			return IOT_ERROR_BAD_REQ;
+		}
+	} else {
+		IOT_WARN("Can't get thread info. Please check it called same thread or not!!");
+		IOT_DUMP_MAIN(WARN, BASE, 0xDEADBABE);
+	}
 
 	if (iot_os_mutex_lock(&ctx->st_conn_lock) != IOT_OS_TRUE)
 		return IOT_ERROR_BAD_REQ;
@@ -1771,9 +1803,21 @@ int st_conn_cleanup(IOT_CTX *iot_ctx, bool reboot)
 	iot_error_t iot_err;
 	unsigned char curr_events;
 	struct iot_context *ctx = (struct iot_context*)iot_ctx;
+	iot_os_thread curr_thread;
 
 	if (!IS_CTX_VALID(ctx))
 		return IOT_ERROR_INVALID_ARGS;
+
+	if (iot_os_thread_get_current_handle(&curr_thread) == IOT_OS_TRUE) {
+		if (curr_thread == ctx->main_thread) {
+			IOT_WARN("Can't support it on same thread!!");
+			IOT_DUMP_MAIN(ERROR, BASE, 0xDEADBABE);
+			return IOT_ERROR_BAD_REQ;
+		}
+	} else {
+		IOT_WARN("Can't get thread info. Please check it called same thread or not!!");
+		IOT_DUMP_MAIN(WARN, BASE, 0xDEADBABE);
+	}
 
 	if (iot_os_mutex_lock(&ctx->st_conn_lock) != IOT_OS_TRUE)
 		return IOT_ERROR_BAD_REQ;
@@ -1820,10 +1864,22 @@ int st_conn_start_ex(IOT_CTX *iot_ctx, iot_ext_args_t *ext_args)
 	iot_error_t iot_err;
 	struct iot_context *ctx = (struct iot_context*)iot_ctx;
 	unsigned char curr_events;
+	iot_os_thread curr_thread;
 
 	if (!IS_CTX_VALID(ctx) || !ext_args) {
 		IOT_ERROR("invalid parameters\n");
 		return IOT_ERROR_INVALID_ARGS;
+	}
+
+	if (iot_os_thread_get_current_handle(&curr_thread) == IOT_OS_TRUE) {
+		if (curr_thread == ctx->main_thread) {
+			IOT_WARN("Can't support it on same thread!!");
+			IOT_DUMP_MAIN(ERROR, BASE, 0xDEADBABE);
+			return IOT_ERROR_BAD_REQ;
+		}
+	} else {
+		IOT_WARN("Can't get thread info. Please check it called same thread or not!!");
+		IOT_DUMP_MAIN(WARN, BASE, 0xDEADBABE);
 	}
 
 	if ((ext_args->start_pt != IOT_STATUS_CONNECTING) &&

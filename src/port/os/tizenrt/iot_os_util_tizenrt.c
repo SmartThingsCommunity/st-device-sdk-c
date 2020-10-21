@@ -99,7 +99,7 @@ void iot_os_thread_yield()
 	sched_yield();
 }
 
-int iot_os_thread_get_current_handle(iot_os_thread* thread_handle);
+int iot_os_thread_get_current_handle(iot_os_thread* thread_handle)
 {
     if (thread_handle == NULL) {
         return IOT_OS_FALSE;
