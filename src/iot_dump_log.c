@@ -206,6 +206,10 @@ int st_create_log_dump(IOT_CTX *iot_ctx, char **log_dump_output, size_t max_log_
 #else
 #error "Need to choice STDK_IOT_CORE_LOG_FILE_TYPE first"
 #endif
+    if (!logfile) {
+        IOT_ERROR("fail to open log file");
+        return IOT_ERROR_BAD_REQ;
+    }
 #endif
 
     if (need_base64) {
