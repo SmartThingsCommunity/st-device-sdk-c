@@ -8,7 +8,7 @@ You may simply link it to develop a device application in your existing developm
 
 We also provide the additional Reference repository so that you can refer to how this core device library can be linked in existing original chipset SDKs and device applications can be developed.
 
-- [Reference](https://github.com/SmartThingsCommunity/st-device-sdk-c-ref) : There are sample device applications under the `apps` directory.
+- [Reference](https://github.com/SmartThingsCommunity/st-device-sdk-c-ref/tree/release/v1.4) : There are sample device applications under the `apps` directory.
 
 It is distributed in source form and written in C99 for the purpose of portability to most platforms.
 
@@ -47,7 +47,7 @@ After porting, you can use this library completely under the specific environmen
 This core device library has platform-dependent directories. In current SDK version, those that must be ported are present in `src/port/bsp`, `src/port/net` and `src/port/os`.
 By default, we have already provided several implementations based on some operating systems(e.g. FreeRTOS) and chipsets(e.g. ESPRESSIF, REALTEK). These porting examples in those directories make it easier for you to port to additional chipsets and operating systems. As of now, this release can also be cross-compiled directly through several chipset SDK environments that have already been ported in the [Reference repository](https://github.com/SmartThingsCommunity/st-device-sdk-c-ref).
 
-For instructions on how to port this SDK, please see the [Porting Guide](https://github.com/SmartThingsCommunity/st-device-sdk-c/blob/master/doc/porting_guide.md).
+For instructions on how to port this SDK, please see the [Porting Guide](https://github.com/SmartThingsCommunity/st-device-sdk-c/blob/release/v1.4/doc/porting_guide.md).
 
 ## Building SmartThings SDK for Direct Connected Devices for C
 
@@ -69,7 +69,7 @@ Basically, you can build this core device library through `make` in the Ubuntu.
 
      ```sh
      $ cd ~
-     $ git clone https://github.com/SmartThingsCommunity/st-device-sdk-c.git
+     $ git clone https://github.com/SmartThingsCommunity/st-device-sdk-c.git -b release/v1.4
      $ cd st-device-sdk-c
      ```
 
