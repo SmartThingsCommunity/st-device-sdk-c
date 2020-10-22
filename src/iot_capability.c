@@ -445,7 +445,8 @@ DEPRECATED int st_cap_attr_send(IOT_CAP_HANDLE *cap_handle,
 	msg.retained = false;
 	msg.topic = ctx->mqtt_event_topic;
 
-	IOT_INFO("publish event, topic : %s, payload :\n%s", ctx->mqtt_event_topic, msg.payload);
+	IOT_INFO("publish event, topic : %s, payload :\n%s",
+		ctx->mqtt_event_topic, (char *)msg.payload);
 
 	ret = st_mqtt_publish_async(ctx->evt_mqttcli, &msg);
 	if (ret) {
@@ -540,7 +541,8 @@ int st_cap_send_attr(IOT_EVENT *event[], uint8_t evt_num)
 	msg.retained = false;
 	msg.topic = ctx->mqtt_event_topic;
 
-	IOT_INFO("publish event, topic : %s, payload :\n%s", ctx->mqtt_event_topic, msg.payload);
+	IOT_INFO("publish event, topic : %s, payload :\n%s",
+		ctx->mqtt_event_topic, (char *)msg.payload);
 
 	ret = st_mqtt_publish_async(ctx->evt_mqttcli, &msg);
 	if (ret) {
