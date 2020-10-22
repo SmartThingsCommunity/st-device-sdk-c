@@ -61,7 +61,7 @@ void http_cleanup_accepted_connection(HTTP_CONN_H *handle)
 	}
 }
 
-int http_send_data(HTTP_CONN_H handle, char *tx_buffer, size_t tx_buffer_len)
+ssize_t http_send_data(HTTP_CONN_H handle, char *tx_buffer, size_t tx_buffer_len)
 {
 	int len;
 
@@ -76,7 +76,7 @@ int http_send_data(HTTP_CONN_H handle, char *tx_buffer, size_t tx_buffer_len)
 	return len;
 }
 
-int http_recv_data(HTTP_CONN_H handle, char *rx_buffer, size_t rx_buffer_size, size_t received_len)
+ssize_t http_recv_data(HTTP_CONN_H handle, char *rx_buffer, size_t rx_buffer_size, size_t received_len)
 {
 	int len;
 
