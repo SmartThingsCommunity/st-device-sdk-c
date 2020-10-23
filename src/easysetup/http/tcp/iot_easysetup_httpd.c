@@ -127,8 +127,8 @@ static void process_accepted_connection(HTTP_CONN_H handle)
 		free(tx_buffer);
 		tx_buffer = NULL;
 		if (len < 0) {
-			IOT_ERROR("Error is occurred during sending: errno %d", len);
-			IOT_ES_DUMP(IOT_DEBUG_LEVEL_ERROR, IOT_DUMP_EASYSETUP_SOCKET_SEND_FAIL, len);
+			IOT_ERROR("Error is occurred during sending: errno %d", errno);
+			IOT_ES_DUMP(IOT_DEBUG_LEVEL_ERROR, IOT_DUMP_EASYSETUP_SOCKET_SEND_FAIL, errno);
 			return;
 		}
 	}
