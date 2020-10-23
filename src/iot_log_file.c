@@ -580,6 +580,7 @@ iot_log_file_handle_t *iot_log_file_open(size_t *filesize, iot_log_file_type_t f
 		break;
 
 	case FLASH_WITH_RAM:
+#ifdef CONFIG_STDK_IOT_CORE_LOG_FILE_FLASH_WITH_RAM
 		_iot_log_file_open_state(IOT_LOG_FILE_TRUE);
 
 		log_header_state = _iot_log_file_load_header(&log_file_header);
@@ -602,7 +603,9 @@ iot_log_file_handle_t *iot_log_file_open(size_t *filesize, iot_log_file_type_t f
 		IOT_LOG_FILE_DEBUG("file handle start=0x%x cur=0x%x end=0x%x *filesize=0x%x(%d)\n",
 			file_handle->start_addr, file_handle->cur_addr, file_handle->log_size, *filesize, *filesize);
 		break;
-
+#else
+		/* falling thru */
+#endif
 	default:
 		IOT_LOG_FILE_ERROR("Unsupported file_type(%d)! %s %d\n",
 			file_handle->file_type, __FUNCTION__, __LINE__);
