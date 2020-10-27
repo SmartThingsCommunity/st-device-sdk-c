@@ -418,6 +418,18 @@ int TEST_FUNC_iot_easysetup_http_parser(void)
     return cmocka_run_group_tests_name("iot_easysetup_http_parser.c", tests, NULL, NULL);
 }
 
+int TEST_FUNC_iot_easysetup_http(void)
+{
+	const struct CMUnitTest tests[] = {
+			cmocka_unit_test(TC_iot_easysetup_gen_post_payload_NULL_IN_PAYLOAD),
+			cmocka_unit_test(TC_iot_easysetup_gen_post_payload_CMD_INVALID_STEP),
+			cmocka_unit_test(TC_iot_easysetup_gen_post_payload_CMD_INVALID_SEQUENCE),
+			cmocka_unit_test(TC_iot_easysetup_gen_get_payload_CMD_INVALID_STEP),
+			cmocka_unit_test(TC_iot_easysetup_gen_get_payload_CMD_INVALID_SEQUENCE),
+	};
+	return cmocka_run_group_tests_name("iot_easysetup_http.c", tests, NULL, NULL);
+}
+
 int main(void) {
     int err = 0;
 
@@ -442,6 +454,7 @@ int main(void) {
     err += TEST_FUNC_iot_dump_log();
     err += TEST_FUNC_iot_easysetup_st_mqtt();
     err += TEST_FUNC_iot_easysetup_http_parser();
+    err += TEST_FUNC_iot_easysetup_http();
 
     return err;
 }

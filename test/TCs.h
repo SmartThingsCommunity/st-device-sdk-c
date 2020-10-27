@@ -335,4 +335,11 @@ void TC_es_msg_parser_INVALID_GET_METHOD(void **state);
 void TC_es_msg_parser_VALID_POST_METHOD(void** state);
 void TC_es_msg_parser_INVALID_POST_METHOD(void **state);
 
+// TCs for iot_eassetup_http.c
+void TC_iot_easysetup_gen_post_payload_NULL_IN_PAYLOAD(void **state);
+void TC_iot_easysetup_gen_post_payload_CMD_INVALID_STEP(void **state);
+void TC_iot_easysetup_gen_post_payload_CMD_INVALID_SEQUENCE(void **state);
+void TC_iot_easysetup_gen_get_payload_CMD_INVALID_STEP(void **state);
+void TC_iot_easysetup_gen_get_payload_CMD_INVALID_SEQUENCE(void **state);
+
 #endif //ST_DEVICE_SDK_C_TCS_H
