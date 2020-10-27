@@ -128,10 +128,10 @@ static void create_dump_test()
 void TC_iot_dump_create_dump_state_success(void **state)
 {
     iot_error_t iot_err;
+    int log_file_type;
+
     // test with no log file condition
     create_dump_test();
-
-    int log_file_type;
 
 #ifdef CONFIG_STDK_IOT_CORE_LOG_FILE
 #if defined(CONFIG_STDK_IOT_CORE_LOG_FILE_RAM_ONLY)
