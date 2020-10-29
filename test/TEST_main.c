@@ -421,11 +421,13 @@ int TEST_FUNC_iot_easysetup_http_parser(void)
 int TEST_FUNC_iot_easysetup_http(void)
 {
 	const struct CMUnitTest tests[] = {
+			cmocka_unit_test(TC_iot_easysetup_gen_post_payload_NULL_REQUEST_QUEUE),
 			cmocka_unit_test(TC_iot_easysetup_gen_post_payload_NULL_IN_PAYLOAD),
 			cmocka_unit_test(TC_iot_easysetup_gen_post_payload_CMD_INVALID_STEP),
 			cmocka_unit_test(TC_iot_easysetup_gen_post_payload_CMD_INVALID_SEQUENCE),
 			cmocka_unit_test(TC_iot_easysetup_gen_get_payload_CMD_INVALID_STEP),
 			cmocka_unit_test(TC_iot_easysetup_gen_get_payload_CMD_INVALID_SEQUENCE),
+			cmocka_unit_test(TC_iot_easysetup_gen_get_payload_STATE_UPDATE_FAILURE),
 	};
 	return cmocka_run_group_tests_name("iot_easysetup_http.c", tests, NULL, NULL);
 }
