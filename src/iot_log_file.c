@@ -508,7 +508,7 @@ static void _iot_log_file_task(void *arg)
 	_iot_log_file_enable(IOT_LOG_FILE_TRUE);
 	while (1) {
 		curr_events = iot_os_eventgroup_wait_bits(log_ctx->events,
-												  IOT_LOG_FILE_EVENT_SYNC_REQ_BIT, true, false, 0xffffffff);
+												  IOT_LOG_FILE_EVENT_SYNC_REQ_BIT, true, 0xffffffff);
 		IOT_LOG_FILE_DEBUG("curr_events=%d\n", curr_events);
 
 		if (curr_events == IOT_LOG_FILE_EVENT_SYNC_REQ_BIT) {
