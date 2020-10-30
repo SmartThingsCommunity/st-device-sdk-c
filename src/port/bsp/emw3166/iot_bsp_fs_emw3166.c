@@ -152,18 +152,28 @@ iot_error_t iot_bsp_fs_open(const char* filename, iot_bsp_fs_open_mode_t mode, i
 	OSStatus err = kNoErr;
 	mico_filesystem_open_mode_t mico_mode;
 	mico_file_t *fh = NULL;
+	iot_error_t ret = IOT_ERROR_NONE;
+
+	bsp_fd = _get_available_fd();
+	if (bsp_fd == -1) {
+		IOT_ERROR("no more fd");
+		return IOT_ERROR_FS_OPEN_FAIL;
+	}
 
 	mico_mode = (mode == FS_READONLY)? MICO_FILESYSTEM_OPEN_FOR_READ : MICO_FILESYSTEM_OPEN_WRITE_CREATE;
 	fh = (mico_file_t*)malloc(sizeof(mico_file_t));
 	IOT_ERROR_CHECK(fh == NULL, IOT_ERROR_MEM_ALLOC, "malloc file handle failed");
 
 	err = mico_filesystem_file_open(&iot_fs_handle, fh, filename, mico_mode);
-
-	bsp_fd = _get_available_fd();
-	if ((err != kNoErr) || (bsp_fd == -1)) {
+	if (err != kNoErr) {
+		if (mico_mode == MICO_FILESYSTEM_OPEN_WRITE_CREATE) {
+			IOT_ERROR("mico fs create fail or open fail in writing mode");
+			ret = IOT_ERROR_FS_OPEN_FAIL;
+		} else if (mico_mode == MICO_FILESYSTEM_OPEN_FOR_READ) {
+			IOT_INFO("mico fs open fail in read mode, no such file.");
+			ret = IOT_ERROR_FS_NO_FILE;
+		}
 		free(fh);
-		IOT_ERROR("mico fs open fail or no more fd");
-		return IOT_ERROR_FS_OPEN_FAIL;
 	}
 
 	_set_mico_fh(bsp_fd, fh);
@@ -171,7 +181,7 @@ iot_error_t iot_bsp_fs_open(const char* filename, iot_bsp_fs_open_mode_t mode, i
 	handle->fd = bsp_fd;
 	snprintf(handle->filename, sizeof(handle->filename), "%s", filename);
 
-	return IOT_ERROR_NONE;
+	return ret;
 }
 
 iot_error_t iot_bsp_fs_read(iot_bsp_fs_handle_t handle, char* buffer, size_t *length)
