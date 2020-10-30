@@ -861,6 +861,7 @@ iot_error_t iot_log_file_init(iot_log_file_type_t type)
 		log_ctx->log_buf.overridden = IOT_LOG_FILE_FALSE;
 
 		_iot_log_file_enable(IOT_LOG_FILE_TRUE);
+        break;
 #endif
 #ifdef CONFIG_STDK_IOT_CORE_LOG_FILE_RAM_ONLY
 	case RAM_ONLY:
