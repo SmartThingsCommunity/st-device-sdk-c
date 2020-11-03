@@ -39,10 +39,10 @@ typedef struct {
 
 iot_error_t http_initialize_connection(HTTP_CONN_H *handle);
 iot_error_t http_accept_connection(HTTP_CONN_H *handle);
-void http_try_configure_connection(HTTP_CONN_H handle);
-ssize_t http_recv_data(HTTP_CONN_H handle, char *rx_buffer, size_t rx_buffer_size, size_t received_len);
-ssize_t http_send_data(HTTP_CONN_H handle, char *tx_buffer, size_t tx_buffer_len);
-bool is_http_conn_handle_initialized(HTTP_CONN_H handle);
+void http_try_configure_connection(HTTP_CONN_H *handle);
+ssize_t http_recv_data(HTTP_CONN_H *handle, char *rx_buffer, size_t rx_buffer_size, size_t received_len);
+ssize_t http_send_data(HTTP_CONN_H *handle, char *tx_buffer, size_t tx_buffer_len);
+bool is_http_conn_handle_initialized(HTTP_CONN_H *handle);
 
 void http_cleanup_all_connection(HTTP_CONN_H *handle);
 void http_cleanup_accepted_connection(HTTP_CONN_H *handle);

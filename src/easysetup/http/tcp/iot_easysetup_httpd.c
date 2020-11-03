@@ -33,7 +33,7 @@ static iot_os_thread es_tcp_task_handle = NULL;
 static HTTP_CONN_H es_http_conn_handle;
 static bool deinit_processing;
 
-static void process_accepted_connection(HTTP_CONN_H handle)
+static void process_accepted_connection(HTTP_CONN_H *handle)
 {
 	char rx_buffer[RX_BUFFER_MAX];
 	iot_error_t err = IOT_ERROR_NONE;
@@ -155,9 +155,9 @@ static void es_tcp_task(void *pvParameters)
 				break;
 			}
 
-			process_accepted_connection(es_http_conn_handle);
+			process_accepted_connection(&es_http_conn_handle);
 
-			if (!deinit_processing && !is_http_conn_handle_initialized(es_http_conn_handle))
+			if (!deinit_processing && !is_http_conn_handle_initialized(&es_http_conn_handle))
 			{
 				http_cleanup_accepted_connection(&es_http_conn_handle);
 			}

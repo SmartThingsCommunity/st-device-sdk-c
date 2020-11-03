@@ -20,10 +20,10 @@
 
 #define HTTP_PORT 8888
 
-bool is_http_conn_handle_initialized(HTTP_CONN_H handle)
+bool is_http_conn_handle_initialized(HTTP_CONN_H *handle)
 {
-	if ((handle.accept_sock == CONN_HANDLE_UNINITIALIZED) ||
-			(handle.listen_sock == CONN_HANDLE_UNINITIALIZED)) {
+	if ((handle == NULL) || (handle->accept_sock == CONN_HANDLE_UNINITIALIZED) ||
+			(handle->listen_sock == CONN_HANDLE_UNINITIALIZED)) {
 		return false;
 	}
 	return true;
@@ -61,66 +61,66 @@ void http_cleanup_accepted_connection(HTTP_CONN_H *handle)
 	}
 }
 
-ssize_t http_send_data(HTTP_CONN_H handle, char *tx_buffer, size_t tx_buffer_len)
+ssize_t http_send_data(HTTP_CONN_H *handle, char *tx_buffer, size_t tx_buffer_len)
 {
 	int len;
 
-	if (is_http_conn_handle_initialized(handle) == false) {
+	if (handle == NULL || is_http_conn_handle_initialized(handle) == false) {
 		return -1;
 	}
 	if (tx_buffer == NULL) {
 		return -1;
 	}
 
-	len = send(handle.accept_sock, tx_buffer, tx_buffer_len, 0);
+	len = send(handle->accept_sock, tx_buffer, tx_buffer_len, 0);
 	return len;
 }
 
-ssize_t http_recv_data(HTTP_CONN_H handle, char *rx_buffer, size_t rx_buffer_size, size_t received_len)
+ssize_t http_recv_data(HTTP_CONN_H *handle, char *rx_buffer, size_t rx_buffer_size, size_t received_len)
 {
 	int len;
 
-	if (is_http_conn_handle_initialized(handle) == false) {
+	if (handle == NULL || is_http_conn_handle_initialized(handle) == false) {
 		return -1;
 	}
 	if (rx_buffer == NULL) {
 		return -1;
 	}
 
-	len = recv(handle.accept_sock, rx_buffer + received_len, rx_buffer_size - received_len - 1, 0);
+	len = recv(handle->accept_sock, rx_buffer + received_len, rx_buffer_size - received_len - 1, 0);
 	return len;
 }
 
-void http_try_configure_connection(HTTP_CONN_H handle)
+void http_try_configure_connection(HTTP_CONN_H *handle)
 {
 	int ret;
 
-	if (is_http_conn_handle_initialized(handle) == false) {
+	if (handle == NULL || is_http_conn_handle_initialized(handle) == false) {
 		return;
 	}
 	// set tcp keepalive related opts
 	// if ST app WiFi disconnect coincidentally during easysetup,
 	// we need short time tcp keepalive here.
 	int keep_alive = 1;
-	ret = setsockopt(handle.accept_sock, SOL_SOCKET, SO_KEEPALIVE, &keep_alive, sizeof(int));
+	ret = setsockopt(handle->accept_sock, SOL_SOCKET, SO_KEEPALIVE, &keep_alive, sizeof(int));
 	if (ret < 0) {
 		IOT_INFO("socket set keep-alive failed %d", errno);
 	}
 
 	int idle = 10;
-	ret = setsockopt(handle.accept_sock, IPPROTO_TCP, TCP_KEEPIDLE, &idle, sizeof(int));
+	ret = setsockopt(handle->accept_sock, IPPROTO_TCP, TCP_KEEPIDLE, &idle, sizeof(int));
 	if (ret < 0) {
 		IOT_INFO("socket set keep-idle failed %d", errno);
 	}
 
 	int interval = 5;
-	ret = setsockopt(handle.accept_sock, IPPROTO_TCP, TCP_KEEPINTVL, &interval, sizeof(int));
+	ret = setsockopt(handle->accept_sock, IPPROTO_TCP, TCP_KEEPINTVL, &interval, sizeof(int));
 	if (ret < 0) {
 		IOT_INFO("socket set keep-interval failed %d", errno);
 	}
 
 	int maxpkt = 3;
-	ret = setsockopt(handle.accept_sock, IPPROTO_TCP, TCP_KEEPCNT, &maxpkt, sizeof(int));
+	ret = setsockopt(handle->accept_sock, IPPROTO_TCP, TCP_KEEPCNT, &maxpkt, sizeof(int));
 	if (ret < 0) {
 		IOT_INFO("socket set keep-count failed %d", errno);
 	}
@@ -129,7 +129,7 @@ void http_try_configure_connection(HTTP_CONN_H handle)
 	// There is no need for tcp packet coalesced.
 	// To enhance throughput, disable TCP Nagle's algorithm here.
 	int no_delay = 1;
-	ret = setsockopt(handle.accept_sock, IPPROTO_TCP, TCP_NODELAY, &no_delay, sizeof(int));
+	ret = setsockopt(handle->accept_sock, IPPROTO_TCP, TCP_NODELAY, &no_delay, sizeof(int));
 	if (ret < 0) {
 		IOT_INFO("socket set no-delay failed %d", errno);
 	}
