@@ -420,7 +420,7 @@ iot_error_t iot_nv_get_wifi_prov_data(struct iot_wifi_prov_data* wifi_prov)
 				ret = IOT_ERROR_NONE;
 			}
 		} else {
-			IOT_INFO("Saved AP BSSID is invalid length:%d", read_len);
+			IOT_INFO("Saved AP BSSID is invalid length:%u", (unsigned int)read_len);
 			memset(wifi_prov->mac_str, '\0', sizeof(wifi_prov->mac_str));
 			memset(wifi_prov->bssid.addr, 0, sizeof(wifi_prov->bssid.addr));
 		}

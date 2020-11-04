@@ -93,6 +93,20 @@ DEPRECATED IOT_EVENT* st_cap_attr_create(const char *attribute,
 	return _iot_cap_create_attr(attribute, value, unit, data);
 }
 
+IOT_EVENT* st_cap_create_attr_with_id(IOT_CAP_HANDLE *cap_handle, const char *attribute,
+			iot_cap_val_t *value, const char *unit, const char *data, char *command_id)
+{
+	iot_cap_evt_data_t* evt_data;
+
+	evt_data = (iot_cap_evt_data_t *)st_cap_create_attr(cap_handle, attribute, value, unit, data);
+
+	if (evt_data != NULL && command_id != NULL) {
+		evt_data->command_id = iot_os_strdup(command_id);
+	}
+
+	return (IOT_EVENT*)evt_data;
+}
+
 static IOT_EVENT* _iot_cap_create_attr(const char *attribute,
 			iot_cap_val_t *value, const char *unit, const char *data)
 {
@@ -445,7 +459,8 @@ DEPRECATED int st_cap_attr_send(IOT_CAP_HANDLE *cap_handle,
 	msg.retained = false;
 	msg.topic = ctx->mqtt_event_topic;
 
-	IOT_INFO("publish event, topic : %s, payload :\n%s", ctx->mqtt_event_topic, msg.payload);
+	IOT_INFO("publish event, topic : %s, payload :\n%s",
+		ctx->mqtt_event_topic, (char *)msg.payload);
 
 	ret = st_mqtt_publish_async(ctx->evt_mqttcli, &msg);
 	if (ret) {
@@ -540,7 +555,8 @@ int st_cap_send_attr(IOT_EVENT *event[], uint8_t evt_num)
 	msg.retained = false;
 	msg.topic = ctx->mqtt_event_topic;
 
-	IOT_INFO("publish event, topic : %s, payload :\n%s", ctx->mqtt_event_topic, msg.payload);
+	IOT_INFO("publish event, topic : %s, payload :\n%s",
+		ctx->mqtt_event_topic, (char *)msg.payload);
 
 	ret = st_mqtt_publish_async(ctx->evt_mqttcli, &msg);
 	if (ret) {
@@ -834,6 +850,7 @@ void iot_cap_sub_cb(iot_cap_handle_list_t *cap_handle_list, char *payload)
 		cmd_data.num_args = 0;
 		cmd_data.total_commands_num = arr_size;
 		cmd_data.order_of_command = i + 1;
+		cmd_data.command_id = NULL;
 
 		cmditem = JSON_GET_ARRAY_ITEM(cap_cmds, i);
 		if (!cmditem) {
@@ -868,6 +885,11 @@ void iot_cap_sub_cb(iot_cap_handle_list_t *cap_handle_list, char *payload)
 			iot_os_free(command_name);
 			command_name = NULL;
 		}
+
+		if (cmd_data.command_id != NULL) {
+			iot_os_free(cmd_data.command_id);
+			cmd_data.command_id = NULL;
+		}
 	}
 
 out:
@@ -885,6 +907,7 @@ static iot_error_t _iot_parse_cmd_data(JSON_H* cmditem, char** component,
 	JSON_H *cap_command = NULL;
 	JSON_H *cap_args = NULL;
 	JSON_H *subitem = NULL;
+	JSON_H *command_id = NULL;
 	int arr_size = 0;
 	int num_args = 0;
 	int i;
@@ -893,6 +916,7 @@ static iot_error_t _iot_parse_cmd_data(JSON_H* cmditem, char** component,
 	cap_capability = JSON_GET_OBJECT_ITEM(cmditem, "capability");
 	cap_command = JSON_GET_OBJECT_ITEM(cmditem, "command");
 	cap_args = JSON_GET_OBJECT_ITEM(cmditem, "arguments");
+	command_id = JSON_GET_OBJECT_ITEM(cmditem, "id");
 
 	if (cap_component == NULL || cap_capability == NULL || cap_command == NULL) {
 		IOT_ERROR("Cannot find value index!!");
@@ -950,6 +974,10 @@ static iot_error_t _iot_parse_cmd_data(JSON_H* cmditem, char** component,
 	}
 	cmd_data->num_args = num_args;
 
+	if (command_id != NULL) {
+		cmd_data->command_id = iot_os_strdup(JSON_GET_STRING_VALUE(command_id));
+	}
+
 	return IOT_ERROR_NONE;
 }
 
@@ -963,6 +991,11 @@ static JSON_H *_iot_make_evt_data(const char* component, const char* capability,
 	char time_in_ms[16]; /* 155934720000 is '2019-06-01 00:00:00.00 UTC' */
 
 	evt_item = JSON_CREATE_OBJECT();
+
+	if (evt_data->command_id != NULL) {
+		/* commandId */
+		JSON_ADD_STRING_TO_OBJECT(evt_item, "commandId", evt_data->command_id);
+	}
 
 	/* component */
 	JSON_ADD_STRING_TO_OBJECT(evt_item, "component", component);
@@ -1112,6 +1145,10 @@ static void _iot_free_evt_data(iot_cap_evt_data_t* evt_data)
 
 	if (evt_data->evt_value_data != NULL) {
 		iot_os_free(evt_data->evt_value_data);
+	}
+
+	if (evt_data->command_id != NULL) {
+		iot_os_free(evt_data->command_id);
 	}
 }
 /* External API */

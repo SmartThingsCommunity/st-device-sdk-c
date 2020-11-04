@@ -141,6 +141,8 @@ typedef struct {
 
 	int total_commands_num;		/**< @brief Total number of commands in a bunch of commands */
 	int order_of_command;		/**< @brief Order of this command in a bunch of commands */
+
+	char *command_id;		/**< @brief commandId */
 } iot_cap_cmd_data_t;
 
 /**
@@ -436,6 +438,32 @@ DEPRECATED IOT_EVENT* st_cap_attr_create(const char *attribute,
  */
 IOT_EVENT* st_cap_create_attr(IOT_CAP_HANDLE *cap_handle, const char *attribute,
 			iot_cap_val_t *value, const char *unit, const char *data);
+
+/**
+ * @brief Create IOT_EVENT data with releated command ID.
+ *
+ * @details This function creates a new IOT_EVENT data with input parameters.
+ * Once it returns, user has full responsibility for deallocating event data
+ * by using [st_cap_free_attr](@ref st_cap_free_attr).
+ * NOTE:IOT_EVENT created in this function must be passed to st_cap_send_attr function
+ * for sending events.
+ *
+ * @param[in] cap_handle Capability reference which the event is created in.
+ * @param[in] attribute The attribute string of IOT_EVENT data.
+ * @param[in] value The value to add to IOT_EVENT data.
+ * @param[in] unit The unit string if needed. Otherwise NULL.
+ * @param[in] data The data json object if needed. Otherwise NULL.
+ * @param[in] command_id The commandId related with the this event if needed. Otherwise NULL.
+ *
+ * @return Pointer of `IOT_EVENT` which is used to publish device status.
+ *
+ * @warning Must call [st_cap_free_attr](@ref st_cap_free_attr)
+ * to free IOT_EVENT data after using it.
+ *
+ * @see @ref st_cap_attr_send
+ */
+IOT_EVENT* st_cap_create_attr_with_id(IOT_CAP_HANDLE *cap_handle, const char *attribute,
+			iot_cap_val_t *value, const char *unit, const char *data, char *command_id);
 
 /**
  * @brief Free IOT_EVENT data.
