@@ -14,6 +14,13 @@ config STDK_IOT_CORE_EASYSETUP_HTTP
     help
        If this option is enabled, STDK will use httpd for easy setup.
 
+config STDK_IOT_CORE_EASYSETUP_HTTP_USE_SOCKET_API
+    bool "Use socket for easysetup http"
+    default y
+    depends on STDK_IOT_CORE_EASYSETUP_HTTP
+    help
+       If this option is enabled, STDK will use socket api to implement httpd.
+
 config STDK_IOT_CORE_EASYSETUP_X509
     bool "Support x.509 for easysetup"
     default n

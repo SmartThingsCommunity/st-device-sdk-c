@@ -1106,32 +1106,50 @@ static void _iot_main_task(struct iot_context *ctx)
 		if (ctx->reg_mqttcli) {
 			int rc = st_mqtt_yield(ctx->reg_mqttcli, 0);
 			if (rc < 0) {
-				iot_es_disconnect(ctx, IOT_CONNECT_TYPE_REGISTRATION);
-				IOT_WARN("Report Disconnected..");
-				next_state = IOT_STATE_CLOUD_DISCONNECTED;
-				err = iot_state_update(ctx, next_state, 0);
-				IOT_DUMP_MAIN(WARN, BASE, err);
+				err = iot_es_disconnect(ctx, IOT_CONNECT_TYPE_REGISTRATION);
+				if (err == IOT_ERROR_NONE) {
+					/* Quickly try to connect without user notification fist */
+					err = iot_es_connect(ctx, IOT_CONNECT_TYPE_REGISTRATION);
+					if (err != IOT_ERROR_NONE) {
+						IOT_WARN("Report Disconnected..");
+						next_state = IOT_STATE_CLOUD_DISCONNECTED;
+						err = iot_state_update(ctx, next_state, 0);
+						IOT_DUMP_MAIN(WARN, BASE, err);
 
-				IOT_WARN("Try MQTT self re-registering..\n");
-				next_state = IOT_STATE_CLOUD_REGISTERING;
-				err = iot_state_update(ctx, next_state, 0);
-				IOT_DUMP_MAIN(WARN, BASE, err);
+						IOT_WARN("Try MQTT self re-registering..\n");
+						next_state = IOT_STATE_CLOUD_REGISTERING;
+						err = iot_state_update(ctx, next_state, 0);
+						IOT_DUMP_MAIN(WARN, BASE, err);
+					}
+				} else {
+					IOT_WARN("REG disconnecting failed(%d) for mqtt_yield", err);
+					IOT_DUMP_MAIN(WARN, BASE, err);
+				}
 			} else if (rc > 0) {
 				task_cycle = 0;
 			}
 		} else if (ctx->evt_mqttcli) {
 			int rc = st_mqtt_yield(ctx->evt_mqttcli, 0);
 			if (rc < 0) {
-				iot_es_disconnect(ctx, IOT_CONNECT_TYPE_COMMUNICATION);
-				IOT_WARN("Report Disconnected..");
-				next_state = IOT_STATE_CLOUD_DISCONNECTED;
-				err = iot_state_update(ctx, next_state, 0);
-				IOT_DUMP_MAIN(WARN, BASE, err);
+				err = iot_es_disconnect(ctx, IOT_CONNECT_TYPE_COMMUNICATION);
+				if (err == IOT_ERROR_NONE) {
+					/* Quickly try to connect without user notification first */
+					err = iot_es_connect(ctx, IOT_CONNECT_TYPE_COMMUNICATION);
+					if (err != IOT_ERROR_NONE) {
+						IOT_WARN("Report Disconnected..");
+						next_state = IOT_STATE_CLOUD_DISCONNECTED;
+						err = iot_state_update(ctx, next_state, 0);
+						IOT_DUMP_MAIN(WARN, BASE, err);
 
-				IOT_WARN("Try MQTT self re-connecting..\n");
-				next_state = IOT_STATE_CLOUD_CONNECTING;
-				err = iot_state_update(ctx, next_state, 0);
-				IOT_DUMP_MAIN(WARN, BASE, err);
+						IOT_WARN("Try MQTT self re-connecting..\n");
+						next_state = IOT_STATE_CLOUD_CONNECTING;
+						err = iot_state_update(ctx, next_state, 0);
+						IOT_DUMP_MAIN(WARN, BASE, err);
+					}
+				} else {
+					IOT_WARN("COMM disconnecting failed(%d) for mqtt_yield", err);
+					IOT_DUMP_MAIN(WARN, BASE, err);
+				}
 			} else if (rc > 0) {
 				task_cycle = 0;
 			}
@@ -1611,6 +1629,17 @@ static iot_error_t _do_state_updating(struct iot_context *ctx,
 		IOT_WARN("Iot-core task will be stopped, needed ext-triggering\n");
 		IOT_DUMP_MAIN_ARG2(WARN, STATE, new_state, iot_err);
 
+		/* if there is previous connection, disconnect it first. */
+		if (ctx->reg_mqttcli != NULL) {
+			IOT_INFO("There is active registering, disconnect it first.\n");
+			iot_es_disconnect(ctx, IOT_CONNECT_TYPE_REGISTRATION);
+		}
+
+		if (ctx->evt_mqttcli != NULL) {
+			IOT_INFO("There is previous connecting, disconnect it first.\n");
+			iot_es_disconnect(ctx, IOT_CONNECT_TYPE_COMMUNICATION);
+		}
+
 		/* wifi off */
 		iot_err = iot_wifi_ctrl_request(ctx, IOT_WIFI_MODE_OFF);
 		if (iot_err != IOT_ERROR_NONE) {
@@ -1912,17 +1941,6 @@ int st_conn_start_ex(IOT_CTX *iot_ctx, iot_ext_args_t *ext_args)
 		iot_os_mutex_lock(&ctx->iot_cmd_lock);
 		_throw_away_all_cmd_queue(ctx);
 		iot_os_mutex_unlock(&ctx->iot_cmd_lock);
-
-		/* if there is previous connection, disconnect it first. */
-		if (ctx->evt_mqttcli != NULL) {
-			IOT_INFO("There is previous connecting, disconnect it first.\n");
-			iot_es_disconnect(ctx, IOT_CONNECT_TYPE_COMMUNICATION);
-		}
-
-		if (ctx->reg_mqttcli != NULL) {
-			IOT_INFO("There is active registering, disconnect it first.\n");
-			iot_es_disconnect(ctx, IOT_CONNECT_TYPE_REGISTRATION);
-		}
 
 		iot_os_eventgroup_clear_bits(ctx->usr_events, IOT_USR_INTERACT_BIT_STATE_UNKNOWN);
 

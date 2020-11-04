@@ -91,6 +91,7 @@ char *iot_debug_get_log(void)
  * @return	iot_error_t
  * @retval	IOT_ERROR_NONE		success
  */
+STATIC_FUNCTION
 iot_error_t _iot_easysetup_gen_get_payload(struct iot_context *ctx, int cmd, char **out_payload)
 {
 	iot_error_t err = IOT_ERROR_NONE;
@@ -195,6 +196,7 @@ get_exit:
  * @return		iot_error_t
  * @retval		IOT_ERROR_NONE		success
  */
+STATIC_FUNCTION
 iot_error_t _iot_easysetup_gen_post_payload(struct iot_context *ctx, int cmd, char *in_payload, char **out_payload)
 {
 	iot_error_t err = IOT_ERROR_NONE;

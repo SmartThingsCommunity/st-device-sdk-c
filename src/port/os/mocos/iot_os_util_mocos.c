@@ -99,12 +99,7 @@ void iot_os_thread_yield()
 
 int iot_os_thread_get_current_handle(iot_os_thread* thread_handle)
 {
-    if (thread_handle == NULL) {
-        return IOT_OS_FALSE;
-    }
-
-    *thread_handle = (iot_os_thread)mico_rtos_get_current_thread();
-    return IOT_OS_TRUE;
+    return IOT_OS_FALSE;
 }
 
 /* Queue */

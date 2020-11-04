@@ -65,6 +65,11 @@ static int _iot_bsp_wifi_off()
 static void _initialize_sntp(void)
 {
 	IOT_INFO("Initializing SNTP");
+	if (sntp_enabled()) {
+		IOT_INFO("SNTP is already working, STOP it first");
+		sntp_stop();
+	}
+
 	sntp_setoperatingmode(SNTP_OPMODE_POLL);
 	sntp_setservername(0, "pool.ntp.org");
 	sntp_setservername(1, "1.kr.pool.ntp.org");
@@ -93,6 +98,8 @@ static void _obtain_time(void)
 		time(&now);
 		localtime_r(&now, &timeinfo);
 	}
+
+	sntp_stop();
 
 	if (retry < 10) {
 		IOT_INFO("[WIFI] system time updated by %ld", now);

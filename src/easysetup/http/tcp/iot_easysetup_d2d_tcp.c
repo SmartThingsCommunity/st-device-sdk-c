@@ -508,7 +508,7 @@ iot_error_t _es_keyinfo_handler(struct iot_context *ctx, char *in_payload, char 
 		err = IOT_ERROR_EASYSETUP_BASE64_DECODE_ERROR;
 		goto exit;
 	} else if (spub_len != IOT_SECURITY_ED25519_LEN) {
-		IOT_ERROR("invalid spub length : %u", spub_len);
+		IOT_ERROR("invalid spub length : %u", (unsigned int)spub_len);
 		IOT_ES_DUMP(IOT_DEBUG_LEVEL_ERROR, IOT_DUMP_EASYSETUP_BASE64_DECODE_ERROR, spub_len);
 		err = IOT_ERROR_EASYSETUP_BASE64_DECODE_ERROR;
 		goto exit;
@@ -532,7 +532,7 @@ iot_error_t _es_keyinfo_handler(struct iot_context *ctx, char *in_payload, char 
 	}
 
 	if (rand_asc_len != (sizeof(rand_asc) - 1)) {
-		IOT_ERROR("rand size is mismatch (%d != %d)", rand_asc_len, (sizeof(rand_asc) - 1));
+		IOT_ERROR("rand size is mismatch (%u != %u)", (unsigned int)rand_asc_len, (unsigned int)(sizeof(rand_asc) - 1));
 		IOT_ES_DUMP(IOT_DEBUG_LEVEL_ERROR, IOT_DUMP_EASYSETUP_RAND_DECODE_ERROR, (sizeof(rand_asc) - 1));
 		err = IOT_ERROR_EASYSETUP_RAND_DECODE_ERROR;
 		goto exit;
@@ -579,7 +579,6 @@ iot_error_t _es_keyinfo_handler(struct iot_context *ctx, char *in_payload, char 
 	if ((recv = JSON_GET_OBJECT_ITEM(root, "datetime")) == NULL) {
 		IOT_INFO("no datetime info");
 		IOT_ES_DUMP(IOT_DEBUG_LEVEL_ERROR, IOT_DUMP_EASYSETUP_INVALID_REQUEST, 0);
-		err  = IOT_ERROR_EASYSETUP_INVALID_REQUEST;
 		goto skip_time_set;
 	}
 	p_datetime_str = (unsigned char *)JSON_GET_STRING_VALUE(recv);

@@ -232,9 +232,9 @@ void _iot_mqtt_registration_client_callback(st_mqtt_event event, void *event_dat
 				if (!strncmp(md->topic, IOT_SUB_TOPIC_REGISTRATION_PREFIX, IOT_SUB_TOPIC_REGISTRATION_PREFIX_SIZE)) {
 					mqtt_reg_sub_cb(md, user_data);
 				} else {
-					IOT_WARN("No msg delivery handler for %s", md->topic);
+					IOT_WARN("No msg delivery handler for %s", (char *)md->topic);
 				}
-				IOT_DEBUG("raw msg (len:%d) : %s", md->payloadlen, md->payload);
+				IOT_DEBUG("raw msg (len:%d) : %s", md->payloadlen, (char *)md->payload);
 				break;
 			}
 		default:
@@ -323,9 +323,9 @@ void _iot_mqtt_signin_client_callback(st_mqtt_event event, void *event_data, voi
 				} else if (!strncmp(md->topic, IOT_SUB_TOPIC_NOTIFICATION_PREFIX, IOT_SUB_TOPIC_NOTIFICATION_PREFIX_SIZE)) {
 					iot_noti_sub_cb(ctx, mqtt_payload);
 				} else {
-					IOT_WARN("No msg delivery handler for %s", md->topic);
+					IOT_WARN("No msg delivery handler for %s", (char *)md->topic);
 				}
-				IOT_DEBUG("raw msg (len:%d) : %s", md->payloadlen, mqtt_payload);
+				IOT_DEBUG("raw msg (len:%d) : %s", md->payloadlen, (char *)mqtt_payload);
 				break;
 			}
 			break;
