@@ -63,7 +63,7 @@ static void process_accepted_connection(HTTP_CONN_H *handle)
 
 		err = http_packet_read(handle, rx_buffer, sizeof(rx_buffer), &received_len, &http_request_header_len);
 		if (err != IOT_ERROR_NONE) {
-			if (!is_es_http_deinit_processing()) {
+			if (!is_es_http_deinit_processing() && err != IOT_ERROR_EASYSETUP_HTTP_CONN_CLOSED) {
 				IOT_ERROR("failed to read http packet %d", err);
 			}
 			return;

@@ -100,8 +100,8 @@ iot_error_t http_packet_read(HTTP_CONN_H *handle, char *rx_buffer, size_t rx_buf
 			return IOT_ERROR_EASYSETUP_HTTP_RECV_FAIL;
 		}
 		else if (len == 0) {
-			IOT_ERROR("Connection closed");
-			IOT_ES_DUMP(IOT_DEBUG_LEVEL_ERROR, IOT_DUMP_EASYSETUP_SOCKET_CON_CLOSE, 0);
+			IOT_WARN("Connection closed");
+			IOT_ES_DUMP(IOT_DEBUG_LEVEL_WARN, IOT_DUMP_EASYSETUP_SOCKET_CON_CLOSE, 0);
 			return IOT_ERROR_EASYSETUP_HTTP_CONN_CLOSED;
 		}
 		else {
