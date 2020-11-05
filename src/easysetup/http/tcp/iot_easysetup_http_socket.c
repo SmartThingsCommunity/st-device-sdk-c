@@ -16,7 +16,8 @@
  *
  ****************************************************************************/
 #include "iot_easysetup_http_socket.h"
-#include "../iot_easysetup.h"
+#include "iot_easysetup.h"
+#include "../easysetup_http.h"
 
 #define HTTP_PORT 8888
 
@@ -61,7 +62,7 @@ void http_cleanup_accepted_connection(HTTP_CONN_H *handle)
 	}
 }
 
-ssize_t http_send_data(HTTP_CONN_H *handle, char *tx_buffer, size_t tx_buffer_len)
+ssize_t http_packet_send(HTTP_CONN_H *handle, char *tx_buffer, size_t tx_buffer_len)
 {
 	int len;
 
@@ -76,19 +77,82 @@ ssize_t http_send_data(HTTP_CONN_H *handle, char *tx_buffer, size_t tx_buffer_le
 	return len;
 }
 
-ssize_t http_recv_data(HTTP_CONN_H *handle, char *rx_buffer, size_t rx_buffer_size, size_t received_len)
+iot_error_t http_packet_read(HTTP_CONN_H *handle, char *rx_buffer, size_t rx_buffer_size, size_t *received_len,
+							 size_t *http_header_len)
 {
-	int len;
+	ssize_t len;
+	size_t existing_len;
+	int header_position = -1;
+	int i;
 
-	if (handle == NULL || is_http_conn_handle_initialized(handle) == false) {
-		return -1;
+	if (handle == NULL || rx_buffer == NULL || received_len == NULL) {
+		return IOT_ERROR_INVALID_ARGS;
 	}
-	if (rx_buffer == NULL) {
-		return -1;
-	}
+	existing_len = *received_len;
+	// ensure complete http request header before es_msg_parser
+	do {
+		len = recv(handle->accept_sock, rx_buffer + existing_len, rx_buffer_size - existing_len - 1, 0);
+		if (len < 0) {
+			if (!is_es_http_deinit_processing()) {
+				IOT_ERROR("recv failed: errno %d", errno);
+				IOT_ES_DUMP(IOT_DEBUG_LEVEL_ERROR, IOT_DUMP_EASYSETUP_SOCKET_RECV_FAIL, errno);
+			}
+			return IOT_ERROR_EASYSETUP_HTTP_RECV_FAIL;
+		}
+		else if (len == 0) {
+			IOT_ERROR("Connection closed");
+			IOT_ES_DUMP(IOT_DEBUG_LEVEL_ERROR, IOT_DUMP_EASYSETUP_SOCKET_CON_CLOSE, 0);
+			return IOT_ERROR_EASYSETUP_HTTP_CONN_CLOSED;
+		}
+		else {
+			existing_len += len;
+		}
 
-	len = recv(handle->accept_sock, rx_buffer + received_len, rx_buffer_size - received_len - 1, 0);
-	return len;
+		// \r\n\r\n  header end
+		for (i = 0; i < existing_len; i++) {
+			if (i < existing_len - 3) {
+				if ((rx_buffer[i] == '\r') && (rx_buffer[i + 1] == '\n') && (rx_buffer[i + 2] == '\r')
+					&& (rx_buffer[i + 3] == '\n')) {
+					header_position = i + 4;
+					break;
+				}
+			}
+		}
+	} while (header_position < 0);
+
+	*received_len = existing_len;
+	*http_header_len = header_position;
+
+	return IOT_ERROR_NONE;
+}
+
+iot_error_t http_packet_read_remaining(HTTP_CONN_H *handle, char *rx_buffer, size_t rx_buffer_size, size_t offset,
+									   size_t expected_len)
+{
+	ssize_t len;
+	size_t total_recv_len = offset;
+
+	if (handle == NULL || rx_buffer == NULL) {
+		return IOT_ERROR_INVALID_ARGS;
+	}
+	do {
+		len = recv(handle->accept_sock, rx_buffer + offset, rx_buffer_size - offset - 1, 0);
+		if (len < 0) {
+			IOT_ERROR("recv failed: errno %d", errno);
+			IOT_ES_DUMP(IOT_DEBUG_LEVEL_ERROR, IOT_DUMP_EASYSETUP_SOCKET_RECV_FAIL, errno);
+			return IOT_ERROR_EASYSETUP_HTTP_RECV_FAIL;
+		}
+		else if (len == 0) {
+			IOT_ERROR("Connection closed");
+			IOT_ES_DUMP(IOT_DEBUG_LEVEL_ERROR, IOT_DUMP_EASYSETUP_SOCKET_CON_CLOSE, 0);
+			return IOT_ERROR_EASYSETUP_HTTP_CONN_CLOSED;
+		}
+		else {
+			total_recv_len += len;
+		}
+	} while (total_recv_len < expected_len);
+
+	return IOT_ERROR_NONE;
 }
 
 void http_try_configure_connection(HTTP_CONN_H *handle)

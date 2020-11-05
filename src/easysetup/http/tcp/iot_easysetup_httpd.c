@@ -17,14 +17,13 @@
  ****************************************************************************/
 
 #include <string.h>
-
-#ifdef CONFIG_STDK_IOT_CORE_EASYSETUP_HTTP_USE_SOCKET_API
-#include "iot_easysetup_http_socket.h"
-#endif
-#include "../easysetup_http.h"
 #include "iot_os_util.h"
 #include "iot_debug.h"
 #include "iot_easysetup.h"
+#include "../easysetup_http.h"
+#ifdef CONFIG_STDK_IOT_CORE_EASYSETUP_HTTP_USE_SOCKET_API
+#include "iot_easysetup_http_socket.h"
+#endif
 
 #define RX_BUFFER_MAX    1024
 
@@ -33,13 +32,22 @@ static iot_os_thread es_tcp_task_handle = NULL;
 static HTTP_CONN_H es_http_conn_handle;
 static bool deinit_processing;
 
+bool is_es_http_deinit_processing(void)
+{
+	return deinit_processing;
+}
+void es_http_deinit_processing_set(bool flag)
+{
+	deinit_processing = flag;
+}
+
 static void process_accepted_connection(HTTP_CONN_H *handle)
 {
 	char rx_buffer[RX_BUFFER_MAX];
 	iot_error_t err = IOT_ERROR_NONE;
 	size_t content_len = 0;
 	char *payload;
-	int i, type, cmd;
+	int type, cmd;
 	ssize_t len;
 
 	http_try_configure_connection(handle);
@@ -48,71 +56,40 @@ static void process_accepted_connection(HTTP_CONN_H *handle)
 	{
 		size_t received_len = 0;
 		size_t tx_buffer_len = 0;
-		ssize_t http_request_header_len = -1;
+		size_t http_request_header_len = 0;
 
 		// start to process one http request
 		memset(rx_buffer, '\0', sizeof(rx_buffer));
+
+		err = http_packet_read(handle, rx_buffer, sizeof(rx_buffer), &received_len, &http_request_header_len);
+		if (err != IOT_ERROR_NONE) {
+			if (!is_es_http_deinit_processing()) {
+				IOT_ERROR("failed to read http packet %d", err);
+			}
+			return;
+		}
+
 		content_len = 0;
-        
-		// ensure complete http request header before es_msg_parser
-		do {
-			len = http_recv_data(handle, rx_buffer, sizeof(rx_buffer), received_len);
-			if (len < 0) {
-				if (!deinit_processing) {
-					IOT_ERROR("recv failed: errno %d", errno);
-					IOT_ES_DUMP(IOT_DEBUG_LEVEL_ERROR, IOT_DUMP_EASYSETUP_SOCKET_RECV_FAIL, errno);
-				}
-				return;
-			}
-			else if (len == 0) {
-				IOT_ERROR("Connection closed");
-				IOT_ES_DUMP(IOT_DEBUG_LEVEL_ERROR, IOT_DUMP_EASYSETUP_SOCKET_CON_CLOSE, 0);
-				return;
-			}
-			else {
-				received_len += len;
-			}
-
-			// \r\n\r\n  header end
-			for (i = 0; i < received_len; i++) {
-				if (i < received_len - 3) {
-					if ((rx_buffer[i] == '\r') && (rx_buffer[i + 1] == '\n') && (rx_buffer[i + 2] == '\r')
-						&& (rx_buffer[i + 3] == '\n')) {
-						http_request_header_len = i + 4;
-					}
-				}
-			} 
-		} while (http_request_header_len < 0);
-
 		err = es_msg_parser(rx_buffer, sizeof(rx_buffer), &payload, &cmd, &type, &content_len);
 
 		if ((err == IOT_ERROR_NONE) && (type == D2D_POST)
 				&& payload && (content_len > strlen((char *)payload)))
 		{
-			do {
-				len = http_recv_data(handle, rx_buffer, sizeof(rx_buffer), received_len);
-				if (len < 0) {
-					IOT_ERROR("recv failed: errno %d", errno);
-					IOT_ES_DUMP(IOT_DEBUG_LEVEL_ERROR, IOT_DUMP_EASYSETUP_SOCKET_RECV_FAIL, errno);
-					return;
-				}
-				else if (len == 0) {
-					IOT_ERROR("Connection closed");
-					IOT_ES_DUMP(IOT_DEBUG_LEVEL_ERROR, IOT_DUMP_EASYSETUP_SOCKET_CON_CLOSE, 0);
-					return;
-				}
-				else {
-					received_len += len;
-				}
-			} while (received_len < (http_request_header_len + content_len));
-
+			iot_error_t ret;
+			ret = http_packet_read_remaining(handle, rx_buffer, sizeof(rx_buffer), received_len, http_request_header_len + content_len);
+			if (ret != IOT_ERROR_NONE) {
+				IOT_ERROR("failed to read remaining http packet %d", ret);
+				return;
+			}
 			payload = rx_buffer + http_request_header_len;
 		}
 
-		if(err == IOT_ERROR_INVALID_ARGS)
+		if(err == IOT_ERROR_INVALID_ARGS) {
 			http_msg_handler(cmd, &tx_buffer, D2D_ERROR, payload);
-		else
+		}
+		else {
 			http_msg_handler(cmd, &tx_buffer, type, payload);
+		}
 
 		if (!tx_buffer) {
 			IOT_ERROR("tx_buffer is NULL");
@@ -123,7 +100,7 @@ static void process_accepted_connection(HTTP_CONN_H *handle)
 		tx_buffer_len = strlen((char *)tx_buffer);
 		tx_buffer[tx_buffer_len] = 0;
 
-		len = http_send_data(handle, tx_buffer, tx_buffer_len);
+		len = http_packet_send(handle, tx_buffer, tx_buffer_len);
 		free(tx_buffer);
 		tx_buffer = NULL;
 		if (len < 0) {
@@ -138,7 +115,7 @@ static void es_tcp_task(void *pvParameters)
 {
 	iot_error_t err;
 
-	while (!deinit_processing) {
+	while (!is_es_http_deinit_processing()) {
 		err = http_initialize_connection(&es_http_conn_handle);
 		if (err != IOT_ERROR_NONE) {
 			break;
@@ -147,7 +124,7 @@ static void es_tcp_task(void *pvParameters)
 		while (1) {
 			err = http_accept_connection(&es_http_conn_handle);
 			if (err != IOT_ERROR_NONE) {
-				if (!deinit_processing) {
+				if (!is_es_http_deinit_processing()) {
 					IOT_ERROR("Unable to accept connection: errno %d", errno);
 					IOT_ES_DUMP(IOT_DEBUG_LEVEL_ERROR, IOT_DUMP_EASYSETUP_SOCKET_ACCEPT_FAIL, errno);
 					IOT_ERROR("accept failed %d", err);
@@ -157,19 +134,19 @@ static void es_tcp_task(void *pvParameters)
 
 			process_accepted_connection(&es_http_conn_handle);
 
-			if (!deinit_processing && !is_http_conn_handle_initialized(&es_http_conn_handle))
+			if (!is_es_http_deinit_processing() && !is_http_conn_handle_initialized(&es_http_conn_handle))
 			{
 				http_cleanup_accepted_connection(&es_http_conn_handle);
 			}
 		}
 
 		//sock resources should be clean
-		if (!deinit_processing) {
+		if (!is_es_http_deinit_processing()) {
 			http_cleanup_all_connection(&es_http_conn_handle);
 		}
 	}
 
-	if (!deinit_processing) {
+	if (!is_es_http_deinit_processing()) {
 		http_cleanup_all_connection(&es_http_conn_handle);
 	}
 
@@ -192,7 +169,7 @@ void es_http_deinit(void)
 {
 	IOT_ES_DUMP(IOT_DEBUG_LEVEL_INFO, IOT_DUMP_EASYSETUP_TCP_DEINIT, 0);
 
-	deinit_processing = true;
+	es_http_deinit_processing_set(true);
 	//sock resources should be clean
 	http_cleanup_all_connection(&es_http_conn_handle);
 
@@ -206,7 +183,7 @@ void es_http_deinit(void)
 		tx_buffer = NULL;
 	}
 
-	deinit_processing = false;
+	es_http_deinit_processing_set(false);
 	IOT_INFO("http tcp deinit complete!");
 	IOT_ES_DUMP(IOT_DEBUG_LEVEL_INFO, IOT_DUMP_EASYSETUP_TCP_DEINIT, 1);
 }
