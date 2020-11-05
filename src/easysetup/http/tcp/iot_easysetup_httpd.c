@@ -84,7 +84,7 @@ static void process_accepted_connection(HTTP_CONN_H *handle)
 			payload = rx_buffer + http_request_header_len;
 		}
 
-		if(err == IOT_ERROR_INVALID_ARGS) {
+		if(err != IOT_ERROR_NONE) {
 			http_msg_handler(cmd, &tx_buffer, D2D_ERROR, payload);
 		}
 		else {
