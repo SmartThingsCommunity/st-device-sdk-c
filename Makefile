@@ -31,7 +31,7 @@ SRCS	+= $(wildcard $(BSP_DIR)/*.c)
 SRCS	+= $(wildcard $(OS_DIR)/*.c)
 SRCS	+= $(wildcard $(NET_DIR)/*.c)
 SRCS	+= $(wildcard $(CRYPTO_DIR)/*.c)
-ifneq ($(findstring, CONFIG_STDK_IOT_CORE_EASYSETUP_POSIX_TESTING, $(CFLAGS_CONFIG)),)
+ifneq ($(findstring CONFIG_STDK_IOT_CORE_EASYSETUP_POSIX_TESTING, $(CFLAGS_CONFIG)),)
 SRCS	+= $(EASYSETUP_DIR)/iot_easysetup_st_mqtt.c \
 			$(wildcard $(EASYSETUP_DIR)/posix_testing/*.c)
 else
@@ -42,11 +42,11 @@ endif
 SRCS	+= $(wildcard $(MQTT_DIR)/client/*.c)
 SRCS	+= $(wildcard $(MQTT_DIR)/packet/*.c)
 SRCS	+= $(wildcard $(SECURITY_DIR)/*.c)
-ifneq ($(findstring, "CONFIG_STDK_IOT_CORE_SECURITY_BACKEND_SOFTWARE", $(CFLAGS_CONFIG)), '')
+ifneq ($(findstring "CONFIG_STDK_IOT_CORE_SECURITY_BACKEND_SOFTWARE", $(CFLAGS_CONFIG)),)
 SRCS	+= $(wildcard $(SECURITY_DIR)/backend/software/*.c)
 endif
 SRCS	+= $(wildcard $(SECURITY_DIR)/helper/libsodium/*.c)
-ifneq ($(findstring, "CONFIG_STDK_IOT_CORE_USE_MBEDTLS", $(CFLAGS_CONFIG)), '')
+ifneq ($(findstring "CONFIG_STDK_IOT_CORE_USE_MBEDTLS", $(CFLAGS_CONFIG)),)
 SRCS	+= $(wildcard $(SECURITY_DIR)/helper/mbedtls/*.c)
 endif
 
