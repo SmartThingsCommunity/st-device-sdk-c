@@ -118,8 +118,14 @@ iot_error_t _iot_security_be_bsp_fs_load_from_nv(iot_security_storage_id_t stora
 	} else {
 		err = iot_bsp_fs_open(filename, FS_READONLY, &handle);
 		if (err) {
-			IOT_ERROR("iot_bsp_fs_open(%s) = %d", filename, err);
-			IOT_ERROR_DUMP_AND_RETURN(FS_OPEN, err);
+			if (err == IOT_ERROR_FS_NO_FILE) {
+				err = IOT_ERROR_SECURITY_FS_NOT_FOUND;
+				IOT_ERROR("iot_bsp_fs_open(%s) = %d", filename, err);
+				IOT_ERROR_DUMP_AND_RETURN(FS_NOT_FOUND, err);
+			} else {
+				IOT_ERROR("iot_bsp_fs_open(%s) = %d", filename, err);
+				IOT_ERROR_DUMP_AND_RETURN(FS_OPEN, err);
+			}
 		}
 	}
 
