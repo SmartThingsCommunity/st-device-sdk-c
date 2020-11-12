@@ -210,20 +210,6 @@ iot_error_t _encrypt_and_encode(iot_security_context_t *security_context, unsign
 	msg_buf.p = plain_msg;
 	msg_buf.len = plain_msg_len;
 
-	encrypt_buf.len = iot_security_cipher_get_align_size(security_context->cipher_params->type, plain_msg_len);
-	if (encrypt_buf.len == 0) {
-		IOT_ERROR("failed to get align size, type = %d", security_context->cipher_params->type);
-		IOT_ES_DUMP(IOT_DEBUG_LEVEL_ERROR, IOT_DUMP_EASYSETUP_CIPHER_ALIGN_ERROR, security_context->cipher_params->type);
-		return IOT_ERROR_EASYSETUP_CIPHER_ALIGN_ERROR;
-	}
-
-	encrypt_buf.p = (unsigned char *) iot_os_calloc(encrypt_buf.len, sizeof(unsigned char));
-	if (!encrypt_buf.p) {
-		IOT_ERROR("not enough memory");
-		IOT_ES_DUMP(IOT_DEBUG_LEVEL_ERROR, IOT_DUMP_EASYSETUP_MEM_ALLOC_ERROR, 0);
-		return IOT_ERROR_EASYSETUP_MEM_ALLOC_ERROR;
-	}
-
 	err = iot_security_cipher_aes_encrypt(security_context, &msg_buf, &encrypt_buf);
 	if (err != IOT_ERROR_NONE) {
 		IOT_ERROR("aes encryption error 0x%x", err);
