@@ -382,14 +382,6 @@ iot_error_t _es_deviceinfo_handler(struct iot_context *ctx, char **out_payload)
 	JSON_ADD_ITEM_TO_OBJECT(root, "hashedSn", JSON_CREATE_STRING((char *)ctx->devconf.hashed_sn));
 	JSON_ADD_NUMBER_TO_OBJECT(root, "wifiSupportFrequency", (double) iot_bsp_wifi_get_freq());
 
-	err = iot_security_cipher_init(ctx->easysetup_security_context);
-	if (err != IOT_ERROR_NONE) {
-		IOT_ERROR("failed to init cipher");
-		IOT_ES_DUMP(IOT_DEBUG_LEVEL_ERROR, IOT_DUMP_EASYSETUP_CIPHER_ERROR, err);
-		err = IOT_ERROR_EASYSETUP_CIPHER_ERROR;
-		goto out;
-	}
-
 	err = _es_crypto_cipher_gen_iv(&iv_buf);
 	if (err != IOT_ERROR_NONE) {
 		IOT_ERROR("failed to generate cipher iv!!");
