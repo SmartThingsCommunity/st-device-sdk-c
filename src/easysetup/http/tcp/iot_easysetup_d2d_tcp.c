@@ -387,7 +387,7 @@ iot_error_t _es_deviceinfo_handler(struct iot_context *ctx, char **out_payload)
 		IOT_ERROR("failed to init cipher");
 		IOT_ES_DUMP(IOT_DEBUG_LEVEL_ERROR, IOT_DUMP_EASYSETUP_CIPHER_ERROR, err);
 		err = IOT_ERROR_EASYSETUP_CIPHER_ERROR;
-		goto fail_cipher_init;
+		goto out;
 	}
 
 	err = _es_crypto_cipher_gen_iv(&iv_buf);
@@ -429,17 +429,12 @@ iot_error_t _es_deviceinfo_handler(struct iot_context *ctx, char **out_payload)
 
 	*out_payload = output_ptr;
 out:
-	iot_security_cipher_deinit(ctx->easysetup_security_context);
-
 	if (iv_buf.p)
 		free(iv_buf.p);
 	if (encode_buf)
 		free(encode_buf);
-
-fail_cipher_init:
 	if (root)
 		JSON_DELETE(root);
-
 	return err;
 }
 
