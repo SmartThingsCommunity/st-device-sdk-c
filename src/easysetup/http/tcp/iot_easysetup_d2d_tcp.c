@@ -1408,12 +1408,16 @@ iot_error_t _es_cloud_prov_parse(struct iot_context *ctx, char *in_payload)
 		cloud_prov->broker_url = NULL;
 		cloud_prov->broker_port = 0;
 		err = IOT_ERROR_EASYSETUP_CLOUD_DATA_WRITE_FAIL;
-		goto cloud_parse_out;
+		goto cloud_prov_data_fail;
 	}
 
 	IOT_INFO("brokerUrl: %s:%d", cloud_prov->broker_url, cloud_prov->broker_port);
 	IOT_INFO("deviceName : %s", cloud_prov->label);
 
+cloud_prov_data_fail:
+	if (cloud_prov->label) {
+		iot_os_free(cloud_prov->label);
+	}
 cloud_parse_out:
 	if (err) {
 		if (url.domain) {
@@ -1425,9 +1429,6 @@ cloud_parse_out:
 	}
 	if (full_url) {
 		iot_os_free(full_url);
-	}
-	if (cloud_prov->label) {
-		iot_os_free(cloud_prov->label);
 	}
 	if (cloud_prov) {
 		iot_os_free(cloud_prov);
