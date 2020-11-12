@@ -898,6 +898,9 @@ cloud_parse_out:
 	if (full_url) {
 		iot_os_free(full_url);
 	}
+	if (cloud_prov->label) {
+		iot_os_free(cloud_prov->label);
+	}
 	if (cloud_prov) {
 		iot_os_free(cloud_prov);
 	}
