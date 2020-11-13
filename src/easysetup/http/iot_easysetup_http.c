@@ -467,7 +467,6 @@ iot_error_t iot_easysetup_init(struct iot_context *ctx)
 
 	context = ctx;
 
-	es_http_init();
 	ref_step = 0;
 
 #if defined(CONFIG_STDK_IOT_CORE_EASYSETUP_LOG_SUPPORT_NO_USE_LOGFILE)
@@ -481,6 +480,9 @@ iot_error_t iot_easysetup_init(struct iot_context *ctx)
 	log_len = 0;
 	dump_enable= true;
 #endif
+
+	es_http_init();
+
 	IOT_REMARK("IOT_STATE_PROV_ES_INIT_DONE");
 	IOT_ES_DUMP(IOT_DEBUG_LEVEL_INFO, IOT_DUMP_EASYSETUP_INIT, 1);
 
