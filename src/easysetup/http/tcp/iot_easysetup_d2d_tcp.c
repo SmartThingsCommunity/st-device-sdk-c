@@ -1431,10 +1431,8 @@ cloud_prov_data_fail:
 		iot_os_free(cloud_prov->label);
 	}
 cloud_parse_out:
-	if (err) {
-		if (url.domain) {
-			iot_os_free(url.domain);
-		}
+	if (url.domain) {
+		iot_os_free(url.domain);
 	}
 	if (url.protocol) {
 		iot_os_free(url.protocol);
@@ -1510,6 +1508,8 @@ iot_error_t _es_wifiprovisioninginfo_handler(struct iot_context *ctx, char *in_p
 	}
 
 	IOT_DEBUG("lookupid = %s", ctx->lookup_id);
+
+	JSON_DELETE(root);
 
 	root = JSON_CREATE_OBJECT();
 	if (!root) {
