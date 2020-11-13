@@ -877,7 +877,6 @@ iot_error_t _es_cloud_prov_parse(struct iot_context *ctx, char *in_payload)
 	if (err) {
 		IOT_ERROR("failed to set the cloud prov data");
 		IOT_ES_DUMP(IOT_DEBUG_LEVEL_ERROR, IOT_DUMP_EASYSETUP_CLOUD_DATA_WRITE_FAIL, err);
-		cloud_prov->broker_url = NULL;
 		cloud_prov->broker_port = 0;
 		err = IOT_ERROR_EASYSETUP_CLOUD_DATA_WRITE_FAIL;
 		goto cloud_prov_data_fail;
@@ -891,10 +890,8 @@ cloud_prov_data_fail:
 		iot_os_free(cloud_prov->label);
 	}
 cloud_parse_out:
-	if (err) {
-		if (url.domain) {
-			iot_os_free(url.domain);
-		}
+	if (url.domain) {
+		iot_os_free(url.domain);
 	}
 	if (url.protocol) {
 		iot_os_free(url.protocol);
@@ -955,6 +952,8 @@ iot_error_t _es_wifiprovisioninginfo_handler(struct iot_context *ctx, char *in_p
 	}
 
 	IOT_DEBUG("lookupid = %s", ctx->lookup_id);
+
+	JSON_DELETE(root);
 
 	root = JSON_CREATE_OBJECT();
 	if (!root) {
