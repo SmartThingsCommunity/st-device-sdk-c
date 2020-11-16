@@ -68,6 +68,7 @@ iot_error_t iot_bsp_fs_deinit();
  * @param[in] mode File open mode. FS_READONLY or FS_READWRITE.
  * @param[out] handle A pointer to the file handle.
  * @retval IOT_ERROR_NONE File open successful.
+ * @retval IOT_ERROR_FS_NO_FILE No file.
  * @retval IOT_ERROR_FS_OPEN_FAIL File open failed.
  */
 iot_error_t iot_bsp_fs_open(const char* filename, iot_bsp_fs_open_mode_t mode, iot_bsp_fs_handle_t* handle);
@@ -80,6 +81,7 @@ iot_error_t iot_bsp_fs_open(const char* filename, iot_bsp_fs_open_mode_t mode, i
  * @param[in] filename File name.
  * @param[out] handle A pointer to the file handle.
  * @retval IOT_ERROR_NONE File open successful.
+ * @retval IOT_ERROR_FS_NO_FILE No file.
  * @retval IOT_ERROR_FS_OPEN_FAIL File open failed.
  */
 iot_error_t iot_bsp_fs_open_from_stnv(const char* filename, iot_bsp_fs_handle_t* handle);

@@ -120,6 +120,12 @@ enum ownership_validation_feature {
 /* Certificate */
 #define IOT_ERROR_EASYSETUP_CETIFICATE_FAILED_GET_CERTIFICATE			(IOT_ERROR_EASYSETUP_500_BASE - 51)
 
+/* HTTP */
+#define IOT_ERROR_EASYSETUP_HTTP_RECV_FAIL		(IOT_ERROR_EASYSETUP_500_BASE - 61)
+#define IOT_ERROR_EASYSETUP_HTTP_SEND_FAIL		(IOT_ERROR_EASYSETUP_500_BASE - 62)
+#define IOT_ERROR_EASYSETUP_HTTP_PARSE_FAIL		(IOT_ERROR_EASYSETUP_500_BASE - 63)
+#define IOT_ERROR_EASYSETUP_HTTP_CONN_CLOSED		(IOT_ERROR_EASYSETUP_500_BASE - 64)
+
 /**
  * @brief	easysetup cgi request handler
  * @details	This function runs from iot-task by executing actual cgi payload manipulation.<br>
