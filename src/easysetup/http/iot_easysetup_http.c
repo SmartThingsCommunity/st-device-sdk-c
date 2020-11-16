@@ -452,27 +452,39 @@ cgi_out:
 
 iot_error_t iot_easysetup_init(struct iot_context *ctx)
 {
+	iot_error_t err;
+
 	ENTER();
 	IOT_REMARK("IOT_STATE_PROV_ES_START");
 	IOT_ES_DUMP(IOT_DEBUG_LEVEL_INFO, IOT_DUMP_EASYSETUP_INIT, 0);
 	if (!ctx)
 		return IOT_ERROR_INVALID_ARGS;
 
+	err = iot_security_cipher_init(ctx->easysetup_security_context);
+	if (err != IOT_ERROR_NONE) {
+		IOT_ERROR("failed to init cipher");
+		IOT_ES_DUMP(IOT_DEBUG_LEVEL_ERROR, IOT_DUMP_EASYSETUP_CIPHER_ERROR, err);
+		return IOT_ERROR_EASYSETUP_CIPHER_ERROR;
+	}
+
 	context = ctx;
 
-	es_http_init();
 	ref_step = 0;
 
 #if defined(CONFIG_STDK_IOT_CORE_EASYSETUP_LOG_SUPPORT_NO_USE_LOGFILE)
 	if ((log_buffer = (char *)malloc(CONFIG_STDK_IOT_CORE_EASYSETUP_HTTP_LOG_SIZE)) == NULL) {
 		IOT_ERROR("failed to malloc for log buffer");
 		IOT_ES_DUMP(IOT_DEBUG_LEVEL_ERROR, IOT_DUMP_EASYSETUP_MEM_ALLOC_ERROR, 0);
+		iot_security_cipher_deinit(ctx->easysetup_security_context);
 		return IOT_ERROR_MEM_ALLOC;
 		}
 	memset(log_buffer, '\0', CONFIG_STDK_IOT_CORE_EASYSETUP_HTTP_LOG_SIZE);
 	log_len = 0;
 	dump_enable= true;
 #endif
+
+	es_http_init();
+
 	IOT_REMARK("IOT_STATE_PROV_ES_INIT_DONE");
 	IOT_ES_DUMP(IOT_DEBUG_LEVEL_INFO, IOT_DUMP_EASYSETUP_INIT, 1);
 
@@ -481,6 +493,8 @@ iot_error_t iot_easysetup_init(struct iot_context *ctx)
 
 void iot_easysetup_deinit(struct iot_context *ctx)
 {
+	iot_error_t err;
+
 	ENTER();
 	IOT_ES_DUMP(IOT_DEBUG_LEVEL_INFO, IOT_DUMP_EASYSETUP_DEINIT, 0);
 	if (!ctx)
@@ -497,6 +511,13 @@ void iot_easysetup_deinit(struct iot_context *ctx)
 #endif
 	iot_os_eventgroup_clear_bits(ctx->iot_events, IOT_EVENT_BIT_EASYSETUP_RESP);
 
+	err = iot_security_cipher_deinit(ctx->easysetup_security_context);
+	if (err != IOT_ERROR_NONE) {
+		IOT_ERROR("failed to iot_security_cipher_deinit, error (%d)", err);
+		IOT_ES_DUMP(IOT_DEBUG_LEVEL_ERROR, IOT_DUMP_EASYSETUP_DEINIT, err);
+	} else {
+		IOT_ES_DUMP(IOT_DEBUG_LEVEL_INFO, IOT_DUMP_EASYSETUP_DEINIT, 1);
+	}
+
 	IOT_REMARK("IOT_STATE_PROV_ES_DONE");
-	IOT_ES_DUMP(IOT_DEBUG_LEVEL_INFO, IOT_DUMP_EASYSETUP_DEINIT, 1);
 }

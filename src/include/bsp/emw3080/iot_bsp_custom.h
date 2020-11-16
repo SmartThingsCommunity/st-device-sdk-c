@@ -16,34 +16,8 @@
  *
  ****************************************************************************/
 
-#ifndef _EASYSETUP_HTTP_H_
-#define _EASYSETUP_HTTP_H_
+#ifndef _IOT_BSP_CUSTOM_H_
+#define _IOT_BSP_CUSTOM_H_
+#include "sdkconfig.h"
 
-#ifdef __cplusplus
-extern "C" {
-#endif
-#include "iot_main.h"
-#include "iot_error.h"
-
-enum cgi_type {
-	D2D_GET= 0,
-	D2D_POST,
-	D2D_ERROR,
-};
-
-void http_msg_handler(int cmd, char **buffer, enum cgi_type type, char* data_buf);
-
-iot_error_t es_msg_parser(char *rx_buffer, size_t rx_buffer_len, char **payload, int *cmd, int *type, size_t *content_len);
-
-void es_http_init(void);
-
-void es_http_deinit(void);
-
-bool is_es_http_deinit_processing(void);
-void es_http_deinit_processing_set(bool flag);
-
-#ifdef __cplusplus
-}
-#endif
-
-#endif /* _EASYSETUP_HTTP_H_ */
+#endif /* _IOT_BSP_CUSTOM_H_ */
