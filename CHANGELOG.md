@@ -1,5 +1,46 @@
 # HISTORY
 
+
+## 1.4.6
+####New Improvements or features
+
+- N/A
+
+####Enhancements or amendments
+
+- Add more detailed control of sntp service.
+- Send OS version to cloud.
+
+####Bug fixed
+
+- Fixed error when calling nvs_partition_gen.py at stdk-keygen.py.
+- Fix build errors.
+- Fix easysetup failure issue when iot-core try to open not existing file.
+- Fix memleak at easysetup cgi handler.
+
+
+## 1.4.5
+####New Improvements or features
+
+- N/A
+
+####Enhancements or amendments
+
+- Remove unused code (easysetup posix testing).
+- Remove unnecessary curl dependency.
+- Remove unused server Root CA.
+- Change WiFi access point BSSID handling at NV (non-volatile) storage.
+- Optimize timing delay.
+
+####Bug fixed
+
+- Fixed wrong buffer length calculation in case of wrong payload.
+- Fixed wrong error printing.
+- Fixed bug at posix port layer.
+- Fixed memleak at easysetup cgi handler.
+- Add missing null assignment to prevent possible double free.
+
+
 ## 1.4.4 :  Changes until v1.4.4
 
 New Improvements or features:
