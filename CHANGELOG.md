@@ -2,16 +2,16 @@
 
 
 ## 1.4.6
-####New Improvements or features
+#### New Improvements or features
 
 - N/A
 
-####Enhancements or amendments
+#### Enhancements or amendments
 
 - Add more detailed control of sntp service.
 - Send OS version to cloud.
 
-####Bug fixed
+#### Bug fixed
 
 - Fixed error when calling nvs_partition_gen.py at stdk-keygen.py.
 - Fix build errors.
@@ -20,11 +20,11 @@
 
 
 ## 1.4.5
-####New Improvements or features
+#### New Improvements or features
 
 - N/A
 
-####Enhancements or amendments
+#### Enhancements or amendments
 
 - Remove unused code (easysetup posix testing).
 - Remove unnecessary curl dependency.
@@ -32,7 +32,7 @@
 - Change WiFi access point BSSID handling at NV (non-volatile) storage.
 - Optimize timing delay.
 
-####Bug fixed
+#### Bug fixed
 
 - Fixed wrong buffer length calculation in case of wrong payload.
 - Fixed wrong error printing.
