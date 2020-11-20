@@ -469,6 +469,10 @@ iot_error_t _es_confirminfo_handler(struct iot_context *ctx, char *in_payload, c
 			sn = _es_json_parse_string(root, "sn");
 
 		err = _es_confirm_check_manager(ctx, recv->valueint, sn);
+
+		if (sn) {
+			free(sn);
+		}
 		if (err != IOT_ERROR_NONE)
 			goto out;
 	} else {
@@ -788,9 +792,7 @@ iot_error_t _es_wifi_prov_parse(struct iot_context *ctx, char *in_payload)
 	if ((item = JSON_GET_OBJECT_ITEM(wifi_credential, "macAddress")) == NULL) {
 		IOT_INFO("no macAddress");
 	} else {
-		strncpy(wifi_prov->mac_str, JSON_GET_STRING_VALUE(item), IOT_WIFI_PROV_MAC_STR_LEN);
-		wifi_prov->mac_str[IOT_WIFI_PROV_MAC_STR_LEN] = '\0';
-
+		strncpy(wifi_prov->mac_str, JSON_GET_STRING_VALUE(item), sizeof(wifi_prov->mac_str));
 		err = iot_util_convert_str_mac(wifi_prov->mac_str, &wifi_prov->bssid);
 		if (err) {
 			IOT_ERROR("Failed to convert str to mac address (error : %d) : %s", err, wifi_prov->mac_str);
@@ -875,20 +877,21 @@ iot_error_t _es_cloud_prov_parse(struct iot_context *ctx, char *in_payload)
 	if (err) {
 		IOT_ERROR("failed to set the cloud prov data");
 		IOT_ES_DUMP(IOT_DEBUG_LEVEL_ERROR, IOT_DUMP_EASYSETUP_CLOUD_DATA_WRITE_FAIL, err);
-		cloud_prov->broker_url = NULL;
 		cloud_prov->broker_port = 0;
 		err = IOT_ERROR_EASYSETUP_CLOUD_DATA_WRITE_FAIL;
-		goto cloud_parse_out;
+		goto cloud_prov_data_fail;
 	}
 
 	IOT_INFO("brokerUrl: %s:%d", cloud_prov->broker_url, cloud_prov->broker_port);
 	IOT_INFO("deviceName : %s", cloud_prov->label);
 
+cloud_prov_data_fail:
+	if (cloud_prov->label) {
+		iot_os_free(cloud_prov->label);
+	}
 cloud_parse_out:
-	if (err) {
-		if (url.domain) {
-			iot_os_free(url.domain);
-		}
+	if (url.domain) {
+		iot_os_free(url.domain);
 	}
 	if (url.protocol) {
 		iot_os_free(url.protocol);
@@ -949,6 +952,8 @@ iot_error_t _es_wifiprovisioninginfo_handler(struct iot_context *ctx, char *in_p
 	}
 
 	IOT_DEBUG("lookupid = %s", ctx->lookup_id);
+
+	JSON_DELETE(root);
 
 	root = JSON_CREATE_OBJECT();
 	if (!root) {
@@ -1123,6 +1128,12 @@ static iot_error_t _es_log_get_dump_handler(struct iot_context *ctx, char **out_
 
 	*out_payload = output_ptr;
 out:
+#if !defined(CONFIG_STDK_IOT_CORE_EASYSETUP_LOG_SUPPORT_NO_USE_LOGFILE)
+		if (log_dump)
+			free(log_dump);
+		if (sumo_dump)
+			free(sumo_dump);
+#endif
 	if (root)
 		JSON_DELETE(root);
 	return err;

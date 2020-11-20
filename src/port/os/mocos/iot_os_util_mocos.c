@@ -97,6 +97,11 @@ void iot_os_thread_yield()
 	mico_rtos_thread_yield();
 }
 
+int iot_os_thread_get_current_handle(iot_os_thread* thread_handle)
+{
+    return IOT_OS_FALSE;
+}
+
 /* Queue */
 iot_os_queue* iot_os_queue_create(int queue_length, int item_size)
 {

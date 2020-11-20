@@ -151,7 +151,7 @@ class Formatter():
 class Nv():
     def prepare_repo(self, sub_path, sn):
         csv_file = "stnv.csv"
-        image_file = "stnv-" + sn + ".img"
+        image_file = "stnv-" + sn + ".bin"
 
         repo_dir = os.path.join(sub_path, "stnv")
 
@@ -181,11 +181,12 @@ class Nv():
             nv_gen_tools = os.path.join(esp_tools_dir, "components/nvs_flash/nvs_partition_generator/nvs_partition_gen.py")
 
         cmd = "python " + nv_gen_tools
-        cmd += " --input " + self._csvfile
-        cmd += " --output " + self._imagefile
-        cmd += " --size 0x4000"
+        cmd += " generate"
+        cmd += " " + self._csvfile
+        cmd += " " + self._imagefile
+        cmd += " 0x4000"
         if "esp32" in esp_tools_dir:
-            cmd += " --version v1"
+            cmd += " --version 1"
         cmd += " > /dev/null"
         result = os.system(cmd)
         if result != 0:

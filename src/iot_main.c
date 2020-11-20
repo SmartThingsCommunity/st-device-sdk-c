@@ -464,6 +464,12 @@ static iot_error_t _do_iot_main_command(struct iot_context *ctx,
 	switch (cmd->cmd_type) {
 		case IOT_COMMNAD_STATE_UPDATE:
 			state_data = (struct iot_state_data *)cmd->param;
+			if (!state_data) {
+				IOT_ERROR("There is no state_data for cmd :%d", cmd->cmd_type);
+				IOT_DUMP_MAIN(ERROR, BASE, 0xDEADBEEF);
+				break;
+			}
+
 			if ((ctx->curr_state > IOT_STATE_UNKNOWN) &&
 					(ctx->curr_state == state_data->iot_state)) {
 				IOT_WARN("Redundant command. state update in progress !");
@@ -879,6 +885,12 @@ static iot_error_t _do_iot_main_command(struct iot_context *ctx,
 
 		case IOT_COMMAND_CHANGE_STATE_TIMEOUT:
 			state_data = (struct iot_state_data *)cmd->param;
+			if (!state_data) {
+				IOT_ERROR("There is no state_data for cmd :%d", cmd->cmd_type);
+				IOT_DUMP_MAIN(ERROR, BASE, 0xDEADBEEF);
+				break;
+			}
+
 			if ((ctx->curr_state == ctx->req_state) || (state_data->iot_state != ctx->req_state)) {
 				IOT_INFO("Already iot-stat updated or mis-matched, can't change timeout : %d for %d",
 					state_data->opt, state_data->iot_state);
@@ -979,67 +991,6 @@ static void _do_cmd_tout_check(struct iot_context *ctx)
 	}
 }
 
-static iot_error_t _publish_event(struct iot_context *ctx, iot_cap_msg_t *cap_msg)
-{
-	int ret;
-	iot_error_t result = IOT_ERROR_NONE;
-	st_mqtt_msg msg;
-
-	if (ctx == NULL) {
-		IOT_ERROR("ctx is not intialized");
-		IOT_DUMP_MAIN(ERROR, BASE, 0xDEADBEEF);
-		return IOT_ERROR_INVALID_ARGS;
-	}
-
-	if (!ctx->iot_reg_data.updated) {
-		IOT_ERROR("Failed as there is no deviceID");
-		IOT_DUMP_MAIN(ERROR, BASE, 0xDEADBEEF);
-		return IOT_ERROR_INVALID_ARGS;
-	}
-
-	if (!cap_msg) {
-		IOT_ERROR("capability msg is NULL");
-		IOT_DUMP_MAIN(ERROR, BASE, 0xDEADBEEF);
-		return IOT_ERROR_INVALID_ARGS;
-	}
-
-	msg.qos = st_mqtt_qos1;
-	msg.retained = false;
-
-	msg.payload = cap_msg->msg;
-	msg.payloadlen = cap_msg->msglen;
-	msg.topic = ctx->mqtt_event_topic;
-
-	IOT_INFO("publish event, topic : %s, payload :\n%s", ctx->mqtt_event_topic, msg.payload);
-
-	ret = st_mqtt_publish_async(ctx->evt_mqttcli, &msg);
-	if (ret) {
-		IOT_WARN("MQTT pub error(%d)", ret);
-		IOT_DUMP_MAIN(WARN, BASE, ret);
-		result = IOT_ERROR_MQTT_PUBLISH_FAIL;
-	}
-
-	return result;
-}
-
-static void _throw_away_all_pub_queue(struct iot_context *ctx)
-{
-	iot_cap_msg_t final_msg;
-
-	if (!ctx) {
-		IOT_ERROR("There is no ctx!!");
-		IOT_DUMP_MAIN(ERROR, BASE, 0xDEADBEEF);
-		return;
-	}
-
-	while (iot_os_queue_receive(ctx->pub_queue,
-				&final_msg, 0) == IOT_OS_TRUE) {
-		if (final_msg.msg) {
-			free(final_msg.msg);
-		}
-	}
-}
-
 static void _throw_away_all_cmd_queue(struct iot_context *ctx)
 {
 	struct iot_command cmd;
@@ -1051,11 +1002,13 @@ static void _throw_away_all_cmd_queue(struct iot_context *ctx)
 		return;
 	}
 
+	cmd.param = NULL;
 	while (iot_os_queue_receive(ctx->cmd_queue,
 				&cmd, 0) == IOT_OS_TRUE) {
 		_clear_cmd_status(ctx, cmd.cmd_type);
 		if (cmd.param) {
 			free(cmd.param);
+			cmd.param = NULL;
 		}
 	}
 
@@ -1078,10 +1031,9 @@ static void _iot_main_task(struct iot_context *ctx)
 	struct iot_command cmd;
 	unsigned char curr_events;
 	iot_error_t err = IOT_ERROR_NONE;
-	iot_cap_msg_t final_msg;
 	struct iot_easysetup_payload easysetup_req;
-	iot_state_t next_state;
 #if !defined(STDK_MQTT_TASK)
+	iot_state_t next_state;
 	unsigned int task_cycle = IOT_MAIN_TASK_DEFAULT_CYCLE;
 #endif
 
@@ -1119,48 +1071,6 @@ static void _iot_main_task(struct iot_context *ctx)
 			iot_os_mutex_unlock(&ctx->iot_cmd_lock);
 		}
 
-		if (curr_events & IOT_EVENT_BIT_CAPABILITY) {
-			final_msg.msg = NULL;
-			final_msg.msglen = 0;
-
-			if (iot_os_queue_receive(ctx->pub_queue,
-					&final_msg, 0) != IOT_OS_FALSE) {
-
-				if (ctx->curr_state < IOT_STATE_CLOUD_CONNECTING) {
-					IOT_WARN("MQTT already disconnected. publish event dropped!!");
-					IOT_WARN("Dropped paylod(size:%d):%s", final_msg.msglen, final_msg.msg);
-					IOT_DUMP_MAIN(WARN, BASE, final_msg.msglen);
-				} else {
-					err = _publish_event(ctx, &final_msg);
-					if (err != IOT_ERROR_NONE) {
-						IOT_ERROR("failed publish event_data : %d", err);
-						IOT_DUMP_MAIN(ERROR, BASE, err);
-
-						if (err == IOT_ERROR_MQTT_PUBLISH_FAIL) {
-							iot_es_disconnect(ctx, IOT_CONNECT_TYPE_COMMUNICATION);
-							IOT_WARN("Report Disconnected..");
-							next_state = IOT_STATE_CLOUD_DISCONNECTED;
-							err = iot_state_update(ctx, next_state, 0);
-							IOT_DUMP_MAIN(WARN, BASE, err);
-
-							IOT_WARN("Try MQTT reconnecting..");
-							_throw_away_all_pub_queue(ctx);
-							next_state = IOT_STATE_CLOUD_CONNECTING;
-							err = iot_state_update(ctx, next_state, 0);
-							IOT_DUMP_MAIN(WARN, BASE, err);
-						}
-					}
-				}
-				if (final_msg.msg)
-					free(final_msg.msg);
-
-				/* Set bit again to check whether the several cmds are already
-				 * stacked up in the queue.
-				 */
-				iot_os_eventgroup_set_bits(ctx->iot_events, IOT_EVENT_BIT_CAPABILITY);
-			}
-		}
-
 		if ((curr_events & IOT_EVENT_BIT_EASYSETUP_REQ) &&
 						ctx->easysetup_req_queue) {
 			easysetup_req.payload = NULL;
@@ -1173,6 +1083,14 @@ static void _iot_main_task(struct iot_context *ctx)
 				if (err != IOT_ERROR_NONE) {
 					IOT_ERROR("failed handle easysetup request step %d: %d\n", easysetup_req.step, err);
 					IOT_DUMP_MAIN(ERROR, BASE, err);
+				} else {
+					/* The SDK can't detect mobile's disconnecting after easy-setupcomplete
+					 * so to guarantee final msg sending to mobile before disconnecting
+					 * add some experiential delay after easy-setupcomplete
+					 */
+					if (easysetup_req.step == IOT_EASYSETUP_STEP_SETUPCOMPLETE) {
+						iot_os_delay(1000); /* delay for easysetup/httpd */
+					}
 				}
 
 				/* Set bit again to check whether the several cmds are already
@@ -1188,34 +1106,50 @@ static void _iot_main_task(struct iot_context *ctx)
 		if (ctx->reg_mqttcli) {
 			int rc = st_mqtt_yield(ctx->reg_mqttcli, 0);
 			if (rc < 0) {
-				iot_es_disconnect(ctx, IOT_CONNECT_TYPE_REGISTRATION);
-				IOT_WARN("Report Disconnected..");
-				next_state = IOT_STATE_CLOUD_DISCONNECTED;
-				err = iot_state_update(ctx, next_state, 0);
-				IOT_DUMP_MAIN(WARN, BASE, err);
+				err = iot_es_disconnect(ctx, IOT_CONNECT_TYPE_REGISTRATION);
+				if (err == IOT_ERROR_NONE) {
+					/* Quickly try to connect without user notification fist */
+					err = iot_es_connect(ctx, IOT_CONNECT_TYPE_REGISTRATION);
+					if (err != IOT_ERROR_NONE) {
+						IOT_WARN("Report Disconnected..");
+						next_state = IOT_STATE_CLOUD_DISCONNECTED;
+						err = iot_state_update(ctx, next_state, 0);
+						IOT_DUMP_MAIN(WARN, BASE, err);
 
-				IOT_WARN("Try MQTT self re-registering..\n");
-				next_state = IOT_STATE_CLOUD_REGISTERING;
-				err = iot_state_update(ctx, next_state, 0);
-				IOT_DUMP_MAIN(WARN, BASE, err);
-				_throw_away_all_pub_queue(ctx);
+						IOT_WARN("Try MQTT self re-registering..\n");
+						next_state = IOT_STATE_CLOUD_REGISTERING;
+						err = iot_state_update(ctx, next_state, 0);
+						IOT_DUMP_MAIN(WARN, BASE, err);
+					}
+				} else {
+					IOT_WARN("REG disconnecting failed(%d) for mqtt_yield", err);
+					IOT_DUMP_MAIN(WARN, BASE, err);
+				}
 			} else if (rc > 0) {
 				task_cycle = 0;
 			}
 		} else if (ctx->evt_mqttcli) {
 			int rc = st_mqtt_yield(ctx->evt_mqttcli, 0);
 			if (rc < 0) {
-				iot_es_disconnect(ctx, IOT_CONNECT_TYPE_COMMUNICATION);
-				IOT_WARN("Report Disconnected..");
-				next_state = IOT_STATE_CLOUD_DISCONNECTED;
-				err = iot_state_update(ctx, next_state, 0);
-				IOT_DUMP_MAIN(WARN, BASE, err);
+				err = iot_es_disconnect(ctx, IOT_CONNECT_TYPE_COMMUNICATION);
+				if (err == IOT_ERROR_NONE) {
+					/* Quickly try to connect without user notification first */
+					err = iot_es_connect(ctx, IOT_CONNECT_TYPE_COMMUNICATION);
+					if (err != IOT_ERROR_NONE) {
+						IOT_WARN("Report Disconnected..");
+						next_state = IOT_STATE_CLOUD_DISCONNECTED;
+						err = iot_state_update(ctx, next_state, 0);
+						IOT_DUMP_MAIN(WARN, BASE, err);
 
-				IOT_WARN("Try MQTT self re-connecting..\n");
-				next_state = IOT_STATE_CLOUD_CONNECTING;
-				err = iot_state_update(ctx, next_state, 0);
-				IOT_DUMP_MAIN(WARN, BASE, err);
-				_throw_away_all_pub_queue(ctx);
+						IOT_WARN("Try MQTT self re-connecting..\n");
+						next_state = IOT_STATE_CLOUD_CONNECTING;
+						err = iot_state_update(ctx, next_state, 0);
+						IOT_DUMP_MAIN(WARN, BASE, err);
+					}
+				} else {
+					IOT_WARN("COMM disconnecting failed(%d) for mqtt_yield", err);
+					IOT_DUMP_MAIN(WARN, BASE, err);
+				}
 			} else if (rc > 0) {
 				task_cycle = 0;
 			}
@@ -1322,16 +1256,6 @@ IOT_CTX* st_conn_init(unsigned char *onboarding_config, unsigned int onboarding_
 		goto error_main_init_usr_evts;
 	}
 
-	/* create msg queue for publish */
-	ctx->pub_queue = iot_os_queue_create(IOT_PUB_QUEUE_LENGTH,
-		sizeof(iot_cap_msg_t));
-
-	if (!ctx->pub_queue) {
-		IOT_ERROR("failed to create Queue for publish data\n");
-		IOT_DUMP_MAIN(ERROR, BASE, IOT_PUB_QUEUE_LENGTH);
-		goto error_main_init_pub_q;
-	}
-
 	/* create msg eventgroup for each queue handling */
 	ctx->iot_events = iot_os_eventgroup_create();
 	if (!ctx->iot_events) {
@@ -1389,9 +1313,6 @@ error_main_cmd_mutex_init:
 	iot_os_eventgroup_delete(ctx->iot_events);
 
 error_main_init_events:
-	iot_os_queue_delete(ctx->pub_queue);
-
-error_main_init_pub_q:
 	iot_os_eventgroup_delete(ctx->usr_events);
 
 error_main_init_usr_evts:
@@ -1655,8 +1576,6 @@ static iot_error_t _do_state_updating(struct iot_context *ctx,
 		iot_os_eventgroup_set_bits(ctx->usr_events,
 			IOT_USR_INTERACT_BIT_PROV_DONE);
 
-		iot_os_delay(1000); /* delay for easysetup/httpd */
-
 		iot_err = iot_wifi_ctrl_request(ctx, IOT_WIFI_MODE_STATION);
 		if (iot_err != IOT_ERROR_NONE) {
 			IOT_ERROR("Can't send WIFI mode command(%d)", iot_err);
@@ -1709,6 +1628,17 @@ static iot_error_t _do_state_updating(struct iot_context *ctx,
 		 */
 		IOT_WARN("Iot-core task will be stopped, needed ext-triggering\n");
 		IOT_DUMP_MAIN_ARG2(WARN, STATE, new_state, iot_err);
+
+		/* if there is previous connection, disconnect it first. */
+		if (ctx->reg_mqttcli != NULL) {
+			IOT_INFO("There is active registering, disconnect it first.\n");
+			iot_es_disconnect(ctx, IOT_CONNECT_TYPE_REGISTRATION);
+		}
+
+		if (ctx->evt_mqttcli != NULL) {
+			IOT_INFO("There is previous connecting, disconnect it first.\n");
+			iot_es_disconnect(ctx, IOT_CONNECT_TYPE_COMMUNICATION);
+		}
 
 		/* wifi off */
 		iot_err = iot_wifi_ctrl_request(ctx, IOT_WIFI_MODE_OFF);
@@ -1800,9 +1730,8 @@ do { \
 #define IS_CTX_VALID(ctx) ( \
 	ctx ? ( \
 	ctx->cmd_queue ? ( \
-	ctx->pub_queue ? ( \
 	ctx->usr_events ? ( \
-	ctx->iot_events ? true : false) : false) : false) : false) : false)
+	ctx->iot_events ? true : false) : false) : false) : false)
 
 int st_conn_start(IOT_CTX *iot_ctx, st_status_cb status_cb,
 		iot_status_t maps, void *usr_data, iot_pin_t *pin_num)
@@ -1811,9 +1740,21 @@ int st_conn_start(IOT_CTX *iot_ctx, st_status_cb status_cb,
 	iot_error_t iot_err;
 	struct iot_context *ctx = (struct iot_context*)iot_ctx;
 	unsigned char curr_events;
+	iot_os_thread curr_thread;
 
 	if (!IS_CTX_VALID(ctx))
 		return IOT_ERROR_INVALID_ARGS;
+
+	if (iot_os_thread_get_current_handle(&curr_thread) == IOT_OS_TRUE) {
+		if (curr_thread == ctx->main_thread) {
+			IOT_WARN("Can't support it on same thread!!");
+			IOT_DUMP_MAIN(ERROR, BASE, 0xDEADBABE);
+			return IOT_ERROR_BAD_REQ;
+		}
+	} else {
+		IOT_WARN("Can't get thread info. Please check it called same thread or not!!");
+		IOT_DUMP_MAIN(WARN, BASE, 0xDEADBABE);
+	}
 
 	if (iot_os_mutex_lock(&ctx->st_conn_lock) != IOT_OS_TRUE)
 		return IOT_ERROR_BAD_REQ;
@@ -1891,9 +1832,21 @@ int st_conn_cleanup(IOT_CTX *iot_ctx, bool reboot)
 	iot_error_t iot_err;
 	unsigned char curr_events;
 	struct iot_context *ctx = (struct iot_context*)iot_ctx;
+	iot_os_thread curr_thread;
 
 	if (!IS_CTX_VALID(ctx))
 		return IOT_ERROR_INVALID_ARGS;
+
+	if (iot_os_thread_get_current_handle(&curr_thread) == IOT_OS_TRUE) {
+		if (curr_thread == ctx->main_thread) {
+			IOT_WARN("Can't support it on same thread!!");
+			IOT_DUMP_MAIN(ERROR, BASE, 0xDEADBABE);
+			return IOT_ERROR_BAD_REQ;
+		}
+	} else {
+		IOT_WARN("Can't get thread info. Please check it called same thread or not!!");
+		IOT_DUMP_MAIN(WARN, BASE, 0xDEADBABE);
+	}
 
 	if (iot_os_mutex_lock(&ctx->st_conn_lock) != IOT_OS_TRUE)
 		return IOT_ERROR_BAD_REQ;
@@ -1940,10 +1893,22 @@ int st_conn_start_ex(IOT_CTX *iot_ctx, iot_ext_args_t *ext_args)
 	iot_error_t iot_err;
 	struct iot_context *ctx = (struct iot_context*)iot_ctx;
 	unsigned char curr_events;
+	iot_os_thread curr_thread;
 
 	if (!IS_CTX_VALID(ctx) || !ext_args) {
 		IOT_ERROR("invalid parameters\n");
 		return IOT_ERROR_INVALID_ARGS;
+	}
+
+	if (iot_os_thread_get_current_handle(&curr_thread) == IOT_OS_TRUE) {
+		if (curr_thread == ctx->main_thread) {
+			IOT_WARN("Can't support it on same thread!!");
+			IOT_DUMP_MAIN(ERROR, BASE, 0xDEADBABE);
+			return IOT_ERROR_BAD_REQ;
+		}
+	} else {
+		IOT_WARN("Can't get thread info. Please check it called same thread or not!!");
+		IOT_DUMP_MAIN(WARN, BASE, 0xDEADBABE);
 	}
 
 	if ((ext_args->start_pt != IOT_STATUS_CONNECTING) &&
@@ -1976,17 +1941,6 @@ int st_conn_start_ex(IOT_CTX *iot_ctx, iot_ext_args_t *ext_args)
 		iot_os_mutex_lock(&ctx->iot_cmd_lock);
 		_throw_away_all_cmd_queue(ctx);
 		iot_os_mutex_unlock(&ctx->iot_cmd_lock);
-
-		/* if there is previous connection, disconnect it first. */
-		if (ctx->evt_mqttcli != NULL) {
-			IOT_INFO("There is previous connecting, disconnect it first.\n");
-			iot_es_disconnect(ctx, IOT_CONNECT_TYPE_COMMUNICATION);
-		}
-
-		if (ctx->reg_mqttcli != NULL) {
-			IOT_INFO("There is active registering, disconnect it first.\n");
-			iot_es_disconnect(ctx, IOT_CONNECT_TYPE_REGISTRATION);
-		}
 
 		iot_os_eventgroup_clear_bits(ctx->usr_events, IOT_USR_INTERACT_BIT_STATE_UNKNOWN);
 

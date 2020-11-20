@@ -1,6 +1,6 @@
 /* ***************************************************************************
  *
- * Copyright 2019 Samsung Electronics All Rights Reserved.
+ * Copyright 2020 Samsung Electronics All Rights Reserved.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -16,25 +16,8 @@
  *
  ****************************************************************************/
 
-#include "iot_main.h"
+#ifndef _IOT_BSP_CUSTOM_H_
+#define _IOT_BSP_CUSTOM_H_
+#include "sdkconfig.h"
 
-iot_error_t iot_easysetup_init(struct iot_context *ctx)
-{
-	return IOT_ERROR_NONE;
-}
-
-void iot_easysetup_deinit(struct iot_context *ctx)
-{
-
-}
-
-iot_error_t iot_easysetup_create_ssid(struct iot_devconf_prov_data *devconf, char *ssid, size_t ssid_len)
-{
-	snprintf(ssid, ssid_len, "posix_testing");
-	return IOT_ERROR_NONE;
-}
-
-iot_error_t iot_easysetup_request_handler(struct iot_context *ctx, struct iot_easysetup_payload request)
-{
-	return IOT_ERROR_NONE;
-}
+#endif /* _IOT_BSP_CUSTOM_H_ */

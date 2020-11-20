@@ -78,7 +78,11 @@ enum {
 	COSE_KEY_TYPE_SYMMETRIC = 4,
 };
 
+/*
+ * https://tools.ietf.org/html/rfc8152#section-8
+ */
 enum {
+	COSE_ALGORITHM_ES256 = -7,
 	COSE_ALGORITHM_EdDSA = -8,
 };
 
@@ -131,6 +135,10 @@ retry:
 	case IOT_SECURITY_KEY_TYPE_ED25519:
 		cbor_encode_int(&map, COSE_HEADER_ALG);
 		cbor_encode_negative_int(&map, -COSE_ALGORITHM_EdDSA);
+		break;
+	case IOT_SECURITY_KEY_TYPE_ECCP256:
+		cbor_encode_int(&map, COSE_HEADER_ALG);
+		cbor_encode_negative_int(&map, -COSE_ALGORITHM_ES256);
 		break;
 	default:
 		IOT_ERROR("'%d' is not a supported type", key_type);
@@ -638,6 +646,45 @@ static char * _iot_jwt_header_ed25519(const iot_wt_params_t *wt_params)
 	return object_str;
 }
 
+static char * _iot_jwt_header_eccp256(const iot_wt_params_t *wt_params)
+{
+	JSON_H *object;
+	char *object_str;
+
+	if (!wt_params) {
+		IOT_ERROR("wt_params is null");
+		return NULL;
+	}
+
+	if (!wt_params->sn) {
+		IOT_ERROR("sn in params is null");
+		return NULL;
+	}
+
+	object = JSON_CREATE_OBJECT();
+	if (!object) {
+		IOT_ERROR("JSON_CREATE_OBJECT returned NULL");
+		return NULL;
+	}
+
+	JSON_ADD_ITEM_TO_OBJECT(object, "alg", JSON_CREATE_STRING("ES256"));
+	JSON_ADD_ITEM_TO_OBJECT(object, "kty", JSON_CREATE_STRING("EC"));
+	JSON_ADD_ITEM_TO_OBJECT(object, "crv", JSON_CREATE_STRING("P256"));
+	JSON_ADD_ITEM_TO_OBJECT(object, "typ", JSON_CREATE_STRING("JWT"));
+	JSON_ADD_ITEM_TO_OBJECT(object, "ver", JSON_CREATE_STRING("0.0.1"));
+	JSON_ADD_ITEM_TO_OBJECT(object, "kid", JSON_CREATE_STRING(wt_params->sn));
+
+	object_str = JSON_PRINT(object);
+	if (!object_str) {
+		IOT_ERROR("JSON_PRINT returned NULL");
+		JSON_DELETE(object);
+		return NULL;
+	}
+
+	JSON_DELETE(object);
+
+	return object_str;
+}
 
 static char * _iot_jwt_create_header(const iot_wt_params_t *wt_params, iot_security_key_type_t key_type)
 {
@@ -649,6 +696,9 @@ static char * _iot_jwt_create_header(const iot_wt_params_t *wt_params, iot_secur
 		break;
 	case IOT_SECURITY_KEY_TYPE_ED25519:
 		object_str = _iot_jwt_header_ed25519(wt_params);
+		break;
+	case IOT_SECURITY_KEY_TYPE_ECCP256:
+		object_str = _iot_jwt_header_eccp256(wt_params);
 		break;
 	default:
 		IOT_ERROR("pubkey type (%d) is not supported", key_type);

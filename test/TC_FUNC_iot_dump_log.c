@@ -21,6 +21,7 @@
 #include <cmocka.h>
 #include <string.h>
 #include <iot_debug.h>
+#include <iot_log_file.h>
 #include <iot_dump_log.h>
 #include <iot_internal.h>
 
@@ -39,6 +40,17 @@ static char sample_device_info[] = {
         "}"
 };
 
+static void write_log_lines(int number_of_lines)
+{
+    static int count = 0;
+
+    while (number_of_lines > 0) {
+        iot_dump_log(0xf, 0xffffffff, 0, 0);
+        number_of_lines--;
+        count++;
+    }
+}
+
 void TC_iot_dump_create_dump_state_failure(void **state)
 {
     struct iot_context *context = NULL;
@@ -47,6 +59,11 @@ void TC_iot_dump_create_dump_state_failure(void **state)
     size_t max_log_dump_size = 0;
     int mode = 0;
     iot_error_t err;
+#ifdef CONFIG_STDK_IOT_CORE_LOG_FILE
+    int malloc_test_count = 4;
+#else
+    int malloc_test_count = 3;
+#endif
 
     // Given :  max_log_dump_size is smaller than minimum
     max_log_dump_size = 1;
@@ -57,7 +74,7 @@ void TC_iot_dump_create_dump_state_failure(void **state)
 
     mode = IOT_DUMP_MODE_NEED_BASE64 | IOT_DUMP_MODE_NEED_DUMP_STATE;
     max_log_dump_size = 500;
-    for (int i = 0; i < 3; i++) {
+    for (int i = 0; i < malloc_test_count; i++) {
         // Given: malloc failure
         do_not_use_mock_iot_os_malloc_failure();
         set_mock_iot_os_malloc_failure_with_index(i);
@@ -69,7 +86,7 @@ void TC_iot_dump_create_dump_state_failure(void **state)
     do_not_use_mock_iot_os_malloc_failure();
 }
 
-void TC_iot_dump_create_dump_state_success(void **state)
+static void create_dump_test()
 {
     struct iot_context *context = NULL;
     char *buf = NULL;
@@ -107,6 +124,35 @@ void TC_iot_dump_create_dump_state_success(void **state)
     iot_api_device_info_mem_free(device_info);
     free(context);
 }
+
+void TC_iot_dump_create_dump_state_success(void **state)
+{
+    iot_error_t iot_err;
+    int log_file_type;
+
+    // test with no log file condition
+    create_dump_test();
+
+#ifdef CONFIG_STDK_IOT_CORE_LOG_FILE
+#if defined(CONFIG_STDK_IOT_CORE_LOG_FILE_RAM_ONLY)
+    log_file_type = RAM_ONLY;
+#elif defined(CONFIG_STDK_IOT_CORE_LOG_FILE_FLASH_WITH_RAM)
+    log_file_type = FLASH_WITH_RAM;
+#else
+#error "Need to choice STDK_IOT_CORE_LOG_FILE_TYPE first"
+#endif
+
+    iot_log_file_init(log_file_type);
+    // test with different log message size condition
+    for(int i = 0; i < 10; i++) {
+        write_log_lines(1<<i);
+        create_dump_test();
+        iot_log_file_remove(log_file_type);
+    }
+    iot_log_file_exit();
+#endif //CONFIG_STDK_IOT_CORE_LOG_FILE
+}
+
 void TC_iot_dump_log(void **state)
 {
     iot_dump_log(IOT_DEBUG_LEVEL_ERROR, 0xffffffff, 0, 0);
@@ -114,3 +160,4 @@ void TC_iot_dump_log(void **state)
     iot_dump_log(IOT_DEBUG_LEVEL_INFO, 0xffffffff, 0, 0);
     iot_dump_log(IOT_DEBUG_LEVEL_DEBUG, 0xffffffff, 0, 0);
 }
+
