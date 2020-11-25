@@ -232,9 +232,9 @@ void _iot_mqtt_registration_client_callback(st_mqtt_event event, void *event_dat
 				if (!strncmp(md->topic, IOT_SUB_TOPIC_REGISTRATION_PREFIX, IOT_SUB_TOPIC_REGISTRATION_PREFIX_SIZE)) {
 					mqtt_reg_sub_cb(md, user_data);
 				} else {
-					IOT_WARN("No msg delivery handler for %s", md->topic);
+					IOT_WARN("No msg delivery handler for %s", (char *)md->topic);
 				}
-				IOT_DEBUG("raw msg (len:%d) : %s", md->payloadlen, md->payload);
+				IOT_DEBUG("raw msg (len:%d) : %s", md->payloadlen, (char *)md->payload);
 				break;
 			}
 		default:
@@ -323,9 +323,9 @@ void _iot_mqtt_signin_client_callback(st_mqtt_event event, void *event_data, voi
 				} else if (!strncmp(md->topic, IOT_SUB_TOPIC_NOTIFICATION_PREFIX, IOT_SUB_TOPIC_NOTIFICATION_PREFIX_SIZE)) {
 					iot_noti_sub_cb(ctx, mqtt_payload);
 				} else {
-					IOT_WARN("No msg delivery handler for %s", md->topic);
+					IOT_WARN("No msg delivery handler for %s", (char *)md->topic);
 				}
-				IOT_DEBUG("raw msg (len:%d) : %s", md->payloadlen, mqtt_payload);
+				IOT_DEBUG("raw msg (len:%d) : %s", md->payloadlen, (char *)mqtt_payload);
 				break;
 			}
 			break;
@@ -441,12 +441,12 @@ retry:
 		cbor_encode_text_stringz(&root_map, "provisioningTs");
 		cbor_encode_int(&root_map, tv.tv_sec);
 	}
+	/* firmwareVersion is mandatory on the device_info */
+	cbor_encode_text_stringz(&root_map, "firmwareVersion");
+	cbor_encode_text_stringz(&root_map, dev_info->firmware_version);
 
 	/* Add optional information if it available */
 	if (dev_info->opt_info) {
-		/* firmwareVersion is mandatory on the device_info */
-		cbor_encode_text_stringz(&root_map, "firmwareVersion");
-		cbor_encode_text_stringz(&root_map, dev_info->firmware_version);
 
 		if (dev_info->model_number) {
 			cbor_encode_text_stringz(&root_map, "modelNumber");
@@ -467,20 +467,20 @@ retry:
 			cbor_encode_text_stringz(&root_map, "manufacturerCode");
 			cbor_encode_text_stringz(&root_map, dev_info->manufacturer_code);
 		}
-
-		if (iot_os_get_os_name()) {
-			cbor_encode_text_stringz(&root_map, "osType");
-			cbor_encode_text_stringz(&root_map, iot_os_get_os_name());
-		}
-
-		if (iot_os_get_os_version_string()) {
-			cbor_encode_text_stringz(&root_map, "osVersion");
-			cbor_encode_text_stringz(&root_map, iot_os_get_os_version_string());
-		}
-
-		cbor_encode_text_stringz(&root_map, "stdkVersion");
-		cbor_encode_text_stringz(&root_map, STDK_VERSION_STRING);
 	}
+
+	if (iot_os_get_os_name() && strlen(iot_os_get_os_name()) > 0) {
+		cbor_encode_text_stringz(&root_map, "osType");
+		cbor_encode_text_stringz(&root_map, iot_os_get_os_name());
+	}
+
+	if (iot_os_get_os_version_string() && strlen(iot_os_get_os_version_string()) > 0) {
+		cbor_encode_text_stringz(&root_map, "osVersion");
+		cbor_encode_text_stringz(&root_map, iot_os_get_os_version_string());
+	}
+
+	cbor_encode_text_stringz(&root_map, "stdkVersion");
+	cbor_encode_text_stringz(&root_map, STDK_VERSION_STRING);
 
 	/* dip is optional values */
 	if (dip_id) {
@@ -603,12 +603,12 @@ void *_iot_es_mqtt_registration_json(struct iot_context *ctx,
 			JSON_CREATE_NUMBER(tv.tv_sec));
 	}
 
+	/* firmwareVersion is mandatory on the device_info */
+	JSON_ADD_ITEM_TO_OBJECT(root, "firmwareVersion",
+		JSON_CREATE_STRING(dev_info->firmware_version));
+
 	/* Add optional information if it available */
 	if (dev_info->opt_info) {
-		/* firmwareVersion is mandatory on the device_info */
-		JSON_ADD_ITEM_TO_OBJECT(root, "firmwareVersion",
-			JSON_CREATE_STRING(dev_info->firmware_version));
-
 		if (dev_info->model_number) {
 			JSON_ADD_ITEM_TO_OBJECT(root, "modelNumber",
 				JSON_CREATE_STRING(dev_info->model_number));
@@ -628,21 +628,21 @@ void *_iot_es_mqtt_registration_json(struct iot_context *ctx,
 			JSON_ADD_ITEM_TO_OBJECT(root, "manufacturerCode",
 				JSON_CREATE_STRING(dev_info->manufacturer_code));
 		}
-
-		if (iot_os_get_os_name()) {
-			JSON_ADD_ITEM_TO_OBJECT(root, "osType",
-				JSON_CREATE_STRING(iot_os_get_os_name()));
-		}
-
-		if (iot_os_get_os_version_string()) {
-			JSON_ADD_ITEM_TO_OBJECT(root, "osVersion",
-				JSON_CREATE_STRING(iot_os_get_os_version_string()));
-		}
-
-		/* STDK release version */
-		JSON_ADD_ITEM_TO_OBJECT(root, "stdkVersion",
-			JSON_CREATE_STRING(STDK_VERSION_STRING));
 	}
+
+	if (iot_os_get_os_name() && strlen(iot_os_get_os_name()) > 0) {
+		JSON_ADD_ITEM_TO_OBJECT(root, "osType",
+			JSON_CREATE_STRING(iot_os_get_os_name()));
+	}
+
+	if (iot_os_get_os_version_string() && strlen(iot_os_get_os_version_string()) > 0) {
+		JSON_ADD_ITEM_TO_OBJECT(root, "osVersion",
+			JSON_CREATE_STRING(iot_os_get_os_version_string()));
+	}
+
+	/* STDK release version */
+	JSON_ADD_ITEM_TO_OBJECT(root, "stdkVersion",
+		JSON_CREATE_STRING(STDK_VERSION_STRING));
 
 	/* dip is optional values */
 	if (dip_id) {

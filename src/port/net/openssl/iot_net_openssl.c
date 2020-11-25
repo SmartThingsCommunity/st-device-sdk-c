@@ -45,12 +45,20 @@ static void _iot_net_show_status(iot_net_interface_t *n)
 	FD_SET(n->context.socket, &rfdset);
 	FD_SET(n->context.socket, &wfdset);
 
-	select(n->context.socket + 1, &rfdset, &wfdset, NULL, &timeout);
-	getsockopt(n->context.socket, SOL_SOCKET, SO_ERROR, &sock_err, &err_len);
-	gettimeofday(&tv, NULL);
+	if (select(n->context.socket + 1, &rfdset, &wfdset, NULL, &timeout) < 0) {
+		IOT_ERROR("failed to select :%d/%d", (n->context.socket + 1), errno);
+	}
+	if (getsockopt(n->context.socket, SOL_SOCKET, SO_ERROR, &sock_err, &err_len) < 0) {
+		IOT_ERROR("failed to getsockopt :%d/%d", n->context.socket, errno);
+	}
+	if (gettimeofday(&tv, NULL) < 0) {
+		IOT_ERROR("failed to gettimeofday :%d", errno);
+	}
 
-	IOT_INFO("[%ld] Socket Network Status readable %d writable %d sock_err %d errno %d", tv.tv_sec,
-			FD_ISSET(n->context.socket, &rfdset), FD_ISSET(n->context.socket, &wfdset), sock_err, errno);
+	IOT_INFO("[%ld] Socket Network Status: sockfd %d readable %d writable %d sock_err %d errno %d",
+			tv.tv_sec, n->context.socket,
+			FD_ISSET(n->context.socket, &rfdset),
+			FD_ISSET(n->context.socket, &wfdset), sock_err, errno);
 }
 
 static int _iot_net_select(iot_net_interface_t *n, unsigned int timeout_ms)
@@ -140,8 +148,12 @@ static int _iot_net_ssl_write(iot_net_interface_t *n, unsigned char *buffer, int
 		long expired = 0;
 		socklen_t err_len = sizeof(error);
 		expired = iot_os_timer_left_ms(timer);
-		getsockopt(n->context.socket, SOL_SOCKET, SO_ERROR, &error, &err_len);
-		gettimeofday(&tv, NULL);
+		if (getsockopt(n->context.socket, SOL_SOCKET, SO_ERROR, &error, &err_len) < 0) {
+			IOT_ERROR("failed to getsockopt :%d/%d", n->context.socket, errno);
+		}
+		if (gettimeofday(&tv, NULL) < 0) {
+			IOT_ERROR("failed to gettimeofday :%d", errno);
+		}
 		IOT_ERROR("[%ld] Socket Network Error write_sel_rc %d sock_err %d errno %d select expired=%ld",
 			tv.tv_sec, ret, error, errno, expired);
 		return ret;

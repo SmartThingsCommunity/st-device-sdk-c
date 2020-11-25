@@ -396,15 +396,37 @@ iot_error_t iot_nv_get_wifi_prov_data(struct iot_wifi_prov_data* wifi_prov)
 	size_t read_len = 0;
 	ret = _iot_nv_read_data(IOT_NVD_AP_BSSID, data, DATA_SIZE, &read_len);
 	if (ret == IOT_ERROR_NONE) {
-		// bssid : 6byte chunk data
-		if (read_len < IOT_NVD_MAX_BSSID_LEN) {
-			memset(wifi_prov->bssid.addr, '\0', IOT_NVD_MAX_BSSID_LEN);
-			ret = IOT_ERROR_NONE;
-		} else {
+		if (read_len >= IOT_WIFI_PROV_MAC_STR_LEN) {
+			/* bssid : new style, 17byte string case */
+			memcpy(wifi_prov->mac_str, data, IOT_WIFI_PROV_MAC_STR_LEN);
+			wifi_prov->mac_str[IOT_WIFI_PROV_MAC_STR_LEN] = '\0';
+			ret = iot_util_convert_str_mac(wifi_prov->mac_str, &wifi_prov->bssid);
+			if (ret != IOT_ERROR_NONE) {
+				IOT_INFO("Saved AP BSSID is invalid string(%d):%s",
+					ret, wifi_prov->mac_str);
+				memset(wifi_prov->mac_str, '\0', sizeof(wifi_prov->mac_str));
+				memset(wifi_prov->bssid.addr, 0, sizeof(wifi_prov->bssid.addr));
+				ret = IOT_ERROR_NONE;
+			}
+		} else if (read_len >= IOT_NVD_MAX_BSSID_LEN) {
+			/* bssid : old style, 6byte chunk data case */
 			memcpy(wifi_prov->bssid.addr, data, IOT_NVD_MAX_BSSID_LEN);
+			ret = iot_util_convert_mac_str(&wifi_prov->bssid, wifi_prov->mac_str,
+					sizeof(wifi_prov->mac_str));
+			if (ret != IOT_ERROR_NONE) {
+				IOT_INFO("Saved AP BSSID is invalid chunk(%d)", ret);
+				memset(wifi_prov->mac_str, '\0', sizeof(wifi_prov->mac_str));
+				memset(wifi_prov->bssid.addr, 0, sizeof(wifi_prov->bssid.addr));
+				ret = IOT_ERROR_NONE;
+			}
+		} else {
+			IOT_INFO("Saved AP BSSID is invalid length:%u", (unsigned int)read_len);
+			memset(wifi_prov->mac_str, '\0', sizeof(wifi_prov->mac_str));
+			memset(wifi_prov->bssid.addr, 0, sizeof(wifi_prov->bssid.addr));
 		}
 	} else if (ret == IOT_ERROR_NV_DATA_NOT_EXIST) {
-		memset(wifi_prov->bssid.addr, '\0', IOT_NVD_MAX_BSSID_LEN);
+		memset(wifi_prov->mac_str, '\0', sizeof(wifi_prov->mac_str));
+		memset(wifi_prov->bssid.addr, 0, sizeof(wifi_prov->bssid.addr));
 		ret = IOT_ERROR_NONE;
 	} else {
 		IOT_DEBUG("AP BSSID : read failed");
@@ -502,16 +524,20 @@ iot_error_t iot_nv_set_wifi_prov_data(struct iot_wifi_prov_data* wifi_prov)
 	}
 
 	/* IOT_NVD_AP_BSSID */
-	size = IOT_NVD_MAX_BSSID_LEN;
-	memcpy(data, wifi_prov->bssid.addr, size);
-	data[size] = '\0';
+	if (wifi_prov->mac_str[0] == '\0') {
+		iot_nv_erase(IOT_NVD_AP_BSSID);
+	} else {
+		size = IOT_WIFI_PROV_MAC_STR_LEN;
+		memcpy(data, wifi_prov->mac_str, size);
+		data[size] = '\0';
 
-	ret = _iot_nv_write_data(IOT_NVD_AP_BSSID, data, size);
-	if (ret != IOT_ERROR_NONE) {
-		IOT_DEBUG("AP BSSID : write failed");
-		IOT_DUMP(IOT_DEBUG_LEVEL_DEBUG, IOT_DUMP_NV_DATA_WRITE_FAIL, IOT_NVD_AP_BSSID, __LINE__);
-		ret = IOT_ERROR_NV_DATA_ERROR;
-		goto exit;
+		ret = _iot_nv_write_data(IOT_NVD_AP_BSSID, data, size);
+		if (ret != IOT_ERROR_NONE) {
+			IOT_DEBUG("AP BSSID : write failed");
+			IOT_DUMP(IOT_DEBUG_LEVEL_DEBUG, IOT_DUMP_NV_DATA_WRITE_FAIL, IOT_NVD_AP_BSSID, __LINE__);
+			ret = IOT_ERROR_NV_DATA_ERROR;
+			goto exit;
+		}
 	}
 
 	/* IOT_NVD_AP_AUTH_TYPE */
@@ -1017,7 +1043,7 @@ iot_error_t iot_nv_get_static_certificate(iot_security_cert_id_t cert_id, iot_se
 		cert_len = st_root_ca_len;
 		break;
 	default:
-		IOT_ERROR("'%s' is not a supported static certificate");
+		IOT_ERROR("%d is not a supported static certificate", cert_id);
 		return IOT_ERROR_NV_DATA_ERROR;
 	}
 
@@ -1066,7 +1092,7 @@ iot_error_t iot_nv_get_data_from_device_info(iot_nvd_t nv_id, iot_security_buffe
 		di_name = name_serialNumber;
 		break;
 	default:
-		IOT_ERROR("'%s' is not a device info nv");
+		IOT_ERROR("%d is not a device info nv", nv_id);
 		return IOT_ERROR_NV_DATA_ERROR;
 	}
 

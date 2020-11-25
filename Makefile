@@ -3,13 +3,16 @@ TOPDIR	:= $(CURDIR)
 include stdkconfig
 include $(TOPDIR)/make/common.mk
 
+STDK_CFLAGS := $(foreach STDK_CONFIG, $(STDK_CONFIGS), -DCONFIG_$(STDK_CONFIG))
+
 BSP_DIR = src/port/bsp/posix
 OS_DIR = src/port/os/posix
-ifneq ($(findstring CONFIG_STDK_IOT_CORE_NET_MBEDTLS, $(CFLAGS_CONFIG)),)
+ifneq ($(findstring STDK_IOT_CORE_NET_MBEDTLS, $(STDK_CONFIGS)),)
 NET_DIR = src/port/net/mbedtls
 else
 NET_DIR = src/port/net/openssl
 endif
+
 CRYPTO_DIR = src/crypto
 SECURITY_DIR = src/security
 EASYSETUP_DIR = src/easysetup
@@ -18,8 +21,10 @@ BUILD_DIR = $(TOPDIR)/build
 OUTPUT_DIR = $(TOPDIR)/output
 CBOR_DIR = src/deps/cbor/tinycbor/src
 
+
 CFLAGS	:= -std=c99 -D_GNU_SOURCE
-CFLAGS	+= $(CFLAGS_CONFIG)
+CFLAGS	+= $(STDK_CFLAGS)
+
 
 INCS	:= -I/usr/include -Isrc/include -Isrc/include/mqtt -Isrc/include/os -Isrc/include/bsp -Isrc/include/external -I$(NET_DIR)
 INCS	+= -Isrc/include/security
@@ -31,16 +36,23 @@ SRCS	+= $(wildcard $(BSP_DIR)/*.c)
 SRCS	+= $(wildcard $(OS_DIR)/*.c)
 SRCS	+= $(wildcard $(NET_DIR)/*.c)
 SRCS	+= $(wildcard $(CRYPTO_DIR)/*.c)
-SRCS	+= $(EASYSETUP_DIR)/iot_easysetup_st_mqtt.c \
-			$(wildcard $(EASYSETUP_DIR)/posix_testing/*.c)
+SRCS	+= $(EASYSETUP_DIR)/iot_easysetup_st_mqtt.c
+ifneq ($(findstring STDK_IOT_CORE_EASYSETUP_HTTP, $(STDK_CONFIGS)),)
+SRCS	+= $(wildcard $(EASYSETUP_DIR)/http/*.c)
+endif
+ifneq ($(findstring STDK_IOT_CORE_EASYSETUP_X509, $(STDK_CONFIGS)),)
+SRCS	+= $(wildcard $(EASYSETUP_DIR)/http/tls/*.c)
+else ifneq ($(findstring STDK_IOT_CORE_EASYSETUP_HTTP_USE_SOCKET_API, $(STDK_CONFIGS)),)
+SRCS	+= $(wildcard $(EASYSETUP_DIR)/http/tcp/*.c)
+endif
 SRCS	+= $(wildcard $(MQTT_DIR)/client/*.c)
 SRCS	+= $(wildcard $(MQTT_DIR)/packet/*.c)
 SRCS	+= $(wildcard $(SECURITY_DIR)/*.c)
-ifneq ($(findstring, "CONFIG_STDK_IOT_CORE_SECURITY_BACKEND_SOFTWARE", $(CFLAGS_CONFIG)), '')
+ifneq ($(findstring STDK_IOT_CORE_SECURITY_BACKEND_SOFTWARE, $(STDK_CONFIGS)),)
 SRCS	+= $(wildcard $(SECURITY_DIR)/backend/software/*.c)
 endif
 SRCS	+= $(wildcard $(SECURITY_DIR)/helper/libsodium/*.c)
-ifneq ($(findstring, "CONFIG_STDK_IOT_CORE_USE_MBEDTLS", $(CFLAGS_CONFIG)), '')
+ifneq ($(findstring STDK_IOT_CORE_USE_MBEDTLS, $(STDK_CONFIGS)),)
 SRCS	+= $(wildcard $(SECURITY_DIR)/helper/mbedtls/*.c)
 endif
 
@@ -54,19 +66,16 @@ export BUILD_DIR
 export PREFIX
 
 JSON_DIR = src/deps/json
-CURL_DIR = src/deps/curl
 LIBSODIUM_DIR = src/deps/libsodium
 MBEDTLS_DIR = src/deps/mbedtls
 
-DEPS_DIRS = $(JSON_DIR) $(CURL_DIR) $(LIBSODIUM_DIR) $(MBEDTLS_DIR)
+DEPS_DIRS = $(JSON_DIR) $(LIBSODIUM_DIR) $(MBEDTLS_DIR)
 
 result	:= $(shell git submodule update --init $(JSON_DIR))
-result	:= $(shell git submodule update --init $(CURL_DIR))
 result	:= $(shell git submodule update --init $(LIBSODIUM_DIR))
 result	:= $(shell git submodule update --init $(MBEDTLS_DIR))
 
 INCS	+= -I$(JSON_DIR)/cJSON
-INCS	+= -I$(CURL_DIR)/curl/include
 INCS	+= -I$(MBEDTLS_DIR)/mbedtls/include
 INCS	+= -I$(LIBSODIUM_DIR)/libsodium/src/libsodium/include -I$(LIBSODIUM_DIR)/libsodium/src/libsodium/include/sodium -I$(LIBSODIUM_DIR)/port/include
 

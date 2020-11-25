@@ -83,7 +83,7 @@ iot_error_t es_msg_parser(char *rx_buffer, size_t rx_buffer_len, char **payload,
 	if ((method == NULL) || (uri == NULL) || (prot == NULL))
 	{
 		IOT_ERROR("invalid data reported");
-		return IOT_ERROR_INVALID_ARGS;
+		return IOT_ERROR_EASYSETUP_HTTP_PARSE_FAIL;
 	}
 
 	if (!strcmp(method,  "GET")) {
@@ -141,7 +141,7 @@ iot_error_t es_msg_parser(char *rx_buffer, size_t rx_buffer_len, char **payload,
 		}
 
 		if (p_body == NULL || post_content_len < 0) {
-			return IOT_ERROR_INVALID_ARGS;
+			return IOT_ERROR_EASYSETUP_HTTP_PARSE_FAIL;
 		}
 
 		if (post_content_len == 0) {
@@ -153,7 +153,7 @@ iot_error_t es_msg_parser(char *rx_buffer, size_t rx_buffer_len, char **payload,
 				*content_len = post_content_len;
 			} else {
 				IOT_ERROR("[POST] out-of-range");
-				return IOT_ERROR_INVALID_ARGS;
+				return IOT_ERROR_EASYSETUP_HTTP_PARSE_FAIL;
 			}
 		}
 		*type = D2D_POST;

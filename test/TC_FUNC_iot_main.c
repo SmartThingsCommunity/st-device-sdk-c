@@ -177,13 +177,11 @@ void TC_st_conn_init_success(void **state)
     assert_non_null(internal_context->state_timer);
     assert_non_null(internal_context->cmd_queue);
     assert_non_null(internal_context->usr_events);
-    assert_non_null(internal_context->pub_queue);
     assert_non_null(internal_context->iot_events);
     assert_non_null(internal_context->main_thread);
     //Teardown
     iot_os_thread_delete(internal_context->main_thread);
     iot_os_eventgroup_delete(internal_context->iot_events);
-    iot_os_queue_delete(internal_context->pub_queue);
     iot_os_eventgroup_delete(internal_context->usr_events);
     iot_os_queue_delete(internal_context->cmd_queue);
     iot_api_device_info_mem_free(&internal_context->device_info);
@@ -250,9 +248,6 @@ void TC_st_conn_cleanup_success(void **state)
     internal_context->cmd_queue = iot_os_queue_create(IOT_QUEUE_LENGTH,
                                          sizeof(struct iot_command));
     assert_non_null(internal_context->cmd_queue);
-    internal_context->pub_queue = iot_os_queue_create(IOT_QUEUE_LENGTH,
-                                         sizeof(iot_cap_msg_t));
-    assert_non_null(internal_context->pub_queue);
     internal_context->usr_events = iot_os_eventgroup_create();
     assert_non_null(internal_context->usr_events);
     internal_context->iot_events = iot_os_eventgroup_create();
@@ -268,7 +263,6 @@ void TC_st_conn_cleanup_success(void **state)
     assert_return_code(err, 0);
     // Teardown
     iot_os_queue_delete(internal_context->cmd_queue);
-    iot_os_queue_delete(internal_context->pub_queue);
     iot_os_eventgroup_delete(internal_context->usr_events);
     iot_os_eventgroup_delete(internal_context->iot_events);
     iot_os_mutex_destroy(&internal_context->st_conn_lock);

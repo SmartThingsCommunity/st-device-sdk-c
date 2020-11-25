@@ -23,10 +23,10 @@
 #define VER_MAJOR	1
 
 /* minor: feature added. keep api backward compatibility */
-#define VER_MINOR	4
+#define VER_MINOR	5
 
 /* patch: bug fix */
-#define VER_PATCH	4
+#define VER_PATCH	3
 
 #define _STDK_STR(s) #s
 #define _STDK_VERSION_STR(a, b, c)	_STDK_STR(a) "." _STDK_STR(b) "." _STDK_STR(c)

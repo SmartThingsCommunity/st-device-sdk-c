@@ -1,5 +1,45 @@
 # HISTORY
 
+## 1.5.3 :  Changes until v1.5.3
+
+New Improvements or features:
+
+ - Add new functions
+  * iot_os_thread_get_current_handle() : to check current thread handle for iot_conn_start/start_ex/cleanup
+  * st_cap_create_attr_with_id() : to support 'commandId' added attribute creating
+
+Enhancements or amendments:
+
+ - Update & change easysetup module
+  * use macro for end-of-http-heaer & HTTP_CONN_H handle as pointer type, declare internal functions as static
+  * replace 'es_http_init()', add more abstraction for receiving http packet for httpd
+ - Push attributes evnets directly in MQTT queue
+  * remove all unused codes related to pub_queue handling in iot-core
+ - Change 'wifi bssid' value saving to NV mechanism
+ - Adjust delay timing for easysetup/httpd complete
+ - Change mqtt disconnection timing to prevent unwanted self-reconnecting
+ - Update & modify TCs for iot_easysetup_http.c, iot_capability.c, iot_dump_log.c
+ - Update parameter for nvs_partition_gen.py
+ - Update & change logfile module
+  * modify argument of iot_os_eventgroup_wait_bits & move declation code to inside of switch statement
+ - Return FS_NOT_FOUND when the bsp-layer returns FS_NO_FILE in security-layer
+  * update doxygen to have IOT_ERROR_FS_NO_FILE return value for bsp-layer
+ - Added some JSON/CBOR encoding codes to set OS information
+
+Bug fixed:
+
+ - Update some static analysis related issues
+  * add Null checking condition
+  * use 'memcpy' instead of 'strcpy'
+  * fix wrong print error cases & add type casting on log printing
+  * fix prevent for division by zero case in security module
+  * fix uninitialized variable usage in OS/POSIX case
+ - Fix some potential memory leak cases on easysetup module
+  * fix wrong buffer length calculation in easysetup
+  * fix iot_security_cipher_init/deinit() related memory leak cases
+  * remove encrypt_buf's outside allcation to prevent memory leak
+  * fix cloud data proving error case
+
 ## 1.4.4 :  Changes until v1.4.4
 
 New Improvements or features:

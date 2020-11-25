@@ -22,7 +22,7 @@
 #ifdef __cplusplus
 extern "C" {
 #endif
-
+#include "iot_main.h"
 #include "iot_error.h"
 
 enum cgi_type {
@@ -38,6 +38,9 @@ iot_error_t es_msg_parser(char *rx_buffer, size_t rx_buffer_len, char **payload,
 void es_http_init(void);
 
 void es_http_deinit(void);
+
+bool is_es_http_deinit_processing(void);
+void es_http_deinit_processing_set(bool flag);
 
 #ifdef __cplusplus
 }

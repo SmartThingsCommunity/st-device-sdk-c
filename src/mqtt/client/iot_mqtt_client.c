@@ -997,18 +997,24 @@ static int _iot_mqtt_run_cycle(MQTTClient *client)
 	int rc = 0;
 
 	rc = _iot_mqtt_run_write_stream(client);
-	if (rc < 0)
+	if (rc < 0) {
+		IOT_DUMP(IOT_DEBUG_LEVEL_WARN, IOT_DUMP_MQTT_WRITE_STREAM_FAIL, rc, 0);
 		return rc;
+	}
 
 	rc = _iot_mqtt_run_read_stream(client);
-	if (rc < 0)
+	if (rc < 0) {
+		IOT_DUMP(IOT_DEBUG_LEVEL_WARN, IOT_DUMP_MQTT_READ_STREAM_FAIL, rc, 0);
 		return rc;
+	}
 
 	_iot_mqtt_process_pending_packets(client);
 
 	rc = _iot_mqtt_check_alive(client);
-	if (rc < 0)
+	if (rc < 0) {
+		IOT_DUMP(IOT_DEBUG_LEVEL_WARN, IOT_DUMP_MQTT_PING_FAIL, rc, 0);
 		return rc;
+	}
 
 	return rc;
 }
