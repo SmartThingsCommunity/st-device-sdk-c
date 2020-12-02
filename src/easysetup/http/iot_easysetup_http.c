@@ -121,6 +121,8 @@ iot_error_t _iot_easysetup_gen_get_payload(struct iot_context *ctx, int cmd, cha
 	if ((cur_step != ref_step) && (cur_step < IOT_EASYSETUP_STEP_LOG_SYSTEMINFO)) {
 		if ((cur_step == IOT_EASYSETUP_STEP_WIFISCANINFO) && (ref_step == IOT_EASYSETUP_STEP_CONFIRM)) {
 			ref_step = IOT_EASYSETUP_STEP_WIFISCANINFO;
+		} else if ((cur_step == IOT_EASYSETUP_STEP_WIFISCANINFO) && (ref_step == IOT_EASYSETUP_STEP_WIFIPROVIONINGINFO)) {
+			ref_step = IOT_EASYSETUP_STEP_WIFISCANINFO;
 		} else {
 			IOT_ERROR("Invalid command step %d", cmd);
 			IOT_ES_DUMP(IOT_DEBUG_LEVEL_ERROR, IOT_DUMP_EASYSETUP_INVALID_CMD, cmd);
