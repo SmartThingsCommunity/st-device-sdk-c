@@ -1,5 +1,17 @@
 # HISTORY
 
+## 1.4.7
+#### New Improvements or features
+
+- Allow to query device's wifi scanlist while easysetup device-to-device communication.
+ 
+#### Enhancements or amendments
+
+- N/A
+
+#### Bug fixed
+
+- N/A
 
 ## 1.4.6
 #### New Improvements or features
