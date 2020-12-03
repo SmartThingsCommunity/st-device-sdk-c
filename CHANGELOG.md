@@ -11,7 +11,7 @@
 
 #### Bug fixed
 
-- N/A
+- Fix memleak during easysetup
 
 ## 1.4.6
 #### New Improvements or features
