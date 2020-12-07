@@ -878,7 +878,8 @@ static iot_error_t _do_iot_main_command(struct iot_context *ctx,
 					ctx->noti_cb(noti, ctx->noti_usr_data);
 			} else if (noti->type == (iot_noti_type_t)_IOT_NOTI_TYPE_JWT_EXPIRED) {
 				iot_es_disconnect(ctx, IOT_CONNECT_TYPE_COMMUNICATION);
-				iot_es_connect(ctx, IOT_CONNECT_TYPE_COMMUNICATION);
+				if (iot_es_connect(ctx, IOT_CONNECT_TYPE_COMMUNICATION) != IOT_ERROR_NONE)
+                                    IOT_ERROR("failed to iot_es_connect for communication");
 			}
 
 			break;
