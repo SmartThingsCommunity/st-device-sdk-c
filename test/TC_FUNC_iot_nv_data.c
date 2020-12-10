@@ -119,7 +119,7 @@ void TC_iot_nv_get_wifi_prov_data_success(void **state)
     // When
     err = iot_nv_get_wifi_prov_data(wifi_prov);
     //Then
-    assert_int_equal(err, IOT_ERROR_NV_DATA_ERROR);
+    assert_int_equal(err, IOT_ERROR_NONE);
 
     // Local teardown
     _teardown_wifi_prov_data();

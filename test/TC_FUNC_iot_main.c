@@ -254,6 +254,8 @@ void TC_st_conn_cleanup_success(void **state)
     assert_non_null(internal_context->iot_events);
     err = iot_os_mutex_init(&internal_context->st_conn_lock);
     assert_int_equal(err, IOT_OS_TRUE);
+    err = iot_os_mutex_init(&internal_context->iot_cmd_lock);
+    assert_int_equal(err, IOT_OS_TRUE);
     err = iot_os_thread_create(_cleanup_test_task, "cleanup_test_task", 2048,
             internal_context, IOT_TASK_PRIORITY, &test_thread);
     assert_int_equal(err, IOT_OS_TRUE);
@@ -266,6 +268,7 @@ void TC_st_conn_cleanup_success(void **state)
     iot_os_eventgroup_delete(internal_context->usr_events);
     iot_os_eventgroup_delete(internal_context->iot_events);
     iot_os_mutex_destroy(&internal_context->st_conn_lock);
+    iot_os_mutex_destroy(&internal_context->iot_cmd_lock);
     free(internal_context);
 }
 
