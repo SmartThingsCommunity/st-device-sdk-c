@@ -58,6 +58,9 @@ int iot_os_thread_create(void * thread_function, const char* name, int stack_siz
 	pthread_t* thread = malloc(sizeof(pthread_t));
 	pthread_attr_t attr;
 
+	if (thread == NULL)
+		return IOT_ERROR_MEM_ALLOC;
+
 	pthread_attr_init(&attr);
 	pthread_attr_setdetachstate(&attr, PTHREAD_CREATE_DETACHED);
 
@@ -110,6 +113,9 @@ iot_os_queue* iot_os_queue_create(int queue_length, int item_size)
 {
 	iot_os_queue_posix_t* queue = malloc(sizeof(iot_os_queue_posix_t));
 	struct mq_attr attr;
+
+	if (queue == NULL)
+		return NULL;
 
 	attr.mq_flags = 0;
 	attr.mq_maxmsg = (queue_length <= 10) ? queue_length : 10;
@@ -212,6 +218,8 @@ typedef struct {
 iot_os_eventgroup* iot_os_eventgroup_create(void)
 {
 	eventgroup_t *eventgroup = malloc(sizeof(eventgroup_t));
+	if (eventgroup == NULL)
+		return NULL;
 
 	for (int i = 0; i < EVENT_MAX; i++) {
 		eventgroup->group[i].id = (1 << i);
@@ -446,6 +454,9 @@ int iot_os_timer_init(iot_os_timer *timer)
 {
 	timer_t* timer_id = malloc(sizeof(timer_t));
 	struct sigevent sig;
+
+	if (timer_id == NULL)
+		return IOT_ERROR_MEM_ALLOC;
 
 	memset(&sig, '\0', sizeof(struct sigevent));
 	sig.sigev_notify = SIGEV_NONE;

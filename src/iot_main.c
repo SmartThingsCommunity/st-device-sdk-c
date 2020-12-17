@@ -878,7 +878,8 @@ static iot_error_t _do_iot_main_command(struct iot_context *ctx,
 					ctx->noti_cb(noti, ctx->noti_usr_data);
 			} else if (noti->type == (iot_noti_type_t)_IOT_NOTI_TYPE_JWT_EXPIRED) {
 				iot_es_disconnect(ctx, IOT_CONNECT_TYPE_COMMUNICATION);
-				iot_es_connect(ctx, IOT_CONNECT_TYPE_COMMUNICATION);
+				if (iot_es_connect(ctx, IOT_CONNECT_TYPE_COMMUNICATION) != IOT_ERROR_NONE)
+                                    IOT_ERROR("failed to iot_es_connect for communication");
 			}
 
 			break;
@@ -1048,7 +1049,9 @@ static void _iot_main_task(struct iot_context *ctx)
 		if (curr_events & IOT_EVENT_BIT_COMMAND) {
 			cmd.param = NULL;
 
-			iot_os_mutex_lock(&ctx->iot_cmd_lock);
+			if (iot_os_mutex_lock(&ctx->iot_cmd_lock) != IOT_OS_TRUE)
+				continue;
+
 			if (iot_os_queue_receive(ctx->cmd_queue,
 					&cmd, 0) != IOT_OS_FALSE) {
 
@@ -1697,8 +1700,14 @@ do { \
 	curr_events = iot_os_eventgroup_wait_bits(ctx->usr_events, \
 		IOT_USR_INTERACT_BITS_ST_CONN, true, IOT_OS_MAX_DELAY); \
 	\
-	iot_os_mutex_lock(&ctx->st_conn_lock); \
+	if (iot_os_mutex_lock(&ctx->st_conn_lock) != IOT_OS_TRUE) { \
+		if (ctx->status_cb) \
+			UNSET_STATUS_CB(); \
 	\
+		if (ctx->es_res_created) \
+			_delete_easysetup_resources_all(ctx); \
+		return IOT_ERROR_BAD_REQ; \
+	} \
 	if (curr_events & IOT_USR_INTERACT_BIT_PROV_CONFIRM) { \
 		if (ctx->devconf.ownership_validation_type & IOT_OVF_TYPE_BUTTON) { \
 			_do_status_report(ctx, IOT_STATE_PROV_CONFIRM, false); \
@@ -1855,7 +1864,9 @@ int st_conn_cleanup(IOT_CTX *iot_ctx, bool reboot)
 	IOT_DUMP_MAIN(INFO, BASE, reboot);
 
 	/* remove all queued commands */
-	iot_os_mutex_lock(&ctx->iot_cmd_lock);
+	if (iot_os_mutex_lock(&ctx->iot_cmd_lock) != IOT_OS_TRUE)
+		return IOT_ERROR_BAD_REQ;
+
 	_throw_away_all_cmd_queue(ctx);
 	iot_os_mutex_unlock(&ctx->iot_cmd_lock);
 
