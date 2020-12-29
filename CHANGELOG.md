@@ -1,5 +1,15 @@
 # HISTORY
 
+## 1.5.5 :  Changes until v1.5.5
+
+New Improvements or features:
+
+ - Update STDK D2D protocol (v1.1.0) : to support the wifi scanlist refresh during D2D
+
+Enhancements or amendments:
+
+ - Added to check NULL for malloc for the posix os porting layer
+
 ## 1.5.3 :  Changes until v1.5.3
 
 New Improvements or features:
