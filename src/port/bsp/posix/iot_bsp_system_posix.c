@@ -60,9 +60,12 @@ iot_error_t iot_bsp_system_set_time_in_sec(const char* time_in_sec)
 	IOT_WARN_CHECK(time_in_sec == NULL, IOT_ERROR_INVALID_ARGS, "time data is NULL");
 
 	struct timespec ts = {0,};
+	int ret;
 
 	sscanf(time_in_sec, "%ld", &ts.tv_sec);
-	clock_settime(CLOCK_REALTIME, &ts);
+	ret = clock_settime(CLOCK_REALTIME, &ts);
+	if (ret == -1)
+		return IOT_ERROR_INVALID_ARGS;
 
 	return IOT_ERROR_NONE;
 }
