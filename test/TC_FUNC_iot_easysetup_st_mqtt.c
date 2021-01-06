@@ -170,32 +170,28 @@ void assert_es_mqtt_registration_json(struct iot_context *context, char *payload
                             JSON_GET_STRING_VALUE(JSON_GET_OBJECT_ITEM(root, "manufacturerName")));
         assert_string_equal(context->device_info.manufacturer_code,
                             JSON_GET_STRING_VALUE(JSON_GET_OBJECT_ITEM(root, "manufacturerCode")));
-        if (iot_os_get_os_name()) {
-            assert_string_equal(iot_os_get_os_name(),
-                    JSON_GET_STRING_VALUE(JSON_GET_OBJECT_ITEM(root, "osType")));
-        } else {
-            assert_null(JSON_GET_OBJECT_ITEM(root, "osType"));
-        }
-
-        if (iot_os_get_os_version_string()) {
-            assert_string_equal(iot_os_get_os_version_string(),
-                    JSON_GET_STRING_VALUE(JSON_GET_OBJECT_ITEM(root, "osVersion")));;
-        } else {
-            assert_null(JSON_GET_OBJECT_ITEM(root, "osVersion"));
-        }
-
-        assert_string_equal(STDK_VERSION_STRING,
-                JSON_GET_STRING_VALUE(JSON_GET_OBJECT_ITEM(root, "stdkVersion")));
     } else {
         assert_null(JSON_GET_OBJECT_ITEM(root, "firmwareVersion"));
         assert_null(JSON_GET_OBJECT_ITEM(root, "modelNumber"));
         assert_null(JSON_GET_OBJECT_ITEM(root, "marketingName"));
         assert_null(JSON_GET_OBJECT_ITEM(root, "manufacturerName"));
         assert_null(JSON_GET_OBJECT_ITEM(root, "manufacturerCode"));
-        assert_null(JSON_GET_OBJECT_ITEM(root, "osType"));
-        assert_null(JSON_GET_OBJECT_ITEM(root, "osVersion"));
-        assert_null(JSON_GET_OBJECT_ITEM(root, "stdkVersion"));
     }
+    if (iot_os_get_os_name()) {
+        assert_string_equal(iot_os_get_os_name(),
+                            JSON_GET_STRING_VALUE(JSON_GET_OBJECT_ITEM(root, "osType")));
+    } else {
+        assert_null(JSON_GET_OBJECT_ITEM(root, "osType"));
+    }
+
+    if (iot_os_get_os_version_string()) {
+        assert_string_equal(iot_os_get_os_version_string(),
+                            JSON_GET_STRING_VALUE(JSON_GET_OBJECT_ITEM(root, "osVersion")));;
+    } else {
+        assert_null(JSON_GET_OBJECT_ITEM(root, "osVersion"));
+    }
+    assert_string_equal(STDK_VERSION_STRING,
+                        JSON_GET_STRING_VALUE(JSON_GET_OBJECT_ITEM(root, "stdkVersion")));
 
     if (context->devconf.dip) {
         iot_error_t err;
