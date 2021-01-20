@@ -253,7 +253,7 @@ static que_for_bmp* _eventgroup_get_available_res(iot_moc_eventgroup *eg, unsign
 	memset(new_que, 0, sizeof(que_for_bmp));
 	new_que->used = 1;
 	new_que->bits = (uint16_t)bits_to_wait_for;
-	mico_rtos_init_queue(&new_que->q, "eg_queue", sizeof(int), 2);
+	mico_rtos_init_queue(&new_que->q, "eg_queue", sizeof(unsigned char), 2);
 	new_que->fd = mico_create_event_fd(new_que->q);
 
 	list->next = new_que;
@@ -297,7 +297,7 @@ iot_os_eventgroup* iot_os_eventgroup_create(void)
 	IOT_ERROR_CHECK(eg == NULL, NULL, "malloc eg failed.");
 	memset(eg, 0, sizeof(iot_moc_eventgroup));
 
-	mico_rtos_init_queue(&eg->resource.q, "eg_queue", sizeof(int), 2);
+	mico_rtos_init_queue(&eg->resource.q, "eg_queue", sizeof(unsigned char), 2);
 	eg->resource.fd = mico_create_event_fd(eg->resource.q);
 
 	memset(eg->cache_bits, 0, sizeof(eg->cache_bits));
