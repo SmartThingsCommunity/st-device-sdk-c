@@ -15,7 +15,7 @@ Each manufacturer should use their own method to meet security requirements for 
 For example
  * The operation of key management facility must be conducted in a secure manner.
  * If device key pair is generated outside device and later injected, the generated private key must only be maintained outside the device in encrypted form and should be deleted after successful injection.
- * The generated key paris must be globally uniquely identified independently based on its identifiers.
+ * The generated key pairs must be globally uniquely identified independently based on its identifiers.
 
 Please refer security guideline document which is available at `Publish` menu of Developer Workspace.
 
