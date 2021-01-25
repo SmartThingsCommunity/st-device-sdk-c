@@ -7,6 +7,18 @@
 This repository provides a tools to generate key pair and batch file for Developer Workspace.
 Ed25519 is a signature algorithm with EdDSA over curve25519.
 
+## Remark
+
+This utility is limited to generate key pairs for test devices.
+Each manufacturer should use their own method to meet security requirements for commercial devices.  
+
+For example
+ * The operation of key management facility must be conducted in a secure manner.
+ * If device key pair is generated outside device and later injected, the generated private key must only be maintained outside the device in encrypted form and should be deleted after successful injection.
+ * The generated key paris must be globally uniquely identified independently based on its identifiers.
+
+Please refer security guideline document which is available at `Publish` menu of Developer Workspace.
+
 ## Requirement
 
 * The generated private key must only be maintained outside the device in encrypted form and should be deleted after successful injection to device.
