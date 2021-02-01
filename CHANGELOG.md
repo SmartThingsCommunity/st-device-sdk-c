@@ -1,5 +1,18 @@
 # HISTORY
 
+## 1.5.7 :  Changes until v1.5.7
+
+Enhancements or amendments:
+
+ - Check MQTT connection status before send event
+ - Check malloc failure before using it for POSIX
+ - Change accept-socket close condition
+ - Update event bits size for mico os queue
+
+Bug fixed:
+
+ - Fix socket leak issue during easysetup process
+
 ## 1.5.5 :  Changes until v1.5.5
 
 New Improvements or features:
