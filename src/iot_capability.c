@@ -406,7 +406,7 @@ DEPRECATED int st_cap_attr_send(IOT_CAP_HANDLE *cap_handle,
 	}
 
 	ctx = handle->ctx;
-	if (ctx->curr_state < IOT_STATE_CLOUD_CONNECTING) {
+	if (ctx->curr_state < IOT_STATE_CLOUD_CONNECTING || ctx->evt_mqttcli == NULL) {
 		IOT_DUMP(IOT_DEBUG_LEVEL_ERROR, IOT_DUMP_CAPABILITY_SEND_EVENT_NO_CONNECT_ERROR, ctx->curr_state, 0);
 		IOT_ERROR("Target has not connected to server yet!!");
 		return IOT_ERROR_BAD_REQ;
@@ -496,7 +496,7 @@ int st_cap_send_attr(IOT_EVENT *event[], uint8_t evt_num)
 	}
 	ctx = evt_data[0]->ref_cap->ctx;
 
-	if (ctx->curr_state < IOT_STATE_CLOUD_CONNECTING) {
+	if (ctx->curr_state < IOT_STATE_CLOUD_CONNECTING || ctx->evt_mqttcli == NULL) {
 		IOT_DUMP(IOT_DEBUG_LEVEL_ERROR, IOT_DUMP_CAPABILITY_SEND_EVENT_NO_CONNECT_ERROR, ctx->curr_state, 0);
 		IOT_ERROR("Target has not connected to server yet!!");
 		return IOT_ERROR_BAD_REQ;

@@ -41,7 +41,7 @@ void es_http_deinit_processing_set(bool flag)
 	deinit_processing = flag;
 }
 
-static void process_accepted_connection(HTTP_CONN_H *handle)
+static int process_accepted_connection(HTTP_CONN_H *handle)
 {
 	char rx_buffer[RX_BUFFER_MAX];
 	iot_error_t err = IOT_ERROR_NONE;
@@ -63,10 +63,10 @@ static void process_accepted_connection(HTTP_CONN_H *handle)
 
 		err = http_packet_read(handle, rx_buffer, sizeof(rx_buffer), &received_len, &http_request_header_len);
 		if (err != IOT_ERROR_NONE) {
-			if (!is_es_http_deinit_processing() && err != IOT_ERROR_EASYSETUP_HTTP_CONN_CLOSED) {
+			if (!is_es_http_deinit_processing() && err != IOT_ERROR_EASYSETUP_HTTP_PEER_CONN_CLOSED) {
 				IOT_ERROR("failed to read http packet %d", err);
 			}
-			return;
+			return err;
 		}
 
 		content_len = 0;
@@ -79,7 +79,7 @@ static void process_accepted_connection(HTTP_CONN_H *handle)
 			ret = http_packet_read_remaining(handle, rx_buffer, sizeof(rx_buffer), received_len, http_request_header_len + content_len);
 			if (ret != IOT_ERROR_NONE) {
 				IOT_ERROR("failed to read remaining http packet %d", ret);
-				return;
+				return IOT_ERROR_EASYSETUP_INTERNAL_SERVER_ERROR;
 			}
 			payload = rx_buffer + http_request_header_len;
 		}
@@ -94,7 +94,7 @@ static void process_accepted_connection(HTTP_CONN_H *handle)
 		if (!tx_buffer) {
 			IOT_ERROR("tx_buffer is NULL");
 			IOT_ES_DUMP(IOT_DEBUG_LEVEL_ERROR, IOT_DUMP_EASYSETUP_INTERNAL_SERVER_ERROR, 0);
-			return;
+			return IOT_ERROR_EASYSETUP_INTERNAL_SERVER_ERROR;
 		}
 
 		tx_buffer_len = strlen((char *)tx_buffer);
@@ -106,7 +106,7 @@ static void process_accepted_connection(HTTP_CONN_H *handle)
 		if (len < 0) {
 			IOT_ERROR("Error is occurred during sending: errno %d", errno);
 			IOT_ES_DUMP(IOT_DEBUG_LEVEL_ERROR, IOT_DUMP_EASYSETUP_SOCKET_SEND_FAIL, errno);
-			return;
+			return IOT_ERROR_EASYSETUP_INTERNAL_SERVER_ERROR;
 		}
 	}
 }
@@ -132,9 +132,8 @@ static void es_tcp_task(void *pvParameters)
 				break;
 			}
 
-			process_accepted_connection(&es_http_conn_handle);
-
-			if (!is_es_http_deinit_processing() && !is_http_conn_handle_initialized(&es_http_conn_handle))
+			err = process_accepted_connection(&es_http_conn_handle);
+			if (!is_es_http_deinit_processing() && (err == IOT_ERROR_EASYSETUP_HTTP_PEER_CONN_CLOSED))
 			{
 				http_cleanup_accepted_connection(&es_http_conn_handle);
 			}
