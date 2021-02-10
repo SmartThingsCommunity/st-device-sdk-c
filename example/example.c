@@ -60,64 +60,47 @@ static void iot_status_cb(iot_status_t status,
 
 void cap_switch_init_cb(IOT_CAP_HANDLE *handle, void *usr_data)
 {
-    IOT_EVENT *init_evt;
-    uint8_t evt_num = 1;
-    int32_t sequence_no;
+    int32_t sequence_no = 1;
 
-    /* Setup switch on state */
-    init_evt = st_cap_attr_create_string("switch", "on", NULL);
+    /* Send initial switch attribute */
+    ST_CAP_SEND_ATTR_STRING(handle, "switch", "on", NULL, NULL, sequence_no);
 
-    /* Send switch on event */
-    sequence_no = st_cap_attr_send(handle, evt_num, &init_evt);
     if (sequence_no < 0)
-        printf("fail to send init_data\n");
-
-    printf("Sequence number return : %d\n", sequence_no);
-    st_cap_attr_free(init_evt);
+        printf("fail to send switch value\n");
+    else
+        printf("Sequence number return : %d\n", sequence_no);
 }
 
 void cap_switch_cmd_off_cb(IOT_CAP_HANDLE *handle,
                            iot_cap_cmd_data_t *cmd_data, void *usr_data)
 {
-    IOT_EVENT *off_evt;
-    uint8_t evt_num = 1;
-    int32_t sequence_no;
+    int32_t sequence_no = 1;
 
-    printf("called [%s] func with : num_args:%u\n",
-           __func__, cmd_data->num_args);
+    printf("OFF command received");
 
-    /* Setup switch off state */
-    off_evt = st_cap_attr_create_string("switch", "off", NULL);
+    /* Update switch attribute */
+    ST_CAP_SEND_ATTR_STRING(handle, "switch", "off", NULL, NULL, sequence_no);
 
-    /* Send switch off event */
-    sequence_no = st_cap_attr_send(handle, evt_num, &off_evt);
     if (sequence_no < 0)
-        printf("fail to send off_data\n");
-
-    printf("Sequence number return : %d\n", sequence_no);
-    st_cap_attr_free(off_evt);
+        printf("fail to send switch value\n");
+    else
+        printf("Sequence number return : %d\n", sequence_no);
 }
 
 void cap_switch_cmd_on_cb(IOT_CAP_HANDLE *handle,
                           iot_cap_cmd_data_t *cmd_data, void *usr_data)
 {
-    IOT_EVENT *on_evt;
-    uint8_t evt_num = 1;
-    int32_t sequence_no;
+    int32_t sequence_no = 1;
 
-    printf("called [%s] func with : num_args:%u\n",
-           __func__, cmd_data->num_args);
+    printf("ON command received");
 
-    /* Setup switch on state */
-    on_evt = st_cap_attr_create_string("switch", "on", NULL);
+    /* Update switch attribute */
+    ST_CAP_SEND_ATTR_STRING(handle, "switch", "on", NULL, NULL, sequence_no);
 
-    /* Send switch on event */
-    sequence_no = st_cap_attr_send(handle, evt_num, &on_evt);
     if (sequence_no < 0)
-        printf("fail to send on_data\n");
-
-    printf("Sequence number return : %d\n", sequence_no);
-    st_cap_attr_free(on_evt);
+        printf("fail to send switch value\n");
+    else
+        printf("Sequence number return : %d\n", sequence_no);
 }
 
 void iot_noti_cb(iot_noti_data_t *noti_data, void *noti_usr_data)
