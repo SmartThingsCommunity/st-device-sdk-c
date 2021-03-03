@@ -1195,6 +1195,7 @@ iot_error_t iot_misc_info_store(iot_misc_info_t type, const void *in_data)
 	unsigned char old_hash[IOT_SECURITY_SHA256_LEN] = {0,};
 	unsigned char new_hash[IOT_SECURITY_SHA256_LEN] = {0,};
 	bool hash_chk = false;
+	bool old_misc_avail = false;
 
 	if (!in_data) {
 		iot_err = IOT_ERROR_INVALID_ARGS;
@@ -1208,13 +1209,15 @@ iot_error_t iot_misc_info_store(iot_misc_info_t type, const void *in_data)
 	} else {
 		json = JSON_PARSE(old_misc_info);
 		if (json == NULL) {
-			IOT_ERROR("old misc_info(%s) parsing failed", old_misc_info);
-			iot_err = IOT_ERROR_BAD_REQ;
-			goto misc_info_store_out;
+			IOT_WARN("old misc_info(%s/%d) parsing failed",
+				old_misc_info, old_misc_info_len);
+			json = JSON_CREATE_OBJECT();
+		} else {
+			old_misc_avail = true;
 		}
 	}
 
-	if ((old_misc_info != NULL) && (old_misc_info_len != 0)) {
+	if (old_misc_avail) {
 		iot_err = iot_security_sha256((const unsigned char *)old_misc_info,
 				old_misc_info_len, old_hash, sizeof(old_hash));
 		if (iot_err != IOT_ERROR_NONE) {
@@ -1224,8 +1227,10 @@ iot_error_t iot_misc_info_store(iot_misc_info_t type, const void *in_data)
 		}
 	}
 
-	iot_os_free(old_misc_info);
-	old_misc_info = NULL;
+	if (old_misc_info) {
+		iot_os_free(old_misc_info);
+		old_misc_info = NULL;
+	}
 
 	switch (type) {
 	case IOT_MISC_INFO_DIP:
