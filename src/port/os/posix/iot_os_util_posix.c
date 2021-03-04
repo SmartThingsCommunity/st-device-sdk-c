@@ -405,7 +405,7 @@ void iot_os_delay(unsigned int delay_ms)
 
 void iot_os_timer_count_ms(iot_os_timer timer, unsigned int timeout_ms)
 {
-	timer_t timer_id = timer;
+	timer_t* timer_id = (timer_t*) timer;
 	struct itimerspec it;
 
 	it.it_interval.tv_sec = 0;
@@ -413,7 +413,7 @@ void iot_os_timer_count_ms(iot_os_timer timer, unsigned int timeout_ms)
 	it.it_value.tv_sec = timeout_ms / 1000;
 	it.it_value.tv_nsec = (timeout_ms % 1000) * 1000000;
 
-	int ret = timer_settime(timer_id, 0, &it, NULL);
+	int ret = timer_settime(*timer_id, 0, &it, NULL);
 	if (ret == -1) {
 		return;
 	}
@@ -421,11 +421,11 @@ void iot_os_timer_count_ms(iot_os_timer timer, unsigned int timeout_ms)
 
 unsigned int iot_os_timer_left_ms(iot_os_timer timer)
 {
-	timer_t timer_id = timer;
+	timer_t* timer_id = (timer_t*) timer;
 	struct itimerspec it = {0,};
 	unsigned int left = 0;
 
-	int ret = timer_gettime(timer_id, &it);
+	int ret = timer_gettime(*timer_id, &it);
 	if (ret == -1) {
 		return 0;
 	}
@@ -435,10 +435,10 @@ unsigned int iot_os_timer_left_ms(iot_os_timer timer)
 
 char iot_os_timer_isexpired(iot_os_timer timer)
 {
-	timer_t timer_id = timer;
+	timer_t* timer_id = (timer_t*) timer;
 	struct itimerspec it = {0,};
 
-	int ret = timer_gettime(timer_id, &it);
+	int ret = timer_gettime(*timer_id, &it);
 	if (ret == -1) {
 		return IOT_OS_TRUE;
 	}
@@ -461,23 +461,23 @@ int iot_os_timer_init(iot_os_timer *timer)
 	memset(&sig, '\0', sizeof(struct sigevent));
 	sig.sigev_notify = SIGEV_NONE;
 	sig.sigev_value.sival_ptr = timer_id;
-	int ret = timer_create(CLOCK_REALTIME, &sig, timer_id);
+	int ret = timer_create(CLOCK_REALTIME, &sig, (timer_t *) timer_id);
 	if (ret == -1) {
+	    free(timer_id);
 		return IOT_ERROR_BAD_REQ;
 	}
 
-	*timer = *timer_id;
+	*timer = timer_id;
+
 	return IOT_ERROR_NONE;
 }
 
 void iot_os_timer_destroy(iot_os_timer *timer)
 {
-	timer_t timer_id = *timer;
-
-	int ret = timer_delete(timer_id);
-	if (ret == -1) {
-		return;
-	}
+    timer_t* timer_id = (timer_t*) *timer;
+	timer_delete((timer_t)*timer_id);
+    free(timer_id);
+    timer = NULL;
 }
 
 void *iot_os_malloc(size_t size)
