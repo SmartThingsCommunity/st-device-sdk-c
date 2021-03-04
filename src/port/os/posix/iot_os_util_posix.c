@@ -390,6 +390,8 @@ void iot_os_mutex_destroy(iot_os_mutex* mutex)
 	pthread_mutex_t* mutex_p = mutex->sem;
 
 	pthread_mutex_destroy(mutex_p);
+	free(mutex_p);
+	mutex->sem = NULL;
 }
 
 /* Delay */
