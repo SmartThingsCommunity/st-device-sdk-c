@@ -1238,8 +1238,15 @@ IOT_CTX* st_conn_init(unsigned char *onboarding_config, unsigned int onboarding_
 		goto error_main_load_device_info;
 	}
 
-	// Initialize Wi-Fi
-	iot_bsp_wifi_init();
+    // Initialize Wi-Fi
+    iot_err = iot_bsp_wifi_init();
+    if (iot_err != IOT_ERROR_NONE) {
+        IOT_ERROR("failed to init iot_bsp_wifi_init (%d)", iot_err);
+        IOT_DUMP_MAIN(ERROR, BASE, iot_err);
+
+        iot_api_device_info_mem_free(dev_info);
+        goto error_main_load_device_info;
+    }
 
 	/* create queue */
 	ctx->cmd_queue = iot_os_queue_create(IOT_QUEUE_LENGTH,
