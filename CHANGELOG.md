@@ -1,5 +1,12 @@
 # HISTORY
 
+## 1.5.9 :  Changes until v1.5.9
+
+Enhancements or amendments:
+
+ - Update deps/mbedtls version to mbedtls-2.16.0
+ - Added iot_bsp_wifi_init() related error-handling codes for st_conn_init()
+
 ## 1.5.7 :  Changes until v1.5.7
 
 Enhancements or amendments:
