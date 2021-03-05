@@ -469,8 +469,8 @@ iot_error_t iot_api_onboarding_config_load(unsigned char *onboarding_config,
 	item = JSON_GET_OBJECT_ITEM(config, name_identityType);
 	if (!item || !strcmp(JSON_GET_STRING_VALUE(item), "ED25519")) {
 		pk_type = IOT_SECURITY_KEY_TYPE_ED25519;
-	} else if (!strcmp(JSON_GET_STRING_VALUE(item), "CERTIFICATE")) {
-		pk_type = IOT_SECURITY_KEY_TYPE_RSA2048;
+	} else if (!strcmp(JSON_GET_STRING_VALUE(item), "X509")) {
+		pk_type = IOT_SECURITY_KEY_TYPE_ECCP256;
 	} else {
 #if defined(CONFIG_STDK_IOT_CORE_LOG_LEVEL_ERROR)
 		current_name = (char *)name_identityType;
