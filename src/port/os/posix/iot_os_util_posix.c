@@ -463,9 +463,9 @@ int iot_os_timer_init(iot_os_timer *timer)
 	memset(&sig, '\0', sizeof(struct sigevent));
 	sig.sigev_notify = SIGEV_NONE;
 	sig.sigev_value.sival_ptr = timer_id;
-	int ret = timer_create(CLOCK_REALTIME, &sig, (timer_t *) timer_id);
+	int ret = timer_create(CLOCK_REALTIME, &sig, timer_id);
 	if (ret == -1) {
-	    free(timer_id);
+		free(timer_id);
 		return IOT_ERROR_BAD_REQ;
 	}
 
@@ -476,10 +476,11 @@ int iot_os_timer_init(iot_os_timer *timer)
 
 void iot_os_timer_destroy(iot_os_timer *timer)
 {
-    timer_t* timer_id = (timer_t*) *timer;
-	timer_delete((timer_t)*timer_id);
-    free(timer_id);
-    timer = NULL;
+	timer_t* timer_id = (timer_t*) *timer;
+
+	timer_delete(*timer_id);
+	free(timer_id);
+	timer = NULL;
 }
 
 void *iot_os_malloc(size_t size)
