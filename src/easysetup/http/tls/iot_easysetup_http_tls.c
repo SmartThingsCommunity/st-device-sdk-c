@@ -41,6 +41,9 @@
 #include "mbedtls/x509.h"
 #include "mbedtls/debug.h"
 
+// TODO : remove this after following is implemented as static
+void iot_net_tls_external_private(mbedtls_ssl_config *conf);
+
 static char *tx_buffer = NULL;
 
 static mbedtls_net_context listen_fd, client_fd;
@@ -189,6 +192,8 @@ static void es_mbedtls_task(void *data)
 		IOT_ERROR("to set up the SSL own certification config failed : %d", ret);
 		goto exit;
 	}
+
+	iot_net_tls_external_private(&conf);
 
 	if ((ret = mbedtls_ssl_setup(&ssl, &conf)) != 0)
 	{
