@@ -35,7 +35,7 @@ pip install pynacl --user
 ## Usage
 
 ```sh
-stdk-keygen.py [-h] [--mnid MNID] [--firmware version] [--input csv] [--output csv] [--nv {esp}] [--qr {individual,commercial}] [--folder FOLDER]
+stdk-keygen.py [-h] [--mnid MNID] [--firmware version] [--input csv] [--output csv] [--nv {esp}] [--qr] [--path PATH]
 ```
 
 ### Individual
@@ -85,7 +85,7 @@ $ cat output_STDKTEST****7KXw/device_info.json
 
 You can generate QR code which could be helpful to add your device in ST app.
 ```sh
-$ python stdk-keygen.py --qr individual --folder [location of onboarding_config.json]
+$ python stdk-keygen.py --qr --path [location of onboarding_config.json]
 Use following serial number and public key
 for the identity of your device in Developer Workspace.
 
@@ -139,7 +139,7 @@ output_bulk/
 ```
 You can generate QR code for commercial
 ```sh
-$ python stdk-keygen.py --input sn.csv --qr commercial --folder [location of onboarding_config.json]
+$ python stdk-keygen.py --input sn.csv --qr --path [location of onboarding_config.json]
 Loading sn.csv...
 ...
 Batch file has been saved: output_bulk/2020****_193746/DI_Batch_2020****_193746.csv
