@@ -127,6 +127,7 @@ static void _iot_net_cleanup_platform_context(iot_net_interface_t *net)
 	mbedtls_entropy_free(&net->context.entropy);
 }
 
+#if defined(CONFIG_MBEDTLS_SSL_ASYNC_PRIVATE)
 static int _iot_net_tls_external_sign(mbedtls_ssl_context *ssl,
 		mbedtls_x509_crt *cert, mbedtls_md_type_t md_alg,
 		const unsigned char *hash, size_t hash_len)
@@ -243,6 +244,11 @@ void iot_net_tls_external_private(mbedtls_ssl_config *conf)
 			_iot_net_tls_external_cancel,
 			NULL);
 }
+#else
+void iot_net_tls_external_private(mbedtls_ssl_config *conf)
+{
+}
+#endif /* CONFIG_MBEDTLS_SSL_ASYNC_PRIVATE */
 
 static iot_error_t _iot_net_tls_connect(iot_net_interface_t *net)
 {
