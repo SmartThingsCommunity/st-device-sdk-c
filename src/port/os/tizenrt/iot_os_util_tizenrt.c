@@ -180,18 +180,22 @@ static void *recursive_mutex_create_wrapper(void)
 {
 	pthread_mutexattr_t mattr;
 	int status = 0;
+	pthread_mutex_t *mutex = NULL;
 
-	pthread_mutex_t *mutex = (pthread_mutex_t *)malloc(sizeof(pthread_mutex_t));
-	if (mutex == NULL) {
-		return NULL;
-	}
 	pthread_mutexattr_init(&mattr);
 	status = pthread_mutexattr_settype(&mattr, PTHREAD_MUTEX_RECURSIVE);
 	if (status != 0) {
 		return NULL;
 	}
+
+	pthread_mutex_t *mutex = (pthread_mutex_t *)malloc(sizeof(pthread_mutex_t));
+	if (mutex == NULL) {
+		return NULL;
+	}
+
 	status = pthread_mutex_init(mutex, &mattr);
 	if (status) {
+		free(mutex);
 		return NULL;
 	}
 	return (void *)mutex;
@@ -267,6 +271,7 @@ void iot_os_mutex_destroy(iot_os_mutex* mutex)
         return;
 
     pthread_mutex_destroy((pthread_mutex_t *)mutex->sem);
+    free(mutex->sem);
 }
 
 /* Delay */
