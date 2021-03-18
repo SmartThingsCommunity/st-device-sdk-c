@@ -58,7 +58,7 @@ int iot_os_thread_create(void *thread_function, const char *name, int stack_size
 {
 	int status;
 	pthread_attr_t attr;
-	pthread_t *pid_h = (pthread_t *)malloc(sizeof(pthread_t));
+	pthread_t *pid_h = NULL
 
 	status = pthread_attr_init(&attr);
 	if (status != 0) {
@@ -70,8 +70,14 @@ int iot_os_thread_create(void *thread_function, const char *name, int stack_size
 		return IOT_OS_FALSE;
 	}
 
+	pid_h = (pthread_t *)malloc(sizeof(pthread_t));
+	if (!pid_h) {
+		return IOT_OS_FALSE;
+	}
+
 	status = pthread_create(pid_h, &attr, thread_function, (pthread_addr_t)data);
 	if (status != 0) {
+		free(pid_h);
 		return IOT_OS_FALSE;
 	}
 
