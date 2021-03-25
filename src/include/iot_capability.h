@@ -73,10 +73,10 @@ typedef struct iot_cap_evt_data_t {
 	char *evt_value_data;
 
 	/**
-	 * @brief event related commandId.
+	 * @brief option for deviceEvent.
 	 *
 	 */
-	char *command_id;
+	iot_cap_attr_option_t options;
 } iot_cap_evt_data_t;
 
 /**

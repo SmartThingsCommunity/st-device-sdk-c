@@ -58,7 +58,7 @@ int iot_os_thread_create(void *thread_function, const char *name, int stack_size
 {
 	int status;
 	pthread_attr_t attr;
-	pthread_t *pid_h = (pthread_t *)malloc(sizeof(pthread_t));
+	pthread_t *pid_h = NULL
 
 	status = pthread_attr_init(&attr);
 	if (status != 0) {
@@ -70,8 +70,14 @@ int iot_os_thread_create(void *thread_function, const char *name, int stack_size
 		return IOT_OS_FALSE;
 	}
 
+	pid_h = (pthread_t *)malloc(sizeof(pthread_t));
+	if (!pid_h) {
+		return IOT_OS_FALSE;
+	}
+
 	status = pthread_create(pid_h, &attr, thread_function, (pthread_addr_t)data);
 	if (status != 0) {
+		free(pid_h);
 		return IOT_OS_FALSE;
 	}
 
@@ -174,18 +180,22 @@ static void *recursive_mutex_create_wrapper(void)
 {
 	pthread_mutexattr_t mattr;
 	int status = 0;
+	pthread_mutex_t *mutex = NULL;
 
-	pthread_mutex_t *mutex = (pthread_mutex_t *)malloc(sizeof(pthread_mutex_t));
-	if (mutex == NULL) {
-		return NULL;
-	}
 	pthread_mutexattr_init(&mattr);
 	status = pthread_mutexattr_settype(&mattr, PTHREAD_MUTEX_RECURSIVE);
 	if (status != 0) {
 		return NULL;
 	}
+
+	pthread_mutex_t *mutex = (pthread_mutex_t *)malloc(sizeof(pthread_mutex_t));
+	if (mutex == NULL) {
+		return NULL;
+	}
+
 	status = pthread_mutex_init(mutex, &mattr);
 	if (status) {
+		free(mutex);
 		return NULL;
 	}
 	return (void *)mutex;
@@ -261,6 +271,7 @@ void iot_os_mutex_destroy(iot_os_mutex* mutex)
         return;
 
     pthread_mutex_destroy((pthread_mutex_t *)mutex->sem);
+    free(mutex->sem);
 }
 
 /* Delay */

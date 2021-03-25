@@ -60,8 +60,12 @@ int TC_iot_wt_create_memleak_detect_setup(void **state)
 
 int TC_iot_wt_create_memleak_detect_teardown(void **state)
 {
+	iot_error_t err;
 	UNUSED(state);
+
 	set_mock_detect_memory_leak(false);
+	err = iot_nv_deinit();
+	assert_int_equal(err, IOT_ERROR_NONE);
 	return 0;
 }
 

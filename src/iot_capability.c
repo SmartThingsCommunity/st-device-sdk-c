@@ -101,7 +101,7 @@ IOT_EVENT* st_cap_create_attr_with_id(IOT_CAP_HANDLE *cap_handle, const char *at
 	evt_data = (iot_cap_evt_data_t *)st_cap_create_attr(cap_handle, attribute, value, unit, data);
 
 	if (evt_data != NULL && command_id != NULL) {
-		evt_data->command_id = iot_os_strdup(command_id);
+		evt_data->options.command_id = iot_os_strdup(command_id);
 	}
 
 	return (IOT_EVENT*)evt_data;
@@ -207,6 +207,12 @@ static IOT_EVENT* _iot_cap_create_attr(const char *attribute,
 IOT_EVENT* st_cap_create_attr(IOT_CAP_HANDLE *cap_handle, const char *attribute,
 			iot_cap_val_t *value, const char *unit, const char *data)
 {
+	return st_cap_create_attr_with_option(cap_handle, attribute, value, unit, data, NULL);
+}
+
+IOT_EVENT* st_cap_create_attr_with_option(IOT_CAP_HANDLE *cap_handle, const char *attribute,
+			iot_cap_val_t *value, const char *unit, const char *data, iot_cap_attr_option_t *options)
+{
 	iot_cap_evt_data_t* evt_data = NULL;
 
 	if (cap_handle == NULL) {
@@ -219,6 +225,15 @@ IOT_EVENT* st_cap_create_attr(IOT_CAP_HANDLE *cap_handle, const char *attribute,
 		return NULL;
 
 	evt_data->ref_cap = (struct iot_cap_handle *)cap_handle;
+
+	if (options != NULL)
+	{
+		evt_data->options.state_change = options->state_change;
+		if (options->command_id)
+		{
+			evt_data->options.command_id = iot_os_strdup(options->command_id);
+		}
+	}
 
 	return (IOT_EVENT*)evt_data;
 }
@@ -992,9 +1007,9 @@ static JSON_H *_iot_make_evt_data(const char* component, const char* capability,
 
 	evt_item = JSON_CREATE_OBJECT();
 
-	if (evt_data->command_id != NULL) {
+	if (evt_data->options.command_id != NULL) {
 		/* commandId */
-		JSON_ADD_STRING_TO_OBJECT(evt_item, "commandId", evt_data->command_id);
+		JSON_ADD_STRING_TO_OBJECT(evt_item, "commandId", evt_data->options.command_id);
 	}
 
 	/* component */
@@ -1050,6 +1065,9 @@ static JSON_H *_iot_make_evt_data(const char* component, const char* capability,
 		IOT_WARN("Cannot add optional timestamp value");
 	else
 		JSON_ADD_STRING_TO_OBJECT(prov_data, "timestamp", time_in_ms);
+
+	if (evt_data->options.state_change)
+		JSON_ADD_STRING_TO_OBJECT(prov_data, "stateChange", "Y");
 
 	JSON_ADD_ITEM_TO_OBJECT(evt_item, "providerData", prov_data);
 
@@ -1147,8 +1165,8 @@ static void _iot_free_evt_data(iot_cap_evt_data_t* evt_data)
 		iot_os_free(evt_data->evt_value_data);
 	}
 
-	if (evt_data->command_id != NULL) {
-		iot_os_free(evt_data->command_id);
+	if (evt_data->options.command_id != NULL) {
+		iot_os_free(evt_data->options.command_id);
 	}
 }
 /* External API */
