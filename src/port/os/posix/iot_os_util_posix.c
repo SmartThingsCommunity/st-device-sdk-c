@@ -288,7 +288,7 @@ unsigned char iot_os_eventgroup_wait_bits(iot_os_eventgroup* eventgroup_handle,
 				if (FD_ISSET(eventgroup->group[i].fd[0], &readfds)) {
 					memset(buf, 0, sizeof(buf));
 					read_size = read(eventgroup->group[i].fd[0], buf, sizeof(buf));
-					IOT_DEBUG("read_size = %d", read_size);
+					IOT_DEBUG("read_size = %d (%d)", read_size, i);
 					bits |= eventgroup->group[i].id;
 				}
 			}
@@ -312,12 +312,12 @@ int iot_os_eventgroup_set_bits(iot_os_eventgroup* eventgroup_handle,
 
 	for (int i = 0; i < EVENT_MAX; i++) {
         if (eventgroup->group[i].id == (eventgroup->group[i].id & eventgroup->event_status)) {
-            IOT_DEBUG("already set 0x08x", eventgroup->group[i].id);
+            IOT_DEBUG("already set 0x%08x (%d)", eventgroup->group[i].id, i);
             continue;
         }
 		if (eventgroup->group[i].id == (eventgroup->group[i].id & bits_to_set)) {
 			write_size = write(eventgroup->group[i].fd[1], "Set", strlen("Set"));
-			IOT_DEBUG("write_size = %d", write_size);
+			IOT_DEBUG("write_size = %d (%d)", write_size, i);
 			bits |= eventgroup->group[i].id;
 		}
 	}
