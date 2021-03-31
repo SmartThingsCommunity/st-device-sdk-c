@@ -115,6 +115,13 @@ typedef struct {
 	};
 } iot_cap_val_t;
 
+/**
+ * @brief Attribute extended options structure
+ */
+typedef struct {
+	uint8_t state_change;	/**< @brief force this attribute value update event */
+	char *command_id;		/**< @brief event related commandId, if not used, set NULL */
+} iot_cap_attr_option_t;
 
 #define MAX_CAP_ARG (5)
 
@@ -438,6 +445,26 @@ DEPRECATED IOT_EVENT* st_cap_attr_create(const char *attribute,
  */
 IOT_EVENT* st_cap_create_attr(IOT_CAP_HANDLE *cap_handle, const char *attribute,
 			iot_cap_val_t *value, const char *unit, const char *data);
+
+/**
+ * @brief Create IOT_EVENT data including options
+ *
+ * @param[in] cap_handle Capability reference which the event is created in.
+ * @param[in] attribute The attribute string of IOT_EVENT data.
+ * @param[in] value The value to add to IOT_EVENT data.
+ * @param[in] unit The unit string if needed. Otherwise NULL.
+ * @param[in] data The data json object if needed. Otherwise NULL.
+ * @param[in] options The option object if needed. Otherwise NULL.
+ *
+ * @return Pointer of `IOT_EVENT` which is used to publish device status.
+ *
+ * @warning Must call [st_cap_free_attr](@ref st_cap_free_attr)
+ * to free IOT_EVENT data after using it.
+ *
+ * @see @ref st_cap_send_attr
+ */
+IOT_EVENT* st_cap_create_attr_with_option(IOT_CAP_HANDLE *cap_handle, const char *attribute,
+			iot_cap_val_t *value, const char *unit, const char *data, iot_cap_attr_option_t *options);
 
 /**
  * @brief Create IOT_EVENT data with releated command ID.

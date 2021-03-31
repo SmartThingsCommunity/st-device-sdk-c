@@ -1,5 +1,23 @@
 # HISTORY
 
+## 1.5.11 :  Changes until v1.5.11
+
+New Improvements or features:
+
+ - Create new attribute extended option API : st_cap_create_attr_with_option() & struct iot_cap_attr_option_t
+ - Added new net interface to use external private key for X509 supporting
+ - Added external private callback & new security key type for X509 supporting
+
+Enhancements or amendments:
+
+ - Change MISC NV storing workflow by the best effort
+ - Upgrade QR code generating tool for user-friendly
+
+Bug fixed:
+
+ - port/os/posix : Fixed missing mem-free at iot_mutex_destory case
+ - port/os/tizenrt : Added mem-free routine for mutex handling & thread handling case
+
 ## 1.5.9 :  Changes until v1.5.9
 
 Enhancements or amendments:

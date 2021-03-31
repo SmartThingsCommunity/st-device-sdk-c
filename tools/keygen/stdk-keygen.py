@@ -14,8 +14,16 @@ from nacl.signing import SigningKey, VerifyKey
 from nacl.encoding import HexEncoder
 
 import json
-import qrcode
 from pathlib import Path
+import pkgutil
+try:
+    import qrcode
+except ImportError:
+    print("-----------------------------NOTICE----------------------------------")
+    print("qrcode module failed to import. QR code generation will not execute.")
+    print("If you want to make QR code, please install qrcode module first.")
+    print("---------------------------------------------------------------------")
+    pass
 
 __version__ = "1.4.0"
 ROOT_PATH = "output"
@@ -23,11 +31,18 @@ ROOT_PATH = "output"
 onboardingFile = "onboarding_config.json"
 
 def safeOpenJSONFile(file):
-    with open(file) as f:
-        try:
-            return json.load(f)
-        except:
-            raise TypeError("Unable to parse %s" % (file))
+    try:
+        open(file)
+    except FileNotFoundError:
+        print("%s is Not Found" % (onboardingFile))
+        print("To make QR code, %s downloaded from Developer Workspace is necessary" % (onboardingFile))
+        print("Please input --path argument with the path located %s in your computer." % (onboardingFile))
+    else:
+        with open(file) as f:
+            try:
+                return json.load(f)
+            except:
+                raise TypeError("Unable to parse %s" % (file))
 
 def safeReadJSON(key, data, file):
     if not key in data:
@@ -209,13 +224,13 @@ class Qr():
     def prepare_repo(self, sub_path, args, mnid, onboardingId, sn):
         image_file = "qr-" + sn + ".png"
 
-        if args.qr == 'commercial':
+        if args.input is None:
+            self._imagefile = os.path.join(sub_path, image_file)
+        else:
             repo_dir = os.path.join(sub_path, sn)
             if not os.path.isdir(repo_dir):
                 os.makedirs(repo_dir, exist_ok=True)
             self._imagefile = os.path.join(repo_dir, image_file)
-        elif args.qr == 'individual':
-            self._imagefile = os.path.join(sub_path, image_file)
 
         qrUrl = "https://qr.samsungiots.com/?m=%s&s=%s&r=%s" % (
                 mnid, onboardingId, sn)
@@ -227,7 +242,7 @@ class Qr():
             img.save(imgFP)
             print("File:\t%s \nQR url:\t%s" % (imgFP, self._qrurl))
 
-def individual(args):
+def individual(args, qrcode_imported):
     root_path = ROOT_PATH
     sn = 'STDK' + get_random(args.mnid, 8)
     sub_path = root_path + "_" + sn
@@ -247,18 +262,19 @@ def individual(args):
         nv.prepare_repo(sub_path, sn)
         nv.generate_csv(edkey.get_pubkey_b64(), edkey.get_seckey_b64())
         nv.generate_image()
-    if args.qr == 'individual':
-        #Generate QRcode image
-        file = os.path.join(args.folder, onboardingFile)
+    if args.qr is True and qrcode_imported is not None:
+        #Generate QRcode imagea
+        file = os.path.join(args.path, onboardingFile)
         data = safeOpenJSONFile(file)
-        safeReadJSON("onboardingConfig", data, file)
-        mnid = safeReadJSON("mnId", data["onboardingConfig"], file)
-        onboardingId = safeReadJSON("setupId", data["onboardingConfig"], file)
-        qr = Qr()
-        qr.prepare_repo(sub_path, args, mnid, onboardingId, sn)
-        qr.generate_image()
+        if data is not None:
+            safeReadJSON("onboardingConfig", data, file)
+            mnid = safeReadJSON("mnId", data["onboardingConfig"], file)
+            onboardingId = safeReadJSON("setupId", data["onboardingConfig"], file)
+            qr = Qr()
+            qr.prepare_repo(sub_path, args, mnid, onboardingId, sn)
+            qr.generate_image()
 
-def bulk(args):
+def bulk(args, qrcode_imported):
     root_path = ROOT_PATH + "_bulk"
     time = datetime.now().strftime("%Y%m%d_%H%M%S")
     sub_path = os.path.join(root_path, time)
@@ -269,12 +285,13 @@ def bulk(args):
 
     print("Loading " + args.input + "...")
 
-    if args.qr == 'commercial':
-        file = os.path.join(args.folder, onboardingFile)
+    if args.qr is True and qrcode_imported is not None:
+        file = os.path.join(args.path, onboardingFile)
         data = safeOpenJSONFile(file)
-        safeReadJSON("onboardingConfig", data, file)
-        mnid = safeReadJSON("mnId", data["onboardingConfig"], file)
-        onboardingId = safeReadJSON("setupId", data["onboardingConfig"], file)
+        if data is not None:
+            safeReadJSON("onboardingConfig", data, file)
+            mnid = safeReadJSON("mnId", data["onboardingConfig"], file)
+            onboardingId = safeReadJSON("setupId", data["onboardingConfig"], file)
 
     with open(args.input, newline='') as csvinput:
         reader = csv.DictReader(csvinput)
@@ -299,7 +316,7 @@ def bulk(args):
                 nv.generate_csv(edkey.get_pubkey_b64(), edkey.get_seckey_b64())
                 nv.generate_image()
 
-            if args.qr == 'commercial':
+            if args.qr is True and qrcode_imported is not None and data is not None:
                 #Generate QRcode image
                 qr = Qr()
                 qr.prepare_repo(sub_path, args, mnid, onboardingId, sn)
@@ -339,21 +356,24 @@ def main():
 
     parser.add_argument(
         '--qr',
-        choices=['individual', 'commercial'],
-        help="generate qrcode image for individual or commercial")
+        action='store_true',
+        default=False,
+        help="generate QR code image. --path is required")
 
     parser.add_argument(
-        '--folder',
+        '--path',
         default=os.getcwd(),
-        help="Folder containing %s (if not supplied uses current folder) Need for generating qrcode"
-        % (onboardingFile))
+        help="input the path located %s (Or copy %s to the current folder)"
+        % (onboardingFile, onboardingFile))
 
     args = parser.parse_args()
 
+    qrcode_imported = pkgutil.find_loader('qrcode')
+
     if args.input is None:
-        individual(args)
+        individual(args, qrcode_imported)
     else:
-        bulk(args)
+        bulk(args, qrcode_imported)
 
 if __name__ == "__main__":
     main()
