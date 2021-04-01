@@ -356,7 +356,7 @@ void http_msg_handler(int cmd, char **buffer, enum cgi_type type, char* data_buf
 		err = _iot_easysetup_gen_post_payload(context, cmd, data_buf, &payload);
 		if (!err) {
 			payload_len = strlen(payload);
-			buffer_len = payload_len + strlen(http_status_200) + strlen(http_header) + digit_count_payload(payload_len) + 5;
+			buffer_len = payload_len + strlen(http_status_200) + strlen(http_header) + digit_count_payload(payload_len) + strlen(END_OF_HTTP_HEADER) + 1;
 			buf = malloc(buffer_len);
 			if (!buf) {
 				IOT_ERROR("failed to malloc buffer for the post msg");
@@ -375,7 +375,7 @@ void http_msg_handler(int cmd, char **buffer, enum cgi_type type, char* data_buf
 		err = _iot_easysetup_gen_get_payload(context, cmd, &payload);
 		if (!err) {
 			payload_len = strlen(payload);
-			buffer_len = payload_len + strlen(http_status_200) + strlen(http_header) + digit_count_payload(payload_len) + 5;
+			buffer_len = payload_len + strlen(http_status_200) + strlen(http_header) + digit_count_payload(payload_len) + strlen(END_OF_HTTP_HEADER) + 1;
 			buf = malloc(buffer_len);
 			if (!buf) {
 				IOT_ERROR("failed to malloc buffer for the get msg");
