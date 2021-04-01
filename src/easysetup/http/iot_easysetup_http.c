@@ -37,7 +37,7 @@ static struct iot_context *context;
 static const char http_status_200[] = "HTTP/1.1 200 OK";
 static const char http_status_400[] = "HTTP/1.1 400 Bad Request";
 static const char http_status_500[] = "HTTP/1.1 500 Internal Server Error";
-static const char http_header[] = "\r\nServer: SmartThings Device SDK\r\nConnection: "CONNECTION_TYPE"\r\nContent-Type: application/json\r\nContent-Length: ";
+static const char http_header[] = "\r\nServer: SmartThings SDK Setup\r\nConnection: "CONNECTION_TYPE"\r\nContent-Type: application/json\r\nContent-Length: ";
 #define END_OF_HTTP_HEADER	"\r\n\r\n"
 STATIC_VARIABLE int ref_step;
 #if defined(CONFIG_STDK_IOT_CORE_EASYSETUP_LOG_SUPPORT_NO_USE_LOGFILE)
