@@ -97,6 +97,7 @@ iot_error_t _iot_easysetup_gen_get_payload(struct iot_context *ctx, int cmd, cha
 	iot_error_t err = IOT_ERROR_NONE;
 	struct iot_easysetup_payload response;
 	int cur_step;
+	unsigned char curr_event;
 	int ret;
 
 	if (cmd == IOT_EASYSETUP_INVALID_STEP) {
@@ -149,8 +150,13 @@ iot_error_t _iot_easysetup_gen_get_payload(struct iot_context *ctx, int cmd, cha
 	}
 	IOT_INFO("waiting.. response for [%d]", cmd);
 	IOT_ES_DUMP(IOT_DEBUG_LEVEL_INFO, IOT_DUMP_EASYSETUP_WAIT_RESPONSE, cmd);
-    iot_os_eventgroup_wait_bits(ctx->iot_events,
-    		IOT_EVENT_BIT_EASYSETUP_RESP, true, IOT_OS_MAX_DELAY);
+	curr_event = iot_os_eventgroup_wait_bits(ctx->iot_events,
+			IOT_EVENT_BIT_EASYSETUP_RESP, true, IOT_OS_MAX_DELAY);
+	if (curr_event & IOT_EVENT_BIT_EASYSETUP_RESP) {
+		IOT_DEBUG("easysetup response for [%d]", cmd);
+	} else {
+		IOT_ERROR("unexpected event for [%d]: 0x%x", cmd, curr_event);
+	}
 	ret = iot_os_queue_receive(ctx->easysetup_resp_queue, &response, 0);
 	if ((ret == IOT_OS_TRUE) && (response.step != cur_step)) {
 		IOT_ERROR("unexpected response %d:%d", cur_step, response.step);
@@ -260,11 +266,12 @@ iot_error_t _iot_easysetup_gen_post_payload(struct iot_context *ctx, int cmd, ch
 	IOT_INFO("waiting.. response for [%d]", cmd);
 	IOT_ES_DUMP(IOT_DEBUG_LEVEL_INFO, IOT_DUMP_EASYSETUP_WAIT_RESPONSE, cmd);
 
-	for( ; ; ) {
-		curr_event = iot_os_eventgroup_wait_bits(ctx->iot_events,
-				IOT_EVENT_BIT_EASYSETUP_RESP, true, IOT_OS_MAX_DELAY);
-		if (curr_event & IOT_EVENT_BIT_EASYSETUP_RESP)
-			break;
+	curr_event = iot_os_eventgroup_wait_bits(ctx->iot_events,
+			IOT_EVENT_BIT_EASYSETUP_RESP, true, IOT_OS_MAX_DELAY);
+	if (curr_event & IOT_EVENT_BIT_EASYSETUP_RESP) {
+		IOT_DEBUG("easysetup response for [%d]", cmd);
+	} else {
+		IOT_ERROR("unexpected event for [%d]: 0x%x", cmd, curr_event);
 	}
 
 	ret = iot_os_queue_receive(ctx->easysetup_resp_queue, &response, 0);
