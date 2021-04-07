@@ -84,7 +84,7 @@ void iot_util_dump_mem(char *tag, uint8_t *buf, size_t len)
 
 	for (i = 0; i < len; i += w) {
 		if (!strcmp(tag, "dump") && !(i % 0x10)) {
-			printf("%s[%p] ", newline, buf);
+			printf("%s[%p] ", newline, buf + i);
 			newline = "\n";
 		}
 

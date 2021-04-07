@@ -37,7 +37,7 @@ static struct iot_context *context;
 static const char http_status_200[] = "HTTP/1.1 200 OK";
 static const char http_status_400[] = "HTTP/1.1 400 Bad Request";
 static const char http_status_500[] = "HTTP/1.1 500 Internal Server Error";
-static const char http_header[] = "\r\nServer: SmartThings Device SDK\r\nConnection: "CONNECTION_TYPE"\r\nContent-Type: application/json\r\nContent-Length: ";
+static const char http_header[] = "\r\nServer: SmartThings SDK Setup\r\nConnection: "CONNECTION_TYPE"\r\nContent-Type: application/json\r\nContent-Length: ";
 #define END_OF_HTTP_HEADER	"\r\n\r\n"
 STATIC_VARIABLE int ref_step;
 #if defined(CONFIG_STDK_IOT_CORE_EASYSETUP_LOG_SUPPORT_NO_USE_LOGFILE)
@@ -97,6 +97,7 @@ iot_error_t _iot_easysetup_gen_get_payload(struct iot_context *ctx, int cmd, cha
 	iot_error_t err = IOT_ERROR_NONE;
 	struct iot_easysetup_payload response;
 	int cur_step;
+	unsigned char curr_event;
 	int ret;
 
 	if (cmd == IOT_EASYSETUP_INVALID_STEP) {
@@ -149,8 +150,13 @@ iot_error_t _iot_easysetup_gen_get_payload(struct iot_context *ctx, int cmd, cha
 	}
 	IOT_INFO("waiting.. response for [%d]", cmd);
 	IOT_ES_DUMP(IOT_DEBUG_LEVEL_INFO, IOT_DUMP_EASYSETUP_WAIT_RESPONSE, cmd);
-    iot_os_eventgroup_wait_bits(ctx->iot_events,
-    		IOT_EVENT_BIT_EASYSETUP_RESP, true, IOT_OS_MAX_DELAY);
+	curr_event = iot_os_eventgroup_wait_bits(ctx->iot_events,
+			IOT_EVENT_BIT_EASYSETUP_RESP, true, IOT_OS_MAX_DELAY);
+	if (curr_event & IOT_EVENT_BIT_EASYSETUP_RESP) {
+		IOT_DEBUG("easysetup response for [%d]", cmd);
+	} else {
+		IOT_ERROR("unexpected event for [%d]: 0x%x", cmd, curr_event);
+	}
 	ret = iot_os_queue_receive(ctx->easysetup_resp_queue, &response, 0);
 	if ((ret == IOT_OS_TRUE) && (response.step != cur_step)) {
 		IOT_ERROR("unexpected response %d:%d", cur_step, response.step);
@@ -260,11 +266,12 @@ iot_error_t _iot_easysetup_gen_post_payload(struct iot_context *ctx, int cmd, ch
 	IOT_INFO("waiting.. response for [%d]", cmd);
 	IOT_ES_DUMP(IOT_DEBUG_LEVEL_INFO, IOT_DUMP_EASYSETUP_WAIT_RESPONSE, cmd);
 
-	for( ; ; ) {
-		curr_event = iot_os_eventgroup_wait_bits(ctx->iot_events,
-				IOT_EVENT_BIT_EASYSETUP_RESP, true, IOT_OS_MAX_DELAY);
-		if (curr_event & IOT_EVENT_BIT_EASYSETUP_RESP)
-			break;
+	curr_event = iot_os_eventgroup_wait_bits(ctx->iot_events,
+			IOT_EVENT_BIT_EASYSETUP_RESP, true, IOT_OS_MAX_DELAY);
+	if (curr_event & IOT_EVENT_BIT_EASYSETUP_RESP) {
+		IOT_DEBUG("easysetup response for [%d]", cmd);
+	} else {
+		IOT_ERROR("unexpected event for [%d]: 0x%x", cmd, curr_event);
 	}
 
 	ret = iot_os_queue_receive(ctx->easysetup_resp_queue, &response, 0);
@@ -356,7 +363,7 @@ void http_msg_handler(int cmd, char **buffer, enum cgi_type type, char* data_buf
 		err = _iot_easysetup_gen_post_payload(context, cmd, data_buf, &payload);
 		if (!err) {
 			payload_len = strlen(payload);
-			buffer_len = payload_len + strlen(http_status_200) + strlen(http_header) + digit_count_payload(payload_len) + 5;
+			buffer_len = payload_len + strlen(http_status_200) + strlen(http_header) + digit_count_payload(payload_len) + strlen(END_OF_HTTP_HEADER) + 1;
 			buf = malloc(buffer_len);
 			if (!buf) {
 				IOT_ERROR("failed to malloc buffer for the post msg");
@@ -375,7 +382,7 @@ void http_msg_handler(int cmd, char **buffer, enum cgi_type type, char* data_buf
 		err = _iot_easysetup_gen_get_payload(context, cmd, &payload);
 		if (!err) {
 			payload_len = strlen(payload);
-			buffer_len = payload_len + strlen(http_status_200) + strlen(http_header) + digit_count_payload(payload_len) + 5;
+			buffer_len = payload_len + strlen(http_status_200) + strlen(http_header) + digit_count_payload(payload_len) + strlen(END_OF_HTTP_HEADER) + 1;
 			buf = malloc(buffer_len);
 			if (!buf) {
 				IOT_ERROR("failed to malloc buffer for the get msg");

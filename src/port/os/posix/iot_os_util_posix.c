@@ -213,6 +213,7 @@ typedef struct {
 typedef struct {
 	event_t group[EVENT_MAX];
 	unsigned char event_status;
+	pthread_mutex_t mutex;
 } eventgroup_t;
 
 iot_os_eventgroup* iot_os_eventgroup_create(void)
@@ -220,6 +221,11 @@ iot_os_eventgroup* iot_os_eventgroup_create(void)
 	eventgroup_t *eventgroup = malloc(sizeof(eventgroup_t));
 	if (eventgroup == NULL)
 		return NULL;
+
+	if (pthread_mutex_init(&eventgroup->mutex, NULL)) {
+		free(eventgroup);
+		return NULL;
+	}
 
 	for (int i = 0; i < EVENT_MAX; i++) {
 		eventgroup->group[i].id = (1 << i);
@@ -229,6 +235,7 @@ iot_os_eventgroup* iot_os_eventgroup_create(void)
 			return NULL;
 		}
 	}
+
 	eventgroup->event_status = 0;
 
 	return eventgroup;
@@ -242,7 +249,7 @@ void iot_os_eventgroup_delete(iot_os_eventgroup* eventgroup_handle)
 		close(eventgroup->group[i].fd[0]);
 		close(eventgroup->group[i].fd[1]);
 	}
-
+	pthread_mutex_destroy(&eventgroup->mutex);
 	free(eventgroup);
 }
 
@@ -275,11 +282,14 @@ unsigned char iot_os_eventgroup_wait_bits(iot_os_eventgroup* eventgroup_handle,
 	tv.tv_usec = (wait_time_ms % 1000) * 1000;
 
 	int ret = select(fd_max + 1, &readfds, NULL, NULL, &tv);
+	pthread_mutex_lock(&eventgroup->mutex);
 	if (ret == -1) {
 		// Select Error
+		pthread_mutex_unlock(&eventgroup->mutex);
 		return 0;
 	} else if (ret == 0) {
 		// Select Timeout
+		pthread_mutex_unlock(&eventgroup->mutex);
 		return (unsigned int)eventgroup->event_status;
 	} else {
 		// read pipe
@@ -288,7 +298,7 @@ unsigned char iot_os_eventgroup_wait_bits(iot_os_eventgroup* eventgroup_handle,
 				if (FD_ISSET(eventgroup->group[i].fd[0], &readfds)) {
 					memset(buf, 0, sizeof(buf));
 					read_size = read(eventgroup->group[i].fd[0], buf, sizeof(buf));
-					IOT_DEBUG("read_size = %d", read_size);
+					IOT_DEBUG("read_size = %d (%d)", read_size, i);
 					bits |= eventgroup->group[i].id;
 				}
 			}
@@ -298,6 +308,7 @@ unsigned char iot_os_eventgroup_wait_bits(iot_os_eventgroup* eventgroup_handle,
 		if (clear_on_exit) {
 			eventgroup->event_status &= ~(bits);
 		}
+		pthread_mutex_unlock(&eventgroup->mutex);
 
 		return (unsigned int)event_status_backup;
 	}
@@ -310,19 +321,21 @@ int iot_os_eventgroup_set_bits(iot_os_eventgroup* eventgroup_handle,
 	unsigned char bits = 0;
 	ssize_t write_size = 0;
 
+	pthread_mutex_lock(&eventgroup->mutex);
 	for (int i = 0; i < EVENT_MAX; i++) {
         if (eventgroup->group[i].id == (eventgroup->group[i].id & eventgroup->event_status)) {
-            IOT_DEBUG("already set 0x08x", eventgroup->group[i].id);
+            IOT_DEBUG("already set 0x%08x (%d)", eventgroup->group[i].id, i);
             continue;
         }
 		if (eventgroup->group[i].id == (eventgroup->group[i].id & bits_to_set)) {
 			write_size = write(eventgroup->group[i].fd[1], "Set", strlen("Set"));
-			IOT_DEBUG("write_size = %d", write_size);
+			IOT_DEBUG("write_size = %d (%d)", write_size, i);
 			bits |= eventgroup->group[i].id;
 		}
 	}
 
 	eventgroup->event_status |= bits;
+	pthread_mutex_unlock(&eventgroup->mutex);
 
 	return IOT_OS_TRUE;
 }
@@ -332,8 +345,10 @@ int iot_os_eventgroup_clear_bits(iot_os_eventgroup* eventgroup_handle,
 {
     eventgroup_t *eventgroup = eventgroup_handle;
 
+	pthread_mutex_lock(&eventgroup->mutex);
     eventgroup->event_status &= ~(bits_to_clear);
     // TODO: clear written event to pipe
+	pthread_mutex_unlock(&eventgroup->mutex);
 
 	return IOT_OS_TRUE;
 }

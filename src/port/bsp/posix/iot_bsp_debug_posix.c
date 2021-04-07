@@ -19,6 +19,7 @@
 #include <stdio.h>
 #include <stdlib.h>
 #include <stdarg.h>
+#include <sys/time.h>
 
 #include "iot_bsp_debug.h"
 
@@ -35,10 +36,12 @@ void iot_bsp_dump(char* buf)
 
 void iot_bsp_debug(iot_debug_level_t level, const char* tag, const char* fmt, ...)
 {
+	struct timeval log_time;
 	char buf[BUF_SIZE] = {0,};
 	int ret;
 	va_list va;
 
+	gettimeofday(&log_time, NULL);
 	va_start(va, fmt);
 	ret = vsnprintf(buf, BUF_SIZE, fmt, va);
 	va_end(va);
@@ -46,15 +49,15 @@ void iot_bsp_debug(iot_debug_level_t level, const char* tag, const char* fmt, ..
 	iot_bsp_dump(buf);
 
 	if (level == IOT_DEBUG_LEVEL_ERROR) {
-		printf(COLOR_RED"E %s: %s\n"COLOR_RESET, tag, buf);
+		printf(COLOR_RED"E (%ld:%ld) %s: %s\n"COLOR_RESET, log_time.tv_sec, log_time.tv_usec / 1000 , tag, buf);
 	} else if (level == IOT_DEBUG_LEVEL_WARN) {
-		printf(COLOR_YELLOW"W %s: %s\n"COLOR_RESET, tag, buf);
+		printf(COLOR_YELLOW"W (%ld:%ld) %s: %s\n"COLOR_RESET, log_time.tv_sec, log_time.tv_usec / 1000 , tag, buf);
 	} else if (level == IOT_DEBUG_LEVEL_INFO) {
-		printf(COLOR_GREEN"I %s: %s\n"COLOR_RESET, tag, buf);
+		printf(COLOR_GREEN"I (%ld:%ld) %s: %s\n"COLOR_RESET, log_time.tv_sec, log_time.tv_usec / 1000, tag, buf);
 	} else if (level == IOT_DEBUG_LEVEL_DEBUG) {
-		printf("D %s: %s\n", tag, buf);
+		printf("D (%ld:%ld) %s: %s\n", log_time.tv_sec, log_time.tv_usec / 1000, tag, buf);
 	} else {
-		printf("D %s: %s\n", tag, buf);
+		printf("D (%ld:%ld) %s: %s\n", log_time.tv_sec, log_time.tv_usec / 1000, tag, buf);
 	}
 }
 
