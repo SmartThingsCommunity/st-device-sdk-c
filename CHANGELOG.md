@@ -1,5 +1,19 @@
 # HISTORY
 
+## 1.5.12 :  Changes until v1.5.12
+
+Enhancements or amendments:
+
+ - posix: os: Add mutex operation while handling eventgroup information
+ - Easysetup process related enhancements
+  * Use same logic to check easysetup response eventgroup
+  * Use strlen(END_OF_HTTP_HEADER) + 1 instread of 5 to calculated length
+  * Changed http header server name by "SmartThings SDK Setup"
+
+Bug fixed:
+
+ - iot_util: fix address display routine of iot_util_dump_mem
+
 ## 1.5.11 :  Changes until v1.5.11
 
 New Improvements or features:
