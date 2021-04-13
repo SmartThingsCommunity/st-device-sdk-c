@@ -15,7 +15,7 @@
  * language governing permissions and limitations under the License.
  *
  ****************************************************************************/
-#include "iot_easysetup_http_socket.h"
+#include "iot_easysetup_http_impl.h"
 #include "iot_easysetup.h"
 
 #define HTTP_PORT 8888
