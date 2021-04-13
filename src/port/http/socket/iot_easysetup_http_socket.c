@@ -1,6 +1,6 @@
 /* ***************************************************************************
  *
- * Copyright 2020 Samsung Electronics All Rights Reserved.
+ * Copyright 2020-2021 Samsung Electronics All Rights Reserved.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -17,7 +17,6 @@
  ****************************************************************************/
 #include "iot_easysetup_http_socket.h"
 #include "iot_easysetup.h"
-#include "../easysetup_http.h"
 
 #define HTTP_PORT 8888
 

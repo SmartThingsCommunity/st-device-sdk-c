@@ -18,7 +18,6 @@ else()
         "${EASYSETUP_D2D_SOURCES}"
         http/tcp/iot_easysetup_d2d_tcp.c
         http/tcp/iot_easysetup_httpd.c
-        http/tcp/iot_easysetup_http_socket.c
     )
 endif()
 
