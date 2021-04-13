@@ -40,7 +40,6 @@ SRCS	+= $(wildcard $(CBOR_DIR)/*.c)
 SRCS	+= $(wildcard $(BSP_DIR)/*.c)
 SRCS	+= $(wildcard $(OS_DIR)/*.c)
 SRCS	+= $(wildcard $(NET_DIR)/*.c)
-SRCS	+= $(wildcard $(HTTP_DIR)/*.c)
 SRCS	+= $(wildcard $(CRYPTO_DIR)/*.c)
 SRCS	+= $(EASYSETUP_DIR)/iot_easysetup_st_mqtt.c
 ifneq ($(findstring STDK_IOT_CORE_EASYSETUP_HTTP, $(STDK_CONFIGS)),)
@@ -50,6 +49,7 @@ ifneq ($(findstring STDK_IOT_CORE_EASYSETUP_X509, $(STDK_CONFIGS)),)
 SRCS	+= $(wildcard $(EASYSETUP_DIR)/http/tls/*.c)
 else
 SRCS	+= $(wildcard $(EASYSETUP_DIR)/http/tcp/*.c)
+SRCS	+= $(wildcard $(HTTP_DIR)/*.c)
 endif
 SRCS	+= $(wildcard $(MQTT_DIR)/client/*.c)
 SRCS	+= $(wildcard $(MQTT_DIR)/packet/*.c)
