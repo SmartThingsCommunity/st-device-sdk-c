@@ -35,6 +35,10 @@
 #include "iot_log_file.h"
 #endif
 
+#if defined(STDK_IOT_CORE_SERIALIZE_CBOR)
+#include <cbor.h>
+#endif
+
 #define NEXT_STATE_TIMEOUT_MS	(100000)
 #define EASYSETUP_TIMEOUT_MS	(300000) /* 5 min */
 #define REGISTRATION_TIMEOUT_MS	(900000) /* 15 min */
@@ -2116,4 +2120,56 @@ int st_info_get(IOT_CTX *iot_ctx, iot_info_type_t info_type, iot_info_data_t *in
 
 	iot_os_mutex_unlock(&ctx->st_conn_lock);
 	return iot_err;
+}
+
+int st_change_health_period(IOT_CTX *iot_ctx, unsigned int new_period)
+{
+	int ret = IOT_ERROR_NONE;
+	struct iot_context *ctx = (struct iot_context*)iot_ctx;
+	st_mqtt_msg msg = {0};
+	JSON_H *json_root = NULL;
+	/* MQTT connection expired after twice ping period */
+	unsigned int new_mqtt_period = new_period/2;
+
+	if (!ctx) {
+		IOT_ERROR("ctx is null");
+	    return IOT_ERROR_INVALID_ARGS;
+	}
+
+	if (ctx->curr_state < IOT_STATE_CLOUD_CONNECTING || ctx->evt_mqttcli == NULL) {
+		IOT_ERROR("Target has not connected to server yet!!");
+		return IOT_ERROR_BAD_REQ;
+	}
+
+	json_root = JSON_CREATE_OBJECT();
+	JSON_ADD_STRING_TO_OBJECT(json_root, "status", "changePeriod");
+	JSON_ADD_NUMBER_TO_OBJECT(json_root, "newPeriod", new_mqtt_period);
+#if defined(STDK_IOT_CORE_SERIALIZE_CBOR)
+	iot_serialize_json2cbor(json_root, (uint8_t **)&msg.payload, (size_t *)&msg.payloadlen);
+#else
+	msg.payload = JSON_PRINT(json_root);
+	msg.payloadlen = strlen(msg.payload);
+#endif
+	msg.qos = st_mqtt_qos1;
+	msg.retained = false;
+	msg.topic = ctx->mqtt_health_topic;
+
+	IOT_INFO("publish event, topic : %s, payload :\n%s",
+		ctx->mqtt_health_topic, (char *)msg.payload);
+
+	ret = st_mqtt_publish(ctx->evt_mqttcli, &msg);
+	if (ret) {
+		ret = IOT_ERROR_MQTT_PUBLISH_FAIL;
+		IOT_ERROR("Failt to publish change period packet");
+		goto exit;
+	}
+	st_mqtt_change_ping_period(ctx->evt_mqttcli, new_mqtt_period);
+
+exit:
+	if (msg.payload)
+		free(msg.payload);
+	if (json_root)
+		JSON_DELETE(json_root);
+
+	return ret;
 }

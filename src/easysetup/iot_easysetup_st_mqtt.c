@@ -985,6 +985,15 @@ iot_error_t iot_es_connect(struct iot_context *ctx, int conn_type)
 		}
 		snprintf(ctx->mqtt_event_topic, IOT_TOPIC_SIZE, IOT_PUB_TOPIC_EVENT, ctx->iot_reg_data.deviceId);
 
+		ctx->mqtt_health_topic = malloc(IOT_TOPIC_SIZE);
+		if (!ctx->mqtt_health_topic) {
+			IOT_ERROR("failed to malloc for mqtt_health_topic");
+			iot_ret = IOT_ERROR_MEM_ALLOC;
+			_iot_es_mqtt_disconnect(ctx, mqtt_cli);
+			goto out;
+		}
+		snprintf(ctx->mqtt_health_topic, IOT_TOPIC_SIZE, IOT_PUB_TOPIC_HEALTH);
+
 		ctx->evt_mqttcli = mqtt_cli;
 	} else {
 		IOT_INFO("connect_type: registration");
@@ -1057,6 +1066,9 @@ iot_error_t iot_es_disconnect(struct iot_context *ctx, int conn_type)
 		if (ctx->mqtt_event_topic)
 			free(ctx->mqtt_event_topic);
 		ctx->mqtt_event_topic = NULL;
+		if (ctx->mqtt_health_topic)
+			free(ctx->mqtt_health_topic);
+		ctx->mqtt_health_topic = NULL;
 		ctx->evt_mqttcli = NULL;
 	} else {
 		target_cli = ctx->reg_mqttcli;

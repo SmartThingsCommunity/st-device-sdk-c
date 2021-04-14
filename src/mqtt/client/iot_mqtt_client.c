@@ -1309,6 +1309,20 @@ exit:
 	return pub_packet;
 }
 
+void st_mqtt_change_ping_period(st_mqtt_client client, unsigned int new_period)
+{
+	MQTTClient *c = client;
+
+	if (c != NULL && c->magic == MQTT_CLIENT_STRUCT_MAGIC_NUMBER) {
+		if((iot_os_mutex_lock(&c->client_manage_lock)) == IOT_OS_TRUE) {
+			c->keepAliveInterval = new_period;
+			iot_os_timer_count_ms(c->last_sent, c->keepAliveInterval * 1000);
+			iot_os_timer_count_ms(c->last_received, c->keepAliveInterval * 1000);
+			iot_os_mutex_unlock(&c->client_manage_lock);
+		}
+	}
+}
+
 int st_mqtt_publish(st_mqtt_client client, st_mqtt_msg *msg)
 {
 	MQTTClient *c = client;

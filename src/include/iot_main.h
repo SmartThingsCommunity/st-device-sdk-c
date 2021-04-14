@@ -266,6 +266,7 @@ struct iot_context {
 	st_mqtt_client reg_mqttcli;			/**< @brief SmartThings MQTT Client for registration */
 	unsigned int mqtt_connect_critical_reject_count;		/**< @brief MQTT connect critical reject count */
 	char *mqtt_event_topic;				/**< @brief mqtt topic for event publish */
+	char *mqtt_health_topic;				/**< @brief mqtt topic for health publish */
 
 	struct iot_device_prov_data prov_data;	/**< @brief allocated device provisioning data */
 	struct iot_devconf_prov_data devconf;	/**< @brief allocated device configuration data */
