@@ -433,6 +433,51 @@ error_prepare_self:
 	return err;
 }
 
+STATIC_FUNCTION
+iot_error_t _delete_dev_card_by_usr(struct iot_context *ctx)
+{
+	iot_error_t iot_err = IOT_ERROR_NONE;
+	unsigned char curr_events;
+	st_mqtt_msg msg;
+	int ret;
+
+	if (!ctx) {
+		return IOT_ERROR_INVALID_ARGS;
+	}
+
+	if ((!ctx->evt_mqttcli) || (ctx->curr_state != IOT_STATE_CLOUD_CONNECTED)) {
+		IOT_WARN("not connected, so can't send device_card deleting msg");
+		return IOT_ERROR_NONE;
+	}
+
+	iot_os_eventgroup_clear_bits(ctx->usr_events, IOT_USR_INTERACT_BIT_CMD_DONE);
+	ctx->usr_delete_req = true;
+
+	/* GreatGate wants to receive 'empty' payload */
+	msg.payload = NULL;
+	msg.payloadlen = 0;
+	msg.qos = st_mqtt_qos1;
+	msg.retained = false;
+	msg.topic = IOT_PUB_TOPIC_DELETE;
+
+	ret = st_mqtt_publish(ctx->evt_mqttcli, &msg);
+	if (ret) {
+		IOT_ERROR("error MQTTpub for %s(%d)", msg.topic, ret);
+		ctx->usr_delete_req = false;
+		iot_err = IOT_ERROR_BAD_REQ;
+	} else {
+		curr_events = iot_os_eventgroup_wait_bits(ctx->usr_events,
+			IOT_USR_INTERACT_BIT_CMD_DONE, true, (NEXT_STATE_TIMEOUT_MS / 2));
+
+		if (!(curr_events & IOT_USR_INTERACT_BIT_CMD_DONE)) {
+			IOT_ERROR("Timeout happened for device_card deleting");
+			ctx->usr_delete_req = false;
+			iot_err = IOT_ERROR_TIMEOUT;
+		}
+	}
+
+	return iot_err;
+}
 
 static iot_error_t _do_iot_main_command(struct iot_context *ctx,
 	struct iot_command *cmd)
@@ -855,14 +900,23 @@ static iot_error_t _do_iot_main_command(struct iot_context *ctx,
 			IOT_DUMP_MAIN(INFO, BASE, noti->type);
 
 			if (noti->type == (iot_noti_type_t)_IOT_NOTI_TYPE_DEV_DELETED) {
-				IOT_INFO("cleanup device");
-				IOT_DUMP_MAIN(WARN, BASE, 0xC1EAC1EA);
+				if (ctx->usr_delete_req) {
+					IOT_INFO("Device-card deleting is done");
+					IOT_DUMP_MAIN(WARN, BASE, 0xC1EAC1EB);
 
-				iot_device_cleanup(ctx);
-				if (ctx->noti_cb)
-					ctx->noti_cb(noti, ctx->noti_usr_data);
+					ctx->usr_delete_req = false;
+					iot_os_eventgroup_set_bits(ctx->usr_events,
+						IOT_USR_INTERACT_BIT_CMD_DONE);
+				} else {
+					IOT_INFO("cleanup device");
+					IOT_DUMP_MAIN(WARN, BASE, 0xC1EAC1EA);
 
-				IOT_REBOOT();
+					iot_device_cleanup(ctx);
+					if (ctx->noti_cb)
+						ctx->noti_cb(noti, ctx->noti_usr_data);
+
+					IOT_REBOOT();
+				}
 			} else if (noti->type == (iot_noti_type_t)_IOT_NOTI_TYPE_RATE_LIMIT) {
 				IOT_INFO("rate limit");
 				IOT_DUMP_MAIN(WARN, BASE, 0xBAD22222);
@@ -935,6 +989,8 @@ static iot_error_t _do_iot_main_command(struct iot_context *ctx,
 			break;
 
 		default:
+			IOT_ERROR("Unsupported command(%d)", cmd->cmd_type);
+			err = IOT_ERROR_BAD_REQ;
 			break;
 	}
 
@@ -1881,6 +1937,13 @@ int st_conn_cleanup(IOT_CTX *iot_ctx, bool reboot)
 
 	_throw_away_all_cmd_queue(ctx);
 	iot_os_mutex_unlock(&ctx->iot_cmd_lock);
+
+	/* Try to delete device_card first, but it depends on connection-status */
+	iot_err = _delete_dev_card_by_usr(ctx);
+	if (iot_err != IOT_ERROR_NONE) {
+		IOT_ERROR("failed to delete device_card(%d)", iot_err);
+		IOT_DUMP_MAIN(ERROR, BASE, iot_err);
+	}
 
 	iot_os_eventgroup_clear_bits(ctx->usr_events, IOT_USR_INTERACT_BIT_CLEANUP_DONE);
 

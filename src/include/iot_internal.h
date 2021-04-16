@@ -56,6 +56,8 @@
 #define IOT_PUB_TOPIC_HEALTH		"/v1/health"
 #endif
 
+#define IOT_PUB_TOPIC_DELETE	"/v1/devices/delete"
+
 /* MQTT Pre-defined constant */
 #define IOT_DEFAULT_TIMEOUT 		12000	/* milli-seconds */
 #define IOT_MQTT_KEEPALIVE_INTERVAL	120		/* seconds */
