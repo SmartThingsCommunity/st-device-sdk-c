@@ -35,6 +35,10 @@ extern "C" {
 #define DLLExport
 #endif
 
+#define ST_MQTT_TCP_KEEPALIVE_IDLE	(300)		/**< @brief tcp keep alive idle with seconds unit */
+#define ST_MQTT_TCP_KEEPALIVE_COUNT	(3)		/**< @brief tcp keep alive count */
+#define ST_MQTT_TCP_KEEPALIVE_INTERVAL	(2)		/**< @brief tcp keep alive intrval */
+
 typedef void* st_mqtt_client;
 
 typedef struct st_mqtt_broker_info {

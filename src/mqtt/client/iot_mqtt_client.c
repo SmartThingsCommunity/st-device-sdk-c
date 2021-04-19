@@ -797,6 +797,15 @@ static int _iot_mqtt_connect_net(MQTTClient *client, st_mqtt_broker_info_t *brok
 		goto exit;
 	}
 
+	if (client->net->tcp_keepalive) {
+		iot_err = client->net->tcp_keepalive(client->net, ST_MQTT_TCP_KEEPALIVE_IDLE,
+				ST_MQTT_TCP_KEEPALIVE_COUNT,
+				ST_MQTT_TCP_KEEPALIVE_INTERVAL);
+		if (iot_err) {
+			IOT_WARN("fail to set keepalive %d", iot_err);
+		}
+	}
+
 	client->isconnected = 1;
 
 exit:

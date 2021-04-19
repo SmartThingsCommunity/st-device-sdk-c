@@ -298,6 +298,8 @@ iot_error_t iot_net_init(iot_net_interface_t *n)
 	n->context.method = TLSv1_2_client_method();
 
 	n->connect = _iot_net_ssl_connect;
+	/* TODO : support tcp keepalive function */
+	n->tcp_keepalive = NULL;
 	n->disconnect = _iot_net_ssl_disconnect;
 	n->select = _iot_net_select;
 	n->read = _iot_net_ssl_read;
