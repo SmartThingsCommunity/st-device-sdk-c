@@ -21,8 +21,16 @@ else()
     )
 endif()
 
+if(CONFIG_STDK_IOT_CORE_EASYSETUP_DISCOVERY_SSID)
+    set(EASYSETUP_DISCOVERY_SOURCES
+        "${EASYSETUP_DISCOVERY_SOURCES}"
+        discovery/iot_easysetup_discovery_ssid.c
+        )
+endif()
+
 target_sources(iotcore
                PRIVATE
                iot_easysetup_st_mqtt.c
                ${EASYSETUP_D2D_SOURCES}
+               ${EASYSETUP_DISCOVERY_SOURCES}
                )

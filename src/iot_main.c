@@ -1561,6 +1561,7 @@ static iot_error_t _do_state_updating(struct iot_context *ctx,
  			break;
  		}
 
+#if defined(CONFIG_STDK_IOT_CORE_EASYSETUP_DISCOVERY_SSID)
 		/*wifi soft-ap mode w/ ssid E4 format*/
 		iot_err = iot_wifi_ctrl_request(ctx, IOT_WIFI_MODE_SOFTAP);
 		if (iot_err != IOT_ERROR_NONE) {
@@ -1568,7 +1569,7 @@ static iot_error_t _do_state_updating(struct iot_context *ctx,
 			IOT_DUMP_MAIN(ERROR, BASE, iot_err);
  			break;
  		}
-
+#endif
 		/* Update next state waiting time for Easy-setup process */
 		*timeout_ms = EASYSETUP_TIMEOUT_MS;
 		IOT_MEM_CHECK("ES_PROV_ENTER DONE >>PT<<");

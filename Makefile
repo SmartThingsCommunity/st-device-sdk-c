@@ -42,6 +42,9 @@ SRCS	+= $(wildcard $(OS_DIR)/*.c)
 SRCS	+= $(wildcard $(NET_DIR)/*.c)
 SRCS	+= $(wildcard $(CRYPTO_DIR)/*.c)
 SRCS	+= $(EASYSETUP_DIR)/iot_easysetup_st_mqtt.c
+ifneq ($(findstring STDK_IOT_CORE_EASYSETUP_DISCOVERY_SSID, $(STDK_CONFIGS)),)
+SRCS	+= $(wildcard $(EASYSETUP_DIR)/discovery/iot_easysetup_discovery_ssid.c)
+endif
 ifneq ($(findstring STDK_IOT_CORE_EASYSETUP_HTTP, $(STDK_CONFIGS)),)
 SRCS	+= $(wildcard $(EASYSETUP_DIR)/http/*.c)
 endif
