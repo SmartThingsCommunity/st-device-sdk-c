@@ -77,6 +77,10 @@ endif
 
 COMPONENT_SRCDIRS += easysetup
 
+ifdef CONFIG_STDK_IOT_CORE_EASYSETUP_DISCOVERY_SSID
+COMPONENT_SRCDIRS += easysetup/discovery/ssid
+endif
+
 ifdef CONFIG_STDK_IOT_CORE_EASYSETUP_HTTP
 COMPONENT_SRCDIRS += easysetup/http
 endif

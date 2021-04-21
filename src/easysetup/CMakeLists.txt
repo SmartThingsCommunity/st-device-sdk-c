@@ -24,7 +24,7 @@ endif()
 if(CONFIG_STDK_IOT_CORE_EASYSETUP_DISCOVERY_SSID)
     set(EASYSETUP_DISCOVERY_SOURCES
         "${EASYSETUP_DISCOVERY_SOURCES}"
-        discovery/iot_easysetup_discovery_ssid.c
+        discovery/ssid/iot_easysetup_discovery_ssid.c
         )
 endif()
 
