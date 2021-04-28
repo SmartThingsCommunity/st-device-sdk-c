@@ -55,6 +55,8 @@ typedef struct iot_net_interface {
 
 	/**< @brief connect to server */
 	iot_error_t (*connect)(iot_net_interface_t *);
+	/**< @brief enable tcp keep-alive */
+	iot_error_t (*tcp_keepalive)(iot_net_interface_t *, unsigned int, unsigned int, unsigned int);
 	/**< @brief disconnect the server connection */
 	void (*disconnect)(iot_net_interface_t *);
 	/**< @brief check network socket status */

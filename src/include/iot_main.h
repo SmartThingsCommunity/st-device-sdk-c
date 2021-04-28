@@ -266,6 +266,7 @@ struct iot_context {
 	st_mqtt_client reg_mqttcli;			/**< @brief SmartThings MQTT Client for registration */
 	unsigned int mqtt_connect_critical_reject_count;		/**< @brief MQTT connect critical reject count */
 	char *mqtt_event_topic;				/**< @brief mqtt topic for event publish */
+	char *mqtt_health_topic;				/**< @brief mqtt topic for health publish */
 
 	struct iot_device_prov_data prov_data;	/**< @brief allocated device provisioning data */
 	struct iot_devconf_prov_data devconf;	/**< @brief allocated device configuration data */
@@ -311,6 +312,7 @@ struct iot_context {
 
 	unsigned int mqtt_connection_success_count; /**< @brief MQTT connection success count */
 	unsigned int mqtt_connection_try_count; /**< @brief MQTT connection try count */
+	bool usr_delete_req;	/**< @brief whether self-device-card-deleting requested from usr */
 };
 
 #endif /* _IOT_MAIN_H_ */

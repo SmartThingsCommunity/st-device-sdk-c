@@ -60,6 +60,11 @@ if(CONFIG_STDK_IOT_CORE)
 	set(STDK_SRC_PATH "${STDK_SRC_PATH}" easysetup)
 	set(STDK_SRC_PATH "${STDK_SRC_PATH}" mqtt)
 
+	if(CONFIG_STDK_IOT_CORE_EASYSETUP_HTTP_USE_SOCKET_API)
+		set(STDK_SRC_PATH "${STDK_SRC_PATH}" port/http/socket)
+		set(STDK_INCLUDE_PATH "${STDK_INCLUDE_PATH}" port/http/socket)
+	endif()
+
 	set(CMAKE_C_STANDARD 99)
 else()
 	message("Fail to find SDK config")
