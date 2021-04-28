@@ -77,14 +77,22 @@ endif
 
 COMPONENT_SRCDIRS += easysetup
 
+ifdef CONFIG_STDK_IOT_CORE_EASYSETUP_DISCOVERY_SSID
+COMPONENT_SRCDIRS += easysetup/discovery/ssid
+endif
+
 ifdef CONFIG_STDK_IOT_CORE_EASYSETUP_HTTP
 COMPONENT_SRCDIRS += easysetup/http
 endif
 
 ifdef CONFIG_STDK_IOT_CORE_EASYSETUP_X509
-COMPONENT_SRCDIRS += easysetup/http/tls
+	COMPONENT_SRCDIRS += easysetup/http/tls
 else
-COMPONENT_SRCDIRS += easysetup/http/tcp
+	COMPONENT_SRCDIRS += easysetup/http/tcp
+	ifeq ($(CONFIG_STDK_IOT_CORE_EASYSETUP_HTTP_USE_SOCKET_API),y)
+	COMPONENT_SRCDIRS += port/http/socket
+	COMPONENT_ADD_INCLUDEDIRS += port/http/socket
+	endif
 endif
 
 CPPFLAGS += -include $(COMPONENT_PATH)/include/iot_common.h

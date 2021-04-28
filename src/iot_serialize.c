@@ -210,6 +210,69 @@ static CborError _iot_cbor_value_to_json(CborValue *it, char *out, size_t len, s
 #endif
 
 		break;
+	case CborTagType:
+		{
+			CborTag result;
+			err = cbor_value_get_tag(it, &result);
+			if (err) {
+				return err;
+			}
+			switch(result)
+			{
+				/* Cbor Decimal Tag type has 2 array values exponent and mantissa */
+				case CborDecimalTag:
+					{
+						uint64_t exp, man;
+						bool man_sign;
+						err = cbor_value_advance_fixed(it);
+						if (err) {
+							return err;
+						}
+						err = cbor_value_enter_container(it, &recursed);
+						if (err) {
+							return err;
+						}
+						cbor_value_get_raw_integer(&recursed, &exp);
+						exp = pow(10, (uint32_t)exp);
+						err = cbor_value_advance_fixed(&recursed);
+						if (err) {
+							return err;
+						}
+						cbor_value_get_raw_integer(&recursed, &man);
+						man_sign = cbor_value_is_negative_integer(&recursed);
+
+						err = cbor_value_advance_fixed(&recursed);
+						if (err) {
+							return err;
+						}
+						err = cbor_value_leave_container(it, &recursed);
+						if (err) {
+							return err;
+						}
+
+						/* mantissa is negative */
+						if (man_sign)
+						{
+							c += snprintf(out + c, len - c, "-");
+						}
+
+						c += snprintf(out + c, len - c, "%u", (uint32_t)(man/exp));
+						c += snprintf(out + c, len - c, ".");
+						if (exp > IOT_SERIALIZE_DECIMAL_PRECISION)
+							c += snprintf(out + c, len - c, "%u",
+									(uint32_t)((man%exp)/(exp/IOT_SERIALIZE_DECIMAL_PRECISION)));
+						else
+							c += snprintf(out + c, len - c, "%u", (uint32_t)(man%exp));
+
+						*olen = (size_t)c;
+						return CborNoError;
+					}
+					break;
+				default:
+					return CborErrorUnknownType;
+			}
+		}
+		break;
 	default:
 		return CborErrorUnknownType;
 	}

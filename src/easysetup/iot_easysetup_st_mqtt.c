@@ -317,16 +317,33 @@ void _iot_mqtt_signin_client_callback(st_mqtt_event event, void *event_data, voi
 		case ST_MQTT_EVENT_MSG_DELIVERED:
 			{
 				st_mqtt_msg *md = event_data;
-				char *mqtt_payload = md->payload;
+				char *payload_json = NULL;
+#if defined(STDK_IOT_CORE_SERIALIZE_CBOR)
+				size_t payload_json_len = 0;
+
+				if (iot_serialize_cbor2json((uint8_t *)md->payload, md->payloadlen, &payload_json, &payload_json_len)) {
+					IOT_ERROR("cbor2json failed");
+					return;
+				}
+
+				if ((payload_json == NULL) || (payload_json_len == 0)) {
+					IOT_ERROR("json buffer is null");
+					return;
+				}
+#else
+				payload_json = md->payload;
+#endif
+				IOT_DEBUG("raw msg : %s", payload_json);
 				if (!strncmp(md->topic, IOT_SUB_TOPIC_COMMAND_PREFIX, IOT_SUB_TOPIC_COMMAND_PREFIX_SIZE)) {
-					iot_cap_sub_cb(ctx->cap_handle_list, mqtt_payload);
+					iot_cap_sub_cb(ctx->cap_handle_list, payload_json);
 				} else if (!strncmp(md->topic, IOT_SUB_TOPIC_NOTIFICATION_PREFIX, IOT_SUB_TOPIC_NOTIFICATION_PREFIX_SIZE)) {
-					iot_noti_sub_cb(ctx, mqtt_payload);
+					iot_noti_sub_cb(ctx, payload_json);
 				} else {
 					IOT_WARN("No msg delivery handler for %s", (char *)md->topic);
 				}
-				IOT_DEBUG("raw msg (len:%d) : %s", md->payloadlen, (char *)mqtt_payload);
-				break;
+#if defined(STDK_IOT_CORE_SERIALIZE_CBOR)
+				free(payload_json);
+#endif
 			}
 			break;
 		case ST_MQTT_EVENT_PUBLISH_FAILED:
@@ -985,6 +1002,15 @@ iot_error_t iot_es_connect(struct iot_context *ctx, int conn_type)
 		}
 		snprintf(ctx->mqtt_event_topic, IOT_TOPIC_SIZE, IOT_PUB_TOPIC_EVENT, ctx->iot_reg_data.deviceId);
 
+		ctx->mqtt_health_topic = malloc(IOT_TOPIC_SIZE);
+		if (!ctx->mqtt_health_topic) {
+			IOT_ERROR("failed to malloc for mqtt_health_topic");
+			iot_ret = IOT_ERROR_MEM_ALLOC;
+			_iot_es_mqtt_disconnect(ctx, mqtt_cli);
+			goto out;
+		}
+		snprintf(ctx->mqtt_health_topic, IOT_TOPIC_SIZE, IOT_PUB_TOPIC_HEALTH);
+
 		ctx->evt_mqttcli = mqtt_cli;
 	} else {
 		IOT_INFO("connect_type: registration");
@@ -1057,6 +1083,9 @@ iot_error_t iot_es_disconnect(struct iot_context *ctx, int conn_type)
 		if (ctx->mqtt_event_topic)
 			free(ctx->mqtt_event_topic);
 		ctx->mqtt_event_topic = NULL;
+		if (ctx->mqtt_health_topic)
+			free(ctx->mqtt_health_topic);
+		ctx->mqtt_health_topic = NULL;
 		ctx->evt_mqttcli = NULL;
 	} else {
 		target_cli = ctx->reg_mqttcli;
