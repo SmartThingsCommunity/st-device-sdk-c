@@ -134,6 +134,7 @@ iot_error_t iot_wifi_ctrl_request(struct iot_context *ctx,
 		}
 		break;
 
+#if defined(CONFIG_STDK_IOT_CORE_EASYSETUP_DISCOVERY_SSID)
 	case IOT_WIFI_MODE_SOFTAP:
 		/*wifi soft-ap mode w/ ssid E4 format*/
 		iot_err = iot_easysetup_create_ssid(&(ctx->devconf),
@@ -146,7 +147,7 @@ iot_error_t iot_wifi_ctrl_request(struct iot_context *ctx,
 		snprintf(wifi_conf.pass, sizeof(wifi_conf.pass), "1111122222");
 		wifi_conf.authmode = IOT_WIFI_AUTH_WPA_WPA2_PSK;
 		break;
-
+#endif
 	case IOT_WIFI_MODE_SCAN:
 		send_cmd = false;
 

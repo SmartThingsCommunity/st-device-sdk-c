@@ -18,12 +18,19 @@ else()
         "${EASYSETUP_D2D_SOURCES}"
         http/tcp/iot_easysetup_d2d_tcp.c
         http/tcp/iot_easysetup_httpd.c
-        http/tcp/iot_easysetup_http_socket.c
     )
+endif()
+
+if(CONFIG_STDK_IOT_CORE_EASYSETUP_DISCOVERY_SSID)
+    set(EASYSETUP_DISCOVERY_SOURCES
+        "${EASYSETUP_DISCOVERY_SOURCES}"
+        discovery/ssid/iot_easysetup_discovery_ssid.c
+        )
 endif()
 
 target_sources(iotcore
                PRIVATE
                iot_easysetup_st_mqtt.c
                ${EASYSETUP_D2D_SOURCES}
+               ${EASYSETUP_DISCOVERY_SOURCES}
                )

@@ -45,6 +45,7 @@
 #define IOT_PUB_TOPIC_EVENT		"/v1/deviceEvents/%s/cbor"
 #define IOT_SUB_TOPIC_COMMAND		"/v1/commands/%s/cbor"
 #define IOT_SUB_TOPIC_NOTIFICATION	"/v1/notifications/%s/cbor"
+#define IOT_PUB_TOPIC_HEALTH		"/v1/health/cbor"
 #else
 #define IOT_PUB_TOPIC_REGISTRATION	"/v1/registrations"
 #define IOT_SUB_TOPIC_REGISTRATION	"/v1/registrations/notification/%s"
@@ -52,7 +53,10 @@
 #define IOT_PUB_TOPIC_EVENT		"/v1/deviceEvents/%s"
 #define IOT_SUB_TOPIC_COMMAND		"/v1/commands/%s"
 #define IOT_SUB_TOPIC_NOTIFICATION	"/v1/notifications/%s"
+#define IOT_PUB_TOPIC_HEALTH		"/v1/health"
 #endif
+
+#define IOT_PUB_TOPIC_DELETE	"/v1/devices/delete"
 
 /* MQTT Pre-defined constant */
 #define IOT_DEFAULT_TIMEOUT 		12000	/* milli-seconds */

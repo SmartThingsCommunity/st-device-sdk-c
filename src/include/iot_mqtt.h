@@ -35,6 +35,10 @@ extern "C" {
 #define DLLExport
 #endif
 
+#define ST_MQTT_TCP_KEEPALIVE_IDLE	(300)		/**< @brief tcp keep alive idle with seconds unit */
+#define ST_MQTT_TCP_KEEPALIVE_COUNT	(3)		/**< @brief tcp keep alive count */
+#define ST_MQTT_TCP_KEEPALIVE_INTERVAL	(2)		/**< @brief tcp keep alive intrval */
+
 typedef void* st_mqtt_client;
 
 typedef struct st_mqtt_broker_info {
@@ -134,6 +138,13 @@ DLLExport int st_mqtt_publish(st_mqtt_client client, st_mqtt_msg *msg);
  *  		others - error codes
  */
 DLLExport int st_mqtt_publish_async(st_mqtt_client client, st_mqtt_msg *msg);
+
+/** MQTT Change ping period - change MQTT PING request period time.
+ *  @param client - the client object to use
+ *  @param new_period - new PING request period to change
+ */
+DLLExport void st_mqtt_change_ping_period(st_mqtt_client client, unsigned int new_period);
+
 
 /** MQTT Subscribe - send an MQTT subscribe packet and wait for suback before returning.
  *  @param client - the client object to use

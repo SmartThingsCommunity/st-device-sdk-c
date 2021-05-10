@@ -1,6 +1,6 @@
 /* ***************************************************************************
  *
- * Copyright 2020 Samsung Electronics All Rights Reserved.
+ * Copyright 2020-2021 Samsung Electronics All Rights Reserved.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -20,10 +20,8 @@
 #include "iot_os_util.h"
 #include "iot_debug.h"
 #include "iot_easysetup.h"
+#include "http/iot_easysetup_http.h"
 #include "../easysetup_http.h"
-#ifdef CONFIG_STDK_IOT_CORE_EASYSETUP_HTTP_USE_SOCKET_API
-#include "iot_easysetup_http_socket.h"
-#endif
 
 #define RX_BUFFER_MAX    1024
 

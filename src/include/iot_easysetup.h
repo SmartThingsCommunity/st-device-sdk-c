@@ -149,7 +149,7 @@ iot_error_t iot_easysetup_request_handler(struct iot_context *ctx, struct iot_ea
 iot_error_t iot_easysetup_create_ssid(struct iot_devconf_prov_data *devconf, char *ssid, size_t ssid_len);
 
 /**
- * @brief	Start eayssetup device-to-device sequence
+ * @brief	Start easysetup device-to-device sequence
  * @details	This function makes wifi mode as soft-ap and starts httpd
  * @param[in]	ctx	iot_context handle
  * @return	iot_error_t
@@ -160,12 +160,21 @@ iot_error_t iot_easysetup_init(struct iot_context *ctx);
 
 
 /**
- * @brief	Stop eayssetup device-to-device sequence
+ * @brief	Stop easysetup device-to-device sequence
  * @details	This function stops httpd working
  * @param[in]	ctx	iot_context handle
  * @return	void
  */
 void iot_easysetup_deinit(struct iot_context *ctx);
+
+/**
+ * @brief	Query stopping eayssetup device-to-device sequence
+ * @details	This function queries stopping easysetup device-to-device sequence
+ * @return	bool
+ * @retval	true	easysetup deinit is in progress
+ * @retval	false	easysetup deinit isn't in progress
+ */
+bool is_es_http_deinit_processing(void);
 
 #ifdef __cplusplus
 }

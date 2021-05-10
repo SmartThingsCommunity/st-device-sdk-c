@@ -189,7 +189,7 @@ void TC_STATIC_es_deviceinfo_handler_success(void **state)
 }
 
 // Static function of STDK declared to test
-extern iot_error_t _es_keyinfo_handler(struct iot_context *ctx, char *in_payload, char **out_payload);
+extern iot_error_t _es_keyinfo_handler(struct iot_context *ctx, char *input_data, char **output_data);
 extern iot_error_t _es_crypto_cipher_gen_iv(iot_security_buffer_t *iv_buffer);
 
 void TC_STATIC_es_crypto_cipher_gen_iv_success(void **state)
@@ -291,7 +291,7 @@ struct test_wifi_provisioning_data {
 };
 
 // Static function of STDK declared to test
-extern iot_error_t _es_wifiprovisioninginfo_handler(struct iot_context *ctx, char *in_payload, char **out_payload);
+extern iot_error_t _es_wifiprovisioninginfo_handler(struct iot_context *ctx, char *input_data, char **output_data);
 
 // static functions for test
 static char* _generate_post_wifiprovisioninginfo_payload(iot_security_cipher_params_t *cipher, struct test_wifi_provisioning_data prov);
@@ -408,7 +408,7 @@ void TC_STATIC_es_wifiprovisioninginfo_handler_success_without_authtype(void **s
 }
 
 // Static function of STDK declared to test
-extern iot_error_t _es_wifiscaninfo_handler(struct iot_context *ctx, char **out_payload);
+extern iot_error_t _es_wifiscaninfo_handler(struct iot_context *ctx, char **output_data);
 
 static void assert_wifiscaninfo_payload(iot_security_cipher_params_t *cipher, char *payload, int num_of_scanlist);
 
@@ -461,7 +461,7 @@ void TC_STATIC_es_wifiscaninfo_handler_success(void **state)
 }
 
 // Static function of STDK declared to test
-extern iot_error_t _es_confirminfo_handler(struct iot_context *ctx, char *in_payload, char **out_payload);
+extern iot_error_t _es_confirminfo_handler(struct iot_context *ctx, char *input_data, char **output_data);
 
 static char *_generate_confirminfo_payload(iot_security_cipher_params_t *cipher, enum ownership_validation_feature feature,
                                     const char *serial_number_for_qr);
@@ -698,7 +698,7 @@ void TC_STATIC_es_confirminfo_handler_button(void **state)
 }
 
 // Static function of STDK declared to test
-extern iot_error_t _es_confirm_handler(struct iot_context *ctx, char *in_payload, char **out_payload);
+extern iot_error_t _es_confirm_handler(struct iot_context *ctx, char *input_data, char **output_data);
 
 static char *_generate_none_container_payload();
 static char *_generate_plain_message_payload();
@@ -906,7 +906,7 @@ void TC_STATIC_es_confirm_handler_invalid_payload(void** state)
     _free_cipher(server_cipher);
 }
 
-extern iot_error_t _es_setupcomplete_handler(struct iot_context *ctx, char *in_payload, char **out_payload);
+extern iot_error_t _es_setupcomplete_handler(struct iot_context *ctx, char *input_data, char **output_data);
 
 void TC_STATIC_es_setupcomplete_handler_success(void** state)
 {
