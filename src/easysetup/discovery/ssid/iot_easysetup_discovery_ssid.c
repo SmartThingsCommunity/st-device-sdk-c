@@ -92,8 +92,16 @@ iot_error_t iot_easysetup_create_ssid(struct iot_devconf_prov_data *devconf, cha
 
 	setup_type = SETUP_TYPE_HYBRID_SERIAL_NUMBER;
 
-	snprintf(ssid_build, sizeof(ssid_build), "%s_E4%3s%3s%1d%4s%4s",
-			 devconf->device_onboarding_id, devconf->mnid, devconf->setupid, setup_type, hashed_sn, last_sn);
+	if (devconf->ssid_version == 4) {
+		snprintf(ssid_build, sizeof(ssid_build), "%s_E4%4s%3s%1d%4s%4s",
+				 devconf->device_onboarding_id, devconf->mnid, devconf->setupid, setup_type, hashed_sn, last_sn);
+	} else if (devconf->ssid_version == 5) {
+		snprintf(ssid_build, sizeof(ssid_build), "%s_E5%4s%3s%4s%4s",
+				 devconf->device_onboarding_id, devconf->mnid, devconf->setupid, hashed_sn, last_sn);
+	} else {
+		err = IOT_ERROR_INVALID_ARGS;
+		goto out;
+	}
 
 	memcpy(ssid, ssid_build, ssid_len < strlen(ssid_build) ? ssid_len : strlen(ssid_build));
 out:

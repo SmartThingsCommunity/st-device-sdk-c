@@ -21,6 +21,7 @@
 
 #include "iot_net_platform.h"
 #include "iot_os_util.h"
+#include "iot_error.h"
 
 #ifdef __cplusplus
 extern "C" {
