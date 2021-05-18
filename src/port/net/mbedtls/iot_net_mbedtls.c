@@ -23,6 +23,10 @@
 #include <sys/time.h>
 #include <sys/socket.h>
 #include <iot_util.h>
+#if defined(CONFIG_STDK_IOT_CORE_OS_SUPPORT_POSIX)
+#include <netinet/in.h>
+#include <netinet/tcp.h>
+#endif
 
 #include "iot_main.h"
 #include "iot_debug.h"
