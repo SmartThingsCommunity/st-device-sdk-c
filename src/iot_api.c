@@ -292,6 +292,14 @@ static bool is_valid_onboarding_id_len(size_t len, unsigned char ssid_version)
 	return true;
 }
 
+static bool is_valid_ssid_version(unsigned char version)
+{
+	if (version == 4 || version == 5) {
+		return true;
+	}
+	return false;
+}
+
 static const char name_onboardingConfig[] = "onboardingConfig";
 static const char name_deviceOnboardingId[] = "deviceOnboardingId";
 static const char name_mnId[] = "mnId";
@@ -352,6 +360,14 @@ iot_error_t iot_api_onboarding_config_load(unsigned char *onboarding_config,
 	item = JSON_GET_OBJECT_ITEM(config, name_ssidVersion);
 	if (item) {
 		ssid_version = (unsigned char) JSON_GET_NUMBER_VALUE(item);
+		if (!is_valid_ssid_version(ssid_version))
+		{
+#if defined(CONFIG_STDK_IOT_CORE_LOG_LEVEL_ERROR)
+			current_name = (char *)name_ssidVersion;
+#endif
+			iot_err = IOT_ERROR_UNINITIALIZED;
+			goto load_out;
+		}
 	} else {
 		/* default version 4 */
 		ssid_version = 4;
