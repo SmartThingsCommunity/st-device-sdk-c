@@ -348,10 +348,10 @@ char* _es_build_output_data(iot_security_context_t *security_context, char *out_
 	output_data = JSON_PRINT(root);
 
 out:
-	if (!root) {
+	if (root) {
 		JSON_DELETE(root);
 	}
-	if (!encrypted_message) {
+	if (encrypted_message) {
 		iot_os_free(encrypted_message);
 	}
 
