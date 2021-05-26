@@ -1251,7 +1251,7 @@ iot_error_t iot_misc_info_store(iot_misc_info_t type, const void *in_data)
 	} else {
 		json = JSON_PARSE(old_misc_info);
 		if (json == NULL) {
-			IOT_WARN("old misc_info(%s/%d) parsing failed",
+			IOT_WARN("old misc_info(%s/%u) parsing failed",
 				old_misc_info, old_misc_info_len);
 			json = JSON_CREATE_OBJECT();
 		} else {
