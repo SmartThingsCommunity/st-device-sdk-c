@@ -1317,9 +1317,6 @@ misc_info_store_out:
 	if (new_misc_info)
 		iot_os_free(new_misc_info);
 
-	if (old_misc_info)
-		iot_os_free(old_misc_info);
-
 	if (json)
 		JSON_DELETE(json);
 
