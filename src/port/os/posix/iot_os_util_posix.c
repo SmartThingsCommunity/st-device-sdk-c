@@ -59,7 +59,7 @@ int iot_os_thread_create(void * thread_function, const char* name, int stack_siz
 	pthread_attr_t attr;
 
 	if (thread == NULL)
-		return IOT_ERROR_MEM_ALLOC;
+		return IOT_OS_FALSE;
 
 	pthread_attr_init(&attr);
 	pthread_attr_setdetachstate(&attr, PTHREAD_CREATE_DETACHED);
