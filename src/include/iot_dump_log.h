@@ -185,12 +185,12 @@ typedef enum {
 	IOT_DUMP_EASYSETUP_RAND_DECODE_ERROR = 0x0511, /* arg1: line number, arg2: err number */
 	IOT_DUMP_EASYSETUP_INVALID_TIME = 0x0512, /* arg1: line number, arg2: err number */
 	/* Otm */
-	IOT_DUMP_EASYSETUP_INVALID_QR = 0x0521, /* arg1: line number, arg2: 0 */
-	IOT_DUMP_EASYSETUP_INVALID_SERIAL_NUMBER = 0x0522, /* arg1: line number, arg2: 0 */
+	IOT_DUMP_EASYSETUP_INVALID_QR = 0x0521, /* arg1: line number, arg2: 0 for qr, 1 for serial number */
+	IOT_DUMP_EASYSETUP_INVALID_SERIAL_NUMBER = 0x0522, /* arg1: line number, arg2: 0 for qr, 1 for serial number */
 	IOT_DUMP_EASYSETUP_INVALID_PIN = 0x0523, /* arg1: line number, arg2: 0 */
 	IOT_DUMP_EASYSETUP_PIN_NOT_MATCHED = 0x0524, /* arg1: line number, arg2: 0 */
 	IOT_DUMP_EASYSETUP_OTMTYPE_JUSTWORK = 0x0525, /* arg1: line number, arg2: 0 */
-	IOT_DUMP_EASYSETUP_OTMTYPE_QR = 0x0526, /* arg1: line number, arg2: 0 */
+	IOT_DUMP_EASYSETUP_OTMTYPE_QR = 0x0526, /* arg1: line number, arg2: 0 for qr, 1 for serial number */
 	IOT_DUMP_EASYSETUP_OTMTYPE_BUTTON = 0x0527, /* arg1: line number, arg2: 0 */
 	IOT_DUMP_EASYSETUP_OTMTYPE_PIN = 0x0528, /* arg1: line number, arg2: 0 */
 	IOT_DUMP_EASYSETUP_OTMTYPE_NOT_SUPPORTED = 0x0529, /* arg1: line number, arg2: 0 */

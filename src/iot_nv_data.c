@@ -36,7 +36,7 @@
 #define IOT_NVD_MAX_PW_LEN (64)
 #define IOT_NVD_MAX_BSSID_LEN (6)
 #define IOT_NVD_MAX_UID_LEN (128)
-#define IOT_NVD_MAX_SN_LEN (64)
+#define IOT_NVD_MAX_SN_LEN (30)
 
 typedef enum iot_nv_io_mode {
 	IOT_NV_MODE_READ = 1,
