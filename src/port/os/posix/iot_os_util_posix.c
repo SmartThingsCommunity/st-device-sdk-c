@@ -59,7 +59,7 @@ int iot_os_thread_create(void * thread_function, const char* name, int stack_siz
 	pthread_attr_t attr;
 
 	if (thread == NULL)
-		return IOT_ERROR_MEM_ALLOC;
+		return IOT_OS_FALSE;
 
 	pthread_attr_init(&attr);
 	pthread_attr_setdetachstate(&attr, PTHREAD_CREATE_DETACHED);
@@ -373,28 +373,38 @@ int iot_os_mutex_init(iot_os_mutex* mutex)
 
 int iot_os_mutex_lock(iot_os_mutex* mutex)
 {
+	int ret;
+
 	if (!mutex || !mutex->sem) {
 		return IOT_OS_FALSE;
 	}
 
 	pthread_mutex_t* mutex_p = mutex->sem;
 
-	pthread_mutex_lock(mutex_p);
-
-	return IOT_OS_TRUE;
+	ret = pthread_mutex_trylock(mutex_p);
+	if (ret) {
+		return IOT_OS_FALSE;
+	} else {
+		return IOT_OS_TRUE;
+	}
 }
 
 int iot_os_mutex_unlock(iot_os_mutex* mutex)
 {
+	int ret;
+
 	if (!mutex || !mutex->sem) {
 		return IOT_OS_FALSE;
 	}
 
 	pthread_mutex_t* mutex_p = mutex->sem;
 
-	pthread_mutex_unlock(mutex_p);
-
-	return IOT_OS_TRUE;
+	ret = pthread_mutex_unlock(mutex_p);
+	if (ret) {
+		return IOT_OS_FALSE;
+	} else {
+		return IOT_OS_TRUE;
+	}
 }
 
 void iot_os_mutex_destroy(iot_os_mutex* mutex)

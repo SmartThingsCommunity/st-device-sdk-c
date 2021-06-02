@@ -348,10 +348,10 @@ char* _es_build_output_data(iot_security_context_t *security_context, char *out_
 	output_data = JSON_PRINT(root);
 
 out:
-	if (!root) {
+	if (root) {
 		JSON_DELETE(root);
 	}
-	if (!encrypted_message) {
+	if (encrypted_message) {
 		iot_os_free(encrypted_message);
 	}
 
@@ -684,6 +684,7 @@ skip_time_set:
 			JSON_ADD_ITEM_TO_ARRAY(array, JSON_CREATE_NUMBER(i));
 		}
 	}
+	JSON_ADD_ITEM_TO_ARRAY(array, JSON_CREATE_NUMBER(OVF_BIT_SERIAL_NUMBER));
 	JSON_ADD_ITEM_TO_OBJECT(root, "otmSupportFeatures", array);
 
 	out_payload = JSON_PRINT(root);
@@ -713,6 +714,7 @@ iot_error_t _es_confirm_check_manager(struct iot_context *ctx, enum ownership_va
 {
 	char *dev_sn = NULL;
 	unsigned char curr_event = 0;
+	unsigned char is_qr = 0;
 	size_t devsn_len;
 	iot_error_t err = IOT_ERROR_NONE;
 
@@ -737,18 +739,21 @@ iot_error_t _es_confirm_check_manager(struct iot_context *ctx, enum ownership_va
 			IOT_ES_DUMP(IOT_DEBUG_LEVEL_INFO, IOT_DUMP_EASYSETUP_OTMTYPE_JUSTWORK, 0);
 			break;
 		case OVF_BIT_QR:
-			IOT_INFO("The QR code confirmation is requested\n");
-			IOT_ES_DUMP(IOT_DEBUG_LEVEL_INFO, IOT_DUMP_EASYSETUP_OTMTYPE_QR, 0);
+			is_qr = 1;
+			// fall through
+		case OVF_BIT_SERIAL_NUMBER:
+			IOT_INFO("The %s confirmation is requested", is_qr ? "QR code" : "serial number");
+			IOT_ES_DUMP(IOT_DEBUG_LEVEL_INFO, IOT_DUMP_EASYSETUP_OTMTYPE_QR, is_qr);
 			if (sn == NULL) {
-				IOT_ERROR("to get invalid QR serial num\n");
-				IOT_ES_DUMP(IOT_DEBUG_LEVEL_ERROR, IOT_DUMP_EASYSETUP_INVALID_QR, 0);
+				IOT_ERROR("null serial number transferred");
+				IOT_ES_DUMP(IOT_DEBUG_LEVEL_ERROR, IOT_DUMP_EASYSETUP_INVALID_QR, is_qr);
 				err = IOT_ERROR_EASYSETUP_INVALID_QR;
 				goto out;
 			}
 
 			err = iot_nv_get_serial_number(&dev_sn, &devsn_len);
 			if (err != IOT_ERROR_NONE) {
-				IOT_ERROR("failed to get serial num\n");
+				IOT_ERROR("failed to load serial number");
 				IOT_ES_DUMP(IOT_DEBUG_LEVEL_ERROR, IOT_DUMP_EASYSETUP_SERIAL_NOT_FOUND, err);
 				err = IOT_ERROR_EASYSETUP_SERIAL_NOT_FOUND;
 				goto out;
@@ -759,7 +764,7 @@ iot_error_t _es_confirm_check_manager(struct iot_context *ctx, enum ownership_va
 				IOT_ES_DUMP(IOT_DEBUG_LEVEL_INFO, IOT_DUMP_EASYSETUP_GET_OWNER_CONFIRM, 0);
 			} else {
 				IOT_ERROR("confirm fail");
-				IOT_ES_DUMP(IOT_DEBUG_LEVEL_ERROR, IOT_DUMP_EASYSETUP_INVALID_SERIAL_NUMBER, 0);
+				IOT_ES_DUMP(IOT_DEBUG_LEVEL_ERROR, IOT_DUMP_EASYSETUP_INVALID_SERIAL_NUMBER, is_qr);
 				err = IOT_ERROR_EASYSETUP_INVALID_SERIAL_NUMBER;
 				goto out;
 			}
@@ -845,10 +850,10 @@ iot_error_t _es_confirminfo_handler(struct iot_context *ctx, char *input_data, c
 	IOT_INFO("otmSupportFeature = %d", recv->valueint);
 	IOT_ES_DUMP(IOT_DEBUG_LEVEL_INFO, IOT_DUMP_EASYSETUP_REPORTED_OTMTYPE, recv->valueint);
 
-	if ((recv->valueint >= OVF_BIT_JUSTWORKS) && (recv->valueint < OVF_BIT_MAX_FEATURE)) {
+	if ((recv->valueint >= OVF_BIT_JUSTWORKS) && (recv->valueint <= OVF_BIT_SERIAL_NUMBER)) {
 		char *sn = NULL;
 
-		if (recv->valueint == OVF_BIT_QR)
+		if (recv->valueint == OVF_BIT_QR || recv->valueint == OVF_BIT_SERIAL_NUMBER)
 			sn = _es_json_parse_string(root, "sn");
 
 		err = _es_confirm_check_manager(ctx, recv->valueint, sn);

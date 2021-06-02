@@ -21,6 +21,7 @@ Please refer security guideline document which is available at `Publish` menu of
 
 ## Requirement
 
+* The length of serial number should be between 8 and 30.
 * The generated private key must only be maintained outside the device in encrypted form and should be deleted after successful injection to device.
 * The generated key pairs must be globally uniquely identified independently based on its identifiers.
 * The key management facility must provide a way to check the validity of each key pair for known compromised devices.

@@ -26,7 +26,7 @@
 #define VER_MINOR	6
 
 /* patch: bug fix */
-#define VER_PATCH	1
+#define VER_PATCH	2
 
 #define _STDK_STR(s) #s
 #define _STDK_VERSION_STR(a, b, c)	_STDK_STR(a) "." _STDK_STR(b) "." _STDK_STR(c)
@@ -37,7 +37,7 @@
 #define STDK_VERSION_STRING	_STDK_VERSION_STR(VER_MAJOR, VER_MINOR, VER_PATCH)
 
 /* Protocol Version */
-#define STDK_D2D_PROTOCOL_VERSION	_STDK_VERSION_STR(1, 1, 0)
+#define STDK_D2D_PROTOCOL_VERSION	_STDK_VERSION_STR(1, 2, 0)
 #define STDK_D2S_PROTOCOL_VERSION	_STDK_VERSION_STR(1, 0, 0)
 #define STDK_DWS_PROTOCOL_VERSION	_STDK_VERSION_STR(1, 0, 0)
 

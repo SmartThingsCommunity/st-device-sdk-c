@@ -2212,6 +2212,11 @@ int st_change_health_period(IOT_CTX *iot_ctx, unsigned int new_period)
 	iot_serialize_json2cbor(json_root, (uint8_t **)&msg.payload, (size_t *)&msg.payloadlen);
 #else
 	msg.payload = JSON_PRINT(json_root);
+	if (msg.payload == NULL) {
+		IOT_ERROR("Fail to make json string");
+		ret = IOT_ERROR_BAD_REQ;
+		goto exit;
+	}
 	msg.payloadlen = strlen(msg.payload);
 #endif
 	msg.qos = st_mqtt_qos1;
