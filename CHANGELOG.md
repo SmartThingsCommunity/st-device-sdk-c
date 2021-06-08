@@ -1,5 +1,40 @@
 # HISTORY
 
+## 1.6.2 :  Changes until v1.6.2
+
+New Improvements or features:
+ - Add serial number confirmation supporting
+  * D2D protocol version updated by v1.2.0
+ - Add adjustable MQTT ping period feature
+  * Add new void st_mqtt_change_ping_period() API & handling topic
+  * Add new tcp keep-alive interface for struct iot_net_interface
+ - Add new feature of ssid discovery for easysetup
+  * Add STDK_IOT_CORE_EASYSETUP_DISCOVERY_SSID feature & new internal APIs
+  * iot_api: add feature on SOFTAP mode
+  * easysetup: discovery: add sub-directory for each method
+ - Add device-card deleting logic when USR triggers factory-reset
+
+Enhancements or amendments:
+ - Add error condition checking codes
+  * port: posix: internal return checking in iot_os_mutex_lock/unlock function
+  * iot_main: msg.payload null checking in st_change_health_period function
+ - Add "ssidVersion" item hadling codes from onboarding_config.json file
+ - Change jwt signature format from der to raw for ES256
+ - Move easysetup http api to port layer
+  * port: http: divide header into common and implementation specific part
+  * make: move HTTP_DIR into proper build option
+ - Use common _es_parse_input_data() and _es_build_output_data() in each cgi handler
+ - Refactoring CBOR to JSON conversion logic
+  * Add CborTag Decimal type conversion from CBOR to JSON
+
+Bug fixed:
+ - Fix some Static Code Analysis report
+  * port: freertos/posix: fix return value of iot_os_thread_create
+  * iot_api: Remove unused dead-codes
+  * iot_api: Change printf format specifier
+ - Fix build failure in fs header file for bsp/iot_bsp_fs.h, included stddef.h
+ - Fix wrong memory free during easysetup message encryption
+
 ## 1.5.12 :  Changes until v1.5.12
 
 Enhancements or amendments:
