@@ -35,6 +35,10 @@
 #include "iot_log_file.h"
 #endif
 
+#if defined(STDK_IOT_CORE_SERIALIZE_CBOR)
+#include <cbor.h>
+#endif
+
 #define NEXT_STATE_TIMEOUT_MS	(100000)
 #define EASYSETUP_TIMEOUT_MS	(300000) /* 5 min */
 #define REGISTRATION_TIMEOUT_MS	(900000) /* 15 min */
@@ -429,6 +433,51 @@ error_prepare_self:
 	return err;
 }
 
+STATIC_FUNCTION
+iot_error_t _delete_dev_card_by_usr(struct iot_context *ctx)
+{
+	iot_error_t iot_err = IOT_ERROR_NONE;
+	unsigned char curr_events;
+	st_mqtt_msg msg;
+	int ret;
+
+	if (!ctx) {
+		return IOT_ERROR_INVALID_ARGS;
+	}
+
+	if ((!ctx->evt_mqttcli) || (ctx->curr_state != IOT_STATE_CLOUD_CONNECTED)) {
+		IOT_WARN("not connected, so can't send device_card deleting msg");
+		return IOT_ERROR_NONE;
+	}
+
+	iot_os_eventgroup_clear_bits(ctx->usr_events, IOT_USR_INTERACT_BIT_CMD_DONE);
+	ctx->usr_delete_req = true;
+
+	/* GreatGate wants to receive 'empty' payload */
+	msg.payload = NULL;
+	msg.payloadlen = 0;
+	msg.qos = st_mqtt_qos1;
+	msg.retained = false;
+	msg.topic = IOT_PUB_TOPIC_DELETE;
+
+	ret = st_mqtt_publish(ctx->evt_mqttcli, &msg);
+	if (ret) {
+		IOT_ERROR("error MQTTpub for %s(%d)", msg.topic, ret);
+		ctx->usr_delete_req = false;
+		iot_err = IOT_ERROR_BAD_REQ;
+	} else {
+		curr_events = iot_os_eventgroup_wait_bits(ctx->usr_events,
+			IOT_USR_INTERACT_BIT_CMD_DONE, true, (NEXT_STATE_TIMEOUT_MS / 2));
+
+		if (!(curr_events & IOT_USR_INTERACT_BIT_CMD_DONE)) {
+			IOT_ERROR("Timeout happened for device_card deleting");
+			ctx->usr_delete_req = false;
+			iot_err = IOT_ERROR_TIMEOUT;
+		}
+	}
+
+	return iot_err;
+}
 
 static iot_error_t _do_iot_main_command(struct iot_context *ctx,
 	struct iot_command *cmd)
@@ -851,14 +900,23 @@ static iot_error_t _do_iot_main_command(struct iot_context *ctx,
 			IOT_DUMP_MAIN(INFO, BASE, noti->type);
 
 			if (noti->type == (iot_noti_type_t)_IOT_NOTI_TYPE_DEV_DELETED) {
-				IOT_INFO("cleanup device");
-				IOT_DUMP_MAIN(WARN, BASE, 0xC1EAC1EA);
+				if (ctx->usr_delete_req) {
+					IOT_INFO("Device-card deleting is done");
+					IOT_DUMP_MAIN(WARN, BASE, 0xC1EAC1EB);
 
-				iot_device_cleanup(ctx);
-				if (ctx->noti_cb)
-					ctx->noti_cb(noti, ctx->noti_usr_data);
+					ctx->usr_delete_req = false;
+					iot_os_eventgroup_set_bits(ctx->usr_events,
+						IOT_USR_INTERACT_BIT_CMD_DONE);
+				} else {
+					IOT_INFO("cleanup device");
+					IOT_DUMP_MAIN(WARN, BASE, 0xC1EAC1EA);
 
-				IOT_REBOOT();
+					iot_device_cleanup(ctx);
+					if (ctx->noti_cb)
+						ctx->noti_cb(noti, ctx->noti_usr_data);
+
+					IOT_REBOOT();
+				}
 			} else if (noti->type == (iot_noti_type_t)_IOT_NOTI_TYPE_RATE_LIMIT) {
 				IOT_INFO("rate limit");
 				IOT_DUMP_MAIN(WARN, BASE, 0xBAD22222);
@@ -931,6 +989,8 @@ static iot_error_t _do_iot_main_command(struct iot_context *ctx,
 			break;
 
 		default:
+			IOT_ERROR("Unsupported command(%d)", cmd->cmd_type);
+			err = IOT_ERROR_BAD_REQ;
 			break;
 	}
 
@@ -1557,6 +1617,7 @@ static iot_error_t _do_state_updating(struct iot_context *ctx,
  			break;
  		}
 
+#if defined(CONFIG_STDK_IOT_CORE_EASYSETUP_DISCOVERY_SSID)
 		/*wifi soft-ap mode w/ ssid E4 format*/
 		iot_err = iot_wifi_ctrl_request(ctx, IOT_WIFI_MODE_SOFTAP);
 		if (iot_err != IOT_ERROR_NONE) {
@@ -1564,7 +1625,7 @@ static iot_error_t _do_state_updating(struct iot_context *ctx,
 			IOT_DUMP_MAIN(ERROR, BASE, iot_err);
  			break;
  		}
-
+#endif
 		/* Update next state waiting time for Easy-setup process */
 		*timeout_ms = EASYSETUP_TIMEOUT_MS;
 		IOT_MEM_CHECK("ES_PROV_ENTER DONE >>PT<<");
@@ -1877,6 +1938,13 @@ int st_conn_cleanup(IOT_CTX *iot_ctx, bool reboot)
 	_throw_away_all_cmd_queue(ctx);
 	iot_os_mutex_unlock(&ctx->iot_cmd_lock);
 
+	/* Try to delete device_card first, but it depends on connection-status */
+	iot_err = _delete_dev_card_by_usr(ctx);
+	if (iot_err != IOT_ERROR_NONE) {
+		IOT_ERROR("failed to delete device_card(%d)", iot_err);
+		IOT_DUMP_MAIN(ERROR, BASE, iot_err);
+	}
+
 	iot_os_eventgroup_clear_bits(ctx->usr_events, IOT_USR_INTERACT_BIT_CLEANUP_DONE);
 
 	iot_err = iot_command_send(ctx,
@@ -2116,4 +2184,61 @@ int st_info_get(IOT_CTX *iot_ctx, iot_info_type_t info_type, iot_info_data_t *in
 
 	iot_os_mutex_unlock(&ctx->st_conn_lock);
 	return iot_err;
+}
+
+int st_change_health_period(IOT_CTX *iot_ctx, unsigned int new_period)
+{
+	int ret = IOT_ERROR_NONE;
+	struct iot_context *ctx = (struct iot_context*)iot_ctx;
+	st_mqtt_msg msg = {0};
+	JSON_H *json_root = NULL;
+	/* MQTT connection expired after twice ping period */
+	unsigned int new_mqtt_period = new_period/2;
+
+	if (!ctx) {
+		IOT_ERROR("ctx is null");
+	    return IOT_ERROR_INVALID_ARGS;
+	}
+
+	if (ctx->curr_state < IOT_STATE_CLOUD_CONNECTING || ctx->evt_mqttcli == NULL) {
+		IOT_ERROR("Target has not connected to server yet!!");
+		return IOT_ERROR_BAD_REQ;
+	}
+
+	json_root = JSON_CREATE_OBJECT();
+	JSON_ADD_STRING_TO_OBJECT(json_root, "status", "changePeriod");
+	JSON_ADD_NUMBER_TO_OBJECT(json_root, "newPeriod", new_mqtt_period);
+#if defined(STDK_IOT_CORE_SERIALIZE_CBOR)
+	iot_serialize_json2cbor(json_root, (uint8_t **)&msg.payload, (size_t *)&msg.payloadlen);
+#else
+	msg.payload = JSON_PRINT(json_root);
+	if (msg.payload == NULL) {
+		IOT_ERROR("Fail to make json string");
+		ret = IOT_ERROR_BAD_REQ;
+		goto exit;
+	}
+	msg.payloadlen = strlen(msg.payload);
+#endif
+	msg.qos = st_mqtt_qos1;
+	msg.retained = false;
+	msg.topic = ctx->mqtt_health_topic;
+
+	IOT_INFO("publish event, topic : %s, payload :\n%s",
+		ctx->mqtt_health_topic, (char *)msg.payload);
+
+	ret = st_mqtt_publish(ctx->evt_mqttcli, &msg);
+	if (ret) {
+		ret = IOT_ERROR_MQTT_PUBLISH_FAIL;
+		IOT_ERROR("Failt to publish change period packet");
+		goto exit;
+	}
+	st_mqtt_change_ping_period(ctx->evt_mqttcli, new_mqtt_period);
+
+exit:
+	if (msg.payload)
+		free(msg.payload);
+	if (json_root)
+		JSON_DELETE(json_root);
+
+	return ret;
 }

@@ -19,6 +19,7 @@
 #ifndef _IOT_BSP_FS_H_
 #define _IOT_BSP_FS_H_
 
+#include <stddef.h>
 #include "iot_error.h"
 
 #ifdef __cplusplus

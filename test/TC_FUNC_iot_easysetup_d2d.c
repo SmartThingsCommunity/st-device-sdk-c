@@ -189,7 +189,7 @@ void TC_STATIC_es_deviceinfo_handler_success(void **state)
 }
 
 // Static function of STDK declared to test
-extern iot_error_t _es_keyinfo_handler(struct iot_context *ctx, char *in_payload, char **out_payload);
+extern iot_error_t _es_keyinfo_handler(struct iot_context *ctx, char *input_data, char **output_data);
 extern iot_error_t _es_crypto_cipher_gen_iv(iot_security_buffer_t *iv_buffer);
 
 void TC_STATIC_es_crypto_cipher_gen_iv_success(void **state)
@@ -291,7 +291,7 @@ struct test_wifi_provisioning_data {
 };
 
 // Static function of STDK declared to test
-extern iot_error_t _es_wifiprovisioninginfo_handler(struct iot_context *ctx, char *in_payload, char **out_payload);
+extern iot_error_t _es_wifiprovisioninginfo_handler(struct iot_context *ctx, char *input_data, char **output_data);
 
 // static functions for test
 static char* _generate_post_wifiprovisioninginfo_payload(iot_security_cipher_params_t *cipher, struct test_wifi_provisioning_data prov);
@@ -408,7 +408,7 @@ void TC_STATIC_es_wifiprovisioninginfo_handler_success_without_authtype(void **s
 }
 
 // Static function of STDK declared to test
-extern iot_error_t _es_wifiscaninfo_handler(struct iot_context *ctx, char **out_payload);
+extern iot_error_t _es_wifiscaninfo_handler(struct iot_context *ctx, char **output_data);
 
 static void assert_wifiscaninfo_payload(iot_security_cipher_params_t *cipher, char *payload, int num_of_scanlist);
 
@@ -461,7 +461,7 @@ void TC_STATIC_es_wifiscaninfo_handler_success(void **state)
 }
 
 // Static function of STDK declared to test
-extern iot_error_t _es_confirminfo_handler(struct iot_context *ctx, char *in_payload, char **out_payload);
+extern iot_error_t _es_confirminfo_handler(struct iot_context *ctx, char *input_data, char **output_data);
 
 static char *_generate_confirminfo_payload(iot_security_cipher_params_t *cipher, enum ownership_validation_feature feature,
                                     const char *serial_number_for_qr);
@@ -526,7 +526,7 @@ void TC_STATIC_es_confirminfo_handler_out_ranged_otm_feature(void **state)
     assert_int_equal(err, IOT_ERROR_NONE);
     server_cipher = _generate_server_cipher(device_cipher->iv.p, device_cipher->iv.len);
     assert_non_null(server_cipher);
-    in_payload = _generate_confirminfo_payload(server_cipher, OVF_BIT_MAX_FEATURE, NULL);
+    in_payload = _generate_confirminfo_payload(server_cipher, OVF_BIT_SERIAL_NUMBER + 1, NULL);
     out_payload = NULL;
     // When
     err = _es_confirminfo_handler(context, in_payload, &out_payload);
@@ -646,6 +646,59 @@ void TC_STATIC_es_confirminfo_handler_qr_code(void **state)
     _free_cipher(server_cipher);
 }
 
+void TC_STATIC_es_confirminfo_handler_serial_number(void **state)
+{
+	iot_error_t err;
+	char *in_payload;
+	char *out_payload;
+	struct iot_context *context;
+	iot_security_cipher_params_t *device_cipher;
+	iot_security_cipher_params_t *server_cipher;
+
+	// Given: common
+	context = (struct iot_context *)*state;
+	context->usr_events = iot_os_eventgroup_create();
+	context->iot_events = iot_os_eventgroup_create();
+	context->cmd_queue = iot_os_queue_create(IOT_QUEUE_LENGTH, sizeof(struct iot_command));
+	device_cipher = _generate_device_cipher(NULL, 0);
+	err = iot_security_cipher_set_params(context->easysetup_security_context, device_cipher);
+	assert_int_equal(err, IOT_ERROR_NONE);
+
+	// Given: valid serial number
+	server_cipher = _generate_server_cipher(device_cipher->iv.p, device_cipher->iv.len);
+	in_payload = _generate_confirminfo_payload(server_cipher, OVF_BIT_SERIAL_NUMBER, TEST_DEVICE_SERIAL_NUMBER);
+	out_payload = NULL;
+	// When
+	err = _es_confirminfo_handler(context, in_payload, &out_payload);
+	// Then
+	assert_int_equal(err, IOT_ERROR_NONE);
+	assert_empty_json(server_cipher, out_payload);
+
+	// Teardown: valid serial number
+	free(in_payload);
+	free(out_payload);
+
+	// Given: invalid serial number
+	server_cipher = _generate_server_cipher(device_cipher->iv.p, device_cipher->iv.len);
+	in_payload = _generate_confirminfo_payload(server_cipher, OVF_BIT_SERIAL_NUMBER, "1234"); // invalid sn
+	out_payload = NULL;
+	// When
+	err = _es_confirminfo_handler(context, in_payload, &out_payload);
+	// Then
+	assert_int_equal(err, IOT_ERROR_EASYSETUP_INVALID_SERIAL_NUMBER);
+	assert_null(out_payload); // out_payload untouched
+
+	// Teardown: invalid serial number
+	free(in_payload);
+
+	// Teardown: common
+	iot_os_eventgroup_delete(context->usr_events);
+	iot_os_eventgroup_delete(context->iot_events);
+	iot_os_queue_delete(context->cmd_queue);
+	_free_cipher(device_cipher);
+	_free_cipher(server_cipher);
+}
+
 static void _wait_and_send_confirm(struct iot_context *context)
 {
     unsigned char event;
@@ -698,7 +751,7 @@ void TC_STATIC_es_confirminfo_handler_button(void **state)
 }
 
 // Static function of STDK declared to test
-extern iot_error_t _es_confirm_handler(struct iot_context *ctx, char *in_payload, char **out_payload);
+extern iot_error_t _es_confirm_handler(struct iot_context *ctx, char *input_data, char **output_data);
 
 static char *_generate_none_container_payload();
 static char *_generate_plain_message_payload();
@@ -906,7 +959,7 @@ void TC_STATIC_es_confirm_handler_invalid_payload(void** state)
     _free_cipher(server_cipher);
 }
 
-extern iot_error_t _es_setupcomplete_handler(struct iot_context *ctx, char *in_payload, char **out_payload);
+extern iot_error_t _es_setupcomplete_handler(struct iot_context *ctx, char *input_data, char **output_data);
 
 void TC_STATIC_es_setupcomplete_handler_success(void** state)
 {
@@ -1029,7 +1082,7 @@ static char *_generate_confirminfo_payload(iot_security_cipher_params_t *cipher,
     item = JSON_CREATE_NUMBER(feature);
     assert_non_null(item);
     JSON_ADD_ITEM_TO_OBJECT(root, "otmSupportFeature", item);
-    if (feature == OVF_BIT_QR) {
+    if (feature == OVF_BIT_QR || feature == OVF_BIT_SERIAL_NUMBER) {
         JSON_ADD_ITEM_TO_OBJECT(root, "sn", JSON_CREATE_STRING(serial_number_for_qr));
     }
     plain_message = JSON_PRINT(root);

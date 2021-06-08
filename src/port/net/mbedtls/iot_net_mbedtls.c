@@ -23,6 +23,10 @@
 #include <sys/time.h>
 #include <sys/socket.h>
 #include <iot_util.h>
+#if defined(CONFIG_STDK_IOT_CORE_OS_SUPPORT_POSIX)
+#include <netinet/in.h>
+#include <netinet/tcp.h>
+#endif
 
 #include "iot_main.h"
 #include "iot_debug.h"
@@ -384,12 +388,54 @@ static iot_error_t _iot_net_tls_connect(iot_net_interface_t *net)
 		IOT_INFO("%s\n", buf);
 	}
 #endif
+
 	return IOT_ERROR_NONE;
 
 exit:
 	_iot_net_cleanup_platform_context(net);
 
 	return IOT_ERROR_NET_CONNECT;
+}
+
+static iot_error_t _iot_net_tcp_keepalive(iot_net_interface_t *net, unsigned int idle, unsigned int count, unsigned int intval)
+{
+	iot_error_t err;
+	int socket;
+	int keepAlive = 1;
+	int ret;
+
+	err = _iot_net_check_interface(net);
+	if (err) {
+		return err;
+	}
+
+	socket = net->context.server_fd.fd;
+	ret = setsockopt(socket, SOL_SOCKET, SO_KEEPALIVE, &keepAlive, sizeof(keepAlive));
+	if (ret)
+	{
+		IOT_WARN("fail to set KEEPALIVE error %d", ret);
+		return IOT_ERROR_BAD_REQ;
+	}
+	ret = setsockopt(socket, IPPROTO_TCP, TCP_KEEPIDLE, &idle, sizeof(idle));
+	if (ret)
+	{
+		IOT_WARN("fail to set KEEPALIVEIDLE error %d", ret);
+		return IOT_ERROR_BAD_REQ;
+	}
+	ret = setsockopt(socket, IPPROTO_TCP, TCP_KEEPCNT, &count, sizeof(count));
+	if (ret)
+	{
+		IOT_WARN("fail to set KEEPALIVECOUNT error %d", ret);
+		return IOT_ERROR_BAD_REQ;
+	}
+	ret = setsockopt(socket, IPPROTO_TCP, TCP_KEEPINTVL, &intval, sizeof(intval));
+	if (ret)
+	{
+		IOT_WARN("fail to set KEEPALIVEINTERVAL error %d", ret);
+		return IOT_ERROR_BAD_REQ;
+	}
+
+	return IOT_ERROR_NONE;
 }
 
 static void _iot_net_tls_disconnect(iot_net_interface_t *net)
@@ -474,6 +520,7 @@ iot_error_t iot_net_init(iot_net_interface_t *net)
 	}
 
 	net->connect = _iot_net_tls_connect;
+	net->tcp_keepalive = _iot_net_tcp_keepalive;
 	net->disconnect = _iot_net_tls_disconnect;
 	net->select = _iot_net_select;
 	net->read = _iot_net_tls_read;

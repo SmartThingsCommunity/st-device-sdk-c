@@ -723,12 +723,72 @@ exit:
 
 #if defined(CONFIG_STDK_IOT_CORE_CRYPTO_SUPPORT_ECDSA)
 STATIC_FUNCTION
+iot_error_t _iot_security_be_software_pk_der_to_raw(iot_security_buffer_t *der_buf, iot_security_buffer_t *raw_buf)
+{
+	unsigned char *p;
+	int len;
+
+	if (!der_buf || !raw_buf) {
+		IOT_ERROR("pk asn1 params is null");
+		IOT_ERROR_DUMP_AND_RETURN(PK_PARAMS_NULL, 0);
+	}
+
+	p = der_buf->p;
+	raw_buf->len = 0;
+
+	// TAG : SEQUENCE
+	if (*p++ != (MBEDTLS_ASN1_CONSTRUCTED | MBEDTLS_ASN1_SEQUENCE)) {
+		IOT_ERROR("not found sequence tag");
+		return -MBEDTLS_ERR_ASN1_UNEXPECTED_TAG;
+	}
+
+	len = *p++;
+
+	// TAG : INTEGER for 's'
+	if (*p++ != MBEDTLS_ASN1_INTEGER) {
+		IOT_ERROR("not found integer tag");
+		return -MBEDTLS_ERR_ASN1_UNEXPECTED_TAG;
+	}
+
+	len = *p++;
+
+	if (*p == 0) {
+		p++;
+		len--;
+	}
+
+	memcpy(raw_buf->p + raw_buf->len, p, len);
+	p += len;
+	raw_buf->len += len;
+
+	// TAG : INTEGER for 'r'
+	if (*p++ != MBEDTLS_ASN1_INTEGER) {
+		IOT_ERROR("not found integer tag");
+		return -MBEDTLS_ERR_ASN1_UNEXPECTED_TAG;
+	}
+
+	len = *p++;
+
+	if (*p == 0) {
+		p++;
+		len--;
+	}
+
+	memcpy(raw_buf->p + raw_buf->len, p, len);
+	p += len;
+	raw_buf->len += len;
+
+	return 0;
+}
+
+STATIC_FUNCTION
 iot_error_t _iot_security_be_software_pk_sign_ecdsa(iot_security_context_t *context, iot_security_buffer_t *input_buf, iot_security_buffer_t *sig_buf)
 {
 	iot_error_t err;
 	iot_security_pk_params_t *pk_params;
 	mbedtls_pk_context mbed_pk_context;
 	mbedtls_md_type_t mbed_md_type;
+	iot_security_buffer_t raw_buf = { 0 };
 	int ret;
 
 	err = _iot_security_be_check_context_and_params_is_valid(context, IOT_SECURITY_SUB_PK);
@@ -782,13 +842,27 @@ iot_error_t _iot_security_be_software_pk_sign_ecdsa(iot_security_context_t *cont
 		goto exit;
 	}
 
-	if (sig_buf->len != iot_security_pk_get_signature_len(pk_params->type)) {
-		unsigned char *tmp;
-		tmp = (unsigned char *)iot_os_realloc(sig_buf->p, sig_buf->len);
-		if (tmp) {
-			sig_buf->p = tmp;
-		}
+	raw_buf.p = (unsigned char *)iot_os_malloc(sig_buf->len);
+	if (!raw_buf.p) {
+		IOT_ERROR("failed to malloc for raw buf");
+		_iot_security_be_software_buffer_free(sig_buf);
+		err = IOT_ERROR_MEM_ALLOC;
+		goto exit;
 	}
+
+	err = _iot_security_be_software_pk_der_to_raw(sig_buf, &raw_buf);
+	if (err) {
+		IOT_ERROR("failed to convert from der to raw");
+		_iot_security_be_software_buffer_free(sig_buf);
+		_iot_security_be_software_buffer_free(&raw_buf);
+		err = IOT_ERROR_SECURITY_PK_SIGN;
+		goto exit;
+	}
+
+	memset(sig_buf->p, 0, sig_buf->len);
+	iot_os_free(sig_buf->p);
+	sig_buf->p = raw_buf.p;
+	sig_buf->len = raw_buf.len;
 
 	IOT_DEBUG("sig:    %3d@%p", (int)sig_buf->len, sig_buf->p);
 
