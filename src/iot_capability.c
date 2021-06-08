@@ -600,25 +600,7 @@ iot_error_t _iot_parse_noti_data(void *data, iot_noti_data_t *noti_data)
 	char *payload = NULL;
 	char time_str[11] = {0,};
 
-#if defined(STDK_IOT_CORE_SERIALIZE_CBOR)
-	char *payload_json = NULL;
-	size_t payload_json_len = 0;
-
-	if (iot_serialize_cbor2json((uint8_t *)data, strlen(data), &payload_json, &payload_json_len)) {
-		IOT_ERROR("cbor2json failed");
-		return IOT_ERROR_BAD_REQ;
-	}
-
-	if ((payload_json == NULL) || (payload_json_len == 0)) {
-		IOT_ERROR("json buffer is null");
-		return IOT_ERROR_BAD_REQ;
-	}
-
-	json = JSON_PARSE(payload_json);
-	free(payload_json);
-#else
 	json = JSON_PARSE(data);
-#endif
 	if (json == NULL) {
 		IOT_ERROR("Cannot parse by json");
 		return IOT_ERROR_BAD_REQ;
@@ -813,25 +795,7 @@ void iot_cap_sub_cb(iot_cap_handle_list_t *cap_handle_list, char *payload)
 		return;
 	}
 
-#if defined(STDK_IOT_CORE_SERIALIZE_CBOR)
-	char *payload_json = NULL;
-	size_t payload_json_len = 0;
-
-	if (iot_serialize_cbor2json((uint8_t *)payload, strlen(payload), &payload_json, &payload_json_len)) {
-		IOT_ERROR("cbor2json failed");
-		return;
-	}
-
-	if ((payload_json == NULL) || (payload_json_len == 0)) {
-		IOT_ERROR("json buffer is null");
-		return;
-	}
-
-	json = JSON_PARSE(payload_json);
-	free(payload_json);
-#else
 	json = JSON_PARSE(payload);
-#endif
 	if (json == NULL) {
 		IOT_ERROR("Cannot parse by json");
 		goto out;

@@ -7,6 +7,13 @@ config STDK_IOT_CORE
        Select this option to enable support for the Samsung SmartThings
        IoT Core via the esp-idf component for the Samsung SmartThings IoT Device C SDK.
 
+config STDK_IOT_CORE_EASYSETUP_DISCOVERY_SSID
+    bool "Use SoftAP SSID broadcasting for device discovery"
+    default y
+    depends on STDK_IOT_CORE
+    help
+       Select this option to use soft-AP SSID broadcasting for device discovery.
+
 config STDK_IOT_CORE_EASYSETUP_HTTP
     bool "Use http for easysetup"
     default y

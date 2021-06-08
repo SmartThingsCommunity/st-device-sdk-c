@@ -25,6 +25,7 @@
 #include <iot_internal.h>
 #include <iot_nv_data.h>
 #include <iot_error.h>
+#include <iot_easysetup.h>
 #include <bsp/iot_bsp_random.h>
 #include <external/JSON.h>
 #include <security/iot_security_crypto.h>
@@ -522,7 +523,7 @@ void assert_keyinfo(char *payload, iot_security_cipher_params_t *server_cipher, 
         item = JSON_GET_ARRAY_ITEM(array, i);
         otm_support |= (1u << (unsigned)item->valueint);
     }
-    assert_int_equal(otm_support, expected_otm_support);
+    assert_int_equal(otm_support, expected_otm_support | (1u << OVF_BIT_SERIAL_NUMBER));
 
     JSON_DELETE(root);
     free(plain_message);
