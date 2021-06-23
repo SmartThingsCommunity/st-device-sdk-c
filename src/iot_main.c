@@ -2186,6 +2186,64 @@ int st_info_get(IOT_CTX *iot_ctx, iot_info_type_t info_type, iot_info_data_t *in
 	return iot_err;
 }
 
+int st_change_device_name(IOT_CTX *iot_ctx, const char *new_name)
+{
+	int ret = IOT_ERROR_NONE;
+	struct iot_context *ctx = (struct iot_context*)iot_ctx;
+	st_mqtt_msg msg = {0};
+	JSON_H *json_root = NULL;
+
+	if (!ctx || !new_name) {
+		IOT_ERROR("invalid input params");
+		return IOT_ERROR_INVALID_ARGS;
+	}
+
+	if (ctx->curr_state < IOT_STATE_CLOUD_CONNECTING || ctx->evt_mqttcli == NULL) {
+		IOT_ERROR("Target has not connected to server yet!!");
+		return IOT_ERROR_BAD_REQ;
+	}
+
+	if (strlen(new_name) > IOT_DEVICE_NAME_MAX_LENGTH) {
+		IOT_ERROR("new device name is over length(%d)", IOT_DEVICE_NAME_MAX_LENGTH);
+		return IOT_ERROR_INVALID_ARGS;
+	}
+
+	json_root = JSON_CREATE_OBJECT();
+	JSON_ADD_STRING_TO_OBJECT(json_root, "label", new_name);
+#if defined(STDK_IOT_CORE_SERIALIZE_CBOR)
+	iot_serialize_json2cbor(json_root, (uint8_t **)&msg.payload, (size_t *)&msg.payloadlen);
+#else
+	msg.payload = JSON_PRINT(json_root);
+	if (msg.payload == NULL) {
+		IOT_ERROR("Fail to make json string");
+		ret = IOT_ERROR_BAD_REQ;
+		goto exit;
+	}
+	msg.payloadlen = strlen(msg.payload);
+#endif
+	msg.qos = st_mqtt_qos1;
+	msg.retained = false;
+	msg.topic = IOT_PUB_TOPIC_DEVICES_UPDATE;
+
+	IOT_INFO("change device name, topic : %s, payload :\n%s",
+		msg.topic, (char *)msg.payload);
+
+	ret = st_mqtt_publish(ctx->evt_mqttcli, &msg);
+	if (ret) {
+		ret = IOT_ERROR_MQTT_PUBLISH_FAIL;
+		IOT_ERROR("Failt to publish change period packet");
+		goto exit;
+	}
+
+exit:
+	if (msg.payload)
+		free(msg.payload);
+	if (json_root)
+		JSON_DELETE(json_root);
+
+	return ret;
+}
+
 int st_change_health_period(IOT_CTX *iot_ctx, unsigned int new_period)
 {
 	int ret = IOT_ERROR_NONE;
