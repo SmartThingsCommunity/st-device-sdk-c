@@ -244,6 +244,13 @@ struct iot_state_data {
 
 typedef struct iot_cap_handle_list iot_cap_handle_list_t;
 
+#define IOT_ST_ECODE_STR_LEN	(4)
+
+struct iot_st_ecode {
+	bool is_happended;
+	char ecode[IOT_ST_ECODE_STR_LEN + 1];
+};
+
 /**
  * @brief Contains "iot core's main context" data
  */
@@ -314,6 +321,8 @@ struct iot_context {
 	unsigned int mqtt_connection_success_count; /**< @brief MQTT connection success count */
 	unsigned int mqtt_connection_try_count; /**< @brief MQTT connection try count */
 	bool usr_delete_req;	/**< @brief whether self-device-card-deleting requested from usr */
+
+	struct iot_st_ecode last_st_ecode;	/**< @brief last happended device error code to send SmartThings App */
 };
 
 #endif /* _IOT_MAIN_H_ */

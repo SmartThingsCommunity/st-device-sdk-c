@@ -1347,6 +1347,34 @@ iot_error_t iot_get_random_id_str(char *str, size_t max_sz)
 	return err;
 }
 
+iot_error_t iot_get_st_ecode(struct iot_context *ctx, struct iot_st_ecode *st_ecode)
+{
+	if ((ctx == NULL) || (st_ecode == NULL)) {
+		IOT_ERROR("There is no ctx or st_ecode arg");
+		return IOT_ERROR_INVALID_ARGS;
+	}
+
+	memcpy(st_ecode, &(ctx->last_st_ecode), sizeof(struct iot_st_ecode));
+
+	return IOT_ERROR_NONE;
+}
+
+iot_error_t iot_set_st_ecode(struct iot_context *ctx, struct iot_st_ecode st_ecode)
+{
+	if (ctx == NULL) {
+		IOT_ERROR("There is no ctx");
+		return IOT_ERROR_INVALID_ARGS;
+	}
+
+	if (st_ecode.is_happended == true) {
+		memcpy(&(ctx->last_st_ecode), &st_ecode, sizeof(struct iot_st_ecode));
+	} else {
+		ctx->last_st_ecode.is_happended = false;
+	}
+
+	return IOT_ERROR_NONE;
+}
+
 /**************************************************************
 *                       Synchronous Call                      *
 **************************************************************/
