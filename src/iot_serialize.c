@@ -114,6 +114,7 @@ static CborError _iot_cbor_value_to_json(CborValue *it, char *out, size_t len, s
 	size_t n = 0;
 	uint64_t val_i64;
 	double val_dbl;
+	bool val_bool;
 #if !IOT_SERIALIZE_SPRINTF_FLOAT
 	double intpart, fracpart;
 #endif
@@ -273,6 +274,23 @@ static CborError _iot_cbor_value_to_json(CborValue *it, char *out, size_t len, s
 			}
 		}
 		break;
+	case CborBooleanType:
+		err = cbor_value_get_boolean(it, &val_bool);
+		if (err)
+		{
+			return err;
+		}
+
+		if (val_bool)
+		{
+			c += snprintf(out + c, len -c, "%s", "true");
+		}
+		else
+		{
+			c += snprintf(out + c, len -c, "%s", "false");
+		}
+
+		break;
 	default:
 		return CborErrorUnknownType;
 	}
@@ -395,6 +413,12 @@ static CborError _iot_json_value_to_cbor(JSON_H *json, CborEncoder *cbor)
 		} else {
 			err = cbor_encode_double(cbor, number);
 		}
+		if (err != 0 && err != CborErrorOutOfMemory) {
+			return err;
+		}
+	} else if (JSON_IS_BOOL(json)) {
+		bool isTrue = JSON_IS_TRUE(json);
+		err = cbor_encode_boolean(cbor, isTrue);
 		if (err != 0 && err != CborErrorOutOfMemory) {
 			return err;
 		}

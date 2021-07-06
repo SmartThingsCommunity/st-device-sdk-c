@@ -121,6 +121,7 @@ typedef struct {
 typedef struct {
 	uint8_t state_change;	/**< @brief force this attribute value update event */
 	char *command_id;		/**< @brief event related commandId, if not used, set NULL */
+	bool *displayed;		/**< @brief whether the event should be displayed in the history feed, if not used, set NULL */
 } iot_cap_attr_option_t;
 
 #define MAX_CAP_ARG (5)
