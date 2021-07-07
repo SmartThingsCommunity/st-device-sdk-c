@@ -12,17 +12,6 @@ We also provide the additional Reference repository so that you can refer to how
 
 It is distributed in source form and written in C99 for the purpose of portability to most platforms.
 
-## Announcements
-
-Good news! We have launched the new commercial program for MQTT devices. You will be able to submit for certification into the SmartThings mobile app later this month. To prepare for submission, please perform the necessary steps with your current integrations:
-
- - Update to the latest SmartThings SDK for Direct Connected Devices for C
-   - Please use the SDK v1.3.3 or later
- - Downlaod the updated onboarding_config.json for your devices.
- - Re-register any test devices you have registered previously.
- - Update to the latest SmartThings mobile app to test your device
-   - Please use SmartThings mobile application v1.7.51 (for Android), v1.6.51 (for iOS) or later
-
 ## Main features
 
 This core device library provides the following features :
