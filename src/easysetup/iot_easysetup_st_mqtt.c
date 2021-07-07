@@ -694,6 +694,7 @@ exit_json_making:
 }
 #endif /* STDK_IOT_CORE_SERIALIZE_CBOR */
 
+STATIC_FUNCTION
 iot_error_t _iot_es_mqtt_registration(struct iot_context *ctx, st_mqtt_client mqtt_ctx)
 {
 	int ret;
