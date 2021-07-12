@@ -462,7 +462,7 @@ iot_error_t _delete_dev_card_by_usr(struct iot_context *ctx)
 
 	ret = st_mqtt_publish(ctx->evt_mqttcli, &msg);
 	if (ret) {
-		IOT_ERROR("error MQTTpub for %s(%d)", msg.topic, ret);
+		IOT_ERROR("error MQTTpub for %s(%d)", (char *)msg.topic, ret);
 		ctx->usr_delete_req = false;
 		iot_err = IOT_ERROR_BAD_REQ;
 	} else {
@@ -2226,7 +2226,7 @@ int st_change_device_name(IOT_CTX *iot_ctx, const char *new_name)
 	msg.topic = IOT_PUB_TOPIC_DEVICES_UPDATE;
 
 	IOT_INFO("change device name, topic : %s, payload :\n%s",
-		msg.topic, (char *)msg.payload);
+		(char *)msg.topic, (char *)msg.payload);
 
 	ret = st_mqtt_publish(ctx->evt_mqttcli, &msg);
 	if (ret) {
