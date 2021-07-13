@@ -1,6 +1,6 @@
 /* ***************************************************************************
  *
- * Copyright 2019-2020 Samsung Electronics All Rights Reserved.
+ * Copyright 2019-2021 Samsung Electronics All Rights Reserved.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -33,6 +33,16 @@ enum {
     CAP_ENUM_OVENOPERATINGSTATE_OVENJOBSTATE_VALUE_PREHEAT,
     CAP_ENUM_OVENOPERATINGSTATE_OVENJOBSTATE_VALUE_READY,
     CAP_ENUM_OVENOPERATINGSTATE_OVENJOBSTATE_VALUE_RINSING,
+    CAP_ENUM_OVENOPERATINGSTATE_OVENJOBSTATE_VALUE_FINISHED,
+    CAP_ENUM_OVENOPERATINGSTATE_OVENJOBSTATE_VALUE_SCHEDULEDSTART,
+    CAP_ENUM_OVENOPERATINGSTATE_OVENJOBSTATE_VALUE_WARMING,
+    CAP_ENUM_OVENOPERATINGSTATE_OVENJOBSTATE_VALUE_DEFROSTING,
+    CAP_ENUM_OVENOPERATINGSTATE_OVENJOBSTATE_VALUE_SENSING,
+    CAP_ENUM_OVENOPERATINGSTATE_OVENJOBSTATE_VALUE_SEARING,
+    CAP_ENUM_OVENOPERATINGSTATE_OVENJOBSTATE_VALUE_FASTPREHEAT,
+    CAP_ENUM_OVENOPERATINGSTATE_OVENJOBSTATE_VALUE_SCHEDULEDEND,
+    CAP_ENUM_OVENOPERATINGSTATE_OVENJOBSTATE_VALUE_STONEHEATING,
+    CAP_ENUM_OVENOPERATINGSTATE_OVENJOBSTATE_VALUE_TIMEHOLDPREHEAT,
     CAP_ENUM_OVENOPERATINGSTATE_OVENJOBSTATE_VALUE_MAX
 };
 
@@ -63,6 +73,16 @@ const static struct iot_caps_ovenOperatingState {
         const char *value_preheat;
         const char *value_ready;
         const char *value_rinsing;
+        const char *value_finished;
+        const char *value_scheduledStart;
+        const char *value_warming;
+        const char *value_defrosting;
+        const char *value_sensing;
+        const char *value_searing;
+        const char *value_fastPreheat;
+        const char *value_scheduledEnd;
+        const char *value_stoneHeating;
+        const char *value_timeHoldPreheat;
     } attr_ovenJobState;
     const struct ovenOperatingState_attr_completionTime {
         const char *name;
@@ -111,7 +131,7 @@ const static struct iot_caps_ovenOperatingState {
         .name = "ovenJobState",
         .property = 0,
         .valueType = VALUE_TYPE_STRING,
-        .values = {"cleaning", "cooking", "cooling", "draining", "preheat", "ready", "rinsing"},
+        .values = {"cleaning", "cooking", "cooling", "draining", "preheat", "ready", "rinsing", "finished", "scheduledStart", "warming", "defrosting", "sensing", "searing", "fastPreheat", "scheduledEnd", "stoneHeating", "timeHoldPreheat"},
         .value_cleaning = "cleaning",
         .value_cooking = "cooking",
         .value_cooling = "cooling",
@@ -119,6 +139,16 @@ const static struct iot_caps_ovenOperatingState {
         .value_preheat = "preheat",
         .value_ready = "ready",
         .value_rinsing = "rinsing",
+        .value_finished = "finished",
+        .value_scheduledStart = "scheduledStart",
+        .value_warming = "warming",
+        .value_defrosting = "defrosting",
+        .value_sensing = "sensing",
+        .value_searing = "searing",
+        .value_fastPreheat = "fastPreheat",
+        .value_scheduledEnd = "scheduledEnd",
+        .value_stoneHeating = "stoneHeating",
+        .value_timeHoldPreheat = "timeHoldPreheat",
     },
     .attr_completionTime = {
         .name = "completionTime",
