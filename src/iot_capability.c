@@ -232,10 +232,49 @@ IOT_EVENT* st_cap_create_attr_with_option(IOT_CAP_HANDLE *cap_handle, const char
 		if (options->command_id)
 		{
 			evt_data->options.command_id = iot_os_strdup(options->command_id);
+			if (evt_data->options.command_id == NULL)
+			{
+				goto failed_creat_attr_option;
+			}
+		}
+
+		if (options->displayed != NULL)
+		{
+			evt_data->options.displayed = (bool *)iot_os_malloc(sizeof(bool));
+			if (evt_data->options.displayed != NULL)
+			{
+				*(evt_data->options.displayed) = *(options->displayed);
+			}
+			else
+			{
+				goto failed_creat_attr_option;
+			}
 		}
 	}
 
 	return (IOT_EVENT*)evt_data;
+
+failed_creat_attr_option:
+
+	if (evt_data->options.displayed != NULL)
+	{
+		iot_os_free(evt_data->options.displayed);
+		evt_data->options.displayed = NULL;
+	}
+
+	if (evt_data->options.command_id != NULL)
+	{
+		iot_os_free(evt_data->options.command_id);
+		evt_data->options.command_id = NULL;
+	}
+
+	if (evt_data != NULL)
+	{
+		_iot_free_evt_data(evt_data);
+		iot_os_free(evt_data);
+	}
+
+	return NULL;
 }
 
 DEPRECATED void st_cap_attr_free(IOT_EVENT* event)
@@ -967,6 +1006,7 @@ static JSON_H *_iot_make_evt_data(const char* component, const char* capability,
 	JSON_H *evt_subjson = NULL;
 	JSON_H *evt_subdata = NULL;
 	JSON_H *prov_data = NULL;
+	JSON_H *visibility_data = NULL;
 	char time_in_ms[16]; /* 155934720000 is '2019-06-01 00:00:00.00 UTC' */
 
 	evt_item = JSON_CREATE_OBJECT();
@@ -1019,6 +1059,15 @@ static JSON_H *_iot_make_evt_data(const char* component, const char* capability,
 	if (evt_data->evt_value_data) {
 		evt_subdata = JSON_PARSE(evt_data->evt_value_data);
 		JSON_ADD_ITEM_TO_OBJECT(evt_item, "data", evt_subdata);
+	}
+
+	/* visibility */
+	if (evt_data->options.displayed != NULL)
+	{
+		visibility_data = JSON_CREATE_OBJECT();
+		JSON_ADD_BOOL_TO_OBJECT(visibility_data, "displayed", *(evt_data->options.displayed));
+
+		JSON_ADD_ITEM_TO_OBJECT(evt_item, "visibility", visibility_data);
 	}
 
 	/* providerData */
@@ -1131,6 +1180,10 @@ static void _iot_free_evt_data(iot_cap_evt_data_t* evt_data)
 
 	if (evt_data->options.command_id != NULL) {
 		iot_os_free(evt_data->options.command_id);
+	}
+
+	if (evt_data->options.displayed != NULL) {
+		iot_os_free(evt_data->options.displayed);
 	}
 }
 /* External API */
