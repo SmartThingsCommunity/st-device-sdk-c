@@ -151,6 +151,7 @@ iot_error_t _es_deviceinfo_handler(struct iot_context *ctx, char **out_payload)
 	JSON_ADD_ITEM_TO_OBJECT(root, "firmwareVersion", JSON_CREATE_STRING(ctx->device_info.firmware_version));
 	JSON_ADD_ITEM_TO_OBJECT(root, "hashedSn", JSON_CREATE_STRING((char *)ctx->devconf.hashed_sn));
 	JSON_ADD_NUMBER_TO_OBJECT(root, "wifiSupportFrequency", (double) iot_bsp_wifi_get_freq());
+	JSON_ADD_ITEM_TO_OBJECT(root, "prevErrorCode", JSON_CREATE_STRING((char *)ctx->last_st_ecode.ecode));
 
 	output_ptr = JSON_PRINT(root);
 
@@ -262,6 +263,7 @@ iot_error_t _es_confirm_check_manager(struct iot_context *ctx, enum ownership_va
 	unsigned char curr_event = 0;
 	size_t devsn_len;
 	iot_error_t err = IOT_ERROR_NONE;
+    struct iot_st_ecode st_ecode;
 
 	iot_os_eventgroup_clear_bits(ctx->iot_events, IOT_EVENT_BIT_EASYSETUP_CONFIRM);
 	ctx->curr_otm_feature = confirm_feature;
@@ -324,6 +326,8 @@ iot_error_t _es_confirm_check_manager(struct iot_context *ctx, enum ownership_va
 			} else {
 				IOT_ERROR("confirm failed");
 				IOT_ES_DUMP(IOT_DEBUG_LEVEL_ERROR, IOT_DUMP_EASYSETUP_CONFIRM_DENIED, 0);
+                iot_ecodeType_to_string(IOT_ST_ECODE_EE01, &st_ecode);
+                iot_set_st_ecode(ctx, &st_ecode);
 
 				/* To report confirm failure to user, try to change iot-state timeout value shortly */
 				if (iot_state_timeout_change(ctx, IOT_STATE_PROV_CONFIRM, ES_CONFIRM_FAIL_TIMEOUT) != IOT_ERROR_NONE) {
