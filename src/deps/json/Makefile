@@ -5,7 +5,7 @@ PREFIX := cJSON_
 
 LOCAL_CFLAGS := -I$(SRCDIR)
 
-SRCS = $(wildcard $(SRCDIR)/*.c)
+SRCS = $(SRCDIR)/cJSON.c
 OBJS = $(SRCS:.c=.o)
 
 all: $(OBJS)

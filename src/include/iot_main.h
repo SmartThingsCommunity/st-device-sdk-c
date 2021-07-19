@@ -54,6 +54,8 @@
 #define IOT_MQTT_CONNECT_CRITICAL_REJECT_MAX	3
 #define IOT_RATE_LIMIT_BREAK_TIME		60000
 
+#define IOT_DEVICE_NAME_MAX_LENGTH		20
+
 enum _iot_noti_type {
 	/* Common notifications */
 	_IOT_NOTI_TYPE_UNKNOWN = IOT_NOTI_TYPE_UNKNOWN,
