@@ -122,6 +122,11 @@ static void es_mbedtls_task(void *data)
 		goto exit;
 	}
 
+	// for null-terminated string format, it should be removed from certificate chain
+	if (cert_buf[cert_len - 1] == 0) {
+		cert_len--;
+	}
+
 	cert_chain_buf = (char *)iot_os_malloc(cert_len);
 	cert_chain_len = cert_len;
 	memcpy(cert_chain_buf, cert_buf, cert_len);
