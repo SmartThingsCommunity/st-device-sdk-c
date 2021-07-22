@@ -139,7 +139,7 @@ static int _iot_net_tls_external_sign(mbedtls_ssl_context *ssl,
 	iot_security_context_t *security_context;
 	iot_security_key_type_t key_type;
 	iot_security_buffer_t hash_buf = { 0 };
-	iot_security_buffer_t sig_buf = { 0 };
+	iot_security_buffer_t *sig_buf;
 	int ret = 0;
 
 	if (ssl == NULL || hash == NULL || hash_len == 0) {
@@ -150,6 +150,12 @@ static int _iot_net_tls_external_sign(mbedtls_ssl_context *ssl,
 	if (md_alg != MBEDTLS_MD_SHA256) {
 		IOT_ERROR("SHA256 only supported");
 		return MBEDTLS_ERR_PK_INVALID_ALG;
+	}
+
+	sig_buf = (iot_security_buffer_t *)malloc(sizeof(iot_security_buffer_t));
+	if (!sig_buf) {
+		IOT_ERROR("failed to malloc for sig");
+		return MBEDTLS_ERR_PK_ALLOC_FAILED;
 	}
 
 	security_context = iot_security_init();
@@ -169,15 +175,25 @@ static int _iot_net_tls_external_sign(mbedtls_ssl_context *ssl,
 
 	switch (key_type) {
 	case IOT_SECURITY_KEY_TYPE_ECCP256:
+		hash_buf.p = (unsigned char *)hash;
+		hash_buf.len = hash_len;
+		if (iot_security_pk_sign(security_context, &hash_buf, sig_buf)) {
+			ret = MBEDTLS_ERR_PK_KEY_INVALID_FORMAT;
+			iot_os_free(sig_buf);
+			break;
+		}
+
+		mbedtls_ssl_set_async_operation_data(ssl, sig_buf);
+		break;
 	case IOT_SECURITY_KEY_TYPE_RSA2048:
 		hash_buf.p = (unsigned char *)hash;
 		hash_buf.len = hash_len;
-		if (iot_security_pk_sign(security_context, &hash_buf, &sig_buf)) {
+		if (iot_security_pk_sign(security_context, &hash_buf, sig_buf)) {
 			ret = MBEDTLS_ERR_PK_KEY_INVALID_FORMAT;
 			break;
 		}
 
-		mbedtls_ssl_set_async_operation_data(ssl, &sig_buf);
+		mbedtls_ssl_set_async_operation_data(ssl, sig_buf);
 		break;
 	default:
 		IOT_ERROR("'%d' is not supported algorithm", key_type);
@@ -218,6 +234,7 @@ static int _iot_net_tls_external_resume(mbedtls_ssl_context *ssl,
 
 	memset(sig_buf->p, 0, sig_buf->len);
 	iot_os_free(sig_buf->p);
+	iot_os_free(sig_buf);
 
 	return 0;
 }
@@ -235,6 +252,7 @@ static void _iot_net_tls_external_cancel(mbedtls_ssl_context *ssl)
 	if (sig_buf) {
 		memset(sig_buf->p, 0, sig_buf->len);
 		iot_os_free(sig_buf->p);
+		iot_os_free(sig_buf);
 	}
 }
 
