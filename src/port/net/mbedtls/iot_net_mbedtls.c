@@ -132,6 +132,91 @@ static void _iot_net_cleanup_platform_context(iot_net_interface_t *net)
 }
 
 #if defined(CONFIG_MBEDTLS_SSL_ASYNC_PRIVATE)
+static void _iot_net_tls_asn1_write_int(unsigned char **p, unsigned char *raw, int base_ofs, size_t len)
+{
+	size_t length;
+
+	// TAG : INTEGER
+	*(*p)++ = MBEDTLS_ASN1_INTEGER;
+
+	// LENGTH
+	length = len;
+	if (raw[base_ofs] & 0x80) {
+		length += 1;
+	}
+	*(*p)++ = length;
+
+	// VALUE
+	if (raw[base_ofs] & 0x80) {
+		*(*p)++ = 0x00;
+	}
+
+	memcpy(*p, raw + base_ofs, len);
+	*p += len;
+}
+
+static iot_error_t _iot_net_tls_raw_to_der(iot_security_buffer_t *raw_buf, iot_security_buffer_t *der_buf)
+{
+	const int asn1_extra_len = 6;
+	unsigned char *p;
+	size_t mpi_r_len;
+	size_t mpi_s_len;
+	int len;
+
+	if (!raw_buf || !der_buf) {
+		IOT_ERROR("params is null");
+		return IOT_ERROR_INVALID_ARGS;
+	}
+
+	if (raw_buf->len > 0x80) {
+		IOT_ERROR("not supported length %d", raw_buf->len);
+		return IOT_ERROR_INVALID_ARGS;
+	}
+
+	/*
+	 * Get expected DER buffer size
+	 */
+	mpi_r_len = raw_buf->len / 2;
+	mpi_s_len = raw_buf->len - mpi_r_len;
+
+	der_buf->len = raw_buf->len + asn1_extra_len;
+	if (raw_buf->p[0] & 0x80) {
+		der_buf->len += 1;
+	}
+	if (raw_buf->p[mpi_r_len] & 0x80) {
+		der_buf->len += 1;
+	}
+
+	der_buf->p = (unsigned char *)iot_os_malloc(der_buf->len);
+	if (!der_buf->p) {
+		IOT_ERROR("failed to malloc for der buf");
+		return IOT_ERROR_MEM_ALLOC;
+	}
+
+	/*
+	 * Fill DER buffer
+	 */
+	p = der_buf->p;
+
+	// TAG : SEQUENCE
+	*p++ = (MBEDTLS_ASN1_CONSTRUCTED | MBEDTLS_ASN1_SEQUENCE);
+
+	// LENGTH
+	len = 4 + raw_buf->len;
+	if (raw_buf->p[0] & 0x80) {
+		len += 1;
+	}
+	if (raw_buf->p[mpi_r_len] & 0x80) {
+		len += 1;
+	}
+	*p++ = len;
+
+	_iot_net_tls_asn1_write_int(&p, raw_buf->p, 0, mpi_r_len);
+	_iot_net_tls_asn1_write_int(&p, raw_buf->p, mpi_r_len, mpi_s_len);
+
+	return IOT_ERROR_NONE;
+}
+
 static int _iot_net_tls_external_sign(mbedtls_ssl_context *ssl,
 		mbedtls_x509_crt *cert, mbedtls_md_type_t md_alg,
 		const unsigned char *hash, size_t hash_len)
@@ -140,6 +225,7 @@ static int _iot_net_tls_external_sign(mbedtls_ssl_context *ssl,
 	iot_security_key_type_t key_type;
 	iot_security_buffer_t hash_buf = { 0 };
 	iot_security_buffer_t *sig_buf;
+	iot_security_buffer_t *der_buf;
 	int ret = 0;
 
 	if (ssl == NULL || hash == NULL || hash_len == 0) {
@@ -183,7 +269,27 @@ static int _iot_net_tls_external_sign(mbedtls_ssl_context *ssl,
 			break;
 		}
 
-		mbedtls_ssl_set_async_operation_data(ssl, sig_buf);
+		der_buf = (iot_security_buffer_t *)malloc(sizeof(iot_security_buffer_t));
+		if (!der_buf) {
+			IOT_ERROR("failed to malloc for der");
+			return MBEDTLS_ERR_PK_ALLOC_FAILED;
+		}
+
+		if (_iot_net_tls_raw_to_der(sig_buf, der_buf)) {
+			ret = MBEDTLS_ERR_PK_KEY_INVALID_FORMAT;
+			iot_os_free(der_buf);
+			memset(sig_buf->p, 0, sig_buf->len);
+			iot_os_free(sig_buf->p);
+			iot_os_free(sig_buf);
+			break;
+		}
+
+		mbedtls_ssl_set_async_operation_data(ssl, der_buf);
+
+		memset(sig_buf->p, 0, sig_buf->len);
+		iot_os_free(sig_buf->p);
+		iot_os_free(sig_buf);
+
 		break;
 	case IOT_SECURITY_KEY_TYPE_RSA2048:
 		hash_buf.p = (unsigned char *)hash;
@@ -225,7 +331,7 @@ static int _iot_net_tls_external_resume(mbedtls_ssl_context *ssl,
 	}
 
 	if (sig_buf->len > output_size) {
-		IOT_ERROR("output buffer is too small");
+		IOT_ERROR("output buffer is too small %d > %d", sig_buf->len, output_size);
 		return MBEDTLS_ERR_SSL_BUFFER_TOO_SMALL;
 	}
 
