@@ -1,5 +1,22 @@
 # HISTORY
 
+## 1.7.0 :  Changes until v1.7.0
+
+New Improvements or features:
+ - Add changing device name feature
+  * New API : st_change_device_name() added
+ - Add 'esp32c3' bsp and modify related component.mk/cmake file
+ - Add capability helper for 'mode' capability
+
+Enhancements or amendments:
+ - Add the history feed displaying control options of the struct iot_cap_attr_option_t
+  * To control whether the event should be displayed in the history feed of the mobile App
+
+Bug fixed:
+ - Fix Static Code Analysis report
+  * iot_api:iot_main: Uses 'type casting' to fit in printf format sepcifier
+ - Fix multiple definition of main error for deps/json : prevent cJSON/test.c building
+
 ## 1.6.2 :  Changes until v1.6.2
 
 New Improvements or features:
