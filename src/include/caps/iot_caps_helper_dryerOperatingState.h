@@ -1,6 +1,6 @@
 /* ***************************************************************************
  *
- * Copyright 2019-2020 Samsung Electronics All Rights Reserved.
+ * Copyright 2019-2021 Samsung Electronics All Rights Reserved.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -39,8 +39,13 @@ enum {
     CAP_ENUM_DRYEROPERATINGSTATE_DRYERJOBSTATE_VALUE_DRYING,
     CAP_ENUM_DRYEROPERATINGSTATE_DRYERJOBSTATE_VALUE_FINISHED,
     CAP_ENUM_DRYEROPERATINGSTATE_DRYERJOBSTATE_VALUE_NONE,
+    CAP_ENUM_DRYEROPERATINGSTATE_DRYERJOBSTATE_VALUE_REFRESHING,
     CAP_ENUM_DRYEROPERATINGSTATE_DRYERJOBSTATE_VALUE_WEIGHTSENSING,
     CAP_ENUM_DRYEROPERATINGSTATE_DRYERJOBSTATE_VALUE_WRINKLEPREVENT,
+    CAP_ENUM_DRYEROPERATINGSTATE_DRYERJOBSTATE_VALUE_DEHUMIDIFYING,
+    CAP_ENUM_DRYEROPERATINGSTATE_DRYERJOBSTATE_VALUE_AIDRYING,
+    CAP_ENUM_DRYEROPERATINGSTATE_DRYERJOBSTATE_VALUE_SANITIZING,
+    CAP_ENUM_DRYEROPERATINGSTATE_DRYERJOBSTATE_VALUE_INTERNALCARE,
     CAP_ENUM_DRYEROPERATINGSTATE_DRYERJOBSTATE_VALUE_MAX
 };
 
@@ -79,8 +84,13 @@ const static struct iot_caps_dryerOperatingState {
         const char *value_drying;
         const char *value_finished;
         const char *value_none;
+        const char *value_refreshing;
         const char *value_weightSensing;
         const char *value_wrinklePrevent;
+        const char *value_dehumidifying;
+        const char *value_aIDrying;
+        const char *value_sanitizing;
+        const char *value_internalCare;
     } attr_dryerJobState;
     const struct dryerOperatingState_cmd_setMachineState { const char* name; } cmd_setMachineState;
 } caps_helper_dryerOperatingState = {
@@ -112,14 +122,19 @@ const static struct iot_caps_dryerOperatingState {
         .name = "dryerJobState",
         .property = ATTR_SET_VALUE_REQUIRED,
         .valueType = VALUE_TYPE_STRING,
-        .values = {"cooling", "delayWash", "drying", "finished", "none", "weightSensing", "wrinklePrevent"},
+        .values = {"cooling", "delayWash", "drying", "finished", "none", "refreshing", "weightSensing", "wrinklePrevent", "dehumidifying", "aIDrying", "sanitizing", "internalCare"},
         .value_cooling = "cooling",
         .value_delayWash = "delayWash",
         .value_drying = "drying",
         .value_finished = "finished",
         .value_none = "none",
+        .value_refreshing = "refreshing",
         .value_weightSensing = "weightSensing",
         .value_wrinklePrevent = "wrinklePrevent",
+        .value_dehumidifying = "dehumidifying",
+        .value_aIDrying = "aIDrying",
+        .value_sanitizing = "sanitizing",
+        .value_internalCare = "internalCare",
     },
     .cmd_setMachineState = { .name = "setMachineState" }, // arguments: state(string) 
 };

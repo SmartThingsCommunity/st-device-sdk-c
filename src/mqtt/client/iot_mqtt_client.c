@@ -599,10 +599,12 @@ static int _iot_mqtt_run_read_stream(MQTTClient *client)
 		w_chunk->qos = (w_chunk->chunk_data[0] & MQTT_FIXED_HEADER_QOS_MASK) >> MQTT_FIXED_HEADER_QOS_OFFSET;
 		w_chunk->packet_id = MQTTPacket_getPacketId(w_chunk->chunk_data);
 		_iot_mqtt_process_post_read(client, w_chunk);
+
 		w_chunk = NULL;
 	} else {
 		read = E_ST_MQTT_NETWORK_ERROR;
 	}
+
 
 exit:
 	iot_os_mutex_unlock(&client->read_lock);
@@ -1206,16 +1208,30 @@ exit:
 	return rc;
 }
 
-int st_mqtt_subscribe(st_mqtt_client client, const char *topic, int qos)
+int st_mqtt_subscribe(st_mqtt_client client, int count, char* topics[], int qos[])
 {
 	MQTTClient *c = client;
 	int rc = 0;
 	int chunk_size;
 	iot_mqtt_packet_chunk_t *sub_packet = NULL;
-	MQTTString Topic = MQTTString_initializer;
-	Topic.cstring = (char *)topic;
+	MQTTString *Topics = NULL;
 
-	chunk_size = MQTTSerialize_subscribe_size(1, &Topic);
+	if (count <= 0 || topics == NULL || qos == NULL) {
+		IOT_ERROR("Invalid arguments");
+		return E_ST_MQTT_FAILURE;
+	}
+
+	Topics = iot_os_malloc(count * sizeof(MQTTString));
+	if (Topics == NULL) {
+		IOT_ERROR("Topics malloc fail");
+		return E_ST_MQTT_FAILURE;
+	}
+	memset(Topics, '\0', count * sizeof(MQTTString));
+	for (int i = 0; i < count; i++) {
+		Topics[i].cstring = (char *)topics[i];
+	}
+
+	chunk_size = MQTTSerialize_subscribe_size(count, Topics);
 	sub_packet = _iot_mqtt_chunk_create(chunk_size);
 	if (sub_packet == NULL) {
 		IOT_ERROR("buf malloc fail");
@@ -1229,7 +1245,7 @@ int st_mqtt_subscribe(st_mqtt_client client, const char *topic, int qos)
 	}
 	c->next_packetid = (c->next_packetid >= MAX_PACKET_ID) ? 1 : c->next_packetid + 1;
 	sub_packet->packet_id = c->next_packetid;
-	MQTTSerialize_subscribe(sub_packet->chunk_data, chunk_size, 0, sub_packet->packet_id, 1, &Topic, (int *)&qos);
+	MQTTSerialize_subscribe(sub_packet->chunk_data, chunk_size, 0, sub_packet->packet_id, count, Topics, qos);
 	sub_packet->packet_type = SUBSCRIBE;
 	sub_packet->have_owner = 1;
 	sub_packet->chunk_state = PACKET_CHUNK_WRITE_PENDING;
@@ -1238,20 +1254,37 @@ int st_mqtt_subscribe(st_mqtt_client client, const char *topic, int qos)
 	rc = _iot_mqtt_wait_for(c, sub_packet);
 
 exit:
+	if (Topics != NULL) {
+		iot_os_free(Topics);
+	}
 	IOT_DUMP(IOT_DEBUG_LEVEL_INFO, IOT_DUMP_MQTT_SUBSCRIBE, rc, 0);
 	return rc;
 }
 
-int st_mqtt_unsubscribe(st_mqtt_client client, const char *topic)
+int st_mqtt_unsubscribe(st_mqtt_client client, int count, char* topics[])
 {
 	MQTTClient *c = client;
 	int rc = 0;
-	MQTTString Topic = MQTTString_initializer;
-	Topic.cstring = (char *)topic;
+	MQTTString *Topics = NULL;
 	int chunk_size;
 	iot_mqtt_packet_chunk_t *unsub_packet = NULL;
 
-	chunk_size = MQTTSerialize_unsubscribe_size(1, &Topic);
+	if (count <= 0 || topics == NULL) {
+		IOT_ERROR("Invalid arguments");
+		return E_ST_MQTT_FAILURE;
+	}
+
+	Topics = iot_os_malloc(count * sizeof(MQTTString));
+	if (Topics == NULL) {
+		IOT_ERROR("Topics malloc fail");
+		return E_ST_MQTT_FAILURE;
+	}
+	memset(Topics, '\0', count * sizeof(MQTTString));
+	for (int i = 0; i < count; i++) {
+		Topics[i].cstring = (char *)topics[i];
+	}
+
+	chunk_size = MQTTSerialize_unsubscribe_size(count, Topics);
 	unsub_packet = _iot_mqtt_chunk_create(chunk_size);
 	if (unsub_packet == NULL) {
 		IOT_ERROR("buf malloc fail");
@@ -1265,7 +1298,7 @@ int st_mqtt_unsubscribe(st_mqtt_client client, const char *topic)
 	}
 	c->next_packetid = (c->next_packetid >= MAX_PACKET_ID) ? 1 : c->next_packetid + 1;
 	unsub_packet->packet_id = c->next_packetid;
-	MQTTSerialize_unsubscribe(unsub_packet->chunk_data, chunk_size, 0, unsub_packet->packet_id, 1, &Topic);
+	MQTTSerialize_unsubscribe(unsub_packet->chunk_data, chunk_size, 0, unsub_packet->packet_id, count, Topics);
 	unsub_packet->packet_type = UNSUBSCRIBE;
 	unsub_packet->have_owner = 1;
 	unsub_packet->chunk_state = PACKET_CHUNK_WRITE_PENDING;
@@ -1274,6 +1307,9 @@ int st_mqtt_unsubscribe(st_mqtt_client client, const char *topic)
 	rc = _iot_mqtt_wait_for(c, unsub_packet);
 
 exit:
+	if (Topics != NULL) {
+		iot_os_free(Topics);
+	}
 	IOT_DUMP(IOT_DEBUG_LEVEL_INFO, IOT_DUMP_MQTT_UNSUBSCRIBE, rc, 0);
 	return rc;
 }
