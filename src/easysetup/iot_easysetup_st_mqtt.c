@@ -906,7 +906,6 @@ iot_error_t iot_es_connect(struct iot_context *ctx, int conn_type)
 	iot_security_buffer_t token_buf = { 0 };
 	iot_wt_params_t wt_params = { 0 };
 	st_mqtt_client mqtt_cli = NULL;
-	char *topicfilter = NULL;
 	iot_error_t iot_ret;
 	int ret;
 
@@ -944,13 +943,9 @@ iot_error_t iot_es_connect(struct iot_context *ctx, int conn_type)
 		goto out;
 	}
 
-	topicfilter = malloc(IOT_TOPIC_SIZE);
-	if (!topicfilter) {
-		IOT_ERROR("failed to malloc topicfilter");
-		iot_ret = IOT_ERROR_MEM_ALLOC;
-		goto out;
-	}
 	if (conn_type == IOT_CONNECT_TYPE_COMMUNICATION) {
+		char* topicfilter[2] = {NULL, };
+		int qos[2] = {st_mqtt_qos1, st_mqtt_qos1};
 		IOT_INFO("connect_type: log-in");
 		/* Using for new MQTT PUB/SUB connection after registration */
 		if (!ctx->iot_reg_data.updated) {
@@ -974,24 +969,30 @@ iot_error_t iot_es_connect(struct iot_context *ctx, int conn_type)
 			IOT_INFO("MQTT connect success sucess/try : %d/%d", ctx->mqtt_connection_success_count, ctx->mqtt_connection_try_count);
 		}
 
-		snprintf(topicfilter, IOT_TOPIC_SIZE, IOT_SUB_TOPIC_NOTIFICATION, ctx->iot_reg_data.deviceId);
-		IOT_DEBUG("noti subscribe topic : %s", topicfilter);
-		ret = st_mqtt_subscribe(mqtt_cli, topicfilter, st_mqtt_qos1);
+		topicfilter[0] = iot_os_malloc(IOT_TOPIC_SIZE);
+		if (topicfilter[0] == NULL) {
+			IOT_ERROR("failed to malloc topicfilter");
+			iot_ret = IOT_ERROR_MEM_ALLOC;
+			goto mqtt_communication_connection_out;
+		}
+		snprintf(topicfilter[0], IOT_TOPIC_SIZE, IOT_SUB_TOPIC_NOTIFICATION, ctx->iot_reg_data.deviceId);
+		IOT_DEBUG("noti subscribe topic : %s", topicfilter[0]);
+
+		topicfilter[1] = iot_os_malloc(IOT_TOPIC_SIZE);
+		if (topicfilter[1] == NULL) {
+			IOT_ERROR("failed to malloc topicfilter");
+			iot_ret = IOT_ERROR_MEM_ALLOC;
+			goto mqtt_communication_connection_out;
+		}
+		snprintf(topicfilter[1], IOT_TOPIC_SIZE, IOT_SUB_TOPIC_COMMAND, ctx->iot_reg_data.deviceId);
+		IOT_DEBUG("cmd subscribe topic : %s", topicfilter[1]);
+
+		ret = st_mqtt_subscribe(mqtt_cli, 2, topicfilter, qos);
 		if (ret) {
 			IOT_WARN("subscribe error(%d)", ret);
 			iot_ret = IOT_ERROR_BAD_REQ;
 			_iot_es_mqtt_disconnect(ctx, mqtt_cli);
-			goto out;
-		}
-
-		snprintf(topicfilter, IOT_TOPIC_SIZE, IOT_SUB_TOPIC_COMMAND, ctx->iot_reg_data.deviceId);
-		IOT_DEBUG("cmd subscribe topic : %s", topicfilter);
-		ret = st_mqtt_subscribe(mqtt_cli, topicfilter, st_mqtt_qos1);
-		if (ret) {
-			IOT_WARN("failed cmd sub registration(%d)", ret);
-			iot_ret = IOT_ERROR_BAD_REQ;
-			_iot_es_mqtt_disconnect(ctx, mqtt_cli);
-			goto out;
+			goto mqtt_communication_connection_out;
 		}
 
 		ctx->mqtt_event_topic = malloc(IOT_TOPIC_SIZE);
@@ -999,7 +1000,7 @@ iot_error_t iot_es_connect(struct iot_context *ctx, int conn_type)
 			IOT_ERROR("failed to malloc for mqtt_event_topic");
 			iot_ret = IOT_ERROR_MEM_ALLOC;
 			_iot_es_mqtt_disconnect(ctx, mqtt_cli);
-			goto out;
+			goto mqtt_communication_connection_out;
 		}
 		snprintf(ctx->mqtt_event_topic, IOT_TOPIC_SIZE, IOT_PUB_TOPIC_EVENT, ctx->iot_reg_data.deviceId);
 
@@ -1008,12 +1009,22 @@ iot_error_t iot_es_connect(struct iot_context *ctx, int conn_type)
 			IOT_ERROR("failed to malloc for mqtt_health_topic");
 			iot_ret = IOT_ERROR_MEM_ALLOC;
 			_iot_es_mqtt_disconnect(ctx, mqtt_cli);
-			goto out;
+			goto mqtt_communication_connection_out;
 		}
 		snprintf(ctx->mqtt_health_topic, IOT_TOPIC_SIZE, IOT_PUB_TOPIC_HEALTH);
 
 		ctx->evt_mqttcli = mqtt_cli;
+mqtt_communication_connection_out:
+		if (topicfilter[0] != NULL) {
+			iot_os_free(topicfilter[0]);
+		}
+
+		if (topicfilter[1] != NULL) {
+			iot_os_free(topicfilter[1]);
+		}
 	} else {
+		char *topicfilter = NULL;
+		int qos = st_mqtt_qos1;
 		IOT_INFO("connect_type: registration");
 
 		ret = st_mqtt_create(&mqtt_cli, _iot_mqtt_registration_client_callback, ctx);
@@ -1031,24 +1042,34 @@ iot_error_t iot_es_connect(struct iot_context *ctx, int conn_type)
 		}
 
 		/* register notification subscribe for registration */
+		topicfilter = iot_os_malloc(IOT_TOPIC_SIZE);
+		if (topicfilter == NULL) {
+			IOT_ERROR("failed to malloc topicfilter");
+			iot_ret = IOT_ERROR_MEM_ALLOC;
+			goto mqtt_communication_connection_out;
+		}
 		snprintf(topicfilter, IOT_TOPIC_SIZE, IOT_SUB_TOPIC_REGISTRATION, wt_params.sn);
 		IOT_DEBUG("noti subscribe topic : %s", topicfilter);
-		ret = st_mqtt_subscribe(mqtt_cli, topicfilter, st_mqtt_qos1);
+		ret = st_mqtt_subscribe(mqtt_cli, 1, &topicfilter, &qos);
 		if (ret) {
 			IOT_ERROR("%s error MQTTsub(%d)", __func__, ret);
 			iot_ret = IOT_ERROR_BAD_REQ;
 			_iot_es_mqtt_disconnect(ctx, mqtt_cli);
-			goto out;
+			goto mqtt_registration_connection_out;
 		}
 
 		iot_ret = _iot_es_mqtt_registration(ctx, mqtt_cli);
 		if (iot_ret != IOT_ERROR_NONE) {
 			IOT_ERROR("failed to register");
 			_iot_es_mqtt_disconnect(ctx, mqtt_cli);
-			goto out;
+			goto mqtt_registration_connection_out;
 		}
 
 		ctx->reg_mqttcli = mqtt_cli;
+mqtt_registration_connection_out:
+		if (topicfilter != NULL) {
+			iot_os_free(topicfilter);
+		}
 	}
 
 out:
@@ -1060,9 +1081,6 @@ out:
 
 	if (token_buf.p)
 		free(token_buf.p);
-
-	if (topicfilter)
-		free(topicfilter);
 
 	if (iot_ret)
 		st_mqtt_destroy(mqtt_cli);
