@@ -56,6 +56,7 @@ typedef enum {
 	IOT_WIFI_AUTH_WPA2_PSK,
 	IOT_WIFI_AUTH_WPA_WPA2_PSK,
 	IOT_WIFI_AUTH_WPA2_ENTERPRISE,
+	IOT_WIFI_AUTH_WPA3_PERSONAL,
 	IOT_WIFI_AUTH_MAX
 } iot_wifi_auth_mode_t;
 
@@ -63,6 +64,22 @@ typedef enum {
 	IOT_WIFI_EVENT_SOFTAP_STA_JOIN,
 	IOT_WIFI_EVENT_SOFTAP_STA_LEAVE,
 } iot_wifi_event_t;
+
+typedef uint32_t iot_wifi_auth_mode_bits_t;
+
+inline uint32_t _iot_wifi_auth_mode_bit(iot_wifi_auth_mode_t auth_mode) {
+	return (1u << auth_mode);
+}
+#define IOT_WIFI_AUTH_MODE_BIT(_auth_mode)	_iot_wifi_auth_mode_bit(_auth_mode)
+
+#define IOT_WIFI_AUTH_MODE_BIT_ALL	(	\
+			IOT_WIFI_AUTH_MODE_BIT(IOT_WIFI_AUTH_OPEN) | \
+			IOT_WIFI_AUTH_MODE_BIT(IOT_WIFI_AUTH_WEP) | \
+			IOT_WIFI_AUTH_MODE_BIT(IOT_WIFI_AUTH_WPA_PSK) | \
+			IOT_WIFI_AUTH_MODE_BIT(IOT_WIFI_AUTH_WPA2_PSK) | \
+			IOT_WIFI_AUTH_MODE_BIT(IOT_WIFI_AUTH_WPA_WPA2_PSK) | \
+			IOT_WIFI_AUTH_MODE_BIT(IOT_WIFI_AUTH_WPA2_ENTERPRISE) | \
+			IOT_WIFI_AUTH_MODE_BIT(IOT_WIFI_AUTH_WPA3_PERSONAL)	)
 
 /**
  * @brief Contains a "wifi stack configuration" data
@@ -170,6 +187,15 @@ iot_error_t iot_bsp_wifi_register_event_cb(iot_bsp_wifi_event_cb_t cb);
  * @brief  Clear Wi-Fi event callback
  */
 void iot_bsp_wifi_clear_event_cb(void);
+
+/**
+ * @brief  Get Wi-Fi module's supported Authentication/Encryption modes
+ *
+ * This function get Wi-Fi module's Authentication/Encryption modes
+ *
+ * @return IOT_WIFI_AUTH_MODE_BIT() based bits
+ */
+iot_wifi_auth_mode_bits_t iot_bsp_wifi_get_auth_mode(void);
 
 #ifdef __cplusplus
 }
