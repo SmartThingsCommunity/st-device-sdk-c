@@ -206,6 +206,97 @@ iot_error_t _iot_security_be_software_bsp_fs_load(iot_security_context_t *contex
 	return IOT_ERROR_NONE;
 };
 
+static void *ephemeral_keypair;
+
+STATIC_FUNCTION
+iot_error_t _iot_security_be_software_get_seckey_with_secp256v1(iot_security_key_id_t key_id, iot_security_buffer_t *key_buf)
+{
+	mbedtls_ecp_keypair *mbed_ecp_keypair;
+	unsigned char raw[IOT_SECURITY_EC_SECKEY_LEN];
+	size_t olen;
+	int ret;
+
+	if (key_id != IOT_SECURITY_KEY_ID_EPHEMERAL) {
+		IOT_ERROR("key is is not a ephemeral key");
+		IOT_ERROR_DUMP_AND_RETURN(KEY_INVALID_ID, 0);
+	}
+
+	if (!ephemeral_keypair) {
+		IOT_ERROR("ephemeral key pair is null");
+		IOT_ERROR_DUMP_AND_RETURN(KEY_NOT_FOUND, 0);
+	}
+
+	mbed_ecp_keypair = ephemeral_keypair;
+
+	ret = mbedtls_mpi_write_binary(&mbed_ecp_keypair->d, raw, sizeof(raw));
+	if (ret) {
+		IOT_ERROR("mbedtls_ecp_point_write_binary = -0x%04X", -ret);
+		printf("mbedtls_ecp_point_write_binary = -0x%04X", -ret);
+		key_buf->len = 0;
+		iot_os_free(key_buf->p);
+		IOT_ERROR_DUMP_AND_RETURN(MANAGER_KEY_GET, -ret);
+	}
+
+	/* remove ecp prefix */
+	key_buf->len = sizeof(raw);
+	key_buf->p = (unsigned char *)iot_os_malloc(key_buf->len);
+	if (!key_buf->p) {
+		IOT_ERROR("failed to malloc for pubkey");
+		key_buf->len = 0;
+		IOT_ERROR_DUMP_AND_RETURN(MEM_ALLOC, 0);
+	}
+
+	memcpy(key_buf->p, raw, key_buf->len);
+
+	return IOT_ERROR_NONE;
+}
+
+STATIC_FUNCTION
+iot_error_t _iot_security_be_software_get_pubkey_with_secp256v1(iot_security_key_id_t key_id, iot_security_buffer_t *key_buf)
+{
+	mbedtls_ecp_keypair *mbed_ecp_keypair;
+	unsigned char raw[IOT_SECURITY_EC_PUBKEY_LEN + 1];
+	size_t olen;
+	int ret;
+
+	if (key_id != IOT_SECURITY_KEY_ID_EPHEMERAL) {
+		IOT_ERROR("key is is not a ephemeral key");
+		IOT_ERROR_DUMP_AND_RETURN(KEY_INVALID_ID, 0);
+	}
+
+	if (!ephemeral_keypair) {
+		IOT_ERROR("ephemeral key pair is null");
+		IOT_ERROR_DUMP_AND_RETURN(KEY_NOT_FOUND, 0);
+	}
+
+	mbed_ecp_keypair = ephemeral_keypair;
+
+	ret = mbedtls_ecp_point_write_binary(&mbed_ecp_keypair->grp,
+					     &mbed_ecp_keypair->Q,
+					     MBEDTLS_ECP_PF_UNCOMPRESSED,
+					     &olen, raw, sizeof(raw));
+	if (ret) {
+		IOT_ERROR("mbedtls_ecp_point_write_binary = -0x%04X", -ret);
+		printf("mbedtls_ecp_point_write_binary = -0x%04X", -ret);
+		key_buf->len = 0;
+		iot_os_free(key_buf->p);
+		IOT_ERROR_DUMP_AND_RETURN(MANAGER_KEY_GET, -ret);
+	}
+
+	/* remove ecp prefix */
+	key_buf->len = olen - 1;
+	key_buf->p = (unsigned char *)iot_os_malloc(key_buf->len);
+	if (!key_buf->p) {
+		IOT_ERROR("failed to malloc for pubkey");
+		key_buf->len = 0;
+		IOT_ERROR_DUMP_AND_RETURN(MEM_ALLOC, 0);
+	}
+
+	memcpy(key_buf->p, &raw[1], key_buf->len);
+
+	return IOT_ERROR_NONE;
+}
+
 #if defined(CONFIG_STDK_IOT_CORE_CRYPTO_SUPPORT_ED25519)
 STATIC_FUNCTION
 iot_error_t _iot_security_be_software_pk_load_ed25519_key(iot_security_context_t *context, iot_security_key_id_t key_id, iot_security_buffer_t *output_buf)
@@ -1226,8 +1317,6 @@ iot_error_t _iot_security_be_software_cipher_aes_decrypt(iot_security_context_t 
 	return _iot_security_be_software_cipher_aes(context, cipher_mode, input_buf, output_buf);
 }
 
-static void *ephemeral_keypair;
-
 STATIC_FUNCTION
 iot_error_t _iot_security_be_software_manager_generate_key(iot_security_context_t *context, iot_security_key_id_t key_id)
 {
@@ -1384,6 +1473,11 @@ iot_error_t _iot_security_be_software_manager_get_key(iot_security_context_t *co
 			IOT_ERROR_DUMP_AND_RETURN(MEM_ALLOC, 0);
 		}
 		memcpy(key_buf->p, context->cipher_params->key.p, key_buf->len);
+	} else if (key_id == IOT_SECURITY_KEY_ID_EPHEMERAL) {
+		err = _iot_security_be_software_get_pubkey_with_secp256v1(key_id, key_buf);
+		if (err) {
+			return err;
+		}
 	} else {
 		err = _iot_security_be_software_bsp_fs_load(context, storage_id, key_buf);
 		if (err) {

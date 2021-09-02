@@ -32,6 +32,9 @@ extern "C" {
 #define IOT_SECURITY_IV_LEN                     16
 #define IOT_SECURITY_SHA256_LEN                 32
 
+#define IOT_SECURITY_EC_SECKEY_LEN              32
+#define IOT_SECURITY_EC_PUBKEY_LEN              64
+
 #define IOT_SECURITY_SIGNATURE_ED25519_LEN      64
 #define IOT_SECURITY_SIGNATURE_RSA2048_LEN      256
 #define IOT_SECURITY_SIGNATURE_ECCP256_LEN      1024    /* MBEDTLS_MPI_MAX_SIZE */
