@@ -99,7 +99,8 @@ typedef struct iot_security_be_key2storage_id_map {
 static const iot_security_be_key2storage_id_map_t key2storage_id_map[] = {
 	{ IOT_SECURITY_KEY_ID_DEVICE_PUBLIC, IOT_NVD_PUBLIC_KEY },
 	{ IOT_SECURITY_KEY_ID_DEVICE_PRIVATE, IOT_NVD_PRIVATE_KEY },
-	{ IOT_SECURITY_KEY_ID_SHARED_SECRET, IOT_NVD_UNKNOWN }
+	{ IOT_SECURITY_KEY_ID_SHARED_SECRET, IOT_NVD_UNKNOWN },
+	{ IOT_SECURITY_KEY_ID_EPHEMERAL, IOT_NVD_UNKNOWN }
 };
 
 static inline iot_security_storage_id_t _iot_security_be_software_id_key2storage(iot_security_key_id_t key_id)
@@ -1225,12 +1226,71 @@ iot_error_t _iot_security_be_software_cipher_aes_decrypt(iot_security_context_t 
 	return _iot_security_be_software_cipher_aes(context, cipher_mode, input_buf, output_buf);
 }
 
+static void *ephemeral_keypair;
+
 STATIC_FUNCTION
 iot_error_t _iot_security_be_software_manager_generate_key(iot_security_context_t *context, iot_security_key_id_t key_id)
 {
-	iot_error_t err = IOT_ERROR_NOT_IMPLEMENTED;
+	iot_error_t err = IOT_ERROR_SECURITY_MANAGER_KEY_GENERATE;
+	int ret;
 
-	// TODO : IMPLEMENT
+	mbedtls_ecp_keypair *mbed_ecp_keypair;
+	const char *curve_name = "secp256r1";
+	const mbedtls_ecp_curve_info *mbed_curve_info;
+
+	mbedtls_ctr_drbg_context mbed_ctr_drbg;
+	mbedtls_entropy_context mbed_entropy;
+	mbedtls_ctr_drbg_init(&mbed_ctr_drbg);
+	mbedtls_entropy_init(&mbed_entropy);
+	const char *pers = "_iot_security_be_software_manager_generate_key";
+
+	if (key_id != IOT_SECURITY_KEY_ID_EPHEMERAL) {
+		IOT_ERROR("key id is not for a ephemeral");
+		IOT_ERROR_DUMP_AND_RETURN(KEY_INVALID_ID, 0);
+	}
+
+	ret = mbedtls_ctr_drbg_seed(&mbed_ctr_drbg, mbedtls_entropy_func, &mbed_entropy, (const unsigned char *)pers, strlen(pers));
+	if (ret) {
+		IOT_ERROR("mbedtls_ctr_drbg_seed = -0x%04X", -ret);
+		IOT_DUMP(IOT_DEBUG_LEVEL_ERROR, err, __LINE__, -ret);
+		return err;
+	}
+
+	mbed_curve_info = mbedtls_ecp_curve_info_from_name(curve_name);
+	if (mbed_curve_info == NULL) {
+		IOT_ERROR("mbedtls_ecp_curve_info_from_name = -0x%04X", -ret);
+		IOT_DUMP(IOT_DEBUG_LEVEL_ERROR, err, __LINE__, -ret);
+		goto exit;
+	}
+
+	mbed_ecp_keypair = (mbedtls_ecp_keypair *)iot_os_malloc(sizeof(mbedtls_ecp_keypair));
+	if (!mbed_ecp_keypair) {
+		IOT_ERROR("failed to malloc for ephemeral keypair");
+		err = IOT_ERROR_SECURITY_MEM_ALLOC;
+		IOT_DUMP(IOT_DEBUG_LEVEL_ERROR, err, __LINE__, 0);
+		goto exit;
+	}
+
+	mbedtls_ecp_group_init(&mbed_ecp_keypair->grp);
+	mbedtls_mpi_init(&mbed_ecp_keypair->d);
+	mbedtls_ecp_point_init(&mbed_ecp_keypair->Q);
+
+	ret = mbedtls_ecp_gen_key(mbed_curve_info->grp_id, mbed_ecp_keypair, mbedtls_ctr_drbg_random, &mbed_ctr_drbg);
+	if (ret) {
+		IOT_ERROR("mbedtls_ecp_gen_key = -0x%04X", -ret);
+		IOT_DUMP(IOT_DEBUG_LEVEL_ERROR, err, __LINE__, -ret);
+		goto exit_keypair_buffer_free;
+	}
+
+	ephemeral_keypair = (void *)mbed_ecp_keypair;
+	err = IOT_ERROR_NONE;
+	goto exit;
+
+exit_keypair_buffer_free:
+	iot_os_free(ephemeral_keypair);
+exit:
+	mbedtls_ctr_drbg_free(&mbed_ctr_drbg);
+	mbedtls_entropy_free(&mbed_entropy);
 
 	return err;
 }
@@ -1238,9 +1298,17 @@ iot_error_t _iot_security_be_software_manager_generate_key(iot_security_context_
 STATIC_FUNCTION
 iot_error_t _iot_security_be_software_manager_remove_key(iot_security_context_t *context, iot_security_key_id_t key_id)
 {
-	iot_error_t err = IOT_ERROR_NOT_IMPLEMENTED;
+	iot_error_t err = IOT_ERROR_NONE;
 
-	// TODO : IMPLEMENT
+	if (key_id != IOT_SECURITY_KEY_ID_EPHEMERAL) {
+		IOT_ERROR("key id %d is not supported");
+		IOT_ERROR_DUMP_AND_RETURN(KEY_INVALID_ID, 0);
+	}
+
+	if (ephemeral_keypair) {
+		mbedtls_ecp_keypair_free((mbedtls_ecp_keypair *)ephemeral_keypair);
+		iot_os_free(ephemeral_keypair);
+	}
 
 	return err;
 }
