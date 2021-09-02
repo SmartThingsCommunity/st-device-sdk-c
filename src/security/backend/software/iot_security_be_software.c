@@ -1226,6 +1226,26 @@ iot_error_t _iot_security_be_software_cipher_aes_decrypt(iot_security_context_t 
 }
 
 STATIC_FUNCTION
+iot_error_t _iot_security_be_software_manager_generate_key(iot_security_context_t *context, iot_security_key_id_t key_id)
+{
+	iot_error_t err = IOT_ERROR_NOT_IMPLEMENTED;
+
+	// TODO : IMPLEMENT
+
+	return err;
+}
+
+STATIC_FUNCTION
+iot_error_t _iot_security_be_software_manager_remove_key(iot_security_context_t *context, iot_security_key_id_t key_id)
+{
+	iot_error_t err = IOT_ERROR_NOT_IMPLEMENTED;
+
+	// TODO : IMPLEMENT
+
+	return err;
+}
+
+STATIC_FUNCTION
 iot_error_t _iot_security_be_software_manager_set_key(iot_security_context_t *context, iot_security_key_params_t *key_params)
 {
 	iot_error_t err;
@@ -1866,6 +1886,8 @@ const iot_security_be_funcs_t iot_security_be_software_funcs = {
 
 	.manager_init = NULL,
 	.manager_deinit = NULL,
+	.manager_generate_key = _iot_security_be_software_manager_generate_key,
+	.manager_remove_key = _iot_security_be_software_manager_remove_key,
 	.manager_set_key = _iot_security_be_software_manager_set_key,
 	.manager_get_key = _iot_security_be_software_manager_get_key,
 	.manager_get_certificate = _iot_security_be_software_manager_get_certificate,
