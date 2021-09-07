@@ -113,6 +113,7 @@ typedef struct iot_security_key_params {
 * @brief Contains ecdh information
 */
 typedef struct iot_security_ecdh_params {
+	iot_security_key_id_t key_id;                   /** @brief a key identity of own key pair */
 	iot_security_buffer_t t_seckey;                 /** @brief a pointer to a things secret key based on curve25519 (software backend only) */
 	iot_security_buffer_t c_pubkey;                 /** @brief a pointer to a server public key based on curve25519 */
 	iot_security_buffer_t salt;                     /** @brief a pointer to a random token as a salt */

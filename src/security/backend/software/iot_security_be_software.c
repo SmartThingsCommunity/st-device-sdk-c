@@ -1680,7 +1680,7 @@ iot_error_t _iot_security_be_software_swap_secret(iot_security_buffer_t *src, io
 }
 
 STATIC_FUNCTION
-iot_error_t _iot_security_be_software_ecdh_compute_premaster_secret(
+iot_error_t _iot_security_be_software_ecdh_compute_premaster_secret_ed25519(
 			iot_security_buffer_t *t_seckey_buf,
 			iot_security_buffer_t *c_pubkey_buf,
 			iot_security_buffer_t *output_buf)
@@ -1818,6 +1818,137 @@ exit:
 }
 
 STATIC_FUNCTION
+iot_error_t _iot_security_be_software_ecdh_compute_premaster_secret_ecdsa(
+			iot_security_buffer_t *t_seckey_buf,
+			iot_security_buffer_t *c_pubkey_buf,
+			iot_security_buffer_t *output_buf)
+{
+	iot_error_t err;
+	mbedtls_ecdh_context mbed_ecdh;
+	mbedtls_ctr_drbg_context mbed_ctr_drbg;
+	mbedtls_entropy_context mbed_entropy;
+	mbedtls_ecp_group_id mbed_ecp_grp_id = MBEDTLS_ECP_DP_SECP256R1;
+	const char *pers = "iot_security_ecdh";
+	iot_security_buffer_t pmsecret_buf = { 0 };
+	size_t key_len;
+	size_t secret_len;
+	unsigned char public_buf[66];		/* length + tag + Q.X + Q.Y */
+	int ret;
+
+	if (!t_seckey_buf || !c_pubkey_buf || !output_buf) {
+		IOT_ERROR("parameters is invalid");
+		IOT_ERROR_DUMP_AND_RETURN(INVALID_ARGS, 0);
+	}
+
+	key_len = IOT_SECURITY_EC_PUBKEY_LEN;
+	secret_len = IOT_SECURITY_SECRET_LEN;
+
+	if (t_seckey_buf->len > key_len) {
+		IOT_ERROR("things seckey is too large");
+		IOT_ERROR_DUMP_AND_RETURN(ECDH_INVALID_SECKEY, t_seckey_buf->len);
+	}
+
+	if (c_pubkey_buf->len > key_len) {
+		IOT_ERROR("cloud pubkey is too large");
+		IOT_ERROR_DUMP_AND_RETURN(ECDH_INVALID_PUBKEY, c_pubkey_buf->len);
+	}
+
+	pmsecret_buf.len = secret_len;
+	pmsecret_buf.p = (unsigned char *)iot_os_malloc(pmsecret_buf.len);
+	if (!pmsecret_buf.p) {
+		IOT_ERROR("malloc failed for pre master secret");
+		IOT_ERROR_DUMP_AND_RETURN(MEM_ALLOC, 0);
+	}
+
+	mbedtls_ecdh_init(&mbed_ecdh);
+	mbedtls_ctr_drbg_init(&mbed_ctr_drbg);
+	mbedtls_entropy_init(&mbed_entropy);
+
+	ret = mbedtls_ctr_drbg_seed(&mbed_ctr_drbg, mbedtls_entropy_func, &mbed_entropy,
+				    (const unsigned char *)pers, strlen(pers));
+	if (ret) {
+		IOT_ERROR("mbedtls_ctr_drbg_seed = -0x%04X", -ret);
+		err = IOT_ERROR_SECURITY_ECDH_LIBRARY;
+		IOT_DUMP(IOT_DEBUG_LEVEL_ERROR, err, __LINE__, 0);
+		goto exit;
+	}
+
+	ret = mbedtls_ecp_group_load(&mbed_ecdh.grp, mbed_ecp_grp_id);
+	if (ret) {
+		IOT_ERROR("mbedtls_ecp_group_load = -0x%04X", -ret);
+		err = IOT_ERROR_SECURITY_ECDH_LIBRARY;
+		IOT_DUMP(IOT_DEBUG_LEVEL_ERROR, err, __LINE__, 0);
+		goto exit;
+	}
+
+	/*
+	 * own key
+	 */
+	ret = mbedtls_ecp_group_load(&mbed_ecdh.grp, mbed_ecp_grp_id);
+	if (ret) {
+		IOT_ERROR("mbedtls_ecp_group_load = -0x%04X", -ret);
+		err = IOT_ERROR_SECURITY_ECDH_LIBRARY;
+		IOT_DUMP(IOT_DEBUG_LEVEL_ERROR, err, __LINE__, 0);
+		goto exit;
+	}
+
+	ret = mbedtls_mpi_read_binary(&mbed_ecdh.d, t_seckey_buf->p, t_seckey_buf->len);
+	if (ret) {
+		IOT_ERROR("mbedtls_mpi_read_binary = -0x%04X", -ret);
+		err = IOT_ERROR_SECURITY_ECDH_LIBRARY;
+		IOT_DUMP(IOT_DEBUG_LEVEL_ERROR, err, __LINE__, 0);
+		goto exit;
+	}
+
+	/*
+	 * peer key
+	 */
+	public_buf[0] = c_pubkey_buf->len + 1;
+	public_buf[1] = 0x04; // uncompressed
+	memcpy(&public_buf[2], c_pubkey_buf->p, c_pubkey_buf->len);
+
+	ret = mbedtls_ecdh_read_public(&mbed_ecdh, public_buf, sizeof(public_buf));
+	if (ret) {
+		printf("mbedtls_ecdh_read_public = -0x%04X", -ret);
+		IOT_ERROR("mbedtls_ecdh_read_public = -0x%04X", -ret);
+		err = IOT_ERROR_SECURITY_ECDH_LIBRARY;
+		IOT_DUMP(IOT_DEBUG_LEVEL_ERROR, err, __LINE__, 0);
+		goto exit;
+	}
+
+	/*
+	 * ecdh
+	 */
+
+	ret = mbedtls_ecdh_compute_shared(&mbed_ecdh.grp, &mbed_ecdh.z, &mbed_ecdh.Qp, &mbed_ecdh.d, mbedtls_ctr_drbg_random, &mbed_ctr_drbg);
+	if (ret) {
+		IOT_ERROR("mbedtls_ecdh_compute_shared = -0x%04X", -ret);
+		err = IOT_ERROR_SECURITY_ECDH_LIBRARY;
+		IOT_DUMP(IOT_DEBUG_LEVEL_ERROR, err, __LINE__, 0);
+		goto exit;
+	}
+
+	ret = mbedtls_mpi_write_binary(&mbed_ecdh.z, pmsecret_buf.p, pmsecret_buf.len);
+	if (ret) {
+		IOT_ERROR("mbedtls_mpi_write_binary = -0x%04X", -ret);
+		err = IOT_ERROR_SECURITY_ECDH_LIBRARY;
+		IOT_DUMP(IOT_DEBUG_LEVEL_ERROR, err, __LINE__, 0);
+		goto exit;
+	}
+
+	output_buf->p = pmsecret_buf.p;
+	output_buf->len = pmsecret_buf.len;
+	err = IOT_ERROR_NONE;
+
+exit:
+	mbedtls_ecdh_free(&mbed_ecdh);
+	mbedtls_ctr_drbg_free(&mbed_ctr_drbg);
+	mbedtls_entropy_free(&mbed_entropy);
+
+	return err;
+}
+
+STATIC_FUNCTION
 iot_error_t _iot_security_be_software_ecdh_copy_params(iot_security_buffer_t *src, iot_security_buffer_t *dst)
 {
 	if (src->p) {
@@ -1858,6 +1989,8 @@ iot_error_t _iot_security_be_software_ecdh_set_params(iot_security_context_t *co
 		IOT_ERROR_DUMP_AND_RETURN(INVALID_ARGS, 0);
 	}
 
+	context->ecdh_params->key_id = ecdh_set_params->key_id;
+
 	err = _iot_security_be_software_ecdh_copy_params(&ecdh_set_params->t_seckey, &context->ecdh_params->t_seckey);
 	if (err) {
 		return err;
@@ -1892,9 +2025,40 @@ iot_error_t _iot_security_be_software_ecdh_compute_shared_secret(iot_security_co
 
 	ecdh_params = context->ecdh_params;
 
-	err = _iot_security_be_software_ecdh_compute_premaster_secret(&ecdh_params->t_seckey, &ecdh_params->c_pubkey, &pmsecret_buf);
-	if (err) {
-		goto exit;
+	switch (ecdh_params->key_id) {
+	case IOT_SECURITY_KEY_ID_EPHEMERAL:
+#if defined(CONFIG_STDK_IOT_CORE_SECURITY_ONLY_UNITTEST)
+		if (ecdh_params->t_seckey.p) {
+			err = _iot_security_be_software_ecdh_compute_premaster_secret_ecdsa(&ecdh_params->t_seckey, &ecdh_params->c_pubkey, &pmsecret_buf);
+		} else
+#endif
+		{
+			iot_security_buffer_t t_seckey_buf = { 0 };
+
+			err = _iot_security_be_software_get_seckey_with_secp256v1(ecdh_params->key_id, &t_seckey_buf);
+			if (err) {
+				IOT_DUMP(IOT_DEBUG_LEVEL_ERROR, err, __LINE__, 0);
+				goto exit;
+			}
+
+			err = _iot_security_be_software_ecdh_compute_premaster_secret_ecdsa(&t_seckey_buf, &ecdh_params->c_pubkey, &pmsecret_buf);
+
+			if (err) {
+				IOT_DUMP(IOT_DEBUG_LEVEL_ERROR, err, __LINE__, 0);
+				_iot_security_be_software_buffer_free(&t_seckey_buf);
+				goto exit;
+			}
+
+			_iot_security_be_software_buffer_free(&t_seckey_buf);
+		}
+		break;
+	default:
+		err = _iot_security_be_software_ecdh_compute_premaster_secret_ed25519(&ecdh_params->t_seckey, &ecdh_params->c_pubkey, &pmsecret_buf);
+		if (err) {
+			IOT_DUMP(IOT_DEBUG_LEVEL_ERROR, err, __LINE__, 0);
+			goto exit;
+		}
+		break;
 	}
 
 	secret_buf.len = pmsecret_buf.len + ecdh_params->salt.len;
