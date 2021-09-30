@@ -84,7 +84,7 @@ char *iot_debug_get_log(void)
 
 static void _iot_easysetup_wifi_event_cb(iot_wifi_event_t event)
 {
-    iot_error_t err = IOT_ERROR_NONE;
+	iot_error_t err = IOT_ERROR_NONE;
 
 	switch (event) {
 		case IOT_WIFI_EVENT_SOFTAP_STA_JOIN:
