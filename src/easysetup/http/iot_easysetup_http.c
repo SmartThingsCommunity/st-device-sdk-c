@@ -124,14 +124,14 @@ iot_error_t _iot_easysetup_gen_get_payload(struct iot_context *ctx, int cmd, cha
 	unsigned char curr_event;
 	int ret;
 
-	cur_step = cmd;
-
 	if (cmd == IOT_EASYSETUP_INVALID_STEP) {
 		IOT_ERROR("Invalid command %d", cmd);
 		IOT_ES_DUMP(IOT_DEBUG_LEVEL_ERROR, IOT_DUMP_EASYSETUP_INVALID_CMD, cmd);
 		err = IOT_ERROR_EASYSETUP_INVALID_CMD;
 		goto get_exit;
 	}
+
+	cur_step = cmd;
 
 	if (cur_step == IOT_EASYSETUP_STEP_DEVICEINFO) {
 		err = iot_state_update(ctx, IOT_STATE_PROV_CONN_MOBILE, 0);
@@ -244,14 +244,14 @@ iot_error_t _iot_easysetup_gen_post_payload(struct iot_context *ctx, int cmd, ch
 		return err;
 	}
 
-	cur_step = cmd;
-
 	if (cmd == IOT_EASYSETUP_INVALID_STEP) {
 		IOT_ERROR("Invalid command %d", cmd);
 		IOT_ES_DUMP(IOT_DEBUG_LEVEL_ERROR, IOT_DUMP_EASYSETUP_INVALID_CMD, cmd);
 		err = IOT_ERROR_EASYSETUP_INVALID_CMD;
-		goto fail_status_update;
+		goto post_exit;
 	}
+
+	cur_step = cmd;
 
 	if ((cur_step != ref_step) && (cur_step < IOT_EASYSETUP_STEP_LOG_SYSTEMINFO)) {
 		if (cur_step == IOT_EASYSETUP_STEP_WIFIPROVIONINGINFO) {
@@ -261,13 +261,13 @@ iot_error_t _iot_easysetup_gen_post_payload(struct iot_context *ctx, int cmd, ch
 			   IOT_ERROR("Invalid command sequence %d", cmd);
 			   IOT_ES_DUMP(IOT_DEBUG_LEVEL_ERROR, IOT_DUMP_EASYSETUP_INVALID_SEQUENCE, cmd);
 			   err = IOT_ERROR_EASYSETUP_INVALID_SEQUENCE;
-			   goto post_exit;
+			   goto fail_status_update;
 		   }
 		} else {
 			IOT_ERROR("Invalid command sequence %d", cmd);
 			IOT_ES_DUMP(IOT_DEBUG_LEVEL_ERROR, IOT_DUMP_EASYSETUP_INVALID_SEQUENCE, cmd);
 			err = IOT_ERROR_EASYSETUP_INVALID_SEQUENCE;
-			goto post_exit;
+			goto fail_status_update;
 		}
 	}
 
