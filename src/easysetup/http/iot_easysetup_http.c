@@ -82,6 +82,30 @@ char *iot_debug_get_log(void)
 }
 #endif
 
+static void _iot_easysetup_wifi_event_cb(iot_wifi_event_t event)
+{
+	iot_error_t err = IOT_ERROR_NONE;
+
+	switch (event) {
+		case IOT_WIFI_EVENT_SOFTAP_STA_JOIN:
+			IOT_INFO("Station joined to SoftAP");
+			break;
+		case IOT_WIFI_EVENT_SOFTAP_STA_LEAVE:
+			IOT_INFO("Station left from SoftAP");
+			ref_step = 0;
+			iot_os_eventgroup_set_bits(context->iot_events, IOT_EVENT_BIT_EASYSETUP_CONFIRM);
+			err = iot_state_update(context, IOT_STATE_UNKNOWN, context->curr_state);
+			if (err) {
+				IOT_ERROR("cannot update state to failed (%d)", err);
+				IOT_ES_DUMP(IOT_DEBUG_LEVEL_ERROR, IOT_DUMP_EASYSETUP_INTERNAL_SERVER_ERROR, err);
+			}
+			break;
+		default:
+			IOT_ERROR("Unknown event 0x%x", event);
+			break;
+	}
+}
+
 /**
  * @brief	http GET method payload handler
  * @details	This function handle GET method cgi request
@@ -115,7 +139,7 @@ iot_error_t _iot_easysetup_gen_get_payload(struct iot_context *ctx, int cmd, cha
 			IOT_ERROR("failed handle cmd (%d): %d", IOT_STATE_PROV_CONN_MOBILE, err);
 			IOT_ES_DUMP(IOT_DEBUG_LEVEL_ERROR, IOT_DUMP_EASYSETUP_INTERNAL_SERVER_ERROR, err);
 			err = IOT_ERROR_EASYSETUP_INTERNAL_SERVER_ERROR;
-			goto fail_status_update;
+			goto get_exit;
 		}
 	}
 
@@ -127,8 +151,8 @@ iot_error_t _iot_easysetup_gen_get_payload(struct iot_context *ctx, int cmd, cha
 		} else {
 			IOT_ERROR("Invalid command step %d", cmd);
 			IOT_ES_DUMP(IOT_DEBUG_LEVEL_ERROR, IOT_DUMP_EASYSETUP_INVALID_CMD, cmd);
-			err = IOT_ERROR_EASYSETUP_INVALID_CMD;
-			goto get_exit;
+			err = IOT_ERROR_EASYSETUP_INVALID_SEQUENCE;
+			goto fail_status_update;
 		}
 	}
 
@@ -180,8 +204,8 @@ fail_status_update:
 	if (err) {
 		iot_error_t err1;
 		ref_step = 0;
-		if (cur_step >= IOT_EASYSETUP_STEP_LOG_SYSTEMINFO) {
-			err1 = iot_state_update(ctx, IOT_STATE_CHANGE_FAILED, ctx->curr_state);
+		if ((cur_step >= IOT_EASYSETUP_STEP_LOG_SYSTEMINFO) || (err == IOT_ERROR_EASYSETUP_INVALID_SEQUENCE)) {
+			err1 = iot_state_update(ctx, IOT_STATE_UNKNOWN, ctx->curr_state);
 			if (err1) {
 				IOT_ERROR("cannot update state to failed (%d)", err1);
 				IOT_ES_DUMP(IOT_DEBUG_LEVEL_ERROR, IOT_DUMP_EASYSETUP_INTERNAL_SERVER_ERROR, err1);
@@ -237,13 +261,13 @@ iot_error_t _iot_easysetup_gen_post_payload(struct iot_context *ctx, int cmd, ch
 			   IOT_ERROR("Invalid command sequence %d", cmd);
 			   IOT_ES_DUMP(IOT_DEBUG_LEVEL_ERROR, IOT_DUMP_EASYSETUP_INVALID_SEQUENCE, cmd);
 			   err = IOT_ERROR_EASYSETUP_INVALID_SEQUENCE;
-			   goto post_exit;
+			   goto fail_status_update;
 		   }
 		} else {
 			IOT_ERROR("Invalid command sequence %d", cmd);
 			IOT_ES_DUMP(IOT_DEBUG_LEVEL_ERROR, IOT_DUMP_EASYSETUP_INVALID_SEQUENCE, cmd);
 			err = IOT_ERROR_EASYSETUP_INVALID_SEQUENCE;
-			goto post_exit;
+			goto fail_status_update;
 		}
 	}
 
@@ -293,11 +317,12 @@ iot_error_t _iot_easysetup_gen_post_payload(struct iot_context *ctx, int cmd, ch
 		err = IOT_ERROR_EASYSETUP_QUEUE_RECV_ERROR;
 	}
 
+fail_status_update:
 	if (err) {
 		iot_error_t err1;
 		ref_step = 0;
-		if (cur_step >= IOT_EASYSETUP_STEP_LOG_SYSTEMINFO) {
-			err1 = iot_state_update(ctx, IOT_STATE_CHANGE_FAILED, ctx->curr_state);
+		if ((cur_step >= IOT_EASYSETUP_STEP_LOG_SYSTEMINFO) || (err == IOT_ERROR_EASYSETUP_INVALID_SEQUENCE)) {
+			err1 = iot_state_update(ctx, IOT_STATE_UNKNOWN, ctx->curr_state);
 			if (err1) {
 				IOT_ERROR("cannot update state to failed (%d)", err1);
 				IOT_ES_DUMP(IOT_DEBUG_LEVEL_ERROR, IOT_DUMP_EASYSETUP_INTERNAL_SERVER_ERROR, err1);
@@ -492,6 +517,13 @@ iot_error_t iot_easysetup_init(struct iot_context *ctx)
 	dump_enable= true;
 #endif
 
+	err = iot_bsp_wifi_register_event_cb(_iot_easysetup_wifi_event_cb);
+	if (err != IOT_ERROR_NONE) {
+		IOT_INFO("wifi event callback isn't registered %d", err);
+		IOT_ES_DUMP(IOT_DEBUG_LEVEL_ERROR, IOT_DUMP_EASYSETUP_INTERNAL_SERVER_ERROR, err);
+		return err;
+	}
+
 	es_http_init();
 
 	IOT_REMARK("IOT_STATE_PROV_ES_INIT_DONE");
@@ -510,6 +542,8 @@ void iot_easysetup_deinit(struct iot_context *ctx)
 		return;
 
 	es_http_deinit();
+
+	iot_bsp_wifi_clear_event_cb();
 
 #if defined(CONFIG_STDK_IOT_CORE_EASYSETUP_LOG_SUPPORT_NO_USE_LOGFILE)
 	if (log_buffer) {
