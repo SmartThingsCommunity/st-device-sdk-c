@@ -1,6 +1,6 @@
 /* ***************************************************************************
  *
- * Copyright 2019 Samsung Electronics All Rights Reserved.
+ * Copyright 2019-2021 Samsung Electronics All Rights Reserved.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -99,4 +99,13 @@ mac_out:
 iot_wifi_freq_t iot_bsp_wifi_get_freq(void)
 {
 	return IOT_WIFI_FREQ_2_4G_ONLY;
+}
+
+iot_error_t iot_bsp_wifi_register_event_cb(iot_bsp_wifi_event_cb_t cb)
+{
+	return IOT_ERROR_BAD_REQ;
+}
+
+void iot_bsp_wifi_clear_event_cb(void)
+{
 }

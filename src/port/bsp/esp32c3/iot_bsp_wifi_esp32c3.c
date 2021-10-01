@@ -1,6 +1,6 @@
 /* ***************************************************************************
  *
- * Copyright (c) 2021 Samsung Electronics All Rights Reserved.
+ * Copyright (c) 2019-2021 Samsung Electronics All Rights Reserved.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -49,6 +49,7 @@ const int WIFI_EVENT_BIT_ALL = BIT0|BIT1|BIT2|BIT3|BIT4;
 
 static int WIFI_INITIALIZED = false;
 static EventGroupHandle_t wifi_event_group;
+static iot_bsp_wifi_event_cb_t wifi_event_cb;
 
 static void _initialize_sntp(void)
 {
@@ -144,6 +145,10 @@ static esp_err_t event_handler(void *ctx, system_event_t *event)
 		IOT_INFO("station:"MACSTR" join, AID=%d",
 				MAC2STR(event->event_info.sta_connected.mac),
 				event->event_info.sta_connected.aid);
+		if (wifi_event_cb) {
+			IOT_DEBUG("0x%p called", wifi_event_cb);
+			(*wifi_event_cb)(IOT_WIFI_EVENT_SOFTAP_STA_JOIN);
+		}
 		break;
 
 	case SYSTEM_EVENT_AP_STADISCONNECTED:
@@ -152,6 +157,10 @@ static esp_err_t event_handler(void *ctx, system_event_t *event)
 				event->event_info.sta_disconnected.aid);
 
 		xEventGroupSetBits(wifi_event_group, WIFI_AP_STOP_BIT);
+		if (wifi_event_cb) {
+			IOT_DEBUG("0x%p called", wifi_event_cb);
+			(*wifi_event_cb)(IOT_WIFI_EVENT_SOFTAP_STA_LEAVE);
+		}
 		break;
 
 	default:
@@ -457,4 +466,19 @@ iot_error_t iot_bsp_wifi_get_mac(struct iot_mac *wifi_mac)
 iot_wifi_freq_t iot_bsp_wifi_get_freq(void)
 {
 	return IOT_WIFI_FREQ_2_4G_ONLY;
+}
+
+iot_error_t iot_bsp_wifi_register_event_cb(iot_bsp_wifi_event_cb_t cb)
+{
+	if (cb == NULL) {
+		return IOT_ERROR_INVALID_ARGS;
+	}
+
+	wifi_event_cb = cb;
+	return IOT_ERROR_NONE;
+}
+
+void iot_bsp_wifi_clear_event_cb(void)
+{
+	wifi_event_cb = NULL;
 }
