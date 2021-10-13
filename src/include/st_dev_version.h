@@ -26,7 +26,7 @@
 #define VER_MINOR	7
 
 /* patch: bug fix */
-#define VER_PATCH	2
+#define VER_PATCH	3
 
 #define _STDK_STR(s) #s
 #define _STDK_VERSION_STR(a, b, c)	_STDK_STR(a) "." _STDK_STR(b) "." _STDK_STR(c)
