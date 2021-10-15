@@ -2250,8 +2250,6 @@ int st_change_health_period(IOT_CTX *iot_ctx, unsigned int new_period)
 	struct iot_context *ctx = (struct iot_context*)iot_ctx;
 	st_mqtt_msg msg = {0};
 	JSON_H *json_root = NULL;
-	/* MQTT connection expired after twice ping period */
-	unsigned int new_mqtt_period = new_period/2;
 
 	if (!ctx) {
 		IOT_ERROR("ctx is null");
@@ -2265,7 +2263,7 @@ int st_change_health_period(IOT_CTX *iot_ctx, unsigned int new_period)
 
 	json_root = JSON_CREATE_OBJECT();
 	JSON_ADD_STRING_TO_OBJECT(json_root, "status", "changePeriod");
-	JSON_ADD_NUMBER_TO_OBJECT(json_root, "newPeriod", new_mqtt_period);
+	JSON_ADD_NUMBER_TO_OBJECT(json_root, "newPeriod", new_period);
 #if defined(STDK_IOT_CORE_SERIALIZE_CBOR)
 	iot_serialize_json2cbor(json_root, (uint8_t **)&msg.payload, (size_t *)&msg.payloadlen);
 #else
@@ -2290,7 +2288,7 @@ int st_change_health_period(IOT_CTX *iot_ctx, unsigned int new_period)
 		IOT_ERROR("Failt to publish change period packet");
 		goto exit;
 	}
-	st_mqtt_change_ping_period(ctx->evt_mqttcli, new_mqtt_period);
+	st_mqtt_change_ping_period(ctx->evt_mqttcli, new_period);
 
 exit:
 	if (msg.payload)

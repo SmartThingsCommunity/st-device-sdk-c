@@ -36,5 +36,6 @@
 #define VALUE_TYPE_NUMBER 2
 #define VALUE_TYPE_STRING 3
 #define VALUE_TYPE_OBJECT 4
+#define VALUE_TYPE_BOOLEAN 5
 
 #endif /* _IOT_CAPS_HELPER_ */
