@@ -59,6 +59,11 @@ typedef enum {
 	IOT_WIFI_AUTH_MAX
 } iot_wifi_auth_mode_t;
 
+typedef enum {
+	IOT_WIFI_EVENT_SOFTAP_STA_JOIN,
+	IOT_WIFI_EVENT_SOFTAP_STA_LEAVE,
+} iot_wifi_event_t;
+
 /**
  * @brief Contains a "wifi stack configuration" data
  */
@@ -145,6 +150,26 @@ iot_error_t iot_bsp_wifi_get_mac(struct iot_mac *wifi_mac);
  * IOT_WIFI_FREQ_2_4G_5G_BOTH : 2.4GHz and 5GHz both supported
  */
 iot_wifi_freq_t iot_bsp_wifi_get_freq(void);
+
+/**
+ * @brief  Wi-Fi event callback function type
+ */
+typedef void (*iot_bsp_wifi_event_cb_t)(iot_wifi_event_t event);
+
+/**
+ * @brief  Register Wi-Fi event callback
+ * @param[in] cb event callback function pointer
+ * @return
+ * IOT_ERROR_NONE : Success
+ * IOT_ERROR_BAD_REQ : Not supported
+ * IOT_ERROR_INVALID_ARGS : Callback function is null
+ */
+iot_error_t iot_bsp_wifi_register_event_cb(iot_bsp_wifi_event_cb_t cb);
+
+/**
+ * @brief  Clear Wi-Fi event callback
+ */
+void iot_bsp_wifi_clear_event_cb(void);
 
 #ifdef __cplusplus
 }

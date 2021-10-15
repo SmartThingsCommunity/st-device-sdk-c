@@ -148,18 +148,20 @@ DLLExport void st_mqtt_change_ping_period(st_mqtt_client client, unsigned int ne
 
 /** MQTT Subscribe - send an MQTT subscribe packet and wait for suback before returning.
  *  @param client - the client object to use
- *  @param topic - the topic filter to subscribe to
+ *  @param count - subscribe topic count
+ *  @param topics - the topic filters to subscribe to
  *  @param qos - request subscribe QoS level
  *  @return success code
  */
-DLLExport int st_mqtt_subscribe(st_mqtt_client client, const char *topic, int qos);
+DLLExport int st_mqtt_subscribe(st_mqtt_client client, int count, char* topics[], int qos[]);
 
 /** MQTT Subscribe - send an MQTT unsubscribe packet and wait for unsuback before returning.
  *  @param client - the client object to use
- *  @param topic - the topic filter to unsubscribe from
+ *  @param count - unsubscribe topic count
+ *  @param topics - the topic filters to unsubscribe from
  *  @return success code
  */
-DLLExport int st_mqtt_unsubscribe(st_mqtt_client client, const char *topic);
+DLLExport int st_mqtt_unsubscribe(st_mqtt_client client, int count, char* topics[]);
 
 /** MQTT Disconnect - send an MQTT disconnect packet and close the connection
  *  @param client - the client object to use

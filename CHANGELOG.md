@@ -1,5 +1,23 @@
 # HISTORY
 
+## 1.7.3 :  Changes until v1.7.3
+
+New Improvements or features:
+ - Add interface for wifi event callback
+ - Add 'esp8266/esp32s2/esp32c3/esp32' bsp to support wifi event callback
+ - Change onboarding fail sequence
+ - Cancel onboarding process for softAP disconnection
+ - Modify mqtt ping period change API logic
+
+Enhancements or amendments:
+ - Change signature format to DER
+ - Change to use heap instead of stack to store context
+ - Add timedSession capability helper
+
+Bug fixed:
+ - Fix in making a certificate chain
+ - Fix WIFI SSID/PASSWORD max string length
+
 ## 1.7.0 :  Changes until v1.7.0
 
 New Improvements or features:
