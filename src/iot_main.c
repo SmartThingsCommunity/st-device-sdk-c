@@ -1040,7 +1040,13 @@ static void _do_cmd_tout_check(struct iot_context *ctx)
 			if (!ctx->cmd_err) {
 				IOT_INFO("New state updated for %d", ctx->req_state);
 				ctx->curr_state = ctx->req_state;
-
+                if (ctx->curr_state == IOT_STATE_CLOUD_CONNECTED)
+                {
+                    /* initialize previous err of deviceinfo for help contents */
+                    ctx->last_st_ecode.is_happended = false;
+                    iot_ecodeType_to_string(IOT_ST_ECODE_NONE, &ctx->last_st_ecode);
+                    IOT_INFO("previous error code[%s]",ctx->last_st_ecode.ecode);
+                }
 				if (ctx->status_cb)
 					_do_status_report(ctx, ctx->curr_state, true);
 			} else {
@@ -1359,6 +1365,11 @@ IOT_CTX* st_conn_init(unsigned char *onboarding_config, unsigned int onboarding_
 		IOT_DUMP_MAIN(ERROR, BASE, IOT_TASK_STACK_SIZE);
 		goto error_main_task_init;
 	}
+
+    /* initialize previous err of deviceinfo for help contents */
+    ctx->last_st_ecode.is_happended = false;
+    iot_ecodeType_to_string(IOT_ST_ECODE_NONE, &ctx->last_st_ecode);
+    IOT_INFO("previous error code[%s]",ctx->last_st_ecode.ecode);
 
 	IOT_MEM_CHECK("MAIN_INIT_ALL_DONE >>PT<<");
 

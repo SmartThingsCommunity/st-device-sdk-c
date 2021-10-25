@@ -1352,85 +1352,85 @@ iot_error_t iot_ecodeType_to_string(iot_st_ecode_t ecode, struct iot_st_ecode *s
     switch(ecode)
     {
         case IOT_ST_ECODE_NONE:
-            memcpy("NONE", &(st_ecode->ecode), IOT_ST_ECODE_STR_LEN);
+            strcpy(st_ecode->ecode, "\0");
             break;
         case IOT_ST_ECODE_EE01:
-            memcpy("EE01", &(st_ecode->ecode), IOT_ST_ECODE_STR_LEN);
+            strcpy(st_ecode->ecode, "EE01");
             break;
         case IOT_ST_ECODE_NE01:
-            memcpy("NE01", &(st_ecode->ecode), IOT_ST_ECODE_STR_LEN);
+            strcpy(st_ecode->ecode, "NE01");
             break;
         case IOT_ST_ECODE_NE02:
-            memcpy("NE02", &(st_ecode->ecode), IOT_ST_ECODE_STR_LEN);
+            strcpy(st_ecode->ecode, "NE02");
             break;
         case IOT_ST_ECODE_NE03:
-            memcpy("NE03", &(st_ecode->ecode), IOT_ST_ECODE_STR_LEN);
+            strcpy(st_ecode->ecode, "NE03");
             break;
         case IOT_ST_ECODE_NE04:
-            memcpy("NE04", &(st_ecode->ecode), IOT_ST_ECODE_STR_LEN);
+            strcpy(st_ecode->ecode, "NE04");
             break;
         case IOT_ST_ECODE_NE10:
-            memcpy("NE10", &(st_ecode->ecode), IOT_ST_ECODE_STR_LEN);
+            strcpy(st_ecode->ecode, "NE10");
             break;
         case IOT_ST_ECODE_NE11:
-            memcpy("NE11", &(st_ecode->ecode), IOT_ST_ECODE_STR_LEN);
+            strcpy(st_ecode->ecode, "NE11");
             break;
         case IOT_ST_ECODE_NE12:
-            memcpy("NE12", &(st_ecode->ecode), IOT_ST_ECODE_STR_LEN);
+            strcpy(st_ecode->ecode, "NE12");
             break;
         case IOT_ST_ECODE_NE13:
-            memcpy("NE13", &(st_ecode->ecode), IOT_ST_ECODE_STR_LEN);
+            strcpy(st_ecode->ecode, "NE13");
             break;
         case IOT_ST_ECODE_NE14:
-            memcpy("NE14", &(st_ecode->ecode), IOT_ST_ECODE_STR_LEN);
+            strcpy(st_ecode->ecode, "NE14");
             break;
         case IOT_ST_ECODE_NE15:
-            memcpy("NE15", &(st_ecode->ecode), IOT_ST_ECODE_STR_LEN);
+            strcpy(st_ecode->ecode, "NE15");
             break;
         case IOT_ST_ECODE_NE16:
-            memcpy("NE16", &(st_ecode->ecode), IOT_ST_ECODE_STR_LEN);
+            strcpy(st_ecode->ecode, "NE16");
             break;
         case IOT_ST_ECODE_NE17:
-            memcpy("NE17", &(st_ecode->ecode), IOT_ST_ECODE_STR_LEN);
+            strcpy(st_ecode->ecode, "NE17");
             break;
         case IOT_ST_ECODE_CE11:
-            memcpy("CE11", &(st_ecode->ecode), IOT_ST_ECODE_STR_LEN);
+            strcpy(st_ecode->ecode, "CE11");
             break;
         case IOT_ST_ECODE_CE12:
-            memcpy("CE12", &(st_ecode->ecode), IOT_ST_ECODE_STR_LEN);
+            strcpy(st_ecode->ecode, "CE12");
             break;
         case IOT_ST_ECODE_CE20:
-            memcpy("CE20", &(st_ecode->ecode), IOT_ST_ECODE_STR_LEN);
+            strcpy(st_ecode->ecode, "CE20");
             break;
         case IOT_ST_ECODE_CE21:
-            memcpy("CE21", &(st_ecode->ecode), IOT_ST_ECODE_STR_LEN);
+            strcpy(st_ecode->ecode, "CE21");
             break;
         case IOT_ST_ECODE_CE30:
-            memcpy("CE30", &(st_ecode->ecode), IOT_ST_ECODE_STR_LEN);
+            strcpy(st_ecode->ecode, "CE30");
             break;
         case IOT_ST_ECODE_CE31:
-            memcpy("CE31", &(st_ecode->ecode), IOT_ST_ECODE_STR_LEN);
+            strcpy(st_ecode->ecode, "CE31");
             break;
         case IOT_ST_ECODE_CE32:
-            memcpy("CE32", &(st_ecode->ecode), IOT_ST_ECODE_STR_LEN);
+            strcpy(st_ecode->ecode, "CE32");
             break;
         case IOT_ST_ECODE_CE33:
-            memcpy("CE33", &(st_ecode->ecode), IOT_ST_ECODE_STR_LEN);
+            strcpy(st_ecode->ecode, "CE33");
             break;
         case IOT_ST_ECODE_CE40:
-            memcpy("CE40", &(st_ecode->ecode), IOT_ST_ECODE_STR_LEN);
+            strcpy(st_ecode->ecode, "CE40");
             break;
         case IOT_ST_ECODE_CE41:
-            memcpy("CE41", &(st_ecode->ecode), IOT_ST_ECODE_STR_LEN);
+            strcpy(st_ecode->ecode, "CE41");
             break;
         case IOT_ST_ECODE_CE50:
-            memcpy("CE50", &(st_ecode->ecode), IOT_ST_ECODE_STR_LEN);
+            strcpy(st_ecode->ecode, "CE50");
             break;
         case IOT_ST_ECODE_CE51:
-            memcpy("CE51", &(st_ecode->ecode), IOT_ST_ECODE_STR_LEN);
+            strcpy(st_ecode->ecode, "CE51");
             break;
         case IOT_ST_ECODE_CE60:
-            memcpy("CE60", &(st_ecode->ecode), IOT_ST_ECODE_STR_LEN);
+            strcpy(st_ecode->ecode, "CE60");
             break;
         default:
             break;
