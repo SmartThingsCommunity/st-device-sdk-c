@@ -686,7 +686,6 @@ skip_time_set:
 			JSON_ADD_ITEM_TO_ARRAY(array, JSON_CREATE_NUMBER(i));
 		}
 	}
-	JSON_ADD_ITEM_TO_ARRAY(array, JSON_CREATE_NUMBER(OVF_BIT_SERIAL_NUMBER));
 	JSON_ADD_ITEM_TO_OBJECT(root, "otmSupportFeatures", array);
 
 	out_payload = JSON_PRINT(root);
