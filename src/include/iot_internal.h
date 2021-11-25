@@ -351,5 +351,33 @@ iot_error_t iot_misc_info_store(iot_misc_info_t type, const void *in_data);
  */
 iot_error_t iot_get_random_id_str(char *str, size_t max_sz);
 
+/**
+ * @brief	get string value according to the error type for help contents
+ * @details	this function gives the string for help contents error type
+ * @param[in]	ecode	    help contents error type
+ * @param[out]	st_ecode	A pointer to load iot_st_ecode data structure
+ * @retval	IOT_ERROR_NONE                  success.
+ */
+iot_error_t iot_ecodeType_to_string(iot_st_ecode_t ecode, struct iot_st_ecode *st_ecode);
+
+
+/**
+ * @brief	get last happended device error code for SmartThings App
+ * @details	this function tries to get last happended device error code
+ * @param[in]	ctx			iot-core context
+ * @param[out]	st_ecode	A pointer to load iot_st_ecode data structure
+ * @retval	IOT_ERROR_NONE                  success.
+ */
+iot_error_t iot_get_st_ecode(struct iot_context *ctx, struct iot_st_ecode *st_ecode);
+
+/**
+ * @brief	set new happended device error code for SmartThings App
+ * @details	this function tries to set new happended device error code
+ * @param[in]	ctx			iot-core context
+ * @param[in]	st_ecode	new iot_st_ecode data structure to store
+ * @retval	IOT_ERROR_NONE                  success.
+ */
+iot_error_t iot_set_st_ecode(struct iot_context *ctx, struct iot_st_ecode st_ecode);
+
 #endif /* _IOT_INTERNAL_H_ */
 
