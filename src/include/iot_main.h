@@ -131,6 +131,36 @@ enum iot_state_opt {
 	IOT_STATE_OPT_CLEANUP,
 };
 
+typedef enum iot_st_ecode_type {
+    IOT_ST_ECODE_NONE,
+    IOT_ST_ECODE_EE01,
+    IOT_ST_ECODE_NE01,
+    IOT_ST_ECODE_NE02,
+    IOT_ST_ECODE_NE03,
+    IOT_ST_ECODE_NE04,
+    IOT_ST_ECODE_NE10,
+    IOT_ST_ECODE_NE11,
+    IOT_ST_ECODE_NE12,
+    IOT_ST_ECODE_NE13,
+    IOT_ST_ECODE_NE14,
+    IOT_ST_ECODE_NE15,
+    IOT_ST_ECODE_NE16,
+    IOT_ST_ECODE_NE17,
+    IOT_ST_ECODE_CE11,
+    IOT_ST_ECODE_CE12,
+    IOT_ST_ECODE_CE20,
+    IOT_ST_ECODE_CE21,
+    IOT_ST_ECODE_CE30,
+    IOT_ST_ECODE_CE31,
+    IOT_ST_ECODE_CE32,
+    IOT_ST_ECODE_CE33,
+    IOT_ST_ECODE_CE40,
+    IOT_ST_ECODE_CE41,
+    IOT_ST_ECODE_CE50,
+    IOT_ST_ECODE_CE51,
+    IOT_ST_ECODE_CE60,
+}iot_st_ecode_t;
+
 /**
  * @brief Contains "uuid" data
  */
@@ -246,6 +276,13 @@ struct iot_state_data {
 
 typedef struct iot_cap_handle_list iot_cap_handle_list_t;
 
+#define IOT_ST_ECODE_STR_LEN	(4)
+
+struct iot_st_ecode {
+	bool is_happended;
+	char ecode[IOT_ST_ECODE_STR_LEN + 1];
+};
+
 /**
  * @brief Contains "iot core's main context" data
  */
@@ -316,6 +353,8 @@ struct iot_context {
 	unsigned int mqtt_connection_success_count; /**< @brief MQTT connection success count */
 	unsigned int mqtt_connection_try_count; /**< @brief MQTT connection try count */
 	bool usr_delete_req;	/**< @brief whether self-device-card-deleting requested from usr */
+
+	struct iot_st_ecode last_st_ecode;	/**< @brief last happended device error code to send SmartThings App */
 };
 
 #endif /* _IOT_MAIN_H_ */
