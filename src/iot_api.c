@@ -1347,6 +1347,125 @@ iot_error_t iot_get_random_id_str(char *str, size_t max_sz)
 	return err;
 }
 
+iot_error_t iot_ecodeType_to_string(iot_st_ecode_t ecode, struct iot_st_ecode *st_ecode)
+{
+    switch(ecode)
+    {
+        case IOT_ST_ECODE_NONE:
+            strncpy(st_ecode->ecode, "\0", sizeof(st_ecode->ecode));
+            break;
+        case IOT_ST_ECODE_EE01:
+            strncpy(st_ecode->ecode, "EE01", sizeof(st_ecode->ecode));
+            break;
+        case IOT_ST_ECODE_NE01:
+            strncpy(st_ecode->ecode, "NE01", sizeof(st_ecode->ecode));
+            break;
+        case IOT_ST_ECODE_NE02:
+            strncpy(st_ecode->ecode, "NE02", sizeof(st_ecode->ecode));
+            break;
+        case IOT_ST_ECODE_NE03:
+            strncpy(st_ecode->ecode, "NE03", sizeof(st_ecode->ecode));
+            break;
+        case IOT_ST_ECODE_NE04:
+            strncpy(st_ecode->ecode, "NE04", sizeof(st_ecode->ecode));
+            break;
+        case IOT_ST_ECODE_NE10:
+            strncpy(st_ecode->ecode, "NE10", sizeof(st_ecode->ecode));
+            break;
+        case IOT_ST_ECODE_NE11:
+            strncpy(st_ecode->ecode, "NE11", sizeof(st_ecode->ecode));
+            break;
+        case IOT_ST_ECODE_NE12:
+            strncpy(st_ecode->ecode, "NE12", sizeof(st_ecode->ecode));
+            break;
+        case IOT_ST_ECODE_NE13:
+            strncpy(st_ecode->ecode, "NE13", sizeof(st_ecode->ecode));
+            break;
+        case IOT_ST_ECODE_NE14:
+            strncpy(st_ecode->ecode, "NE14", sizeof(st_ecode->ecode));
+            break;
+        case IOT_ST_ECODE_NE15:
+            strncpy(st_ecode->ecode, "NE15", sizeof(st_ecode->ecode));
+            break;
+        case IOT_ST_ECODE_NE16:
+            strncpy(st_ecode->ecode, "NE16", sizeof(st_ecode->ecode));
+            break;
+        case IOT_ST_ECODE_NE17:
+            strncpy(st_ecode->ecode, "NE17", sizeof(st_ecode->ecode));
+            break;
+        case IOT_ST_ECODE_CE11:
+            strncpy(st_ecode->ecode, "CE11", sizeof(st_ecode->ecode));
+            break;
+        case IOT_ST_ECODE_CE12:
+            strncpy(st_ecode->ecode, "CE12", sizeof(st_ecode->ecode));
+            break;
+        case IOT_ST_ECODE_CE20:
+            strncpy(st_ecode->ecode, "CE20", sizeof(st_ecode->ecode));
+            break;
+        case IOT_ST_ECODE_CE21:
+            strncpy(st_ecode->ecode, "CE21", sizeof(st_ecode->ecode));
+            break;
+        case IOT_ST_ECODE_CE30:
+            strncpy(st_ecode->ecode, "CE30", sizeof(st_ecode->ecode));
+            break;
+        case IOT_ST_ECODE_CE31:
+            strncpy(st_ecode->ecode, "CE31", sizeof(st_ecode->ecode));
+            break;
+        case IOT_ST_ECODE_CE32:
+            strncpy(st_ecode->ecode, "CE32", sizeof(st_ecode->ecode));
+            break;
+        case IOT_ST_ECODE_CE33:
+            strncpy(st_ecode->ecode, "CE33", sizeof(st_ecode->ecode));
+            break;
+        case IOT_ST_ECODE_CE40:
+            strncpy(st_ecode->ecode, "CE40", sizeof(st_ecode->ecode));
+            break;
+        case IOT_ST_ECODE_CE41:
+            strncpy(st_ecode->ecode, "CE41", sizeof(st_ecode->ecode));
+            break;
+        case IOT_ST_ECODE_CE50:
+            strncpy(st_ecode->ecode, "CE50", sizeof(st_ecode->ecode));
+            break;
+        case IOT_ST_ECODE_CE51:
+            strncpy(st_ecode->ecode, "CE51", sizeof(st_ecode->ecode));
+            break;
+        case IOT_ST_ECODE_CE60:
+            strncpy(st_ecode->ecode, "CE60", sizeof(st_ecode->ecode));
+            break;
+        default:
+            break;
+    }
+    return IOT_ERROR_NONE;
+}
+
+iot_error_t iot_get_st_ecode(struct iot_context *ctx, struct iot_st_ecode *st_ecode)
+{
+	if ((ctx == NULL) || (st_ecode == NULL)) {
+		IOT_ERROR("There is no ctx or st_ecode arg");
+		return IOT_ERROR_INVALID_ARGS;
+	}
+
+	memcpy(st_ecode, &(ctx->last_st_ecode), sizeof(struct iot_st_ecode));
+
+	return IOT_ERROR_NONE;
+}
+
+iot_error_t iot_set_st_ecode(struct iot_context *ctx, struct iot_st_ecode st_ecode)
+{
+	if (ctx == NULL) {
+		IOT_ERROR("There is no ctx");
+		return IOT_ERROR_INVALID_ARGS;
+	}
+
+	if (st_ecode.is_happended == true) {
+		memcpy(&(ctx->last_st_ecode), &st_ecode, sizeof(struct iot_st_ecode));
+	} else {
+		ctx->last_st_ecode.is_happended = false;
+	}
+
+	return IOT_ERROR_NONE;
+}
+
 /**************************************************************
 *                       Synchronous Call                      *
 **************************************************************/
