@@ -91,13 +91,15 @@ static void _iot_easysetup_wifi_event_cb(iot_wifi_event_t event)
 			IOT_INFO("Station joined to SoftAP");
 			break;
 		case IOT_WIFI_EVENT_SOFTAP_STA_LEAVE:
-			IOT_INFO("Station left from SoftAP");
-			ref_step = 0;
-			iot_os_eventgroup_set_bits(context->iot_events, IOT_EVENT_BIT_EASYSETUP_CONFIRM);
-			err = iot_state_update(context, IOT_STATE_UNKNOWN, context->curr_state);
-			if (err) {
-				IOT_ERROR("cannot update state to failed (%d)", err);
-				IOT_ES_DUMP(IOT_DEBUG_LEVEL_ERROR, IOT_DUMP_EASYSETUP_INTERNAL_SERVER_ERROR, err);
+			if (ref_step <= IOT_EASYSETUP_STEP_SETUPCOMPLETE) {
+				IOT_INFO("Station left from SoftAP");
+				ref_step = 0;
+				iot_os_eventgroup_set_bits(context->iot_events, IOT_EVENT_BIT_EASYSETUP_CONFIRM);
+				err = iot_state_update(context, IOT_STATE_UNKNOWN, context->curr_state);
+				if (err) {
+					IOT_ERROR("cannot update state to failed (%d)", err);
+					IOT_ES_DUMP(IOT_DEBUG_LEVEL_ERROR, IOT_DUMP_EASYSETUP_INTERNAL_SERVER_ERROR, err);
+				}
 			}
 			break;
 		default:

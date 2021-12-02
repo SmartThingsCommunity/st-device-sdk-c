@@ -1,5 +1,17 @@
 # HISTORY
 
+## 1.7.4 : Changes until v1.7.4
+New Improvements or features:
+ - update for help contents adding previous error code
+ - iot_api: Added new internal APIs for previous ErrorCode handling
+
+Enhancements or amendments:
+ - add caps helper for operatingState
+
+Bug fixed:
+ - easysetup: remove serial number confirm type on otmSupportFeatures
+ - fix esp8266 onboarding fail issue during checking softAp mode
+
 ## 1.7.3 :  Changes until v1.7.3
 
 New Improvements or features:
