@@ -124,7 +124,7 @@ If you port a new chipset or OS, please submit or inform your porting results to
 
 The IoT core device library has a porting layer to support the use of the same APIs in the device application, even if the platform changes. In the current STDK version, the platform-dependent directories that must be ported are present in the `src/port/bsp`, `src/port/net` and `src/port/os` of [IoT core device library git repo](https://github.com/SmartThingsCommunity/st-device-sdk-c).
 
-<img src="res/st_device_sdk_arch.jpg" style="zoom:80%;" align="left"/>
+![architecture](./res/st_device_sdk_arch.jpg)
 
 ### BSP(Board Support Package)
 
@@ -179,6 +179,8 @@ For additional information about API parameters, please refer to the [API docume
 | uint16_t iot_bsp_wifi_get_scan_result  ( iot_wifi_scan_result_t *  scan_result ) | Get the AP scan result.                                      |
 | iot_error_t iot_bsp_wifi_init  (  )                          | Initialize Wi-Fi function.                                   |
 | iot_error_t iot_bsp_wifi_set_mode  ( iot_wifi_conf *  conf ) | This function set the wifi operating mode as scan, station and softap |
+| iot_error_t iot_bsp_wifi_register_event_cb(iot_bsp_wifi_event_cb_t cb) | This function set Wi-Fi event callback such as IOT_WIFI_EVENT_SOFTAP_STA_JOIN, IOT_WIFI_EVENT_SOFTAP_STA_LEAVE |
+| void iot_bsp_wifi_clear_event_cb(void)                       | This function clears registered Wi-Fi event callback |
 
 #### Debug
 
