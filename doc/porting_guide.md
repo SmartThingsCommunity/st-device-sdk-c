@@ -180,7 +180,8 @@ For additional information about API parameters, please refer to the [API docume
 | iot_error_t iot_bsp_wifi_init  (  )                          | Initialize Wi-Fi function.                                   |
 | iot_error_t iot_bsp_wifi_set_mode  ( iot_wifi_conf *  conf ) | This function set the wifi operating mode as scan, station and softap |
 | iot_error_t iot_bsp_wifi_register_event_cb(iot_bsp_wifi_event_cb_t cb) | This function set Wi-Fi event callback such as IOT_WIFI_EVENT_SOFTAP_STA_JOIN, IOT_WIFI_EVENT_SOFTAP_STA_LEAVE |
-| void iot_bsp_wifi_clear_event_cb(void)                       | This function clears registered Wi-Fi event callback |
+| void iot_bsp_wifi_clear_event_cb(void)                       | This function clears registered Wi-Fi event callback         |
+| iot_wifi_auth_mode_bits_t iot_bsp_wifi_get_auth_mode(void)   | This function returns wifi auth mode support bits            |
 
 #### Debug
 
