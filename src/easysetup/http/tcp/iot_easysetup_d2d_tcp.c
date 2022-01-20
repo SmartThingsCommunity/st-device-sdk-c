@@ -388,6 +388,7 @@ iot_error_t _es_deviceinfo_handler(struct iot_context *ctx, char **out_payload)
 	JSON_ADD_ITEM_TO_OBJECT(root, "firmwareVersion", JSON_CREATE_STRING(ctx->device_info.firmware_version));
 	JSON_ADD_ITEM_TO_OBJECT(root, "hashedSn", JSON_CREATE_STRING((char *)ctx->devconf.hashed_sn));
 	JSON_ADD_NUMBER_TO_OBJECT(root, "wifiSupportFrequency", (double) iot_bsp_wifi_get_freq());
+	JSON_ADD_NUMBER_TO_OBJECT(root, "wifiSupportAuthType", (double) iot_bsp_wifi_get_auth_mode());
 	JSON_ADD_ITEM_TO_OBJECT(root, "prevErrorCode", JSON_CREATE_STRING((char *)ctx->last_st_ecode.ecode));
 
 	err = _es_crypto_cipher_gen_iv(&iv_buf);
@@ -1023,6 +1024,7 @@ iot_error_t _es_wifiscaninfo_handler(struct iot_context *ctx, char **output_data
 	int i;
 	iot_error_t err = IOT_ERROR_NONE;
 	char *out_payload = NULL;
+	iot_wifi_auth_mode_bits_t supported_auth_mode_bits = iot_bsp_wifi_get_auth_mode();
 
 	if (!ctx) {
 		IOT_ERROR("invalid iot_context!!");
@@ -1055,7 +1057,8 @@ iot_error_t _es_wifiscaninfo_handler(struct iot_context *ctx, char **output_data
 
 	for(i = 0; i < ctx->scan_num; i++) {
 		if ((ctx->scan_result[i].authmode <  IOT_WIFI_AUTH_OPEN) ||
-			(ctx->scan_result[i].authmode >= IOT_WIFI_AUTH_WPA2_ENTERPRISE)) {
+			(ctx->scan_result[i].authmode >= IOT_WIFI_AUTH_UNKNOWN) ||
+			!(IOT_WIFI_AUTH_MODE_BIT(ctx->scan_result[i].authmode) & supported_auth_mode_bits)) {
 			IOT_DEBUG("Unsupported authType %d, %s", ctx->scan_result[i].authmode,
 								(char *)ctx->scan_result[i].ssid);
 			continue;
