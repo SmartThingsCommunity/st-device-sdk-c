@@ -44,6 +44,37 @@ iot_error_t iot_security_manager_init(iot_security_context_t *context);
 iot_error_t iot_security_manager_deinit(iot_security_context_t *context);
 
 /**
+ * @brief	Generate a ephemeral key pair
+ * @details	Generate a key pair based on elliptic curve
+ * @param[in]	context reference to the security context
+ * @param[in]	key_id key identity to specific a ephemeral key pair
+ * @retval	IOT_ERROR_NONE success
+ * @retval	IOT_ERROR_INVALID_ARGS input parameter is invalid
+ * @retval	IOT_ERROR_MEM_ALLOC not enough heap memory
+ * @retval	IOT_ERROR_SECURITY_CONTEXT_NULL security context is null
+ * @retval	IOT_ERROR_SECURITY_BE_CONTEXT_NULL backend context is null
+ * @retval	IOT_ERROR_SECURITY_BE_FUNC_NULL a pointer to a read function of backend is null
+ * @retval	IOT_ERROR_SECURITY_KEY_INVALID_ID key identity in key_params is not a supported
+ * @retval	IOT_ERROR_SECURITY_MANAGER_KEY_GENERATE failed to generate key pair
+ */
+iot_error_t iot_security_manager_generate_key(iot_security_context_t *context, iot_security_key_id_t key_id);
+
+/**
+ * @brief	Remove the generated ephemeral key pair
+ * @param[in]	context reference to the security context
+ * @param[in]	key_id key identity to specific a ephemeral key pair
+ * @retval	IOT_ERROR_NONE success
+ * @retval	IOT_ERROR_INVALID_ARGS input parameter is invalid
+ * @retval	IOT_ERROR_MEM_ALLOC not enough heap memory
+ * @retval	IOT_ERROR_SECURITY_CONTEXT_NULL security context is null
+ * @retval	IOT_ERROR_SECURITY_BE_CONTEXT_NULL backend context is null
+ * @retval	IOT_ERROR_SECURITY_BE_FUNC_NULL a pointer to a read function of backend is null
+ * @retval	IOT_ERROR_SECURITY_KEY_INVALID_ID key identity in key_params is not a supported
+ * @retval	IOT_ERROR_SECURITY_MANAGER_KEY_REMOVE failed to remove key pair
+ */
+iot_error_t iot_security_manager_remove_key(iot_security_context_t *context, iot_security_key_id_t key_id);
+
+/**
  * @brief	Set the key for signature or encryption
  * @details	Set the parameter required for signature or encryption operation
  * @param[in]	context reference to the security context

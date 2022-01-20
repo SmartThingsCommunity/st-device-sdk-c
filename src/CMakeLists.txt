@@ -20,6 +20,17 @@ if (NOT MBEDTLS_H)
     set(STDK_INCLUDE_PATH "${STDK_INCLUDE_PATH}" ${MBEDTLS_DIR}/mbedtls/include)
 endif (NOT MBEDTLS_H)
 
+set(LIBSODIUM_DIR deps/libsodium)
+check_include_file(${LIBSODIUM_DIR}/libsodium/src/libsodium/include/sodium.h SODIUM_H)
+if (NOT SODIUM_H)
+    message(STATUS "submodule init for libsodium")
+    execute_process(COMMAND git submodule update --init ${LIBSODIUM_DIR}
+            WORKING_DIRECTORY "${CMAKE_CURRENT_SOURCE_DIR}")
+    set(STDK_INCLUDE_PATH "${STDK_INCLUDE_PATH}" ${LIBSODIUM_DIR}/libsodium/src/libsodium/include)
+    set(STDK_INCLUDE_PATH "${STDK_INCLUDE_PATH}" ${LIBSODIUM_DIR}/libsodium/src/libsodium/include/sodium)
+    set(STDK_INCLUDE_PATH "${STDK_INCLUDE_PATH}" ${LIBSODIUM_DIR}/port/include)
+endif (NOT SODIUM_H)
+
 set(CMAKE_C_FLAGS "${CMAKE_C_FLAGS} -fPIC -fpic")
 set(BUILD_SHARED_LIBS OFF CACHE BOOL "Build shared libraries" FORCE)
 set(ENABLE_CJSON_TEST OFF CACHE BOOL "Enable building cJSON test" FORCE)
@@ -31,6 +42,7 @@ set(ENABLE_TESTING OFF CACHE BOOL "Build mbed TLS tests." FORCE)
 add_subdirectory(${MBEDTLS_DIR}/mbedtls)
 set(STDK_LINK_LIBRARY ${STDK_LINK_LIBRARY} mbedtls mbedx509 mbedcrypto)
 
+add_subdirectory(${LIBSODIUM_DIR})
 set(STDK_LINK_LIBRARY ${STDK_LINK_LIBRARY} sodium)
 endif()
 

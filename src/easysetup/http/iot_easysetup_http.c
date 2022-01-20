@@ -521,9 +521,8 @@ iot_error_t iot_easysetup_init(struct iot_context *ctx)
 
 	err = iot_bsp_wifi_register_event_cb(_iot_easysetup_wifi_event_cb);
 	if (err != IOT_ERROR_NONE) {
-		IOT_INFO("wifi event callback isn't registered %d", err);
-		IOT_ES_DUMP(IOT_DEBUG_LEVEL_ERROR, IOT_DUMP_EASYSETUP_INTERNAL_SERVER_ERROR, err);
-		return err;
+		IOT_WARN("wifi event callback isn't registered %d", err);
+		IOT_ES_DUMP(IOT_DEBUG_LEVEL_WARN, IOT_DUMP_EASYSETUP_INIT, err);
 	}
 
 	es_http_init();

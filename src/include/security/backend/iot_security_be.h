@@ -97,6 +97,14 @@ typedef struct iot_security_be_funcs {
 	 */
 	iot_error_t (*manager_deinit)(iot_security_context_t *);
 	/**
+	 * @brief a pointer to a function to generate a ephemeral key pair for key agreement
+	 */
+	iot_error_t (*manager_generate_key)(iot_security_context_t *, iot_security_key_id_t);
+	/**
+	 * @brief a pointer to a function to remove a generated ephemeral key pair
+	 */
+	iot_error_t (*manager_remove_key)(iot_security_context_t *, iot_security_key_id_t);
+	/**
 	 * @brief a pointer to a function to get the security key
 	 */
 	iot_error_t (*manager_get_key)(iot_security_context_t *, iot_security_key_id_t, iot_security_buffer_t *);

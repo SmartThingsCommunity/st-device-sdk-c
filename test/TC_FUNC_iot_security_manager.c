@@ -299,6 +299,13 @@ void TC_iot_security_manager_get_key_invalid_parameters(void **state)
 	err = iot_security_manager_get_key(context, key_id, &key_buf);
 	// Then
 	assert_int_equal(err, IOT_ERROR_SECURITY_KEY_NO_PERMISSION);
+
+	// Given: empty key
+	key_id = IOT_SECURITY_KEY_ID_EPHEMERAL;
+	// When
+	err = iot_security_manager_get_key(context, key_id, &key_buf);
+	// Then
+	assert_int_equal(err, IOT_ERROR_SECURITY_KEY_NOT_FOUND);
 }
 
 void TC_iot_security_manager_get_key_alloc_failure(void **state)
@@ -349,6 +356,21 @@ void TC_iot_security_manager_get_key_success(void **state)
 	assert_memory_equal(pubkey_buf.p, pubkey_ref, strlen(pubkey_ref));
 	// Teardown
 	iot_os_free(pubkey_buf.p);
+
+	// Given
+	key_id = IOT_SECURITY_KEY_ID_EPHEMERAL;
+	err = iot_security_manager_generate_key(context, key_id);
+	assert_int_equal(err, IOT_ERROR_NONE);
+	// When
+	err = iot_security_manager_get_key(context, key_id, &pubkey_buf);
+	// Then
+	assert_int_equal(err, IOT_ERROR_NONE);
+	assert_non_null(pubkey_buf.p);
+	assert_int_not_equal(pubkey_buf.len, 0);
+	// Teardown
+	iot_os_free(pubkey_buf.p);
+	err = iot_security_manager_remove_key(context, key_id);
+	assert_int_equal(err, IOT_ERROR_NONE);
 }
 
 void TC_iot_security_manager_get_certificate_null_parameters(void **state)

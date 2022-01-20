@@ -12,7 +12,11 @@ if(ENABLE_STDK_TEST)
                         ${st_device_sdk_c_SOURCE_DIR}/src/include/external
                         ${st_device_sdk_c_SOURCE_DIR}/src/deps/json/cJSON
                         ${st_device_sdk_c_SOURCE_DIR}/src/deps/mbedtls/mbedtls/include
-                        ${st_device_sdk_c_SOURCE_DIR}/src/port/net/mbedtls)
+                        ${st_device_sdk_c_SOURCE_DIR}/src/port/net/mbedtls
+                        ${st_device_sdk_c_SOURCE_DIR}/src/deps/libsodium/libsodium/src/libsodium/include
+                        ${st_device_sdk_c_SOURCE_DIR}/src/deps/libsodium/libsodium/src/libsodium/include/sodium
+                        ${st_device_sdk_c_SOURCE_DIR}/src/deps/libsodium/port/include
+            )
 
     foreach(mock ${MOCKED_FUNCTIONS})
         set(CMAKE_C_FLAGS_UNITTEST "${CMAKE_C_FLAGS_UNITTEST} -Wl,--wrap=${mock}")
@@ -60,6 +64,5 @@ if(ENABLE_STDK_TEST)
                           cmocka
                           pthread
                           rt
-                          cjson
                           )
 endif()
