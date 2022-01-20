@@ -304,13 +304,20 @@ iot_error_t iot_bsp_wifi_set_mode(iot_wifi_conf *conf)
 		}
 
 		str_len = strlen((char *)conf->bssid);
-		if(str_len){
+		if(str_len) {
 			memcpy(wifi_config.sta.bssid, conf->bssid, IOT_WIFI_MAX_BSSID_LEN);
 			wifi_config.sta.bssid_set = true;
 
 			IOT_DEBUG("target mac=%2X:%2X:%2X:%2X:%2X:%2X",
 					wifi_config.sta.bssid[0], wifi_config.sta.bssid[1], wifi_config.sta.bssid[2],
 					wifi_config.sta.bssid[3], wifi_config.sta.bssid[4], wifi_config.sta.bssid[5]);
+		}
+
+		if (conf->authmode == IOT_WIFI_AUTH_WPA3_PERSONAL) {
+			wifi_config.sta.threshold.authmode = WIFI_AUTH_WPA3_PSK;
+			// set PMF (Protected Management Frames) optional mode for better compatibility
+			wifi_config.sta.pmf_cfg.capable = true;
+			wifi_config.sta.pmf_cfg.required = false;
 		}
 
 		ESP_ERROR_CHECK(esp_wifi_set_mode(WIFI_MODE_STA));
@@ -417,12 +424,26 @@ uint16_t iot_bsp_wifi_get_scan_result(iot_wifi_scan_result_t *scan_result)
 
 			if(esp_wifi_scan_get_ap_records(&ap_num, ap_list) == ESP_OK){
 				for(i=0; i<ap_num; i++)	{
+					iot_wifi_auth_mode_t conv_auth_mode;
+
+					switch (ap_list[i].authmode) {
+						case WIFI_AUTH_WAPI_PSK:
+							conv_auth_mode = IOT_WIFI_AUTH_UNKNOWN;
+							break;
+						case WIFI_AUTH_WPA2_WPA3_PSK:
+						case WIFI_AUTH_WPA3_PSK:
+							conv_auth_mode = IOT_WIFI_AUTH_WPA3_PERSONAL;
+							break;
+						default:
+							conv_auth_mode = ap_list[i].authmode;
+							break;
+					}
 					memcpy(scan_result[i].ssid, ap_list[i].ssid, strlen((char *)ap_list[i].ssid));
 					memcpy(scan_result[i].bssid, ap_list[i].bssid, IOT_WIFI_MAX_BSSID_LEN);
 
 					scan_result[i].rssi = ap_list[i].rssi;
 					scan_result[i].freq = iot_util_convert_channel_freq(ap_list[i].primary);
-					scan_result[i].authmode = ap_list[i].authmode;
+					scan_result[i].authmode = conv_auth_mode;
 
 					IOT_DEBUG("scan result ssid=%s, mac=%02X:%02X:%02X:%02X:%02X:%02X, rssi=%d, freq=%d, authmode=%d chan=%d",
 							scan_result[i].ssid,
@@ -474,4 +495,12 @@ iot_error_t iot_bsp_wifi_register_event_cb(iot_bsp_wifi_event_cb_t cb)
 void iot_bsp_wifi_clear_event_cb(void)
 {
 	wifi_event_cb = NULL;
+}
+
+iot_wifi_auth_mode_bits_t iot_bsp_wifi_get_auth_mode(void)
+{
+	iot_wifi_auth_mode_bits_t supported_mode_bits = IOT_WIFI_AUTH_MODE_BIT_ALL;
+	supported_mode_bits = supported_mode_bits ^ IOT_WIFI_AUTH_MODE_BIT(IOT_WIFI_AUTH_WPA2_ENTERPRISE);
+
+	return supported_mode_bits;
 }
