@@ -500,7 +500,7 @@ void iot_bsp_wifi_clear_event_cb(void)
 iot_wifi_auth_mode_bits_t iot_bsp_wifi_get_auth_mode(void)
 {
 	iot_wifi_auth_mode_bits_t supported_mode_bits = IOT_WIFI_AUTH_MODE_BIT_ALL;
-	supported_mode_bits = supported_mode_bits ^ IOT_WIFI_AUTH_MODE_BIT(IOT_WIFI_AUTH_WPA2_ENTERPRISE);
+	supported_mode_bits ^= IOT_WIFI_AUTH_MODE_BIT(IOT_WIFI_AUTH_WPA2_ENTERPRISE);
 
 	return supported_mode_bits;
 }
