@@ -523,7 +523,7 @@ void assert_keyinfo(char *payload, iot_security_cipher_params_t *server_cipher, 
         item = JSON_GET_ARRAY_ITEM(array, i);
         otm_support |= (1u << (unsigned)item->valueint);
     }
-    assert_int_equal(otm_support, expected_otm_support | (1u << OVF_BIT_SERIAL_NUMBER));
+    assert_int_equal(otm_support, expected_otm_support);
 
     JSON_DELETE(root);
     free(plain_message);

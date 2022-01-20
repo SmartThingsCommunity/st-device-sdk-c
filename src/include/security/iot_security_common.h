@@ -32,6 +32,9 @@ extern "C" {
 #define IOT_SECURITY_IV_LEN                     16
 #define IOT_SECURITY_SHA256_LEN                 32
 
+#define IOT_SECURITY_EC_SECKEY_LEN              32
+#define IOT_SECURITY_EC_PUBKEY_LEN              64
+
 #define IOT_SECURITY_SIGNATURE_ED25519_LEN      64
 #define IOT_SECURITY_SIGNATURE_RSA2048_LEN      256
 #define IOT_SECURITY_SIGNATURE_ECCP256_LEN      1024    /* MBEDTLS_MPI_MAX_SIZE */
@@ -65,6 +68,7 @@ typedef enum iot_security_key_id {
 	IOT_SECURITY_KEY_ID_DEVICE_PUBLIC,
 	IOT_SECURITY_KEY_ID_DEVICE_PRIVATE,
 	IOT_SECURITY_KEY_ID_SHARED_SECRET,
+	IOT_SECURITY_KEY_ID_EPHEMERAL,
 	IOT_SECURITY_KEY_ID_MAX,
 } iot_security_key_id_t;
 
@@ -109,6 +113,7 @@ typedef struct iot_security_key_params {
 * @brief Contains ecdh information
 */
 typedef struct iot_security_ecdh_params {
+	iot_security_key_id_t key_id;                   /** @brief a key identity of own key pair */
 	iot_security_buffer_t t_seckey;                 /** @brief a pointer to a things secret key based on curve25519 (software backend only) */
 	iot_security_buffer_t c_pubkey;                 /** @brief a pointer to a server public key based on curve25519 */
 	iot_security_buffer_t salt;                     /** @brief a pointer to a random token as a salt */
