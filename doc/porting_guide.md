@@ -6,9 +6,9 @@ This document explains how you can port the SmartThings Device SDK(STDK for shor
 
 By default, the STDK uses the build system of the chipset vendor, so you must install the toolchain provided by the vendor of the chipset that you want to develop.
 
-- **Example for ESP8266**
+- **Example for ESP32**
 
-  ESP8266 supports multiple host environments including Windows, Linux, and macOS. Based on experience, compile times are significantly faster on Linux but it is up to you which environment you prefer to use. Anyway, in this document, we will describe this on Linux. If you want to use other environments, please refer to the [chipset vendor's guides](https://docs.espressif.com/projects/esp8266-rtos-sdk/en/latest/index.html).
+  ESP32 supports multiple host environments including Windows, Linux, and macOS. Based on experience, compile times are significantly faster on Linux but it is up to you which environment you prefer to use. Anyway, in this document, we will describe this on Linux. If you want to use other environments, please refer to the [chipset vendor's guides](https://docs.espressif.com/projects/esp-idf/en/latest/esp32/get-started/index.html).
 
   1. Get STDK source code
 
@@ -32,30 +32,14 @@ By default, the STDK uses the build system of the chipset vendor, so you must in
      ```sh
      mkdir -p ~/esp
      cd ~/esp
-     git clone https://github.com/espressif/ESP8266_RTOS_SDK.git
+     git clone --recursive https://github.com/espressif/esp-idf.git
      ```
 
-  3. Get toolchain
-
-     Get the ESP8266 toolchain for Linux, available on the Expressif website :
-
-     - [64-bit Linux](https://dl.espressif.com/dl/xtensa-lx106-elf-linux64-1.22.0-92-g8facf4c-5.2.0.tar.gz)
-     - [32-bit Linux](https://dl.espressif.com/dl/xtensa-lx106-elf-linux32-1.22.0-92-g8facf4c-5.2.0.tar.gz)
-
-     Once the file is downloaded, extract it in the ~/esp directory.
-  
-     ```sh
-     cd ~/esp
-     tar -xzf ~/Downloads/xtensa-lx106-elf-linux64-1.22.0-92-g8facf4c-5.2.0.tar.gz
-     ```
-
-     The above command places the files in the ~/esp/xtensa-lx106-elf/ directory.   
-
-  4. Setup build environment
+  3. Setup build environment
 
      Now you have to choose whether to configure the build environment as a chipset SDK-based or STDK-based.
   
-     If you want to configure a build environment based on chipset SDK, you can place the IoT core device library into `~/esp/ESP8266_RTOS_SDK/components/` . From now on, it's more helpful to see the chipset vendor's guides for more details.
+     If you want to configure a build environment based on chipset SDK, you can place the IoT core device library into `~/esp/esp-idf/components/` . From now on, it's more helpful to see the chipset vendor's guides for more details.
 
      Here, l will explain setting up a build environment based on the STDK [reference git repository](https://github.com/SmartThingsCommunity/st-device-sdk-c-ref).
 
@@ -68,15 +52,24 @@ By default, the STDK uses the build system of the chipset vendor, so you must in
       
      #Place the chipset SDK into reference(examples) git repository.
      cd ~/st-device-sdk-c-ref/bsp
-     mkdir esp8266
-     cp -r ~/esp/ESP8266_RTOS_SDK/* ./esp8266/
+     mkdir esp32
+     cp -r ~/esp/esp-idf/* ./esp32/
      ```
 
      After porting, you can register this job as git submodules and do it easily.
 
+  4. Set up the tools
+
+     Aside from the ESP-IDF, you also need to install the tools used by ESP-IDF, such as the compiler, debugger, Python packages, etc.
+
+     ```sh
+     cd ~/esp32
+     ./install.sh esp32
+     ```
+
   5. Make a build script.
 
-     Please refer to the pre-supplied scripts(such as `build.sh`, `build_esp8266.sh`) that ported on the ESP8266 board using freeRTOS for easier understanding.
+     Please refer to the pre-supplied scripts(such as `build.sh`, `build_esp32.sh`) that ported on the ESP32 board using freeRTOS for easier understanding.
 
      ```sh
      cd ~/st-device-sdk-c-ref
@@ -88,10 +81,10 @@ By default, the STDK uses the build system of the chipset vendor, so you must in
      |-- setup.sh
      `-- tools
          |-- ......
-         |-- esp8266
-         |   |-- build_esp8266.sh
+         |-- esp32
+         |   |-- build_esp32.sh
          |   |-- ......
-         |   `-- setup_esp8266.sh
+         |   `-- setup_esp32.sh
          |-- ......
      ```
 
@@ -108,7 +101,7 @@ Like other SDKs, the STDK have platform-dependent and platform-independent direc
     - include : there are declarations of functions to be ported
     - **port** : add a new directory that you want to port
       - **bsp**
-        - **esp8266**
+        - **esp32**
         - **posix**
         - **{new chipset}**
       - **net**
@@ -131,7 +124,7 @@ If you port a new chipset or OS, please submit or inform your porting results to
 
 The IoT core device library has a porting layer to support the use of the same APIs in the device application, even if the platform changes. In the current STDK version, the platform-dependent directories that must be ported are present in the `src/port/bsp`, `src/port/net` and `src/port/os` of [IoT core device library git repo](https://github.com/SmartThingsCommunity/st-device-sdk-c).
 
-<img src="res/st_device_sdk_arch.jpg" style="zoom:80%;" align="left"/>
+![architecture](./res/st_device_sdk_arch.jpg)
 
 ### BSP(Board Support Package)
 
@@ -186,6 +179,8 @@ For additional information about API parameters, please refer to the [API docume
 | uint16_t iot_bsp_wifi_get_scan_result  ( iot_wifi_scan_result_t *  scan_result ) | Get the AP scan result.                                      |
 | iot_error_t iot_bsp_wifi_init  (  )                          | Initialize Wi-Fi function.                                   |
 | iot_error_t iot_bsp_wifi_set_mode  ( iot_wifi_conf *  conf ) | This function set the wifi operating mode as scan, station and softap |
+| iot_error_t iot_bsp_wifi_register_event_cb(iot_bsp_wifi_event_cb_t cb) | This function set Wi-Fi event callback such as IOT_WIFI_EVENT_SOFTAP_STA_JOIN, IOT_WIFI_EVENT_SOFTAP_STA_LEAVE |
+| void iot_bsp_wifi_clear_event_cb(void)                       | This function clears registered Wi-Fi event callback |
 
 #### Debug
 
@@ -238,3 +233,4 @@ These APIs are related to operating system.
 | unsigned int iot_os_timer_left_ms  ( iot_os_timer  timer )   | This function will return remaining time in ms unit          |
 | const char *iot_os_get_os_name  ( )                          | This function will return name of os                         |
 | const char *iot_os_get_os_version_string  ( )                | This function will return version string of os               |
+

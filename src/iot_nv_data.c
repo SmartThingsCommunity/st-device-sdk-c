@@ -47,6 +47,8 @@ static unsigned char *device_nv_info;
 static size_t device_nv_info_len;
 static const char name_privateKey[] = "privateKey";
 static const char name_publicKey[] = "publicKey";
+static const char name_rootCaCert[] = "rootCaCert";
+static const char name_subCaCert[] = "subCaCert";
 static const char name_deviceCert[] = "deviceCert";
 static const char name_serialNumber[] = "serialNumber";
 #endif
@@ -1082,6 +1084,12 @@ iot_error_t iot_nv_get_data_from_device_info(iot_nvd_t nv_id, iot_security_buffe
 		break;
 	case IOT_NVD_PUBLIC_KEY:
 		di_name = name_publicKey;
+		break;
+	case IOT_NVD_ROOT_CA_CERT:
+		di_name = name_rootCaCert;
+		break;
+	case IOT_NVD_SUB_CA_CERT:
+		di_name = name_subCaCert;
 		break;
 	case IOT_NVD_DEVICE_CERT:
 		di_name = name_deviceCert;

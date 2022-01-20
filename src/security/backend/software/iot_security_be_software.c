@@ -99,7 +99,8 @@ typedef struct iot_security_be_key2storage_id_map {
 static const iot_security_be_key2storage_id_map_t key2storage_id_map[] = {
 	{ IOT_SECURITY_KEY_ID_DEVICE_PUBLIC, IOT_NVD_PUBLIC_KEY },
 	{ IOT_SECURITY_KEY_ID_DEVICE_PRIVATE, IOT_NVD_PRIVATE_KEY },
-	{ IOT_SECURITY_KEY_ID_SHARED_SECRET, IOT_NVD_UNKNOWN }
+	{ IOT_SECURITY_KEY_ID_SHARED_SECRET, IOT_NVD_UNKNOWN },
+	{ IOT_SECURITY_KEY_ID_EPHEMERAL, IOT_NVD_UNKNOWN }
 };
 
 static inline iot_security_storage_id_t _iot_security_be_software_id_key2storage(iot_security_key_id_t key_id)
@@ -204,6 +205,97 @@ iot_error_t _iot_security_be_software_bsp_fs_load(iot_security_context_t *contex
 
 	return IOT_ERROR_NONE;
 };
+
+static void *ephemeral_keypair;
+
+STATIC_FUNCTION
+iot_error_t _iot_security_be_software_get_seckey_with_secp256v1(iot_security_key_id_t key_id, iot_security_buffer_t *key_buf)
+{
+	mbedtls_ecp_keypair *mbed_ecp_keypair;
+	unsigned char raw[IOT_SECURITY_EC_SECKEY_LEN];
+	size_t olen;
+	int ret;
+
+	if (key_id != IOT_SECURITY_KEY_ID_EPHEMERAL) {
+		IOT_ERROR("key is is not a ephemeral key");
+		IOT_ERROR_DUMP_AND_RETURN(KEY_INVALID_ID, 0);
+	}
+
+	if (!ephemeral_keypair) {
+		IOT_ERROR("ephemeral key pair is null");
+		IOT_ERROR_DUMP_AND_RETURN(KEY_NOT_FOUND, 0);
+	}
+
+	mbed_ecp_keypair = ephemeral_keypair;
+
+	ret = mbedtls_mpi_write_binary(&mbed_ecp_keypair->d, raw, sizeof(raw));
+	if (ret) {
+		IOT_ERROR("mbedtls_ecp_point_write_binary = -0x%04X", -ret);
+		printf("mbedtls_ecp_point_write_binary = -0x%04X", -ret);
+		key_buf->len = 0;
+		iot_os_free(key_buf->p);
+		IOT_ERROR_DUMP_AND_RETURN(MANAGER_KEY_GET, -ret);
+	}
+
+	/* remove ecp prefix */
+	key_buf->len = sizeof(raw);
+	key_buf->p = (unsigned char *)iot_os_malloc(key_buf->len);
+	if (!key_buf->p) {
+		IOT_ERROR("failed to malloc for pubkey");
+		key_buf->len = 0;
+		IOT_ERROR_DUMP_AND_RETURN(MEM_ALLOC, 0);
+	}
+
+	memcpy(key_buf->p, raw, key_buf->len);
+
+	return IOT_ERROR_NONE;
+}
+
+STATIC_FUNCTION
+iot_error_t _iot_security_be_software_get_pubkey_with_secp256v1(iot_security_key_id_t key_id, iot_security_buffer_t *key_buf)
+{
+	mbedtls_ecp_keypair *mbed_ecp_keypair;
+	unsigned char raw[IOT_SECURITY_EC_PUBKEY_LEN + 1];
+	size_t olen;
+	int ret;
+
+	if (key_id != IOT_SECURITY_KEY_ID_EPHEMERAL) {
+		IOT_ERROR("key is is not a ephemeral key");
+		IOT_ERROR_DUMP_AND_RETURN(KEY_INVALID_ID, 0);
+	}
+
+	if (!ephemeral_keypair) {
+		IOT_ERROR("ephemeral key pair is null");
+		IOT_ERROR_DUMP_AND_RETURN(KEY_NOT_FOUND, 0);
+	}
+
+	mbed_ecp_keypair = ephemeral_keypair;
+
+	ret = mbedtls_ecp_point_write_binary(&mbed_ecp_keypair->grp,
+					     &mbed_ecp_keypair->Q,
+					     MBEDTLS_ECP_PF_UNCOMPRESSED,
+					     &olen, raw, sizeof(raw));
+	if (ret) {
+		IOT_ERROR("mbedtls_ecp_point_write_binary = -0x%04X", -ret);
+		printf("mbedtls_ecp_point_write_binary = -0x%04X", -ret);
+		key_buf->len = 0;
+		iot_os_free(key_buf->p);
+		IOT_ERROR_DUMP_AND_RETURN(MANAGER_KEY_GET, -ret);
+	}
+
+	/* remove ecp prefix */
+	key_buf->len = olen - 1;
+	key_buf->p = (unsigned char *)iot_os_malloc(key_buf->len);
+	if (!key_buf->p) {
+		IOT_ERROR("failed to malloc for pubkey");
+		key_buf->len = 0;
+		IOT_ERROR_DUMP_AND_RETURN(MEM_ALLOC, 0);
+	}
+
+	memcpy(key_buf->p, &raw[1], key_buf->len);
+
+	return IOT_ERROR_NONE;
+}
 
 #if defined(CONFIG_STDK_IOT_CORE_CRYPTO_SUPPORT_ED25519)
 STATIC_FUNCTION
@@ -1226,6 +1318,91 @@ iot_error_t _iot_security_be_software_cipher_aes_decrypt(iot_security_context_t 
 }
 
 STATIC_FUNCTION
+iot_error_t _iot_security_be_software_manager_generate_key(iot_security_context_t *context, iot_security_key_id_t key_id)
+{
+	iot_error_t err = IOT_ERROR_SECURITY_MANAGER_KEY_GENERATE;
+	int ret;
+
+	mbedtls_ecp_keypair *mbed_ecp_keypair;
+	const char *curve_name = "secp256r1";
+	const mbedtls_ecp_curve_info *mbed_curve_info;
+
+	mbedtls_ctr_drbg_context mbed_ctr_drbg;
+	mbedtls_entropy_context mbed_entropy;
+	mbedtls_ctr_drbg_init(&mbed_ctr_drbg);
+	mbedtls_entropy_init(&mbed_entropy);
+	const char *pers = "_iot_security_be_software_manager_generate_key";
+
+	if (key_id != IOT_SECURITY_KEY_ID_EPHEMERAL) {
+		IOT_ERROR("key id is not for a ephemeral");
+		IOT_ERROR_DUMP_AND_RETURN(KEY_INVALID_ID, 0);
+	}
+
+	ret = mbedtls_ctr_drbg_seed(&mbed_ctr_drbg, mbedtls_entropy_func, &mbed_entropy, (const unsigned char *)pers, strlen(pers));
+	if (ret) {
+		IOT_ERROR("mbedtls_ctr_drbg_seed = -0x%04X", -ret);
+		IOT_DUMP(IOT_DEBUG_LEVEL_ERROR, err, __LINE__, -ret);
+		return err;
+	}
+
+	mbed_curve_info = mbedtls_ecp_curve_info_from_name(curve_name);
+	if (mbed_curve_info == NULL) {
+		IOT_ERROR("mbedtls_ecp_curve_info_from_name = -0x%04X", -ret);
+		IOT_DUMP(IOT_DEBUG_LEVEL_ERROR, err, __LINE__, -ret);
+		goto exit;
+	}
+
+	mbed_ecp_keypair = (mbedtls_ecp_keypair *)iot_os_malloc(sizeof(mbedtls_ecp_keypair));
+	if (!mbed_ecp_keypair) {
+		IOT_ERROR("failed to malloc for ephemeral keypair");
+		err = IOT_ERROR_SECURITY_MEM_ALLOC;
+		IOT_DUMP(IOT_DEBUG_LEVEL_ERROR, err, __LINE__, 0);
+		goto exit;
+	}
+
+	mbedtls_ecp_group_init(&mbed_ecp_keypair->grp);
+	mbedtls_mpi_init(&mbed_ecp_keypair->d);
+	mbedtls_ecp_point_init(&mbed_ecp_keypair->Q);
+
+	ret = mbedtls_ecp_gen_key(mbed_curve_info->grp_id, mbed_ecp_keypair, mbedtls_ctr_drbg_random, &mbed_ctr_drbg);
+	if (ret) {
+		IOT_ERROR("mbedtls_ecp_gen_key = -0x%04X", -ret);
+		IOT_DUMP(IOT_DEBUG_LEVEL_ERROR, err, __LINE__, -ret);
+		goto exit_keypair_buffer_free;
+	}
+
+	ephemeral_keypair = (void *)mbed_ecp_keypair;
+	err = IOT_ERROR_NONE;
+	goto exit;
+
+exit_keypair_buffer_free:
+	iot_os_free(ephemeral_keypair);
+exit:
+	mbedtls_ctr_drbg_free(&mbed_ctr_drbg);
+	mbedtls_entropy_free(&mbed_entropy);
+
+	return err;
+}
+
+STATIC_FUNCTION
+iot_error_t _iot_security_be_software_manager_remove_key(iot_security_context_t *context, iot_security_key_id_t key_id)
+{
+	iot_error_t err = IOT_ERROR_NONE;
+
+	if (key_id != IOT_SECURITY_KEY_ID_EPHEMERAL) {
+		IOT_ERROR("key id %d is not supported");
+		IOT_ERROR_DUMP_AND_RETURN(KEY_INVALID_ID, 0);
+	}
+
+	if (ephemeral_keypair) {
+		mbedtls_ecp_keypair_free((mbedtls_ecp_keypair *)ephemeral_keypair);
+		iot_os_free(ephemeral_keypair);
+	}
+
+	return err;
+}
+
+STATIC_FUNCTION
 iot_error_t _iot_security_be_software_manager_set_key(iot_security_context_t *context, iot_security_key_params_t *key_params)
 {
 	iot_error_t err;
@@ -1296,6 +1473,11 @@ iot_error_t _iot_security_be_software_manager_get_key(iot_security_context_t *co
 			IOT_ERROR_DUMP_AND_RETURN(MEM_ALLOC, 0);
 		}
 		memcpy(key_buf->p, context->cipher_params->key.p, key_buf->len);
+	} else if (key_id == IOT_SECURITY_KEY_ID_EPHEMERAL) {
+		err = _iot_security_be_software_get_pubkey_with_secp256v1(key_id, key_buf);
+		if (err) {
+			return err;
+		}
 	} else {
 		err = _iot_security_be_software_bsp_fs_load(context, storage_id, key_buf);
 		if (err) {
@@ -1498,7 +1680,7 @@ iot_error_t _iot_security_be_software_swap_secret(iot_security_buffer_t *src, io
 }
 
 STATIC_FUNCTION
-iot_error_t _iot_security_be_software_ecdh_compute_premaster_secret(
+iot_error_t _iot_security_be_software_ecdh_compute_premaster_secret_ed25519(
 			iot_security_buffer_t *t_seckey_buf,
 			iot_security_buffer_t *c_pubkey_buf,
 			iot_security_buffer_t *output_buf)
@@ -1636,6 +1818,137 @@ exit:
 }
 
 STATIC_FUNCTION
+iot_error_t _iot_security_be_software_ecdh_compute_premaster_secret_ecdsa(
+			iot_security_buffer_t *t_seckey_buf,
+			iot_security_buffer_t *c_pubkey_buf,
+			iot_security_buffer_t *output_buf)
+{
+	iot_error_t err;
+	mbedtls_ecdh_context mbed_ecdh;
+	mbedtls_ctr_drbg_context mbed_ctr_drbg;
+	mbedtls_entropy_context mbed_entropy;
+	mbedtls_ecp_group_id mbed_ecp_grp_id = MBEDTLS_ECP_DP_SECP256R1;
+	const char *pers = "iot_security_ecdh";
+	iot_security_buffer_t pmsecret_buf = { 0 };
+	size_t key_len;
+	size_t secret_len;
+	unsigned char public_buf[66];		/* length + tag + Q.X + Q.Y */
+	int ret;
+
+	if (!t_seckey_buf || !c_pubkey_buf || !output_buf) {
+		IOT_ERROR("parameters is invalid");
+		IOT_ERROR_DUMP_AND_RETURN(INVALID_ARGS, 0);
+	}
+
+	key_len = IOT_SECURITY_EC_PUBKEY_LEN;
+	secret_len = IOT_SECURITY_SECRET_LEN;
+
+	if (t_seckey_buf->len > key_len) {
+		IOT_ERROR("things seckey is too large");
+		IOT_ERROR_DUMP_AND_RETURN(ECDH_INVALID_SECKEY, t_seckey_buf->len);
+	}
+
+	if (c_pubkey_buf->len > key_len) {
+		IOT_ERROR("cloud pubkey is too large");
+		IOT_ERROR_DUMP_AND_RETURN(ECDH_INVALID_PUBKEY, c_pubkey_buf->len);
+	}
+
+	pmsecret_buf.len = secret_len;
+	pmsecret_buf.p = (unsigned char *)iot_os_malloc(pmsecret_buf.len);
+	if (!pmsecret_buf.p) {
+		IOT_ERROR("malloc failed for pre master secret");
+		IOT_ERROR_DUMP_AND_RETURN(MEM_ALLOC, 0);
+	}
+
+	mbedtls_ecdh_init(&mbed_ecdh);
+	mbedtls_ctr_drbg_init(&mbed_ctr_drbg);
+	mbedtls_entropy_init(&mbed_entropy);
+
+	ret = mbedtls_ctr_drbg_seed(&mbed_ctr_drbg, mbedtls_entropy_func, &mbed_entropy,
+				    (const unsigned char *)pers, strlen(pers));
+	if (ret) {
+		IOT_ERROR("mbedtls_ctr_drbg_seed = -0x%04X", -ret);
+		err = IOT_ERROR_SECURITY_ECDH_LIBRARY;
+		IOT_DUMP(IOT_DEBUG_LEVEL_ERROR, err, __LINE__, 0);
+		goto exit;
+	}
+
+	ret = mbedtls_ecp_group_load(&mbed_ecdh.grp, mbed_ecp_grp_id);
+	if (ret) {
+		IOT_ERROR("mbedtls_ecp_group_load = -0x%04X", -ret);
+		err = IOT_ERROR_SECURITY_ECDH_LIBRARY;
+		IOT_DUMP(IOT_DEBUG_LEVEL_ERROR, err, __LINE__, 0);
+		goto exit;
+	}
+
+	/*
+	 * own key
+	 */
+	ret = mbedtls_ecp_group_load(&mbed_ecdh.grp, mbed_ecp_grp_id);
+	if (ret) {
+		IOT_ERROR("mbedtls_ecp_group_load = -0x%04X", -ret);
+		err = IOT_ERROR_SECURITY_ECDH_LIBRARY;
+		IOT_DUMP(IOT_DEBUG_LEVEL_ERROR, err, __LINE__, 0);
+		goto exit;
+	}
+
+	ret = mbedtls_mpi_read_binary(&mbed_ecdh.d, t_seckey_buf->p, t_seckey_buf->len);
+	if (ret) {
+		IOT_ERROR("mbedtls_mpi_read_binary = -0x%04X", -ret);
+		err = IOT_ERROR_SECURITY_ECDH_LIBRARY;
+		IOT_DUMP(IOT_DEBUG_LEVEL_ERROR, err, __LINE__, 0);
+		goto exit;
+	}
+
+	/*
+	 * peer key
+	 */
+	public_buf[0] = c_pubkey_buf->len + 1;
+	public_buf[1] = 0x04; // uncompressed
+	memcpy(&public_buf[2], c_pubkey_buf->p, c_pubkey_buf->len);
+
+	ret = mbedtls_ecdh_read_public(&mbed_ecdh, public_buf, sizeof(public_buf));
+	if (ret) {
+		printf("mbedtls_ecdh_read_public = -0x%04X", -ret);
+		IOT_ERROR("mbedtls_ecdh_read_public = -0x%04X", -ret);
+		err = IOT_ERROR_SECURITY_ECDH_LIBRARY;
+		IOT_DUMP(IOT_DEBUG_LEVEL_ERROR, err, __LINE__, 0);
+		goto exit;
+	}
+
+	/*
+	 * ecdh
+	 */
+
+	ret = mbedtls_ecdh_compute_shared(&mbed_ecdh.grp, &mbed_ecdh.z, &mbed_ecdh.Qp, &mbed_ecdh.d, mbedtls_ctr_drbg_random, &mbed_ctr_drbg);
+	if (ret) {
+		IOT_ERROR("mbedtls_ecdh_compute_shared = -0x%04X", -ret);
+		err = IOT_ERROR_SECURITY_ECDH_LIBRARY;
+		IOT_DUMP(IOT_DEBUG_LEVEL_ERROR, err, __LINE__, 0);
+		goto exit;
+	}
+
+	ret = mbedtls_mpi_write_binary(&mbed_ecdh.z, pmsecret_buf.p, pmsecret_buf.len);
+	if (ret) {
+		IOT_ERROR("mbedtls_mpi_write_binary = -0x%04X", -ret);
+		err = IOT_ERROR_SECURITY_ECDH_LIBRARY;
+		IOT_DUMP(IOT_DEBUG_LEVEL_ERROR, err, __LINE__, 0);
+		goto exit;
+	}
+
+	output_buf->p = pmsecret_buf.p;
+	output_buf->len = pmsecret_buf.len;
+	err = IOT_ERROR_NONE;
+
+exit:
+	mbedtls_ecdh_free(&mbed_ecdh);
+	mbedtls_ctr_drbg_free(&mbed_ctr_drbg);
+	mbedtls_entropy_free(&mbed_entropy);
+
+	return err;
+}
+
+STATIC_FUNCTION
 iot_error_t _iot_security_be_software_ecdh_copy_params(iot_security_buffer_t *src, iot_security_buffer_t *dst)
 {
 	if (src->p) {
@@ -1676,6 +1989,8 @@ iot_error_t _iot_security_be_software_ecdh_set_params(iot_security_context_t *co
 		IOT_ERROR_DUMP_AND_RETURN(INVALID_ARGS, 0);
 	}
 
+	context->ecdh_params->key_id = ecdh_set_params->key_id;
+
 	err = _iot_security_be_software_ecdh_copy_params(&ecdh_set_params->t_seckey, &context->ecdh_params->t_seckey);
 	if (err) {
 		return err;
@@ -1710,9 +2025,40 @@ iot_error_t _iot_security_be_software_ecdh_compute_shared_secret(iot_security_co
 
 	ecdh_params = context->ecdh_params;
 
-	err = _iot_security_be_software_ecdh_compute_premaster_secret(&ecdh_params->t_seckey, &ecdh_params->c_pubkey, &pmsecret_buf);
-	if (err) {
-		goto exit;
+	switch (ecdh_params->key_id) {
+	case IOT_SECURITY_KEY_ID_EPHEMERAL:
+#if defined(CONFIG_STDK_IOT_CORE_SECURITY_ONLY_UNITTEST)
+		if (ecdh_params->t_seckey.p) {
+			err = _iot_security_be_software_ecdh_compute_premaster_secret_ecdsa(&ecdh_params->t_seckey, &ecdh_params->c_pubkey, &pmsecret_buf);
+		} else
+#endif
+		{
+			iot_security_buffer_t t_seckey_buf = { 0 };
+
+			err = _iot_security_be_software_get_seckey_with_secp256v1(ecdh_params->key_id, &t_seckey_buf);
+			if (err) {
+				IOT_DUMP(IOT_DEBUG_LEVEL_ERROR, err, __LINE__, 0);
+				goto exit;
+			}
+
+			err = _iot_security_be_software_ecdh_compute_premaster_secret_ecdsa(&t_seckey_buf, &ecdh_params->c_pubkey, &pmsecret_buf);
+
+			if (err) {
+				IOT_DUMP(IOT_DEBUG_LEVEL_ERROR, err, __LINE__, 0);
+				_iot_security_be_software_buffer_free(&t_seckey_buf);
+				goto exit;
+			}
+
+			_iot_security_be_software_buffer_free(&t_seckey_buf);
+		}
+		break;
+	default:
+		err = _iot_security_be_software_ecdh_compute_premaster_secret_ed25519(&ecdh_params->t_seckey, &ecdh_params->c_pubkey, &pmsecret_buf);
+		if (err) {
+			IOT_DUMP(IOT_DEBUG_LEVEL_ERROR, err, __LINE__, 0);
+			goto exit;
+		}
+		break;
 	}
 
 	secret_buf.len = pmsecret_buf.len + ecdh_params->salt.len;
@@ -1866,6 +2212,8 @@ const iot_security_be_funcs_t iot_security_be_software_funcs = {
 
 	.manager_init = NULL,
 	.manager_deinit = NULL,
+	.manager_generate_key = _iot_security_be_software_manager_generate_key,
+	.manager_remove_key = _iot_security_be_software_manager_remove_key,
 	.manager_set_key = _iot_security_be_software_manager_set_key,
 	.manager_get_key = _iot_security_be_software_manager_get_key,
 	.manager_get_certificate = _iot_security_be_software_manager_get_certificate,

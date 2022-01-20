@@ -67,6 +67,62 @@ iot_error_t iot_security_manager_deinit(iot_security_context_t *context)
 	return IOT_ERROR_NONE;
 }
 
+iot_error_t iot_security_manager_generate_key(iot_security_context_t *context, iot_security_key_id_t key_id)
+{
+	iot_error_t err;
+
+	err = iot_security_check_backend_funcs_entry_is_valid(context);
+	if (err) {
+		return err;
+	}
+
+	if (key_id != IOT_SECURITY_KEY_ID_EPHEMERAL) {
+		IOT_ERROR("key id %d is invalid", key_id);
+		IOT_ERROR_DUMP_AND_RETURN(KEY_INVALID_ID, 0);
+	}
+
+	if (!context->be_context->fn->manager_generate_key) {
+		IOT_ERROR("be->fn->manager_generate_key is null");
+		IOT_ERROR_DUMP_AND_RETURN(BE_FUNC_NULL, 0);
+	}
+
+	err = context->be_context->fn->manager_generate_key(context, key_id);
+	if (err) {
+		IOT_ERROR("be->fn->manager_generate_key = %d", err);
+		return err;
+	}
+
+	return IOT_ERROR_NONE;
+}
+
+iot_error_t iot_security_manager_remove_key(iot_security_context_t *context, iot_security_key_id_t key_id)
+{
+	iot_error_t err;
+
+	err = iot_security_check_backend_funcs_entry_is_valid(context);
+	if (err) {
+		return err;
+	}
+
+	if (key_id != IOT_SECURITY_KEY_ID_EPHEMERAL) {
+		IOT_ERROR("key id %d is invalid", key_id);
+		IOT_ERROR_DUMP_AND_RETURN(KEY_INVALID_ID, 0);
+	}
+
+	if (!context->be_context->fn->manager_remove_key) {
+		IOT_ERROR("be->fn->manager_remove_key is null");
+		IOT_ERROR_DUMP_AND_RETURN(BE_FUNC_NULL, 0);
+	}
+
+	err = context->be_context->fn->manager_remove_key(context, key_id);
+	if (err) {
+		IOT_ERROR("be->fn->manager_remove_key = %d", err);
+		return err;
+	}
+
+	return IOT_ERROR_NONE;
+}
+
 iot_error_t iot_security_manager_set_key(iot_security_context_t *context, iot_security_key_params_t *key_params)
 {
 	iot_error_t err;
