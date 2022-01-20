@@ -1,5 +1,23 @@
 # HISTORY
 
+## 1.7.5 : Changes until v1.7.5
+New Improvement or features:
+ - test: add TC for iot_security_manager_get_key with ephemeral key
+ - security: added support ec key based ecdh
+ - nv: added support root ca and sub ca certificate in device info
+ - security: added support for public key import of ephemeral key
+ - security: implement ephemeral key pair generation
+ - security: add interface to generate and remove a ephemeral key pair
+
+Enhancements or amendments:
+ - update porting guide document
+ - cmake: use builtin libsodium instead of using system installed
+
+Bug fixed:
+ - test: fix unit test failure caused by removing enforced serial confirm type
+ - doc: porting_guide: add missing Wi-Fi port API description
+ - easysetup: make iot_bsp_wifi_register_event_cb() as optional
+
 ## 1.7.4 : Changes until v1.7.4
 New Improvements or features:
  - update for help contents adding previous error code
