@@ -427,9 +427,11 @@ uint16_t iot_bsp_wifi_get_scan_result(iot_wifi_scan_result_t *scan_result)
 					iot_wifi_auth_mode_t conv_auth_mode;
 
 					switch (ap_list[i].authmode) {
+#if (ESP_IDF_VERSION >= ESP_IDF_VERSION_VAL(4,3,0))
 						case WIFI_AUTH_WAPI_PSK:
 							conv_auth_mode = IOT_WIFI_AUTH_UNKNOWN;
 							break;
+#endif
 						case WIFI_AUTH_WPA2_WPA3_PSK:
 						case WIFI_AUTH_WPA3_PSK:
 							conv_auth_mode = IOT_WIFI_AUTH_WPA3_PERSONAL;
