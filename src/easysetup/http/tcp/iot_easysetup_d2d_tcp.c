@@ -1377,6 +1377,7 @@ iot_error_t _es_wifiprovisioninginfo_handler(struct iot_context *ctx, char *inpu
 	err = iot_nv_get_serial_number(&serial, &serial_len);
 	if (err != IOT_ERROR_NONE) {
 		IOT_ERROR("Failed to get serial number (%d)", err);
+		IOT_ES_DUMP(IOT_DEBUG_LEVEL_ERROR, IOT_DUMP_EASYSETUP_SERIAL_NUMBER_GET_FAIL, err);
 		err = IOT_ERROR_EASYSETUP_SERIAL_NUMBER_GET_FAIL;
 		goto out;
 	}
