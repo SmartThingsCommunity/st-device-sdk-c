@@ -844,6 +844,8 @@ iot_error_t _es_wifiprovisioninginfo_handler(struct iot_context *ctx, char *in_p
 	char *recv_msg = NULL;
 	JSON_H *root = NULL;
 	iot_error_t err = IOT_ERROR_NONE;
+	char *serial = NULL;
+	size_t serial_len;
 
 	root = JSON_PARSE(in_payload);
 	if (!root) {
@@ -891,7 +893,16 @@ iot_error_t _es_wifiprovisioninginfo_handler(struct iot_context *ctx, char *in_p
 		err = IOT_ERROR_EASYSETUP_JSON_CREATE_ERROR;
 		goto out;
 	}
+
 	JSON_ADD_ITEM_TO_OBJECT(root, "lookupId", JSON_CREATE_STRING(ctx->lookup_id));
+
+	err = iot_nv_get_serial_number(&serial, &serial_len);
+	if (err != IOT_ERROR_NONE) {
+		IOT_ERROR("Failed to get serial number (%d)", err);
+		err = IOT_ERROR_EASYSETUP_SERIAL_NUMBER_GET_FAIL;
+		goto out;
+	}
+	JSON_ADD_ITEM_TO_OBJECT(root, "sn", JSON_CREATE_STRING(serial));
 
 	final_msg = JSON_PRINT(root);
 
