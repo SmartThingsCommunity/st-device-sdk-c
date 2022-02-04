@@ -573,6 +573,10 @@ static iot_error_t _do_iot_main_command(struct iot_context *ctx,
 					state_opt = ctx->req_state;
 					err = iot_state_update(ctx,
 							next_state, state_opt);
+					if (conf->mode == IOT_WIFI_MODE_SOFTAP)
+							iot_set_st_ecode(ctx, IOT_ST_ECODE_NE01);
+					else if (conf->mode == IOT_WIFI_MODE_STATION)
+							iot_set_st_ecode(ctx, IOT_ST_ECODE_NE10);
 				} else {
 					IOT_WARN("Duplicated error handling, skip updating!!");
 					err = IOT_ERROR_DUPLICATED_CMD;

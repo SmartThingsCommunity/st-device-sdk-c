@@ -1450,21 +1450,21 @@ iot_error_t iot_get_st_ecode(struct iot_context *ctx, struct iot_st_ecode *st_ec
 	return IOT_ERROR_NONE;
 }
 
-iot_error_t iot_set_st_ecode(struct iot_context *ctx, struct iot_st_ecode st_ecode)
+iot_error_t iot_set_st_ecode(struct iot_context *ctx, iot_st_ecode_t ecode)
 {
+	struct iot_st_ecode st_ecode;
+
 	if (ctx == NULL) {
 		IOT_ERROR("There is no ctx");
 		return IOT_ERROR_INVALID_ARGS;
 	}
 
-	if (st_ecode.is_happended == true) {
-		memcpy(&(ctx->last_st_ecode), &st_ecode, sizeof(struct iot_st_ecode));
-	} else {
-		ctx->last_st_ecode.is_happended = false;
-	}
+	iot_ecodeType_to_string(ecode, &st_ecode);
+	memcpy(&(ctx->last_st_ecode), &st_ecode, sizeof(struct iot_st_ecode));
 
 	return IOT_ERROR_NONE;
 }
+
 
 /**************************************************************
 *                       Synchronous Call                      *
