@@ -22,8 +22,9 @@
 #include "freertos/FreeRTOS.h"
 #include "freertos/event_groups.h"
 #include "esp_wifi.h"
-#include "esp_event_loop.h"
+#include "esp_event.h"
 #include "esp_log.h"
+#include "esp_netif.h"
 
 #include "iot_debug.h"
 #include "iot_bsp_wifi.h"
@@ -43,6 +44,12 @@ const int WIFI_EVENT_BIT_ALL = BIT0|BIT1|BIT2|BIT3|BIT4;
 static int WIFI_INITIALIZED = false;
 static EventGroupHandle_t wifi_event_group;
 static iot_bsp_wifi_event_cb_t wifi_event_cb;
+
+static system_event_cb_t s_event_handler_cb = NULL;
+static void *s_event_ctx = NULL;
+static bool s_initialized = false;
+
+ESP_EVENT_DEFINE_BASE(SYSTEM_EVENT);
 
 static void _initialize_sntp(void)
 {
@@ -117,7 +124,7 @@ static esp_err_t event_handler(void *ctx, system_event_t *event)
 	case SYSTEM_EVENT_STA_GOT_IP:
 		esp_wifi_sta_get_ap_info(&ap_info);
 		IOT_INFO("got ip:%s rssi:%ddBm",
-			ip4addr_ntoa(&event->event_info.got_ip.ip_info.ip), ap_info.rssi);
+			ip4addr_ntoa((ip4_addr_t *)&event->event_info.got_ip.ip_info.ip), ap_info.rssi);
 		IOT_DUMP(IOT_DEBUG_LEVEL_ERROR, IOT_DUMP_BSP_WIFI_EVENT_AUTH, ap_info.rssi, 0);
 		xEventGroupSetBits(wifi_event_group, WIFI_STA_CONNECT_BIT);
 		xEventGroupClearBits(wifi_event_group, WIFI_STA_DISCONNECT_BIT);
@@ -164,6 +171,50 @@ static esp_err_t event_handler(void *ctx, system_event_t *event)
 	return ESP_OK;
 }
 
+static void esp_event_post_to_user(void* arg, esp_event_base_t base, int32_t id, void* data)
+{
+	if (s_event_handler_cb) {
+		system_event_t* event = (system_event_t*) data;
+		(*s_event_handler_cb)(s_event_ctx, event);
+	}
+}
+
+esp_err_t esp_event_send_legacy(system_event_t *event)
+{
+	if (!s_initialized) {
+		IOT_ERROR("system event loop not initialized via esp_event_loop_init");
+		return ESP_ERR_INVALID_STATE;
+	}
+
+	return esp_event_post(SYSTEM_EVENT, event->event_id, event, sizeof(*event), portMAX_DELAY);
+}
+
+static esp_err_t esp_event_loop_init_wrap(system_event_cb_t cb, void *ctx)
+{
+	if (s_initialized) {
+		IOT_ERROR("system event loop already initialized");
+		return ESP_ERR_INVALID_STATE;
+	}
+
+	esp_err_t err = esp_event_loop_create_default();
+	if (err != ESP_OK && err != ESP_ERR_INVALID_STATE) {
+		IOT_ERROR("esp_event_loop_create_default is failed");
+		return err;
+	}
+
+	err = esp_event_handler_register(SYSTEM_EVENT, ESP_EVENT_ANY_ID, esp_event_post_to_user, NULL);
+	if (err != ESP_OK) {
+		IOT_ERROR("esp_event_handler_register is failed");
+		esp_event_loop_delete_default();
+		return err;
+	}
+
+	s_initialized = true;
+	s_event_handler_cb = cb;
+	s_event_ctx = ctx;
+	return ESP_OK;
+}
+
 iot_error_t iot_bsp_wifi_init()
 {
 	esp_err_t esp_ret;
@@ -175,13 +226,16 @@ iot_error_t iot_bsp_wifi_init()
 
 	wifi_event_group = xEventGroupCreate();
 
-	tcpip_adapter_init();
-	esp_ret = esp_event_loop_init(event_handler, NULL);
+	esp_netif_init();
+	esp_ret = esp_event_loop_init_wrap(event_handler, NULL);
 	if(esp_ret != ESP_OK) {
-		IOT_ERROR("esp_event_loop_init failed err=[%d]", esp_ret);
+		IOT_ERROR("esp_event_loop_init_wrap failed err=[%d]", esp_ret);
 		IOT_DUMP(IOT_DEBUG_LEVEL_ERROR, IOT_DUMP_BSP_WIFI_INIT_FAIL, esp_ret, __LINE__);
 		return IOT_ERROR_INIT_FAIL;
 	}
+
+	esp_netif_create_default_wifi_sta();
+	esp_netif_create_default_wifi_ap();
 
 	wifi_init_config_t cfg = WIFI_INIT_CONFIG_DEFAULT();
 	esp_ret = esp_wifi_init(&cfg);
