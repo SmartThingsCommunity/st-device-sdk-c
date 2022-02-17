@@ -68,7 +68,7 @@ typedef enum {
 
 typedef uint32_t iot_wifi_auth_mode_bits_t;
 
-inline uint32_t _iot_wifi_auth_mode_bit(iot_wifi_auth_mode_t auth_mode) {
+static inline uint32_t _iot_wifi_auth_mode_bit(iot_wifi_auth_mode_t auth_mode) {
 	return (1u << auth_mode);
 }
 #define IOT_WIFI_AUTH_MODE_BIT(_auth_mode)	_iot_wifi_auth_mode_bit(_auth_mode)
