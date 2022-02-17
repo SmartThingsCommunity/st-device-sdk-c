@@ -347,7 +347,13 @@ void _iot_mqtt_signin_client_callback(st_mqtt_event event, void *event_data, voi
 			}
 			break;
 		case ST_MQTT_EVENT_PUBLISH_FAILED:
+		case ST_MQTT_EVENT_PUBLISH_TIMEOUT:
 			{
+				if (event == ST_MQTT_EVENT_PUBLISH_FAILED) {
+					iot_set_st_ecode(ctx, IOT_ST_ECODE_CE40);
+				} else if (event == ST_MQTT_EVENT_PUBLISH_TIMEOUT) {
+					iot_set_st_ecode(ctx, IOT_ST_ECODE_CE41);
+				}
 				st_mqtt_msg *md = event_data;
 				char *mqtt_payload = md->payload;
 				iot_noti_data_t noti_data;
@@ -868,6 +874,11 @@ iot_error_t _iot_es_mqtt_connect(struct iot_context *ctx, st_mqtt_client target_
 			reboot = true;
 			iot_command_send(ctx, IOT_COMMAND_SELF_CLEANUP, &reboot, sizeof(bool));
 			iot_ret = IOT_ERROR_MQTT_REJECT_CONNECT;
+			break;
+
+		case E_ST_MQTT_PACKET_TIMEOUT:
+			ctx->mqtt_connect_critical_reject_count = 0;
+			iot_ret = IOT_ERROR_MQTT_CONNECT_TIMEOUT;
 			break;
 
 		default:

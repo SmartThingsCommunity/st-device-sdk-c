@@ -768,6 +768,12 @@ static iot_error_t _do_iot_main_command(struct iot_context *ctx,
 				IOT_ERROR("failed to iot_es_connect for registration\n");
 				IOT_DUMP_MAIN(ERROR, BASE, err);
 
+				if (err == IOT_ERROR_MQTT_CONNECT_TIMEOUT) {
+					iot_set_st_ecode(ctx, IOT_ST_ECODE_CE12);
+				} else {
+					iot_set_st_ecode(ctx, IOT_ST_ECODE_CE11);
+				}
+
 				if (ctx->req_state != IOT_STATE_CHANGE_FAILED) {
 					ctx->cmd_err |= (1u << cmd->cmd_type);
 					next_state = IOT_STATE_CHANGE_FAILED;
@@ -881,6 +887,12 @@ static iot_error_t _do_iot_main_command(struct iot_context *ctx,
 				next_state = IOT_STATE_UNKNOWN;
 			} else if (err != IOT_ERROR_NONE) {
 				IOT_ERROR("failed to iot_es_connect for communication\n");
+
+				if (err == IOT_ERROR_MQTT_CONNECT_TIMEOUT) {
+					iot_set_st_ecode(ctx, IOT_ST_ECODE_CE21);
+				} else {
+					iot_set_st_ecode(ctx, IOT_ST_ECODE_CE20);
+				}
 
 				ctx->cmd_err |= (1u << cmd->cmd_type);
 				next_state = IOT_STATE_CHANGE_FAILED;
@@ -1204,6 +1216,11 @@ static void _iot_main_task(struct iot_context *ctx)
 		} else if (ctx->evt_mqttcli) {
 			int rc = st_mqtt_yield(ctx->evt_mqttcli, 0);
 			if (rc < 0) {
+				if (rc == E_ST_MQTT_PING_FAIL) {
+					iot_set_st_ecode(ctx, IOT_ST_ECODE_CE32);
+				} else if (rc == E_ST_MQTT_PING_TIMEOUT) {
+					iot_set_st_ecode(ctx, IOT_ST_ECODE_CE33);
+				}
 				err = iot_es_disconnect(ctx, IOT_CONNECT_TYPE_COMMUNICATION);
 				if (err == IOT_ERROR_NONE) {
 					/* Quickly try to connect without user notification first */

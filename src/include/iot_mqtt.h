@@ -84,6 +84,7 @@ typedef struct st_mqtt_msg {
 typedef enum {
 	ST_MQTT_EVENT_MSG_DELIVERED = 1,
 	ST_MQTT_EVENT_PUBLISH_FAILED = 2,
+	ST_MQTT_EVENT_PUBLISH_TIMEOUT = 3,
 } st_mqtt_event;
 
 typedef void (*st_mqtt_event_callback)(st_mqtt_event event, void *event_data, void *usr_data);
@@ -104,6 +105,9 @@ enum {
 	E_ST_MQTT_BAD_USERNAME_OR_PASSWORD = -7,		/* MQTT connection username or password is malformed */
 	E_ST_MQTT_NOT_AUTHORIZED = -8,					/* MQTT client is not authorized to connect */
 	E_ST_MQTT_NETWORK_ERROR = -9,					/* MQTT network error */
+	E_ST_MQTT_PACKET_TIMEOUT = -10,					/* MQTT MQTT pending packet timeout */
+	E_ST_MQTT_PING_FAIL = -11,						/* MQTT send ping fail */
+	E_ST_MQTT_PING_TIMEOUT = -12,					/* MQTT send ping timeout */
 };
 
 /**
