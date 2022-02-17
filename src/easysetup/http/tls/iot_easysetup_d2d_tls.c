@@ -264,7 +264,6 @@ iot_error_t _es_confirm_check_manager(struct iot_context *ctx, enum ownership_va
 	unsigned char curr_event = 0;
 	size_t devsn_len;
 	iot_error_t err = IOT_ERROR_NONE;
-	struct iot_st_ecode st_ecode;
 
 	iot_os_eventgroup_clear_bits(ctx->iot_events, IOT_EVENT_BIT_EASYSETUP_CONFIRM);
 	ctx->curr_otm_feature = confirm_feature;
