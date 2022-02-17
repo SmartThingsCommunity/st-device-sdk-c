@@ -561,8 +561,9 @@ static iot_error_t _do_iot_main_command(struct iot_context *ctx,
 			} else {
 				err = iot_bsp_wifi_set_mode(conf);
 				if (err < 0) {
-					IOT_ERROR("failed to set wifi_set_mode\n");
+					IOT_ERROR("failed to set wifi_set_mode %d", err);
 					IOT_DUMP_MAIN(ERROR, BASE, err);
+					iot_set_st_ecode_from_conn_error(ctx, err);
 				}
 			}
 

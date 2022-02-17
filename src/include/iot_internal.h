@@ -362,13 +362,26 @@ iot_error_t iot_get_random_id_str(char *str, size_t max_sz);
 iot_error_t iot_get_st_ecode(struct iot_context *ctx, struct iot_st_ecode *st_ecode);
 
 /**
- * @brief	set new happended device error code for SmartThings App
- * @details	this function tries to set new happended device error code
+ * @brief	set new happened device error code for SmartThings App
+ * @details	this function tries to set new happened device error code
  * @param[in]	ctx			iot-core context
  * @param[in]	ecode	    help contents error type
  * @retval	IOT_ERROR_NONE                  success.
  */
 iot_error_t iot_set_st_ecode(struct iot_context *ctx, iot_st_ecode_t ecode);
+
+
+/**
+ * @brief	set device error code for SmartThings App from internal connection error
+ * @details	this function converts device error code from iot_error_t type connection error.
+ *          this function calls iot_set_st_ecode() internally.
+ *          iot_bsp_wifi_set_mode() should return proper iot_error_t value to send help contents error code
+ * @param[in]	ctx			iot-core context
+ * @param[in]	conn_error	    iot_error_t type connection error (-610 ~ -6xx)
+ * @retval	IOT_ERROR_NONE                  success.
+ *          IOT_ERROR_INVALID_ARGS          not supported error code and/or null context
+ */
+iot_error_t iot_set_st_ecode_from_conn_error(struct iot_context *ctx, iot_error_t conn_error);
 
 #endif /* _IOT_INTERNAL_H_ */
 

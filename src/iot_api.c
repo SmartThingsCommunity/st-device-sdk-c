@@ -1480,6 +1480,54 @@ static iot_error_t iot_ecodeType_to_string(iot_st_ecode_t ecode_type, struct iot
     return IOT_ERROR_NONE;
 }
 
+iot_error_t iot_set_st_ecode_from_conn_error(struct iot_context *ctx, iot_error_t conn_error)
+{
+	iot_st_ecode_t ecode;
+
+	switch (conn_error)
+	{
+		case IOT_ERROR_CONN_SOFTAP_CONF_FAIL:
+			ecode = IOT_ST_ECODE_NE01;
+			break;
+		case IOT_ERROR_CONN_SOFTAP_CONN_FAIL:
+			ecode = IOT_ST_ECODE_NE02;
+			break;
+		case IOT_ERROR_CONN_SOFTAP_DHCP_FAIL:
+			ecode = IOT_ST_ECODE_NE03;
+			break;
+		case IOT_ERROR_CONN_SOFTAP_AUTH_FAIL:
+			ecode = IOT_ST_ECODE_NE04;
+			break;
+		case IOT_ERROR_CONN_STA_CONF_FAIL:
+			ecode = IOT_ST_ECODE_NE10;
+			break;
+		case IOT_ERROR_CONN_STA_CONN_FAIL:
+			ecode = IOT_ST_ECODE_NE11;
+			break;
+		case IOT_ERROR_CONN_STA_DHCP_FAIL:
+			ecode = IOT_ST_ECODE_NE12;
+			break;
+		case IOT_ERROR_CONN_STA_AP_NOT_FOUND:
+			ecode = IOT_ST_ECODE_NE13;
+			break;
+		case IOT_ERROR_CONN_STA_ASSOC_FAIL:
+			ecode = IOT_ST_ECODE_NE14;
+			break;
+		case IOT_ERROR_CONN_STA_AUTH_FAIL:
+			ecode = IOT_ST_ECODE_NE15;
+			break;
+		case IOT_ERROR_CONN_STA_NO_INTERNET:
+			ecode = IOT_ST_ECODE_NE16;
+			break;
+		case IOT_ERROR_CONN_DNS_QUERY_FAIL:
+			ecode = IOT_ST_ECODE_NE17;
+			break;
+		default:
+			return IOT_ERROR_INVALID_ARGS;
+	}
+	return iot_set_st_ecode(ctx, ecode);
+}
+
 iot_error_t iot_get_st_ecode(struct iot_context *ctx, struct iot_st_ecode *st_ecode)
 {
 	if ((ctx == NULL) || (st_ecode == NULL)) {

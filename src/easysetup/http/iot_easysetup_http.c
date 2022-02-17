@@ -82,7 +82,7 @@ char *iot_debug_get_log(void)
 }
 #endif
 
-static void _iot_easysetup_wifi_event_cb(iot_wifi_event_t event)
+static void _iot_easysetup_wifi_event_cb(iot_wifi_event_t event, iot_error_t error)
 {
 	iot_error_t err = IOT_ERROR_NONE;
 
@@ -101,6 +101,10 @@ static void _iot_easysetup_wifi_event_cb(iot_wifi_event_t event)
 					IOT_ES_DUMP(IOT_DEBUG_LEVEL_ERROR, IOT_DUMP_EASYSETUP_INTERNAL_SERVER_ERROR, err);
 				}
 			}
+			break;
+		case IOT_WIFI_EVENT_SOFTAP_STA_FAIL:
+			IOT_ERROR("Soft AP connection failed %d", error);
+			iot_set_st_ecode_from_conn_error(context, error);
 			break;
 		default:
 			IOT_ERROR("Unknown event 0x%x", event);

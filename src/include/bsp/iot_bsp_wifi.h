@@ -64,6 +64,7 @@ typedef enum {
 typedef enum {
 	IOT_WIFI_EVENT_SOFTAP_STA_JOIN,
 	IOT_WIFI_EVENT_SOFTAP_STA_LEAVE,
+	IOT_WIFI_EVENT_SOFTAP_STA_FAIL,
 } iot_wifi_event_t;
 
 typedef uint32_t iot_wifi_auth_mode_bits_t;
@@ -172,7 +173,7 @@ iot_wifi_freq_t iot_bsp_wifi_get_freq(void);
 /**
  * @brief  Wi-Fi event callback function type
  */
-typedef void (*iot_bsp_wifi_event_cb_t)(iot_wifi_event_t event);
+typedef void (*iot_bsp_wifi_event_cb_t)(iot_wifi_event_t event, iot_error_t error);
 
 /**
  * @brief  Register Wi-Fi event callback
