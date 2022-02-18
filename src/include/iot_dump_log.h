@@ -270,7 +270,7 @@ typedef enum {
 	IOT_DUMP_BSP_WIFI_SETMODE = 0x0703, /* arg1: configuration mode(conf->mode) */
 	IOT_DUMP_BSP_WIFI_SETMODE_FAIL = 0x0704, /* arg1: configuration mode(conf->mode),  arg2: return code(rc) */
 	IOT_DUMP_BSP_WIFI_CONNECT_SUCCESS = 0x0705,
-	IOT_DUMP_BSP_WIFI_CONNECT_FAIL = 0x0706, /* arg1: connect timeout, arg2: line number*/
+	IOT_DUMP_BSP_WIFI_CONNECT_FAIL = 0x0706, /* arg1: connect timeout, arg2: error code*/
 	IOT_DUMP_BSP_WIFI_SNTP_SUCCESS = 0x0707, /* arg1: current time,  arg2: retry count */
 	IOT_DUMP_BSP_WIFI_SNTP_FAIL = 0x0708, /* arg1: retry count,  arg2: max retry */
 	IOT_DUMP_BSP_WIFI_TIMEOUT = 0x0709, /* arg1: wifi mode, arg2: line number*/

@@ -45,6 +45,8 @@ static int WIFI_INITIALIZED = false;
 static EventGroupHandle_t wifi_event_group;
 static iot_bsp_wifi_event_cb_t wifi_event_cb;
 
+static iot_error_t s_latest_disconnect_reason;
+
 static void _initialize_sntp(void)
 {
 	IOT_INFO("Initializing SNTP");
@@ -114,10 +116,22 @@ static esp_err_t event_handler(void *ctx, system_event_t *event)
 		IOT_INFO("Disconnect reason : %d", event->event_info.disconnected.reason);
 		IOT_DUMP(IOT_DEBUG_LEVEL_ERROR, IOT_DUMP_BSP_WIFI_EVENT_DEAUTH, event->event_info.disconnected.reason, 0);
 		xEventGroupSetBits(wifi_event_group, WIFI_STA_DISCONNECT_BIT);
-	        if (info->disconnected.reason == WIFI_REASON_BASIC_RATE_NOT_SUPPORT) {
-	            /*Switch to 802.11 bgn mode */
-	            esp_wifi_set_protocol(ESP_IF_WIFI_STA, WIFI_PROTOCOL_11B | WIFI_PROTOCOL_11G | WIFI_PROTOCOL_11N);
-	        }
+		switch (info->disconnected.reason)
+		{
+			case WIFI_REASON_BASIC_RATE_NOT_SUPPORT:
+				/*Switch to 802.11 bgn mode */
+				esp_wifi_set_protocol(ESP_IF_WIFI_STA, WIFI_PROTOCOL_11B | WIFI_PROTOCOL_11G | WIFI_PROTOCOL_11N);
+				break;
+			case WIFI_REASON_NO_AP_FOUND:
+				s_latest_disconnect_reason = IOT_ERROR_CONN_STA_AP_NOT_FOUND;
+				break;
+			case WIFI_REASON_AUTH_FAIL:
+				s_latest_disconnect_reason = IOT_ERROR_CONN_STA_AUTH_FAIL;
+				break;
+			case WIFI_REASON_ASSOC_FAIL:
+				s_latest_disconnect_reason = IOT_ERROR_CONN_STA_ASSOC_FAIL;
+				break;
+		}
 		esp_wifi_connect();
 		xEventGroupClearBits(wifi_event_group, WIFI_STA_CONNECT_BIT);
 		break;
@@ -148,7 +162,7 @@ static esp_err_t event_handler(void *ctx, system_event_t *event)
 				event->event_info.sta_connected.aid);
 		if (wifi_event_cb) {
 			IOT_DEBUG("0x%p called", wifi_event_cb);
-			(*wifi_event_cb)(IOT_WIFI_EVENT_SOFTAP_STA_JOIN);
+			(*wifi_event_cb)(IOT_WIFI_EVENT_SOFTAP_STA_JOIN, IOT_ERROR_NONE);
 		}
 		break;
 
@@ -160,7 +174,7 @@ static esp_err_t event_handler(void *ctx, system_event_t *event)
 		xEventGroupSetBits(wifi_event_group, WIFI_AP_STOP_BIT);
 		if (wifi_event_cb) {
 			IOT_DEBUG("0x%p called", wifi_event_cb);
-			(*wifi_event_cb)(IOT_WIFI_EVENT_SOFTAP_STA_LEAVE);
+			(*wifi_event_cb)(IOT_WIFI_EVENT_SOFTAP_STA_LEAVE, IOT_ERROR_NONE);
 		}
 		break;
 
@@ -312,7 +326,7 @@ iot_error_t iot_bsp_wifi_set_mode(iot_wifi_conf *conf)
 		}
 
 		str_len = strlen((char *)conf->bssid);
-		if(str_len){
+		if(str_len) {
 			memcpy(wifi_config.sta.bssid, conf->bssid, IOT_WIFI_MAX_BSSID_LEN);
 			wifi_config.sta.bssid_set = true;
 
@@ -327,6 +341,7 @@ iot_error_t iot_bsp_wifi_set_mode(iot_wifi_conf *conf)
 			wifi_config.sta.pmf_cfg.capable = true;
 			wifi_config.sta.pmf_cfg.required = false;
 		}
+		s_latest_disconnect_reason = IOT_ERROR_CONN_CONNECT_FAIL;
 
 		ESP_ERROR_CHECK(esp_wifi_set_mode(WIFI_MODE_STA));
 		ESP_ERROR_CHECK(esp_wifi_set_config(ESP_IF_WIFI_STA, &wifi_config));
@@ -341,9 +356,14 @@ iot_error_t iot_bsp_wifi_set_mode(iot_wifi_conf *conf)
 			IOT_DUMP(IOT_DEBUG_LEVEL_ERROR, IOT_DUMP_BSP_WIFI_CONNECT_SUCCESS, 0, 0);
 		}
 		else {
-				IOT_ERROR("WIFI_STA_CONNECT_BIT event Timeout");
-				IOT_DUMP(IOT_DEBUG_LEVEL_ERROR, IOT_DUMP_BSP_WIFI_CONNECT_FAIL, IOT_WIFI_CMD_TIMEOUT, __LINE__);
-				return IOT_ERROR_CONN_CONNECT_FAIL;
+			iot_error_t err = IOT_ERROR_CONN_CONNECT_FAIL;
+			if (s_latest_disconnect_reason != IOT_ERROR_CONN_CONNECT_FAIL) {
+				err = s_latest_disconnect_reason;
+			}
+
+			IOT_ERROR("WIFI_STA_CONNECT_BIT event Timeout %d", err);
+			IOT_DUMP(IOT_DEBUG_LEVEL_ERROR, IOT_DUMP_BSP_WIFI_CONNECT_FAIL, IOT_WIFI_CMD_TIMEOUT, err);
+			return err;
 		}
 
 		time(&now);
@@ -392,7 +412,7 @@ iot_error_t iot_bsp_wifi_set_mode(iot_wifi_conf *conf)
 		else {
 				IOT_ERROR("WIFI_AP_START_BIT event Timeout");
 				IOT_DUMP(IOT_DEBUG_LEVEL_ERROR, IOT_DUMP_BSP_WIFI_TIMEOUT, conf->mode, __LINE__);
-				return IOT_ERROR_CONN_OPERATE_FAIL;
+				return IOT_ERROR_CONN_SOFTAP_CONF_FAIL;
 		}
 
 		break;
