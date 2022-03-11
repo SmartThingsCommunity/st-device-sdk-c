@@ -1389,9 +1389,9 @@ iot_error_t iot_get_random_id_str(char *str, size_t max_sz)
 	return err;
 }
 
-static iot_error_t iot_ecodeType_to_string(iot_st_ecode_t ecode, struct iot_st_ecode *st_ecode)
+static iot_error_t iot_ecodeType_to_string(iot_st_ecode_t ecode_type, struct iot_st_ecode *st_ecode)
 {
-    switch(ecode)
+    switch(ecode_type)
     {
         case IOT_ST_ECODE_NONE:
             strncpy(st_ecode->ecode, "\0", sizeof(st_ecode->ecode));
@@ -1492,7 +1492,7 @@ iot_error_t iot_get_st_ecode(struct iot_context *ctx, struct iot_st_ecode *st_ec
 	return IOT_ERROR_NONE;
 }
 
-iot_error_t iot_set_st_ecode(struct iot_context *ctx, iot_st_ecode_t ecode)
+iot_error_t iot_set_st_ecode(struct iot_context *ctx, iot_st_ecode_t ecode_type)
 {
 	iot_error_t err = IOT_ERROR_NONE;
 
@@ -1501,12 +1501,11 @@ iot_error_t iot_set_st_ecode(struct iot_context *ctx, iot_st_ecode_t ecode)
 		return IOT_ERROR_INVALID_ARGS;
 	}
 
-	memset(ctx->last_st_ecode.ecode, 0, sizeof(ctx->last_st_ecode.ecode));
-	iot_ecodeType_to_string(ecode, &ctx->last_st_ecode);
-
-	if (ctx->last_st_ecode.writeRequest == true) {
+    if (ecode_type != ctx->last_st_ecode.ecode_type) {
+		memset(ctx->last_st_ecode.ecode, 0, sizeof(ctx->last_st_ecode.ecode));
+		iot_ecodeType_to_string(ecode_type, &ctx->last_st_ecode);
 		err = iot_misc_info_store(IOT_MISC_PREV_ERR, (void *)&(ctx->last_st_ecode));
-	}
+    }
 
 	return err;
 }

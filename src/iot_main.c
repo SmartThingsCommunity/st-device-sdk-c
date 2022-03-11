@@ -1059,7 +1059,6 @@ static void _do_cmd_tout_check(struct iot_context *ctx)
                 if (ctx->curr_state == IOT_STATE_CLOUD_CONNECTED)
                 {
                     /* initialize previous err of deviceinfo for help contents */
-                    ctx->last_st_ecode.writeRequest = true;
                     iot_set_st_ecode(ctx, IOT_ST_ECODE_NONE);
                 }
 				if (ctx->status_cb)
@@ -1385,9 +1384,6 @@ IOT_CTX* st_conn_init(unsigned char *onboarding_config, unsigned int onboarding_
 		IOT_DUMP_MAIN(ERROR, BASE, IOT_TASK_STACK_SIZE);
 		goto error_main_task_init;
 	}
-
-    /* initialize previous err of deviceinfo for help contents */
-    ctx->last_st_ecode.writeRequest = false;
 
 	IOT_MEM_CHECK("MAIN_INIT_ALL_DONE >>PT<<");
 

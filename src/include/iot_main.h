@@ -287,7 +287,7 @@ typedef struct iot_cap_handle_list iot_cap_handle_list_t;
 #define IOT_ST_ECODE_STR_LEN	(4)
 
 struct iot_st_ecode {
-	bool writeRequest;
+	iot_st_ecode_t ecode_type;
 	char ecode[IOT_ST_ECODE_STR_LEN + 1];
 };
 

@@ -329,7 +329,6 @@ iot_error_t _es_confirm_check_manager(struct iot_context *ctx, enum ownership_va
 			} else {
 				IOT_ERROR("confirm failed");
 				IOT_ES_DUMP(IOT_DEBUG_LEVEL_ERROR, IOT_DUMP_EASYSETUP_CONFIRM_DENIED, 0);
-				ctx->last_st_ecode.writeRequest = true;
 				iot_set_st_ecode(ctx, IOT_ST_ECODE_EE01);
 
 				/* To report confirm failure to user, try to change iot-state timeout value shortly */
