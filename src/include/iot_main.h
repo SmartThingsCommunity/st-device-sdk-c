@@ -53,6 +53,7 @@
 #define IOT_MAIN_TASK_DEFAULT_CYCLE			100		/* in ms */
 #define IOT_MQTT_CONNECT_CRITICAL_REJECT_MAX	3
 #define IOT_RATE_LIMIT_BREAK_TIME		60000
+#define IOT_PREVERR_LEN     5
 
 #define IOT_DEVICE_NAME_MAX_LENGTH		20
 
@@ -274,12 +275,19 @@ struct iot_state_data {
 	int opt;					/**< @brief additional option for each state */
 };
 
+/**
+ * @brief Contains "iot core's main state" data
+ */
+struct iot_preverr_data {
+    char prevErr[IOT_PREVERR_LEN];
+};
+
 typedef struct iot_cap_handle_list iot_cap_handle_list_t;
 
 #define IOT_ST_ECODE_STR_LEN	(4)
 
 struct iot_st_ecode {
-	bool is_happended;
+	bool writeRequest;
 	char ecode[IOT_ST_ECODE_STR_LEN + 1];
 };
 

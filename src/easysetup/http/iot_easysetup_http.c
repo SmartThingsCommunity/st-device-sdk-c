@@ -389,6 +389,11 @@ void http_msg_handler(int cmd, char **buffer, enum cgi_type type, char* data_buf
 	if (type == D2D_POST) {
 		err = _iot_easysetup_gen_post_payload(context, cmd, data_buf, &payload);
 		if (!err) {
+			if (payload == NULL) {
+				err = IOT_ERROR_EASYSETUP_JSON_CREATE_ERROR;
+				goto cgi_out;
+			}
+
 			payload_len = strlen(payload);
 			buffer_len = payload_len + strlen(http_status_200) + strlen(http_header) + digit_count_payload(payload_len) + strlen(END_OF_HTTP_HEADER) + 1;
 			buf = malloc(buffer_len);
@@ -408,6 +413,11 @@ void http_msg_handler(int cmd, char **buffer, enum cgi_type type, char* data_buf
 	} else if (type == D2D_GET) {
 		err = _iot_easysetup_gen_get_payload(context, cmd, &payload);
 		if (!err) {
+			if (payload == NULL) {
+				err = IOT_ERROR_EASYSETUP_JSON_CREATE_ERROR;
+				goto cgi_out;
+			}
+
 			payload_len = strlen(payload);
 			buffer_len = payload_len + strlen(http_status_200) + strlen(http_header) + digit_count_payload(payload_len) + strlen(END_OF_HTTP_HEADER) + 1;
 			buf = malloc(buffer_len);

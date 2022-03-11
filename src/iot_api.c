@@ -1089,6 +1089,20 @@ static iot_error_t _get_location_from_json(JSON_H *json, struct iot_uuid *uuid)
 	return IOT_ERROR_NONE;
 }
 
+static iot_error_t _get_preverr_from_json(JSON_H *json, char *prev_err)
+{
+	JSON_H *item = NULL;
+
+	item = JSON_GET_OBJECT_ITEM(json, "prevErr");
+	if (item == NULL) {
+		IOT_ERROR("There is no prevErr in misc_info");
+		return IOT_ERROR_BAD_REQ;
+	}
+
+	memcpy(prev_err, item->valuestring, strlen(item->valuestring));
+	return IOT_ERROR_NONE;
+}
+
 iot_error_t iot_misc_info_load(iot_misc_info_t type, void *out_data)
 {
 	char *misc_info = NULL;
@@ -1123,6 +1137,10 @@ iot_error_t iot_misc_info_load(iot_misc_info_t type, void *out_data)
 
 	case IOT_MISC_INFO_LOCATION:
 		iot_err = _get_location_from_json(json, (struct iot_uuid *)out_data);
+		break;
+
+	case IOT_MISC_PREV_ERR:
+		iot_err = _get_preverr_from_json(json, (char *)out_data);
 		break;
 
 	default:
@@ -1227,6 +1245,26 @@ static iot_error_t _set_location_to_json(JSON_H *json, struct iot_uuid *uuid)
 	return IOT_ERROR_NONE;
 }
 
+static iot_error_t _set_preverr_to_json(JSON_H *json, char *prev_err)
+{
+	JSON_H *item = NULL;
+
+	item = JSON_CREATE_STRING(prev_err);
+	if (item == NULL) {
+		IOT_ERROR("Can't make new string for prev_err");
+		return IOT_ERROR_MEM_ALLOC;
+	}
+
+	if (JSON_GET_OBJECT_ITEM(json, "prevErr") == NULL) {
+		IOT_DEBUG("There is no prevErr in misc_info");
+		JSON_ADD_ITEM_TO_OBJECT(json, "prevErr", item);
+	} else {
+		JSON_REPLACE_ITEM_IN_OBJ_CASESENS(json, "prevErr", item);
+	}
+
+	return IOT_ERROR_NONE;
+}
+
 iot_error_t iot_misc_info_store(iot_misc_info_t type, const void *in_data)
 {
 	char *old_misc_info = NULL;
@@ -1281,6 +1319,10 @@ iot_error_t iot_misc_info_store(iot_misc_info_t type, const void *in_data)
 
 	case IOT_MISC_INFO_LOCATION:
 		iot_err = _set_location_to_json(json, (struct iot_uuid *)in_data);
+		break;
+
+	case IOT_MISC_PREV_ERR:
+		iot_err = _set_preverr_to_json(json, (char *)in_data);
 		break;
 
 	default:
@@ -1347,7 +1389,7 @@ iot_error_t iot_get_random_id_str(char *str, size_t max_sz)
 	return err;
 }
 
-iot_error_t iot_ecodeType_to_string(iot_st_ecode_t ecode, struct iot_st_ecode *st_ecode)
+static iot_error_t iot_ecodeType_to_string(iot_st_ecode_t ecode, struct iot_st_ecode *st_ecode)
 {
     switch(ecode)
     {
@@ -1452,19 +1494,22 @@ iot_error_t iot_get_st_ecode(struct iot_context *ctx, struct iot_st_ecode *st_ec
 
 iot_error_t iot_set_st_ecode(struct iot_context *ctx, iot_st_ecode_t ecode)
 {
-	struct iot_st_ecode st_ecode;
+	iot_error_t err = IOT_ERROR_NONE;
 
 	if (ctx == NULL) {
 		IOT_ERROR("There is no ctx");
 		return IOT_ERROR_INVALID_ARGS;
 	}
 
-	iot_ecodeType_to_string(ecode, &st_ecode);
-	memcpy(&(ctx->last_st_ecode), &st_ecode, sizeof(struct iot_st_ecode));
+	memset(ctx->last_st_ecode.ecode, 0, sizeof(ctx->last_st_ecode.ecode));
+	iot_ecodeType_to_string(ecode, &ctx->last_st_ecode);
 
-	return IOT_ERROR_NONE;
+	if (ctx->last_st_ecode.writeRequest == true) {
+		err = iot_misc_info_store(IOT_MISC_PREV_ERR, (void *)&(ctx->last_st_ecode));
+	}
+
+	return err;
 }
-
 
 /**************************************************************
 *                       Synchronous Call                      *
