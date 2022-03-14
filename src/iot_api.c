@@ -1549,10 +1549,10 @@ iot_error_t iot_set_st_ecode(struct iot_context *ctx, iot_st_ecode_t ecode_type)
 		return IOT_ERROR_INVALID_ARGS;
 	}
 
-    if (ecode_type != ctx->last_st_ecode.ecode_type) {
+    if ((ecode_type != ctx->last_st_ecode.ecode_type) || (ecode_type == IOT_ST_ECODE_NONE)) {
 		memset(ctx->last_st_ecode.ecode, 0, sizeof(ctx->last_st_ecode.ecode));
 		iot_ecodeType_to_string(ecode_type, &ctx->last_st_ecode);
-		err = iot_misc_info_store(IOT_MISC_PREV_ERR, (void *)&(ctx->last_st_ecode));
+		err = iot_misc_info_store(IOT_MISC_PREV_ERR, (void *)ctx->last_st_ecode.ecode);
     }
 
 	return err;

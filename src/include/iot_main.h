@@ -278,10 +278,6 @@ struct iot_state_data {
 /**
  * @brief Contains "iot core's main state" data
  */
-struct iot_preverr_data {
-    char prevErr[IOT_PREVERR_LEN];
-};
-
 typedef struct iot_cap_handle_list iot_cap_handle_list_t;
 
 #define IOT_ST_ECODE_STR_LEN	(4)
