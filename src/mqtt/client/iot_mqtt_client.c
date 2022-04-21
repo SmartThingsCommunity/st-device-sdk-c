@@ -449,7 +449,12 @@ static void _iot_mqtt_process_received_publish(MQTTClient *client, iot_mqtt_pack
 		_iot_mqtt_queue_push(&client->write_pending_queue, puback);
 	}
 
-	_iot_mqtt_queue_push(&client->user_event_callback_queue, chunk);
+	if ((chunk->chunk_data[0] & MQTT_FIXED_HEADER_DUP_MASK) >> MQTT_FIXED_HEADER_DUP_OFFSET) {
+		IOT_WARN("duplicated PUB packet %d", chunk->packet_id);
+		_iot_mqtt_chunk_destroy(chunk);
+	} else {
+		_iot_mqtt_queue_push(&client->user_event_callback_queue, chunk);
+	}
 }
 
 static void _iot_mqtt_process_received_pubrec_pubrel(MQTTClient *client, iot_mqtt_packet_chunk_t *chunk)
