@@ -95,11 +95,8 @@ static void _iot_easysetup_wifi_event_cb(iot_wifi_event_t event, iot_error_t err
 				IOT_INFO("Station left from SoftAP");
 				ref_step = 0;
 				iot_os_eventgroup_set_bits(context->iot_events, IOT_EVENT_BIT_EASYSETUP_CONFIRM);
-				err = iot_state_update(context, IOT_STATE_UNKNOWN, context->curr_state);
-				if (err) {
-					IOT_ERROR("cannot update state to failed (%d)", err);
-					IOT_ES_DUMP(IOT_DEBUG_LEVEL_ERROR, IOT_DUMP_EASYSETUP_INTERNAL_SERVER_ERROR, err);
-				}
+				/* TODO : signaling restart onboarding */
+				IOT_ERROR("mock : signaling restart onboarding %d", __LINE__);
 			}
 			break;
 		case IOT_WIFI_EVENT_SOFTAP_STA_FAIL:
@@ -138,16 +135,6 @@ iot_error_t _iot_easysetup_gen_get_payload(struct iot_context *ctx, int cmd, cha
 	}
 
 	cur_step = cmd;
-
-	if (cur_step == IOT_EASYSETUP_STEP_DEVICEINFO) {
-		err = iot_state_update(ctx, IOT_STATE_PROV_CONN_MOBILE, 0);
-		if (err != IOT_ERROR_NONE) {
-			IOT_ERROR("failed handle cmd (%d): %d", IOT_STATE_PROV_CONN_MOBILE, err);
-			IOT_ES_DUMP(IOT_DEBUG_LEVEL_ERROR, IOT_DUMP_EASYSETUP_INTERNAL_SERVER_ERROR, err);
-			err = IOT_ERROR_EASYSETUP_INTERNAL_SERVER_ERROR;
-			goto get_exit;
-		}
-	}
 
 	if ((cur_step != ref_step) && (cur_step < IOT_EASYSETUP_STEP_LOG_SYSTEMINFO)) {
 		if ((cur_step == IOT_EASYSETUP_STEP_WIFISCANINFO) && (ref_step == IOT_EASYSETUP_STEP_CONFIRM)) {
@@ -211,12 +198,8 @@ fail_status_update:
 		iot_error_t err1;
 		ref_step = 0;
 		if ((cur_step >= IOT_EASYSETUP_STEP_LOG_SYSTEMINFO) || (err == IOT_ERROR_EASYSETUP_INVALID_SEQUENCE)) {
-			err1 = iot_state_update(ctx, IOT_STATE_UNKNOWN, ctx->curr_state);
-			if (err1) {
-				IOT_ERROR("cannot update state to failed (%d)", err1);
-				IOT_ES_DUMP(IOT_DEBUG_LEVEL_ERROR, IOT_DUMP_EASYSETUP_INTERNAL_SERVER_ERROR, err1);
-				err = IOT_ERROR_EASYSETUP_INTERNAL_SERVER_ERROR;
-			}
+			/* TODO : signaling restart onboarding */
+			IOT_ERROR("mock : signaling restart onboarding %d", __LINE__);
 		}
 	}
 
@@ -328,12 +311,8 @@ fail_status_update:
 		iot_error_t err1;
 		ref_step = 0;
 		if ((cur_step >= IOT_EASYSETUP_STEP_LOG_SYSTEMINFO) || (err == IOT_ERROR_EASYSETUP_INVALID_SEQUENCE)) {
-			err1 = iot_state_update(ctx, IOT_STATE_UNKNOWN, ctx->curr_state);
-			if (err1) {
-				IOT_ERROR("cannot update state to failed (%d)", err1);
-				IOT_ES_DUMP(IOT_DEBUG_LEVEL_ERROR, IOT_DUMP_EASYSETUP_INTERNAL_SERVER_ERROR, err1);
-				err = IOT_ERROR_EASYSETUP_INTERNAL_SERVER_ERROR;
-			}
+			/* TODO : signaling restart onboarding */
+			IOT_ERROR("mock : signaling restart onboarding %d", __LINE__);
 		}
 	} else {
 		iot_error_t err1;

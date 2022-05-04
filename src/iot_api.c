@@ -31,19 +31,12 @@
 #include "iot_bsp_wifi.h"
 #include "security/iot_security_common.h"
 #include "security/iot_security_helper.h"
+#include "iot_bsp_system.h"
 
 #include "JSON.h"
 #define ONBOARDINGID_E4_MAX_LEN	13
 #define ONBOARDINGID_E5_MAX_LEN	14
 #define IOT_STATE_TIMEOUT_MAX_MS	(900000) /* 15 min */
-
-static void _set_cmd_status(struct iot_context *ctx, enum iot_command_type cmd_type)
-{
-	if ((cmd_type) != IOT_COMMNAD_STATE_UPDATE) {
-		ctx->cmd_status |= (1u << (cmd_type));
-		ctx->cmd_count[(cmd_type)]++;
-	}
-}
 
 iot_error_t iot_command_send(struct iot_context *ctx,
 	enum iot_command_type new_cmd, const void *param, int param_size)
@@ -73,8 +66,6 @@ iot_error_t iot_command_send(struct iot_context *ctx,
 			free(cmd_data.param);
 		err = IOT_ERROR_BAD_REQ;
 	} else {
-		_set_cmd_status(ctx, new_cmd);
-
 		iot_os_eventgroup_set_bits(ctx->iot_events,
 			IOT_EVENT_BIT_COMMAND);
 		err = IOT_ERROR_NONE;
@@ -176,9 +167,32 @@ iot_error_t iot_wifi_ctrl_request(struct iot_context *ctx,
 	}
 
 	if (send_cmd) {
-		iot_err = iot_command_send(ctx,
-				IOT_COMMAND_NETWORK_MODE,
-					&wifi_conf, sizeof(wifi_conf));
+		iot_err = iot_bsp_wifi_set_mode(&wifi_conf);
+		if (iot_err < 0) {
+			IOT_ERROR("failed to set wifi_set_mode %d", iot_err);
+			iot_set_st_ecode_from_conn_error(ctx, iot_err);
+			if (wifi_mode == IOT_WIFI_MODE_SOFTAP)
+				iot_set_st_ecode(ctx, IOT_ST_ECODE_NE01);
+			else if (wifi_mode == IOT_WIFI_MODE_STATION)
+				iot_set_st_ecode(ctx, IOT_ST_ECODE_NE10);
+			return iot_err;
+		}
+
+		switch (wifi_mode) {
+		case IOT_WIFI_MODE_SOFTAP:
+			iot_err = iot_easysetup_init(ctx);
+			IOT_MEM_CHECK("ES_INIT DONE >>PT<<");
+
+			if (iot_err != IOT_ERROR_NONE) {
+				IOT_ERROR("failed to iot_easysetup_init(%d)", iot_err);
+				return iot_err;
+			} else {
+				ctx->es_http_ready = true;
+			}
+			break;
+		default:
+			break;
+		}
 	}
 
 	return iot_err;
@@ -234,8 +248,8 @@ iot_error_t iot_state_update(struct iot_context *ctx,
 	state_data.iot_state = new_state;
 	state_data.opt = opt;
 
-	err = iot_command_send(ctx, IOT_COMMNAD_STATE_UPDATE,
-                           &state_data, sizeof(struct iot_state_data));
+	err = iot_command_send(ctx, IOT_COMMAND_STATE_UPDATE,
+		                    &state_data, sizeof(struct iot_state_data));
 
 	return err;
 }
@@ -243,7 +257,6 @@ iot_error_t iot_state_update(struct iot_context *ctx,
 iot_error_t iot_state_timeout_change(struct iot_context *ctx, iot_state_t target_state,
 	unsigned int new_timeout_ms)
 {
-	struct iot_state_data state_data;
 	iot_error_t err;
 
 	if (target_state <= IOT_STATE_INITIALIZED)
@@ -252,11 +265,12 @@ iot_error_t iot_state_timeout_change(struct iot_context *ctx, iot_state_t target
 	if (new_timeout_ms > IOT_STATE_TIMEOUT_MAX_MS)
 		return IOT_ERROR_INVALID_ARGS;
 
-	state_data.iot_state = target_state;
-	state_data.opt = (int)new_timeout_ms;
+	if (ctx->curr_state != target_state) {
+		IOT_INFO("Not current state(%d) target state %d", ctx->curr_state, target_state);
+		return IOT_ERROR_INVALID_ARGS;
+	}
 
-	err = iot_command_send(ctx, IOT_COMMAND_CHANGE_STATE_TIMEOUT,
-                           &state_data, sizeof(struct iot_state_data));
+	iot_os_timer_count_ms(ctx->state_timer, new_timeout_ms);
 
 	return err;
 }
@@ -1556,6 +1570,22 @@ iot_error_t iot_set_st_ecode(struct iot_context *ctx, iot_st_ecode_t ecode_type)
 	}
 
 	return err;
+}
+
+iot_error_t iot_cleanup(struct iot_context *ctx, bool reboot)
+{
+	if (ctx->es_http_ready) {
+		ctx->es_http_ready = false;
+		iot_easysetup_deinit(ctx);
+	}
+
+	iot_device_cleanup(ctx);
+
+	if (reboot) {
+		IOT_REBOOT();
+	}
+
+	return IOT_ERROR_NONE;
 }
 
 /**************************************************************

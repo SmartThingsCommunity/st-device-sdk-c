@@ -57,6 +57,10 @@
 
 #define IOT_DEVICE_NAME_MAX_LENGTH		20
 
+#define NEXT_STATE_TIMEOUT_MS	(100000)
+#define EASYSETUP_TIMEOUT_MS	(300000) /* 5 min */
+#define REGISTRATION_TIMEOUT_MS	(900000) /* 15 min */
+
 enum _iot_noti_type {
 	/* Common notifications */
 	_IOT_NOTI_TYPE_UNKNOWN = IOT_NOTI_TYPE_UNKNOWN,
@@ -71,22 +75,12 @@ enum _iot_noti_type {
 };
 
 enum iot_command_type {
-	IOT_COMMAND_READY_TO_CTL,
-
-	IOT_COMMAND_NETWORK_MODE,
-	IOT_COMMAND_CHECK_PROV_STATUS,
-
-	IOT_COMMAND_CHECK_CLOUD_STATE,
+	IOT_COMMAND_STATE_UPDATE,
 	IOT_COMMAND_CLOUD_REGISTERING,
 	IOT_COMMAND_CLOUD_REGISTERED,
 	IOT_COMMAND_CLOUD_CONNECTING,
-
 	IOT_COMMAND_NOTIFICATION_RECEIVED,
-	IOT_COMMAND_CHANGE_STATE_TIMEOUT,
-
-	IOT_COMMAND_SELF_CLEANUP,
-	IOT_COMMAND_TYPE_MAX = IOT_COMMAND_SELF_CLEANUP, /* MAX : under 32 */
-	IOT_COMMNAD_STATE_UPDATE,
+	IOT_COMMAND_TYPE_MAX = IOT_COMMAND_NOTIFICATION_RECEIVED, /* MAX : under 32 */
 };
 
 enum iot_easysetup_step {
@@ -109,20 +103,14 @@ enum iot_connect_type {
 };
 
 typedef enum iot_state_type {
-	IOT_STATE_CHANGE_FAILED = -2,
-	IOT_STATE_UNKNOWN = -1,
-
 	IOT_STATE_INITIALIZED = 0,
 
+	IOT_STATE_PROV_SLEEP,
 	IOT_STATE_PROV_ENTER,
-	IOT_STATE_PROV_CONN_MOBILE,
 	IOT_STATE_PROV_CONFIRM,
 	IOT_STATE_PROV_DONE,
 
 	IOT_STATE_CLOUD_DISCONNECTED,
-	IOT_STATE_CLOUD_REGISTERING,
-
-	IOT_STATE_CLOUD_CONNECTING,
 	IOT_STATE_CLOUD_CONNECTED,
 } iot_state_t;
 
@@ -298,7 +286,6 @@ struct iot_context {
 	bool es_http_ready;					/**< @brief to check easy-setup-httpd is initialized or not */
 
 	iot_state_t curr_state;			/**< @brief reflect current iot_state */
-	iot_state_t req_state;			/**< @brief reflect requested iot_state */
 	iot_os_timer state_timer;		/**< @brief state checking timer for each iot_state */
 
 	iot_os_eventgroup *usr_events;		/**< @brief User level handling events */
@@ -336,18 +323,11 @@ struct iot_context {
 	int curr_otm_feature;	/**< @brief current device's supported onboarding process validation type */
 	iot_pin_t *pin;			/**< @brief current device's PIN values for PIN type otm */
 
-	unsigned int cmd_err;						/**< @brief current command handling error checking value */
-	unsigned int cmd_status;					/**< @brief current command status */
-	uint16_t cmd_count[IOT_COMMAND_TYPE_MAX+1];	/**< @brief current queued command counts */
-
 	iot_os_thread main_thread; /**< @brief iot main task thread */
 	iot_os_mutex st_conn_lock; /**< @brief User level control API lock */
 	iot_os_mutex iot_cmd_lock; /**< @brief iot-core's command handling lock*/
 
 	bool add_justworks; 	/**< @brief to skip user-confirm using JUSTWORKS bit */
-
-	unsigned char rcv_try_cnt;	/**< @brief to check current recovery repeated counts */
-	iot_state_t rcv_fail_state;	/**< @brief to check current failed state for recovery */
 
 	int event_sequence_num;	/**< @brief Last event's sequence number */
 

@@ -110,9 +110,8 @@ static void mqtt_reg_sub_cb(st_mqtt_msg *md, void *userData)
 				IOT_ERROR("Cannot send cloud registering cmd!!");
 			}
 		} else if (!strncmp(event->valuestring, "error", 5)) {
-			bool reboot;
-			reboot = true;
-			iot_command_send(ctx, IOT_COMMAND_SELF_CLEANUP, &reboot, sizeof(bool));
+			/* TODO : signaling restart onboarding */
+			IOT_ERROR("TODO : signaling restart onboarding %d", __LINE__);
 			goto reg_sub_out;
 		} else {
 			IOT_ERROR("event type %s is not defined", event->valuestring);
@@ -871,8 +870,7 @@ iot_error_t _iot_es_mqtt_connect(struct iot_context *ctx, st_mqtt_client target_
 			}
 			IOT_WARN("Rejected by Server!! cleanup all & reboot");
 
-			reboot = true;
-			iot_command_send(ctx, IOT_COMMAND_SELF_CLEANUP, &reboot, sizeof(bool));
+			iot_cleanup(ctx, true);
 			iot_ret = IOT_ERROR_MQTT_REJECT_CONNECT;
 			break;
 

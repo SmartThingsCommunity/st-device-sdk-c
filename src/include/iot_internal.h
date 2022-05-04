@@ -383,5 +383,14 @@ iot_error_t iot_set_st_ecode(struct iot_context *ctx, iot_st_ecode_t ecode);
  */
 iot_error_t iot_set_st_ecode_from_conn_error(struct iot_context *ctx, iot_error_t conn_error);
 
+/**
+ * @brief	device internal clean-up function
+ * @details	This function cleans-up all DATA including provisioning & registered data
+ * @param[in]	ctx			iot-core context
+ * @param[in]	reboot		boolean set true for auto-reboot of system, else false.
+ * @retval	IOT_ERROR_NONE                  success.
+ */
+iot_error_t iot_cleanup(struct iot_context *ctx, bool reboot);
+
 #endif /* _IOT_INTERNAL_H_ */
 
