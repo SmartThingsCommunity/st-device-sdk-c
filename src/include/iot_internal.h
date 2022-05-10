@@ -281,6 +281,14 @@ iot_error_t iot_es_disconnect(struct iot_context *ctx, int conn_type);
 void iot_cap_sub_cb(iot_cap_handle_list_t *cap_handle_list, char *payload);
 
 /**
+ * @brief	callback for mqtt command msg(version2)
+ * @details	this function is used to handle command message from server
+ * @param[in]	ctx		iot-core context
+ * @param[in]	payload			received raw message from server
+ */
+void iot_cap_commands_cb(struct iot_context *ctx, char *payload);
+
+/**
  * @brief	callback for mqtt noti msg
  * @details	this function is used to handle notification message from server
  * @param[in]	ctx		iot-core context

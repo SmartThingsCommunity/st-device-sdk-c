@@ -334,7 +334,11 @@ void _iot_mqtt_signin_client_callback(st_mqtt_event event, void *event_data, voi
 #endif
 				IOT_DEBUG("raw msg : %s", payload_json);
 				if (!strncmp(md->topic, IOT_SUB_TOPIC_COMMAND_PREFIX, IOT_SUB_TOPIC_COMMAND_PREFIX_SIZE)) {
+					/* Send commands to each registered capability callback handler
+					 * and registered noti callback handler. 
+					 * application can choose one of both handlers to handle commands */
 					iot_cap_sub_cb(ctx->cap_handle_list, payload_json);
+					iot_cap_commands_cb(ctx, payload_json);
 				} else if (!strncmp(md->topic, IOT_SUB_TOPIC_NOTIFICATION_PREFIX, IOT_SUB_TOPIC_NOTIFICATION_PREFIX_SIZE)) {
 					iot_noti_sub_cb(ctx, payload_json);
 				} else {
