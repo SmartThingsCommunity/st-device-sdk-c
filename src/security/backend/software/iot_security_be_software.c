@@ -942,6 +942,10 @@ iot_error_t _iot_security_be_software_pk_sign_ecdsa(iot_security_context_t *cont
 		goto exit;
 	}
 
+    #if 1
+           memcpy(raw_buf.p, sig_buf->p, sig_buf->len);
+           raw_buf.len = sig_buf->len;
+    #else
 	err = _iot_security_be_software_pk_der_to_raw(sig_buf, &raw_buf);
 	if (err) {
 		IOT_ERROR("failed to convert from der to raw");
@@ -950,7 +954,7 @@ iot_error_t _iot_security_be_software_pk_sign_ecdsa(iot_security_context_t *cont
 		err = IOT_ERROR_SECURITY_PK_SIGN;
 		goto exit;
 	}
-
+    #endif
 	memset(sig_buf->p, 0, sig_buf->len);
 	iot_os_free(sig_buf->p);
 	sig_buf->p = raw_buf.p;

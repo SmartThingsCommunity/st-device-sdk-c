@@ -2,7 +2,6 @@ menu "SmartThings IoT Core"
 
 config STDK_IOT_CORE
     bool "Enable SmartThings IoT Core"
-    select STDK_IOT_CORE_EASYSETUP_HTTP
     help
        Select this option to enable support for the Samsung SmartThings
        IoT Core via the esp-idf component for the Samsung SmartThings IoT Device C SDK.
@@ -16,14 +15,21 @@ config STDK_IOT_CORE_EASYSETUP_DISCOVERY_SSID
 
 config STDK_IOT_CORE_EASYSETUP_HTTP
     bool "Use http for easysetup"
-    default y
+    default n
     depends on STDK_IOT_CORE
     help
        If this option is enabled, STDK will use httpd for easy setup.
 
+config STDK_IOT_CORE_EASYSETUP_BLE
+    bool "Use ble for easysetup"
+    default n
+    depends on STDK_IOT_CORE
+    help
+       If this option is enabled, STDK will use ble for easy setup.
+
 config STDK_IOT_CORE_EASYSETUP_HTTP_USE_SOCKET_API
     bool "Use socket for easysetup http"
-    default y
+    default n
     depends on STDK_IOT_CORE_EASYSETUP_HTTP
     help
        If this option is enabled, STDK will use socket api to implement httpd.
