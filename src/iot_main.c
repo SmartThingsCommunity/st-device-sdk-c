@@ -445,8 +445,6 @@ static iot_error_t _do_state_updating(struct iot_context *ctx, iot_state_t new_s
 			timeout_ms = REGISTRATION_TIMEOUT_MS;
 			iot_cmd = IOT_COMMAND_CLOUD_REGISTERING;
 			iot_err = iot_command_send(ctx, iot_cmd, NULL, 0);
-			iot_os_eventgroup_set_bits(ctx->usr_events,
-				IOT_USR_INTERACT_BIT_PROV_DONE);
 		} else if (new_state == IOT_STATE_CLOUD_DISCONNECTED) {
 			iot_err = iot_wifi_ctrl_request(ctx, IOT_WIFI_MODE_STATION);
 			if (iot_err != IOT_ERROR_NONE) {
@@ -474,8 +472,6 @@ static iot_error_t _do_state_updating(struct iot_context *ctx, iot_state_t new_s
 			timeout_ms = REGISTRATION_TIMEOUT_MS;
 			iot_cmd = IOT_COMMAND_CLOUD_REGISTERING;
 			iot_err = iot_command_send(ctx, iot_cmd, NULL, 0);
-			iot_os_eventgroup_set_bits(ctx->usr_events,
-				IOT_USR_INTERACT_BIT_PROV_DONE);
 		} else
 			return IOT_ERROR_INVALID_ARGS;
 		break;
@@ -541,10 +537,6 @@ static iot_error_t _do_state_updating(struct iot_context *ctx, iot_state_t new_s
 			}
 			break;
 		case IOT_STATE_PROV_CONFIRM :
-			if ((ctx->status_maps & IOT_STATUS_NEED_INTERACT) && ctx->curr_otm_feature == OVF_BIT_BUTTON) {
-				ctx->status_cb(IOT_STATUS_NEED_INTERACT, IOT_STAT_LV_STAY, ctx->status_usr_data);
-				ctx->reported_stat = IOT_STATUS_NEED_INTERACT | IOT_STAT_LV_STAY << 8;
-			}
 			break;
 		case IOT_STATE_PROV_DONE :
 			if (ctx->status_maps & IOT_STATUS_PROVISIONING) {
@@ -1122,36 +1114,6 @@ error_main_bsp_init:
 	return NULL;
 }
 
-#define WAIT_USR_INTERACT() \
-do { \
-	iot_os_mutex_unlock(&ctx->st_conn_lock); \
-	\
-	curr_events = iot_os_eventgroup_wait_bits(ctx->usr_events, \
-		IOT_USR_INTERACT_BITS_ST_CONN, true, IOT_OS_MAX_DELAY); \
-	\
-	if (iot_os_mutex_lock(&ctx->st_conn_lock) != IOT_OS_TRUE) { \
-		if (ctx->status_cb) \
-			UNSET_STATUS_CB(); \
-	\
-		if (ctx->es_res_created) \
-			_delete_easysetup_resources_all(ctx); \
-		return IOT_ERROR_BAD_REQ; \
-	} \
-	if (curr_events & IOT_USR_INTERACT_BIT_PROV_CONFIRM) { \
-		if (ctx->devconf.ownership_validation_type & IOT_OVF_TYPE_BUTTON) { \
-			ctx->status_cb(IOT_STATUS_NEED_INTERACT, IOT_STAT_LV_STAY, ctx->status_usr_data); \
-			ctx->reported_stat = IOT_STATUS_NEED_INTERACT | IOT_STAT_LV_STAY << 8; \
-		} \
-	\
-		iot_err = IOT_ERROR_NONE; \
-	} else if (curr_events & IOT_USR_INTERACT_BIT_PROV_DONE) { \
-		iot_err = IOT_ERROR_NONE; \
-	} else { \
-		IOT_ERROR("Can't go to PROV_CONFIRM (0x%0x)", curr_events); \
-		iot_err = IOT_ERROR_TIMEOUT; \
-	} \
-} while(0)
-
 #define SET_STATUS_CB(cb, maps, usr_data) \
 do { \
 	ctx->status_cb = cb; \
@@ -1177,7 +1139,6 @@ int st_conn_start(IOT_CTX *iot_ctx, st_status_cb status_cb,
 {
 	iot_error_t iot_err;
 	struct iot_context *ctx = (struct iot_context*)iot_ctx;
-	unsigned char curr_events;
 	iot_os_thread curr_thread;
 
 	if (!IS_CTX_VALID(ctx))
@@ -1234,8 +1195,6 @@ int st_conn_start(IOT_CTX *iot_ctx, st_status_cb status_cb,
 		SET_STATUS_CB(status_cb, maps, usr_data);
 	}
 
-	iot_os_eventgroup_clear_bits(ctx->usr_events, IOT_USR_INTERACT_BITS_ST_CONN);
-
 	iot_err = _check_prov_status(ctx, false);
 
 	if (iot_err != IOT_ERROR_NONE) {
@@ -1250,8 +1209,6 @@ int st_conn_start(IOT_CTX *iot_ctx, st_status_cb status_cb,
 		}
 		goto end_st_conn_start;
 	}
-
-	WAIT_USR_INTERACT();
 
 	IOT_INFO("%s done (%d)", __func__, iot_err);
 	IOT_DUMP_MAIN(INFO, BASE, iot_err);
@@ -1315,7 +1272,6 @@ int st_conn_start_ex(IOT_CTX *iot_ctx, iot_ext_args_t *ext_args)
 {
 	iot_error_t iot_err = IOT_ERROR_NONE;
 	struct iot_context *ctx = (struct iot_context*)iot_ctx;
-	unsigned char curr_events;
 	iot_os_thread curr_thread;
 
 	if (!IS_CTX_VALID(ctx) || !ext_args) {
@@ -1365,8 +1321,6 @@ int st_conn_start_ex(IOT_CTX *iot_ctx, iot_ext_args_t *ext_args)
 		_throw_away_all_cmd_queue(ctx);
 		iot_os_mutex_unlock(&ctx->iot_cmd_lock);
 
-		iot_os_eventgroup_clear_bits(ctx->usr_events, IOT_USR_INTERACT_BIT_STATE_UNKNOWN);
-
 		iot_cleanup(ctx, false);
 	}
 
@@ -1414,14 +1368,6 @@ int st_conn_start_ex(IOT_CTX *iot_ctx, iot_ext_args_t *ext_args)
 
 	if (ext_args->status_cb) {
 		SET_STATUS_CB(ext_args->status_cb, ext_args->maps, ext_args->usr_data);
-	}
-
-	if (ext_args->start_pt == IOT_STATUS_PROVISIONING) {
-		iot_os_eventgroup_clear_bits(ctx->usr_events, IOT_USR_INTERACT_BITS_ST_CONN);
-	}
-
-	if (ext_args->start_pt == IOT_STATUS_PROVISIONING) {
-		WAIT_USR_INTERACT();
 	}
 
 	IOT_INFO("%s done (%d)", __func__, iot_err);

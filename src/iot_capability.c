@@ -1058,7 +1058,6 @@ void iot_cap_commands_cb(struct iot_context *ctx, char *payload)
 	memset(command_noti.raw.commands.commands_data, 0, sizeof(st_command_data) * arr_size);
 
 	for (i = 0; i < arr_size; i++) {
-
 		cmditem = JSON_GET_ARRAY_ITEM(cap_cmds, i);
 		if (!cmditem) {
 			IOT_ERROR("Cannot get %dth commands data", i);

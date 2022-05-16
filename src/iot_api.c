@@ -241,8 +241,10 @@ iot_error_t iot_state_update(struct iot_context *ctx,
 	if ((new_state == IOT_STATE_PROV_CONFIRM)
 			&& (opt == IOT_STATE_OPT_NEED_INTERACT)) {
 		IOT_INFO("Trigger PROV_CONFIRM");
-		iot_os_eventgroup_set_bits(ctx->usr_events,
-			IOT_USR_INTERACT_BIT_PROV_CONFIRM);
+		if ((ctx->status_maps & IOT_STATUS_NEED_INTERACT) && ctx->curr_otm_feature == OVF_BIT_BUTTON) {
+			ctx->status_cb(IOT_STATUS_NEED_INTERACT, IOT_STAT_LV_STAY, ctx->status_usr_data);
+			ctx->reported_stat = IOT_STATUS_NEED_INTERACT | IOT_STAT_LV_STAY << 8;
+		}
 	}
 
 	state_data.iot_state = new_state;
