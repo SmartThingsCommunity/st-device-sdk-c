@@ -6,6 +6,4 @@ target_sources(iotcore
         iot_bsp_random_esp32.c
         iot_bsp_system_esp32.c
         iot_bsp_wifi_esp32.c
-        PUBLIC
-        iot_bsp_ble_esp32.c
         )

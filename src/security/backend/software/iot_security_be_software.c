@@ -942,7 +942,7 @@ iot_error_t _iot_security_be_software_pk_sign_ecdsa(iot_security_context_t *cont
 		goto exit;
 	}
 
-    #if 1
+    #if 0
            memcpy(raw_buf.p, sig_buf->p, sig_buf->len);
            raw_buf.len = sig_buf->len;
     #else
