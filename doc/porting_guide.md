@@ -183,6 +183,18 @@ For additional information about API parameters, please refer to the [API docume
 | void iot_bsp_wifi_clear_event_cb(void)                       | This function clears registered Wi-Fi event callback         |
 | iot_wifi_auth_mode_bits_t iot_bsp_wifi_get_auth_mode(void)   | This function returns wifi auth mode support bits            |
 
+#### BLE
+
+| APIs                                                         | Description                                                  |
+| ------------------------------------------------------------ | ------------------------------------------------------------ |
+| void iot_bsp_send_indication(uint8_t *buf, uint32_t len)     | Send indication.                                             |
+| void iot_bsp_create_advertise_packet(char *mnid, char *setupid, char *serial) | Create Advertise packet.                                     |
+| void iot_bsp_create_scan_response_packet(char *device_onboarding_id, char *serial) | Create Scan Response packet.                               |
+| void iot_bsp_gatt_init(void)                                 | Initialize Gatt function.                                     |
+| void iot_bsp_ble_init(CharWriteCallback cb)                  | Initialize BLE function.                                      |
+| void iot_bsp_ble_deinit(void)                                | De-initizlize BLE function.                                   |
+| uint32_t iot_bsp_ble_get_mtu(void)                           | Get MTU size.                                                 |
+
 #### Debug
 
 | APIs                                                         | Description                                                  |
