@@ -195,6 +195,14 @@ iot_error_t iot_wifi_ctrl_request(struct iot_context *ctx,
 		}
 	}
 
+	if (iot_err == IOT_ERROR_NONE) {
+		if (wifi_mode == IOT_WIFI_MODE_STATION) {
+			ctx->is_wifi_station = true;
+		} else {
+			ctx->is_wifi_station = false;
+		}
+	}
+
 	return iot_err;
 }
 

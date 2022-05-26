@@ -437,20 +437,10 @@ static iot_error_t _do_state_updating(struct iot_context *ctx, iot_state_t new_s
 			timeout_ms = EASYSETUP_TIMEOUT_MS;
 			IOT_MEM_CHECK("ES_PROV_ENTER DONE >>PT<<");
 		} else if (new_state == IOT_STATE_PROV_DONE) {
-			iot_err = iot_wifi_ctrl_request(ctx, IOT_WIFI_MODE_STATION);
-			if (iot_err != IOT_ERROR_NONE) {
-				IOT_ERROR("Can't send WIFI mode command(%d)", iot_err);
-				return iot_err;
-			}
 			timeout_ms = REGISTRATION_TIMEOUT_MS;
 			iot_cmd = IOT_COMMAND_CLOUD_REGISTERING;
 			iot_err = iot_command_send(ctx, iot_cmd, NULL, 0);
 		} else if (new_state == IOT_STATE_CLOUD_DISCONNECTED) {
-			iot_err = iot_wifi_ctrl_request(ctx, IOT_WIFI_MODE_STATION);
-			if (iot_err != IOT_ERROR_NONE) {
-				IOT_ERROR("Can't send WIFI mode command(%d)", iot_err);
-				return iot_err;
-			}
 			iot_cmd = IOT_COMMAND_CLOUD_CONNECTING;
 			iot_err = iot_command_send(ctx, iot_cmd, NULL, 0);
 		} else
@@ -464,11 +454,6 @@ static iot_error_t _do_state_updating(struct iot_context *ctx, iot_state_t new_s
 		break;
 	case IOT_STATE_PROV_CONFIRM:
 		if (new_state == IOT_STATE_PROV_DONE) {
-			iot_err = iot_wifi_ctrl_request(ctx, IOT_WIFI_MODE_STATION);
-			if (iot_err != IOT_ERROR_NONE) {
-				IOT_ERROR("Can't send WIFI mode command(%d)", iot_err);
-				return iot_err;
-			}
 			timeout_ms = REGISTRATION_TIMEOUT_MS;
 			iot_cmd = IOT_COMMAND_CLOUD_REGISTERING;
 			iot_err = iot_command_send(ctx, iot_cmd, NULL, 0);
@@ -579,6 +564,15 @@ static iot_error_t _do_iot_main_command(struct iot_context *ctx,
 			_do_state_updating(ctx, state_data->iot_state, state_data->opt);
 			break;
 		case IOT_COMMAND_CLOUD_REGISTERING:
+			if (!ctx->is_wifi_station) {
+				err = iot_wifi_ctrl_request(ctx, IOT_WIFI_MODE_STATION);
+				if (err != IOT_ERROR_NONE) {
+					IOT_ERROR("Can't send WIFI mode command(%d)", err);
+					iot_command_send(ctx, IOT_COMMAND_CLOUD_REGISTERING, NULL, 0);
+					break;
+				}
+			}
+
 			/* if there is previous connection, disconnect it first. */
 			if (ctx->reg_mqttcli != NULL) {
 				IOT_INFO("There is active registering, disconnect it first.");
@@ -654,6 +648,14 @@ static iot_error_t _do_iot_main_command(struct iot_context *ctx,
 			IOT_MEM_CHECK("CLOUD_REGISTERED DONE >>PT<<");
 			break;
 		case IOT_COMMAND_CLOUD_CONNECTING:
+			if (!ctx->is_wifi_station) {
+				err = iot_wifi_ctrl_request(ctx, IOT_WIFI_MODE_STATION);
+				if (err != IOT_ERROR_NONE) {
+					IOT_ERROR("Can't send WIFI mode command(%d)", err);
+					iot_command_send(ctx, IOT_COMMAND_CLOUD_CONNECTING, NULL, 0);
+					break;
+				}
+			}
 			/* we don't need this lookup_id anymore */
 			if (ctx->lookup_id) {
 				free(ctx->lookup_id);

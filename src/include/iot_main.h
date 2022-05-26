@@ -332,6 +332,8 @@ struct iot_context {
 	bool usr_delete_req;	/**< @brief whether self-device-card-deleting requested from usr */
 
 	struct iot_st_ecode last_st_ecode;	/**< @brief last happended device error code to send SmartThings App */
+
+	bool is_wifi_station;		/**< @brief indicator if wifi is station mode or not */
 };
 
 #endif /* _IOT_MAIN_H_ */
