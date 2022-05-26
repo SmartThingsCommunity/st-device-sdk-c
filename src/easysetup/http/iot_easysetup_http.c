@@ -136,6 +136,13 @@ iot_error_t _iot_easysetup_gen_get_payload(struct iot_context *ctx, int cmd, cha
 
 	cur_step = cmd;
 
+	if (cur_step == IOT_EASYSETUP_STEP_DEVICEINFO) {
+		if ((ctx->status_maps & IOT_STATUS_PROVISIONING) && ctx->status_cb) {
+			ctx->status_cb(IOT_STATUS_PROVISIONING, IOT_STAT_LV_CONN, ctx->status_usr_data);
+			ctx->reported_stat = IOT_STATUS_PROVISIONING | IOT_STAT_LV_CONN << 8;
+		}
+	}
+
 	if ((cur_step != ref_step) && (cur_step < IOT_EASYSETUP_STEP_LOG_SYSTEMINFO)) {
 		if ((cur_step == IOT_EASYSETUP_STEP_WIFISCANINFO) && (ref_step == IOT_EASYSETUP_STEP_CONFIRM)) {
 			ref_step = IOT_EASYSETUP_STEP_WIFISCANINFO;

@@ -110,12 +110,9 @@ iot_error_t _iot_easysetup_gen_get_payload(struct iot_context *ctx, int cmd, cha
 	cur_step = cmd;
 
 	if (cur_step == IOT_EASYSETUP_STEP_DEVICEINFO) {
-		err = iot_state_update(ctx, IOT_STATE_PROV_CONN_MOBILE, 0);
-		if (err != IOT_ERROR_NONE) {
-			IOT_ERROR("failed handle cmd (%d): %d", IOT_STATE_PROV_CONN_MOBILE, err);
-			IOT_ES_DUMP(IOT_DEBUG_LEVEL_ERROR, IOT_DUMP_EASYSETUP_INTERNAL_SERVER_ERROR, err);
-			err = IOT_ERROR_EASYSETUP_INTERNAL_SERVER_ERROR;
-			goto fail_status_update;
+		if ((ctx->status_maps & IOT_STATUS_PROVISIONING) && ctx->status_cb) {
+			ctx->status_cb(IOT_STATUS_PROVISIONING, IOT_STAT_LV_CONN, ctx->status_usr_data);
+			ctx->reported_stat = IOT_STATUS_PROVISIONING | IOT_STAT_LV_CONN << 8;
 		}
 	}
 
