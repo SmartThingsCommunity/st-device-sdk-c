@@ -923,6 +923,7 @@ static iot_error_t _iot_parse_cmd_data_v2(JSON_H* cmditem, st_command_data *cmd_
 	JSON_H *cap_command = NULL;
 	JSON_H *cap_args = NULL;
 	JSON_H *subitem = NULL;
+	JSON_H *command_id = NULL;
 	int arr_size = 0;
 	int i;
 
@@ -930,12 +931,14 @@ static iot_error_t _iot_parse_cmd_data_v2(JSON_H* cmditem, st_command_data *cmd_
 	cap_capability = JSON_GET_OBJECT_ITEM(cmditem, "capability");
 	cap_command = JSON_GET_OBJECT_ITEM(cmditem, "command");
 	cap_args = JSON_GET_OBJECT_ITEM(cmditem, "arguments");
+	command_id = JSON_GET_OBJECT_ITEM(cmditem, "id");
 
 	if (cap_component == NULL || cap_capability == NULL || cap_command == NULL) {
 		IOT_ERROR("Cannot find value index!!");
 		return IOT_ERROR_BAD_REQ;
 	}
 
+	cmd_data->command_id = iot_os_strdup(command_id->valuestring);
 	cmd_data->custom_component_name = iot_os_strdup(cap_component->valuestring);
 	cmd_data->custom_cap_name = iot_os_strdup(cap_capability->valuestring);
 	cmd_data->custom_command_name = iot_os_strdup(cap_command->valuestring);
@@ -1007,6 +1010,8 @@ static void _iot_free_cmd_data_v2(st_command_data *cmd_data)
 		iot_os_free(cmd_data->custom_cap_name);
 	if (cmd_data->custom_component_name)
 		iot_os_free(cmd_data->custom_component_name);
+	if (cmd_data->command_id)
+		iot_os_free(cmd_data->command_id);
 
 }
 
@@ -1437,7 +1442,14 @@ static JSON_H *_iot_make_evt_data_v2(st_attr_data *attr_data, int seq_num)
 	else
 		JSON_ADD_STRING_TO_OBJECT(prov_data, "timestamp", time_in_ms);
 
+	if (attr_data->state_change)
+		JSON_ADD_STRING_TO_OBJECT(prov_data, "stateChange", "Y");
+
 	JSON_ADD_ITEM_TO_OBJECT(evt_item, "providerData", prov_data);
+
+	/* related command ID */
+	if (attr_data->related_command_id != NULL)
+		JSON_ADD_STRING_TO_OBJECT(evt_item, "commandId", attr_data->related_command_id);
 
 	return evt_item;
 err_make_evt_item:

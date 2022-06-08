@@ -87,9 +87,13 @@ typedef struct {
 	char *unit;
 	char *data;
 	bool support_history;
+	bool state_change;			/**< Indicator whether forces state change event even if value is not changed. */
+	char *related_command_id;	/**< null-terminated Command ID string(UUID-format)
+								  related with this attribute data. Set null if there isn't. */
 } st_attr_data;
 
 typedef struct {
+	char *command_id;			/**< null-terminated Command ID string(UUID-format) */
 	st_component_type component_type;
 	char *custom_component_name;
 	st_command_type command_type;
