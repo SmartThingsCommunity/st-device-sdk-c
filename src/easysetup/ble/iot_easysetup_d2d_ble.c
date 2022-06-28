@@ -1601,7 +1601,6 @@ out:
 iot_error_t iot_easysetup_request_handler(struct iot_context *ctx, struct iot_easysetup_payload request)
 {
 	iot_error_t err = IOT_ERROR_NONE;
-	int ret = IOT_OS_TRUE;
 	struct iot_easysetup_payload response;
 
 	if (!ctx)
@@ -1652,8 +1651,8 @@ iot_error_t iot_easysetup_request_handler(struct iot_context *ctx, struct iot_ea
 	response.err = err;
 
 	if (ctx->easysetup_resp_queue) {
-		ret = iot_os_queue_send(ctx->easysetup_resp_queue, &response, 0);
-		if (ret != IOT_OS_TRUE) {
+		err = iot_util_queue_send(ctx->easysetup_resp_queue, &response);
+		if (err != IOT_ERROR_NONE) {
 			IOT_ERROR("Cannot put the response into easysetup_resp_queue");
 			err = IOT_ERROR_EASYSETUP_QUEUE_SEND_ERROR;
 		} else {

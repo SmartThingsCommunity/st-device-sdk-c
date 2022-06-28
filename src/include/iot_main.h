@@ -26,8 +26,7 @@
 #include "iot_net.h"
 #include "iot_mqtt.h"
 #include "security/iot_security_crypto.h"
-
-#define IOT_UUID_BYTES				(16)
+#include "iot_util.h"
 
 #define IOT_WIFI_PROV_SSID_STR_LEN		(32)
 #define IOT_WIFI_PROV_PASSWORD_STR_LEN 	(64)
@@ -143,12 +142,6 @@ typedef enum iot_st_ecode_type {
 	IOT_ST_ECODE_CE60,
 }iot_st_ecode_t;
 
-/**
- * @brief Contains "uuid" data
- */
-struct iot_uuid {
-	unsigned char id[IOT_UUID_BYTES];	/**< @brief actual uuid values, 16 octet */
-};
 
 /**
  * @brief Contains "wifi provisioning" data
@@ -272,9 +265,9 @@ struct iot_st_ecode {
  * @brief Contains "iot core's main context" data
  */
 struct iot_context {
-	iot_os_queue *cmd_queue;			/**< @brief iot core's internal command queue */
-	iot_os_queue *easysetup_req_queue;	/**< @brief request queue for easy-setup process */
-	iot_os_queue *easysetup_resp_queue;	/**< @brief response queue for easy-setup process */
+	iot_util_queue_t *cmd_queue;			/**< @brief iot core's internal command queue */
+	iot_util_queue_t *easysetup_req_queue;	/**< @brief request queue for easy-setup process */
+	iot_util_queue_t *easysetup_resp_queue;	/**< @brief response queue for easy-setup process */
 	bool es_res_created;				/**< @brief to check easy-setup resources are created or not */
 	bool es_http_ready;					/**< @brief to check easy-setup-httpd is initialized or not */
 
