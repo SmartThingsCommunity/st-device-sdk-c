@@ -111,6 +111,8 @@ static iot_mqtt_packet_chunk_t* _iot_mqtt_queue_pop_by_type_and_id(iot_mqtt_pack
 			iterator = queue->head;
 			while (iterator->next) {
 				if (iterator->next->packet_type == packet_type && iterator->next->packet_id == packet_id) {
+					if (iterator->next == queue->tail)
+						queue->tail = iterator;
 					chunk = iterator->next;
 					iterator->next = iterator->next->next;
 					chunk->next = NULL;
@@ -149,6 +151,8 @@ static iot_mqtt_packet_chunk_t* _iot_mqtt_queue_pop_by_expiry(iot_mqtt_packet_ch
 			iterator = queue->head;
 			while (iterator->next) {
 				if (iot_os_timer_isexpired(iterator->next->expiry_time)) {
+					if (iterator->next == queue->tail)
+						queue->tail = iterator;
 					chunk = iterator->next;
 					iterator->next = iterator->next->next;
 					chunk->next = NULL;
