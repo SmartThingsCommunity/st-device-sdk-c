@@ -1,6 +1,6 @@
 /* ***************************************************************************
  *
- * Copyright (c) 2020 Samsung Electronics All Rights Reserved.
+ * Copyright (c) 2020-2022 Samsung Electronics All Rights Reserved.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -79,7 +79,7 @@ static inline char *JSON_PRINT(const JSON_H *item) {
 }
 
 static inline void JSON_DELETE(JSON_H *item) {
-    return cJSON_Delete(item);
+    cJSON_Delete(item);
 }
 
 static inline JSON_H *JSON_CREATE_ARRAY(void) {
@@ -91,7 +91,7 @@ static inline JSON_H *JSON_CREATE_STRING_ARRAY(const char **strings, int count) 
 }
 
 static inline void JSON_ADD_ITEM_TO_ARRAY(JSON_H *array, JSON_H *item) {
-    return cJSON_AddItemToArray(array, item);
+    cJSON_AddItemToArray(array, item);
 }
 
 static inline int JSON_GET_ARRAY_SIZE(const JSON_H *array) {
@@ -115,7 +115,7 @@ static inline JSON_H *JSON_CREATE_NUMBER(double num) {
 }
 
 static inline void JSON_FREE(void *obj) {
-    return cJSON_free(obj);
+    cJSON_free(obj);
 }
 
 static inline bool JSON_IS_STRING(const JSON_H * const item) {

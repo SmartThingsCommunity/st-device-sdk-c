@@ -70,6 +70,7 @@
 typedef enum {
 	IOT_MISC_INFO_DIP = 0,	/**< @brief For Device Integration Profile information */
 	IOT_MISC_INFO_LOCATION,	/**< @brief for Device's location ID */
+	IOT_MISC_PREV_ERR,      /**< @brief for err code for help contents of app */
 } iot_misc_info_t;
 
 /* Core */
@@ -280,6 +281,14 @@ iot_error_t iot_es_disconnect(struct iot_context *ctx, int conn_type);
 void iot_cap_sub_cb(iot_cap_handle_list_t *cap_handle_list, char *payload);
 
 /**
+ * @brief	callback for mqtt command msg(version2)
+ * @details	this function is used to handle command message from server
+ * @param[in]	ctx		iot-core context
+ * @param[in]	payload			received raw message from server
+ */
+void iot_cap_commands_cb(struct iot_context *ctx, char *payload);
+
+/**
  * @brief	callback for mqtt noti msg
  * @details	this function is used to handle notification message from server
  * @param[in]	ctx		iot-core context
@@ -352,16 +361,6 @@ iot_error_t iot_misc_info_store(iot_misc_info_t type, const void *in_data);
 iot_error_t iot_get_random_id_str(char *str, size_t max_sz);
 
 /**
- * @brief	get string value according to the error type for help contents
- * @details	this function gives the string for help contents error type
- * @param[in]	ecode	    help contents error type
- * @param[out]	st_ecode	A pointer to load iot_st_ecode data structure
- * @retval	IOT_ERROR_NONE                  success.
- */
-iot_error_t iot_ecodeType_to_string(iot_st_ecode_t ecode, struct iot_st_ecode *st_ecode);
-
-
-/**
  * @brief	get last happended device error code for SmartThings App
  * @details	this function tries to get last happended device error code
  * @param[in]	ctx			iot-core context
@@ -371,13 +370,35 @@ iot_error_t iot_ecodeType_to_string(iot_st_ecode_t ecode, struct iot_st_ecode *s
 iot_error_t iot_get_st_ecode(struct iot_context *ctx, struct iot_st_ecode *st_ecode);
 
 /**
- * @brief	set new happended device error code for SmartThings App
- * @details	this function tries to set new happended device error code
+ * @brief	set new happened device error code for SmartThings App
+ * @details	this function tries to set new happened device error code
  * @param[in]	ctx			iot-core context
- * @param[in]	st_ecode	new iot_st_ecode data structure to store
+ * @param[in]	ecode	    help contents error type
  * @retval	IOT_ERROR_NONE                  success.
  */
-iot_error_t iot_set_st_ecode(struct iot_context *ctx, struct iot_st_ecode st_ecode);
+iot_error_t iot_set_st_ecode(struct iot_context *ctx, iot_st_ecode_t ecode);
+
+
+/**
+ * @brief	set device error code for SmartThings App from internal connection error
+ * @details	this function converts device error code from iot_error_t type connection error.
+ *          this function calls iot_set_st_ecode() internally.
+ *          iot_bsp_wifi_set_mode() should return proper iot_error_t value to send help contents error code
+ * @param[in]	ctx			iot-core context
+ * @param[in]	conn_error	    iot_error_t type connection error (-610 ~ -6xx)
+ * @retval	IOT_ERROR_NONE                  success.
+ *          IOT_ERROR_INVALID_ARGS          not supported error code and/or null context
+ */
+iot_error_t iot_set_st_ecode_from_conn_error(struct iot_context *ctx, iot_error_t conn_error);
+
+/**
+ * @brief	device internal clean-up function
+ * @details	This function cleans-up all DATA including provisioning & registered data
+ * @param[in]	ctx			iot-core context
+ * @param[in]	reboot		boolean set true for auto-reboot of system, else false.
+ * @retval	IOT_ERROR_NONE                  success.
+ */
+iot_error_t iot_cleanup(struct iot_context *ctx, bool reboot);
 
 #endif /* _IOT_INTERNAL_H_ */
 

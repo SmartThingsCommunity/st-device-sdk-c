@@ -31,25 +31,17 @@
 #include "iot_bsp_wifi.h"
 #include "security/iot_security_common.h"
 #include "security/iot_security_helper.h"
+#include "iot_bsp_system.h"
 
 #include "JSON.h"
 #define ONBOARDINGID_E4_MAX_LEN	13
 #define ONBOARDINGID_E5_MAX_LEN	14
 #define IOT_STATE_TIMEOUT_MAX_MS	(900000) /* 15 min */
 
-static void _set_cmd_status(struct iot_context *ctx, enum iot_command_type cmd_type)
-{
-	if ((cmd_type) != IOT_COMMNAD_STATE_UPDATE) {
-		ctx->cmd_status |= (1u << (cmd_type));
-		ctx->cmd_count[(cmd_type)]++;
-	}
-}
-
 iot_error_t iot_command_send(struct iot_context *ctx,
 	enum iot_command_type new_cmd, const void *param, int param_size)
 {
 	struct iot_command cmd_data;
-	int ret;
 	iot_error_t err;
 
 	if (param && (param_size > 0)) {
@@ -66,15 +58,13 @@ iot_error_t iot_command_send(struct iot_context *ctx,
 
 	cmd_data.cmd_type = new_cmd;
 
-	ret = iot_os_queue_send(ctx->cmd_queue, &cmd_data, 0);
-	if (ret != IOT_OS_TRUE) {
+	err = iot_util_queue_send(ctx->cmd_queue, &cmd_data);
+	if (err != IOT_ERROR_NONE) {
 		IOT_ERROR("Cannot put the cmd into cmd_queue");
 		if (cmd_data.param)
 			free(cmd_data.param);
 		err = IOT_ERROR_BAD_REQ;
 	} else {
-		_set_cmd_status(ctx, new_cmd);
-
 		iot_os_eventgroup_set_bits(ctx->iot_events,
 			IOT_EVENT_BIT_COMMAND);
 		err = IOT_ERROR_NONE;
@@ -176,9 +166,40 @@ iot_error_t iot_wifi_ctrl_request(struct iot_context *ctx,
 	}
 
 	if (send_cmd) {
-		iot_err = iot_command_send(ctx,
-				IOT_COMMAND_NETWORK_MODE,
-					&wifi_conf, sizeof(wifi_conf));
+		iot_err = iot_bsp_wifi_set_mode(&wifi_conf);
+		if (iot_err < 0) {
+			IOT_ERROR("failed to set wifi_set_mode %d", iot_err);
+			iot_set_st_ecode_from_conn_error(ctx, iot_err);
+			if (wifi_mode == IOT_WIFI_MODE_SOFTAP)
+				iot_set_st_ecode(ctx, IOT_ST_ECODE_NE01);
+			else if (wifi_mode == IOT_WIFI_MODE_STATION)
+				iot_set_st_ecode(ctx, IOT_ST_ECODE_NE10);
+			return iot_err;
+		}
+
+		switch (wifi_mode) {
+		case IOT_WIFI_MODE_SOFTAP:
+			iot_err = iot_easysetup_init(ctx);
+			IOT_MEM_CHECK("ES_INIT DONE >>PT<<");
+
+			if (iot_err != IOT_ERROR_NONE) {
+				IOT_ERROR("failed to iot_easysetup_init(%d)", iot_err);
+				return iot_err;
+			} else {
+				ctx->es_http_ready = true;
+			}
+			break;
+		default:
+			break;
+		}
+	}
+
+	if (iot_err == IOT_ERROR_NONE) {
+		if (wifi_mode == IOT_WIFI_MODE_STATION) {
+			ctx->is_wifi_station = true;
+		} else {
+			ctx->is_wifi_station = false;
+		}
 	}
 
 	return iot_err;
@@ -189,7 +210,6 @@ iot_error_t iot_easysetup_request(struct iot_context *ctx,
 				enum iot_easysetup_step step, const void *payload)
 {
 	struct iot_easysetup_payload request;
-	int ret;
 	iot_error_t err;
 
 	if (payload) {
@@ -201,8 +221,8 @@ iot_error_t iot_easysetup_request(struct iot_context *ctx,
 	request.step = step;
 
 	if (ctx->easysetup_req_queue) {
-		ret = iot_os_queue_send(ctx->easysetup_req_queue, &request, 0);
-		if (ret != IOT_OS_TRUE) {
+		err = iot_util_queue_send(ctx->easysetup_req_queue, &request);
+		if (err != IOT_ERROR_NONE) {
 			IOT_ERROR("Cannot put the request into easysetup_req_queue");
 			err = IOT_ERROR_EASYSETUP_QUEUE_SEND_ERROR;
 		} else {
@@ -227,15 +247,17 @@ iot_error_t iot_state_update(struct iot_context *ctx,
 	if ((new_state == IOT_STATE_PROV_CONFIRM)
 			&& (opt == IOT_STATE_OPT_NEED_INTERACT)) {
 		IOT_INFO("Trigger PROV_CONFIRM");
-		iot_os_eventgroup_set_bits(ctx->usr_events,
-			IOT_USR_INTERACT_BIT_PROV_CONFIRM);
+		if ((ctx->status_maps & IOT_STATUS_NEED_INTERACT) && ctx->curr_otm_feature == OVF_BIT_BUTTON) {
+			ctx->status_cb(IOT_STATUS_NEED_INTERACT, IOT_STAT_LV_STAY, ctx->status_usr_data);
+			ctx->reported_stat = IOT_STATUS_NEED_INTERACT | IOT_STAT_LV_STAY << 8;
+		}
 	}
 
 	state_data.iot_state = new_state;
 	state_data.opt = opt;
 
-	err = iot_command_send(ctx, IOT_COMMNAD_STATE_UPDATE,
-                           &state_data, sizeof(struct iot_state_data));
+	err = iot_command_send(ctx, IOT_COMMAND_STATE_UPDATE,
+		                    &state_data, sizeof(struct iot_state_data));
 
 	return err;
 }
@@ -243,7 +265,6 @@ iot_error_t iot_state_update(struct iot_context *ctx,
 iot_error_t iot_state_timeout_change(struct iot_context *ctx, iot_state_t target_state,
 	unsigned int new_timeout_ms)
 {
-	struct iot_state_data state_data;
 	iot_error_t err;
 
 	if (target_state <= IOT_STATE_INITIALIZED)
@@ -252,11 +273,12 @@ iot_error_t iot_state_timeout_change(struct iot_context *ctx, iot_state_t target
 	if (new_timeout_ms > IOT_STATE_TIMEOUT_MAX_MS)
 		return IOT_ERROR_INVALID_ARGS;
 
-	state_data.iot_state = target_state;
-	state_data.opt = (int)new_timeout_ms;
+	if (ctx->curr_state != target_state) {
+		IOT_INFO("Not current state(%d) target state %d", ctx->curr_state, target_state);
+		return IOT_ERROR_INVALID_ARGS;
+	}
 
-	err = iot_command_send(ctx, IOT_COMMAND_CHANGE_STATE_TIMEOUT,
-                           &state_data, sizeof(struct iot_state_data));
+	iot_os_timer_count_ms(ctx->state_timer, new_timeout_ms);
 
 	return err;
 }
@@ -1089,6 +1111,20 @@ static iot_error_t _get_location_from_json(JSON_H *json, struct iot_uuid *uuid)
 	return IOT_ERROR_NONE;
 }
 
+static iot_error_t _get_preverr_from_json(JSON_H *json, char *prev_err)
+{
+	JSON_H *item = NULL;
+
+	item = JSON_GET_OBJECT_ITEM(json, "prevErr");
+	if (item == NULL) {
+		IOT_ERROR("There is no prevErr in misc_info");
+		return IOT_ERROR_BAD_REQ;
+	}
+
+	memcpy(prev_err, item->valuestring, strlen(item->valuestring));
+	return IOT_ERROR_NONE;
+}
+
 iot_error_t iot_misc_info_load(iot_misc_info_t type, void *out_data)
 {
 	char *misc_info = NULL;
@@ -1123,6 +1159,10 @@ iot_error_t iot_misc_info_load(iot_misc_info_t type, void *out_data)
 
 	case IOT_MISC_INFO_LOCATION:
 		iot_err = _get_location_from_json(json, (struct iot_uuid *)out_data);
+		break;
+
+	case IOT_MISC_PREV_ERR:
+		iot_err = _get_preverr_from_json(json, (char *)out_data);
 		break;
 
 	default:
@@ -1227,6 +1267,26 @@ static iot_error_t _set_location_to_json(JSON_H *json, struct iot_uuid *uuid)
 	return IOT_ERROR_NONE;
 }
 
+static iot_error_t _set_preverr_to_json(JSON_H *json, char *prev_err)
+{
+	JSON_H *item = NULL;
+
+	item = JSON_CREATE_STRING(prev_err);
+	if (item == NULL) {
+		IOT_ERROR("Can't make new string for prev_err");
+		return IOT_ERROR_MEM_ALLOC;
+	}
+
+	if (JSON_GET_OBJECT_ITEM(json, "prevErr") == NULL) {
+		IOT_DEBUG("There is no prevErr in misc_info");
+		JSON_ADD_ITEM_TO_OBJECT(json, "prevErr", item);
+	} else {
+		JSON_REPLACE_ITEM_IN_OBJ_CASESENS(json, "prevErr", item);
+	}
+
+	return IOT_ERROR_NONE;
+}
+
 iot_error_t iot_misc_info_store(iot_misc_info_t type, const void *in_data)
 {
 	char *old_misc_info = NULL;
@@ -1281,6 +1341,10 @@ iot_error_t iot_misc_info_store(iot_misc_info_t type, const void *in_data)
 
 	case IOT_MISC_INFO_LOCATION:
 		iot_err = _set_location_to_json(json, (struct iot_uuid *)in_data);
+		break;
+
+	case IOT_MISC_PREV_ERR:
+		iot_err = _set_preverr_to_json(json, (char *)in_data);
 		break;
 
 	default:
@@ -1347,95 +1411,143 @@ iot_error_t iot_get_random_id_str(char *str, size_t max_sz)
 	return err;
 }
 
-iot_error_t iot_ecodeType_to_string(iot_st_ecode_t ecode, struct iot_st_ecode *st_ecode)
+static iot_error_t iot_ecodeType_to_string(iot_st_ecode_t ecode_type, struct iot_st_ecode *st_ecode)
 {
-    switch(ecode)
-    {
-        case IOT_ST_ECODE_NONE:
-            strncpy(st_ecode->ecode, "\0", sizeof(st_ecode->ecode));
-            break;
-        case IOT_ST_ECODE_EE01:
-            strncpy(st_ecode->ecode, "EE01", sizeof(st_ecode->ecode));
-            break;
-        case IOT_ST_ECODE_NE01:
-            strncpy(st_ecode->ecode, "NE01", sizeof(st_ecode->ecode));
-            break;
-        case IOT_ST_ECODE_NE02:
-            strncpy(st_ecode->ecode, "NE02", sizeof(st_ecode->ecode));
-            break;
-        case IOT_ST_ECODE_NE03:
-            strncpy(st_ecode->ecode, "NE03", sizeof(st_ecode->ecode));
-            break;
-        case IOT_ST_ECODE_NE04:
-            strncpy(st_ecode->ecode, "NE04", sizeof(st_ecode->ecode));
-            break;
-        case IOT_ST_ECODE_NE10:
-            strncpy(st_ecode->ecode, "NE10", sizeof(st_ecode->ecode));
-            break;
-        case IOT_ST_ECODE_NE11:
-            strncpy(st_ecode->ecode, "NE11", sizeof(st_ecode->ecode));
-            break;
-        case IOT_ST_ECODE_NE12:
-            strncpy(st_ecode->ecode, "NE12", sizeof(st_ecode->ecode));
-            break;
-        case IOT_ST_ECODE_NE13:
-            strncpy(st_ecode->ecode, "NE13", sizeof(st_ecode->ecode));
-            break;
-        case IOT_ST_ECODE_NE14:
-            strncpy(st_ecode->ecode, "NE14", sizeof(st_ecode->ecode));
-            break;
-        case IOT_ST_ECODE_NE15:
-            strncpy(st_ecode->ecode, "NE15", sizeof(st_ecode->ecode));
-            break;
-        case IOT_ST_ECODE_NE16:
-            strncpy(st_ecode->ecode, "NE16", sizeof(st_ecode->ecode));
-            break;
-        case IOT_ST_ECODE_NE17:
-            strncpy(st_ecode->ecode, "NE17", sizeof(st_ecode->ecode));
-            break;
-        case IOT_ST_ECODE_CE11:
-            strncpy(st_ecode->ecode, "CE11", sizeof(st_ecode->ecode));
-            break;
-        case IOT_ST_ECODE_CE12:
-            strncpy(st_ecode->ecode, "CE12", sizeof(st_ecode->ecode));
-            break;
-        case IOT_ST_ECODE_CE20:
-            strncpy(st_ecode->ecode, "CE20", sizeof(st_ecode->ecode));
-            break;
-        case IOT_ST_ECODE_CE21:
-            strncpy(st_ecode->ecode, "CE21", sizeof(st_ecode->ecode));
-            break;
-        case IOT_ST_ECODE_CE30:
-            strncpy(st_ecode->ecode, "CE30", sizeof(st_ecode->ecode));
-            break;
-        case IOT_ST_ECODE_CE31:
-            strncpy(st_ecode->ecode, "CE31", sizeof(st_ecode->ecode));
-            break;
-        case IOT_ST_ECODE_CE32:
-            strncpy(st_ecode->ecode, "CE32", sizeof(st_ecode->ecode));
-            break;
-        case IOT_ST_ECODE_CE33:
-            strncpy(st_ecode->ecode, "CE33", sizeof(st_ecode->ecode));
-            break;
-        case IOT_ST_ECODE_CE40:
-            strncpy(st_ecode->ecode, "CE40", sizeof(st_ecode->ecode));
-            break;
-        case IOT_ST_ECODE_CE41:
-            strncpy(st_ecode->ecode, "CE41", sizeof(st_ecode->ecode));
-            break;
-        case IOT_ST_ECODE_CE50:
-            strncpy(st_ecode->ecode, "CE50", sizeof(st_ecode->ecode));
-            break;
-        case IOT_ST_ECODE_CE51:
-            strncpy(st_ecode->ecode, "CE51", sizeof(st_ecode->ecode));
-            break;
-        case IOT_ST_ECODE_CE60:
-            strncpy(st_ecode->ecode, "CE60", sizeof(st_ecode->ecode));
-            break;
-        default:
-            break;
-    }
-    return IOT_ERROR_NONE;
+	switch(ecode_type)
+	{
+		case IOT_ST_ECODE_NONE:
+			strncpy(st_ecode->ecode, "\0", sizeof(st_ecode->ecode));
+			break;
+		case IOT_ST_ECODE_EE01:
+			strncpy(st_ecode->ecode, "EE01", sizeof(st_ecode->ecode));
+			break;
+		case IOT_ST_ECODE_NE01:
+			strncpy(st_ecode->ecode, "NE01", sizeof(st_ecode->ecode));
+			break;
+		case IOT_ST_ECODE_NE02:
+			strncpy(st_ecode->ecode, "NE02", sizeof(st_ecode->ecode));
+			break;
+		case IOT_ST_ECODE_NE03:
+			strncpy(st_ecode->ecode, "NE03", sizeof(st_ecode->ecode));
+			break;
+		case IOT_ST_ECODE_NE04:
+			strncpy(st_ecode->ecode, "NE04", sizeof(st_ecode->ecode));
+			break;
+		case IOT_ST_ECODE_NE10:
+			strncpy(st_ecode->ecode, "NE10", sizeof(st_ecode->ecode));
+			break;
+		case IOT_ST_ECODE_NE11:
+			strncpy(st_ecode->ecode, "NE11", sizeof(st_ecode->ecode));
+			break;
+		case IOT_ST_ECODE_NE12:
+			strncpy(st_ecode->ecode, "NE12", sizeof(st_ecode->ecode));
+			break;
+		case IOT_ST_ECODE_NE13:
+			strncpy(st_ecode->ecode, "NE13", sizeof(st_ecode->ecode));
+			break;
+		case IOT_ST_ECODE_NE14:
+			strncpy(st_ecode->ecode, "NE14", sizeof(st_ecode->ecode));
+			break;
+		case IOT_ST_ECODE_NE15:
+			strncpy(st_ecode->ecode, "NE15", sizeof(st_ecode->ecode));
+			break;
+		case IOT_ST_ECODE_NE16:
+			strncpy(st_ecode->ecode, "NE16", sizeof(st_ecode->ecode));
+			break;
+		case IOT_ST_ECODE_NE17:
+			strncpy(st_ecode->ecode, "NE17", sizeof(st_ecode->ecode));
+			break;
+		case IOT_ST_ECODE_CE11:
+			strncpy(st_ecode->ecode, "CE11", sizeof(st_ecode->ecode));
+			break;
+		case IOT_ST_ECODE_CE12:
+			strncpy(st_ecode->ecode, "CE12", sizeof(st_ecode->ecode));
+			break;
+		case IOT_ST_ECODE_CE20:
+			strncpy(st_ecode->ecode, "CE20", sizeof(st_ecode->ecode));
+			break;
+		case IOT_ST_ECODE_CE21:
+			strncpy(st_ecode->ecode, "CE21", sizeof(st_ecode->ecode));
+			break;
+		case IOT_ST_ECODE_CE30:
+			strncpy(st_ecode->ecode, "CE30", sizeof(st_ecode->ecode));
+			break;
+		case IOT_ST_ECODE_CE31:
+			strncpy(st_ecode->ecode, "CE31", sizeof(st_ecode->ecode));
+			break;
+		case IOT_ST_ECODE_CE32:
+			strncpy(st_ecode->ecode, "CE32", sizeof(st_ecode->ecode));
+			break;
+		case IOT_ST_ECODE_CE33:
+			strncpy(st_ecode->ecode, "CE33", sizeof(st_ecode->ecode));
+			break;
+		case IOT_ST_ECODE_CE40:
+			strncpy(st_ecode->ecode, "CE40", sizeof(st_ecode->ecode));
+			break;
+		case IOT_ST_ECODE_CE41:
+			strncpy(st_ecode->ecode, "CE41", sizeof(st_ecode->ecode));
+			break;
+		case IOT_ST_ECODE_CE50:
+			strncpy(st_ecode->ecode, "CE50", sizeof(st_ecode->ecode));
+			break;
+		case IOT_ST_ECODE_CE51:
+			strncpy(st_ecode->ecode, "CE51", sizeof(st_ecode->ecode));
+			break;
+		case IOT_ST_ECODE_CE60:
+			strncpy(st_ecode->ecode, "CE60", sizeof(st_ecode->ecode));
+			break;
+		default:
+			break;
+	}
+	return IOT_ERROR_NONE;
+}
+
+iot_error_t iot_set_st_ecode_from_conn_error(struct iot_context *ctx, iot_error_t conn_error)
+{
+	iot_st_ecode_t ecode;
+
+	switch (conn_error)
+	{
+		case IOT_ERROR_CONN_SOFTAP_CONF_FAIL:
+			ecode = IOT_ST_ECODE_NE01;
+			break;
+		case IOT_ERROR_CONN_SOFTAP_CONN_FAIL:
+			ecode = IOT_ST_ECODE_NE02;
+			break;
+		case IOT_ERROR_CONN_SOFTAP_DHCP_FAIL:
+			ecode = IOT_ST_ECODE_NE03;
+			break;
+		case IOT_ERROR_CONN_SOFTAP_AUTH_FAIL:
+			ecode = IOT_ST_ECODE_NE04;
+			break;
+		case IOT_ERROR_CONN_STA_CONF_FAIL:
+			ecode = IOT_ST_ECODE_NE10;
+			break;
+		case IOT_ERROR_CONN_STA_CONN_FAIL:
+			ecode = IOT_ST_ECODE_NE11;
+			break;
+		case IOT_ERROR_CONN_STA_DHCP_FAIL:
+			ecode = IOT_ST_ECODE_NE12;
+			break;
+		case IOT_ERROR_CONN_STA_AP_NOT_FOUND:
+			ecode = IOT_ST_ECODE_NE13;
+			break;
+		case IOT_ERROR_CONN_STA_ASSOC_FAIL:
+			ecode = IOT_ST_ECODE_NE14;
+			break;
+		case IOT_ERROR_CONN_STA_AUTH_FAIL:
+			ecode = IOT_ST_ECODE_NE15;
+			break;
+		case IOT_ERROR_CONN_STA_NO_INTERNET:
+			ecode = IOT_ST_ECODE_NE16;
+			break;
+		case IOT_ERROR_CONN_DNS_QUERY_FAIL:
+			ecode = IOT_ST_ECODE_NE17;
+			break;
+		default:
+			return IOT_ERROR_INVALID_ARGS;
+	}
+	return iot_set_st_ecode(ctx, ecode);
 }
 
 iot_error_t iot_get_st_ecode(struct iot_context *ctx, struct iot_st_ecode *st_ecode)
@@ -1450,17 +1562,35 @@ iot_error_t iot_get_st_ecode(struct iot_context *ctx, struct iot_st_ecode *st_ec
 	return IOT_ERROR_NONE;
 }
 
-iot_error_t iot_set_st_ecode(struct iot_context *ctx, struct iot_st_ecode st_ecode)
+iot_error_t iot_set_st_ecode(struct iot_context *ctx, iot_st_ecode_t ecode_type)
 {
+	iot_error_t err = IOT_ERROR_NONE;
+
 	if (ctx == NULL) {
 		IOT_ERROR("There is no ctx");
 		return IOT_ERROR_INVALID_ARGS;
 	}
 
-	if (st_ecode.is_happended == true) {
-		memcpy(&(ctx->last_st_ecode), &st_ecode, sizeof(struct iot_st_ecode));
-	} else {
-		ctx->last_st_ecode.is_happended = false;
+	if ((ecode_type != ctx->last_st_ecode.ecode_type) || (ecode_type == IOT_ST_ECODE_NONE)) {
+		memset(ctx->last_st_ecode.ecode, 0, sizeof(ctx->last_st_ecode.ecode));
+		iot_ecodeType_to_string(ecode_type, &ctx->last_st_ecode);
+		err = iot_misc_info_store(IOT_MISC_PREV_ERR, (void *)ctx->last_st_ecode.ecode);
+	}
+
+	return err;
+}
+
+iot_error_t iot_cleanup(struct iot_context *ctx, bool reboot)
+{
+	if (ctx->es_http_ready) {
+		ctx->es_http_ready = false;
+		iot_easysetup_deinit(ctx);
+	}
+
+	iot_device_cleanup(ctx);
+
+	if (reboot) {
+		IOT_REBOOT();
 	}
 
 	return IOT_ERROR_NONE;

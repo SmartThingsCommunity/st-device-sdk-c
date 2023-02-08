@@ -5,6 +5,17 @@ if(CONFIG_STDK_IOT_CORE_EASYSETUP_HTTP)
         http/iot_easysetup_http.c
         http/easysetup_http.h
         )
+elseif(CONFIG_STDK_IOT_CORE_EASYSETUP_BLE)
+    SET(EASYSETUP_D2D_SOURCES
+        "${EASYSETUP_D2D_SOURCES}"
+        ble/iot_easysetup_ble_parser.c
+        ble/iot_easysetup_ble.c
+        ble/iot_easysetup_ble_task.c
+        ble/iot_easysetup_ble_msg.c
+        ble/iot_easysetup_ble_ecdh.c
+        ble/iot_easysetup_d2d_ble.c
+        ble/easysetup_ble.h
+        )
 endif()
 
 if(CONFIG_STDK_IOT_CORE_EASYSETUP_X509)

@@ -39,6 +39,25 @@
 #define ES_CONFIRM_MAX_DELAY	100000
 #define ES_CONFIRM_FAIL_TIMEOUT (10000)
 
+#define AUTH_TYPE_NONE          (1 << 0)
+#define AUTH_TYPE_WEP           (1 << 1)
+#define AUTH_TYPE_WPA_PSK       (1 << 2)
+#define AUTH_TYPE_WPA2_PSK      (1 << 3)
+#define AUTH_TYPE_WPA_WPA2_PSK  (1 << 4)
+#define AUTH_TYPE_EAP           (1 << 5)
+#define AUTH_TYPE_WPA3          (1 << 6)
+
+#define RANDOM_LEN              16
+#define PREERR_STR_LEN          32
+#define STR_DEFAULT_LEN         64
+
+int iot_easysetup_ble_ecdh_setup(iot_security_context_t **state);
+void iot_easysetup_ble_ecdh_compute_shared_secret_static_success(iot_security_context_t **state, unsigned char *sec_random, unsigned char **dev_cert,
+								 unsigned char **sub_cert, unsigned char **spub_key, size_t *spub_key_len, unsigned char **signature, size_t *signature_len);
+int iot_easysetup_ble_ecdh_teardown(void **state);
+
+static unsigned char sec_random[RANDOM_LEN*2] = {0};
+
 void st_conn_ownership_confirm(IOT_CTX *iot_ctx, bool confirm)
 {
 	struct iot_context *ctx = (struct iot_context*)iot_ctx;
@@ -87,33 +106,7 @@ char *_es_json_parse_string(JSON_H *json, const char *name)
 	return buf;
 }
 
-STATIC_FUNCTION
-iot_error_t _es_crypto_cipher_gen_iv(iot_security_buffer_t *iv_buffer)
-{
-	int i;
-	unsigned char *iv;
-	size_t iv_len = IOT_SECURITY_IV_LEN;
-
-	if (!iv_buffer) {
-		IOT_ERROR("iv buffer is null");
-		return IOT_ERROR_INVALID_ARGS;
-	}
-
-	if ((iv = (unsigned char *)iot_os_malloc(iv_len)) == NULL) {
-		IOT_ERROR("failed to malloc for iv");
-		IOT_ES_DUMP(IOT_DEBUG_LEVEL_ERROR, IOT_DUMP_EASYSETUP_MEM_ALLOC_ERROR, 0);
-		return IOT_ERROR_EASYSETUP_MEM_ALLOC_ERROR;
-	}
-
-	for (i = 0; i < iv_len; i++) {
-		iv[i] = (unsigned char)iot_bsp_random();
-	}
-
-	iv_buffer->p = iv;
-	iv_buffer->len = iv_len;
-
-	return IOT_ERROR_NONE;
-}
+int trans_len = 0;
 
 STATIC_FUNCTION
 iot_error_t _encrypt_and_encode(iot_security_context_t *security_context, unsigned char *plain_msg, size_t plain_msg_len, char **out_msg)
@@ -122,7 +115,6 @@ iot_error_t _encrypt_and_encode(iot_security_context_t *security_context, unsign
 	iot_security_buffer_t msg_buf = { 0 };
 	iot_security_buffer_t encrypt_buf = { 0 };
 	iot_security_buffer_t encrypt_b64url_buf = { 0 };
-	size_t out_len;
 
 	if (!security_context || !plain_msg || plain_msg_len == 0) {
 		IOT_ES_DUMP(IOT_DEBUG_LEVEL_ERROR, IOT_DUMP_EASYSETUP_INTERNAL_SERVER_ERROR, 0);
@@ -140,26 +132,9 @@ iot_error_t _encrypt_and_encode(iot_security_context_t *security_context, unsign
 		goto enc_fail;
 	}
 
-	encrypt_b64url_buf.len = IOT_SECURITY_B64_ENCODE_LEN(encrypt_buf.len);
-	encrypt_b64url_buf.p = (unsigned char *)iot_os_calloc(encrypt_b64url_buf.len, sizeof(unsigned char));
-	if (!encrypt_b64url_buf.p) {
-		IOT_ERROR("failed to malloc for encrypt b64url");
-		IOT_ES_DUMP(IOT_DEBUG_LEVEL_ERROR, IOT_DUMP_EASYSETUP_MEM_ALLOC_ERROR, 0);
-		err = IOT_ERROR_EASYSETUP_MEM_ALLOC_ERROR;
-		goto enc_fail;
-	}
+	trans_len = encrypt_buf.len;
 
-	err = iot_security_base64_encode_urlsafe(encrypt_buf.p, encrypt_buf.len,
-				encrypt_b64url_buf.p, encrypt_b64url_buf.len, &out_len);
-	if (err != IOT_ERROR_NONE) {
-		IOT_ERROR("base64url encode error 0x%x", err);
-		IOT_ES_DUMP(IOT_DEBUG_LEVEL_ERROR, IOT_DUMP_EASYSETUP_BASE64_ENCODE_ERROR, err);
-		err = IOT_ERROR_EASYSETUP_BASE64_ENCODE_ERROR;
-		goto enc_fail;
-	}
-
-	iot_os_free(encrypt_buf.p);
-	*out_msg = (char *)encrypt_b64url_buf.p;
+	*out_msg = (char *)encrypt_buf.p;
 	return IOT_ERROR_NONE;
 
 enc_fail:
@@ -172,38 +147,31 @@ enc_fail:
 	return err;
 }
 
+extern int recv_size;
+
 STATIC_FUNCTION
 iot_error_t _decode_and_decrypt(iot_security_context_t *security_context, unsigned char *encrypt_b64url_msg, size_t encrypt_b64url_msg_len, char **out_msg)
 {
 	iot_error_t err;
 	iot_security_buffer_t decrypt_buf = {0 };
 	iot_security_buffer_t plain_buf = { 0 };
-	size_t decoded_len;
 
 	if (!security_context || !encrypt_b64url_msg || encrypt_b64url_msg_len == 0) {
 		IOT_ES_DUMP(IOT_DEBUG_LEVEL_ERROR, IOT_DUMP_EASYSETUP_INTERNAL_SERVER_ERROR, 0);
 		return IOT_ERROR_EASYSETUP_INTERNAL_SERVER_ERROR;
 	}
 
-	// Decode
-	decrypt_buf.len = IOT_SECURITY_B64_DECODE_LEN(encrypt_b64url_msg_len);
-	decrypt_buf.p = (unsigned char*) iot_os_calloc(decrypt_buf.len, sizeof(unsigned char));
-	if (!decrypt_buf.p) {
-		IOT_ERROR("failed to malloc for decrypt");
+	if ((decrypt_buf.p = iot_os_malloc(recv_size)) == NULL) {
+		IOT_ERROR("failed to malloc for decode_buf");
 		IOT_ES_DUMP(IOT_DEBUG_LEVEL_ERROR, IOT_DUMP_EASYSETUP_MEM_ALLOC_ERROR, 0);
-		return IOT_DUMP_EASYSETUP_MEM_ALLOC_ERROR;
-	}
-
-	err = iot_security_base64_decode_urlsafe(encrypt_b64url_msg, encrypt_b64url_msg_len,
-					decrypt_buf.p, decrypt_buf.len, &decoded_len);
-	if (err != IOT_ERROR_NONE) {
-		IOT_ERROR("base64url decode error 0x%x", err);
-		IOT_ES_DUMP(IOT_DEBUG_LEVEL_ERROR, IOT_DUMP_EASYSETUP_BASE64_DECODE_ERROR, err);
-		err = IOT_ERROR_EASYSETUP_BASE64_DECODE_ERROR;
+		err = IOT_ERROR_EASYSETUP_MEM_ALLOC_ERROR;
 		goto dec_fail;
 	}
 
-	decrypt_buf.len = decoded_len;
+
+	decrypt_buf.len = recv_size;
+
+	memcpy(decrypt_buf.p, encrypt_b64url_msg, decrypt_buf.len);
 
 	err = iot_security_cipher_aes_decrypt(security_context, &decrypt_buf, &plain_buf);
 	if (err != IOT_ERROR_NONE) {
@@ -277,9 +245,7 @@ STATIC_FUNCTION
 char* _es_parse_input_data(iot_security_context_t *security_context, char *input_data)
 {
 	iot_error_t err = IOT_ERROR_NONE;
-	char *message_value = NULL;
 	char *in_payload = NULL;
-	JSON_H *root = NULL;
 
 	if (!input_data || !security_context) {
 		IOT_ERROR("Invalid args");
@@ -287,34 +253,13 @@ char* _es_parse_input_data(iot_security_context_t *security_context, char *input
 		return NULL;
 	}
 
-	root = JSON_PARSE(input_data);
-	if (!root) {
-		IOT_ERROR("parse error");
-		IOT_ES_DUMP(IOT_DEBUG_LEVEL_ERROR, IOT_DUMP_EASYSETUP_INVALID_REQUEST, 0);
-		goto out;
-	}
-
-	message_value = _es_json_parse_string(root, "message");
-	if (!message_value) {
-		IOT_ERROR("Invalid message");
-		IOT_ES_DUMP(IOT_DEBUG_LEVEL_ERROR, IOT_DUMP_EASYSETUP_INVALID_REQUEST, 0);
-		goto out;
-	}
-
-	err = _decode_and_decrypt(security_context, (unsigned char*) message_value, strlen(message_value), &in_payload);
+	err = _decode_and_decrypt(security_context, (unsigned char*) input_data, strlen(input_data), &in_payload);
 	if (err != IOT_ERROR_NONE) {
 		IOT_ERROR("decrypt and decode fail 0x%x", err);
 		goto out;
 	}
 
 out:
-	if (root) {
-		JSON_DELETE(root);
-	}
-	if (message_value) {
-		iot_os_free(message_value);
-	}
-
 	return in_payload;
 }
 
@@ -323,8 +268,6 @@ char* _es_build_output_data(iot_security_context_t *security_context, char *out_
 {
 	iot_error_t err = IOT_ERROR_NONE;
 	char *encrypted_message = NULL;
-	char *output_data = NULL;
-	JSON_H *root = NULL;
 
 	if (!out_payload || !security_context) {
 		IOT_ERROR("Invalid args");
@@ -338,44 +281,69 @@ char* _es_build_output_data(iot_security_context_t *security_context, char *out_
 		goto out;
 	}
 
-	root = JSON_CREATE_OBJECT();
-	if (!root) {
-		IOT_ERROR("json create failed");
-		IOT_ES_DUMP(IOT_DEBUG_LEVEL_ERROR, IOT_DUMP_EASYSETUP_JSON_CREATE_ERROR, 0);
-		goto out;
-	}
-	JSON_ADD_ITEM_TO_OBJECT(root, "message", JSON_CREATE_STRING((char *) encrypted_message));
-	output_data = JSON_PRINT(root);
-
 out:
-	if (root) {
-		JSON_DELETE(root);
-	}
-	if (encrypted_message) {
-		iot_os_free(encrypted_message);
-	}
-
-	return output_data;
+	return encrypted_message;
 }
 
 STATIC_FUNCTION
-iot_error_t _es_deviceinfo_handler(struct iot_context *ctx, char **out_payload)
+iot_error_t _es_deviceinfo_handler(struct iot_context *ctx, char *in_payload, char **out_payload)
 {
 	char *output_ptr = NULL;
 	JSON_H *root = NULL;
+	JSON_H *data = NULL;
+	JSON_H *recv = NULL;
+	JSON_H *recv_data = NULL;
+	unsigned char crand[RANDOM_LEN] = {0};
+	unsigned int crand_len = 0;
+	unsigned char *crand_str = NULL;
+	unsigned char srand[RANDOM_LEN] = {0};
+	unsigned int srand_len = 0;
+	unsigned char srand_str[STR_DEFAULT_LEN];
 	iot_error_t err = IOT_ERROR_NONE;
-	iot_security_buffer_t iv_buf = { 0 };
-	iot_security_cipher_params_t cipher_set_params = { 0 };
-	size_t base64_written = 0;
-	size_t encode_buf_len = 0;
-	unsigned char *encode_buf = NULL;
-
+	static iot_error_t pre_err;
+	char *sn_buf = NULL;
+	unsigned int sn_len = 0;
+	unsigned char sn_str[STR_DEFAULT_LEN] = {0};
+	unsigned int sn_str_len = 0;
+	unsigned char *sub_cert = NULL;
+	unsigned char *dev_cert = NULL;
+	unsigned char *spub_key = NULL;
+	unsigned char *signature = NULL;
+	unsigned int orin_spub_key_len = 0;
+	unsigned int orin_signature_len = 0;
+     
 	if (!ctx) {
 		IOT_ERROR("invalid iot_context!!");
 		IOT_ES_DUMP(IOT_DEBUG_LEVEL_ERROR, IOT_DUMP_EASYSETUP_INTERNAL_SERVER_ERROR, 0);
 		err = IOT_ERROR_EASYSETUP_INTERNAL_SERVER_ERROR;
 		return err;
 	}
+
+	root = JSON_PARSE(in_payload);
+	if (!root) {
+		IOT_ERROR("Invalid json format of payload");
+		IOT_ES_DUMP(IOT_DEBUG_LEVEL_ERROR, IOT_DUMP_EASYSETUP_INVALID_REQUEST, 0);
+		err = IOT_ERROR_EASYSETUP_INVALID_REQUEST;
+		goto exit;
+	}
+    
+	if ((recv = JSON_GET_OBJECT_ITEM(root, "data")) == NULL) {
+		IOT_INFO("no data info");
+		IOT_ES_DUMP(IOT_DEBUG_LEVEL_ERROR, IOT_DUMP_EASYSETUP_INVALID_REQUEST, 0);
+		err  = IOT_ERROR_EASYSETUP_INVALID_REQUEST;
+		goto exit;
+	}
+    
+	if ((recv_data = JSON_GET_OBJECT_ITEM(recv, "crand")) == NULL) {
+		IOT_INFO("no crand info");
+		IOT_ES_DUMP(IOT_DEBUG_LEVEL_ERROR, IOT_DUMP_EASYSETUP_INVALID_REQUEST, 0);
+		err = IOT_ERROR_EASYSETUP_INVALID_REQUEST;
+		goto exit;
+	}
+	crand_str = (unsigned char *)JSON_GET_STRING_VALUE(recv_data);
+	iot_security_base64_decode_urlsafe(crand_str, strlen((char*)crand_str), crand, RANDOM_LEN, &crand_len);
+	memcpy(&sec_random[0], crand, RANDOM_LEN);
+	JSON_DELETE(root);
 
 	root = JSON_CREATE_OBJECT();
 	if (!root) {
@@ -384,93 +352,116 @@ iot_error_t _es_deviceinfo_handler(struct iot_context *ctx, char **out_payload)
 		err = IOT_ERROR_EASYSETUP_JSON_CREATE_ERROR;
 		return err;
 	}
-	JSON_ADD_ITEM_TO_OBJECT(root, "protocolVersion", JSON_CREATE_STRING(STDK_D2D_PROTOCOL_VERSION));
-	JSON_ADD_ITEM_TO_OBJECT(root, "firmwareVersion", JSON_CREATE_STRING(ctx->device_info.firmware_version));
-	JSON_ADD_ITEM_TO_OBJECT(root, "hashedSn", JSON_CREATE_STRING((char *)ctx->devconf.hashed_sn));
-	JSON_ADD_NUMBER_TO_OBJECT(root, "wifiSupportFrequency", (double) iot_bsp_wifi_get_freq());
-	JSON_ADD_NUMBER_TO_OBJECT(root, "wifiSupportAuthType", (double) iot_bsp_wifi_get_auth_mode());
-	err = iot_misc_info_load(IOT_MISC_PREV_ERR, (char *)ctx->last_st_ecode.ecode);
-	if (!err) {
-		JSON_ADD_ITEM_TO_OBJECT(root, "prevErrorCode", JSON_CREATE_STRING((char *)ctx->last_st_ecode.ecode));
+
+	data = JSON_CREATE_OBJECT();
+
+	JSON_ADD_ITEM_TO_OBJECT(root, "data", data);
+	JSON_ADD_ITEM_TO_OBJECT(data, "protocolVersion", JSON_CREATE_STRING(STDK_D2D_PROTOCOL_VERSION));
+	JSON_ADD_ITEM_TO_OBJECT(data, "firmwareVersion", JSON_CREATE_STRING(ctx->device_info.firmware_version));
+
+	err = iot_nv_get_serial_number(&sn_buf, &sn_len);
+	if (err) {
+		IOT_ERROR("Get serial number failed");
+		goto exit;
 	}
 
-	err = _es_crypto_cipher_gen_iv(&iv_buf);
-	if (err != IOT_ERROR_NONE) {
-		IOT_ERROR("failed to generate cipher iv!!");
-		goto out;
+	iot_security_base64_encode_urlsafe((unsigned char *)sn_buf, sn_len, sn_str, sizeof(sn_str), &sn_str_len);
+	IOT_INFO("Serial number is %s",sn_buf);
+	sn_str[sn_str_len] = 0;
+	IOT_INFO("Serial number str is %s",sn_str);
+
+	JSON_ADD_ITEM_TO_OBJECT(data, "hashedSn", JSON_CREATE_STRING((char *)sn_str));
+	JSON_ADD_NUMBER_TO_OBJECT(data, "wifiSupportFrequency", (double) iot_bsp_wifi_get_freq());
+	JSON_ADD_NUMBER_TO_OBJECT(data, "wifiSupportAuthType", (double)AUTH_TYPE_WPA2_PSK);    //TBD
+
+	static char pre_err_str[PREERR_STR_LEN];
+	itoa(pre_err, pre_err_str, 10);
+	JSON_ADD_ITEM_TO_OBJECT(data, "prevErrorCode", JSON_CREATE_STRING(pre_err_str));
+
+	unsigned int rnd;
+	for (int i = 0; i < 4; i++) {
+		rnd = iot_bsp_random();
+		srand[i * 4 + 0] = (unsigned char)((rnd >> 0)  & 0x000000FF);
+		srand[i * 4 + 1] = (unsigned char)((rnd >> 8)  & 0x000000FF);
+		srand[i * 4 + 2] = (unsigned char)((rnd >> 16) & 0x000000FF);
+		srand[i * 4 + 3] = (unsigned char)((rnd >> 24) & 0x000000FF);
 	}
 
-	cipher_set_params.type = IOT_SECURITY_KEY_TYPE_AES256;
-	cipher_set_params.iv = iv_buf;
+	memcpy(&sec_random[RANDOM_LEN], srand, RANDOM_LEN);
 
-	err = iot_security_cipher_set_params(ctx->easysetup_security_context, &cipher_set_params);
-	if (err != IOT_ERROR_NONE) {
-		IOT_ERROR("failed to set cipher params");
-		IOT_ES_DUMP(IOT_DEBUG_LEVEL_ERROR, IOT_DUMP_EASYSETUP_CIPHER_PARAMS_ERROR, 0);
-		err = IOT_ERROR_EASYSETUP_CIPHER_PARAMS_ERROR;
-		goto out;
-	}
+	iot_security_base64_encode_urlsafe(srand, RANDOM_LEN, srand_str, sizeof(srand_str), &srand_len);
 
-	encode_buf_len = IOT_SECURITY_B64_ENCODE_LEN(iv_buf.len);
-	if ((encode_buf = (unsigned char *)iot_os_malloc(encode_buf_len)) == NULL) {
-		IOT_ERROR("failed to malloc for encode_buf");
-		IOT_ES_DUMP(IOT_DEBUG_LEVEL_ERROR, IOT_DUMP_EASYSETUP_MEM_ALLOC_ERROR, 0);
-		err = IOT_ERROR_EASYSETUP_MEM_ALLOC_ERROR;
-		goto out;
-	}
+	JSON_ADD_ITEM_TO_OBJECT(data, "srand", JSON_CREATE_STRING((char *)srand_str));
 
-	err = iot_security_base64_encode_urlsafe(iv_buf.p, iv_buf.len,
-					encode_buf, encode_buf_len, &base64_written);
-	if (err != IOT_ERROR_NONE) {
-		IOT_ERROR("base64 encode error!!");
-		IOT_ES_DUMP(IOT_DEBUG_LEVEL_ERROR, IOT_DUMP_EASYSETUP_BASE64_ENCODE_ERROR, 0);
-		err = IOT_ERROR_EASYSETUP_BASE64_ENCODE_ERROR;
-		goto out;
-	}
+	iot_easysetup_ble_ecdh_setup(&ctx->easysetup_security_context);
 
-	JSON_ADD_ITEM_TO_OBJECT(root, "iv", JSON_CREATE_STRING((char *)encode_buf));
+	iot_easysetup_ble_ecdh_compute_shared_secret_static_success(&ctx->easysetup_security_context, sec_random, 
+				&dev_cert, &sub_cert, &spub_key, &orin_spub_key_len, &signature, &orin_signature_len);
+
+	unsigned char spub_key_str[128];
+	unsigned int spub_key_len = 0;
+	iot_security_base64_encode_urlsafe(spub_key,orin_spub_key_len,spub_key_str, sizeof(spub_key_str), &spub_key_len);
+
+	unsigned char signature_str[128];
+	unsigned int signature_len = 0;
+	iot_security_base64_encode_urlsafe(signature,orin_signature_len,signature_str, sizeof(signature_str), &signature_len);
+
+	JSON_ADD_ITEM_TO_OBJECT(data, "subCaCert", JSON_CREATE_STRING((char *)sub_cert));
+	JSON_ADD_ITEM_TO_OBJECT(data, "deviceCert", JSON_CREATE_STRING((char *)dev_cert));
+	JSON_ADD_ITEM_TO_OBJECT(data, "spubKey", JSON_CREATE_STRING((char *)spub_key_str));
+	JSON_ADD_ITEM_TO_OBJECT(data, "signature", JSON_CREATE_STRING((char *)signature_str));
+
+	JSON_ADD_ITEM_TO_OBJECT(data, "cloudlog", JSON_CREATE_STRING("NULL"));
+	JSON_ADD_NUMBER_TO_OBJECT(root, "errorcode", 0);
+
 	output_ptr = JSON_PRINT(root);
-
+    
 	*out_payload = output_ptr;
-	IOT_DEBUG("payload: %s", *out_payload);
-out:
-	if (iv_buf.p)
-		free(iv_buf.p);
-	if (encode_buf)
-		free(encode_buf);
+exit:
 	if (root)
 		JSON_DELETE(root);
-	return err;
+	if (sn_buf)
+		iot_os_free(sn_buf);
+	if (sub_cert)
+		iot_os_free(sub_cert);
+	if (dev_cert)
+		iot_os_free(dev_cert);
+	if (spub_key)
+		iot_os_free(spub_key);
+	if (signature)
+		iot_os_free(signature);
+	pre_err = err;
+		return err;
 }
 
 STATIC_FUNCTION
 iot_error_t _es_keyinfo_handler(struct iot_context *ctx, char *input_data, char **output_data)
 {
 	JSON_H *recv = NULL;
+	JSON_H *recv_data = NULL;
 	JSON_H *root = NULL;
+    JSON_H *data = NULL;
 	JSON_H *array = NULL;
 	unsigned int i;
 	iot_error_t err = IOT_ERROR_NONE;
+    iot_security_cipher_params_t cipher_set_params = { 0 };
 	iot_security_ecdh_params_t ecdh_params = { 0 };
 	iot_security_buffer_t secret_buf = { 0 };
+	iot_security_buffer_t peer_pubkey_buf = { 0 };
+	iot_security_buffer_t data_buf = { 0 };
+	iot_security_buffer_t hash_buf = { 0 };
+	iot_security_buffer_t iv = { 0 };
+    unsigned char *p_cpubkey_str = NULL;
 	unsigned char *p_datetime_str = NULL;
 	unsigned char *p_regionaldatetime_str = NULL;
 	unsigned char *p_timezoneid_str = NULL;
 	char *out_payload = NULL;
-	char tmp[3] = {0};
-	char rand_asc[IOT_SECURITY_SHA256_LEN * 2 + 1] = { 0 };
-	unsigned char val;
-	unsigned int j;
-	unsigned char key_spub_sign[IOT_SECURITY_ED25519_LEN];
-	unsigned char key_rand[IOT_SECURITY_SHA256_LEN];
+    unsigned char secret[IOT_SECURITY_SECRET_LEN] = { 0 };
 	unsigned char *decode_buf = NULL;
-	unsigned char *p_spub_str = NULL;
-	unsigned char *p_rand_str = NULL;
 	size_t input_len = 0;
 	size_t output_len = 0;
 	size_t result_len = 0;
-	size_t spub_len = 0;
-	size_t rand_asc_len = 0;
+	size_t secret_len = 0;
 
 	root = JSON_PARSE(input_data);
 	if (!root) {
@@ -480,71 +471,51 @@ iot_error_t _es_keyinfo_handler(struct iot_context *ctx, char *input_data, char 
 		goto exit;
 	}
 
-	if ((recv = JSON_GET_OBJECT_ITEM(root, "spub")) == NULL) {
-		IOT_ERROR("no spub info");
-		IOT_ES_DUMP(IOT_DEBUG_LEVEL_ERROR, IOT_DUMP_EASYSETUP_INVALID_REQUEST, 0);
-		err  = IOT_ERROR_EASYSETUP_INVALID_REQUEST;
-		goto exit;
-	}
-	p_spub_str = (unsigned char *)JSON_GET_STRING_VALUE(recv);
-	IOT_DEBUG("spub_info = %s", p_spub_str);
-	err = iot_security_base64_decode_urlsafe(p_spub_str, strlen((char*)p_spub_str),
-					key_spub_sign, sizeof(key_spub_sign),
-					&spub_len);
-	if (err) {
-		IOT_ERROR("spub decode error %d", err);
-		IOT_ES_DUMP(IOT_DEBUG_LEVEL_ERROR, IOT_DUMP_EASYSETUP_BASE64_DECODE_ERROR, err);
-		err = IOT_ERROR_EASYSETUP_BASE64_DECODE_ERROR;
-		goto exit;
-	} else if (spub_len != IOT_SECURITY_ED25519_LEN) {
-		IOT_ERROR("invalid spub length : %u", (unsigned int)spub_len);
-		IOT_ES_DUMP(IOT_DEBUG_LEVEL_ERROR, IOT_DUMP_EASYSETUP_BASE64_DECODE_ERROR, spub_len);
-		err = IOT_ERROR_EASYSETUP_BASE64_DECODE_ERROR;
-		goto exit;
-	}
-
-	if ((recv = JSON_GET_OBJECT_ITEM(root, "rand")) == NULL) {
-		IOT_ERROR("no spub info");
+	if ((recv = JSON_GET_OBJECT_ITEM(root, "data")) == NULL) {
+		IOT_ERROR("no data info");
 		IOT_ES_DUMP(IOT_DEBUG_LEVEL_ERROR, IOT_DUMP_EASYSETUP_INVALID_REQUEST, 0);
 		err = IOT_ERROR_EASYSETUP_INVALID_REQUEST;
 		goto exit;
 	}
-	p_rand_str = (unsigned char *)JSON_GET_STRING_VALUE(recv);
-	IOT_DEBUG("rand_info = %s", p_rand_str);
-	err = iot_security_base64_decode(p_rand_str, strlen((char*)p_rand_str),
-					(unsigned char *)rand_asc, sizeof(rand_asc), &rand_asc_len);
+
+	if ((recv_data = JSON_GET_OBJECT_ITEM(recv, "cpubKey")) == NULL) {
+		IOT_ERROR("no cpubKey info");
+		IOT_ES_DUMP(IOT_DEBUG_LEVEL_ERROR, IOT_DUMP_EASYSETUP_INVALID_REQUEST, 0);
+		err  = IOT_ERROR_EASYSETUP_INVALID_REQUEST;
+		goto exit;
+	}
+	p_cpubkey_str = (unsigned char *)JSON_GET_STRING_VALUE(recv_data);
+	IOT_DEBUG("cpubKey: %s \r\n",p_cpubkey_str); // Stoage later
+
+
+	input_len = (unsigned int)strlen((char*)p_cpubkey_str);
+	output_len = IOT_SECURITY_B64_DECODE_LEN(input_len);
+	if ((decode_buf = iot_os_malloc(output_len)) == NULL) {
+		IOT_ERROR("failed to malloc for decode_buf");
+		IOT_ES_DUMP(IOT_DEBUG_LEVEL_ERROR, IOT_DUMP_EASYSETUP_MEM_ALLOC_ERROR, 0);
+		err = IOT_ERROR_EASYSETUP_MEM_ALLOC_ERROR;
+		goto exit_secret;
+	}
+	memset(decode_buf, 0, output_len);
+
+	err = iot_security_base64_decode_urlsafe((unsigned char *) p_cpubkey_str, input_len,
+					decode_buf, output_len,
+					&result_len);
 	if (err) {
-		IOT_ERROR("rand decode error %d", err);
-		IOT_ES_DUMP(IOT_DEBUG_LEVEL_ERROR, IOT_DUMP_EASYSETUP_RAND_DECODE_ERROR, err);
-		err = IOT_ERROR_EASYSETUP_RAND_DECODE_ERROR;
-		goto exit;
+		IOT_ERROR("base64 decode error!! : %d", err);
+		IOT_ES_DUMP(IOT_DEBUG_LEVEL_ERROR, IOT_DUMP_EASYSETUP_BASE64_DECODE_ERROR, err);
+		err = IOT_ERROR_EASYSETUP_BASE64_DECODE_ERROR;
+		goto exit_secret;
 	}
 
-	if (rand_asc_len != (sizeof(rand_asc) - 1)) {
-		IOT_ERROR("rand size is mismatch (%u != %u)", (unsigned int)rand_asc_len, (unsigned int)(sizeof(rand_asc) - 1));
-		IOT_ES_DUMP(IOT_DEBUG_LEVEL_ERROR, IOT_DUMP_EASYSETUP_RAND_DECODE_ERROR, (sizeof(rand_asc) - 1));
-		err = IOT_ERROR_EASYSETUP_RAND_DECODE_ERROR;
-		goto exit;
-	}
+	peer_pubkey_buf.p = iot_os_malloc(64);
+	memcpy(peer_pubkey_buf.p, decode_buf + 27, 64);
 
-	for (i = 0, j = 0; i < sizeof(rand_asc) - 1; i += 2, j++) {
-		memcpy(tmp, rand_asc + i, 2);
-		val = (unsigned char)strtol((const char *)tmp, NULL, 16);
-		key_rand[j] = val;
-	}
-
-	err = iot_security_ecdh_init(ctx->easysetup_security_context);
-	if (err) {
-		IOT_ERROR("iot_security_ecdh_init = %d", err);
-		IOT_ES_DUMP(IOT_DEBUG_LEVEL_ERROR, IOT_DUMP_EASYSETUP_SHARED_KEY_INIT_FAIL, err);
-		err = IOT_ERROR_EASYSETUP_SHARED_KEY_INIT_FAIL;
-		goto exit;
-	}
-
-	ecdh_params.c_pubkey.p = key_spub_sign;
-	ecdh_params.c_pubkey.len = sizeof(key_spub_sign);
-	ecdh_params.salt.p = key_rand;
-	ecdh_params.salt.len = sizeof(key_rand);
+	ecdh_params.key_id = IOT_SECURITY_KEY_ID_EPHEMERAL;
+	ecdh_params.c_pubkey.p = peer_pubkey_buf.p;
+	ecdh_params.c_pubkey.len = 64;
+	ecdh_params.salt.p = sec_random;
+	ecdh_params.salt.len = 32;
 
 	err = iot_security_ecdh_set_params(ctx->easysetup_security_context, &ecdh_params);
 	if (err) {
@@ -563,6 +534,36 @@ iot_error_t _es_keyinfo_handler(struct iot_context *ctx, char *input_data, char 
 	} else {
 		IOT_INFO("master secret generation success");
 		IOT_ES_DUMP(IOT_DEBUG_LEVEL_INFO, IOT_DUMP_EASYSETUP_MASTER_SECRET_GENERATION_SUCCESS, 0);
+	}
+
+	memcpy(secret, secret_buf.p, secret_buf.len);
+
+	secret_len = sizeof(secret);
+
+	data_buf.len = secret_len + sizeof(sec_random);
+	data_buf.p = (unsigned char *)iot_os_malloc(data_buf.len);
+	memcpy(data_buf.p, secret, secret_len);
+	memcpy(data_buf.p + secret_len, sec_random, sizeof(sec_random));
+
+	hash_buf.len = IOT_SECURITY_SHA256_LEN;
+	hash_buf.p = (unsigned char *)iot_os_malloc(hash_buf.len);
+
+	err = iot_security_sha256(data_buf.p, data_buf.len, hash_buf.p, hash_buf.len);
+
+	iv.len = IOT_SECURITY_IV_LEN;
+	iv.p = (unsigned char *)iot_os_malloc(IOT_SECURITY_IV_LEN);
+
+	memcpy(iv.p, hash_buf.p, IOT_SECURITY_IV_LEN);
+
+	cipher_set_params.type = IOT_SECURITY_KEY_TYPE_AES256;
+	cipher_set_params.iv = iv;
+
+	err = iot_security_cipher_set_params(ctx->easysetup_security_context, &cipher_set_params);
+	if (err != IOT_ERROR_NONE) {
+		IOT_ERROR("failed to set cipher params");
+		IOT_ES_DUMP(IOT_DEBUG_LEVEL_ERROR, IOT_DUMP_EASYSETUP_CIPHER_PARAMS_ERROR, 0);
+		err = IOT_ERROR_EASYSETUP_CIPHER_PARAMS_ERROR;
+		goto exit_ecdh_deinit;
 	}
 
 	if ((recv = JSON_GET_OBJECT_ITEM(root, "datetime")) == NULL) {
@@ -675,6 +676,10 @@ skip_time_set:
 		goto exit_secret;
 	}
 
+	data = JSON_CREATE_OBJECT();
+
+	JSON_ADD_ITEM_TO_OBJECT(root, "data", data);
+
 	array = JSON_CREATE_ARRAY();
 	if (!array) {
 		IOT_ERROR("json create failed");
@@ -690,7 +695,8 @@ skip_time_set:
 			JSON_ADD_ITEM_TO_ARRAY(array, JSON_CREATE_NUMBER(i));
 		}
 	}
-	JSON_ADD_ITEM_TO_OBJECT(root, "otmSupportFeatures", array);
+	JSON_ADD_ITEM_TO_OBJECT(data, "otmSupportFeatures", array);
+	JSON_ADD_NUMBER_TO_OBJECT(root, "errorcode", 0);
 
 	out_payload = JSON_PRINT(root);
 	*output_data = _es_build_output_data(ctx->easysetup_security_context, out_payload);
@@ -722,6 +728,7 @@ iot_error_t _es_confirm_check_manager(struct iot_context *ctx, enum ownership_va
 	unsigned char is_qr = 0;
 	size_t devsn_len;
 	iot_error_t err = IOT_ERROR_NONE;
+	struct iot_st_ecode st_ecode;
 
 	iot_os_eventgroup_clear_bits(ctx->iot_events, IOT_EVENT_BIT_EASYSETUP_CONFIRM | IOT_EVENT_BIT_EASYSETUP_CONFIRM_DENY);
 	ctx->curr_otm_feature = confirm_feature;
@@ -787,7 +794,10 @@ iot_error_t _es_confirm_check_manager(struct iot_context *ctx, enum ownership_va
 			} else {
 				IOT_ERROR("confirm failed");
 				IOT_ES_DUMP(IOT_DEBUG_LEVEL_ERROR, IOT_DUMP_EASYSETUP_CONFIRM_DENIED, 0);
-				iot_set_st_ecode(ctx, IOT_ST_ECODE_EE01);
+				st_ecode.is_happended = true;
+				iot_ecodeType_to_string(IOT_ST_ECODE_EE01, &st_ecode);
+				iot_set_st_ecode(ctx, st_ecode);
+				IOT_INFO("previous error code[%s]",ctx->last_st_ecode.ecode);
 
 				/* To report confirm failure to user, try to change iot-state timeout value shortly */
 				if (iot_state_timeout_change(ctx, IOT_STATE_PROV_CONFIRM, ES_CONFIRM_FAIL_TIMEOUT) != IOT_ERROR_NONE) {
@@ -819,6 +829,7 @@ iot_error_t _es_confirminfo_handler(struct iot_context *ctx, char *input_data, c
 {
 	JSON_H *recv = NULL;
 	JSON_H *root = NULL;
+    JSON_H *recv_data = NULL;
 	iot_error_t err = IOT_ERROR_NONE;
 	char *in_payload = NULL;
 	char *out_payload = NULL;
@@ -838,20 +849,26 @@ iot_error_t _es_confirminfo_handler(struct iot_context *ctx, char *input_data, c
 		goto out;
 	}
 
-	root = JSON_PARSE(in_payload);
+   	root = JSON_PARSE(in_payload);
 	if (!root) {
-		IOT_ERROR("Invalid payload json format");
+		IOT_ERROR("parse error");
 		IOT_ES_DUMP(IOT_DEBUG_LEVEL_ERROR, IOT_DUMP_EASYSETUP_INVALID_REQUEST, 0);
-		err = IOT_ERROR_EASYSETUP_INVALID_REQUEST;
 		goto out;
 	}
 
-	if ((recv = JSON_GET_OBJECT_ITEM(root, "otmSupportFeature")) == NULL) {
-		IOT_ERROR("no otmsupportfeature info");
+	if ((recv_data = JSON_GET_OBJECT_ITEM(root, "data")) == NULL) {
+		IOT_INFO("no data info");
 		IOT_ES_DUMP(IOT_DEBUG_LEVEL_ERROR, IOT_DUMP_EASYSETUP_INVALID_REQUEST, 0);
-		err = IOT_ERROR_EASYSETUP_INVALID_REQUEST;
+		err  = IOT_ERROR_EASYSETUP_INVALID_REQUEST;
 		goto out;
 	}
+
+    if ((recv = JSON_GET_OBJECT_ITEM(recv_data, "otmSupportFeature")) == NULL) {
+        IOT_ERROR("no otmsupportfeature info");
+        IOT_ES_DUMP(IOT_DEBUG_LEVEL_ERROR, IOT_DUMP_EASYSETUP_INVALID_REQUEST, 0);
+        err = IOT_ERROR_EASYSETUP_INVALID_REQUEST;
+        goto out;
+    }
 
 	IOT_INFO("otmSupportFeature = %d", recv->valueint);
 	IOT_ES_DUMP(IOT_DEBUG_LEVEL_INFO, IOT_DUMP_EASYSETUP_REPORTED_OTMTYPE, recv->valueint);
@@ -885,6 +902,8 @@ iot_error_t _es_confirminfo_handler(struct iot_context *ctx, char *input_data, c
 		err = IOT_ERROR_EASYSETUP_JSON_CREATE_ERROR;
 		goto out;
 	}
+
+    JSON_ADD_NUMBER_TO_OBJECT(root, "errorcode", 0);
 	out_payload = JSON_PRINT(root);
 	*output_data = _es_build_output_data(ctx->easysetup_security_context, out_payload);
 out:
@@ -1023,7 +1042,7 @@ iot_error_t _es_wifiscaninfo_handler(struct iot_context *ctx, char **output_data
 	int i;
 	iot_error_t err = IOT_ERROR_NONE;
 	char *out_payload = NULL;
-	iot_wifi_auth_mode_bits_t supported_auth_mode_bits = iot_bsp_wifi_get_auth_mode();
+    JSON_H *data = NULL;
 
 	if (!ctx) {
 		IOT_ERROR("invalid iot_context!!");
@@ -1056,8 +1075,7 @@ iot_error_t _es_wifiscaninfo_handler(struct iot_context *ctx, char **output_data
 
 	for(i = 0; i < ctx->scan_num; i++) {
 		if ((ctx->scan_result[i].authmode <  IOT_WIFI_AUTH_OPEN) ||
-			(ctx->scan_result[i].authmode >= IOT_WIFI_AUTH_UNKNOWN) ||
-			!(IOT_WIFI_AUTH_MODE_BIT(ctx->scan_result[i].authmode) & supported_auth_mode_bits)) {
+			(ctx->scan_result[i].authmode >= IOT_WIFI_AUTH_WPA2_ENTERPRISE)) {
 			IOT_DEBUG("Unsupported authType %d, %s", ctx->scan_result[i].authmode,
 								(char *)ctx->scan_result[i].ssid);
 			continue;
@@ -1095,7 +1113,13 @@ iot_error_t _es_wifiscaninfo_handler(struct iot_context *ctx, char **output_data
 		}
 		goto out;
 	}
-	JSON_ADD_ITEM_TO_OBJECT(root, "wifiScanInfo", array);
+
+	data = JSON_CREATE_OBJECT();
+
+	JSON_ADD_ITEM_TO_OBJECT(root, "data", data);
+    
+	JSON_ADD_ITEM_TO_OBJECT(data, "wifiScanInfo", array);
+    JSON_ADD_NUMBER_TO_OBJECT(root, "errorcode", 0);
 
 	out_payload = JSON_PRINT(root);
 	*output_data = _es_build_output_data(ctx->easysetup_security_context, out_payload);
@@ -1163,6 +1187,7 @@ iot_error_t _es_wifi_prov_parse(struct iot_context *ctx, char *in_payload)
 	struct iot_wifi_prov_data *wifi_prov = NULL;
 	JSON_H *item = NULL;
 	JSON_H *root = NULL;
+    JSON_H *data = NULL;
 	JSON_H *wifi_credential = NULL;
 	iot_error_t err = IOT_ERROR_NONE;
 
@@ -1174,7 +1199,14 @@ iot_error_t _es_wifi_prov_parse(struct iot_context *ctx, char *in_payload)
 		goto wifi_parse_out;
 	}
 
-	if ((wifi_credential = JSON_GET_OBJECT_ITEM(root, "wifiCredential")) == NULL) {
+	if ((data = JSON_GET_OBJECT_ITEM(root, "data")) == NULL) {
+		IOT_INFO("no data info");
+		IOT_ES_DUMP(IOT_DEBUG_LEVEL_ERROR, IOT_DUMP_EASYSETUP_INVALID_REQUEST, 0);
+		err  = IOT_ERROR_EASYSETUP_INVALID_REQUEST;
+		goto wifi_parse_out;
+	}
+
+	if ((wifi_credential = JSON_GET_OBJECT_ITEM(data, "wifiCredential")) == NULL) {
 		IOT_ERROR("failed to find wifiCredential");
 		IOT_ES_DUMP(IOT_DEBUG_LEVEL_ERROR, IOT_DUMP_EASYSETUP_INVALID_REQUEST, 0);
 		err = IOT_ERROR_EASYSETUP_INVALID_REQUEST;
@@ -1217,7 +1249,6 @@ iot_error_t _es_wifi_prov_parse(struct iot_context *ctx, char *in_payload)
 		}
 	}
 
-
 	wifi_prov->security_type =
 		_decide_wifi_auth_mode(JSON_GET_OBJECT_ITEM(wifi_credential, "authType"), wifi_prov, ctx);
 
@@ -1247,6 +1278,7 @@ iot_error_t _es_cloud_prov_parse(struct iot_context *ctx, char *in_payload)
 	struct iot_cloud_prov_data *cloud_prov = NULL;
 	char *full_url = NULL;
 	JSON_H *root = NULL;
+    JSON_H *data = NULL;
 	iot_error_t err = IOT_ERROR_NONE;
 	url_parse_t url = { .protocol = NULL, .domain = NULL, .port = 0};
 
@@ -1255,6 +1287,13 @@ iot_error_t _es_cloud_prov_parse(struct iot_context *ctx, char *in_payload)
 		IOT_ERROR("Invalid payload json format");
 		IOT_ES_DUMP(IOT_DEBUG_LEVEL_ERROR, IOT_DUMP_EASYSETUP_INVALID_REQUEST, 0);
 		err = IOT_ERROR_EASYSETUP_INVALID_REQUEST;
+		goto cloud_parse_out;
+	}
+
+	if ((data = JSON_GET_OBJECT_ITEM(root, "data")) == NULL) {
+		IOT_INFO("no data info");
+		IOT_ES_DUMP(IOT_DEBUG_LEVEL_ERROR, IOT_DUMP_EASYSETUP_INVALID_REQUEST, 0);
+		err  = IOT_ERROR_EASYSETUP_INVALID_REQUEST;
 		goto cloud_parse_out;
 	}
 
@@ -1267,7 +1306,7 @@ iot_error_t _es_cloud_prov_parse(struct iot_context *ctx, char *in_payload)
 
 	memset(cloud_prov, 0, sizeof(struct iot_cloud_prov_data));
 
-	if ((full_url = _es_json_parse_string(root, "brokerUrl")) == NULL) {
+	if ((full_url = _es_json_parse_string(data, "brokerUrl")) == NULL) {
 		IOT_ERROR("failed to find brokerUrl");
 		IOT_ES_DUMP(IOT_DEBUG_LEVEL_ERROR, IOT_DUMP_EASYSETUP_INVALID_REQUEST, 0);
 		err = IOT_ERROR_EASYSETUP_INVALID_REQUEST;
@@ -1282,7 +1321,7 @@ iot_error_t _es_cloud_prov_parse(struct iot_context *ctx, char *in_payload)
 		goto cloud_parse_out;
 	}
 
-	if ((cloud_prov->label = _es_json_parse_string(root, "deviceName")) == NULL) {
+	if ((cloud_prov->label = _es_json_parse_string(data, "deviceName")) == NULL) {
 		IOT_INFO("No deviceName");
 	}
 
@@ -1328,11 +1367,10 @@ STATIC_FUNCTION
 iot_error_t _es_wifiprovisioninginfo_handler(struct iot_context *ctx, char *input_data, char **output_data)
 {
 	JSON_H *root = NULL;
+    JSON_H *data = NULL;
 	iot_error_t err = IOT_ERROR_NONE;
 	char *in_payload = NULL;
 	char *out_payload = NULL;
-	char *serial = NULL;
-	size_t serial_len;
 
 	in_payload = _es_parse_input_data(ctx->easysetup_security_context, input_data);
 
@@ -1370,17 +1408,11 @@ iot_error_t _es_wifiprovisioninginfo_handler(struct iot_context *ctx, char *inpu
 		err = IOT_ERROR_EASYSETUP_JSON_CREATE_ERROR;
 		goto out;
 	}
+    data = JSON_CREATE_OBJECT();
 
-	JSON_ADD_ITEM_TO_OBJECT(root, "lookupId", JSON_CREATE_STRING(ctx->lookup_id));
-
-	err = iot_nv_get_serial_number(&serial, &serial_len);
-	if (err != IOT_ERROR_NONE) {
-		IOT_ERROR("Failed to get serial number (%d)", err);
-		IOT_ES_DUMP(IOT_DEBUG_LEVEL_ERROR, IOT_DUMP_EASYSETUP_SERIAL_NUMBER_GET_FAIL, err);
-		err = IOT_ERROR_EASYSETUP_SERIAL_NUMBER_GET_FAIL;
-		goto out;
-	}
-	JSON_ADD_ITEM_TO_OBJECT(root, "sn", JSON_CREATE_STRING(serial));
+	JSON_ADD_ITEM_TO_OBJECT(root, "data", data);
+	JSON_ADD_ITEM_TO_OBJECT(data, "lookupId", JSON_CREATE_STRING(ctx->lookup_id));
+    JSON_ADD_NUMBER_TO_OBJECT(root, "errorcode", 0);
 
 	out_payload = JSON_PRINT(root);
 	*output_data = _es_build_output_data(ctx->easysetup_security_context, out_payload);
@@ -1418,6 +1450,8 @@ iot_error_t _es_setupcomplete_handler(struct iot_context *ctx, char *input_data,
 	iot_error_t err = IOT_ERROR_NONE;
 	char *out_payload = NULL;
 
+    IOT_INFO("_es_setupcomplete_handler");
+
 	root = JSON_CREATE_OBJECT();
 	if (!root) {
 		IOT_ERROR("json create failed");
@@ -1426,8 +1460,11 @@ iot_error_t _es_setupcomplete_handler(struct iot_context *ctx, char *input_data,
 		goto out;
 	}
 
+    JSON_ADD_NUMBER_TO_OBJECT(root, "errorcode", 0);
+
 	out_payload = JSON_PRINT(root);
 	*output_data = _es_build_output_data(ctx->easysetup_security_context, out_payload);
+    //iot_easysetup_ble_ecdh_teardown(&ctx->easysetup_security_context);
 out:
 	if (out_payload) {
 		iot_os_free(out_payload);
@@ -1574,7 +1611,7 @@ iot_error_t iot_easysetup_request_handler(struct iot_context *ctx, struct iot_ea
 
 	switch (request.step) {
 	case IOT_EASYSETUP_STEP_DEVICEINFO:
-		err = _es_deviceinfo_handler(ctx, &response.payload);
+		err = _es_deviceinfo_handler(ctx, request.payload, &response.payload);
 		break;
 	case IOT_EASYSETUP_STEP_WIFISCANINFO:
 		err = _es_wifiscaninfo_handler(ctx, &response.payload);

@@ -26,8 +26,7 @@
 #include "iot_net.h"
 #include "iot_mqtt.h"
 #include "security/iot_security_crypto.h"
-
-#define IOT_UUID_BYTES				(16)
+#include "iot_util.h"
 
 #define IOT_WIFI_PROV_SSID_STR_LEN		(32)
 #define IOT_WIFI_PROV_PASSWORD_STR_LEN 	(64)
@@ -41,20 +40,18 @@
 #define IOT_EVENT_BIT_EASYSETUP_CONFIRM_DENY	(1u << 5u)
 #define IOT_EVENT_BIT_ALL	(IOT_EVENT_BIT_COMMAND | IOT_EVENT_BIT_CAPABILITY | IOT_EVENT_BIT_EASYSETUP_REQ)
 
-#define IOT_USR_INTERACT_BIT_PROV_CONFIRM	(1u << 0u)
-#define IOT_USR_INTERACT_BIT_STATE_UNKNOWN	(1u << 1u)
-#define IOT_USR_INTERACT_BIT_PROV_DONE		(1u << 2u)
-#define IOT_USR_INTERACT_BIT_CLEANUP_DONE	(1u << 3u)
 #define IOT_USR_INTERACT_BIT_CMD_DONE		(1u << 4u)
-
-#define IOT_USR_INTERACT_BITS_ST_CONN	(IOT_USR_INTERACT_BIT_PROV_CONFIRM | IOT_USR_INTERACT_BIT_STATE_UNKNOWN \
-				| IOT_USR_INTERACT_BIT_PROV_DONE | IOT_USR_INTERACT_BIT_CLEANUP_DONE)
 
 #define IOT_MAIN_TASK_DEFAULT_CYCLE			100		/* in ms */
 #define IOT_MQTT_CONNECT_CRITICAL_REJECT_MAX	3
 #define IOT_RATE_LIMIT_BREAK_TIME		60000
+#define IOT_PREVERR_LEN     5
 
 #define IOT_DEVICE_NAME_MAX_LENGTH		20
+
+#define NEXT_STATE_TIMEOUT_MS	(100000)
+#define EASYSETUP_TIMEOUT_MS	(300000) /* 5 min */
+#define REGISTRATION_TIMEOUT_MS	(900000) /* 15 min */
 
 enum _iot_noti_type {
 	/* Common notifications */
@@ -70,22 +67,12 @@ enum _iot_noti_type {
 };
 
 enum iot_command_type {
-	IOT_COMMAND_READY_TO_CTL,
-
-	IOT_COMMAND_NETWORK_MODE,
-	IOT_COMMAND_CHECK_PROV_STATUS,
-
-	IOT_COMMAND_CHECK_CLOUD_STATE,
+	IOT_COMMAND_STATE_UPDATE,
 	IOT_COMMAND_CLOUD_REGISTERING,
 	IOT_COMMAND_CLOUD_REGISTERED,
 	IOT_COMMAND_CLOUD_CONNECTING,
-
 	IOT_COMMAND_NOTIFICATION_RECEIVED,
-	IOT_COMMAND_CHANGE_STATE_TIMEOUT,
-
-	IOT_COMMAND_SELF_CLEANUP,
-	IOT_COMMAND_TYPE_MAX = IOT_COMMAND_SELF_CLEANUP, /* MAX : under 32 */
-	IOT_COMMNAD_STATE_UPDATE,
+	IOT_COMMAND_TYPE_MAX = IOT_COMMAND_NOTIFICATION_RECEIVED, /* MAX : under 32 */
 };
 
 enum iot_easysetup_step {
@@ -108,20 +95,14 @@ enum iot_connect_type {
 };
 
 typedef enum iot_state_type {
-	IOT_STATE_CHANGE_FAILED = -2,
-	IOT_STATE_UNKNOWN = -1,
-
 	IOT_STATE_INITIALIZED = 0,
 
+	IOT_STATE_PROV_SLEEP,
 	IOT_STATE_PROV_ENTER,
-	IOT_STATE_PROV_CONN_MOBILE,
 	IOT_STATE_PROV_CONFIRM,
 	IOT_STATE_PROV_DONE,
 
 	IOT_STATE_CLOUD_DISCONNECTED,
-	IOT_STATE_CLOUD_REGISTERING,
-
-	IOT_STATE_CLOUD_CONNECTING,
 	IOT_STATE_CLOUD_CONNECTED,
 } iot_state_t;
 
@@ -132,41 +113,35 @@ enum iot_state_opt {
 };
 
 typedef enum iot_st_ecode_type {
-    IOT_ST_ECODE_NONE,
-    IOT_ST_ECODE_EE01,
-    IOT_ST_ECODE_NE01,
-    IOT_ST_ECODE_NE02,
-    IOT_ST_ECODE_NE03,
-    IOT_ST_ECODE_NE04,
-    IOT_ST_ECODE_NE10,
-    IOT_ST_ECODE_NE11,
-    IOT_ST_ECODE_NE12,
-    IOT_ST_ECODE_NE13,
-    IOT_ST_ECODE_NE14,
-    IOT_ST_ECODE_NE15,
-    IOT_ST_ECODE_NE16,
-    IOT_ST_ECODE_NE17,
-    IOT_ST_ECODE_CE11,
-    IOT_ST_ECODE_CE12,
-    IOT_ST_ECODE_CE20,
-    IOT_ST_ECODE_CE21,
-    IOT_ST_ECODE_CE30,
-    IOT_ST_ECODE_CE31,
-    IOT_ST_ECODE_CE32,
-    IOT_ST_ECODE_CE33,
-    IOT_ST_ECODE_CE40,
-    IOT_ST_ECODE_CE41,
-    IOT_ST_ECODE_CE50,
-    IOT_ST_ECODE_CE51,
-    IOT_ST_ECODE_CE60,
+	IOT_ST_ECODE_NONE,
+	IOT_ST_ECODE_EE01,
+	IOT_ST_ECODE_NE01,
+	IOT_ST_ECODE_NE02,
+	IOT_ST_ECODE_NE03,
+	IOT_ST_ECODE_NE04,
+	IOT_ST_ECODE_NE10,
+	IOT_ST_ECODE_NE11,
+	IOT_ST_ECODE_NE12,
+	IOT_ST_ECODE_NE13,
+	IOT_ST_ECODE_NE14,
+	IOT_ST_ECODE_NE15,
+	IOT_ST_ECODE_NE16,
+	IOT_ST_ECODE_NE17,
+	IOT_ST_ECODE_CE11,
+	IOT_ST_ECODE_CE12,
+	IOT_ST_ECODE_CE20,
+	IOT_ST_ECODE_CE21,
+	IOT_ST_ECODE_CE30,
+	IOT_ST_ECODE_CE31,
+	IOT_ST_ECODE_CE32,
+	IOT_ST_ECODE_CE33,
+	IOT_ST_ECODE_CE40,
+	IOT_ST_ECODE_CE41,
+	IOT_ST_ECODE_CE50,
+	IOT_ST_ECODE_CE51,
+	IOT_ST_ECODE_CE60,
 }iot_st_ecode_t;
 
-/**
- * @brief Contains "uuid" data
- */
-struct iot_uuid {
-	unsigned char id[IOT_UUID_BYTES];	/**< @brief actual uuid values, 16 octet */
-};
 
 /**
  * @brief Contains "wifi provisioning" data
@@ -274,12 +249,15 @@ struct iot_state_data {
 	int opt;					/**< @brief additional option for each state */
 };
 
+/**
+ * @brief Contains "iot core's main state" data
+ */
 typedef struct iot_cap_handle_list iot_cap_handle_list_t;
 
 #define IOT_ST_ECODE_STR_LEN	(4)
 
 struct iot_st_ecode {
-	bool is_happended;
+	iot_st_ecode_t ecode_type;
 	char ecode[IOT_ST_ECODE_STR_LEN + 1];
 };
 
@@ -287,14 +265,13 @@ struct iot_st_ecode {
  * @brief Contains "iot core's main context" data
  */
 struct iot_context {
-	iot_os_queue *cmd_queue;			/**< @brief iot core's internal command queue */
-	iot_os_queue *easysetup_req_queue;	/**< @brief request queue for easy-setup process */
-	iot_os_queue *easysetup_resp_queue;	/**< @brief response queue for easy-setup process */
+	iot_util_queue_t *cmd_queue;			/**< @brief iot core's internal command queue */
+	iot_util_queue_t *easysetup_req_queue;	/**< @brief request queue for easy-setup process */
+	iot_util_queue_t *easysetup_resp_queue;	/**< @brief response queue for easy-setup process */
 	bool es_res_created;				/**< @brief to check easy-setup resources are created or not */
 	bool es_http_ready;					/**< @brief to check easy-setup-httpd is initialized or not */
 
 	iot_state_t curr_state;			/**< @brief reflect current iot_state */
-	iot_state_t req_state;			/**< @brief reflect requested iot_state */
 	iot_os_timer state_timer;		/**< @brief state checking timer for each iot_state */
 
 	iot_os_eventgroup *usr_events;		/**< @brief User level handling events */
@@ -332,18 +309,11 @@ struct iot_context {
 	int curr_otm_feature;	/**< @brief current device's supported onboarding process validation type */
 	iot_pin_t *pin;			/**< @brief current device's PIN values for PIN type otm */
 
-	unsigned int cmd_err;						/**< @brief current command handling error checking value */
-	unsigned int cmd_status;					/**< @brief current command status */
-	uint16_t cmd_count[IOT_COMMAND_TYPE_MAX+1];	/**< @brief current queued command counts */
-
 	iot_os_thread main_thread; /**< @brief iot main task thread */
 	iot_os_mutex st_conn_lock; /**< @brief User level control API lock */
 	iot_os_mutex iot_cmd_lock; /**< @brief iot-core's command handling lock*/
 
 	bool add_justworks; 	/**< @brief to skip user-confirm using JUSTWORKS bit */
-
-	unsigned char rcv_try_cnt;	/**< @brief to check current recovery repeated counts */
-	iot_state_t rcv_fail_state;	/**< @brief to check current failed state for recovery */
 
 	int event_sequence_num;	/**< @brief Last event's sequence number */
 
@@ -355,6 +325,8 @@ struct iot_context {
 	bool usr_delete_req;	/**< @brief whether self-device-card-deleting requested from usr */
 
 	struct iot_st_ecode last_st_ecode;	/**< @brief last happended device error code to send SmartThings App */
+
+	bool is_wifi_station;		/**< @brief indicator if wifi is station mode or not */
 };
 
 #endif /* _IOT_MAIN_H_ */
