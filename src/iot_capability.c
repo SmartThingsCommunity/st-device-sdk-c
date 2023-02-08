@@ -29,6 +29,7 @@
 #include "iot_os_util.h"
 #include "iot_bsp_system.h"
 #include "JSON.h"
+#include "st_caps.h"
 
 #define MAX_SQNUM 0x7FFFFFFF
 
@@ -460,7 +461,7 @@ DEPRECATED int st_cap_attr_send(IOT_CAP_HANDLE *cap_handle,
 	}
 
 	ctx = handle->ctx;
-	if (ctx->curr_state < IOT_STATE_CLOUD_CONNECTING || ctx->evt_mqttcli == NULL) {
+	if (ctx->curr_state != IOT_STATE_CLOUD_CONNECTED || ctx->evt_mqttcli == NULL) {
 		IOT_DUMP(IOT_DEBUG_LEVEL_ERROR, IOT_DUMP_CAPABILITY_SEND_EVENT_NO_CONNECT_ERROR, ctx->curr_state, 0);
 		IOT_ERROR("Target has not connected to server yet!!");
 		return IOT_ERROR_BAD_REQ;
@@ -550,7 +551,7 @@ int st_cap_send_attr(IOT_EVENT *event[], uint8_t evt_num)
 	}
 	ctx = evt_data[0]->ref_cap->ctx;
 
-	if (ctx->curr_state < IOT_STATE_CLOUD_CONNECTING || ctx->evt_mqttcli == NULL) {
+	if (ctx->curr_state != IOT_STATE_CLOUD_CONNECTED || ctx->evt_mqttcli == NULL) {
 		IOT_DUMP(IOT_DEBUG_LEVEL_ERROR, IOT_DUMP_CAPABILITY_SEND_EVENT_NO_CONNECT_ERROR, ctx->curr_state, 0);
 		IOT_ERROR("Target has not connected to server yet!!");
 		return IOT_ERROR_BAD_REQ;
@@ -915,6 +916,179 @@ out:
 		JSON_DELETE(json);
 }
 
+static iot_error_t _iot_parse_cmd_data_v2(JSON_H* cmditem, st_command_data *cmd_data)
+{
+	JSON_H *cap_component = NULL;
+	JSON_H *cap_capability = NULL;
+	JSON_H *cap_command = NULL;
+	JSON_H *cap_args = NULL;
+	JSON_H *subitem = NULL;
+	JSON_H *command_id = NULL;
+	int arr_size = 0;
+	int i;
+
+	cap_component = JSON_GET_OBJECT_ITEM(cmditem, "component");
+	cap_capability = JSON_GET_OBJECT_ITEM(cmditem, "capability");
+	cap_command = JSON_GET_OBJECT_ITEM(cmditem, "command");
+	cap_args = JSON_GET_OBJECT_ITEM(cmditem, "arguments");
+	command_id = JSON_GET_OBJECT_ITEM(cmditem, "id");
+
+	if (cap_component == NULL || cap_capability == NULL || cap_command == NULL) {
+		IOT_ERROR("Cannot find value index!!");
+		return IOT_ERROR_BAD_REQ;
+	}
+
+	cmd_data->command_id = iot_os_strdup(command_id->valuestring);
+	cmd_data->custom_component_name = iot_os_strdup(cap_component->valuestring);
+	cmd_data->custom_cap_name = iot_os_strdup(cap_capability->valuestring);
+	cmd_data->custom_command_name = iot_os_strdup(cap_command->valuestring);
+
+	IOT_DEBUG("component:%s, capability:%s command:%s", cmd_data->custom_component_name,
+														cmd_data->custom_cap_name,
+														cmd_data->custom_command_name);
+
+	arr_size = JSON_GET_ARRAY_SIZE(cap_args);
+	IOT_DEBUG("cap_args arr_size=%d", arr_size);
+	subitem = JSON_GET_ARRAY_ITEM(cap_args, 0);
+	cmd_data->param_list = (st_data *)iot_os_malloc(sizeof(st_data) * arr_size);
+	cmd_data->param_num = arr_size;
+	memset(cmd_data->param_list, 0, sizeof(st_data) * arr_size);
+
+	if (subitem != NULL) {
+		for (i = 0; i < arr_size; i++) {
+			if (JSON_IS_BOOL(subitem)) {
+				cmd_data->param_list[i].data_type = ST_DATA_TYPE_BOOLEAN;
+				if (JSON_IS_TRUE(subitem)) {
+					IOT_DEBUG("[%d] True", i);
+					cmd_data->param_list[i].data.boolean = true;
+				} else {
+					IOT_DEBUG("[%d] False", i);
+					cmd_data->param_list[i].data.boolean = false;
+				}
+			}
+			else if (JSON_IS_NUMBER(subitem)) {
+				IOT_DEBUG("[%d] %f", i, JSON_GET_NUMBER_VALUE(subitem));
+				cmd_data->param_list[i].data_type = ST_DATA_TYPE_NUMBER;
+				cmd_data->param_list[i].data.number = JSON_GET_NUMBER_VALUE(subitem);
+			}
+			else if (JSON_IS_STRING(subitem)) {
+				IOT_DEBUG("[%d] %s", i, JSON_GET_STRING_VALUE(subitem));
+				cmd_data->param_list[i].data_type = ST_DATA_TYPE_STRING;
+				cmd_data->param_list[i].data.string = JSON_GET_STRING_VALUE(subitem);
+			}
+			else if (JSON_IS_OBJECT(subitem) || JSON_IS_ARRAY(subitem)) {
+				cmd_data->param_list[i].data_type = ST_DATA_TYPE_RAW_JSON;
+				cmd_data->param_list[i].data.raw_json = JSON_PRINT(subitem);
+				IOT_DEBUG("[%d] %s", i, cmd_data->param_list[i].data.raw_json);
+			}
+			subitem = subitem->next;
+		}
+	}
+
+	return IOT_ERROR_NONE;
+}
+
+static void _iot_free_cmd_data_v2(st_command_data *cmd_data)
+{
+	int i;
+
+	if (cmd_data == NULL) {
+		return;
+	}
+
+	for (i = 0; i < cmd_data->param_num; i++) {
+		if (cmd_data->param_list[i].data_type == ST_DATA_TYPE_RAW_JSON)
+			free(cmd_data->param_list[i].data.raw_json);
+	}
+
+	if (cmd_data->param_list)
+		iot_os_free(cmd_data->param_list);
+
+	if (cmd_data->custom_command_name)
+		iot_os_free(cmd_data->custom_command_name);
+	if (cmd_data->custom_cap_name)
+		iot_os_free(cmd_data->custom_cap_name);
+	if (cmd_data->custom_component_name)
+		iot_os_free(cmd_data->custom_component_name);
+	if (cmd_data->command_id)
+		iot_os_free(cmd_data->command_id);
+
+}
+
+void iot_cap_commands_cb(struct iot_context *ctx, char *payload)
+{
+	JSON_H *json = NULL;
+	JSON_H *cap_cmds = NULL;
+	JSON_H *cmditem = NULL;
+	char *raw_data = NULL;
+	iot_error_t err;
+	int i;
+	int arr_size = 0;
+	iot_noti_data_t command_noti = {.type = IOT_NOTI_TYPE_COMMANDS,
+									.raw.commands.commands_data = NULL,
+									.raw.commands.commands_num = 0};
+
+	if (!payload) {
+		IOT_ERROR("There is no payload");
+		return;
+	}
+
+	json = JSON_PARSE(payload);
+	if (json == NULL) {
+		IOT_ERROR("Cannot parse by json");
+		goto out;
+	}
+
+	raw_data = JSON_PRINT(json);
+	IOT_INFO("command : %s", raw_data);
+	free(raw_data);
+
+	cap_cmds = JSON_GET_OBJECT_ITEM(json, "commands");
+	if (cap_cmds == NULL) {
+		IOT_ERROR("there is no commands in raw_data");
+		goto out;
+	}
+
+	arr_size = JSON_GET_ARRAY_SIZE(cap_cmds);
+	IOT_DEBUG("cap_cmds arr_size=%d", arr_size);
+	IOT_DUMP(IOT_DEBUG_LEVEL_INFO, IOT_DUMP_CAPABILITY_COMMANDS_RECEIVED, arr_size, 0);
+
+	if (arr_size == 0) {
+		IOT_ERROR("There are no commands data");
+		goto out;
+	}
+
+	command_noti.raw.commands.commands_num = arr_size;
+	command_noti.raw.commands.commands_data = (st_command_data *)iot_os_malloc(sizeof(st_command_data) * arr_size);
+	memset(command_noti.raw.commands.commands_data, 0, sizeof(st_command_data) * arr_size);
+
+	for (i = 0; i < arr_size; i++) {
+		cmditem = JSON_GET_ARRAY_ITEM(cap_cmds, i);
+		if (!cmditem) {
+			IOT_ERROR("Cannot get %dth commands data", i);
+			continue;
+		}
+
+		IOT_DUMP(IOT_DEBUG_LEVEL_INFO, IOT_DUMP_CAPABILITY_PROCESS_COMMAND, i + 1, 0);
+		err = _iot_parse_cmd_data_v2(cmditem, &command_noti.raw.commands.commands_data[i]);
+		if (err != IOT_ERROR_NONE) {
+			IOT_ERROR("Cannot parse %dth command data", i);
+			goto out;
+		}
+	}
+
+	if (ctx->noti_cb)
+		ctx->noti_cb(&command_noti, ctx->noti_usr_data);
+out:
+	for (i = 0; i < arr_size; i++) {
+		_iot_free_cmd_data_v2(&command_noti.raw.commands.commands_data[i]);
+	}
+	if (command_noti.raw.commands.commands_data)
+		iot_os_free(command_noti.raw.commands.commands_data);
+	if (json != NULL)
+		JSON_DELETE(json);
+}
+
 
 /* Internal API */
 static iot_error_t _iot_parse_cmd_data(JSON_H* cmditem, char** component,
@@ -1185,5 +1359,197 @@ static void _iot_free_evt_data(iot_cap_evt_data_t* evt_data)
 	if (evt_data->options.displayed != NULL) {
 		iot_os_free(evt_data->options.displayed);
 	}
+}
+
+static JSON_H *_iot_make_evt_data_v2(st_attr_data *attr_data, int seq_num)
+{
+	JSON_H *evt_item = NULL;
+	JSON_H *evt_subjson = NULL;
+	JSON_H *evt_subdata = NULL;
+	JSON_H *prov_data = NULL;
+	JSON_H *visibility_data = NULL;
+	char time_in_ms[16]; /* 155934720000 is '2019-06-01 00:00:00.00 UTC' */
+
+	evt_item = JSON_CREATE_OBJECT();
+
+	/* component */
+	if (attr_data->component_type == ST_COMPONENT_DEFULAT) {
+		JSON_ADD_STRING_TO_OBJECT(evt_item, "component", "main");
+	} else if (attr_data->component_type == ST_COMPONENT_CUSTOM) {
+		if (attr_data->custom_component_name)
+			JSON_ADD_STRING_TO_OBJECT(evt_item, "component", attr_data->custom_component_name);
+		else
+			goto err_make_evt_item;
+	} else
+		goto err_make_evt_item;
+
+	/* capability && attribute */
+	if (attr_data->attr_type == ST_ATTR_CUSTOM) {
+		if (attr_data->custom_cap_name && attr_data->custom_attr_name) {
+			JSON_ADD_STRING_TO_OBJECT(evt_item, "capability", attr_data->custom_cap_name);
+			JSON_ADD_STRING_TO_OBJECT(evt_item, "attribute", attr_data->custom_attr_name);
+		} else
+			goto err_make_evt_item;
+	} else
+		goto err_make_evt_item;
+
+	/* value */
+	switch (attr_data->value.data_type) {
+		case ST_DATA_TYPE_STRING:
+			JSON_ADD_STRING_TO_OBJECT(evt_item, "value", attr_data->value.data.string);
+			break;
+		case ST_DATA_TYPE_NUMBER:
+			JSON_ADD_NUMBER_TO_OBJECT(evt_item, "value", attr_data->value.data.number);
+			break;
+		case ST_DATA_TYPE_JSON_OBJECT:
+			break;
+		case ST_DATA_TYPE_JSON_ARRAY:
+			break;
+		case ST_DATA_TYPE_BOOLEAN:
+			JSON_ADD_BOOL_TO_OBJECT(evt_item, "value", attr_data->value.data.boolean);
+			break;
+		case ST_DATA_TYPE_NULL:
+			break;
+		case ST_DATA_TYPE_RAW_JSON:
+			evt_subjson = JSON_PARSE(attr_data->value.data.raw_json);
+			JSON_ADD_ITEM_TO_OBJECT(evt_item, "value", evt_subjson);
+			break;
+	}
+
+	/* unit */
+	if (attr_data->unit)
+		JSON_ADD_STRING_TO_OBJECT(evt_item, "unit", attr_data->unit);
+
+	/* data */
+	if (attr_data->data) {
+		evt_subdata = JSON_PARSE(attr_data->data);
+		JSON_ADD_ITEM_TO_OBJECT(evt_item, "data", evt_subdata);
+	}
+
+	/* visibility */
+	if (!attr_data->support_history) {
+		visibility_data = JSON_CREATE_OBJECT();
+		JSON_ADD_BOOL_TO_OBJECT(visibility_data, "displayed", false);
+		JSON_ADD_ITEM_TO_OBJECT(evt_item, "visibility", visibility_data);
+	}
+
+	/* providerData */
+	prov_data = JSON_CREATE_OBJECT();
+	JSON_ADD_NUMBER_TO_OBJECT(prov_data, "sequenceNumber", seq_num);
+
+	if (iot_get_time_in_ms(time_in_ms, sizeof(time_in_ms)) != IOT_ERROR_NONE)
+		IOT_WARN("Cannot add optional timestamp value");
+	else
+		JSON_ADD_STRING_TO_OBJECT(prov_data, "timestamp", time_in_ms);
+
+	if (attr_data->state_change)
+		JSON_ADD_STRING_TO_OBJECT(prov_data, "stateChange", "Y");
+
+	JSON_ADD_ITEM_TO_OBJECT(evt_item, "providerData", prov_data);
+
+	/* related command ID */
+	if (attr_data->related_command_id != NULL)
+		JSON_ADD_STRING_TO_OBJECT(evt_item, "commandId", attr_data->related_command_id);
+
+	return evt_item;
+err_make_evt_item:
+	if (evt_item) {
+		JSON_DELETE(evt_item);
+	}
+
+	return NULL;
+}
+
+int st_cap_send_attr_v2(IOT_CTX *iot_ctx, st_attr_data* attr_data[], uint8_t attr_num)
+{
+	int ret;
+	struct iot_context *ctx = (struct iot_context *)iot_ctx;
+	st_mqtt_msg msg = {0};
+	int i;
+	JSON_H *evt_root = NULL;
+	JSON_H *evt_arr = NULL;
+	JSON_H *evt_item = NULL;
+
+	if (!ctx || attr_num == 0) {
+		IOT_DUMP(IOT_DEBUG_LEVEL_ERROR, IOT_DUMP_CAPABILITY_SEND_EVENT_NO_DATA_ERROR, 0, 0);
+		IOT_ERROR("There is no ctx or attr_data");
+		return IOT_ERROR_INVALID_ARGS;
+	}
+
+	if (ctx->curr_state != IOT_STATE_CLOUD_CONNECTED || ctx->evt_mqttcli == NULL) {
+		IOT_DUMP(IOT_DEBUG_LEVEL_ERROR, IOT_DUMP_CAPABILITY_SEND_EVENT_NO_CONNECT_ERROR, ctx->curr_state, 0);
+		IOT_ERROR("Target has not connected to server yet!!");
+		return IOT_ERROR_BAD_REQ;
+	}
+
+	if (ctx->rate_limit) {
+		if ((iot_os_timer_isexpired(ctx->rate_limit_timeout))) {
+			ctx->rate_limit = false;
+		} else {
+			IOT_WARN("Exceed rate limit. Can't send attributes for a while");
+			return IOT_ERROR_BAD_REQ;
+		}
+	}
+
+	if (ctx->event_sequence_num == MAX_SQNUM) {
+		ctx->event_sequence_num = 0;
+	}
+	ctx->event_sequence_num = (ctx->event_sequence_num + 1) & MAX_SQNUM;
+
+	evt_root = JSON_CREATE_OBJECT();
+	evt_arr = JSON_CREATE_ARRAY();
+
+	JSON_ADD_ITEM_TO_OBJECT(evt_root, "deviceEvents", evt_arr);
+
+	/* Make event data format & enqueue data */
+	for (i = 0; i < attr_num; i++) {
+		if (!attr_data[i]) {
+			IOT_ERROR("There si no capability reference in event data or ctx not matched");
+			JSON_DELETE(evt_root);
+			return IOT_ERROR_BAD_REQ;
+		}
+		evt_item = _iot_make_evt_data_v2(attr_data[i], ctx->event_sequence_num);
+		if (evt_item == NULL) {
+			IOT_ERROR("Cannot make evt_data!!");
+			JSON_DELETE(evt_root);
+			return IOT_ERROR_BAD_REQ;
+		}
+		JSON_ADD_ITEM_TO_ARRAY(evt_arr, evt_item);
+	}
+
+#if defined(STDK_IOT_CORE_SERIALIZE_CBOR)
+	iot_serialize_json2cbor(evt_root, (uint8_t **)&msg.payload, (size_t *)&msg.payloadlen);
+#else
+	msg.payload = JSON_PRINT(evt_root);
+	if (msg.payload != NULL) {
+		msg.payloadlen = strlen(msg.payload);
+	}
+#endif
+	JSON_DELETE(evt_root);
+	if (msg.payload == NULL) {
+		IOT_ERROR("Fail to transfer to payload");
+		return IOT_ERROR_BAD_REQ;
+	}
+	msg.qos = st_mqtt_qos1;
+	msg.retained = false;
+	msg.topic = ctx->mqtt_event_topic;
+
+	IOT_INFO("publish event, topic : %s, payload :\n%s",
+		ctx->mqtt_event_topic, (char *)msg.payload);
+
+	ret = st_mqtt_publish_async(ctx->evt_mqttcli, &msg);
+	if (ret) {
+		IOT_WARN("MQTT pub error(%d)", ret);
+		free(msg.payload);
+		return IOT_ERROR_MQTT_PUBLISH_FAIL;
+	}
+
+#if !defined(STDK_MQTT_TASK)
+	iot_os_eventgroup_set_bits(ctx->iot_events, IOT_EVENT_BIT_CAPABILITY);
+#endif
+	IOT_DUMP(IOT_DEBUG_LEVEL_INFO, IOT_DUMP_CAPABILITY_SEND_EVENT_SUCCESS, attr_num, 0);
+
+	free(msg.payload);
+	return ctx->event_sequence_num;
 }
 /* External API */

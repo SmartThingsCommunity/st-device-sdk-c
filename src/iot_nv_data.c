@@ -199,7 +199,13 @@ iot_error_t iot_nv_init(unsigned char *device_info, size_t device_info_len)
 	IOT_DEBUG_CHECK(ret != IOT_ERROR_NONE, IOT_ERROR_INIT_FAIL, "NV init fail");
 
 #if !defined(CONFIG_STDK_IOT_CORE_SUPPORT_STNV_PARTITION)
-	device_nv_info = device_info;
+	unsigned char* data = NULL;
+
+	data = iot_os_malloc(device_info_len + 1);
+	memcpy(data, device_info, device_info_len);
+	data[device_info_len] = '\0';
+
+	device_nv_info = data;
 	device_nv_info_len = device_info_len;
 #endif
 	return IOT_ERROR_NONE;
@@ -212,6 +218,9 @@ iot_error_t iot_nv_deinit()
 	IOT_DEBUG_CHECK(ret != IOT_ERROR_NONE, IOT_ERROR_DEINIT_FAIL, "NV deinit fail");
 
 #if !defined(CONFIG_STDK_IOT_CORE_SUPPORT_STNV_PARTITION)
+	if (device_nv_info) {
+		iot_os_free(device_nv_info);
+	}
 	device_nv_info = NULL;
 	device_nv_info_len = 0;
 #endif

@@ -441,3 +441,129 @@ iot_error_t iot_util_url_parse(char *url, url_parse_t *output)
 
 	return IOT_ERROR_NONE;
 }
+
+iot_util_queue_t* iot_util_queue_create(size_t item_size)
+{
+	iot_util_queue_t *queue = NULL;
+
+	if (item_size == 0) {
+		IOT_ERROR("Queue item size should be above 0");
+		return NULL;
+	}
+
+	queue = iot_os_malloc(sizeof(iot_util_queue_t));
+	if (queue == NULL) {
+		IOT_ERROR("Fail to malloc queue struct");
+		return NULL;
+	}
+	memset(queue, '\0', sizeof(iot_util_queue_t));
+
+	iot_os_mutex_init(&queue->lock);
+	if (queue->lock.sem == NULL) {
+		IOT_ERROR("Fail to init queue lock");
+		iot_os_free(queue);
+		return NULL;
+	}
+
+	queue->item_size = item_size;
+
+	return queue;
+}
+
+void iot_util_queue_delete(iot_util_queue_t* queue)
+{
+	do {
+		if (queue == NULL || queue->lock.sem == NULL)
+			return;
+	} while ((iot_os_mutex_lock(&queue->lock)) != IOT_OS_TRUE);
+
+	iot_util_queue_data_t *iterator = queue->head, *tmp;
+	while (iterator) {
+		tmp = iterator;
+		iterator = iterator->next;
+		iot_os_free(tmp->data);
+		iot_os_free(tmp);
+	}
+	queue->head = queue->tail = NULL;
+	iot_os_mutex_unlock(&queue->lock);
+
+	if (queue->lock.sem != NULL) {
+		iot_os_mutex_destroy(&queue->lock);
+		queue->lock.sem = NULL;
+	}
+
+	iot_os_free(queue);
+}
+
+iot_error_t iot_util_queue_send(iot_util_queue_t* queue, void * data)
+{
+	iot_util_queue_data_t *queue_data = NULL;
+	if (queue == NULL || data == NULL) {
+		return IOT_ERROR_INVALID_ARGS;
+	}
+
+	queue_data = iot_os_malloc(sizeof(iot_util_queue_data_t));
+	if (queue_data == NULL) {
+		IOT_ERROR("Fail to malloc queue data struct");
+		return IOT_ERROR_MEM_ALLOC;
+	}
+	memset(queue_data, '\0', sizeof(iot_util_queue_data_t));
+	queue_data->data = iot_os_malloc(queue->item_size);
+	if (queue_data->data == NULL) {
+		IOT_ERROR("Fail to malloc queue data");
+		iot_os_free(queue_data);
+		return IOT_ERROR_MEM_ALLOC;
+	}
+	memcpy(queue_data->data, data, queue->item_size);
+
+	if((iot_os_mutex_lock(&queue->lock)) != IOT_OS_TRUE) {
+		iot_os_free(queue_data->data);
+		iot_os_free(queue_data);
+		return IOT_ERROR_TIMEOUT;
+	}
+
+	if (queue->head == NULL || queue->tail == NULL) {
+		queue->head = queue->tail = queue_data;
+	} else {
+		queue->tail->next = queue_data;
+		queue->tail = queue_data;
+	}
+
+	iot_os_mutex_unlock(&queue->lock);
+
+	return IOT_ERROR_NONE;
+}
+
+iot_error_t iot_util_queue_receive(iot_util_queue_t* queue, void * data)
+{
+	iot_util_queue_data_t *queue_data = NULL;
+	iot_error_t ret = IOT_ERROR_NONE;
+
+	if (queue == NULL || data == NULL) {
+		return IOT_ERROR_INVALID_ARGS;
+	}
+
+	if((iot_os_mutex_lock(&queue->lock)) != IOT_OS_TRUE)
+		return IOT_ERROR_TIMEOUT;
+
+	if (queue->head == NULL || queue->tail == NULL) {
+		ret = IOT_ERROR_BAD_REQ;
+	} else if (queue->head == queue->tail) {
+		queue_data = queue->head;
+		queue->head = queue->tail = NULL;
+	} else {
+		queue_data = queue->head;
+		queue->head = queue->head->next;
+		queue_data->next = NULL;
+	}
+
+	iot_os_mutex_unlock(&queue->lock);
+
+	if (queue_data != NULL) {
+		memcpy(data, queue_data->data, queue->item_size);
+		iot_os_free(queue_data->data);
+		iot_os_free(queue_data);
+	}
+
+	return ret;
+}

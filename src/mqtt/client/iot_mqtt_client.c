@@ -449,7 +449,12 @@ static void _iot_mqtt_process_received_publish(MQTTClient *client, iot_mqtt_pack
 		_iot_mqtt_queue_push(&client->write_pending_queue, puback);
 	}
 
-	_iot_mqtt_queue_push(&client->user_event_callback_queue, chunk);
+	if ((chunk->chunk_data[0] & MQTT_FIXED_HEADER_DUP_MASK) >> MQTT_FIXED_HEADER_DUP_OFFSET) {
+		IOT_WARN("duplicated PUB packet %d", chunk->packet_id);
+		_iot_mqtt_chunk_destroy(chunk);
+	} else {
+		_iot_mqtt_queue_push(&client->user_event_callback_queue, chunk);
+	}
 }
 
 static void _iot_mqtt_process_received_pubrec_pubrel(MQTTClient *client, iot_mqtt_packet_chunk_t *chunk)
@@ -857,11 +862,11 @@ static int _iot_mqtt_check_alive(MQTTClient *client)
 	int rc = 0;
 
 	if (client == NULL || client->magic != MQTT_CLIENT_STRUCT_MAGIC_NUMBER) {
-		return E_ST_MQTT_FAILURE;
+		return E_ST_MQTT_PING_FAIL;
 	}
 
 	if((iot_os_mutex_lock(&client->client_manage_lock)) != IOT_OS_TRUE) {
-		return E_ST_MQTT_FAILURE;
+		return E_ST_MQTT_PING_FAIL;
 	}
 	if (iot_os_timer_isexpired(client->last_sent) || iot_os_timer_isexpired(client->last_received)) {
 		switch (client->ping_packet->chunk_state) {
@@ -874,7 +879,7 @@ static int _iot_mqtt_check_alive(MQTTClient *client)
 			case PACKET_CHUNK_TIMEOUT:
 				client->ping_packet->chunk_state = PACKET_CHUNK_INIT;
 				IOT_WARN("mqtt didn't get PINGRESP");
-				rc = E_ST_MQTT_FAILURE;
+				rc = E_ST_MQTT_PING_TIMEOUT;
 				goto exit;
 			default:
 				break;
@@ -969,7 +974,11 @@ static void _iot_mqtt_notify_publish_failed(MQTTClient *client, iot_mqtt_packet_
 	msg.qos = qos;
 	msg.topic = topic_name.lenstring.data;
 	msg.topiclen = topic_name.lenstring.len;
-	client->user_callback_fp(ST_MQTT_EVENT_PUBLISH_FAILED, &msg, client->user_callback_user_data);
+	if (chunk->chunk_state == PACKET_CHUNK_WRITE_FAIL) {
+		client->user_callback_fp(ST_MQTT_EVENT_PUBLISH_FAILED, &msg, client->user_callback_user_data);
+	} else if (chunk->chunk_state == PACKET_CHUNK_TIMEOUT) {
+		client->user_callback_fp(ST_MQTT_EVENT_PUBLISH_TIMEOUT, &msg, client->user_callback_user_data);
+	}
 }
 
 static void _iot_mqtt_process_user_callback(MQTTClient *client)
@@ -1134,8 +1143,10 @@ static int _iot_mqtt_wait_for(MQTTClient *client, iot_mqtt_packet_chunk_t *chunk
 				goto exit;
 			case PACKET_CHUNK_QUEUE_DESTROYED:
 			case PACKET_CHUNK_WRITE_FAIL:
-			case PACKET_CHUNK_TIMEOUT:
 				rc = E_ST_MQTT_FAILURE;
+				goto exit;
+			case PACKET_CHUNK_TIMEOUT:
+				rc = E_ST_MQTT_PACKET_TIMEOUT;
 				goto exit;
 			default:
 				continue;

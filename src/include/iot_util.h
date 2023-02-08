@@ -20,7 +20,8 @@
 #define _IOT_UTIL_H_
 
 #include "iot_error.h"
-#include "iot_main.h"
+#include "iot_os_util.h"
+#include "iot_bsp_wifi.h"
 
 #ifdef __cplusplus
 extern "C" {
@@ -34,6 +35,15 @@ extern "C" {
  */
 void iot_util_dump_mem(char *tag, uint8_t *buf, size_t len);
 
+#define IOT_UUID_BYTES				(16)
+
+/**
+ * @brief Contains "uuid" data
+ */
+struct iot_uuid {
+	unsigned char id[IOT_UUID_BYTES];	/**< @brief actual uuid values, 16 octet */
+};
+
 /**
  * @brief Contains a "url parse" data
  */
@@ -42,6 +52,74 @@ typedef struct {
 	char *domain;		/**< @brief broker url's domain part such as "test.example.com" */
 	int port;		/**< @brief broker url's port number part such as 443, 8883' */
 } url_parse_t;
+
+/**
+ * @brief iot_util_queue data struct
+ */
+typedef struct iot_util_queue_data {
+	void *data;
+	struct iot_util_queue_data *next;
+} iot_util_queue_data_t;
+
+/**
+ * @brief internal queue struct
+ */
+typedef struct {
+	iot_os_mutex lock;
+	size_t item_size;
+	struct iot_util_queue_data *head;
+	struct iot_util_queue_data *tail;
+} iot_util_queue_t;
+
+/**
+ * @brief	create queue
+ *
+ * This function create queue and return queue struct pointer
+ *
+ * @param[in] item_size	size of queue data item
+ *
+ * @return
+ *	return is queue struct pointer.
+ *	If queue was not created, NULL is returned.
+ *
+ */
+iot_util_queue_t* iot_util_queue_create(size_t item_size);
+
+/**
+ * @brief	delete queue
+ *
+ * This function delete queue
+ *
+ * @param[in] queue	queue struct pointer to be deleted
+ *
+ */
+void iot_util_queue_delete(iot_util_queue_t* queue);
+
+/**
+ * @brief	send message to the back of queue.
+ *
+ * This function will send item to the back of queue
+ *
+ * @param[in] queue	pointer of queue to save item
+ * @param[in] data	item to be saved in queue
+ *
+ * @return	return IOT_ERROR_NONE on success, or iot_error_t errors if it fails
+ *
+ */
+iot_error_t iot_util_queue_send(iot_util_queue_t* queue, void * data);
+
+/**
+ * @brief	receive message from the front of queue.
+ *
+ * This function will receive item from the front of queue
+ *
+ * @param[in] queue	pointer of queue to receive item
+ * @param[out] data	buffer for item received from queue
+ *
+ * @return	return IOT_ERROR_NONE on success, or iot_error_t errors if it fails
+ *
+ */
+iot_error_t iot_util_queue_receive(iot_util_queue_t* queue, void * data);
 
 /**
  * @brief	parse url with protocol, domain, port number parts for st-iot-core

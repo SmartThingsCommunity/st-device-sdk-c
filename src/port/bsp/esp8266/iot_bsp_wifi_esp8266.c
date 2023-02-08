@@ -1,6 +1,6 @@
 /* ***************************************************************************
  *
- * Copyright (c) 2019-2021 Samsung Electronics All Rights Reserved.
+ * Copyright (c) 2019-2022 Samsung Electronics All Rights Reserved.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -44,6 +44,8 @@ const int WIFI_EVENT_BIT_ALL = BIT0|BIT1|BIT2|BIT3|BIT4;
 static int WIFI_INITIALIZED = false;
 static EventGroupHandle_t wifi_event_group;
 static iot_bsp_wifi_event_cb_t wifi_event_cb;
+
+static iot_error_t s_latest_disconnect_reason;
 
 static void _initialize_sntp(void)
 {
@@ -114,10 +116,22 @@ static esp_err_t event_handler(void *ctx, system_event_t *event)
 		IOT_INFO("Disconnect reason : %d", event->event_info.disconnected.reason);
 		IOT_DUMP(IOT_DEBUG_LEVEL_ERROR, IOT_DUMP_BSP_WIFI_EVENT_DEAUTH, event->event_info.disconnected.reason, 0);
 		xEventGroupSetBits(wifi_event_group, WIFI_STA_DISCONNECT_BIT);
-	        if (info->disconnected.reason == WIFI_REASON_BASIC_RATE_NOT_SUPPORT) {
-	            /*Switch to 802.11 bgn mode */
-	            esp_wifi_set_protocol(ESP_IF_WIFI_STA, WIFI_PROTOCOL_11B | WIFI_PROTOCOL_11G | WIFI_PROTOCOL_11N);
-	        }
+		switch (info->disconnected.reason)
+		{
+			case WIFI_REASON_BASIC_RATE_NOT_SUPPORT:
+				/*Switch to 802.11 bgn mode */
+				esp_wifi_set_protocol(ESP_IF_WIFI_STA, WIFI_PROTOCOL_11B | WIFI_PROTOCOL_11G | WIFI_PROTOCOL_11N);
+				break;
+			case WIFI_REASON_NO_AP_FOUND:
+				s_latest_disconnect_reason = IOT_ERROR_CONN_STA_AP_NOT_FOUND;
+				break;
+			case WIFI_REASON_AUTH_FAIL:
+				s_latest_disconnect_reason = IOT_ERROR_CONN_STA_AUTH_FAIL;
+				break;
+			case WIFI_REASON_ASSOC_FAIL:
+				s_latest_disconnect_reason = IOT_ERROR_CONN_STA_ASSOC_FAIL;
+				break;
+		}
 		esp_wifi_connect();
 		xEventGroupClearBits(wifi_event_group, WIFI_STA_CONNECT_BIT);
 		break;
@@ -148,7 +162,7 @@ static esp_err_t event_handler(void *ctx, system_event_t *event)
 				event->event_info.sta_connected.aid);
 		if (wifi_event_cb) {
 			IOT_DEBUG("0x%p called", wifi_event_cb);
-			(*wifi_event_cb)(IOT_WIFI_EVENT_SOFTAP_STA_JOIN);
+			(*wifi_event_cb)(IOT_WIFI_EVENT_SOFTAP_STA_JOIN, IOT_ERROR_NONE);
 		}
 		break;
 
@@ -160,7 +174,7 @@ static esp_err_t event_handler(void *ctx, system_event_t *event)
 		xEventGroupSetBits(wifi_event_group, WIFI_AP_STOP_BIT);
 		if (wifi_event_cb) {
 			IOT_DEBUG("0x%p called", wifi_event_cb);
-			(*wifi_event_cb)(IOT_WIFI_EVENT_SOFTAP_STA_LEAVE);
+			(*wifi_event_cb)(IOT_WIFI_EVENT_SOFTAP_STA_LEAVE, IOT_ERROR_NONE);
 		}
 		break;
 
@@ -312,7 +326,7 @@ iot_error_t iot_bsp_wifi_set_mode(iot_wifi_conf *conf)
 		}
 
 		str_len = strlen((char *)conf->bssid);
-		if(str_len){
+		if(str_len) {
 			memcpy(wifi_config.sta.bssid, conf->bssid, IOT_WIFI_MAX_BSSID_LEN);
 			wifi_config.sta.bssid_set = true;
 
@@ -320,6 +334,14 @@ iot_error_t iot_bsp_wifi_set_mode(iot_wifi_conf *conf)
 					wifi_config.sta.bssid[0], wifi_config.sta.bssid[1], wifi_config.sta.bssid[2],
 					wifi_config.sta.bssid[3], wifi_config.sta.bssid[4], wifi_config.sta.bssid[5]);
 		}
+
+		if (conf->authmode == IOT_WIFI_AUTH_WPA3_PERSONAL) {
+			wifi_config.sta.threshold.authmode = WIFI_AUTH_WPA3_PSK;
+			// set PMF (Protected Management Frames) optional mode for better compatibility
+			wifi_config.sta.pmf_cfg.capable = true;
+			wifi_config.sta.pmf_cfg.required = false;
+		}
+		s_latest_disconnect_reason = IOT_ERROR_CONN_CONNECT_FAIL;
 
 		ESP_ERROR_CHECK(esp_wifi_set_mode(WIFI_MODE_STA));
 		ESP_ERROR_CHECK(esp_wifi_set_config(ESP_IF_WIFI_STA, &wifi_config));
@@ -334,9 +356,14 @@ iot_error_t iot_bsp_wifi_set_mode(iot_wifi_conf *conf)
 			IOT_DUMP(IOT_DEBUG_LEVEL_ERROR, IOT_DUMP_BSP_WIFI_CONNECT_SUCCESS, 0, 0);
 		}
 		else {
-				IOT_ERROR("WIFI_STA_CONNECT_BIT event Timeout");
-				IOT_DUMP(IOT_DEBUG_LEVEL_ERROR, IOT_DUMP_BSP_WIFI_CONNECT_FAIL, IOT_WIFI_CMD_TIMEOUT, __LINE__);
-				return IOT_ERROR_CONN_CONNECT_FAIL;
+			iot_error_t err = IOT_ERROR_CONN_CONNECT_FAIL;
+			if (s_latest_disconnect_reason != IOT_ERROR_CONN_CONNECT_FAIL) {
+				err = s_latest_disconnect_reason;
+			}
+
+			IOT_ERROR("WIFI_STA_CONNECT_BIT event Timeout %d", err);
+			IOT_DUMP(IOT_DEBUG_LEVEL_ERROR, IOT_DUMP_BSP_WIFI_CONNECT_FAIL, IOT_WIFI_CMD_TIMEOUT, err);
+			return err;
 		}
 
 		time(&now);
@@ -385,7 +412,7 @@ iot_error_t iot_bsp_wifi_set_mode(iot_wifi_conf *conf)
 		else {
 				IOT_ERROR("WIFI_AP_START_BIT event Timeout");
 				IOT_DUMP(IOT_DEBUG_LEVEL_ERROR, IOT_DUMP_BSP_WIFI_TIMEOUT, conf->mode, __LINE__);
-				return IOT_ERROR_CONN_OPERATE_FAIL;
+				return IOT_ERROR_CONN_SOFTAP_CONF_FAIL;
 		}
 
 		break;
@@ -425,12 +452,23 @@ uint16_t iot_bsp_wifi_get_scan_result(iot_wifi_scan_result_t *scan_result)
 
 			if(esp_wifi_scan_get_ap_records(&ap_num, ap_list) == ESP_OK){
 				for(i=0; i<ap_num; i++)	{
+					iot_wifi_auth_mode_t conv_auth_mode;
+
+					switch (ap_list[i].authmode) {
+						case WIFI_AUTH_WPA2_WPA3_PSK:
+						case WIFI_AUTH_WPA3_PSK:
+							conv_auth_mode = IOT_WIFI_AUTH_WPA3_PERSONAL;
+							break;
+						default:
+							conv_auth_mode = ap_list[i].authmode;
+							break;
+					}
 					memcpy(scan_result[i].ssid, ap_list[i].ssid, strlen((char *)ap_list[i].ssid));
 					memcpy(scan_result[i].bssid, ap_list[i].bssid, IOT_WIFI_MAX_BSSID_LEN);
 
 					scan_result[i].rssi = ap_list[i].rssi;
 					scan_result[i].freq = iot_util_convert_channel_freq(ap_list[i].primary);
-					scan_result[i].authmode = ap_list[i].authmode;
+					scan_result[i].authmode = conv_auth_mode;
 
 					IOT_DEBUG("esp8266 ssid=%s, mac=%02X:%02X:%02X:%02X:%02X:%02X, rssi=%d, freq=%d, authmode=%d chan=%d",
 							scan_result[i].ssid,
@@ -482,4 +520,12 @@ iot_error_t iot_bsp_wifi_register_event_cb(iot_bsp_wifi_event_cb_t cb)
 void iot_bsp_wifi_clear_event_cb(void)
 {
 	wifi_event_cb = NULL;
+}
+
+iot_wifi_auth_mode_bits_t iot_bsp_wifi_get_auth_mode(void)
+{
+	iot_wifi_auth_mode_bits_t supported_mode_bits = IOT_WIFI_AUTH_MODE_BIT_ALL;
+	supported_mode_bits ^= IOT_WIFI_AUTH_MODE_BIT(IOT_WIFI_AUTH_WPA2_ENTERPRISE);
+
+	return supported_mode_bits;
 }

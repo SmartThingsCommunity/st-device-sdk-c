@@ -110,9 +110,8 @@ static void mqtt_reg_sub_cb(st_mqtt_msg *md, void *userData)
 				IOT_ERROR("Cannot send cloud registering cmd!!");
 			}
 		} else if (!strncmp(event->valuestring, "error", 5)) {
-			bool reboot;
-			reboot = true;
-			iot_command_send(ctx, IOT_COMMAND_SELF_CLEANUP, &reboot, sizeof(bool));
+			/* TODO : signaling restart onboarding */
+			IOT_ERROR("TODO : signaling restart onboarding %d", __LINE__);
 			goto reg_sub_out;
 		} else {
 			IOT_ERROR("event type %s is not defined", event->valuestring);
@@ -335,7 +334,11 @@ void _iot_mqtt_signin_client_callback(st_mqtt_event event, void *event_data, voi
 #endif
 				IOT_DEBUG("raw msg : %s", payload_json);
 				if (!strncmp(md->topic, IOT_SUB_TOPIC_COMMAND_PREFIX, IOT_SUB_TOPIC_COMMAND_PREFIX_SIZE)) {
+					/* Send commands to each registered capability callback handler
+					 * and registered noti callback handler. 
+					 * application can choose one of both handlers to handle commands */
 					iot_cap_sub_cb(ctx->cap_handle_list, payload_json);
+					iot_cap_commands_cb(ctx, payload_json);
 				} else if (!strncmp(md->topic, IOT_SUB_TOPIC_NOTIFICATION_PREFIX, IOT_SUB_TOPIC_NOTIFICATION_PREFIX_SIZE)) {
 					iot_noti_sub_cb(ctx, payload_json);
 				} else {
@@ -347,7 +350,13 @@ void _iot_mqtt_signin_client_callback(st_mqtt_event event, void *event_data, voi
 			}
 			break;
 		case ST_MQTT_EVENT_PUBLISH_FAILED:
+		case ST_MQTT_EVENT_PUBLISH_TIMEOUT:
 			{
+				if (event == ST_MQTT_EVENT_PUBLISH_FAILED) {
+					iot_set_st_ecode(ctx, IOT_ST_ECODE_CE40);
+				} else if (event == ST_MQTT_EVENT_PUBLISH_TIMEOUT) {
+					iot_set_st_ecode(ctx, IOT_ST_ECODE_CE41);
+				}
 				st_mqtt_msg *md = event_data;
 				char *mqtt_payload = md->payload;
 				iot_noti_data_t noti_data;
@@ -865,9 +874,13 @@ iot_error_t _iot_es_mqtt_connect(struct iot_context *ctx, st_mqtt_client target_
 			}
 			IOT_WARN("Rejected by Server!! cleanup all & reboot");
 
-			reboot = true;
-			iot_command_send(ctx, IOT_COMMAND_SELF_CLEANUP, &reboot, sizeof(bool));
+			iot_cleanup(ctx, true);
 			iot_ret = IOT_ERROR_MQTT_REJECT_CONNECT;
+			break;
+
+		case E_ST_MQTT_PACKET_TIMEOUT:
+			ctx->mqtt_connect_critical_reject_count = 0;
+			iot_ret = IOT_ERROR_MQTT_CONNECT_TIMEOUT;
 			break;
 
 		default:
