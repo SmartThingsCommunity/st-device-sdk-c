@@ -567,3 +567,20 @@ iot_error_t iot_util_queue_receive(iot_util_queue_t* queue, void * data)
 
 	return ret;
 }
+
+unsigned int iot_util_generator_backoff(unsigned int try_count, unsigned int maximum_backoff)
+{
+	unsigned int backoff = 1;
+
+	for (int i = 0; i < try_count; i++)
+	{
+		backoff *= 2;
+		if ((backoff * 1000) >= (maximum_backoff * 1000))
+			return maximum_backoff * 1000;
+	}
+
+	backoff *= 1000;
+	backoff += (iot_bsp_random() % 1000);
+
+	return backoff;
+}

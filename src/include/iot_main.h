@@ -327,6 +327,9 @@ struct iot_context {
 	struct iot_st_ecode last_st_ecode;	/**< @brief last happended device error code to send SmartThings App */
 
 	bool is_wifi_station;		/**< @brief indicator if wifi is station mode or not */
+
+	unsigned int connection_retry_count; 	/**< @brief MQTT server connection retry count */
+	iot_os_timer next_connection_retry_timer;	/**< @brief timer for next connection retry count */
 };
 
 #endif /* _IOT_MAIN_H_ */
