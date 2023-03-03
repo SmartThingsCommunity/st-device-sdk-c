@@ -677,19 +677,31 @@ static iot_error_t _do_iot_main_command(struct iot_context *ctx,
 			err = iot_es_connect(ctx, IOT_CONNECT_TYPE_COMMUNICATION);
 			if (err == IOT_ERROR_MQTT_REJECT_CONNECT) {
 				IOT_WARN("Intended error case(reboot)");
+				ctx->connection_retry_count = 0;
 				IOT_DUMP_MAIN(WARN, BASE, err);
 				iot_cleanup(ctx, true);
 			} else if (err != IOT_ERROR_NONE) {
-				IOT_ERROR("failed to iot_es_connect for communication\n");
+				unsigned int next_retry_time;
+				ctx->connection_retry_count++;
+
+				err = iot_os_timer_init(&ctx->next_connection_retry_timer);
+				if (err != IOT_ERROR_NONE) {
+					IOT_ERROR("failed to malloc for reconnection timer");
+					break;
+				}
+				next_retry_time = iot_util_generator_backoff(ctx->connection_retry_count, 64);
+				iot_os_timer_count_ms(ctx->next_connection_retry_timer, next_retry_time);
+
+				IOT_ERROR("failed to iot_es_connect for communication try count %d next after %d ms",
+						ctx->connection_retry_count, next_retry_time);
 
 				if (err == IOT_ERROR_MQTT_CONNECT_TIMEOUT) {
 					iot_set_st_ecode(ctx, IOT_ST_ECODE_CE21);
 				} else {
 					iot_set_st_ecode(ctx, IOT_ST_ECODE_CE20);
 				}
-
-				iot_command_send(ctx, IOT_COMMAND_CLOUD_CONNECTING, NULL, 0);
 			} else {
+				ctx->connection_retry_count = 0;
 				iot_state_update(ctx, IOT_STATE_CLOUD_CONNECTED, 0);
 			}
 
@@ -786,6 +798,14 @@ static void _do_cmd_tout_check(struct iot_context *ctx)
 		}
 		break;
 	case IOT_STATE_CLOUD_DISCONNECTED :
+		if (ctx->next_connection_retry_timer) {
+			is_expired = iot_os_timer_isexpired(ctx->next_connection_retry_timer);
+			if (is_expired) {
+				iot_os_timer_destroy(&ctx->next_connection_retry_timer);
+				ctx->next_connection_retry_timer = NULL;
+				iot_command_send(ctx, IOT_COMMAND_CLOUD_CONNECTING, NULL, 0);
+			}
+		}
 		break;
 	case IOT_STATE_CLOUD_CONNECTED :
 		break;

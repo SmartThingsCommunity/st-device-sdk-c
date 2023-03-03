@@ -765,7 +765,7 @@ static void _iot_mqtt_close_net(MQTTClient *client)
 
 static int _iot_mqtt_connect_net(MQTTClient *client, st_mqtt_broker_info_t *broker)
 {
-	int rc = 0, connect_retry = 3;
+	int rc = 0;
 	iot_error_t iot_err;
 
 	if (client == NULL || client->magic != MQTT_CLIENT_STRUCT_MAGIC_NUMBER) {
@@ -793,15 +793,7 @@ static int _iot_mqtt_connect_net(MQTTClient *client, st_mqtt_broker_info_t *brok
 	client->net->connection.ca_cert = broker->ca_cert;
 	client->net->connection.ca_cert_len = broker->ca_cert_len;
 
-	do {
-		iot_err = client->net->connect(client->net);
-		if (iot_err) {
-			IOT_ERROR("net->connect = %d, retry (%d)", iot_err, connect_retry);
-			connect_retry--;
-			iot_os_delay(2000);
-		}
-	} while ((iot_err != IOT_ERROR_NONE) && connect_retry);
-
+	iot_err = client->net->connect(client->net);
 	if (iot_err != IOT_ERROR_NONE) {
 		IOT_ERROR("MQTT net connection failed");
 		rc = E_ST_MQTT_FAILURE;

@@ -122,6 +122,17 @@ iot_error_t iot_util_queue_send(iot_util_queue_t* queue, void * data);
 iot_error_t iot_util_queue_receive(iot_util_queue_t* queue, void * data);
 
 /**
+ * @brief	generate retry back time.
+ *
+ * @param[in] try_count retry count for generating backoff time
+ * @param[in] maximum_backoff	maximum backoff time
+ *
+ * @return	return generated backoff time
+ *
+ */
+unsigned int iot_util_generator_backoff(unsigned int try_count, unsigned int maximum_backoff);
+
+/**
  * @brief	parse url with protocol, domain, port number parts for st-iot-core
  * @details	This function parse give url protocol, domain, port number parts
  * @param[in]	url		null-terminated url string like "https://example.sample.com:1234"
