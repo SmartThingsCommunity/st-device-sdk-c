@@ -381,7 +381,7 @@ int iot_os_mutex_lock(iot_os_mutex* mutex)
 
 	pthread_mutex_t* mutex_p = mutex->sem;
 
-	ret = pthread_mutex_trylock(mutex_p);
+	ret = pthread_mutex_lock(mutex_p);
 	if (ret) {
 		return IOT_OS_FALSE;
 	} else {
