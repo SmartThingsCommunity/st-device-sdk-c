@@ -154,7 +154,7 @@ You have registered your device profile and device information, so now it is tim
 
 ### Start from example
 
-An easy way to get started is to branch out one of the example projects provided in the git repository. You can fine one of exmaple from `example` directory.
+An easy way to get started is to branch out one of the example projects provided in the git repository. You can fine one of example from `example` directory.
 
 &nbsp;
 
