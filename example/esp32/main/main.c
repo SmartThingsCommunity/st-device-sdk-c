@@ -132,7 +132,7 @@ static void iot_noti_cb(iot_noti_data_t *noti_data, void *noti_usr_data)
 			else if (noti_data->raw.preferences.preferences_data[i].preference_data.type == IOT_CAP_VAL_TYPE_BOOLEAN)
 				printf("%s\n", noti_data->raw.preferences.preferences_data[i].preference_data.boolean ? "true" : "false");
 			else
-				printf("Unkown type\n");
+				printf("Unknown type\n");
 		}
 	}
 }
