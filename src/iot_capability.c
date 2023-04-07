@@ -734,6 +734,60 @@ iot_error_t _iot_parse_noti_data(void *data, iot_noti_data_t *noti_data)
 		}
 		noti_data->raw.quota.limit = item->valueint;
 		IOT_DUMP(IOT_DEBUG_LEVEL_INFO, IOT_DUMP_CAPABILITY_QUOTA_LIMIT_RECEIVED, noti_data->raw.quota.used, noti_data->raw.quota.limit);
+	} else if (!strncmp(noti_type_string, SERVER_NOTI_TYPE_PREFERENCE_UPDATED, strlen(SERVER_NOTI_TYPE_PREFERENCE_UPDATED))) {
+		noti_data->type = _IOT_NOTI_TYPE_PREFERENCE_UPDATED;
+
+		item = JSON_GET_OBJECT_ITEM(json, "values");
+		if (item == NULL) {
+			IOT_ERROR("there is value in updated preference");
+			err = IOT_ERROR_BAD_REQ;
+			goto out_noti_parse;
+		} else {
+			size_t item_size = JSON_GET_ARRAY_SIZE(item);
+			noti_data->raw.preferences.preferences_num = item_size;
+			noti_data->raw.preferences.preferences_data = iot_os_malloc(
+					sizeof(iot_preference_data) * item_size);
+			if (!noti_data->raw.preferences.preferences_data) {
+				IOT_ERROR("Failed to alloc preferences data");
+				err = IOT_ERROR_BAD_REQ;
+				goto out_noti_parse;
+			}
+			memset(noti_data->raw.preferences.preferences_data, 0, sizeof(iot_preference_data) * item_size);
+
+			for (int i = 0; i < item_size; i++) {
+				JSON_H *sub_item = JSON_GET_ARRAY_ITEM(item, i);
+				JSON_H *preference_type = JSON_GET_OBJECT_ITEM(sub_item, "preferenceType");
+				JSON_H *preference_value = JSON_GET_OBJECT_ITEM(sub_item, "value");
+
+				noti_data->raw.preferences.preferences_data[i].preference_name =
+					iot_os_strdup(JSON_GET_OBJECT_ITEM_STRING(sub_item));
+
+				if (!strncmp(JSON_GET_STRING_VALUE(preference_type), "string", 6)) {
+					noti_data->raw.preferences.preferences_data[i].preference_data.type =
+						IOT_CAP_VAL_TYPE_STRING;
+					noti_data->raw.preferences.preferences_data[i].preference_data.string =
+						iot_os_strdup(JSON_GET_STRING_VALUE(preference_value));
+				} else if (!strncmp(JSON_GET_STRING_VALUE(preference_type), "number", 6)) {
+					noti_data->raw.preferences.preferences_data[i].preference_data.type =
+						IOT_CAP_VAL_TYPE_NUMBER;
+					noti_data->raw.preferences.preferences_data[i].preference_data.number =
+						JSON_GET_NUMBER_VALUE(preference_value);
+				} else if (!strncmp(JSON_GET_STRING_VALUE(preference_type), "boolean", 7)) {
+					noti_data->raw.preferences.preferences_data[i].preference_data.type =
+						IOT_CAP_VAL_TYPE_BOOLEAN;
+					noti_data->raw.preferences.preferences_data[i].preference_data.boolean =
+						JSON_IS_TRUE(preference_value);
+				} else if (!strncmp(JSON_GET_STRING_VALUE(preference_type), "integer", 7)) {
+					noti_data->raw.preferences.preferences_data[i].preference_data.type =
+						IOT_CAP_VAL_TYPE_INTEGER;
+					noti_data->raw.preferences.preferences_data[i].preference_data.integer =
+						preference_value->valueint;
+				} else {
+					noti_data->raw.preferences.preferences_data[i].preference_data.type =
+						IOT_CAP_VAL_TYPE_UNKNOWN;
+				}
+			}
+		}
 	} else {
 		IOT_WARN("There is no noti_type matched");
 		err = IOT_ERROR_BAD_REQ;

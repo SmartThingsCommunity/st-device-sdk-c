@@ -745,6 +745,19 @@ static iot_error_t _do_iot_main_command(struct iot_context *ctx,
 
 				if (ctx->noti_cb)
 					ctx->noti_cb(noti, ctx->noti_usr_data);
+			} else if (noti->type == (iot_noti_type_t)_IOT_NOTI_TYPE_PREFERENCE_UPDATED) {
+				IOT_INFO("preference updated");
+
+				if (ctx->noti_cb)
+					ctx->noti_cb(noti, ctx->noti_usr_data);
+
+				for (int i = 0; i < noti->raw.preferences.preferences_num; i++) {
+					if (noti->raw.preferences.preferences_data[i].preference_data.type == IOT_CAP_VAL_TYPE_STRING)
+						iot_os_free(noti->raw.preferences.preferences_data[i].preference_data.string);
+
+					iot_os_free(noti->raw.preferences.preferences_data[i].preference_name);
+				}
+				iot_os_free(noti->raw.preferences.preferences_data);
 			} else if (noti->type == (iot_noti_type_t)_IOT_NOTI_TYPE_SEND_FAILED) {
 				IOT_INFO("send failed seq number : %d", noti->raw.send_fail.failed_sequence_num);
 

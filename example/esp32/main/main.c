@@ -120,7 +120,21 @@ static void iot_noti_cb(iot_noti_data_t *noti_data, void *noti_usr_data)
     } else if (noti_data->type == IOT_NOTI_TYPE_RATE_LIMIT) {
         printf("[rate limit] Remaining time:%d, sequence number:%d\n",
                noti_data->raw.rate_limit.remainingTime, noti_data->raw.rate_limit.sequenceNumber);
-    }
+    } else if(noti_data->type == IOT_NOTI_TYPE_PREFERENCE_UPDATED) {
+		for (int i = 0; i < noti_data->raw.preferences.preferences_num; i++) {
+			printf("[preference update] name : %s value : ", noti_data->raw.preferences.preferences_data[i].preference_name);
+			if (noti_data->raw.preferences.preferences_data[i].preference_data.type == IOT_CAP_VAL_TYPE_STRING)
+				printf("%s\n", noti_data->raw.preferences.preferences_data[i].preference_data.string);
+			else if (noti_data->raw.preferences.preferences_data[i].preference_data.type == IOT_CAP_VAL_TYPE_NUMBER)
+				printf("%f\n", noti_data->raw.preferences.preferences_data[i].preference_data.number);
+			else if (noti_data->raw.preferences.preferences_data[i].preference_data.type == IOT_CAP_VAL_TYPE_INTEGER)
+				printf("%d\n", noti_data->raw.preferences.preferences_data[i].preference_data.integer);
+			else if (noti_data->raw.preferences.preferences_data[i].preference_data.type == IOT_CAP_VAL_TYPE_BOOLEAN)
+				printf("%s\n", noti_data->raw.preferences.preferences_data[i].preference_data.boolean ? "true" : "false");
+			else
+				printf("Unknown type\n");
+		}
+	}
 }
 
 static void connection_start(void)
