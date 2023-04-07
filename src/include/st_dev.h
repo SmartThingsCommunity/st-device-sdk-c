@@ -155,6 +155,14 @@ typedef struct {
 } iot_cap_cmd_data_t;
 
 /**
+ * @brief Preference data
+ */
+typedef struct {
+	char *preference_name;	/**< @brief Name of the preference. */
+	iot_cap_val_t preference_data;	/**< @brief Value of the preference. */
+} iot_preference_data;
+
+/**
  * @brief Contains a enumeration values for types of notification.
  */
 typedef enum iot_noti_type {
@@ -165,6 +173,7 @@ typedef enum iot_noti_type {
 	IOT_NOTI_TYPE_QUOTA_REACHED,		/**< @brief For data quota reached event. */
 	IOT_NOTI_TYPE_SEND_FAILED,		/**< @brief For send failed event. */
 	IOT_NOTI_TYPE_COMMANDS,			/**< @brief For commands */
+	IOT_NOTI_TYPE_PREFERENCE_UPDATED,			/**< @brief For preference update */
 } iot_noti_type_t;
 
 
@@ -193,6 +202,11 @@ typedef union {
 		st_command_data *commands_data;	/**< @brief commands data list */
 		int commands_num;					/**< @brief Number of commands data list */
 	} commands;
+	/* Preference */
+	struct _preferences {
+		size_t preferences_num;		/**< @brief Number of preferences data list */
+		iot_preference_data *preferences_data;	/**< @brief Preferences data list */
+	} preferences;
 } noti_data_raw_t;
 
 /**
