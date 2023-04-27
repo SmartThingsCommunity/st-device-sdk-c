@@ -101,6 +101,16 @@ iot_error_t iot_wifi_ctrl_request(struct iot_context *ctx,
 		iot_wifi_mode_t wifi_mode);
 
 /**
+ * @brief   send ble control request
+ * @details this function sends ble control command using iot_command_send internally
+ * @param[in]   ctx                 iot-core context
+ * @retval  IOT_ERROR_NONE          success.
+ * @retval  IOT_ERROR_MEM_ALLOC     memory allocation failed
+ * @retval  IOT_ERROR_BAD_REQ       queue send error
+ */
+iot_error_t iot_ble_ctrl_request(struct iot_context *ctx);
+
+/**
  * @brief	update iot state
  * @details	this function tries to update iot-state using iot_command_send internally
  * @param[in]	ctx					iot-core context

@@ -284,7 +284,7 @@ iot_error_t _iot_security_be_software_get_pubkey_with_secp256v1(iot_security_key
 	}
 
 	/* remove ecp prefix */
-	key_buf->len = olen - 1;
+	key_buf->len = olen;
 	key_buf->p = (unsigned char *)iot_os_malloc(key_buf->len);
 	if (!key_buf->p) {
 		IOT_ERROR("failed to malloc for pubkey");
@@ -292,7 +292,7 @@ iot_error_t _iot_security_be_software_get_pubkey_with_secp256v1(iot_security_key
 		IOT_ERROR_DUMP_AND_RETURN(MEM_ALLOC, 0);
 	}
 
-	memcpy(key_buf->p, &raw[1], key_buf->len);
+	memcpy(key_buf->p, raw, key_buf->len);
 
 	return IOT_ERROR_NONE;
 }
@@ -549,6 +549,26 @@ iot_error_t _iot_security_be_software_pk_get_key_type(iot_security_context_t *co
 
 	return IOT_ERROR_NONE;
 }
+
+#if defined(CONFIG_STDK_IOT_CORE_CRYPTO_SUPPORT_ECDSA)
+STATIC_FUNCTION
+iot_error_t _iot_security_be_software_pk_set_sign_type(iot_security_context_t *context, iot_security_pk_sign_type_t pk_sign_type)
+{
+	iot_error_t err;
+
+	err = _iot_security_be_check_context_and_params_is_valid(context, IOT_SECURITY_SUB_PK);
+	if (err) {
+		return err;
+	}
+
+	context->pk_params->pk_sign_type = pk_sign_type;
+
+	IOT_DEBUG("type = %d", pk_sign_type);
+
+	return IOT_ERROR_NONE;
+}
+#endif
+
 
 #if defined(CONFIG_STDK_IOT_CORE_CRYPTO_SUPPORT_ED25519)
 STATIC_FUNCTION
@@ -942,19 +962,21 @@ iot_error_t _iot_security_be_software_pk_sign_ecdsa(iot_security_context_t *cont
 		goto exit;
 	}
 
-    #if 0
-           memcpy(raw_buf.p, sig_buf->p, sig_buf->len);
-           raw_buf.len = sig_buf->len;
-    #else
-	err = _iot_security_be_software_pk_der_to_raw(sig_buf, &raw_buf);
-	if (err) {
-		IOT_ERROR("failed to convert from der to raw");
-		_iot_security_be_software_buffer_free(sig_buf);
-		_iot_security_be_software_buffer_free(&raw_buf);
-		err = IOT_ERROR_SECURITY_PK_SIGN;
-		goto exit;
+	if (pk_params->pk_sign_type == IOT_SECURITY_PK_SIGN_TYPE_DER) {
+		memcpy(raw_buf.p, sig_buf->p, sig_buf->len);
+		raw_buf.len = sig_buf->len;
 	}
-    #endif
+	else {
+		err = _iot_security_be_software_pk_der_to_raw(sig_buf, &raw_buf);
+		if (err) {
+			IOT_ERROR("failed to convert from der to raw");
+			_iot_security_be_software_buffer_free(sig_buf);
+			_iot_security_be_software_buffer_free(&raw_buf);
+			err = IOT_ERROR_SECURITY_PK_SIGN;
+			goto exit;
+		}
+	}
+
 	memset(sig_buf->p, 0, sig_buf->len);
 	iot_os_free(sig_buf->p);
 	sig_buf->p = raw_buf.p;
@@ -1852,7 +1874,8 @@ iot_error_t _iot_security_be_software_ecdh_compute_premaster_secret_ecdsa(
 		IOT_ERROR_DUMP_AND_RETURN(ECDH_INVALID_SECKEY, t_seckey_buf->len);
 	}
 
-	if (c_pubkey_buf->len > key_len) {
+	// c_pubkey_buf include tag(1 byte) + key
+	if (c_pubkey_buf->len > key_len + 1) {
 		IOT_ERROR("cloud pubkey is too large");
 		IOT_ERROR_DUMP_AND_RETURN(ECDH_INVALID_PUBKEY, c_pubkey_buf->len);
 	}
@@ -1907,9 +1930,8 @@ iot_error_t _iot_security_be_software_ecdh_compute_premaster_secret_ecdsa(
 	/*
 	 * peer key
 	 */
-	public_buf[0] = c_pubkey_buf->len + 1;
-	public_buf[1] = 0x04; // uncompressed
-	memcpy(&public_buf[2], c_pubkey_buf->p, c_pubkey_buf->len);
+	public_buf[0] = c_pubkey_buf->len;
+	memcpy(&public_buf[1], c_pubkey_buf->p, c_pubkey_buf->len);
 
 	ret = mbedtls_ecdh_read_public(&mbed_ecdh, public_buf, sizeof(public_buf));
 	if (ret) {
@@ -2196,6 +2218,11 @@ const iot_security_be_funcs_t iot_security_be_software_funcs = {
 	.pk_deinit = _iot_security_be_software_pk_deinit,
 	.pk_set_params = NULL,
 	.pk_get_key_type = _iot_security_be_software_pk_get_key_type,
+#if defined(CONFIG_STDK_IOT_CORE_CRYPTO_SUPPORT_ECDSA)
+	.pk_set_sign_type = _iot_security_be_software_pk_set_sign_type,
+#else
+	.pk_set_sign_type = NULL,
+#endif
 	.pk_sign = _iot_security_be_software_pk_sign,
 #if defined(CONFIG_STDK_IOT_CORE_CRYPTO_SUPPORT_VERIFY)
 	.pk_verify = _iot_security_be_software_pk_verify,

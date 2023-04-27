@@ -41,6 +41,11 @@ void es_ble_deinit(void);
 
 void es_ble_deinit_processing_set(bool flag);
 
+iot_error_t iot_easysetup_ble_ecdh_compute_shared_signature(iot_security_context_t **state,
+                                    unsigned char *sec_random, unsigned char **dev_cert, unsigned char **sub_cert,
+                                    unsigned char **spub_key, size_t *spub_key_len, unsigned char **signature, size_t *signature_len);
+iot_error_t iot_easysetup_ble_ecdh_init(iot_security_context_t **state);
+iot_error_t iot_easysetup_ble_ecdh_teardown(void **state);
 #ifdef __cplusplus
 }
 #endif

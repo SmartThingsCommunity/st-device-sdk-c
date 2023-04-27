@@ -133,6 +133,30 @@ iot_error_t iot_security_pk_get_key_type(iot_security_context_t *context, iot_se
 	return IOT_ERROR_NONE;
 }
 
+iot_error_t iot_security_pk_set_sign_type(iot_security_context_t *context, iot_security_pk_sign_type_t pk_sign_type)
+{
+	iot_error_t err;
+
+	err = iot_security_check_backend_funcs_entry_is_valid(context);
+	if (err) {
+		return err;
+	}
+
+	if (!context->be_context->fn->pk_set_sign_type) {
+		IOT_ERROR("be->fn->pk_set_sign_type is null");
+		IOT_ERROR_DUMP_AND_RETURN(BE_FUNC_NULL, 0);
+	}
+
+	err = context->be_context->fn->pk_set_sign_type(context, pk_sign_type);
+	if (err) {
+		return err;
+	}
+
+	IOT_DEBUG("type = %d", pk_sign_type);
+
+	return IOT_ERROR_NONE;
+}
+
 iot_error_t iot_security_pk_sign(iot_security_context_t *context, iot_security_buffer_t *input_buf, iot_security_buffer_t *sig_buf)
 {
 	iot_error_t err;

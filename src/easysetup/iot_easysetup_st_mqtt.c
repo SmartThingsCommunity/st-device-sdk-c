@@ -1040,6 +1040,34 @@ iot_error_t iot_es_connect(struct iot_context *ctx, int conn_type)
 		wt_params.mnid_len = strlen(wt_params.mnid);
 	}
 
+#if defined(CONIFG_STDK_IOT_CORE_EASYSETUP_SELF_CONTAINED_JWT)
+	size_t str_id_len = 40;
+	if (ctx->devconf.dip) {
+		wt_params.dipid_len = str_id_len;
+		wt_params.dipid = (char *)malloc(str_id_len);
+		if (!wt_params.dipid) {
+			IOT_ERROR("malloc failed for DIP id");
+			iot_ret = IOT_ERROR_MEM_ALLOC;
+			goto out;
+		}
+		memset(wt_params.dipid, 0, str_id_len);
+
+		iot_ret = iot_util_convert_uuid_str(&ctx->devconf.dip->dip_id,
+					wt_params.dipid, str_id_len);
+		if (iot_ret != IOT_ERROR_NONE) {
+			IOT_ERROR("%s error DIP_id convt (%d)", __func__, iot_ret);
+			iot_ret = IOT_ERROR_BAD_REQ;
+			goto out;
+		}
+		iot_ret = _iot_nv_get_certificate_serial_number(&wt_params.cert_sn);
+		if (iot_ret != IOT_ERROR_NONE) {
+			IOT_ERROR("%s error get cert serial from nv (%d)", __func__, iot_ret);
+			iot_ret = IOT_ERROR_BAD_REQ;
+			goto out;
+		}
+	}
+#endif
+
 	iot_ret = iot_wt_create((const iot_wt_params_t *)&wt_params, &token_buf);
 	if (iot_ret != IOT_ERROR_NONE) {
 		IOT_ERROR("failed to make wt-token");
@@ -1150,6 +1178,7 @@ mqtt_communication_connection_out:
 			iot_os_free(topicfilter[1]);
 		}
 	} else {
+		char *serial_number = (wt_params.cert_sn ? wt_params.cert_sn : wt_params.sn);
 		char *topicfilter = NULL;
 		int qos = st_mqtt_qos1;
 		IOT_INFO("connect_type: registration");
@@ -1160,7 +1189,7 @@ mqtt_communication_connection_out:
 			goto out;
 		}
 
-		iot_ret = _iot_es_mqtt_connect(ctx, mqtt_cli, wt_params.sn, (char *)token_buf.p);
+		iot_ret = _iot_es_mqtt_connect(ctx, mqtt_cli, serial_number, (char *)token_buf.p);
 		if (iot_ret != IOT_ERROR_NONE) {
 			IOT_ERROR("failed to connect");
 			goto out;
@@ -1177,7 +1206,7 @@ mqtt_communication_connection_out:
 			iot_ret = IOT_ERROR_MEM_ALLOC;
 			goto mqtt_communication_connection_out;
 		}
-		snprintf(topicfilter, IOT_TOPIC_SIZE, IOT_SUB_TOPIC_REGISTRATION, wt_params.sn);
+		snprintf(topicfilter, IOT_TOPIC_SIZE, IOT_SUB_TOPIC_REGISTRATION, serial_number);
 		IOT_DEBUG("noti subscribe topic : %s", topicfilter);
 		ret = st_mqtt_subscribe(mqtt_cli, 1, &topicfilter, &qos);
 		if (ret) {
@@ -1225,6 +1254,9 @@ out:
 
 	if (wt_params.mnid)
 		iot_os_free((void *)wt_params.mnid);
+
+    if (wt_params.dipid)
+		iot_os_free((void *)wt_params.dipid);
 
 	if (token_buf.p)
 		free(token_buf.p);

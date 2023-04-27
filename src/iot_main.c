@@ -433,6 +433,14 @@ static iot_error_t _do_state_updating(struct iot_context *ctx, iot_state_t new_s
 				return iot_err;
 			}
 #endif
+#if defined(CONFIG_STDK_IOT_CORE_EASYSETUP_BLE)
+            iot_err = iot_ble_ctrl_request(ctx);
+            if (iot_err != IOT_ERROR_NONE) {
+				IOT_ERROR("Can't send BLE.(%d)", iot_err);
+                IOT_DUMP_MAIN(ERROR, BASE, iot_err);
+                break;
+            }
+#endif
 			/* Update next state waiting time for Easy-setup process */
 			timeout_ms = EASYSETUP_TIMEOUT_MS;
 			IOT_MEM_CHECK("ES_PROV_ENTER DONE >>PT<<");

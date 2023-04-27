@@ -33,6 +33,9 @@ typedef struct iot_wt_params {
 	size_t sn_len;		/**< @brief length of sn */
 	char *mnid;			/**< @brief determined in devworks */
 	size_t mnid_len;	/**< @brief length of mnid */
+	char *dipid;		/**< @brief as flag for certificate based auth */
+	size_t dipid_len;	/**< @brief length of dipid */
+	char *cert_sn;		/**< @brief device certification serial number */
 } iot_wt_params_t;
 
 /**

@@ -63,8 +63,9 @@ iot_error_t es_msg_parser(char *rx_buffer, size_t rx_buffer_len, uint8_t cmd_num
         *cmd  = IOT_EASYSETUP_STEP_WIFIPROVIONINGINFO;
         *type = D2D_POST;
     } else if (cmd_num == IOT_EASYSETUP_BLE_CMD_TNC_AGREEMENTS) {
-        *cmd  = IOT_EASYSETUP_STEP_TNC_AGREEMENTS;
-        *type = D2D_GET;
+		/* TODO : Need to change BLE STEP */
+        //*cmd  = IOT_EASYSETUP_STEP_TNC_AGREEMENTS;
+        //*type = D2D_GET;
     } else if (cmd_num == IOT_EASYSETUP_BLE_CMD_SETUPCOMPLETE) {
         *cmd  = IOT_EASYSETUP_STEP_SETUPCOMPLETE;
         *type = D2D_POST;

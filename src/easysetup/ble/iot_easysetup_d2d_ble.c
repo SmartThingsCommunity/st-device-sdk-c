@@ -18,6 +18,7 @@
 
 #include <string.h>
 #include <time.h>
+#include "easysetup_ble.h"
 #include "JSON.h"
 #include "iot_main.h"
 #include "iot_bsp_random.h"
@@ -51,10 +52,6 @@
 #define PREERR_STR_LEN          32
 #define STR_DEFAULT_LEN         64
 
-int iot_easysetup_ble_ecdh_setup(iot_security_context_t **state);
-void iot_easysetup_ble_ecdh_compute_shared_secret_static_success(iot_security_context_t **state, unsigned char *sec_random, unsigned char **dev_cert,
-								 unsigned char **sub_cert, unsigned char **spub_key, size_t *spub_key_len, unsigned char **signature, size_t *signature_len);
-int iot_easysetup_ble_ecdh_teardown(void **state);
 
 static unsigned char sec_random[RANDOM_LEN*2] = {0};
 
@@ -358,19 +355,7 @@ iot_error_t _es_deviceinfo_handler(struct iot_context *ctx, char *in_payload, ch
 	JSON_ADD_ITEM_TO_OBJECT(root, "data", data);
 	JSON_ADD_ITEM_TO_OBJECT(data, "protocolVersion", JSON_CREATE_STRING(STDK_D2D_PROTOCOL_VERSION));
 	JSON_ADD_ITEM_TO_OBJECT(data, "firmwareVersion", JSON_CREATE_STRING(ctx->device_info.firmware_version));
-
-	err = iot_nv_get_serial_number(&sn_buf, &sn_len);
-	if (err) {
-		IOT_ERROR("Get serial number failed");
-		goto exit;
-	}
-
-	iot_security_base64_encode_urlsafe((unsigned char *)sn_buf, sn_len, sn_str, sizeof(sn_str), &sn_str_len);
-	IOT_INFO("Serial number is %s",sn_buf);
-	sn_str[sn_str_len] = 0;
-	IOT_INFO("Serial number str is %s",sn_str);
-
-	JSON_ADD_ITEM_TO_OBJECT(data, "hashedSn", JSON_CREATE_STRING((char *)sn_str));
+	JSON_ADD_ITEM_TO_OBJECT(data, "hashedSn", JSON_CREATE_STRING((char *)ctx->devconf.hashed_sn));
 	JSON_ADD_NUMBER_TO_OBJECT(data, "wifiSupportFrequency", (double) iot_bsp_wifi_get_freq());
 	JSON_ADD_NUMBER_TO_OBJECT(data, "wifiSupportAuthType", (double)AUTH_TYPE_WPA2_PSK);    //TBD
 
@@ -393,10 +378,20 @@ iot_error_t _es_deviceinfo_handler(struct iot_context *ctx, char *in_payload, ch
 
 	JSON_ADD_ITEM_TO_OBJECT(data, "srand", JSON_CREATE_STRING((char *)srand_str));
 
-	iot_easysetup_ble_ecdh_setup(&ctx->easysetup_security_context);
+	err = iot_easysetup_ble_ecdh_init(&ctx->easysetup_security_context);
+	if (err != IOT_ERROR_NONE) {
+		IOT_ERROR("security setup fail 0x%x", err);
+		err = IOT_ERROR_EASYSETUP_SHARED_KEY_INIT_FAIL;
+		goto exit;
+	}
 
-	iot_easysetup_ble_ecdh_compute_shared_secret_static_success(&ctx->easysetup_security_context, sec_random, 
+       err = iot_easysetup_ble_ecdh_compute_shared_signature(&ctx->easysetup_security_context, sec_random,
 				&dev_cert, &sub_cert, &spub_key, &orin_spub_key_len, &signature, &orin_signature_len);
+	if (err != IOT_ERROR_NONE) {
+		IOT_ERROR("shared signature creation fail 0x%x", err);
+		err = IOT_ERROR_EASYSETUP_SHARED_SIGNATURE_CREATION_FAIL;
+		goto exit;
+	}
 
 	unsigned char spub_key_str[128];
 	unsigned int spub_key_len = 0;
@@ -508,12 +503,12 @@ iot_error_t _es_keyinfo_handler(struct iot_context *ctx, char *input_data, char 
 		goto exit_secret;
 	}
 
-	peer_pubkey_buf.p = iot_os_malloc(64);
-	memcpy(peer_pubkey_buf.p, decode_buf + 27, 64);
+	peer_pubkey_buf.p = iot_os_malloc(65);
+	memcpy(peer_pubkey_buf.p, decode_buf + 26, 65);
 
 	ecdh_params.key_id = IOT_SECURITY_KEY_ID_EPHEMERAL;
 	ecdh_params.c_pubkey.p = peer_pubkey_buf.p;
-	ecdh_params.c_pubkey.len = 64;
+	ecdh_params.c_pubkey.len = 65;
 	ecdh_params.salt.p = sec_random;
 	ecdh_params.salt.len = 32;
 
@@ -794,10 +789,7 @@ iot_error_t _es_confirm_check_manager(struct iot_context *ctx, enum ownership_va
 			} else {
 				IOT_ERROR("confirm failed");
 				IOT_ES_DUMP(IOT_DEBUG_LEVEL_ERROR, IOT_DUMP_EASYSETUP_CONFIRM_DENIED, 0);
-				st_ecode.is_happended = true;
-				iot_ecodeType_to_string(IOT_ST_ECODE_EE01, &st_ecode);
-				iot_set_st_ecode(ctx, st_ecode);
-				IOT_INFO("previous error code[%s]",ctx->last_st_ecode.ecode);
+				iot_set_st_ecode(ctx, IOT_ST_ECODE_EE01);
 
 				/* To report confirm failure to user, try to change iot-state timeout value shortly */
 				if (iot_state_timeout_change(ctx, IOT_STATE_PROV_CONFIRM, ES_CONFIRM_FAIL_TIMEOUT) != IOT_ERROR_NONE) {
