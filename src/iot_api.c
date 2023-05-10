@@ -205,6 +205,24 @@ iot_error_t iot_wifi_ctrl_request(struct iot_context *ctx,
 	return iot_err;
 }
 
+iot_error_t iot_ble_ctrl_request(struct iot_context *ctx)
+{
+    iot_error_t iot_err = IOT_ERROR_NONE;
+
+    IOT_INFO("BLE onboarding start!!\n");
+
+    if (!ctx) {
+        IOT_ERROR("There is no ctx\n");
+        return IOT_ERROR_BAD_REQ;
+    }
+
+    iot_err = iot_easysetup_init(ctx);
+    IOT_MEM_CHECK("ES_INIT DONE >>PT<<");
+    if (iot_err != IOT_ERROR_NONE) {
+        IOT_ERROR("failed to iot_easysetup_init(%d)", iot_err);
+    }
+    return iot_err;
+}
 
 iot_error_t iot_easysetup_request(struct iot_context *ctx,
 				enum iot_easysetup_step step, const void *payload)

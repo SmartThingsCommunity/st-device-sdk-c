@@ -407,6 +407,24 @@ iot_error_t _delete_dev_card_by_usr(struct iot_context *ctx)
 	return iot_err;
 }
 
+static void _get_device_preference(struct iot_context *ctx)
+{
+	st_mqtt_msg msg = {0};
+
+	if (ctx->evt_mqttcli == NULL) {
+		IOT_ERROR("Target has not connected to server yet!!");
+		return;
+	}
+
+	msg.qos = st_mqtt_qos1;
+	msg.retained = false;
+	msg.topic = IOT_PUB_TOPIC_GET_PREFERENCES;
+
+	IOT_INFO("Get device preference");
+
+	st_mqtt_publish_async(ctx->evt_mqttcli, &msg);
+}
+
 static iot_error_t _do_state_updating(struct iot_context *ctx, iot_state_t new_state, int opt)
 {
 	iot_error_t iot_err = IOT_ERROR_NONE;
@@ -432,6 +450,14 @@ static iot_error_t _do_state_updating(struct iot_context *ctx, iot_state_t new_s
 				IOT_ERROR("Can't send WIFI mode softap.(%d)", iot_err);
 				return iot_err;
 			}
+#endif
+#if defined(CONFIG_STDK_IOT_CORE_EASYSETUP_BLE)
+            iot_err = iot_ble_ctrl_request(ctx);
+            if (iot_err != IOT_ERROR_NONE) {
+				IOT_ERROR("Can't send BLE.(%d)", iot_err);
+                IOT_DUMP_MAIN(ERROR, BASE, iot_err);
+                break;
+            }
 #endif
 			/* Update next state waiting time for Easy-setup process */
 			timeout_ms = EASYSETUP_TIMEOUT_MS;
@@ -487,6 +513,7 @@ static iot_error_t _do_state_updating(struct iot_context *ctx, iot_state_t new_s
 		break;
 	case IOT_STATE_CLOUD_DISCONNECTED:
 		if (new_state == IOT_STATE_CLOUD_CONNECTED) {
+			_get_device_preference(ctx);
 		} else
 			return IOT_ERROR_INVALID_ARGS;
 		break;

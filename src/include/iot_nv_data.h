@@ -199,6 +199,18 @@ iot_error_t iot_nv_set_cloud_prov_data(struct iot_cloud_prov_data* cloud_prov);
 iot_error_t iot_nv_get_certificate(iot_security_cert_id_t cert_id, char **cert, size_t *cert_len);
 
 /**
+ * @brief Get a device certificate serial number from the nv file-system.
+ *
+ * @param[out] cert A pointer to data array to store the certificate serial number from the nv file-system.
+ * @retval IOT_ERROR_NONE Get nv data successful.
+ * @retval IOT_ERROR_INVALID_ARGS Invalid argument.
+ * @retval IOT_ERROR_NV_DATA_ERROR Get nv data failed.
+ *
+ * @warning The caller is always responsible to free the allocated pointer after using the data.
+ */
+iot_error_t _iot_nv_get_certificate_serial_number(char **cert_sn);
+
+/**
  * @brief Get a device id from the nv file-system.
  *
  * @param[out] device_id A pointer to data array to store the device id from the nv file-system.

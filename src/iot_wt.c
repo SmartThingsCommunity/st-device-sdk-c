@@ -23,6 +23,7 @@
 #include "iot_internal.h"
 #include "iot_debug.h"
 #include "iot_error.h"
+#include "iot_nv_data.h"
 #include "iot_util.h"
 #include "iot_uuid.h"
 #include "iot_wt.h"
@@ -566,6 +567,103 @@ exit_failed:
 
 #include <JSON.h>
 
+static char *_iot_jwt_header_trim_certificate(const char *origin, size_t origin_len)
+{
+	const char *certificate_prefix = "-----BEGIN CERTIFICATE-----";
+	const char *certificate_suffix = "-----END CERTIFICATE-----";
+	const char *rid;
+	char *trim;
+	char *p;
+	int origin_idx;
+	int trim_idx;
+	int i;
+
+	trim = (char *)malloc(origin_len);
+	if (trim == NULL) {
+		IOT_ERROR("failed to malloc for trim");
+		return NULL;
+	}
+
+	origin_idx = 0;
+	trim_idx = 0;
+
+	rid = certificate_prefix;
+	p = strstr(origin, rid);
+	if (p) {
+		origin_idx += strlen(rid);
+	}
+
+	rid = certificate_suffix;
+	for (i = origin_idx; i < origin_len; i++) {
+		if (origin[i] == '\n' || origin[i] == '\r') {
+			continue;
+		} else if (origin[i] == rid[0]) {
+			p = strstr(&origin[i], rid);
+			if (p) {
+				break;
+			}
+		}
+
+		trim[trim_idx++] = origin[i];
+
+	}
+
+	trim[trim_idx] = '\0';
+
+	return trim;
+}
+
+static iot_error_t _iot_jwt_header_set_certificate(JSON_H *object)
+{
+	JSON_H *array = NULL;
+	char *cert_buf = NULL;
+	char *trim_buf = NULL;
+	size_t cert_len;
+	iot_error_t ret;
+
+	array = JSON_CREATE_ARRAY();
+	if (array == NULL) {
+		IOT_ERROR("JSON_CREATE_ARRAY failed");
+		return IOT_ERROR_WEBTOKEN_FAIL;
+	}
+
+	ret = iot_nv_get_certificate(IOT_SECURITY_CERT_ID_DEVICE, &cert_buf, &cert_len);
+	if (ret) {
+		IOT_ERROR("iot_nv_get_certificate = %d", ret);
+		return IOT_ERROR_WEBTOKEN_FAIL;
+	}
+
+	trim_buf = _iot_jwt_header_trim_certificate(cert_buf, cert_len);
+	if (trim_buf == NULL) {
+		iot_os_free(cert_buf);
+		return IOT_ERROR_WEBTOKEN_FAIL;
+	}
+
+	JSON_ADD_ITEM_TO_ARRAY(array, JSON_CREATE_STRING(trim_buf));
+	iot_os_free(cert_buf);
+	iot_os_free(trim_buf);
+
+	ret = iot_nv_get_certificate(IOT_SECURITY_CERT_ID_SUB_CA, &cert_buf, &cert_len);
+	if (ret) {
+		IOT_ERROR("iot_nv_get_certificate = %d", ret);
+		return IOT_ERROR_WEBTOKEN_FAIL;
+	}
+
+	trim_buf = _iot_jwt_header_trim_certificate(cert_buf, cert_len);
+	if (trim_buf == NULL) {
+		iot_os_free(cert_buf);
+		return IOT_ERROR_WEBTOKEN_FAIL;
+	}
+
+	JSON_ADD_ITEM_TO_ARRAY(array, JSON_CREATE_STRING(trim_buf));
+	iot_os_free(cert_buf);
+	iot_os_free(trim_buf);
+
+	JSON_ADD_ITEM_TO_OBJECT(object, "x5c", array);
+
+	return IOT_ERROR_NONE;
+}
+
 static char * _iot_jwt_header_rs256(const iot_wt_params_t *wt_params)
 {
 	JSON_H *object;
@@ -592,7 +690,18 @@ static char * _iot_jwt_header_rs256(const iot_wt_params_t *wt_params)
 	JSON_ADD_ITEM_TO_OBJECT(object, "crv", JSON_CREATE_STRING(""));
 	JSON_ADD_ITEM_TO_OBJECT(object, "typ", JSON_CREATE_STRING("JWT"));
 	JSON_ADD_ITEM_TO_OBJECT(object, "ver", JSON_CREATE_STRING("0.0.1"));
-	JSON_ADD_ITEM_TO_OBJECT(object, "kid", JSON_CREATE_STRING(wt_params->sn));
+
+	if (wt_params->dipid && (wt_params->dipid_len > 0)) {
+		iot_error_t ret;
+		JSON_ADD_ITEM_TO_OBJECT(object, "kid", JSON_CREATE_STRING(wt_params->cert_sn));
+		ret = _iot_jwt_header_set_certificate(object);
+		if (ret) {
+			return NULL;
+		}
+	}
+	else {
+		JSON_ADD_ITEM_TO_OBJECT(object, "kid", JSON_CREATE_STRING(wt_params->sn));
+	}
 
 	object_str = JSON_PRINT(object);
 	if (!object_str) {
@@ -672,7 +781,18 @@ static char * _iot_jwt_header_eccp256(const iot_wt_params_t *wt_params)
 	JSON_ADD_ITEM_TO_OBJECT(object, "crv", JSON_CREATE_STRING("P256"));
 	JSON_ADD_ITEM_TO_OBJECT(object, "typ", JSON_CREATE_STRING("JWT"));
 	JSON_ADD_ITEM_TO_OBJECT(object, "ver", JSON_CREATE_STRING("0.0.1"));
-	JSON_ADD_ITEM_TO_OBJECT(object, "kid", JSON_CREATE_STRING(wt_params->sn));
+
+	if (wt_params->dipid && (wt_params->dipid_len > 0)) {
+		iot_error_t ret;
+		JSON_ADD_ITEM_TO_OBJECT(object, "kid", JSON_CREATE_STRING(wt_params->cert_sn));
+		ret = _iot_jwt_header_set_certificate(object);
+		if (ret) {
+			return NULL;
+		}
+	}
+	else {
+		JSON_ADD_ITEM_TO_OBJECT(object, "kid", JSON_CREATE_STRING(wt_params->sn));
+	}
 
 	object_str = JSON_PRINT(object);
 	if (!object_str) {
@@ -805,6 +925,9 @@ static char * _iot_jwt_create_payload(const iot_wt_params_t *wt_params)
 	JSON_ADD_ITEM_TO_OBJECT(object, "iat", JSON_CREATE_STRING(time_in_sec));
 	JSON_ADD_ITEM_TO_OBJECT(object, "jti", JSON_CREATE_STRING(uuid_str));
 	JSON_ADD_ITEM_TO_OBJECT(object, "mnId", JSON_CREATE_STRING(wt_params->mnid));
+	if (wt_params->dipid && (wt_params->dipid_len > 0)) {
+		JSON_ADD_ITEM_TO_OBJECT(object, "dipId", JSON_CREATE_STRING(wt_params->dipid));
+	}
 
 	object_str = JSON_PRINT(object);
 	if (!object_str) {

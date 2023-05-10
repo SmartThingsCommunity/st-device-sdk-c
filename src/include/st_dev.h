@@ -82,6 +82,7 @@ typedef struct iot_pin_t {
  */
 typedef enum iot_cap_val_type {
 	IOT_CAP_VAL_TYPE_UNKNOWN = -1,	/**< @brief For undefined type. */
+	IOT_CAP_VAL_TYPE_NULL,			/**< @brief For null type. */
 	IOT_CAP_VAL_TYPE_INTEGER,		/**< @brief For integer. */
 	IOT_CAP_VAL_TYPE_NUMBER,		/**< @brief For float number. */
 	IOT_CAP_VAL_TYPE_INT_OR_NUM,	/**< @brief For integer or float number. */

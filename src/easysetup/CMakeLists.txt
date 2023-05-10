@@ -37,6 +37,11 @@ if(CONFIG_STDK_IOT_CORE_EASYSETUP_DISCOVERY_SSID)
         "${EASYSETUP_DISCOVERY_SOURCES}"
         discovery/ssid/iot_easysetup_discovery_ssid.c
         )
+elseif(CONFIG_STDK_IOT_CORE_EASYSETUP_DISCOVERY_ADVERTISER)
+    set(EASYSETUP_DISCOVERY_SOURCES
+        "${EASYSETUP_DISCOVERY_SOURCES}"
+        discovery/advertiser/iot_easysetup_discovery_advertiser.c
+        )
 endif()
 
 target_sources(iotcore

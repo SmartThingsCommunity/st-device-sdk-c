@@ -53,6 +53,8 @@
 #define EASYSETUP_TIMEOUT_MS	(300000) /* 5 min */
 #define REGISTRATION_TIMEOUT_MS	(900000) /* 15 min */
 
+#define GG_CONNECTION_RESPONSE_TIMEOUT_MS	(5000)
+
 enum _iot_noti_type {
 	/* Common notifications */
 	_IOT_NOTI_TYPE_UNKNOWN = IOT_NOTI_TYPE_UNKNOWN,
@@ -262,6 +264,13 @@ struct iot_st_ecode {
 	char ecode[IOT_ST_ECODE_STR_LEN + 1];
 };
 
+typedef enum {
+	GG_CONNECTION_REQUEST_STATUS_NOT_INITIALIZED,
+	GG_CONNECTION_REQUEST_STATUS_WAITING,
+	GG_CONNECTION_REQUEST_STATUS_SUCCESS,
+	GG_CONNECTION_REQUEST_STATUS_FAIL,
+} gg_connection_request_status;
+
 /**
  * @brief Contains "iot core's main context" data
  */
@@ -281,8 +290,10 @@ struct iot_context {
 	iot_cap_handle_list_t *cap_handle_list;		/**< @brief allocated capability handle lists */
 
 	st_mqtt_client evt_mqttcli;			/**< @brief SmartThings MQTT Client for event & commands */
+	gg_connection_request_status sign_in_connection_request_status;	/**< @brief Sign-in connection request status */
 	st_mqtt_client reg_mqttcli;			/**< @brief SmartThings MQTT Client for registration */
 	unsigned int mqtt_connect_critical_reject_count;		/**< @brief MQTT connect critical reject count */
+	gg_connection_request_status sign_up_connection_request_status;	/**< @brief Sign-up connection request status */
 	char *mqtt_event_topic;				/**< @brief mqtt topic for event publish */
 	char *mqtt_health_topic;				/**< @brief mqtt topic for health publish */
 

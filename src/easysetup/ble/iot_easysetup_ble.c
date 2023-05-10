@@ -33,7 +33,7 @@
 #define MAX_PAYLOAD_LENGTH	1024
 #define ARRAY_SIZE(x) (int)(sizeof(x)/sizeof(x[0]))
 
-static struct iot_context *context;
+struct iot_context *context;
 #define END_OF_HTTP_HEADER	"\r\n\r\n"
 STATIC_VARIABLE int ref_step;
 #if defined(CONFIG_STDK_IOT_CORE_EASYSETUP_LOG_SUPPORT_NO_USE_LOGFILE)
@@ -123,8 +123,8 @@ iot_error_t _iot_easysetup_gen_get_payload(struct iot_context *ctx, int cmd, cha
 		} else {
 			IOT_ERROR("Invalid command step %d", cmd);
 			IOT_ES_DUMP(IOT_DEBUG_LEVEL_ERROR, IOT_DUMP_EASYSETUP_INVALID_CMD, cmd);
-			err = IOT_ERROR_EASYSETUP_INVALID_CMD;
-			goto get_exit;
+			err = IOT_ERROR_EASYSETUP_INVALID_SEQUENCE;
+			goto fail_status_update;
 		}
 	}
 
@@ -175,13 +175,9 @@ fail_status_update:
 	if (err) {
 		iot_error_t err1;
 		ref_step = 0;
-		if (cur_step >= IOT_EASYSETUP_STEP_LOG_SYSTEMINFO) {
-			err1 = iot_state_update(ctx, IOT_STATE_CHANGE_FAILED, ctx->curr_state);
-			if (err1) {
-				IOT_ERROR("cannot update state to failed (%d)", err1);
-				IOT_ES_DUMP(IOT_DEBUG_LEVEL_ERROR, IOT_DUMP_EASYSETUP_INTERNAL_SERVER_ERROR, err1);
-				err = IOT_ERROR_EASYSETUP_INTERNAL_SERVER_ERROR;
-			}
+		if (cur_step >= IOT_EASYSETUP_STEP_LOG_SYSTEMINFO || err == IOT_ERROR_EASYSETUP_INVALID_SEQUENCE) {
+			/* TODO : signaling restart onboarding */
+			IOT_ERROR("mock : signaling restart onboarding %d", __LINE__);
 		}
 	}
 
@@ -291,12 +287,8 @@ iot_error_t _iot_easysetup_gen_post_payload(struct iot_context *ctx, int cmd, ch
 		iot_error_t err1;
 		ref_step = 0;
 		if (cur_step >= IOT_EASYSETUP_STEP_LOG_SYSTEMINFO) {
-			err1 = iot_state_update(ctx, IOT_STATE_CHANGE_FAILED, ctx->curr_state);
-			if (err1) {
-				IOT_ERROR("cannot update state to failed (%d)", err1);
-				IOT_ES_DUMP(IOT_DEBUG_LEVEL_ERROR, IOT_DUMP_EASYSETUP_INTERNAL_SERVER_ERROR, err1);
-				err = IOT_ERROR_EASYSETUP_INTERNAL_SERVER_ERROR;
-			}
+			/* TODO : signaling restart onboarding */
+			IOT_ERROR("mock : signaling restart onboarding %d", __LINE__);
 		}
 	} else {
 		iot_error_t err1;

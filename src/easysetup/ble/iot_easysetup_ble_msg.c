@@ -23,6 +23,7 @@
 #include "esp_system.h"
 #include "esp_log.h"
 #include "iot_debug.h"
+#include "iot_bsp_ble.h"
 
 #define HEADER_LEN_IN_MTU          (12)
 #define MAX_MTU                   (183)
@@ -30,7 +31,6 @@
 typedef bool (*CharWriteCallback)(uint8_t *buf, uint32_t len);
 
 void msg_dispatch(uint8_t *buf, uint32_t len, uint8_t cmd_num);
-void send_indication(uint8_t *buf, uint32_t len);
 uint32_t iot_bsp_ble_get_mtu(void);
 
 static void msg_state_reset(void);
@@ -205,7 +205,7 @@ bool msg_disassemble(uint8_t *buf, uint32_t len)
         memcpy(ind->segment_data, buf + sent_len, ind->segment_len);
 
         g_flg = 0;
-        send_indication((uint8_t*)ind,sizeof(struct transfor_data) - 0 + ind->segment_len);
+        iot_send_indication((uint8_t*)ind,sizeof(struct transfor_data) - 0 + ind->segment_len);
         while(g_flg == 0);
         sent_len += ind->segment_len;
         ind->op_code += 1;
