@@ -47,6 +47,7 @@
 #define IOT_SUB_TOPIC_NOTIFICATION	"/v1/notifications/%s/cbor"
 #define IOT_PUB_TOPIC_HEALTH		"/v1/health/cbor"
 #define IOT_PUB_TOPIC_DEVICES_UPDATE		"/v1/devices/update/cbor"
+#define IOT_PUB_TOPIC_GET_PREFERENCES		"/v1/devices/preferences/get/cbor"
 #else
 #define IOT_PUB_TOPIC_REGISTRATION	"/v1/registrations"
 #define IOT_SUB_TOPIC_REGISTRATION	"/v1/registrations/notification/%s"
@@ -56,6 +57,7 @@
 #define IOT_SUB_TOPIC_NOTIFICATION	"/v1/notifications/%s"
 #define IOT_PUB_TOPIC_HEALTH		"/v1/health"
 #define IOT_PUB_TOPIC_DEVICES_UPDATE		"/v1/devices/update"
+#define IOT_PUB_TOPIC_GET_PREFERENCES		"/v1/devices/preferences/get"
 #endif
 
 #define IOT_PUB_TOPIC_DELETE	"/v1/devices/delete"
@@ -99,6 +101,16 @@ iot_error_t iot_command_send(struct iot_context *ctx,
  */
 iot_error_t iot_wifi_ctrl_request(struct iot_context *ctx,
 		iot_wifi_mode_t wifi_mode);
+
+/**
+ * @brief   send ble control request
+ * @details this function sends ble control command using iot_command_send internally
+ * @param[in]   ctx                 iot-core context
+ * @retval  IOT_ERROR_NONE          success.
+ * @retval  IOT_ERROR_MEM_ALLOC     memory allocation failed
+ * @retval  IOT_ERROR_BAD_REQ       queue send error
+ */
+iot_error_t iot_ble_ctrl_request(struct iot_context *ctx);
 
 /**
  * @brief	update iot state

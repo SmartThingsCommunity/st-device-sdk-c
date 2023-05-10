@@ -7,3 +7,5 @@ target_sources(iotcore
         iot_bsp_system_posix.c
         iot_bsp_wifi_posix.c
         )
+
+target_link_libraries(iotcore PUBLIC pthread rt)

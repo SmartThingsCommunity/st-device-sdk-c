@@ -340,6 +340,12 @@ iot_error_t iot_bsp_wifi_set_mode(iot_wifi_conf *conf)
 		break;
 
 	case IOT_WIFI_MODE_STATION:
+		esp_ret = esp_wifi_set_mode(WIFI_MODE_NULL);
+		if(esp_ret != ESP_OK) {
+			IOT_ERROR("esp_wifi_set_mode MODE_NULL failed err=[%d]", esp_ret);
+			IOT_DUMP(IOT_DEBUG_LEVEL_ERROR, IOT_DUMP_BSP_WIFI_SETMODE_FAIL, conf->mode, esp_ret);
+			return IOT_ERROR_CONN_OPERATE_FAIL;
+		}
 
 		esp_ret = esp_wifi_get_mode(&mode);
 		if(esp_ret != ESP_OK) {

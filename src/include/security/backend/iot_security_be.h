@@ -43,6 +43,10 @@ typedef struct iot_security_be_funcs {
 	 */
 	iot_error_t (*pk_get_key_type)(iot_security_context_t *, iot_security_key_type_t *);
 	/**
+	 * @brief a pointer to a function to set a signature type
+	 */
+	iot_error_t (*pk_set_sign_type)(iot_security_context_t *, iot_security_pk_sign_type_t);
+	/**
 	 * @brief a pointer to a function to create a signature
 	 */
 	iot_error_t (*pk_sign)(iot_security_context_t *, iot_security_buffer_t *, iot_security_buffer_t *);

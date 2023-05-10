@@ -97,6 +97,9 @@ enum ownership_validation_feature {
 #define IOT_ERROR_EASYSETUP_SHARED_KEY_INIT_FAIL		(IOT_ERROR_EASYSETUP_500_BASE - 11)
 #define IOT_ERROR_EASYSETUP_SHARED_KEY_CREATION_FAIL		(IOT_ERROR_EASYSETUP_500_BASE - 12)
 #define IOT_ERROR_EASYSETUP_SHARED_KEY_PARAMS_FAIL		(IOT_ERROR_EASYSETUP_500_BASE - 13)
+#define IOT_ERROR_EASYSETUP_BLE_ECDH_SETUP_FAIL		(IOT_ERROR_EASYSETUP_500_BASE - 14)
+#define IOT_ERROR_EASYSETUP_SHARED_SIGNATURE_CREATION_FAIL	(IOT_ERROR_EASYSETUP_500_BASE - 15)
+#define IOT_ERROR_EASYSETUP_SHARED_DATA_CREATION_FAIL		(IOT_ERROR_EASYSETUP_500_BASE - 16)
 
 /* Otm */
 #define IOT_ERROR_EASYSETUP_CONFIRM_NOT_SUPPORT		(IOT_ERROR_EASYSETUP_500_BASE - 21)
@@ -150,6 +153,15 @@ iot_error_t iot_easysetup_request_handler(struct iot_context *ctx, struct iot_ea
  * @retval	IOT_ERROR_NONE	success
  */
 iot_error_t iot_easysetup_create_ssid(struct iot_devconf_prov_data *devconf, char *ssid, size_t ssid_len);
+
+/**
+ * @brief   Create BLE Advertise Packet
+ * @details This function create BLE advertise packet for this device
+ * @param[in]   ctx     iot_context
+ * @return  iot_state_t
+ * @retval  IOT_ERROR_NONE  success
+ */
+iot_error_t iot_easysetup_create_ble_advertise_packet(struct iot_context *ctx);
 
 /**
  * @brief	Start easysetup device-to-device sequence

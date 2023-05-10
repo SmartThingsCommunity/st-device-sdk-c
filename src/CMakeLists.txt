@@ -73,12 +73,12 @@ endforeach()
 
 target_include_directories(iotcore
         PRIVATE
-        include/bsp
         include/os
         include/mqtt
         include/external
         ${STDK_INCLUDE_PATH}
         PUBLIC
+        include/bsp
         include
         )
 

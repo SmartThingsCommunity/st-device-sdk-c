@@ -70,6 +70,17 @@ size_t iot_security_pk_get_signature_len(iot_security_key_type_t pk_type);
 iot_error_t iot_security_pk_get_key_type(iot_security_context_t *context, iot_security_key_type_t *key_type);
 
 /**
+ * @brief	Set a signature type
+ * @param[in]	context reference to the security context
+ * @param[out]	pk_sign_type a type of signature
+ * @retval	IOT_ERROR_NONE success
+ * @retval	IOT_ERROR_SECURITY_CONTEXT_NULL security context is null
+ * @retval	IOT_ERROR_SECURITY_BE_CONTEXT_NULL backend context is null
+ * @retval	IOT_ERROR_SECURITY_BE_FUNC_NULL a pointer to a read function of backend is null
+ */
+iot_error_t iot_security_pk_set_sign_type(iot_security_context_t *context, iot_security_pk_sign_type_t pk_sign_type);
+
+/**
  * @brief	Calculate a signature
  * @details	Calculate a signature with input_buf then return the signature to sig_buf
  * @param[in]	context reference to the security context

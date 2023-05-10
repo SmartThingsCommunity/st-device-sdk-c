@@ -28,6 +28,7 @@
 #if !defined(CONFIG_STDK_IOT_CORE_SUPPORT_STNV_PARTITION)
 #include "iot_internal.h"
 #endif
+#include "security/iot_security_helper.h"
 #include "security/iot_security_manager.h"
 #include "security/iot_security_storage.h"
 
@@ -835,6 +836,126 @@ iot_error_t iot_nv_get_certificate(iot_security_cert_id_t cert_id, char** cert, 
 	(void)iot_security_manager_deinit(security_context);
 	(void)_iot_nv_io_storage_deinit(security_context);
 
+	return IOT_ERROR_NONE;
+}
+
+static char *_iot_nv_trim_certificate(const char *cert, size_t cert_len)
+{
+	const char *certificate_prefix = "-----BEGIN CERTIFICATE-----";
+	const char *certificate_suffix = "-----END CERTIFICATE-----";
+	char *trimmed_cert = NULL;
+	const char *cert_head = NULL;
+	const char *cert_tail = NULL;
+	int trim_idx;
+
+	cert_head = strstr(cert, certificate_prefix);
+	if (cert_head == NULL) {
+		cert_head = &cert[0];
+	}
+	else {
+		cert_head += strlen(certificate_prefix);
+	}
+
+	cert_tail = strstr(cert, certificate_suffix);
+	if (cert_tail == NULL) {
+		cert_tail = &cert[cert_len];
+	}
+
+	trimmed_cert = (char *)malloc(cert_tail - cert_head + 1);
+	for (trim_idx = 0; cert_head != cert_tail; cert_head++) {
+		if (cert_head[0] == '\n' || cert_head[0] == '\r') {
+			continue;
+		}
+		trimmed_cert[trim_idx++] = cert_head[0];
+	}
+	trimmed_cert[trim_idx] = '\0';
+
+	return trimmed_cert;
+}
+
+iot_error_t _iot_nv_get_certificate_serial_number(char **cert_sn)
+{
+	mbedtls_x509_crt cert;
+	char *cert_buf = NULL;
+	char *cert_der = NULL;
+	char *cert_sn_buf = NULL;
+	char *trimmed_cert = NULL;
+	size_t cert_len;
+	size_t cert_der_len;
+	size_t cert_sn_len;
+	size_t trimmed_cert_len;
+	char buf[2];
+	int idx, buf_idx;
+	int ret;
+
+	ret = iot_nv_get_certificate(IOT_SECURITY_CERT_ID_DEVICE, &cert_buf, &cert_len);
+	if (ret) {
+		IOT_ERROR("iot_nv_get_certificate = %d", ret);
+		return IOT_ERROR_NV_DATA_ERROR;
+	}
+
+	trimmed_cert = _iot_nv_trim_certificate(cert_buf, cert_len);
+	if (trimmed_cert == NULL) {
+		iot_os_free(cert_buf);
+		return IOT_ERROR_NV_DATA_ERROR;
+	}
+
+	trimmed_cert_len = strlen(trimmed_cert);
+	cert_der = (char *)malloc(trimmed_cert_len);
+	if (!cert_der) {
+		IOT_ERROR("malloc failed for cert_der");
+		return IOT_ERROR_NV_DATA_ERROR;
+	}
+	memset(cert_der, 0, trimmed_cert_len);
+	ret = iot_security_base64_decode((const unsigned char *)trimmed_cert, trimmed_cert_len, (unsigned char *)cert_der, trimmed_cert_len, &cert_der_len);
+	if (ret) {
+		IOT_ERROR( "certification parse failed : 0x%x", -ret);
+		iot_os_free(cert_der);
+		return IOT_ERROR_NV_DATA_ERROR;
+	}
+
+	mbedtls_x509_crt_init(&cert);
+	ret = mbedtls_x509_crt_parse(&cert, (const unsigned char *)cert_der, cert_der_len);
+	if (ret) {
+		IOT_ERROR( "certification parse failed : 0x%x", -ret);
+		iot_os_free(cert_der);
+		mbedtls_x509_crt_free(&cert);
+		return IOT_ERROR_NV_DATA_ERROR;
+	}
+
+	cert_sn_len = cert.serial.len * 2 + 1;
+	cert_sn_buf = (char *)malloc(cert_sn_len);
+	if (!cert_sn) {
+		IOT_ERROR("malloc failed for cert_sn_buf");
+		iot_os_free(cert_der);
+		mbedtls_x509_crt_free(&cert);
+		return IOT_ERROR_NV_DATA_ERROR;
+	}
+
+	memset(cert_sn_buf, 0, cert_sn_len);
+	for (idx=0; idx<cert.serial.len; idx++) {
+		buf[0] = cert.serial.p[idx] >> 4;
+		buf[1] = cert.serial.p[idx] & 0x0f;
+		for (buf_idx=0; buf_idx<2; buf_idx++){
+			if (buf[buf_idx] > 9 && buf[buf_idx] < 16) {
+				cert_sn_buf[idx * 2 + buf_idx] = buf[buf_idx] - 10 + 'a';
+			}
+			else if (buf[buf_idx] >= 0 && buf[buf_idx] < 10) {
+				cert_sn_buf[idx * 2 + buf_idx] = buf[buf_idx] + '0';
+			}
+			else{
+				IOT_ERROR("certification serial number parse failed : 0x%x", cert.serial.p[idx]);
+				iot_os_free(cert_der);
+				iot_os_free(cert_sn_buf);
+				mbedtls_x509_crt_free(&cert);
+				return IOT_ERROR_NV_DATA_ERROR;
+			}
+		}
+	}
+
+	*cert_sn = cert_sn_buf;
+	iot_os_free(cert_der);
+	mbedtls_x509_crt_free(&cert);
 	return IOT_ERROR_NONE;
 }
 

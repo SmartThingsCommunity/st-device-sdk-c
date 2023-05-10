@@ -21,6 +21,7 @@
 #include "iot_debug.h"
 #include "iot_easysetup.h"
 #include "easysetup_ble.h"
+#include "iot_bsp_ble.h"
 
 #define RX_BUFFER_MAX    512
 
@@ -28,10 +29,8 @@ static uint8_t *tx_buffer = NULL;
 static iot_os_thread es_ble_task_handle = NULL;
 static bool deinit_processing;
 
-typedef bool (*WriteCB)(uint8_t *buf, uint32_t len);
-void iot_bsp_ble_init(WriteCB cb);
+extern struct iot_context *context;
 
-void send_indication(uint8_t *buf, uint32_t len);
 bool msg_assemble(uint8_t *buf, uint32_t len);
 
 bool is_es_ble_deinit_processing(void)
@@ -98,7 +97,7 @@ static int process_accepted_connection(void *handle)
 
 		tx_buffer[tx_buffer_len] = 0;
 
-		send_indication(tx_buffer, tx_buffer_len);
+		iot_send_indication(tx_buffer, tx_buffer_len);
 		
 		free(tx_buffer);
 		tx_buffer = NULL;
@@ -107,6 +106,14 @@ static int process_accepted_connection(void *handle)
 
 static void es_ble_task(void *pvParameters)
 {
+	iot_error_t iot_err = IOT_ERROR_NONE;
+
+	iot_err = iot_easysetup_create_ble_advertise_packet(context);
+	if (iot_err != IOT_ERROR_NONE) {
+	    IOT_ERROR("Can't create ble advertise packet for easysetup.(%d)", iot_err);
+		return;
+	}
+
 	iot_bsp_ble_init(msg_assemble);
 
 	while (!is_es_ble_deinit_processing()) {
@@ -119,7 +126,7 @@ static void es_ble_task(void *pvParameters)
 }
 
 
-void es_ble_init(void)
+void es_ble_init()
 {
 	IOT_INFO("ble init!!");
 	IOT_ES_DUMP(IOT_DEBUG_LEVEL_INFO, IOT_DUMP_EASYSETUP_TCP_INIT, 0);

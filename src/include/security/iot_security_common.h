@@ -80,6 +80,12 @@ typedef enum iot_security_cert_id {
 	IOT_SECURITY_CERT_ID_MAX,
 } iot_security_cert_id_t;
 
+typedef enum iot_security_pk_sign_type {
+	IOT_SECURITY_PK_SIGN_TYPE_UNKNOWN = 0,
+	IOT_SECURITY_PK_SIGN_TYPE_DER,
+	IOT_SECURITY_PK_SIGN_TYPE_RAW,
+} iot_security_pk_sign_type_t;
+
 /**
  * @brief Contains information of public key pair
  */
@@ -87,6 +93,7 @@ typedef struct iot_security_pk_params {
 	iot_security_key_type_t type;                   /** @brief type of key pair */
 	iot_security_buffer_t pubkey;                   /** @brief public key buffer structure of key pair */
 	iot_security_buffer_t seckey;                   /** @brief private key buffer structure of key pair  */
+	iot_security_pk_sign_type_t pk_sign_type;		/** @brief private key signature type */
 } iot_security_pk_params_t;
 
 /**
