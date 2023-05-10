@@ -744,6 +744,12 @@ iot_error_t _iot_parse_noti_data(void *data, iot_noti_data_t *noti_data)
 			goto out_noti_parse;
 		} else {
 			size_t item_size = JSON_GET_ARRAY_SIZE(item);
+
+			if (item_size == 0) {
+				IOT_INFO("No references");
+				err = IOT_ERROR_BAD_REQ;
+				goto out_noti_parse;
+			}
 			noti_data->raw.preferences.preferences_num = item_size;
 			noti_data->raw.preferences.preferences_data = iot_os_malloc(
 					sizeof(iot_preference_data) * item_size);
@@ -762,7 +768,10 @@ iot_error_t _iot_parse_noti_data(void *data, iot_noti_data_t *noti_data)
 				noti_data->raw.preferences.preferences_data[i].preference_name =
 					iot_os_strdup(JSON_GET_OBJECT_ITEM_STRING(sub_item));
 
-				if (!strncmp(JSON_GET_STRING_VALUE(preference_type), "string", 6)) {
+				if (preference_value == NULL) {
+					noti_data->raw.preferences.preferences_data[i].preference_data.type =
+						IOT_CAP_VAL_TYPE_NULL;
+				} else if (!strncmp(JSON_GET_STRING_VALUE(preference_type), "string", 6)) {
 					noti_data->raw.preferences.preferences_data[i].preference_data.type =
 						IOT_CAP_VAL_TYPE_STRING;
 					noti_data->raw.preferences.preferences_data[i].preference_data.string =
@@ -817,7 +826,7 @@ void iot_noti_sub_cb(struct iot_context *ctx, char *payload)
 	IOT_DUMP(IOT_DEBUG_LEVEL_INFO, IOT_DUMP_CAPABILITY_NOTI_RECEIVED, 0, 0);
 	err = _iot_parse_noti_data((void *)payload, &noti_data);
 	if (err != IOT_ERROR_NONE) {
-		IOT_ERROR("Cannot parse notification data");
+		IOT_INFO("Ignore notification");
 		return;
 	}
 	if (noti_data.type == IOT_NOTI_TYPE_RATE_LIMIT) {

@@ -47,6 +47,7 @@
 #define IOT_SUB_TOPIC_NOTIFICATION	"/v1/notifications/%s/cbor"
 #define IOT_PUB_TOPIC_HEALTH		"/v1/health/cbor"
 #define IOT_PUB_TOPIC_DEVICES_UPDATE		"/v1/devices/update/cbor"
+#define IOT_PUB_TOPIC_GET_PREFERENCES		"/v1/devices/preferences/get/cbor"
 #else
 #define IOT_PUB_TOPIC_REGISTRATION	"/v1/registrations"
 #define IOT_SUB_TOPIC_REGISTRATION	"/v1/registrations/notification/%s"
@@ -56,6 +57,7 @@
 #define IOT_SUB_TOPIC_NOTIFICATION	"/v1/notifications/%s"
 #define IOT_PUB_TOPIC_HEALTH		"/v1/health"
 #define IOT_PUB_TOPIC_DEVICES_UPDATE		"/v1/devices/update"
+#define IOT_PUB_TOPIC_GET_PREFERENCES		"/v1/devices/preferences/get"
 #endif
 
 #define IOT_PUB_TOPIC_DELETE	"/v1/devices/delete"

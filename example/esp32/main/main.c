@@ -123,7 +123,9 @@ static void iot_noti_cb(iot_noti_data_t *noti_data, void *noti_usr_data)
     } else if(noti_data->type == IOT_NOTI_TYPE_PREFERENCE_UPDATED) {
 		for (int i = 0; i < noti_data->raw.preferences.preferences_num; i++) {
 			printf("[preference update] name : %s value : ", noti_data->raw.preferences.preferences_data[i].preference_name);
-			if (noti_data->raw.preferences.preferences_data[i].preference_data.type == IOT_CAP_VAL_TYPE_STRING)
+			if (noti_data->raw.preferences.preferences_data[i].preference_data.type == IOT_CAP_VAL_TYPE_NULL)
+				printf("NULL\n");
+			else if (noti_data->raw.preferences.preferences_data[i].preference_data.type == IOT_CAP_VAL_TYPE_STRING)
 				printf("%s\n", noti_data->raw.preferences.preferences_data[i].preference_data.string);
 			else if (noti_data->raw.preferences.preferences_data[i].preference_data.type == IOT_CAP_VAL_TYPE_NUMBER)
 				printf("%f\n", noti_data->raw.preferences.preferences_data[i].preference_data.number);
