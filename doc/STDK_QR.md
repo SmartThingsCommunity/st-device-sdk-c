@@ -7,9 +7,9 @@ SmartThings SDK provides four methods for this. These are `Just Works`, `Button 
 When registering an onboarding profile in Developer Workspace, the developer can select methods will be used to check whether the device to be paired with the SmartThings App is owned by the user during onboarding.
 Using QR code is not only used for user verification, but also helps user to onboarding user's device quickly and accurately. 
 
-In the "Add device" menu of the SmartThings App, the onboarding process starts by only scanning QR provided through the "Scan QR code".
+In the "Add device" menu of the SmartThings App, the onboarding process starts by only scanning QR provided through the "Scan QR code".  
 
-> Please note that QR code is required while pairing device when user uses **iOS** version of SmartThings app, regardless of ownership confirm type.
+:warning: **QR code is required while pairing device when user uses iOS version of SmartThings app, regardless of ownership confirm type.**  
 
 
 ### Information included in QR code
