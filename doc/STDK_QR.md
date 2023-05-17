@@ -1,12 +1,16 @@
-# How to create QR code for SmartThings Device SDK
+# How to create QR code for SmartThings SDK for Direct Connected Devices
 
 ### Introduction
-SmartThings Device SDK allows users to pair their devices with the SmartThings App through a process called device onboarding.
+SmartThings SDK for Direct Connected Devices allows users to pair their devices with the SmartThings App through a process called device onboarding.
 This "device onboarding" process involves confirming whether this device is owned by the user through the user's operation.
-STDK provides four methods for this. These four methods are Just Works, Button Confirm, Pin Code Confirm, and QR Code Confirm.
+SmartThings SDK provides four methods for this. These are `Just Works`, `Button Confirm`, `Pin Code Confirm`, and `QR Code Confirm`.
 When registering an onboarding profile in Developer Workspace, the developer can select methods will be used to check whether the device to be paired with the SmartThings App is owned by the user during onboarding.
 Using QR code is not only used for user verification, but also helps user to onboarding user's device quickly and accurately. 
+
 In the "Add device" menu of the SmartThings App, the onboarding process starts by only scanning QR provided through the "Scan QR code".
+
+> Please note that QR code is required while pairing device when user uses **iOS** version of SmartThings app, regardless of ownership confirm type.
+
 
 ### Information included in QR code
 The QR code includes the following three pieces of information, and the manufacturer can generate the QR code with the information of each device and provide it to the user.
