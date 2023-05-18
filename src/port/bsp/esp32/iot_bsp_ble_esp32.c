@@ -18,6 +18,7 @@
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
+#include <sys/time.h>
 #include "freertos/FreeRTOS.h"
 #include "freertos/task.h"
 #include "freertos/event_groups.h"
@@ -79,7 +80,8 @@ static void gatts_event_handler(esp_gatts_cb_event_t event, esp_gatt_if_t gatts_
 #define SCAN_RESP_FLAG_TYPE     0x09
 #define SCAN_RESP_MF_DATA_LEN   0x06
 
-extern int g_flg;
+int indication_need_confirmed;
+int gatt_connected;
 static uint8_t ble_onboarding_char_uuid[16] = {0x09, 0x0E, 0xE6, 0x80, 0x02, 0x30, 0xC7, 0xA4, 0x8E, 0x4F, 0x2D, 0xAE, 0x0E, 0x0F, 0x94, 0xBE};
 
 static uint8_t char_val[MAX_CHAR_LEN] = {0x00};
@@ -102,6 +104,7 @@ static size_t adv_data_len;
 static uint8_t scan_response_data[PACKET_MAX_SIZE];
 static size_t scan_response_len;
 static uint8_t manufacturer_id[2] = {0x75, 0x00};
+static iot_bsp_ble_event_cb_t ble_event_cb;
 
 CharWriteCallback CharWriteCb;
 
@@ -277,9 +280,24 @@ void iot_create_scan_response_packet(char *device_onboarding_id, char *serial)
 
 int iot_send_indication(uint8_t *buf, uint32_t len)
 {
-    if(NULL == buf || 0 == len) {
-        return -1;
-    }
+	struct timeval start_tv = {0,}, elasped_tv = {0,};
+
+	gettimeofday(&start_tv, NULL);
+
+	while(indication_need_confirmed && gatt_connected) {
+		gettimeofday(&elasped_tv, NULL);
+		if (elasped_tv.tv_sec - start_tv.tv_sec >= 5) {
+			ESP_LOGI(GATTS_TAG, "Wait confirm timeout 5s");
+			return 1;
+		}
+	}
+
+	if (!gatt_connected) {
+		ESP_LOGI(GATTS_TAG, "%s No gatt connection", __func__);
+		return 1;
+	}
+
+	indication_need_confirmed = 1;
     esp_ble_gatts_send_indicate(gl_profile.gatts_if, gl_profile.conn_id, gl_profile.char_handle, len, buf, true);
 
 	return 0;
@@ -433,18 +451,26 @@ static void gatts_event_handler(esp_gatts_cb_event_t event, esp_gatt_if_t gatts_
         gl_profile.conn_id = param->connect.conn_id;
         //start sent the update connection parameters to the peer device.
         esp_ble_gap_update_conn_params(&conn_params);
+		if (ble_event_cb)
+			ble_event_cb(IOT_BLE_EVENT_GATT_JOIN, IOT_ERROR_NONE);
+		gatt_connected = 1;
+		indication_need_confirmed = 0;
         break;
     }
     case ESP_GATTS_DISCONNECT_EVT:
         ESP_LOGI(GATTS_TAG, "ESP_GATTS_DISCONNECT_EVT, disconnect reason 0x%x", param->disconnect.reason);
         esp_ble_gap_start_advertising(&adv_params);
+		if (ble_event_cb)
+			ble_event_cb(IOT_BLE_EVENT_GATT_LEAVE, IOT_ERROR_NONE);
+		gatt_connected = 0;
+		indication_need_confirmed = 0;
         break;
     case ESP_GATTS_CONF_EVT:
         ESP_LOGI(GATTS_TAG, "ESP_GATTS_CONF_EVT, status %d attr_handle %d", param->conf.status, param->conf.handle);
         if (param->conf.status != ESP_GATT_OK){
             esp_log_buffer_hex(GATTS_TAG, param->conf.value, param->conf.len);
         }
-        g_flg = 1;
+		indication_need_confirmed = 0;
         break;
     case ESP_GATTS_OPEN_EVT:
     case ESP_GATTS_CANCEL_OPEN_EVT:
@@ -516,6 +542,16 @@ void iot_bsp_ble_init(CharWriteCallback cb)
     }
 
     return;
+}
+
+iot_error_t iot_bsp_ble_register_event_cb(iot_bsp_ble_event_cb_t cb)
+{
+       if (cb == NULL) {
+               return IOT_ERROR_INVALID_ARGS;
+       }
+
+       ble_event_cb = cb;
+       return IOT_ERROR_NONE;
 }
 
 void iot_bsp_ble_deinit(void)

@@ -1605,6 +1605,11 @@ iot_error_t iot_cleanup(struct iot_context *ctx, bool reboot)
 		iot_easysetup_deinit(ctx);
 	}
 
+	if (ctx->es_ble_ready) {
+		ctx->es_ble_ready = false;
+		iot_easysetup_deinit(ctx);
+	}
+
 	iot_device_cleanup(ctx);
 
 	if (reboot) {
