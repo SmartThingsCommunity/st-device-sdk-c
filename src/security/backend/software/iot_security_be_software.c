@@ -213,7 +213,6 @@ iot_error_t _iot_security_be_software_get_seckey_with_secp256v1(iot_security_key
 {
 	mbedtls_ecp_keypair *mbed_ecp_keypair;
 	unsigned char raw[IOT_SECURITY_EC_SECKEY_LEN];
-	size_t olen;
 	int ret;
 
 	if (key_id != IOT_SECURITY_KEY_ID_EPHEMERAL) {
