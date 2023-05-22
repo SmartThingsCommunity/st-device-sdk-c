@@ -441,10 +441,13 @@ iot_error_t iot_bsp_wifi_set_mode(iot_wifi_conf *conf)
 		else{
 			wifi_config.ap.authmode = WIFI_AUTH_WPA_WPA2_PSK;
 		}
-		ESP_ERROR_CHECK(esp_wifi_set_mode(WIFI_MODE_APSTA));
-		ESP_ERROR_CHECK(esp_wifi_set_config(ESP_IF_WIFI_AP, &wifi_config));
-		ESP_ERROR_CHECK(esp_wifi_start());
-
+		//ESP_ERROR_CHECK(esp_wifi_set_mode(WIFI_MODE_APSTA));
+		//ESP_ERROR_CHECK(esp_wifi_set_config(ESP_IF_WIFI_AP, &wifi_config));
+		//ESP_ERROR_CHECK(esp_wifi_start());
+                
+		IOT_INFO("wifi_init_softap finished.SSID:%s password:%s",
+				wifi_config.ap.ssid, wifi_config.ap.password);
+			
 		IOT_DEBUG("wifi_init_softap finished.SSID:%s password:%s",
 				wifi_config.ap.ssid, wifi_config.ap.password);
 
