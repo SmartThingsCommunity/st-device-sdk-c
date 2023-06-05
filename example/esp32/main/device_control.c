@@ -49,7 +49,7 @@ int get_button_event(int* button_event_type, int* button_event_count)
         vTaskDelay( pdMS_TO_TICKS(BUTTON_DEBOUNCE_TIME_MS) );
         gpio_level = gpio_get_level(GPIO_INPUT_BUTTON);
         if (button_last_state != gpio_level) {
-            printf("Button event, val: %d, tick: %u\n", gpio_level, (uint32_t)xTaskGetTickCount());
+            printf("Button event, val: %ld, tick: %lu\n", gpio_level, (uint32_t)xTaskGetTickCount());
             button_last_state = gpio_level;
             if (gpio_level == BUTTON_GPIO_PRESSED) {
                 button_count++;

@@ -253,7 +253,7 @@ iot_error_t http_initialize_connection(HTTP_CONN_H *handle)
 iot_error_t http_accept_connection(HTTP_CONN_H *handle)
 {
 	struct sockaddr_in source_addr;
-	uint addr_len;
+	socklen_t addr_len;
 	int sock;
 
 	if (handle == NULL) {

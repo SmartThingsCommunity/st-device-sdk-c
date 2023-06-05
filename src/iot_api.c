@@ -669,7 +669,7 @@ iot_error_t iot_get_time_in_sec(char *buf, size_t buf_len)
 	}
 
 	gettimeofday(&tv_now, NULL);
-	snprintf(buf, buf_len, "%ld", tv_now.tv_sec);
+	snprintf(buf, buf_len, "%lld", tv_now.tv_sec);
 
 	return IOT_ERROR_NONE;
 }
@@ -699,7 +699,7 @@ iot_error_t iot_get_time_in_ms(char *buf, size_t buf_len)
 	}
 
 	gettimeofday(&tv_now, NULL);
-	snprintf(buf, buf_len, "%ld%03ld",
+	snprintf(buf, buf_len, "%lld%03ld",
 		tv_now.tv_sec, (tv_now.tv_usec / 1000));
 
 	return IOT_ERROR_NONE;
