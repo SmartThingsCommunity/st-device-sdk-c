@@ -52,7 +52,7 @@ iot_error_t iot_bsp_system_get_time_in_sec(char* buf, unsigned int buf_len)
 	struct timeval tv = {0,};
 
 	gettimeofday(&tv, NULL);
-	snprintf(buf, buf_len, "%ld", tv.tv_sec);
+	snprintf(buf, buf_len, "%lld", tv.tv_sec);
 
 	return IOT_ERROR_NONE;
 }
@@ -63,7 +63,7 @@ iot_error_t iot_bsp_system_set_time_in_sec(const char* time_in_sec)
 
 	struct timeval tv = {0,};
 
-	sscanf(time_in_sec, "%ld", &tv.tv_sec);
+	sscanf(time_in_sec, "%lld", &tv.tv_sec);
 	settimeofday(&tv, NULL);
 
 	return IOT_ERROR_NONE;

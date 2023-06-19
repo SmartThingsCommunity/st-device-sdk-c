@@ -84,8 +84,6 @@ char *iot_debug_get_log(void)
 
 static void _iot_easysetup_wifi_event_cb(iot_wifi_event_t event, iot_error_t error)
 {
-	iot_error_t err = IOT_ERROR_NONE;
-
 	switch (event) {
 		case IOT_WIFI_EVENT_SOFTAP_STA_JOIN:
 			IOT_INFO("Station joined to SoftAP");
@@ -201,7 +199,6 @@ iot_error_t _iot_easysetup_gen_get_payload(struct iot_context *ctx, int cmd, cha
 
 fail_status_update:
 	if (err) {
-		iot_error_t err1;
 		ref_step = 0;
 		if ((cur_step >= IOT_EASYSETUP_STEP_LOG_SYSTEMINFO) || (err == IOT_ERROR_EASYSETUP_INVALID_SEQUENCE)) {
 			/* TODO : signaling restart onboarding */
@@ -313,7 +310,6 @@ iot_error_t _iot_easysetup_gen_post_payload(struct iot_context *ctx, int cmd, ch
 
 fail_status_update:
 	if (err) {
-		iot_error_t err1;
 		ref_step = 0;
 		if ((cur_step >= IOT_EASYSETUP_STEP_LOG_SYSTEMINFO) || (err == IOT_ERROR_EASYSETUP_INVALID_SEQUENCE)) {
 			/* TODO : signaling restart onboarding */

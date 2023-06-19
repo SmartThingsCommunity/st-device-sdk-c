@@ -262,7 +262,7 @@ iot_error_t _es_time_set(unsigned char *time)
 	tm.tm_mon -= 1;
 
 	now = mktime(&tm);
-	snprintf(time_str, sizeof(time_str), "%ld", now);
+	snprintf(time_str, sizeof(time_str), "%lld", now);
 
 	err = iot_bsp_system_set_time_in_sec(time_str);
 	if (err) {

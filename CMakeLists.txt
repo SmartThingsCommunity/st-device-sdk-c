@@ -1,8 +1,6 @@
 cmake_minimum_required(VERSION 3.13)
 project(st_device_sdk_c C)
 
-set(CMAKE_C_STANDARD 99)
-
 set(CMAKE_CXX_FLAGS_UNITTEST "-g --coverage -DSUPPORT_TC_ON_STATIC_FUNC" CACHE STRING
     "Flags used by the C++ compiler during unit test builds."
     FORCE)

@@ -22,6 +22,7 @@
 #include "iot_debug.h"
 #include "security/iot_security_helper.h"
 
+#include "mbedtls/version.h"
 #include "mbedtls/sha256.h"
 #include "mbedtls/base64.h"
 #include "mbedtls/cipher.h"
@@ -268,7 +269,11 @@ iot_error_t iot_security_sha256(const unsigned char *input, size_t input_len, un
 		IOT_ERROR_DUMP_AND_RETURN(INVALID_ARGS, 0);
 	}
 
+#if MBEDTLS_VERSION_NUMBER > 0x03000000
+	ret = mbedtls_sha256(input, input_len, output, 0);
+#else
 	ret = mbedtls_sha256_ret(input, input_len, output, 0);
+#endif
 	if (ret) {
 		IOT_ERROR("mbedtls_sha256_ret = -0x%04X", -ret);
 		IOT_ERROR_DUMP_AND_RETURN(SHA256, -ret);

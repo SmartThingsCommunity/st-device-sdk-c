@@ -19,12 +19,19 @@
 #ifndef _IOT_NET_PLATFORM_H_
 #define _IOT_NET_PLATFORM_H_
 
+#include "mbedtls/version.h"
 #include "mbedtls/platform.h"
+#if MBEDTLS_VERSION_NUMBER > 0x03000000
+#include "mbedtls/net_sockets.h"
+#else
 #include "mbedtls/net.h"
+#endif
 #include "mbedtls/ssl.h"
 #include "mbedtls/entropy.h"
 #include "mbedtls/ctr_drbg.h"
+#if MBEDTLS_VERSION_NUMBER < 0x03000000
 #include "mbedtls/certs.h"
+#endif
 #include "mbedtls/x509.h"
 #include "mbedtls/debug.h"
 

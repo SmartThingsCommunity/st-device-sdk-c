@@ -59,7 +59,7 @@ static void update_switch_attribute(int state)
     if (sequence_no < 0)
         printf("fail to send switch value\n");
     else
-        printf("Sequence number return : %d\n", sequence_no);
+        printf("Sequence number return : %ld\n", sequence_no);
 }
 
 static void cap_switch_init_cb(IOT_CAP_HANDLE *handle, void *usr_data)

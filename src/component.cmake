@@ -75,7 +75,6 @@ if(CONFIG_STDK_IOT_CORE)
 		set(STDK_INCLUDE_PATH "${STDK_INCLUDE_PATH}" port/http/socket)
 	endif()
 
-	set(CMAKE_C_STANDARD 99)
 else()
 	message("Fail to find SDK config")
 # Disable SmartThing Device SDK support

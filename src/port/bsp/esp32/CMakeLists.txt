@@ -14,3 +14,5 @@ target_sources(iotcore
 		iot_bsp_ble_esp32.c
         )
 endif()
+
+target_link_libraries(iotcore PRIVATE idf::spi_flash idf::esp_partition idf::esp_wifi idf::mbedtls idf::json idf::espressif__libsodium idf::nvs_flash idf::bootloader_support)

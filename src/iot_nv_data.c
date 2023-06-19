@@ -940,7 +940,7 @@ iot_error_t _iot_nv_get_certificate_serial_number(char **cert_sn)
 			if (buf[buf_idx] > 9 && buf[buf_idx] < 16) {
 				cert_sn_buf[idx * 2 + buf_idx] = buf[buf_idx] - 10 + 'a';
 			}
-			else if (buf[buf_idx] >= 0 && buf[buf_idx] < 10) {
+			else if (buf[buf_idx] < 10) {
 				cert_sn_buf[idx * 2 + buf_idx] = buf[buf_idx] + '0';
 			}
 			else{

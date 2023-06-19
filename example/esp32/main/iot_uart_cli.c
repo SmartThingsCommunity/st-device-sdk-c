@@ -215,7 +215,7 @@ static void esp_uart_cli_task()
         memset(data, 0, UART_BUF_SIZE);
 
         // Read data from the UART
-        int len = uart_read_bytes(UART_NUM_0, data, UART_BUF_SIZE, 20 / portTICK_RATE_MS);
+        int len = uart_read_bytes(UART_NUM_0, data, UART_BUF_SIZE, 20 / portTICK_PERIOD_MS);
         for (int i = 0; i < len; i++) {
             switch(data[i])
             {
