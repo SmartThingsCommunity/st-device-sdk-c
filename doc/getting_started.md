@@ -63,6 +63,7 @@ The device onboarding guides device owners when their device is first registerin
 
 The product info defines how this device is shown at SmartThings mobile app catalog. 
 You can define device’s category and its regional availability.
+> **_NOTE:_**  If user or tester samsung account country is not in availability list, they can't onboard the device. Please check the regional availability before device test or production.
 
 ![create product info](./res/add-product-info.gif)  
 
