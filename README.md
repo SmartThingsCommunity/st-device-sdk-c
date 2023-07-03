@@ -78,6 +78,10 @@ For more information, please review the following documents:
 - [Capabilities Reference](https://developer.smartthings.com/docs/devices/capabilities/capabilities) : This page serves as a reference for the supported capabilities.
 - [Developer Workspace](https://smartthings.developer.samsung.com/workspace/) : It provides functions related to device information registration and device integration in the SmartThings cloud.
 
+## Contact
+
+If you have any issue, or want to commercialize your IoT devices using this SDK, please contact stdk@samsung.com or open new issue.
+
 ## License
 
 This library is licensed under the [Apache License Ver2.0](LICENSE).
