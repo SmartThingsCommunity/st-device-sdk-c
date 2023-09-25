@@ -68,24 +68,3 @@ iot_error_t iot_bsp_system_set_time_in_sec(const char* time_in_sec)
 
 	return IOT_ERROR_NONE;
 }
-
-iot_error_t iot_bsp_system_get_uniqueid(unsigned char **uid, size_t *olen)
-{
-	unsigned int *buf;
-	unsigned int chipid_reg = EFUSE_BLK0_RDATA1_REG; /* CRC of MAC */
-	size_t chipid_len = 2 * sizeof(unsigned int);
-
-	buf = (unsigned int *)malloc(chipid_len);
-	if (buf == NULL) {
-		IOT_ERROR("malloc failed for uid");
-		return IOT_ERROR_MEM_ALLOC;
-	}
-
-	buf[0] = REG_READ(chipid_reg + 0x0);
-	buf[1] = REG_READ(chipid_reg + 0x4);
-
-	*uid = (unsigned char *)buf;
-	*olen = chipid_len;
-
-	return IOT_ERROR_NONE;
-}

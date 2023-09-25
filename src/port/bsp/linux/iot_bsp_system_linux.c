@@ -74,29 +74,3 @@ iot_error_t iot_bsp_system_set_time_in_sec(const char* time_in_sec)
 
 	return IOT_ERROR_NONE;
 }
-
-iot_error_t iot_bsp_system_get_uniqueid(unsigned char **uid, size_t *olen)
-{
-	FILE *fp = NULL;
-	unsigned char *machine_id;
-	int pos;
-
-	machine_id = (unsigned char*)malloc(MACHINE_ID_LEN_BYTES);
-	if (!machine_id)
-		return IOT_ERROR_MEM_ALLOC;
-
-	fp = fopen(MACHINE_ID_FILE, "r");
-	if (!fp) {
-		printf("could not open the file: %s", MACHINE_ID_FILE);
-		return IOT_ERROR_READ_FAIL;
-	}
-
-	for (pos = 0; pos < MACHINE_ID_LEN_BYTES && !feof(fp); pos++)
-		fscanf(fp, "%2hhx", &machine_id[pos]);
-
-	fclose(fp);
-	*uid = machine_id;
-	*olen = MACHINE_ID_LEN_BYTES;
-
-	return IOT_ERROR_NONE;
-}
