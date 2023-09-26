@@ -83,18 +83,6 @@ iot_error_t iot_bsp_system_get_time_in_sec(char* buf, unsigned int buf_len);
  */
 iot_error_t iot_bsp_system_set_time_in_sec(const char* time_in_sec);
 
-/**
- * @brief	Get device unique value
- * @details	The source of unique value
- * @param[out]	uid	a pointer of pointer to a unique id buffer
- * @param[out]	olen	the bytes written to unique id buffer
- * @return	iot_error_t
- * @retval	IOT_ERROR_NONE	success
- * @retval	IOT_ERROR_MEM_ALLOC alloc failed for unique id buffer
- * @retval	IOT_ERROR_NOT_IMPLEMENTED no way to make unique id
- */
-iot_error_t iot_bsp_system_get_uniqueid(unsigned char **uid, size_t *olen);
-
 #ifdef __cplusplus
 }
 #endif

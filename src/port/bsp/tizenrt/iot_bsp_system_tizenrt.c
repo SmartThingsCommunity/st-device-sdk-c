@@ -99,36 +99,3 @@ iot_error_t iot_bsp_system_set_time_in_sec(const char *time_in_sec)
 
 	return IOT_ERROR_NONE;
 }
-
-iot_error_t iot_bsp_system_get_uniqueid(unsigned char **uid, size_t *olen)
-{
-	unsigned int *buf;
-	size_t chipid_len = 2 * sizeof(unsigned int);
-#ifdef CONFIG_ARCH_BOARD_ESP32_FAMILY
-	unsigned int chipid_reg = EFUSE_BLK0_RDATA1_REG; /* CRC of MAC */
-#else
-	struct iot_mac umac;
-#endif
-
-	buf = (unsigned int *)malloc(chipid_len);
-	if (buf == NULL) {
-		IOT_ERROR("malloc failed for uid");
-		return IOT_ERROR_MEM_ALLOC;
-	}
-
-#ifdef CONFIG_ARCH_BOARD_ESP32_FAMILY
-	buf[0] = REG_READ(chipid_reg + 0x0);
-	buf[1] = REG_READ(chipid_reg + 0x4);
-#else
-	if (iot_bsp_wifi_get_mac(&umac) != IOT_ERROR_NONE) {
-		return IOT_ERROR_READ_FAIL;
-	}
-	buf[0] = umac.addr[0] << 24 | umac.addr[1] << 16 | umac.addr[2] << 8 | umac.addr[3];
-	buf[1] = umac.addr[4] << 8 | umac.addr[5];
-#endif
-
-	*uid = (unsigned char *)buf;
-	*olen = chipid_len;
-
-	return IOT_ERROR_NONE;
-}
