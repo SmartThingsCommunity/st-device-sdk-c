@@ -17,7 +17,7 @@
  ****************************************************************************/
 
 #include "iot_bsp_random.h"
-#include <esp_system.h>
+#include "esp_random.h"
 
 unsigned int iot_bsp_random()
 {

@@ -92,6 +92,23 @@ enum iot_easysetup_step {
 	IOT_EASYSETUP_INVALID_STEP,
 };
 
+enum iot_easysetup_ble_step {
+	IOT_EASYSETUP_BLE_STEP_DEVICEINFO,
+	IOT_EASYSETUP_BLE_STEP_KEYINFO,
+	IOT_EASYSETUP_BLE_STEP_CONFIRMINFO,
+	IOT_EASYSETUP_BLE_STEP_CONFIRM,
+	IOT_EASYSETUP_BLE_STEP_WIFISCANINFO,
+	IOT_EASYSETUP_BLE_STEP_WIFIPROVIONINGINFO,
+	IOT_EASYSETUP_BLE_STEP_TNCAGREEMENTS,
+	IOT_EASYSETUP_BLE_STEP_SETUPCOMPLETE,
+	IOT_EASYSETUP_BLE_STEP_LOG_SYSTEMINFO,
+	IOT_EASYSETUP_BLE_STEP_LOG_GET_DUMP,
+	IOT_EASYSETUP_BLE_STEP_OFFLINE_DIAGNOSTICS_CONNECTOION_INFO,
+	IOT_EASYSETUP_BLE_STEP_OFFLINE_DIAGNOSTICS_RECOVERY,
+	IOT_EASYSETUP_BLE_STEP_SETUPCOMPLETE_RESPONSE,
+	IOT_EASYSETUP_BLE_INVALID_STEP,
+};
+
 enum iot_connect_type {
 	IOT_CONNECT_TYPE_REGISTRATION,
 	IOT_CONNECT_TYPE_COMMUNICATION,
@@ -216,6 +233,7 @@ struct iot_easysetup_payload {
 	enum iot_easysetup_step	step;		/**< @brief reflect easy-setup process step */
 	iot_error_t err;					/**< @brief error status for each step */
 	char *payload;						/**< @brief actual payload for each step */
+	size_t payload_len;
 };
 
 #define IOT_REG_UUID_STR_LEN		(36)
@@ -279,7 +297,8 @@ struct iot_context {
 	iot_util_queue_t *easysetup_req_queue;	/**< @brief request queue for easy-setup process */
 	iot_util_queue_t *easysetup_resp_queue;	/**< @brief response queue for easy-setup process */
 	bool es_res_created;				/**< @brief to check easy-setup resources are created or not */
-	bool es_http_ready;					/**< @brief to check easy-setup-httpd is initialized or not */
+	bool es_http_ready;				/**< @brief to check easy-setup-httpd is initialized or not */
+	bool es_ble_ready;				/**< @brief to check easy-setup-ble is initialized or not */
 
 	iot_state_t curr_state;			/**< @brief reflect current iot_state */
 	iot_os_timer state_timer;		/**< @brief state checking timer for each iot_state */

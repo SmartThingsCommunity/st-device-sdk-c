@@ -20,7 +20,7 @@
 #define _IOT_SECURITY_COMMON_H_
 
 #include <stdbool.h>
-#include <sodium.h>
+#include "sodium.h"
 #include "iot_security_error.h"
 
 #ifdef __cplusplus

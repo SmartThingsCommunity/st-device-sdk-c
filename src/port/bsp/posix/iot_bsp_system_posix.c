@@ -69,24 +69,3 @@ iot_error_t iot_bsp_system_set_time_in_sec(const char* time_in_sec)
 
 	return IOT_ERROR_NONE;
 }
-
-iot_error_t iot_bsp_system_get_uniqueid(unsigned char **uid, size_t *olen)
-{
-	unsigned long hostid = gethostid();
-	unsigned char *id;
-
-	id = (unsigned char*) malloc(4);
-	if (!id) {
-		return IOT_ERROR_MEM_ALLOC;
-	}
-
-	for (int i = 0; i < 4; i++) {
-		id[i] = (unsigned char) hostid;
-		hostid = hostid >> 8u;
-	}
-
-	*uid = id;
-	*olen = 4;
-
-	return IOT_ERROR_NONE;
-}

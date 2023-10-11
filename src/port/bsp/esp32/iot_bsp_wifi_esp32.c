@@ -23,11 +23,6 @@
 #include "freertos/event_groups.h"
 
 #include "esp_idf_version.h"
-#if (ESP_IDF_VERSION >= ESP_IDF_VERSION_VAL(4,0,0))
-#include "esp32/rom/ets_sys.h"
-#else
-#include "rom/ets_sys.h"
-#endif
 #include "esp_wifi.h"
 #include "esp_event.h"
 #include "esp_log.h"
@@ -52,7 +47,6 @@ static int WIFI_INITIALIZED = false;
 static EventGroupHandle_t wifi_event_group;
 static iot_bsp_wifi_event_cb_t wifi_event_cb;
 
-static system_event_cb_t s_event_handler_cb = NULL;
 static void *s_event_ctx = NULL;
 static bool s_initialized = false;
 static iot_error_t s_latest_disconnect_reason;
@@ -105,27 +99,27 @@ static void _obtain_time(void)
 	}
 }
 
-static esp_err_t event_handler(void *ctx, system_event_t *event)
+static void esp_wifi_event_post_to_user(void* arg, esp_event_base_t base, int32_t id, void* data)
 {
-	wifi_ap_record_t ap_info;
-	memset(&ap_info, 0x0, sizeof(wifi_ap_record_t));
-
-	switch(event->event_id) {
-	case SYSTEM_EVENT_STA_START:
+	switch(id) {
+	case WIFI_EVENT_STA_START:
+		IOT_INFO("Station started");
 		xEventGroupSetBits(wifi_event_group, WIFI_STA_START_BIT);
 		esp_wifi_connect();
 		break;
 
-	case SYSTEM_EVENT_STA_STOP:
+	case WIFI_EVENT_STA_STOP:
 		IOT_INFO("SYSTEM_EVENT_STA_STOP");
 		xEventGroupClearBits(wifi_event_group, WIFI_EVENT_BIT_ALL);
 		break;
 
-	case SYSTEM_EVENT_STA_DISCONNECTED:
-		IOT_INFO("Disconnect reason : %d", event->event_info.disconnected.reason);
-		IOT_DUMP(IOT_DEBUG_LEVEL_ERROR, IOT_DUMP_BSP_WIFI_EVENT_DEAUTH, event->event_info.disconnected.reason, 0);
+	case WIFI_EVENT_STA_DISCONNECTED:
+		{
+		wifi_event_sta_disconnected_t *event = (wifi_event_sta_disconnected_t *)data;
+		IOT_INFO("Disconnect reason : %d", event->reason);
+		IOT_DUMP(IOT_DEBUG_LEVEL_ERROR, IOT_DUMP_BSP_WIFI_EVENT_DEAUTH, event->reason, 0);
 		xEventGroupSetBits(wifi_event_group, WIFI_STA_DISCONNECT_BIT);
-		switch (event->event_info.disconnected.reason)
+		switch (event->reason)
 		{
 			case WIFI_REASON_NO_AP_FOUND:
 				s_latest_disconnect_reason = IOT_ERROR_CONN_STA_AP_NOT_FOUND;
@@ -139,77 +133,78 @@ static esp_err_t event_handler(void *ctx, system_event_t *event)
 		}
 		esp_wifi_connect();
 		xEventGroupClearBits(wifi_event_group, WIFI_STA_CONNECT_BIT);
+		}
 		break;
 
-	case SYSTEM_EVENT_STA_GOT_IP:
-		esp_wifi_sta_get_ap_info(&ap_info);
-		IOT_INFO("got ip:%s rssi:%ddBm",
-			ip4addr_ntoa((ip4_addr_t *)&event->event_info.got_ip.ip_info.ip), ap_info.rssi);
-		IOT_DUMP(IOT_DEBUG_LEVEL_ERROR, IOT_DUMP_BSP_WIFI_EVENT_AUTH, ap_info.rssi, 0);
-		xEventGroupSetBits(wifi_event_group, WIFI_STA_CONNECT_BIT);
-		xEventGroupClearBits(wifi_event_group, WIFI_STA_DISCONNECT_BIT);
+	case WIFI_EVENT_STA_CONNECTED :
+		{
+		IOT_INFO("Wifi Connected");
+		}
 		break;
 
-	case SYSTEM_EVENT_AP_START:
+	case WIFI_EVENT_AP_START:
 		xEventGroupClearBits(wifi_event_group, WIFI_EVENT_BIT_ALL);
 		IOT_INFO("SYSTEM_EVENT_AP_START");
 		xEventGroupSetBits(wifi_event_group, WIFI_AP_START_BIT);
 		break;
 
-	case SYSTEM_EVENT_AP_STOP:
+	case WIFI_EVENT_AP_STOP:
 		IOT_INFO("SYSTEM_EVENT_AP_STOP");
 		xEventGroupSetBits(wifi_event_group, WIFI_AP_STOP_BIT);
 		break;
 
-	case SYSTEM_EVENT_AP_STACONNECTED:
-		IOT_INFO("station:"MACSTR" join, AID=%d",
-				MAC2STR(event->event_info.sta_connected.mac),
-				event->event_info.sta_connected.aid);
+	case WIFI_EVENT_AP_STACONNECTED:
+		{
+		wifi_event_ap_staconnected_t *event = (wifi_event_ap_staconnected_t *)data;
+		IOT_INFO("station: %02x:%02x:%02x:%02x:%02x:%02x join, AID=%d",
+				event->mac[0],event->mac[1],event->mac[2],event->mac[3],event->mac[4],event->mac[5],
+				event->aid);
 		if (wifi_event_cb) {
 			IOT_DEBUG("0x%p called", wifi_event_cb);
 			(*wifi_event_cb)(IOT_WIFI_EVENT_SOFTAP_STA_JOIN, IOT_ERROR_NONE);
 		}
+		}
 		break;
 
-	case SYSTEM_EVENT_AP_STADISCONNECTED:
-		IOT_INFO("station:"MACSTR" leave, AID=%d",
-				MAC2STR(event->event_info.sta_disconnected.mac),
-				event->event_info.sta_disconnected.aid);
+	case WIFI_EVENT_AP_STADISCONNECTED:
+		{
+		wifi_event_ap_stadisconnected_t *event = (wifi_event_ap_stadisconnected_t *)data;
+		IOT_INFO("station: %02x:%02x:%02x:%02x:%02x:%02x leave, AID=%d",
+				event->mac[0],event->mac[1],event->mac[2],event->mac[3],event->mac[4],event->mac[5],
+				event->aid);
 
 		xEventGroupSetBits(wifi_event_group, WIFI_AP_STOP_BIT);
 		if (wifi_event_cb) {
 			IOT_DEBUG("0x%p called", wifi_event_cb);
 			(*wifi_event_cb)(IOT_WIFI_EVENT_SOFTAP_STA_LEAVE, IOT_ERROR_NONE);
 		}
+		}
 		break;
 
 	default:
-		IOT_INFO("event_handler = %d", event->event_id);
+		IOT_INFO("event_handler = %d", id);
 		break;
 	}
-
-	return ESP_OK;
 }
 
-static void esp_event_post_to_user(void* arg, esp_event_base_t base, int32_t id, void* data)
+static void esp_ip_event_post_to_user(void* arg, esp_event_base_t base, int32_t id, void* data)
 {
-	if (s_event_handler_cb) {
-		system_event_t* event = (system_event_t*) data;
-		(*s_event_handler_cb)(s_event_ctx, event);
+	switch(id) {
+	case IP_EVENT_STA_GOT_IP:
+		{
+		ip_event_got_ip_t *event = (ip_event_got_ip_t *)data;
+		IOT_INFO("got ip:%s", ip4addr_ntoa((ip4_addr_t *)&event->ip_info.ip));
+		xEventGroupSetBits(wifi_event_group, WIFI_STA_CONNECT_BIT);
+		xEventGroupClearBits(wifi_event_group, WIFI_STA_DISCONNECT_BIT);
+		}
+		break;
+	default:
+		IOT_INFO("event_handler = %d", id);
+		break;
 	}
 }
 
-esp_err_t esp_event_send_legacy(system_event_t *event)
-{
-	if (!s_initialized) {
-		IOT_ERROR("system event loop not initialized via esp_event_loop_init");
-		return ESP_ERR_INVALID_STATE;
-	}
-
-	return esp_event_post(SYSTEM_EVENT, event->event_id, event, sizeof(*event), portMAX_DELAY);
-}
-
-static esp_err_t esp_event_loop_init_wrap(system_event_cb_t cb, void *ctx)
+static esp_err_t esp_event_loop_init_wrap(void *ctx)
 {
 	if (s_initialized) {
 		IOT_ERROR("system event loop already initialized");
@@ -222,15 +217,29 @@ static esp_err_t esp_event_loop_init_wrap(system_event_cb_t cb, void *ctx)
 		return err;
 	}
 
-	err = esp_event_handler_register(SYSTEM_EVENT, ESP_EVENT_ANY_ID, esp_event_post_to_user, NULL);
+	err = esp_event_handler_instance_register(WIFI_EVENT,
+                                              ESP_EVENT_ANY_ID,
+                                              &esp_wifi_event_post_to_user,
+                                              NULL,
+                                              NULL);
 	if (err != ESP_OK) {
-		IOT_ERROR("esp_event_handler_register is failed");
+		IOT_ERROR("wifi_event_handler_register is failed");
+		esp_event_loop_delete_default();
+		return err;
+	}
+
+	err = esp_event_handler_instance_register(IP_EVENT,
+                                              ESP_EVENT_ANY_ID,
+                                              &esp_ip_event_post_to_user,
+                                              NULL,
+                                              NULL);
+	if (err != ESP_OK) {
+		IOT_ERROR("ip_event_handler_register is failed");
 		esp_event_loop_delete_default();
 		return err;
 	}
 
 	s_initialized = true;
-	s_event_handler_cb = cb;
 	s_event_ctx = ctx;
 	return ESP_OK;
 }
@@ -247,7 +256,7 @@ iot_error_t iot_bsp_wifi_init()
 	wifi_event_group = xEventGroupCreate();
 
 	esp_netif_init();
-	esp_ret = esp_event_loop_init_wrap(event_handler, NULL);
+	esp_ret = esp_event_loop_init_wrap(NULL);
 	if(esp_ret != ESP_OK) {
 		IOT_ERROR("esp_event_loop_init_wrap failed err=[%d]", esp_ret);
 		IOT_DUMP(IOT_DEBUG_LEVEL_ERROR, IOT_DUMP_BSP_WIFI_INIT_FAIL, esp_ret, __LINE__);
@@ -340,13 +349,6 @@ iot_error_t iot_bsp_wifi_set_mode(iot_wifi_conf *conf)
 		break;
 
 	case IOT_WIFI_MODE_STATION:
-		esp_ret = esp_wifi_set_mode(WIFI_MODE_NULL);
-		if(esp_ret != ESP_OK) {
-			IOT_ERROR("esp_wifi_set_mode MODE_NULL failed err=[%d]", esp_ret);
-			IOT_DUMP(IOT_DEBUG_LEVEL_ERROR, IOT_DUMP_BSP_WIFI_SETMODE_FAIL, conf->mode, esp_ret);
-			return IOT_ERROR_CONN_OPERATE_FAIL;
-		}
-
 		esp_ret = esp_wifi_get_mode(&mode);
 		if(esp_ret != ESP_OK) {
 			IOT_ERROR("esp_wifi_get_mode failed err=[%d]", esp_ret);
@@ -513,11 +515,9 @@ uint16_t iot_bsp_wifi_get_scan_result(iot_wifi_scan_result_t *scan_result)
 					iot_wifi_auth_mode_t conv_auth_mode;
 
 					switch (ap_list[i].authmode) {
-#if (ESP_IDF_VERSION >= ESP_IDF_VERSION_VAL(4,3,0))
 						case WIFI_AUTH_WAPI_PSK:
 							conv_auth_mode = IOT_WIFI_AUTH_UNKNOWN;
 							break;
-#endif
 						case WIFI_AUTH_WPA2_WPA3_PSK:
 						case WIFI_AUTH_WPA3_PSK:
 							conv_auth_mode = IOT_WIFI_AUTH_WPA3_PERSONAL;

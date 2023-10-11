@@ -52,7 +52,7 @@ iot_error_t iot_bsp_system_get_time_in_sec(char* buf, unsigned int buf_len)
 	struct timeval tv = {0,};
 
 	gettimeofday(&tv, NULL);
-	snprintf(buf, buf_len, "%ld", tv.tv_sec);
+	snprintf(buf, buf_len, "%lld", tv.tv_sec);
 
 	return IOT_ERROR_NONE;
 }
@@ -63,29 +63,8 @@ iot_error_t iot_bsp_system_set_time_in_sec(const char* time_in_sec)
 
 	struct timeval tv = {0,};
 
-	sscanf(time_in_sec, "%ld", &tv.tv_sec);
+	sscanf(time_in_sec, "%lld", &tv.tv_sec);
 	settimeofday(&tv, NULL);
-
-	return IOT_ERROR_NONE;
-}
-
-iot_error_t iot_bsp_system_get_uniqueid(unsigned char **uid, size_t *olen)
-{
-	unsigned int *buf;
-	unsigned int chipid_reg = EFUSE_BLK0_RDATA1_REG; /* CRC of MAC */
-	size_t chipid_len = 2 * sizeof(unsigned int);
-
-	buf = (unsigned int *)malloc(chipid_len);
-	if (buf == NULL) {
-		IOT_ERROR("malloc failed for uid");
-		return IOT_ERROR_MEM_ALLOC;
-	}
-
-	buf[0] = REG_READ(chipid_reg + 0x0);
-	buf[1] = REG_READ(chipid_reg + 0x4);
-
-	*uid = (unsigned char *)buf;
-	*olen = chipid_len;
 
 	return IOT_ERROR_NONE;
 }

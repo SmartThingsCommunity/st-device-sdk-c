@@ -43,7 +43,6 @@ gg_connection_request_status _check_connection_response(char *response_payload, 
 	JSON_H *event_json = NULL;
 	JSON_H *cur_time_json = NULL;
 	char time_str[11] = {0,};
-	iot_error_t err;
 	gg_connection_request_status response_ret = GG_CONNECTION_REQUEST_STATUS_FAIL;
 	char *response_payload_str = NULL;
 
@@ -51,6 +50,7 @@ gg_connection_request_status _check_connection_response(char *response_payload, 
 #if defined(STDK_IOT_CORE_SERIALIZE_CBOR)
 	char *payload_json = NULL;
 	size_t payload_json_len = 0;
+	iot_error_t err;
 
 	err = iot_serialize_cbor2json((uint8_t *)response_payload,
 			(size_t)response_payload_len,
@@ -891,7 +891,6 @@ iot_error_t _iot_es_mqtt_connect(struct iot_context *ctx, st_mqtt_client target_
 	st_mqtt_broker_info_t broker_info;
 	int ret;
 	iot_error_t iot_ret = IOT_ERROR_NONE;
-	bool reboot;
 	char client_id[IOT_REG_UUID_STR_LEN + 1] = {0, };
 	struct iot_cloud_prov_data *cloud_prov;
 	char *root_cert = NULL;

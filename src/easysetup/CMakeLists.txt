@@ -8,7 +8,6 @@ if(CONFIG_STDK_IOT_CORE_EASYSETUP_HTTP)
 elseif(CONFIG_STDK_IOT_CORE_EASYSETUP_BLE)
     SET(EASYSETUP_D2D_SOURCES
         "${EASYSETUP_D2D_SOURCES}"
-        ble/iot_easysetup_ble_parser.c
         ble/iot_easysetup_ble.c
         ble/iot_easysetup_ble_task.c
         ble/iot_easysetup_ble_msg.c

@@ -18,11 +18,11 @@
 
 #include <string.h>
 #include <stdbool.h>
-#include "FreeRTOS.h"
-#include "task.h"
-#include "queue.h"
-#include "event_groups.h"
-#include "semphr.h"
+#include "freertos/FreeRTOS.h"
+#include "freertos/task.h"
+#include "freertos/queue.h"
+#include "freertos/event_groups.h"
+#include "freertos/semphr.h"
 
 #include "iot_error.h"
 #include "iot_os_util.h"
@@ -46,7 +46,7 @@ int iot_os_thread_create(void * thread_function, const char* name, int stack_siz
 		void* data, int priority, iot_os_thread* thread_handle)
 {
 	BaseType_t ret;
-	ret = xTaskCreate(thread_function, name, stack_size, data, priority, thread_handle);
+	ret = xTaskCreate(thread_function, name, stack_size, data, priority,(TaskHandle_t *)thread_handle);
 
 	return (ret == pdTRUE) ? IOT_OS_TRUE : IOT_OS_FALSE;
 }
