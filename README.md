@@ -68,6 +68,13 @@ Basically, you can build this core device library through `cmake` in the Ubuntu.
      $ make
      ```
 
+## Git Branch Guide
+
+We are managing two git branch categories. One is `develop` branch. The other is `release/v{version}` branchs. In `devleop` branch, we are merging latest developing features actively. In `release/v{version}` branchs, we branch out from `devleop` branch and keep them stable updating bugfix and small amendment. If you want to use latest SDK features for test or POC, we recommand `devleop` branch as base. Or if you want to apply the SDK in real product and consider commercializing, we recommand `release/v{version}` branchs as base.
+
+- `develop` branch : Latest devleoping features. Recommand for new feature test or POC.
+- `release/v{version}` branchs : Tested and stable branchs. Recommand for Commercial product.
+
 ## Learn more
 
 For more information, please review the following documents:
