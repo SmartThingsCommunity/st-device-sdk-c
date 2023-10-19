@@ -21,7 +21,6 @@
 #include <stdlib.h>
 
 typedef void *iot_os_thread;
-typedef void iot_os_queue;
 typedef void iot_os_eventgroup;
 typedef void iot_os_sem;
 typedef void *iot_os_timer;
@@ -109,77 +108,6 @@ void iot_os_thread_yield();
  *	otherwise :  fail
  */
 int iot_os_thread_get_current_handle(iot_os_thread* thread_handle);
-
-/**
- * @brief	create queue
- *
- * This function create queue and return queue handle
- *
- * @param[in] queue_length	maximum number of queue item
- * @param[in] item_size	size of item
- *
- * @return
- *	return is queue handle of queue created by this function
- *	If queue was not created, NULL is returned.
- *
- */
-iot_os_queue* iot_os_queue_create(int queue_length, int item_size);
-
-/**
- * @brief	reset queue
- *
- * This function reset queue
- *
- * @param[in] queue_handle	handle of queue to reset.
- *
- * @return
- *	IOT_OS_TRUE : success
- *  otherwise : fail
- *
- */
-int iot_os_queue_reset(iot_os_queue* queue_handle);
-
-/**
- * @brief	delete queue
- *
- * This function delete queue
- *
- * @param[in] queue_handle	handle of queue to be deleted.
- *
- */
-void iot_os_queue_delete(iot_os_queue* queue_handle);
-
-/**
- * @brief	send message to the back of queue.
- *
- * This function will send item to the back of queue
- *
- * @param[in] queue_handle	handle of queue to save item
- * @param[in] data	item to be saved in queue
- * @param[in] wait_time_ms	maximum time to wait until queue is available
- *
- * @return
- *	IOT_OS_TRUE : success
- *	otherwise :  fail
- *
- */
-int iot_os_queue_send(iot_os_queue* queue_handle, void * data, unsigned int wait_time_ms);
-
-/**
- * @brief	receive message from the front of queue.
- *
- * This function will receive item from the front of queue
- *
- * @param[in] queue_handle	handle of queue to receive item
- * @param[in] data	buffer for item received from queue
- * @param[in] wait_time_ms	maximum time to wait until queue is not empty
- *
- * @return
- *	IOT_OS_TRUE : success
- *	otherwise :  fail
- *
- */
-int iot_os_queue_receive(iot_os_queue* queue_handle, void * data, unsigned int wait_time_ms);
 
 /**
  * @brief	create eventgroup
