@@ -630,10 +630,12 @@ iot_error_t _iot_security_be_software_pk_sign_ed25519(iot_security_context_t *co
 	sig_buf->p = (unsigned char *)iot_os_malloc(sig_buf->len);
 	if (!sig_buf->p) {
 		IOT_ERROR("failed to malloc for sig");
+		memset(skpk, 0, sizeof(skpk));
 		IOT_ERROR_DUMP_AND_RETURN(MEM_ALLOC, 0);
 	}
 
 	ret = crypto_sign_detached(sig_buf->p, &olen, input_buf->p, input_buf->len, skpk);
+	memset(skpk, 0, sizeof(skpk));
 	if (ret) {
 		IOT_ERROR("crypto_sign_detached = %d", ret);
 		_iot_security_be_software_buffer_free(sig_buf);
