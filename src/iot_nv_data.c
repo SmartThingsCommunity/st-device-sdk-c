@@ -461,6 +461,9 @@ iot_error_t iot_nv_get_wifi_prov_data(struct iot_wifi_prov_data* wifi_prov)
 
 exit:
 	free(data);
+	if (ret) {
+		memset(wifi_prov, 0, sizeof(struct iot_wifi_prov_data));
+	}
 
 	return ret;
 }

@@ -75,32 +75,6 @@ int iot_os_thread_get_current_handle(iot_os_thread* thread_handle)
 #endif
 }
 
-/* Queue */
-iot_os_queue* iot_os_queue_create(int queue_length, int item_size)
-{
-	return xQueueCreate(queue_length, item_size);
-}
-
-int iot_os_queue_reset(iot_os_queue* queue_handle)
-{
-	return xQueueReset(queue_handle);
-}
-
-void iot_os_queue_delete(iot_os_queue* queue_handle)
-{
-	vQueueDelete(queue_handle);
-}
-
-int iot_os_queue_send(iot_os_queue* queue_handle, void * data, unsigned int wait_time_ms)
-{
-	return xQueueSend(queue_handle, data, pdMS_TO_TICKS(wait_time_ms));
-}
-
-int iot_os_queue_receive(iot_os_queue* queue_handle, void * data, unsigned int wait_time_ms)
-{
-	return xQueueReceive(queue_handle, data, pdMS_TO_TICKS(wait_time_ms));
-}
-
 /* Event Group */
 iot_os_eventgroup* iot_os_eventgroup_create(void)
 {

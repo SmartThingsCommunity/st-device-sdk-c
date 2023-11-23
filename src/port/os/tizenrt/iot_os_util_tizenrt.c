@@ -115,32 +115,6 @@ int iot_os_thread_get_current_handle(iot_os_thread* thread_handle)
     return IOT_OS_TRUE;
 }
 
-/* Queue */
-iot_os_queue *iot_os_queue_create(int queue_length, int item_size)
-{
-	return queue_create_wrapper(queue_length, item_size);
-}
-
-int iot_os_queue_reset(iot_os_queue *queue_handle)
-{
-	return queue_reset_wrapper((void *)queue_handle);
-}
-
-void iot_os_queue_delete(iot_os_queue *queue_handle)
-{
-	queue_delete_wrapper((void *)queue_handle);
-}
-
-int iot_os_queue_send(iot_os_queue *queue_handle, void *data, unsigned int wait_time_ms)
-{
-	return queue_send_wrapper(queue_handle, data, VALIDATE_MSEC2TICK(wait_time_ms));
-}
-
-int iot_os_queue_receive(iot_os_queue *queue_handle, void *data, unsigned int wait_time_ms)
-{
-	return queue_recv_wrapper((void *)queue_handle, data, VALIDATE_MSEC2TICK(wait_time_ms));
-}
-
 /* Event Group */
 iot_os_eventgroup* iot_os_eventgroup_create(void)
 {
