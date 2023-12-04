@@ -1187,19 +1187,24 @@ iot_error_t _iot_security_be_software_cipher_set_params(iot_security_context_t *
 STATIC_FUNCTION
 iot_error_t _iot_security_be_software_cipher_aes_check_info(iot_security_cipher_params_t *cipher_params, const mbedtls_cipher_info_t *mbed_cipher_info)
 {
+#if MBEDTLS_VERSION_NUMBER > 0x03000000
+	size_t mbed_cipher_key_bitlen, mbed_cipher_iv_size;
+#endif
 	if (!cipher_params || !mbed_cipher_info) {
 		IOT_ERROR("parameters are null");
 		IOT_ERROR_DUMP_AND_RETURN(INVALID_ARGS, 0);
 	}
 
 #if MBEDTLS_VERSION_NUMBER > 0x03000000
-	if (cipher_params->key.len != (mbed_cipher_info->MBEDTLS_PRIVATE(key_bitlen) / 8)) {
-		IOT_ERROR("key len mismatch, %d != %d", cipher_params->key.len, (mbed_cipher_info->MBEDTLS_PRIVATE(key_bitlen) / 8));
+	mbed_cipher_key_bitlen = mbedtls_cipher_info_get_key_bitlen(mbed_cipher_info);
+	mbed_cipher_iv_size = mbedtls_cipher_info_get_iv_size(mbed_cipher_info);
+	if (cipher_params->key.len != (mbed_cipher_key_bitlen / 8)) {
+		IOT_ERROR("key len mismatch, %d != %d", cipher_params->key.len, mbed_cipher_key_bitlen / 8);
 		IOT_ERROR_DUMP_AND_RETURN(CIPHER_KEY_LEN, (int)cipher_params->key.len);
 	}
 
-	if (cipher_params->iv.len != mbed_cipher_info->MBEDTLS_PRIVATE(iv_size)) {
-		IOT_ERROR("iv len mismatch, %d != %d", cipher_params->iv.len, mbed_cipher_info->MBEDTLS_PRIVATE(iv_size));
+	if (cipher_params->iv.len != mbed_cipher_iv_size) {
+		IOT_ERROR("iv len mismatch, %d != %d", cipher_params->iv.len, mbed_cipher_iv_size);
 		IOT_ERROR_DUMP_AND_RETURN(CIPHER_IV_LEN, (int)cipher_params->iv.len);
 	}
 #else
@@ -1223,6 +1228,9 @@ iot_error_t _iot_security_be_software_cipher_aes(iot_security_context_t *context
 	iot_error_t err;
 	iot_security_cipher_params_t *cipher_params;
 	const mbedtls_cipher_info_t *mbed_cipher_info;
+#if MBEDTLS_VERSION_NUMBER > 0x03000000
+	size_t mbed_cipher_key_bitlen;
+#endif
 	mbedtls_cipher_type_t mbed_cipher_alg;
 	mbedtls_cipher_context_t mbed_cipher_ctx;
 	mbedtls_operation_t mbed_op_mode;
@@ -1316,9 +1324,18 @@ iot_error_t _iot_security_be_software_cipher_aes(iot_security_context_t *context
 	}
 
 #if MBEDTLS_VERSION_NUMBER > 0x03000000
-	ret = mbedtls_cipher_setkey(&mbed_cipher_ctx, cipher_params->key.p, mbed_cipher_info->MBEDTLS_PRIVATE(key_bitlen), mbed_op_mode);
+	mbed_cipher_key_bitlen = mbedtls_cipher_info_get_key_bitlen(mbed_cipher_info);
+	ret = mbedtls_cipher_setkey(&mbed_cipher_ctx, cipher_params->key.p, mbed_cipher_key_bitlen, mbed_op_mode);
 	if (ret) {
 		IOT_ERROR("mbedtls_cipher_setup = -0x%04X", -ret);
+		err = IOT_ERROR_SECURITY_CIPHER_LIBRARY;
+		IOT_DUMP(IOT_DEBUG_LEVEL_ERROR, err, __LINE__, 0);
+		goto exit_free_output_buf;
+	}
+
+	ret = mbedtls_cipher_set_padding_mode(&mbed_cipher_ctx, MBEDTLS_PADDING_PKCS7);
+	if (ret) {
+		IOT_ERROR("mbedtls_cipher_set_padding_mode = -0x%04X", -ret);
 		err = IOT_ERROR_SECURITY_CIPHER_LIBRARY;
 		IOT_DUMP(IOT_DEBUG_LEVEL_ERROR, err, __LINE__, 0);
 		goto exit_free_output_buf;
