@@ -16,16 +16,199 @@
  *
  ****************************************************************************/
 
-#include <string.h>
-
-#include "iot_main.h"
 #include "iot_debug.h"
-#include "security/iot_security_helper.h"
+#include "security/iot_security_util.h"
+#include "port_crypto.h"
 
-#include "mbedtls/version.h"
-#include "mbedtls/sha256.h"
-#include "mbedtls/base64.h"
-#include "mbedtls/cipher.h"
+/* base64.c from mbedtls */
+
+static const unsigned char base64_enc_map[64] =
+{
+    'A', 'B', 'C', 'D', 'E', 'F', 'G', 'H', 'I', 'J',
+    'K', 'L', 'M', 'N', 'O', 'P', 'Q', 'R', 'S', 'T',
+    'U', 'V', 'W', 'X', 'Y', 'Z', 'a', 'b', 'c', 'd',
+    'e', 'f', 'g', 'h', 'i', 'j', 'k', 'l', 'm', 'n',
+    'o', 'p', 'q', 'r', 's', 't', 'u', 'v', 'w', 'x',
+    'y', 'z', '0', '1', '2', '3', '4', '5', '6', '7',
+    '8', '9', '+', '/'
+};
+
+static const unsigned char base64_dec_map[128] =
+{
+    127, 127, 127, 127, 127, 127, 127, 127, 127, 127,
+    127, 127, 127, 127, 127, 127, 127, 127, 127, 127,
+    127, 127, 127, 127, 127, 127, 127, 127, 127, 127,
+    127, 127, 127, 127, 127, 127, 127, 127, 127, 127,
+    127, 127, 127,  62, 127, 127, 127,  63,  52,  53,
+     54,  55,  56,  57,  58,  59,  60,  61, 127, 127,
+    127,  64, 127, 127, 127,   0,   1,   2,   3,   4,
+      5,   6,   7,   8,   9,  10,  11,  12,  13,  14,
+     15,  16,  17,  18,  19,  20,  21,  22,  23,  24,
+     25, 127, 127, 127, 127, 127, 127,  26,  27,  28,
+     29,  30,  31,  32,  33,  34,  35,  36,  37,  38,
+     39,  40,  41,  42,  43,  44,  45,  46,  47,  48,
+     49,  50,  51, 127, 127, 127, 127, 127
+};
+
+#define BASE64_SIZE_T_MAX   ( (size_t) -1 ) /* SIZE_T_MAX is not standard */
+
+/*
+ * Decode a base64-formatted buffer, copid from mbedtls_base64_decode
+ */
+static int _base64_decode( unsigned char *dst, size_t dlen, size_t *olen,
+                   const unsigned char *src, size_t slen )
+{
+    size_t i, n;
+    uint32_t j, x;
+    unsigned char *p;
+
+    /* First pass: check for validity and get output length */
+    for( i = n = j = 0; i < slen; i++ )
+    {
+        /* Skip spaces before checking for EOL */
+        x = 0;
+        while( i < slen && src[i] == ' ' )
+        {
+            ++i;
+            ++x;
+        }
+
+        /* Spaces at end of buffer are OK */
+        if( i == slen )
+            break;
+
+        if( ( slen - i ) >= 2 &&
+            src[i] == '\r' && src[i + 1] == '\n' )
+            continue;
+
+        if( src[i] == '\n' )
+            continue;
+
+        /* Space inside a line is an error */
+        if( x != 0 )
+            return( -1 );
+
+        if( src[i] == '=' && ++j > 2 )
+            return( -1 );
+
+        if( src[i] > 127 || base64_dec_map[src[i]] == 127 )
+            return( -1 );
+
+        if( base64_dec_map[src[i]] < 64 && j != 0 )
+            return( -1 );
+
+        n++;
+    }
+
+    if( n == 0 )
+    {
+        *olen = 0;
+        return( 0 );
+    }
+
+    /* The following expression is to calculate the following formula without
+     * risk of integer overflow in n:
+     *     n = ( ( n * 6 ) + 7 ) >> 3;
+     */
+    n = ( 6 * ( n >> 3 ) ) + ( ( 6 * ( n & 0x7 ) + 7 ) >> 3 );
+    n -= j;
+
+    if( dst == NULL || dlen < n )
+    {
+        *olen = n;
+        return( -1 );
+    }
+
+   for( j = 3, n = x = 0, p = dst; i > 0; i--, src++ )
+   {
+        if( *src == '\r' || *src == '\n' || *src == ' ' )
+            continue;
+
+        j -= ( base64_dec_map[*src] == 64 );
+        x  = ( x << 6 ) | ( base64_dec_map[*src] & 0x3F );
+
+        if( ++n == 4 )
+        {
+            n = 0;
+            if( j > 0 ) *p++ = (unsigned char)( x >> 16 );
+            if( j > 1 ) *p++ = (unsigned char)( x >>  8 );
+            if( j > 2 ) *p++ = (unsigned char)( x       );
+        }
+    }
+
+    *olen = p - dst;
+
+    return( 0 );
+}
+
+/*
+ * Encode a buffer into base64 format, copied from mbedtls_base64_encode
+ */
+int _base64_encode( unsigned char *dst, size_t dlen, size_t *olen,
+                   const unsigned char *src, size_t slen )
+{
+    size_t i, n;
+    int C1, C2, C3;
+    unsigned char *p;
+
+    if( slen == 0 )
+    {
+        *olen = 0;
+        return( 0 );
+    }
+
+    n = slen / 3 + ( slen % 3 != 0 );
+
+    if( n > ( BASE64_SIZE_T_MAX - 1 ) / 4 )
+    {
+        *olen = BASE64_SIZE_T_MAX;
+        return( -1 );
+    }
+
+    n *= 4;
+
+    if( ( dlen < n + 1 ) || ( NULL == dst ) )
+    {
+        *olen = n + 1;
+        return( -1 );
+    }
+
+    n = ( slen / 3 ) * 3;
+
+    for( i = 0, p = dst; i < n; i += 3 )
+    {
+        C1 = *src++;
+        C2 = *src++;
+        C3 = *src++;
+
+        *p++ = base64_enc_map[(C1 >> 2) & 0x3F];
+        *p++ = base64_enc_map[(((C1 &  3) << 4) + (C2 >> 4)) & 0x3F];
+        *p++ = base64_enc_map[(((C2 & 15) << 2) + (C3 >> 6)) & 0x3F];
+        *p++ = base64_enc_map[C3 & 0x3F];
+    }
+
+    if( i < slen )
+    {
+        C1 = *src++;
+        C2 = ( ( i + 1 ) < slen ) ? *src++ : 0;
+
+        *p++ = base64_enc_map[(C1 >> 2) & 0x3F];
+        *p++ = base64_enc_map[(((C1 & 3) << 4) + (C2 >> 4)) & 0x3F];
+
+        if( ( i + 1 ) < slen )
+             *p++ = base64_enc_map[((C2 & 15) << 2) & 0x3F];
+        else *p++ = '=';
+
+        *p++ = '=';
+    }
+
+    *olen = p - dst;
+    *p = 0;
+
+    return( 0 );
+}
+
+/* base64.c from mbedtls */
 
 static iot_error_t _iot_security_url_encode(char *buf, size_t buf_len)
 {
@@ -110,9 +293,9 @@ iot_error_t iot_security_base64_encode(const unsigned char *src, size_t src_len,
 
 	IOT_DEBUG("src: %d@%p, dst: %d@%p", (int)src_len, src, (int)dst_len, dst);
 
-	ret = mbedtls_base64_encode(dst, dst_len, out_len, src, src_len);
+	ret = _base64_encode(dst, dst_len, out_len, src, src_len);
 	if (ret) {
-		IOT_ERROR("mbedtls_base64_encode = -0x%04X", -ret);
+		IOT_ERROR("_base64_encode = -0x%04X", -ret);
 		IOT_ERROR_DUMP_AND_RETURN(BASE64_ENCODE, -ret);
 	}
 
@@ -144,9 +327,9 @@ iot_error_t iot_security_base64_decode(const unsigned char *src, size_t src_len,
 
 	IOT_DEBUG("src: %d@%p, dst: %d@%p", (int)src_len, src, (int)dst_len, dst);
 
-	ret = mbedtls_base64_decode(dst, dst_len, out_len, src, src_len);
+	ret = _base64_decode(dst, dst_len, out_len, src, src_len);
 	if (ret) {
-		IOT_ERROR("mbedtls_base64_decode = -0x%04X", -ret);
+		IOT_ERROR("_base64_decode = -0x%04X", -ret);
 		IOT_ERROR_DUMP_AND_RETURN(BASE64_DECODE, -ret);
 	}
 
@@ -178,9 +361,9 @@ iot_error_t iot_security_base64_encode_urlsafe(const unsigned char *src, size_t 
 
 	IOT_DEBUG("src: %d@%p, dst: %d@%p", (int)src_len, src, (int)dst_len, dst);
 
-	ret = mbedtls_base64_encode(dst, dst_len, out_len, src, src_len);
+	ret = _base64_encode(dst, dst_len, out_len, src, src_len);
 	if (ret) {
-		IOT_ERROR("mbedtls_base64_encode = -0x%04X", -ret);
+		IOT_ERROR("_base64_encode = -0x%04X", -ret);
 		IOT_ERROR_DUMP_AND_RETURN(BASE64_URL_ENCODE, -ret);
 	}
 
@@ -242,9 +425,9 @@ iot_error_t iot_security_base64_decode_urlsafe(const unsigned char *src, size_t 
 		IOT_ERROR_DUMP_AND_RETURN(BASE64_URL_DECODE, ret);
 	}
 
-	ret = mbedtls_base64_decode(dst, dst_len, out_len, (const unsigned char *)src_dup, align_len);
+	ret = _base64_decode(dst, dst_len, out_len, (const unsigned char *)src_dup, align_len);
 	if (ret) {
-		IOT_ERROR("mbedtls_base64_decode = -0x%04X", -ret);
+		IOT_ERROR("_base64_decode = -0x%04X", -ret);
 		iot_os_free(src_dup);
 		IOT_ERROR_DUMP_AND_RETURN(BASE64_URL_DECODE, -ret);
 	}
@@ -255,28 +438,47 @@ iot_error_t iot_security_base64_decode_urlsafe(const unsigned char *src, size_t 
 	return IOT_ERROR_NONE;
 }
 
+iot_error_t iot_security_sha512(const unsigned char *input, size_t input_len, unsigned char *output, size_t output_len)
+{
+	int ret;
+
+	if (!input || (input_len == 0)) {
+		IOT_ERROR("invalid input with %d@%p", (int)input_len, input);
+		return IOT_ERROR_SECURITY_INVALID_ARGS;
+	}
+
+	if (!output || (output_len < 64)) {
+		IOT_ERROR("invalid output with %d@%p", (int)output_len, output);
+		return IOT_ERROR_SECURITY_INVALID_ARGS;
+	}
+
+	ret = port_crypto_sha512(input, input_len, output, output_len);
+	if (ret) {
+		IOT_ERROR("port_crypto_sha512 ret %04x", ret);
+		return ret;
+	}
+
+	return IOT_ERROR_NONE;
+}
+
 iot_error_t iot_security_sha256(const unsigned char *input, size_t input_len, unsigned char *output, size_t output_len)
 {
 	int ret;
 
 	if (!input || (input_len == 0)) {
 		IOT_ERROR("invalid input with %d@%p", (int)input_len, input);
-		IOT_ERROR_DUMP_AND_RETURN(INVALID_ARGS, 0);
+		return IOT_ERROR_SECURITY_INVALID_ARGS;
 	}
 
-	if (!output || (output_len < IOT_SECURITY_SHA256_LEN)) {
+	if (!output || (output_len < 32)) {
 		IOT_ERROR("invalid output with %d@%p", (int)output_len, output);
-		IOT_ERROR_DUMP_AND_RETURN(INVALID_ARGS, 0);
+		return IOT_ERROR_SECURITY_INVALID_ARGS;
 	}
 
-#if MBEDTLS_VERSION_NUMBER > 0x03000000
-	ret = mbedtls_sha256(input, input_len, output, 0);
-#else
-	ret = mbedtls_sha256_ret(input, input_len, output, 0);
-#endif
+	ret = port_crypto_sha256(input, input_len, output, output_len);
 	if (ret) {
-		IOT_ERROR("mbedtls_sha256_ret = -0x%04X", -ret);
-		IOT_ERROR_DUMP_AND_RETURN(SHA256, -ret);
+		IOT_ERROR("port_crypto_sha256 ret %04x", ret);
+		return ret;
 	}
 
 	return IOT_ERROR_NONE;

@@ -29,7 +29,7 @@
 #include "iot_debug.h"
 #include "security/iot_security_crypto.h"
 #include "security/iot_security_ecdh.h"
-#include "security/iot_security_helper.h"
+#include "security/iot_security_util.h"
 
 
 #define PIN_SIZE	8

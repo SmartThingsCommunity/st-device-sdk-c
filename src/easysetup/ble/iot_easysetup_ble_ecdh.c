@@ -27,7 +27,7 @@
 #include <bsp/iot_bsp_random.h>
 #include <security/iot_security_manager.h>
 #include <iot_util.h>
-#include <security/iot_security_helper.h>
+#include <security/iot_security_util.h>
 #include "iot_debug.h"
 
 #define ECDH_BLE_RANDOM_LEN		16

@@ -23,8 +23,6 @@
 #include "security/iot_security_crypto.h"
 #include "security/backend/iot_security_be.h"
 
-#include "mbedtls/cipher.h"
-
 iot_error_t iot_security_pk_init(iot_security_context_t *context)
 {
 	iot_error_t err;
@@ -289,59 +287,6 @@ iot_error_t iot_security_cipher_deinit(iot_security_context_t *context)
 	context->sub_system &= ~IOT_SECURITY_SUB_CIPHER;
 
 	return IOT_ERROR_NONE;
-}
-
-size_t iot_security_cipher_get_align_size(iot_security_key_type_t key_type, size_t data_size)
-{
-	const mbedtls_cipher_info_t *cipher_info;
-	mbedtls_cipher_context_t cipher_ctx;
-	mbedtls_cipher_type_t cipher_alg;
-	unsigned int block_size;
-	int ret;
-
-	IOT_DEBUG("data size = %d, type = %d", (int)data_size, key_type);
-
-	if (key_type == IOT_SECURITY_KEY_TYPE_AES256) {
-		cipher_alg = MBEDTLS_CIPHER_AES_256_CBC;
-	} else {
-		IOT_ERROR("'%d' is not supported cipher algorithm", key_type);
-		return 0;
-	}
-
-	if (!data_size) {
-		IOT_ERROR("input size is zero");
-		return 0;
-	}
-
-	cipher_info = mbedtls_cipher_info_from_type(cipher_alg);
-	if (!cipher_info) {
-		IOT_ERROR("mbedtls_cipher_info_from_type returned null");
-		return 0;
-	}
-
-	mbedtls_cipher_init(&cipher_ctx);
-
-	ret = mbedtls_cipher_setup(&cipher_ctx, cipher_info);
-	if (ret) {
-		IOT_ERROR("mbedtls_cipher_setup = -0x%04X", -ret);
-		mbedtls_cipher_free(&cipher_ctx);
-		return 0;
-	}
-
-	block_size = mbedtls_cipher_get_block_size(&cipher_ctx);
-	if (block_size == 0) {
-		IOT_ERROR("mbedtls_cipher_get_block_size returned zero");
-		mbedtls_cipher_free(&cipher_ctx);
-		return 0;
-	}
-
-	data_size = data_size + (block_size - (data_size % block_size));
-
-	mbedtls_cipher_free(&cipher_ctx);
-
-	IOT_DEBUG("align size = %d", (int)data_size);
-
-	return data_size;
 }
 
 iot_error_t iot_security_cipher_set_params(iot_security_context_t *context, iot_security_cipher_params_t *cipher_set_params)

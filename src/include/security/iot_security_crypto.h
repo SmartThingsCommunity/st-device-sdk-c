@@ -139,15 +139,6 @@ iot_error_t iot_security_cipher_init(iot_security_context_t *context);
 iot_error_t iot_security_cipher_deinit(iot_security_context_t *context);
 
 /**
- * @brief	Generate a digest by sha256 hash
- * @param[in]	key_type a algorithm type for cipher operation
- * @param[in]	data_size the size of data for cipher operation
- * @retval	return calculated align size for request key type
- * 		return zero size if failed to calculate align size
- */
-size_t iot_security_cipher_get_align_size(iot_security_key_type_t key_type, size_t data_size);
-
-/**
  * @brief	Set the parameter for cipher operation
  * @details	Set the cipher algorithm, Key and IV
  * @param[in]	context reference to the security context

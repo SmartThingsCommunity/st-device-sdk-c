@@ -23,7 +23,7 @@
 #include "iot_uuid.h"
 #include "iot_bsp_random.h"
 #include "iot_debug.h"
-#include "security/iot_security_helper.h"
+#include "security/iot_security_util.h"
 
 iot_error_t iot_get_random_uuid_from_mac(struct iot_uuid *uuid)
 {
