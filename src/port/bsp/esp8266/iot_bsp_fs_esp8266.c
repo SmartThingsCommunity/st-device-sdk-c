@@ -25,7 +25,7 @@
 #include "iot_bsp_nv_data.h"
 #include "iot_debug.h"
 #if defined(CONFIG_STDK_IOT_CORE_FS_SW_ENCRYPTION)
-#include "security/backend/lib/iot_security_ss.h"
+#include "iot_security_ss.h"
 #endif
 
 #define STDK_NV_DATA_PARTITION "stnv"
