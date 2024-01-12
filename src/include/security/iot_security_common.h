@@ -20,14 +20,13 @@
 #define _IOT_SECURITY_COMMON_H_
 
 #include <stdbool.h>
-#include "sodium.h"
 #include "iot_security_error.h"
 
 #ifdef __cplusplus
 extern "C" {
 #endif
 
-#define IOT_SECURITY_ED25519_LEN                crypto_sign_PUBLICKEYBYTES
+#define IOT_SECURITY_ED25519_LEN                32
 #define IOT_SECURITY_SECRET_LEN                 32
 #define IOT_SECURITY_IV_LEN                     16
 #define IOT_SECURITY_SHA256_LEN                 32
@@ -50,6 +49,17 @@ typedef struct iot_security_buffer {
 	size_t len;                                     /**< @brief length of buffer */
 	unsigned char *p;                               /**< @brief pointer of buffer */
 } iot_security_buffer_t;
+
+static inline void iot_security_buffer_free(iot_security_buffer_t *buffer)
+{
+	if (buffer) {
+		if (buffer->p && buffer->len) {
+			memset(buffer->p, 0, buffer->len);
+			iot_os_free(buffer->p);
+		}
+		memset(buffer, 0, sizeof(iot_security_buffer_t));
+	}
+}
 
 /**
  * @brief Algorithm types of key

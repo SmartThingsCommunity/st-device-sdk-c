@@ -25,7 +25,7 @@
 
 #include "iot_os_util.h"
 #include "iot_bsp_system.h"
-#include "security/iot_security_helper.h"
+#include "security/iot_security_util.h"
 #ifdef CONFIG_STDK_IOT_CORE_LOG_FILE
 #include "iot_log_file.h"
 #endif

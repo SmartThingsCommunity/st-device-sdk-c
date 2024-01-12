@@ -20,7 +20,7 @@
 #include <iot_easysetup.h>
 #include <iot_debug.h>
 #include <iot_error.h>
-#include <security/iot_security_helper.h>
+#include <security/iot_security_util.h>
 
 #define HASH_SIZE (4)
 #if defined(CONFIG_STDK_IOT_CORE_EASYSETUP_X509)

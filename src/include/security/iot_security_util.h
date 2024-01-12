@@ -16,10 +16,10 @@
  *
  ****************************************************************************/
 
-#ifndef _IOT_SECURITY_HELPER_H_
-#define _IOT_SECURITY_HELPER_H_
+#ifndef _IOT_SECURITY_UTIL_H_
+#define _IOT_SECURITY_UTIL_H_
 
-#include "iot_security_common.h"
+#include "iot_error.h"
 
 #ifdef __cplusplus
 extern "C" {
@@ -85,6 +85,17 @@ iot_error_t iot_security_base64_encode_urlsafe(const unsigned char *src, size_t 
 iot_error_t iot_security_base64_decode_urlsafe(const unsigned char *src, size_t src_len, unsigned char *dst, size_t dst_len, size_t *out_len);
 
 /**
+ * @brief	Generate a digest by sha512 hash
+ * @param[in]	src a pointer to a buffer to generate a digest
+ * @param[in]	src_len the size of buffer pointed by src in bytes
+ * @param[out]	dst a pointer to a buffer to store a digest
+ * @retval	IOT_ERROR_NONE success
+ * @retval	IOT_ERROR_INVALID_ARGS input parameter is invalid
+ * @retval	IOT_ERROR_SECURITY_SHA256 failed to generate a digest
+ */
+iot_error_t iot_security_sha512(const unsigned char *input, size_t input_len, unsigned char *output, size_t output_len);
+
+/**
  * @brief	Generate a digest by sha256 hash
  * @param[in]	src a pointer to a buffer to generate a digest
  * @param[in]	src_len the size of buffer pointed by src in bytes
@@ -95,28 +106,8 @@ iot_error_t iot_security_base64_decode_urlsafe(const unsigned char *src, size_t 
  */
 iot_error_t iot_security_sha256(const unsigned char *input, size_t input_len, unsigned char *output, size_t output_len);
 
-/**
- * @brief	Converts an ed25519 public key to an x25519 public key
- * @param[in]	ed25519_key a pointer to a public key buffer
- * @param[out]	curve25519_key a pointer to a buffer to store converted x25519 public key
- * @retval	IOT_ERROR_NONE success
- * @retval	IOT_ERROR_INVALID_ARGS input parameter is invalid
- * @retval	IOT_ERROR_CRYPTO_ED_KEY_CONVERT failed to convert to x25519
- */
-iot_error_t iot_security_ed25519_convert_pubkey(unsigned char *ed25519_key, unsigned char *curve25519_key);
-
-/**
- * @brief	Converts an ed25519 secret key to an x25519 secret key
- * @param[in]	ed25519_key a pointer to a secret key buffer
- * @param[out]	curve25519_key a pointer to a buffer to store converted x25519 secret key
- * @retval	IOT_ERROR_NONE success
- * @retval	IOT_ERROR_INVALID_ARGS input parameter is invalid
- * @retval	IOT_ERROR_CRYPTO_ED_KEY_CONVERT failed to convert to x25519
- */
-iot_error_t iot_security_ed25519_convert_seckey(unsigned char *ed25519_key, unsigned char *curve25519_key);
-
 #ifdef __cplusplus
 }
 #endif
 
-#endif /* _IOT_SECURITY_HELPER_H_ */
+#endif /* _IOT_SECURITY_UTIL_H_ */

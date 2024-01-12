@@ -27,7 +27,7 @@
 #include "iot_nv_data.h"
 #include "iot_util.h"
 #include "iot_debug.h"
-#include "security/iot_security_helper.h"
+#include "security/iot_security_util.h"
 
 #define PIN_SIZE	8
 #define MAC_ADDR_BUFFER_SIZE	20

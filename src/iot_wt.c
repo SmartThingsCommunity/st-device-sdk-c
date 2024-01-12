@@ -28,7 +28,7 @@
 #include "iot_uuid.h"
 #include "iot_wt.h"
 #include "security/iot_security_crypto.h"
-#include "security/iot_security_helper.h"
+#include "security/iot_security_util.h"
 
 static iot_security_buffer_t *_iot_wt_alloc_b64_buffer(size_t plain_len)
 {

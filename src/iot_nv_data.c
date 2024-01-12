@@ -28,7 +28,7 @@
 #if !defined(CONFIG_STDK_IOT_CORE_SUPPORT_STNV_PARTITION)
 #include "iot_internal.h"
 #endif
-#include "security/iot_security_helper.h"
+#include "security/iot_security_util.h"
 #include "security/iot_security_manager.h"
 #include "security/iot_security_storage.h"
 

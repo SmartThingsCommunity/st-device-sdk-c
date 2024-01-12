@@ -15,4 +15,4 @@ target_sources(iotcore
         )
 endif()
 
-target_link_libraries(iotcore PRIVATE idf::spi_flash idf::esp_partition idf::esp_wifi idf::mbedtls idf::json idf::espressif__libsodium idf::nvs_flash idf::bootloader_support)
+target_link_libraries(iotcore PRIVATE idf::spi_flash idf::esp_partition idf::esp_wifi idf::json idf::nvs_flash idf::bootloader_support)

@@ -30,7 +30,7 @@
 #include "iot_uuid.h"
 #include "iot_bsp_wifi.h"
 #include "security/iot_security_common.h"
-#include "security/iot_security_helper.h"
+#include "security/iot_security_util.h"
 #include "iot_bsp_system.h"
 
 #include "JSON.h"

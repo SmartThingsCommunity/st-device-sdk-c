@@ -4,13 +4,16 @@
 
 ifdef CONFIG_STDK_IOT_CORE
 
-COMPONENT_ADD_INCLUDEDIRS += include include/bsp include/os include/mqtt include/external
+COMPONENT_ADD_INCLUDEDIRS += include include/bsp include/os include/mqtt include/external include/port
 
 COMPONENT_SRCDIRS += ./
 
 ifeq ($(CONFIG_STDK_IOT_CORE_BSP_SUPPORT_ESP8266),y)
 	COMPONENT_SRCDIRS += port/bsp/esp8266
 	COMPONENT_ADD_INCLUDEDIRS += include/bsp/esp8266
+	ifdef CONFIG_STDK_IOT_CORE_FS_SW_ENCRYPTION
+	COMPONENT_ADD_LDFLAGS += -L $(COMPONENT_PATH)/port/bsp/esp8266 -liot_security_ss
+	endif
 else ifeq ($(CONFIG_STDK_IOT_CORE_BSP_SUPPORT_ESP32),y)
 	COMPONENT_SRCDIRS += port/bsp/esp32
 	COMPONENT_ADD_INCLUDEDIRS += include/bsp/esp32
@@ -65,15 +68,9 @@ COMPONENT_SRCDIRS += deps/cbor/tinycbor/src
 COMPONENT_ADD_INCLUDEDIRS += deps/cbor/tinycbor/src
 
 COMPONENT_SRCDIRS += security
-COMPONENT_SRCDIRS += security/helper/libsodium
-ifdef CONFIG_STDK_IOT_CORE_USE_MBEDTLS
-COMPONENT_SRCDIRS += security/helper/mbedtls
-endif
+COMPONENT_SRCDIRS += port/crypto/reference
 ifeq ($(CONFIG_STDK_IOT_CORE_SECURITY_BACKEND_SOFTWARE),y)
 	COMPONENT_SRCDIRS += security/backend/software
-	ifdef CONFIG_STDK_IOT_CORE_FS_SW_ENCRYPTION
-	COMPONENT_ADD_LDFLAGS += -L $(COMPONENT_PATH)/security/backend/software/lib/esp -liot_security_ss
-	endif
 else ifeq ($(CONFIG_STDK_IOT_CORE_SECURITY_BACKEND_HARDWARE),y)
 	COMPONENT_SRCDIRS += security/backend/hardware
 endif

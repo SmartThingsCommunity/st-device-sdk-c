@@ -76,6 +76,7 @@ target_include_directories(iotcore
         include/os
         include/mqtt
         include/external
+        include/port
         ${STDK_INCLUDE_PATH}
         PUBLIC
         include/bsp

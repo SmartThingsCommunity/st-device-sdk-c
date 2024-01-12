@@ -12,13 +12,13 @@ NET_DIR = src/port/net/mbedtls
 else
 NET_DIR = src/port/net/openssl
 endif
+CRYPTO_DIR = src/port/crypto/reference
 
 ifneq ($(findstring STDK_IOT_CORE_EASYSETUP_HTTP_USE_SOCKET_API, $(STDK_CONFIGS)),)
 HTTP_DIR = src/port/http/socket
 endif
 
 
-CRYPTO_DIR = src/crypto
 SECURITY_DIR = src/security
 EASYSETUP_DIR = src/easysetup
 MQTT_DIR = src/mqtt
@@ -31,7 +31,7 @@ CFLAGS	:= -std=c99 -D_GNU_SOURCE
 CFLAGS	+= $(STDK_CFLAGS)
 
 
-INCS	:= -I/usr/include -Isrc/include -Isrc/include/mqtt -Isrc/include/os -Isrc/include/bsp -Isrc/include/external -I$(NET_DIR) -I$(HTTP_DIR)
+INCS	:= -I/usr/include -Isrc/include -Isrc/include/mqtt -Isrc/include/os -Isrc/include/bsp -Isrc/include/external -I$(NET_DIR) -I$(HTTP_DIR) -Isrc/include/port
 INCS	+= -Isrc/include/security
 INCS	+= -I$(CBOR_DIR)
 
@@ -59,10 +59,6 @@ SRCS	+= $(wildcard $(MQTT_DIR)/packet/*.c)
 SRCS	+= $(wildcard $(SECURITY_DIR)/*.c)
 ifneq ($(findstring STDK_IOT_CORE_SECURITY_BACKEND_SOFTWARE, $(STDK_CONFIGS)),)
 SRCS	+= $(wildcard $(SECURITY_DIR)/backend/software/*.c)
-endif
-SRCS	+= $(wildcard $(SECURITY_DIR)/helper/libsodium/*.c)
-ifneq ($(findstring STDK_IOT_CORE_USE_MBEDTLS, $(STDK_CONFIGS)),)
-SRCS	+= $(wildcard $(SECURITY_DIR)/helper/mbedtls/*.c)
 endif
 
 OBJS	= $(SRCS:%.c=%.o)

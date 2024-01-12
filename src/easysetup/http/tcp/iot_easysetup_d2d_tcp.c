@@ -29,7 +29,7 @@
 #include "iot_debug.h"
 #include "security/iot_security_crypto.h"
 #include "security/iot_security_ecdh.h"
-#include "security/iot_security_helper.h"
+#include "security/iot_security_util.h"
 
 
 #define PIN_SIZE	8
@@ -230,7 +230,7 @@ dec_fail:
 STATIC_FUNCTION
 iot_error_t _es_time_set(unsigned char *time)
 {
-	char time_str[11] = {0,};
+	char time_str[20] = {0,};
 	iot_error_t err = IOT_ERROR_NONE;
 	struct tm tm = { 0 };
 	time_t now = 0;
@@ -262,7 +262,7 @@ iot_error_t _es_time_set(unsigned char *time)
 	tm.tm_mon -= 1;
 
 	now = mktime(&tm);
-	snprintf(time_str, sizeof(time_str), "%lld", now);
+	snprintf(time_str, sizeof(time_str), "%lld", (long long)now);
 
 	err = iot_bsp_system_set_time_in_sec(time_str);
 	if (err) {
