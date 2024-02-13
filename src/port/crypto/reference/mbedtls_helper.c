@@ -421,8 +421,8 @@ iot_error_t mbedtls_helper_pk_verify_rsa(iot_security_pk_params_t *pk_params, io
 		return IOT_ERROR_SECURITY_PK_INVALID_PUBKEY;
 	}
 
-	IOT_DEBUG("input:  %3d@%p", (int)input->len, input->p);
-	IOT_DEBUG("sig:    %3d@%p", (int)sig->len, sig->p);
+	IOT_DEBUG("input:  %3d@%p", (int)input_buf->len, input_buf->p);
+	IOT_DEBUG("sig:    %3d@%p", (int)sig_buf->len, sig_buf->p);
 	IOT_DEBUG("pubkey: %3d@%p", (int)pk_params->pubkey.len, pk_params->pubkey);
 
 	mbed_md_type = MBEDTLS_MD_SHA256;
@@ -464,8 +464,8 @@ iot_error_t mbedtls_helper_pk_verify_ecdsa(iot_security_pk_params_t *pk_params, 
 		return IOT_ERROR_SECURITY_PK_INVALID_PUBKEY;
 	}
 
-	IOT_DEBUG("input:  %3d@%p", (int)input->len, input->p);
-	IOT_DEBUG("sig:    %3d@%p", (int)sig->len, sig->p);
+	IOT_DEBUG("input:  %3d@%p", (int)input_buf->len, input_buf->p);
+	IOT_DEBUG("sig:    %3d@%p", (int)sig_buf->len, sig_buf->p);
 	IOT_DEBUG("pubkey: %3d@%p", (int)pk_params->pubkey.len, pk_params->pubkey);
 
 	mbed_md_type = MBEDTLS_MD_SHA256;
