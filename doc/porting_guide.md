@@ -132,7 +132,7 @@ The BSP is the well-defined set of functions that the IoT core device library in
 
 In other words, porting APIs which are ported are designed to be implemented only for the functions required by the IoT core device library. Currently, there are 21 APIs to be ported by each hardware architecture.
 
-For additional information about API parameters, please refer to the [API document](https://github.com/SmartThingsCommunity/st-device-sdk-c/blob/master/doc/STDK_APIs.pdf).
+For additional information about API parameters, please refer to the [API document](https://github.com/SmartThingsCommunity/st-device-sdk-c/blob/master/doc/APIs.md).
 
 #### File system
 
@@ -207,8 +207,8 @@ For additional information about API parameters, please refer to the [API docume
 A Network layer provides the STDK with TLS communication using various TLS/SSL libraries.
 The SmartThings does not support non-TLS communication.
 
-A network interface instance is created via the [`iot_net_init`](https://github.com/SmartThingsCommunity/st-device-sdk-c/blob/master/src/include/iot_easysetup.h#L78) function.
-And the library specific parameter must be implemented in [`iot_net_platform_context_t context`](https://github.com/SmartThingsCommunity/st-device-sdk-c/blob/master/src/include/iot_easysetup.h#L53).
+A network interface instance is created via the [`iot_net_init`](https://github.com/SmartThingsCommunity/st-device-sdk-c/blob/master/src/include/iot_net.h#L82) function.
+And the library specific parameter must be implemented in [`iot_net_platform_context_t context`](https://github.com/SmartThingsCommunity/st-device-sdk-c/blob/master/src/include/iot_net.h#L55).
 
 #### Existing implementations
 - [`iot_net_mbedtls.c`](https://github.com/SmartThingsCommunity/st-device-sdk-c/blob/master/src/port/net/mbedtls/iot_net_mbedtls.c)

@@ -10,7 +10,7 @@ This article demonstrates how to integrate a direct-connected device with SmartT
 
 In the documents, we will show how to develop simple switch example with SmartThings SDK.
 
-Before developing deivces, you need to register your device profile, onboarding information and device information on [Developer Workspace](https://smartthings.developer.samsung.com/workspace/projects).
+Before developing deivces, you need to register your device profile, onboarding information and device information on [Developer Workspace](https://developer.smartthings.com/workspace/projects).
 
 And with the informaiton, you can start developing your device application with SmartThings SDK.
 
@@ -21,7 +21,7 @@ And with the informaiton, you can start developing your device application with 
 
 ## Register a Device on Developer Workspace
 
-First, please sign in to the [Developer Workspace](https://smartthings.developer.samsung.com/workspace/) with a Samsung Account.
+First, please sign in to the [Developer Workspace](https://developer.smartthings.com/workspace/) with a Samsung Account.
 
 ![sign in](./res/sign_in.png)
 

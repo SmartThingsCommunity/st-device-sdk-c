@@ -82,8 +82,8 @@ For more information, please review the following documents:
 - [Getting Started](./doc/getting_started.md) : It covers the overall workflow and detailed steps for starters to work with SDK.
 - [API References](./doc/APIs.md) : It provide all API reference that SDK offers.
 - [Commercialization Guide](./doc/Commercialization_Guide) : It provides guide for ones who consider commercializing their IoT products with SDK.
-- [Capabilities Reference](https://developer.smartthings.com/docs/devices/capabilities/capabilities) : This page serves as a reference for the supported capabilities.
-- [Developer Workspace](https://smartthings.developer.samsung.com/workspace/) : It provides functions related to device information registration and device integration in the SmartThings cloud.
+- [Capabilities Reference](https://developer.smartthings.com/docs/devices/capabilities/capabilities-reference) : This page serves as a reference for the supported capabilities.
+- [Developer Workspace](https://developer.smartthings.com/workspace/) : It provides functions related to device information registration and device integration in the SmartThings cloud.
 
 ## Contact
 
