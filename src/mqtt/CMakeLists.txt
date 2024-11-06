@@ -1,0 +1,14 @@
+target_sources(iotcore
+        PRIVATE
+        client/iot_mqtt_client.c
+        packet/iot_mqtt_connect_client.c
+        packet/iot_mqtt_connect_server.c
+        packet/iot_mqtt_deserialize_publish.c
+        packet/iot_mqtt_format.c
+        packet/iot_mqtt_packet.c
+        packet/iot_mqtt_serialize_publish.c
+        packet/iot_mqtt_subscribe_client.c
+        packet/iot_mqtt_subscribe_server.c
+        packet/iot_mqtt_unsubscribe_client.c
+        packet/iot_mqtt_unsubscribe_server.c
+        )

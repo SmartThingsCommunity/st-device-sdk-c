@@ -1,0 +1,165 @@
+# HISTORY
+
+## 2.0.1 : Changes for version 2.0.1
+
+New Improvements or features:
+
+- Supporting ED25519 BLE Onboarding feature
+
+Enhancements or amendments:
+
+- Main task is working based on events instead of polling.
+- Remove Capability command arguments count limit.
+- Unmaintained porting layers and examples were deleted.
+  -- Deleted examples
+    -- posix
+	-- raspberry
+  -- Deleted porting layer
+    -- MX Chips (emw3080, emw3166)
+	-- Realtek (RTL8195, RTL8720c, RTL8721c)
+	-- linux
+	-- tizenrt
+	-- openssl
+
+Bug fixed:
+
+- Unit test codes for the latest SDK code were updated.
+- Unit test cases were added and failed ones were modified.
+
+## 1.8.12 : Changes for version 1.8.12
+
+New Improvements or features
+
+ - Add new iot_bsp_wifi porting API to get auth mode
+ - add caps helper for pH Measurement
+ - Add support of network error code for user help contents
+ - Add esp32 example
+ - Add raspberry pi example
+ - Apply backoff algorithm when MQTT reconnecting
+ - Support Device Preference feature.
+
+Enhancements or amendments
+
+ - Replace internal queue implement with internal data struct(Remove porting API)
+ - Refactoring iot-main core logic
+   -- st_conn_start do not block until onboarding done.
+ - Update fanOscilationMode cap helper
+ - Support esp-idf v5.0
+
+## 1.7.0 : Changes for version 1.7.0
+
+New Improvements or features
+
+ - Add changing device name feature
+   -- New API : st_change_device_name() added
+ - Add 'esp32c3' bsp and modify related component.mk/cmake file
+ - Add capability helper for 'mode' capability
+
+Enhancements or amendments
+
+ - Add the history feed displaying control options of the struct iot_cap_attr_option_t
+   -- To control whether the event should be displayed in the history feed of the mobile App
+
+Bug fixed
+
+ - Fix Static Code Analysis report
+   -- iot_api:iot_main: Uses 'type casting' to fit in printf format sepcifier
+ - Fix multiple definition of main error for deps/json : prevent cJSON/test.c building
+
+## 1.4.7 : Changes for version 1.4.7
+
+New Improvements or features
+
+ - Allow to query device's wifi scanlist while easysetup device-to-device communication.
+
+Bug fixed
+
+ - Fix memleak during easysetup
+
+## 1.4.6 : Changes for version 1.4.6
+
+Enhancements or amendments
+
+ - Add more detailed control of sntp service.
+ - Send OS version to cloud.
+
+Bug fixed
+
+ - Fixed error when calling nvs_partition_gen.py at stdk-keygen.py.
+ - Fix build errors.
+ - Fix easysetup failure issue when iot-core try to open not existing file.
+ - Fix memleak at easysetup cgi handler.
+
+Supported Porting Layer
+
+BSP
+
+ - ESP32, ESP32S2
+ - ESP8266
+ - RTL8915
+ - RTL8720C, RTL8721C
+ - TizenRT - TizenRT has platform own hardware/bsp abstraction layer
+
+OS
+
+ - FreeRTOS
+ - Mocos
+ - TizenRT
+
+## 1.4.5 : Changes for version 1.4.5
+
+Supported Porting Layer
+
+BSP
+
+ - ESP32, ESP32S2
+ - ESP8266
+ - RTL8915
+ - RTL8720C
+ - RTL8721C
+ - TizenRT - TizenRT has platform own hardware/bsp abstraction layer
+
+OS
+
+ - FreeRTOS
+ - Mocos
+ - TizenRT
+
+## 1.1.0 :  Changes for version 1.1.0
+
+ * Need to use over the Mobile's SmartThings Apps v1.7.43 (for Android)
+
+New Improvements or features:
+
+ - Supports TizenRT based target - port TizenRT wrapper
+ - The port number changed for httpd during easy-setup
+ - Added new IOT_STAT_LV_CONN to notify it to user
+ - Added implementation of iot_bsp_wifi_get_mac()
+ - Supports rtl8720c bsp based target
+ - Supports mbedTLS usage in posix solution (instead of openssl, you can use mbedTLS for posix)
+ - Added rtl8721csm porting layer
+ - Update keygen tool - v2.1
+
+Enhancements or amendments:
+
+ - Don't send MQTT ping during there is outstanding packet
+ - Only support for dynamic buffer allocation in MQTT layer
+ - Add a contributing guideline
+ - Check the uuid validation
+ - Change lookup_id removing timing
+ - Increase the maximum number of sacn results
+ - Make iot_mqtt.h layer to import external MQTT solution
+ - Separate internal network interface layer
+ - Some function naming changed for httpd_init/deinit
+ - Internal network function related code cleanup
+ - Change auth mode to verify the certifcate
+
+Bug fixed:
+
+ - Fix rtl-chipset not support web security type connection issue
+ - Added easy-setup resources checking flag & deleting routine to avoid memory leaking
+ - Fix rtl-chipset based "RTW API: Join bss timeout" issue
+ - Fix wi-fi memory leak
+ - Internal network related build error fix
+
+## 1.0.0 : Initial public release.
