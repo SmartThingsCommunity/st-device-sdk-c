@@ -87,6 +87,20 @@ int TEST_FUNC_iot_capability(void)
             cmocka_unit_test(TC_iot_parse_noti_data_device_deleted),
             cmocka_unit_test(TC_iot_parse_noti_data_expired_jwt),
             cmocka_unit_test(TC_iot_parse_noti_data_quota_reached),
+            cmocka_unit_test(TC_st_cap_create_attr_with_id_success),
+            cmocka_unit_test(TC_st_cap_create_attr_with_option_null_parameter),
+            cmocka_unit_test_setup_teardown(TC_st_cap_create_attr_with_option_failure, TC_iot_capability_setup, TC_iot_capability_teardown),
+            cmocka_unit_test_setup_teardown(TC_st_cap_create_attr_with_option_internal_failure, TC_iot_capability_setup, TC_iot_capability_teardown),
+            cmocka_unit_test_setup_teardown(TC_st_cap_create_attr_with_option_success, TC_iot_capability_setup, TC_iot_capability_teardown),
+            cmocka_unit_test_setup_teardown(TC_st_cap_cmd_set_cb_internal_failure, TC_iot_capability_setup, TC_iot_capability_teardown),
+            cmocka_unit_test_setup_teardown(TC_iot_cap_commands_cb_failure, TC_iot_capability_setup, TC_iot_capability_teardown),
+            cmocka_unit_test_setup_teardown(TC_iot_cap_commands_cb_success, TC_iot_capability_setup, TC_iot_capability_teardown),
+            cmocka_unit_test_setup_teardown(TC_iot_parse_noti_data_presference_updated, TC_iot_capability_setup, TC_iot_capability_teardown),
+            cmocka_unit_test_setup_teardown(TC_iot_cap_call_init_cb_null_parameteer, TC_iot_capability_setup, TC_iot_capability_teardown),
+            cmocka_unit_test_setup_teardown(TC_iot_cap_call_init_cb_success, TC_iot_capability_setup, TC_iot_capability_teardown),
+            cmocka_unit_test_setup_teardown(TC_st_cap_send_attr_v2_null_parameter, TC_iot_capability_setup, TC_iot_capability_teardown),
+            cmocka_unit_test_setup_teardown(TC_st_cap_send_attr_v2_failure, TC_iot_capability_setup, TC_iot_capability_teardown),
+            cmocka_unit_test_setup_teardown(TC_st_cap_send_attr_v2_success, TC_iot_capability_setup, TC_iot_capability_teardown),
     };
     return cmocka_run_group_tests_name("iot_capability.c", tests, NULL, NULL);
 }

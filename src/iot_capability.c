@@ -51,50 +51,6 @@ static IOT_EVENT* _iot_cap_create_attr(const char *attribute,
 *                       Synchronous Call                      *
 **************************************************************/
 /* External API */
-DEPRECATED IOT_EVENT* st_cap_attr_create_int(const char *attribute, int integer, const char *unit)
-{
-	iot_cap_val_t value;
-	value.type = IOT_CAP_VAL_TYPE_INTEGER;
-	value.integer = integer;
-
-	return _iot_cap_create_attr(attribute, &value, unit, NULL);
-}
-
-DEPRECATED IOT_EVENT* st_cap_attr_create_number(const char *attribute, double number, const char *unit)
-{
-	iot_cap_val_t value;
-	value.type = IOT_CAP_VAL_TYPE_NUMBER;
-	value.number = number;
-
-	return _iot_cap_create_attr(attribute, &value, unit, NULL);
-}
-
-DEPRECATED IOT_EVENT* st_cap_attr_create_string(const char *attribute, char *string, const char *unit)
-{
-	iot_cap_val_t value;
-	value.type = IOT_CAP_VAL_TYPE_STRING;
-	value.string = string;
-
-	return _iot_cap_create_attr(attribute, &value, unit, NULL);
-}
-
-DEPRECATED IOT_EVENT* st_cap_attr_create_string_array(const char *attribute,
-			uint8_t str_num, char *string_array[], const char *unit)
-{
-	iot_cap_val_t value;
-	value.type = IOT_CAP_VAL_TYPE_STR_ARRAY;
-	value.str_num = str_num;
-	value.strings = string_array;
-
-	return _iot_cap_create_attr(attribute, &value, unit, NULL);
-}
-
-DEPRECATED IOT_EVENT* st_cap_attr_create(const char *attribute,
-			iot_cap_val_t *value, const char *unit, const char *data)
-{
-	return _iot_cap_create_attr(attribute, value, unit, data);
-}
-
 IOT_EVENT* st_cap_create_attr_with_id(IOT_CAP_HANDLE *cap_handle, const char *attribute,
 			iot_cap_val_t *value, const char *unit, const char *data, char *command_id)
 {
@@ -279,16 +235,6 @@ failed_creat_attr_option:
 	return NULL;
 }
 
-DEPRECATED void st_cap_attr_free(IOT_EVENT* event)
-{
-	iot_cap_evt_data_t* evt_data = (iot_cap_evt_data_t*) event;
-
-	if (evt_data) {
-		_iot_free_evt_data(evt_data);
-		iot_os_free(evt_data);
-	}
-}
-
 void st_cap_free_attr(IOT_EVENT* event)
 {
 	iot_cap_evt_data_t* evt_data = (iot_cap_evt_data_t*) event;
@@ -442,91 +388,6 @@ int st_cap_cmd_set_cb(IOT_CAP_HANDLE *cap_handle, const char *cmd_type,
 	return IOT_ERROR_NONE;
 }
 
-DEPRECATED int st_cap_attr_send(IOT_CAP_HANDLE *cap_handle,
-		uint8_t evt_num, IOT_EVENT *event[])
-{
-	iot_cap_evt_data_t** evt_data = (iot_cap_evt_data_t**)event;
-	int ret;
-	struct iot_context *ctx;
-	st_mqtt_msg msg = {0};
-	struct iot_cap_handle *handle = (struct iot_cap_handle*)cap_handle;
-	int i;
-	JSON_H *evt_root = NULL;
-	JSON_H *evt_arr = NULL;
-	JSON_H *evt_item = NULL;
-
-	if (!handle || !handle->component || !handle->capability || !handle->ctx || !evt_data || !evt_num) {
-		IOT_DUMP(IOT_DEBUG_LEVEL_ERROR, IOT_DUMP_CAPABILITY_SEND_EVENT_NO_DATA_ERROR, 0, 0);
-		IOT_ERROR("There is no handle or evt_data");
-		return IOT_ERROR_INVALID_ARGS;
-	}
-
-	ctx = handle->ctx;
-	if (ctx->curr_state != IOT_STATE_CLOUD_CONNECTED || ctx->evt_mqttcli == NULL) {
-		IOT_DUMP(IOT_DEBUG_LEVEL_ERROR, IOT_DUMP_CAPABILITY_SEND_EVENT_NO_CONNECT_ERROR, ctx->curr_state, 0);
-		IOT_ERROR("Target has not connected to server yet!!");
-		return IOT_ERROR_BAD_REQ;
-	}
-
-	if (ctx->rate_limit) {
-		IOT_WARN("Exceed rate limit. Can't send attributes for a while");
-		return IOT_ERROR_BAD_REQ;
-	}
-
-	if (ctx->event_sequence_num == MAX_SQNUM) {
-		ctx->event_sequence_num = 0;
-	}
-	ctx->event_sequence_num = (ctx->event_sequence_num + 1) & MAX_SQNUM;
-
-	evt_root = JSON_CREATE_OBJECT();
-	evt_arr = JSON_CREATE_ARRAY();
-
-	JSON_ADD_ITEM_TO_OBJECT(evt_root, "deviceEvents", evt_arr);
-
-	/* Make event data format & enqueue data */
-	for (i = 0; i < evt_num; i++) {
-		evt_item = _iot_make_evt_data(handle->component, handle->capability, evt_data[i], ctx->event_sequence_num);
-		if (evt_item == NULL) {
-			IOT_ERROR("Cannot make evt_data!!");
-			JSON_DELETE(evt_root);
-			return IOT_ERROR_BAD_REQ;
-		}
-		JSON_ADD_ITEM_TO_ARRAY(evt_arr, evt_item);
-	}
-
-#if defined(STDK_IOT_CORE_SERIALIZE_CBOR)
-	iot_serialize_json2cbor(evt_root, (uint8_t **)&msg.payload, (size_t *)&msg.payloadlen);
-#else
-	msg.payload = JSON_PRINT(evt_root);
-	if (msg.payload != NULL) {
-		msg.payloadlen = strlen(msg.payload);
-	}
-#endif
-	JSON_DELETE(evt_root);
-	if (msg.payload == NULL) {
-		IOT_ERROR("Fail to transfer to payload");
-		return IOT_ERROR_BAD_REQ;
-	}
-	msg.qos = st_mqtt_qos1;
-	msg.retained = false;
-	msg.topic = ctx->mqtt_event_topic;
-
-	IOT_INFO("publish event, topic : %s, payload :\n%s",
-		ctx->mqtt_event_topic, (char *)msg.payload);
-
-	ret = st_mqtt_publish_async(ctx->evt_mqttcli, &msg);
-	if (ret) {
-		IOT_WARN("MQTT pub error(%d)", ret);
-		free(msg.payload);
-		return IOT_ERROR_MQTT_PUBLISH_FAIL;
-	}
-
-	IOT_DUMP(IOT_DEBUG_LEVEL_INFO, IOT_DUMP_CAPABILITY_SEND_EVENT_SUCCESS, evt_num, 0);
-
-	free(msg.payload);
-	return ctx->event_sequence_num;
-}
-
 int st_cap_send_attr(IOT_EVENT *event[], uint8_t evt_num)
 {
 	iot_cap_evt_data_t** evt_data = (iot_cap_evt_data_t**)event;
@@ -626,6 +487,7 @@ iot_error_t _iot_parse_noti_data(void *data, iot_noti_data_t *noti_data)
 	char *noti_type_string = NULL;
 	char *payload = NULL;
 	char time_str[11] = {0,};
+	char *subitem_str = NULL;
 
 	json = JSON_PARSE(data);
 	if (json == NULL) {
@@ -757,8 +619,12 @@ iot_error_t _iot_parse_noti_data(void *data, iot_noti_data_t *noti_data)
 				JSON_H *preference_type = JSON_GET_OBJECT_ITEM(sub_item, "preferenceType");
 				JSON_H *preference_value = JSON_GET_OBJECT_ITEM(sub_item, "value");
 
-				noti_data->raw.preferences.preferences_data[i].preference_name =
-					iot_os_strdup(JSON_GET_OBJECT_ITEM_STRING(sub_item));
+				subitem_str = JSON_GET_OBJECT_ITEM_STRING(sub_item);
+				if (subitem_str != NULL) {
+					noti_data->raw.preferences.preferences_data[i].preference_name = iot_os_strdup(subitem_str);
+				} else {
+					noti_data->raw.preferences.preferences_data[i].preference_name = NULL;
+				}
 
 				if (preference_value == NULL) {
 					noti_data->raw.preferences.preferences_data[i].preference_data.type =
@@ -1184,6 +1050,7 @@ static iot_error_t _iot_parse_cmd_data(JSON_H* cmditem, char** component,
 	int arr_size = 0;
 	int num_args = 0;
 	int i;
+	char *json_str = NULL;
 
 	cap_component = JSON_GET_OBJECT_ITEM(cmditem, "component");
 	cap_capability = JSON_GET_OBJECT_ITEM(cmditem, "capability");
@@ -1251,8 +1118,14 @@ static iot_error_t _iot_parse_cmd_data(JSON_H* cmditem, char** component,
 			else if (JSON_IS_OBJECT(subitem) || JSON_IS_ARRAY(subitem)) {
 				cmd_data->args_str[num_args] = NULL;
 				cmd_data->cmd_data[num_args].type = IOT_CAP_VAL_TYPE_JSON_OBJECT;
-				cmd_data->cmd_data[num_args].json_object = JSON_PRINT(subitem);
-				IOT_DEBUG("[%d] %s", num_args, cmd_data->cmd_data[num_args].json_object);
+				json_str = JSON_PRINT(subitem);
+				if (json_str != NULL) {
+					cmd_data->cmd_data[num_args].json_object = iot_os_strdup(json_str);
+					IOT_DEBUG("[%d] %s", num_args, cmd_data->cmd_data[num_args].json_object);
+					free(json_str);
+				} else {
+					cmd_data->cmd_data[num_args].json_object = NULL;
+				}
 				num_args++;
 			}
 			subitem = subitem->next;

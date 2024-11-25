@@ -101,6 +101,20 @@ void TC_iot_parse_noti_data_device_deleted(void** state);
 void TC_iot_parse_noti_data_expired_jwt(void** state);
 void TC_iot_parse_noti_data_quota_reached(void** state);
 void TC_iot_parse_noti_data_rate_limit(void** state);
+void TC_st_cap_create_attr_with_id_success(void** state);
+void TC_st_cap_create_attr_with_option_null_parameter(void** state);
+void TC_st_cap_create_attr_with_option_failure(void** state);
+void TC_st_cap_create_attr_with_option_internal_failure(void** state);
+void TC_st_cap_create_attr_with_option_success(void** state);
+void TC_st_cap_cmd_set_cb_internal_failure(void **state);
+void TC_iot_cap_commands_cb_failure(void **state);
+void TC_iot_cap_commands_cb_success(void **state);
+void TC_iot_parse_noti_data_presference_updated(void** state);
+void TC_iot_cap_call_init_cb_null_parameteer(void **state);
+void TC_iot_cap_call_init_cb_success(void **state);
+void TC_st_cap_send_attr_v2_null_parameter(void **state);
+void TC_st_cap_send_attr_v2_failure(void **state);
+void TC_st_cap_send_attr_v2_success(void **state);
 
 // TCs for iot_nv_data.c
 int TC_iot_nv_data_setup(void **state);

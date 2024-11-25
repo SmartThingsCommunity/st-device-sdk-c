@@ -29,6 +29,7 @@
 #include "TC_MOCK_functions.h"
 
 #define UNUSED(x) (void*)(x)
+#define NUM_OF_IOT_EVENTS 6
 
 int TC_iot_capability_setup(void **state)
 {
@@ -282,10 +283,12 @@ void TC_st_cap_handle_init_success(void **state)
     free(usr_data);
 }
 
+bool test_st_cap_noti_cb_called;
 static void test_st_cap_noti_cb(iot_noti_data_t *noti_data, void *noti_usr_data)
 {
     assert_non_null(noti_data);
     UNUSED(noti_usr_data);
+    test_st_cap_noti_cb_called = true;
 }
 
 void TC_st_conn_set_noti_cb_null_parameters(void **state)
@@ -408,6 +411,58 @@ void TC_st_cap_cmd_set_cb_invalid_parameters(void **state)
     // Teardown
     free(user_data);
     free(internal_handle);
+
+    // Given
+    internal_handle = (struct iot_cap_handle*) malloc(sizeof(struct iot_cap_handle));
+    memset(internal_handle, '\0', sizeof(struct iot_cap_handle));
+    handle = (IOT_CAP_HANDLE*) internal_handle;
+    user_data = strdup("fakeData");
+    internal_handle->cmd_list = malloc(sizeof(struct iot_cap_cmd_set_list));
+    internal_handle->cmd_list->next = NULL;
+    internal_handle->cmd_list->command = malloc(sizeof(struct iot_cap_cmd_set));
+
+    internal_handle->cmd_list->command->cmd_type = "fakeCommand";
+
+    // When: cmd_cb null
+    ret = st_cap_cmd_set_cb(handle, "fakeCommand", NULL, (void*)user_data);
+    // Then
+    assert_int_not_equal(ret, 0);
+    // Teardown
+    free(user_data);
+    free(internal_handle->cmd_list->command);
+    free(internal_handle->cmd_list);
+    free(internal_handle);
+}
+
+void TC_st_cap_cmd_set_cb_internal_failure(void **state)
+{
+    int ret;
+    struct iot_cap_handle *internal_handle;
+    IOT_CAP_HANDLE* handle;
+    char *user_data;
+    UNUSED(state);
+
+    // Given
+    internal_handle = (struct iot_cap_handle*) malloc(sizeof(struct iot_cap_handle));
+    memset(internal_handle, '\0', sizeof(struct iot_cap_handle));
+    handle = (IOT_CAP_HANDLE*) internal_handle;
+    user_data = strdup("fakeData");
+
+    // When
+    for (unsigned int i = 0; i < 2; i++) {
+        // Given: i-th malloc failure
+        do_not_use_mock_iot_os_malloc_failure();
+        set_mock_iot_os_malloc_failure_with_index(i);
+        // When: valid input
+        ret = st_cap_cmd_set_cb(handle, "fakeCommand", test_cap_cmd_cb, (void*)user_data);
+        // Then: success
+        assert_int_not_equal(ret, 0);
+    }
+
+    // Teardown
+    do_not_use_mock_iot_os_malloc_failure();
+    free(internal_handle);
+    free(user_data);
 }
 
 void TC_st_cap_cmd_set_cb_success(void **state)
@@ -442,11 +497,11 @@ void TC_st_cap_cmd_set_cb_success(void **state)
 }
 
 static void assert_st_cap_attr_send(char *message, char *expected_component, char *expected_capability,
-                                IOT_EVENT *expected_event, int expected_sequence_number)
+                                IOT_EVENT *expected_event[], int expected_sequence_number)
 {
     JSON_H *root;
     JSON_H *event_array;
-    iot_cap_evt_data_t* internal_event = (iot_cap_evt_data_t*) expected_event;
+    iot_cap_evt_data_t** internal_event = (iot_cap_evt_data_t**) expected_event;
     assert_non_null(message);
 
     root = JSON_PARSE(message);
@@ -471,35 +526,42 @@ static void assert_st_cap_attr_send(char *message, char *expected_component, cha
 
         item = JSON_GET_OBJECT_ITEM(event, "attribute");
         assert_non_null(item);
-        assert_string_equal(JSON_GET_STRING_VALUE(item), internal_event->evt_type);
+        assert_string_equal(JSON_GET_STRING_VALUE(item), internal_event[i]->evt_type);
 
         item = JSON_GET_OBJECT_ITEM(event, "value");
         assert_non_null(item);
-        switch (internal_event->evt_value.type)
+        switch (internal_event[i]->evt_value.type)
         {
+            case IOT_CAP_VAL_TYPE_BOOLEAN:
+                assert_true(internal_event[i]->evt_value.boolean);
+                assert_string_equal(internal_event[i]->options.command_id , "test_cmd_id");
+                break;
             case IOT_CAP_VAL_TYPE_INTEGER:
-                assert_int_equal(item->valueint, internal_event->evt_value.integer);
+                assert_int_equal(item->valueint, internal_event[i]->evt_value.integer);
                 break;
             case IOT_CAP_VAL_TYPE_NUMBER:
-                assert_int_equal(item->valuedouble, internal_event->evt_value.number);
+                assert_int_equal(item->valuedouble, internal_event[i]->evt_value.number);
                 break;
             case IOT_CAP_VAL_TYPE_STRING:
-                assert_string_equal(JSON_GET_STRING_VALUE(item), internal_event->evt_value.string);
+                assert_string_equal(JSON_GET_STRING_VALUE(item), internal_event[i]->evt_value.string);
                 break;
             case IOT_CAP_VAL_TYPE_INT_OR_NUM:
             case IOT_CAP_VAL_TYPE_STR_ARRAY:
+                assert_int_equal(JSON_GET_ARRAY_SIZE(item), internal_event[i]->evt_value.str_num);
+                break;
             case IOT_CAP_VAL_TYPE_JSON_OBJECT:
                 // TODO: validate value for these type
+                assert_string_equal(JSON_PRINT(item), internal_event[i]->evt_value.json_object);
                 break;
             default:
                 assert_false(1);
                 break;
         }
 
-        if (internal_event->evt_unit.type == IOT_CAP_UNIT_TYPE_STRING) {
+        if (internal_event[i]->evt_unit.type == IOT_CAP_UNIT_TYPE_STRING) {
             item = JSON_GET_OBJECT_ITEM(event, "unit");
             assert_non_null(item);
-            assert_string_equal(JSON_GET_STRING_VALUE(item), internal_event->evt_unit.string);
+            assert_string_equal(JSON_GET_STRING_VALUE(item), internal_event[i]->evt_unit.string);
         }
 
         item = JSON_GET_OBJECT_ITEM(event, "providerData");
@@ -520,11 +582,13 @@ void TC_st_cap_send_attr_success(void **state)
     int sequence_number;
     IOT_CTX *context;
     IOT_CAP_HANDLE* cap_handle;
-    IOT_EVENT* event;
+    IOT_EVENT* event[NUM_OF_IOT_EVENTS];
     struct iot_cap_handle *internal_handle;
     struct iot_context *internal_context;
     iot_mqtt_packet_chunk_t *final_chunk;
     MQTTClient *c;
+    iot_cap_val_t value;
+    iot_cap_attr_option_t opt;
     UNUSED(state);
 
     // Given
@@ -538,10 +602,39 @@ void TC_st_cap_send_attr_success(void **state)
     st_mqtt_create(&internal_context->evt_mqttcli, dummy_mqtt_callback, NULL, NULL, NULL);
     cap_handle = st_cap_handle_init(context, "main", "testCap", test_cap_init_callback, NULL);
     assert_non_null(cap_handle);
-    ST_CAP_CREATE_ATTR_NUMBER(cap_handle, "testAttr", 10, "testUnit", NULL, event);
-    assert_non_null(event);
+    ST_CAP_CREATE_ATTR_NUMBER(cap_handle, "testAttr", 10, "testUnit", NULL, event[0]);
+    assert_non_null(event[0]);
+    ST_CAP_CREATE_ATTR_STRING(cap_handle, "testAttr", "abc", "testUnit", NULL, event[1]);
+    assert_non_null(event[1]);
+    char **str_arr = iot_os_malloc(2 * sizeof(char*));
+    str_arr[0] = "abc";
+    str_arr[1] = "xyz";
+    ST_CAP_CREATE_ATTR_STRINGS_ARRAY(cap_handle, "testAttr", str_arr, 2, "testUnit", NULL, event[2]);
+    assert_non_null(event[2]);
+    // Value type is boolean
+    opt.command_id = "test_cmd_id";
+    opt.state_change = 2;
+    opt.displayed = (bool *) iot_os_malloc(sizeof(bool));
+    memset(opt.displayed, true, sizeof(bool));
+    value.type = IOT_CAP_VAL_TYPE_BOOLEAN;
+    value.boolean = true;
+    event[3] = st_cap_create_attr_with_option(cap_handle, "testAttr", &value, "testUnit", NULL, &opt);
+    assert_non_null(event[3]);
+
+    // Value type is integer
+    value.type = IOT_CAP_VAL_TYPE_INTEGER;
+    value.integer = 12;
+    event[4] = st_cap_create_attr(cap_handle, "testAttr", &value, "testUnit", NULL);
+    assert_non_null(event[4]);
+
+    // Value type is json object
+    value.type = IOT_CAP_VAL_TYPE_JSON_OBJECT;
+    value.json_object = "{\"key1\":2,\"key2\":5}";
+    event[5] = st_cap_create_attr(cap_handle, "testAttr", &value, "testUnit", NULL);
+    assert_non_null(event[5]);
+
     // When
-    sequence_number = st_cap_send_attr(&event, 1);
+    sequence_number = st_cap_send_attr(event, NUM_OF_IOT_EVENTS);
     // Then
     assert_true(sequence_number > 0);
     c = internal_context->evt_mqttcli;
@@ -549,7 +642,8 @@ void TC_st_cap_send_attr_success(void **state)
     /* packet header(2bytes) + MQTTTopiclength(2bytes) + MQTTTopicstring("TCTEST", 6bytes) + packetId(2bytes) = 12 */
     assert_st_cap_attr_send(final_chunk->chunk_data + 12, "main", "testCap", event, sequence_number);
     // Teardown
-    st_cap_free_attr(event);
+    for (int i = 0; i < NUM_OF_IOT_EVENTS; i++)
+        st_cap_free_attr(event[i]);
     internal_handle = (struct iot_cap_handle*) cap_handle;
     if (internal_handle->capability) {
         iot_os_free((void*)internal_handle->capability);
@@ -567,6 +661,8 @@ void TC_st_cap_send_attr_success(void **state)
     iot_os_free(cap_handle);
     iot_os_eventgroup_delete(internal_context->iot_events);
     free(context);
+    iot_os_free(str_arr);
+    iot_os_free(opt.displayed);
 }
 
 void TC_st_cap_send_attr_invalid_parameter(void **state)
@@ -631,14 +727,15 @@ static void test_cap_sub_switch_on(IOT_CAP_HANDLE *HANDLE,
     assert_string_equal(handle->capability, "switch");
     assert_string_equal(handle->component, "main");
     assert_string_equal(handle->cmd_list->command->cmd_type, "on");
-    assert_int_equal(cmd_data->num_args, 0);
+    assert_int_equal(cmd_data->num_args, 5);
 }
 
 void TC_iot_cap_sub_cb_success(void **state)
 {
     // Given: typical payload and handle lists
     iot_cap_handle_list_t cap_handle_list;
-    char *payload = "{\"commands\":[{\"component\":\"main\",\"capability\":\"switch\",\"command\":\"on\",\"arguments\":[]}]}";
+    char *payload = "{\"commands\":[{\"component\":\"main\",\"capability\":\"switch\",\"command\":\"on\",\"arguments\":\
+                    [true,123,\"xyz\",{\"ab\":\"xy\"},[21,22]]}]}";
 
     cap_handle_list.next = NULL;
     cap_handle_list.handle = malloc(sizeof(struct iot_cap_handle));
@@ -847,4 +944,569 @@ void TC_iot_parse_noti_data_rate_limit(void** state)
             assert_int_equal(notification.raw.rate_limit.threshold, test_data[i].raw.rate_limit.threshold);
         }
     }
+}
+
+void TC_st_cap_create_attr_with_id_success(void** state)
+{
+    IOT_EVENT* evt;
+    iot_cap_evt_data_t* event_data = NULL;
+    IOT_CAP_HANDLE cap_handle;
+    iot_cap_val_t value;
+    UNUSED(state);
+
+    // when : atribute with id
+    value.type = IOT_CAP_VAL_TYPE_STRING;
+    value.string = "testValue";
+
+    evt = st_cap_create_attr_with_id(&cap_handle, "testIdAttr", &value, NULL, NULL, "test_cmd_id");
+    // Then : return proper event data
+    event_data = (iot_cap_evt_data_t*) evt;
+    assert_int_equal(event_data->evt_unit.type, IOT_CAP_UNIT_TYPE_UNUSED);
+    assert_string_equal(event_data->evt_value.string, "testValue");
+    assert_int_equal(event_data->evt_value.type, IOT_CAP_VAL_TYPE_STRING);
+    assert_string_equal(event_data->options.command_id , "test_cmd_id");
+    assert_string_equal(event_data->evt_type, "testIdAttr");
+}
+
+void TC_st_cap_create_attr_with_option_null_parameter(void** state)
+{
+    IOT_EVENT* evt;
+    iot_cap_val_t value;
+    IOT_CAP_HANDLE cap_handle;
+    UNUSED(state);
+
+    // Given:
+    value.type = IOT_CAP_VAL_TYPE_STRING;
+    value.string = "testValue";
+
+    // When cap handle is null
+    evt = st_cap_create_attr_with_option(NULL, "testIdAttr", &value, NULL, NULL, NULL);
+    // Then: returns null
+    assert_null(evt);
+
+    // When: attribute is null
+    evt = st_cap_create_attr_with_option(&cap_handle, NULL, &value, NULL, NULL, NULL);
+    // Then: returns null
+    assert_null(evt);
+
+    // When: value is null
+    evt = st_cap_create_attr_with_option(&cap_handle, "testIdAttr", NULL, NULL, NULL, NULL);
+    // Then: returns null
+    assert_null(evt);
+}
+
+void TC_st_cap_create_attr_with_option_failure(void** state)
+{
+    IOT_EVENT* evt;
+    iot_cap_evt_data_t* event_data = NULL;
+    IOT_CAP_HANDLE cap_handle;
+    iot_cap_val_t value;
+    iot_cap_attr_option_t opt;
+    JSON_H *root;
+    UNUSED(state);
+
+    opt.command_id = "test_cmd_id";
+    opt.state_change = 2;
+
+    // when: string value is null
+    value.type = IOT_CAP_VAL_TYPE_STRING;
+    value.string = NULL;
+    evt = st_cap_create_attr_with_option(&cap_handle, "bodyWeightMeasurement", &value, NULL, NULL, &opt);
+    // Then: returns null
+    assert_null(evt);
+
+    // When: string array value is null
+    value.type = IOT_CAP_VAL_TYPE_STR_ARRAY;
+    value.str_num = 3;
+    value.strings = iot_os_malloc(value.str_num * sizeof(char*));
+    memset(value.strings, '\0', value.str_num * sizeof(char*));
+    evt = st_cap_create_attr_with_option(&cap_handle, "testAttribute", &value, NULL, NULL, &opt);
+    // Then: returns null
+    assert_null(evt);
+    // Teardown
+    iot_os_free(value.strings);
+
+    // When: unknown attribute type
+    value.type = IOT_CAP_VAL_TYPE_UNKNOWN;
+    evt = st_cap_create_attr_with_option(&cap_handle, "testAttribute", &value, NULL, NULL, &opt);
+    // Then: returns null
+    assert_null(evt);
+}
+
+void TC_st_cap_create_attr_with_option_internal_failure(void** state)
+{
+    IOT_EVENT* evt;
+    iot_cap_evt_data_t* event_data = NULL;
+    IOT_CAP_HANDLE cap_handle;
+    iot_cap_val_t value;
+    iot_cap_attr_option_t opt;
+    JSON_H *root;
+    UNUSED(state);
+
+    // Given
+    value.type = IOT_CAP_VAL_TYPE_STR_ARRAY;
+    value.str_num = 3;
+    value.strings = iot_os_malloc(value.str_num * sizeof(char*));
+    value.strings[0] = "str1";
+    value.strings[1] = "str2";
+    value.strings[2] = "str3";
+    opt.command_id = "test_cmd_id";
+    opt.state_change = 2;
+
+    opt.displayed = (bool *) iot_os_malloc(sizeof(bool));
+    memset(opt.displayed, true, sizeof(bool));
+    for (unsigned int i = 0; i < 3; i++) {
+        // Given: i-th malloc failure
+        do_not_use_mock_iot_os_malloc_failure();
+        set_mock_iot_os_malloc_failure_with_index(i);
+        // When: valid input
+        evt = st_cap_create_attr_with_option(&cap_handle, "testAttribute", &value, NULL, NULL, &opt);
+        // Then: success
+        assert_null(evt);
+    }
+
+    // Teardown
+    do_not_use_mock_iot_os_malloc_failure();
+    iot_os_free(value.strings);
+    iot_os_free(opt.displayed);
+}
+
+void TC_st_cap_create_attr_with_option_success(void** state)
+{
+    IOT_EVENT* evt;
+    iot_cap_evt_data_t* event_data = NULL;
+    IOT_CAP_HANDLE cap_handle;
+    iot_cap_val_t value;
+    iot_cap_attr_option_t opt;
+    JSON_H *root;
+    UNUSED(state);
+
+    // when: value type is number
+    value.type = IOT_CAP_VAL_TYPE_NUMBER;
+    value.number = 56.7;
+    opt.command_id = "test_cmd_id";
+    opt.state_change = 2;
+
+    opt.displayed = (bool *) iot_os_malloc(sizeof(bool));
+    memset(opt.displayed, true, sizeof(bool));
+
+    evt = st_cap_create_attr_with_option(&cap_handle, "bodyWeightMeasurement", &value, "kg", "tempdata", &opt);
+    // Then: return non null
+    assert_non_null(evt);
+    // Then : return proper event data
+    event_data = (iot_cap_evt_data_t*) evt;
+    assert_int_equal(event_data->evt_unit.type, IOT_CAP_UNIT_TYPE_STRING);
+    assert_int_equal(event_data->evt_value.number, 56.7);
+    assert_int_equal(event_data->evt_value.type, IOT_CAP_VAL_TYPE_NUMBER);
+    assert_string_equal(event_data->options.command_id , "test_cmd_id");
+    assert_string_equal(event_data->evt_type, "bodyWeightMeasurement");
+    assert_string_equal(event_data->evt_value_data, "tempdata");
+    // Teardown
+    st_cap_free_attr(evt);
+
+    // When: value type is integer
+    value.type = IOT_CAP_VAL_TYPE_INTEGER;
+    value.integer = 5;
+    evt = st_cap_create_attr_with_option(&cap_handle, "data", &value, NULL, NULL, &opt);
+    event_data = (iot_cap_evt_data_t*) evt;
+    // Then: return non null
+    assert_non_null(evt);
+    event_data = (iot_cap_evt_data_t*) evt;
+    assert_int_equal(event_data->evt_unit.type, IOT_CAP_UNIT_TYPE_UNUSED);
+    assert_int_equal(event_data->evt_value.integer, 5);
+    assert_int_equal(event_data->evt_value.type, IOT_CAP_VAL_TYPE_INTEGER);
+    assert_string_equal(event_data->options.command_id , "test_cmd_id");
+    assert_string_equal(event_data->evt_type, "data");
+    // Teardown
+    st_cap_free_attr(evt);
+
+    // When value type is boolean
+    value.type = IOT_CAP_VAL_TYPE_BOOLEAN;
+    value.boolean = true;
+    evt = st_cap_create_attr_with_option(&cap_handle, "on", &value, NULL, NULL, &opt);
+    event_data = (iot_cap_evt_data_t*) evt;
+    // Then: return non null
+    assert_non_null(evt);
+    event_data = (iot_cap_evt_data_t*) evt;
+    assert_int_equal(event_data->evt_unit.type, IOT_CAP_UNIT_TYPE_UNUSED);
+    assert_int_equal(event_data->evt_value.boolean, true);
+    assert_int_equal(event_data->evt_value.type, IOT_CAP_VAL_TYPE_BOOLEAN);
+    assert_string_equal(event_data->options.command_id , "test_cmd_id");
+    assert_string_equal(event_data->evt_type, "on");
+    // Teardown
+    st_cap_free_attr(evt);
+
+    // When value type is string array
+    value.type = IOT_CAP_VAL_TYPE_STR_ARRAY;
+    value.str_num = 3;
+    value.strings = iot_os_malloc(value.str_num * sizeof(char*));
+    value.strings[0] = "str1";
+    value.strings[1] = "str2";
+    value.strings[2] = "str3";
+    evt = st_cap_create_attr_with_option(&cap_handle, "testAttribute", &value, NULL, NULL, &opt);
+    event_data = (iot_cap_evt_data_t*) evt;
+    // Then: return non null
+    assert_non_null(evt);
+    event_data = (iot_cap_evt_data_t*) evt;
+    assert_int_equal(event_data->evt_unit.type, IOT_CAP_UNIT_TYPE_UNUSED);
+    assert_int_equal(event_data->evt_value.str_num, 3);
+    assert_int_equal(event_data->evt_value.type, IOT_CAP_VAL_TYPE_STR_ARRAY);
+    assert_string_equal(event_data->options.command_id , "test_cmd_id");
+    assert_string_equal(event_data->evt_type, "testAttribute");
+    // Teardown
+    st_cap_free_attr(evt);
+    iot_os_free(value.strings);
+
+    // When: value type is object
+    root = JSON_CREATE_OBJECT();
+    assert_non_null(root);
+    JSON_ADD_ITEM_TO_OBJECT(root, "key1", JSON_CREATE_STRING("val1"));
+    JSON_ADD_ITEM_TO_OBJECT(root, "key2", JSON_CREATE_STRING("val2"));
+    value.type = IOT_CAP_VAL_TYPE_JSON_OBJECT;
+    value.json_object = JSON_PRINT(root);
+    // Then: returns non null
+    evt = st_cap_create_attr_with_option(&cap_handle, "testAttribute", &value, NULL, NULL, &opt);
+    event_data = (iot_cap_evt_data_t*) evt;
+    // Then: return non null
+    assert_non_null(evt);
+    event_data = (iot_cap_evt_data_t*) evt;
+    assert_int_equal(event_data->evt_unit.type, IOT_CAP_UNIT_TYPE_UNUSED);
+    assert_int_equal(event_data->evt_value.type, IOT_CAP_VAL_TYPE_JSON_OBJECT);
+    assert_string_equal(event_data->evt_value.json_object, value.json_object);
+    assert_string_equal(event_data->options.command_id , "test_cmd_id");
+    assert_string_equal(event_data->evt_type, "testAttribute");
+
+    // Teardown
+    st_cap_free_attr(evt);
+    JSON_FREE(root);
+    iot_os_free(opt.displayed);
+}
+
+void TC_iot_cap_commands_cb_failure(void **state)
+{
+    UNUSED(state);
+    struct iot_context *context;
+
+    // Given
+    context = (struct iot_context*)malloc(sizeof(struct iot_context));
+    assert_non_null(context);
+    memset(context, '\0', sizeof(struct iot_context));
+
+    // When payload is null
+    iot_cap_commands_cb(context, NULL);
+
+    // Teardown
+    free(context);
+}
+
+void TC_iot_cap_commands_cb_success(void **state)
+{
+    UNUSED(state);
+    struct iot_context *context;
+    char* payload = NULL;
+    JSON_H *json = NULL;
+    JSON_H *item = NULL;
+    JSON_H *sub_item = NULL;
+    JSON_H *arr = NULL;
+    int ret;
+
+    // Given
+    context = (struct iot_context*)malloc(sizeof(struct iot_context));
+    assert_non_null(context);
+    memset(context, '\0', sizeof(struct iot_context));
+
+    payload = "{\"commands\":[{\"component\":\"main\",\"capability\":\"switch\",\"command\":\"on\","
+    "\"arguments\":[true,123,\"xyz\",{\"ab\":\"xy\"}, [31,21]],\"id\":\"test_id\"}]}";
+    // Then
+    //assert_int_equal(ret, 0);
+    context->noti_cb = test_st_cap_noti_cb;
+    // When
+    iot_cap_commands_cb(context, payload);
+    assert_ptr_equal(context->noti_cb, test_st_cap_noti_cb);
+    assert_true(test_st_cap_noti_cb_called);
+
+    // Teardown
+    free(context);
+}
+
+void TC_iot_parse_noti_data_presference_updated(void** state)
+{
+    iot_error_t err;
+    iot_noti_data_t notification;
+    char *payload = NULL;
+    UNUSED(state);
+
+    struct parse_noti_test_data test_data =
+            {"{\"target\":\""NOTI_TEST_UUID"\",\"event\":\"device.preferences\",\"values\":[\
+                    {\"preferenceType\":\"string\",\"value\":\"testValue\"},\
+                    {\"preferenceType\":\"number\",\"value\":123.0},\
+                    {\"preferenceType\":\"boolean\",\"value\":true},\
+                    {\"preferenceType\":\"integer\",\"value\":40}]}",\
+                    IOT_ERROR_NONE, _IOT_NOTI_TYPE_PREFERENCE_UPDATED, 0 };
+    // When
+    err = _iot_parse_noti_data((void*)test_data.payload, &notification);
+    // Then
+    assert_int_equal(err, test_data.expected_result);
+    if (test_data.expected_result == IOT_ERROR_NONE) {
+        assert_int_equal(notification.type, test_data.type);
+    }
+
+    // Teardown
+    if (notification.raw.preferences.preferences_data->preference_name)
+        iot_os_free(notification.raw.preferences.preferences_data->preference_name);
+    iot_os_free(notification.raw.preferences.preferences_data->preference_data.string);
+    iot_os_free(notification.raw.preferences.preferences_data);
+}
+
+void TC_iot_cap_call_init_cb_null_parameteer(void **state)
+{
+    UNUSED(state);
+
+    // When handle is null
+    iot_cap_call_init_cb(NULL);
+}
+
+void TC_iot_cap_call_init_cb_success(void **state)
+{
+    struct iot_cap_handle_list *cap_handle_list;
+
+    UNUSED(state);
+
+    // Given
+    cap_handle_list = (struct iot_cap_handle_list*)malloc(sizeof(struct iot_cap_handle_list));
+    cap_handle_list->handle = (struct iot_cap_handle*)malloc(sizeof(struct iot_cap_handle));
+    cap_handle_list->handle->init_cb = test_cap_init_callback;
+    cap_handle_list->handle->capability = iot_os_strdup("main");
+    cap_handle_list->next = NULL;
+
+    // When:
+    iot_cap_call_init_cb(cap_handle_list);
+
+    // Teardown
+    iot_os_free((void*)cap_handle_list->handle->capability);
+    free(cap_handle_list->handle);
+    free(cap_handle_list);
+}
+
+static void assert_st_cap_attr_v2_send(char *message, char *expected_component, char *expected_capability,
+                                st_attr_data *attr_data[], int expected_sequence_number)
+{
+    JSON_H *root;
+    JSON_H *attr_array;
+    assert_non_null(message);
+
+    root = JSON_PARSE(message);
+    assert_non_null(root);
+
+    attr_array = JSON_GET_OBJECT_ITEM(root, "deviceEvents");
+    assert_non_null(attr_array);
+    for (int i = 0; i < JSON_GET_ARRAY_SIZE(attr_array); i++) {
+        JSON_H *attr;
+        JSON_H *item;
+
+        attr = JSON_GET_ARRAY_ITEM(attr_array, i);
+        assert_non_null(attr);
+
+        item = JSON_GET_OBJECT_ITEM(attr, "component");
+        assert_non_null(item);
+        assert_string_equal(JSON_GET_STRING_VALUE(item), expected_component);
+
+        item = JSON_GET_OBJECT_ITEM(attr, "capability");
+        assert_non_null(item);
+        assert_string_equal(JSON_GET_STRING_VALUE(item), expected_capability);
+
+        item = JSON_GET_OBJECT_ITEM(attr, "attribute");
+        assert_non_null(item);
+
+        item = JSON_GET_OBJECT_ITEM(attr, "value");
+        assert_non_null(item);
+        switch (attr_data[i]->value.data_type)
+        {
+            case ST_DATA_TYPE_BOOLEAN:
+                assert_true(attr_data[i]->value.data_type);
+                break;
+            case ST_DATA_TYPE_NUMBER:
+                assert_int_equal(item->valueint, attr_data[i]->value.data.number);
+                break;
+            case ST_DATA_TYPE_STRING:
+                assert_string_equal(JSON_GET_STRING_VALUE(item), attr_data[i]->value.data.string);
+                break;
+            case ST_DATA_TYPE_RAW_JSON:
+                // TODO: validate value for these type
+                assert_string_equal(JSON_PRINT(item), attr_data[i]->value.data.raw_json);
+                break;
+            default:
+                assert_false(1);
+                break;
+        }
+
+        item = JSON_GET_OBJECT_ITEM(attr, "providerData");
+        assert_non_null(item);
+
+        assert_int_equal(JSON_GET_OBJECT_ITEM(item, "sequenceNumber")->valueint, expected_sequence_number);
+    }
+
+    JSON_DELETE(root);
+}
+
+void TC_st_cap_send_attr_v2_null_parameter(void **state)
+{
+    UNUSED(state);
+    st_attr_data* attr[5];
+    IOT_CTX *context;
+    int ret;
+
+    context = (IOT_CTX*) malloc(sizeof(struct iot_context));
+
+    // When context is null
+    ret = st_cap_send_attr_v2(NULL, attr, 5);
+    assert_int_equal(ret, IOT_ERROR_INVALID_ARGS);
+
+    // When number of attribute is 0
+    ret = st_cap_send_attr_v2(context, attr, 0);
+    assert_int_equal(ret, IOT_ERROR_INVALID_ARGS);
+
+    // Teardown
+    free(context);
+}
+
+void TC_st_cap_send_attr_v2_failure(void **state)
+{
+    UNUSED(state);
+    st_attr_data* attr[5];
+    IOT_CTX *context;
+    struct iot_context *internal_context;
+    int ret;
+
+    // Given
+    internal_context = (struct iot_context*) malloc(sizeof(struct iot_context));
+    assert_non_null(internal_context);
+    memset(internal_context, '\0', sizeof(struct iot_context));
+    context = (IOT_CTX*) internal_context;
+    internal_context->curr_state = IOT_STATE_CLOUD_DISCONNECTED;
+
+    // When not connected to cloud
+    ret = st_cap_send_attr_v2(context, attr, 5);
+    assert_int_equal(ret, IOT_ERROR_BAD_REQ);
+    internal_context->curr_state = IOT_STATE_CLOUD_CONNECTED;
+
+    // When rate limit occur
+    internal_context->rate_limit = true;
+    ret = st_cap_send_attr_v2(context, attr, 5);
+    assert_int_equal(ret, IOT_ERROR_BAD_REQ);
+    internal_context->rate_limit = false;
+
+    // When attr is null
+    attr[0] = NULL;
+    ret = st_cap_send_attr_v2(context, attr, 1);
+    assert_int_equal(ret, IOT_ERROR_BAD_REQ);
+
+    // When invalid attribute component type
+    st_mqtt_create(&internal_context->evt_mqttcli, dummy_mqtt_callback, NULL, NULL, NULL);
+    attr[0] = (st_attr_data*)malloc(sizeof(st_attr_data));
+    assert_non_null(attr[0]);
+    attr[0]->component_type = 2;
+    ret = st_cap_send_attr_v2(context, attr, 1);
+    assert_int_equal(ret, IOT_ERROR_BAD_REQ);
+
+    // Teardown
+    free(attr[0]);
+    st_mqtt_destroy(internal_context->evt_mqttcli);
+    free(context);
+}
+
+void TC_st_cap_send_attr_v2_success(void **state)
+{
+    UNUSED(state);
+    int sequence_number;
+    IOT_CTX *context;
+    st_attr_data* attr[5];
+    struct iot_context *internal_context;
+    iot_mqtt_packet_chunk_t *final_chunk;
+    MQTTClient *c;
+    UNUSED(state);
+
+    // Given
+    internal_context = (struct iot_context*) malloc(sizeof(struct iot_context));
+    assert_non_null(internal_context);
+    memset(internal_context, '\0', sizeof(struct iot_context));
+    context = (IOT_CTX*) internal_context;
+    internal_context->curr_state = IOT_STATE_CLOUD_CONNECTED;
+    internal_context->mqtt_event_topic = "TCtest";
+    internal_context->event_sequence_num = 0;
+    st_mqtt_create(&internal_context->evt_mqttcli, dummy_mqtt_callback, NULL, NULL, NULL);
+
+    // attr type is number
+    attr[0] = (st_attr_data*)malloc(sizeof(st_attr_data));
+    assert_non_null(attr[0]);
+    attr[0]->component_type = ST_COMPONENT_DEFULAT;
+    attr[0]->attr_type = ST_ATTR_CUSTOM;
+    attr[0]->custom_attr_name = strdup("testAttr");
+    attr[0]->custom_cap_name = strdup("testCap");
+    attr[0]->value.data_type = ST_DATA_TYPE_NUMBER;
+    attr[0]->value.data.number = 5.0;
+    attr[0]->unit = strdup("testUnit");
+    attr[0]->data = strdup("testData");
+    attr[0]->state_change = true;
+    attr[0]->related_command_id = NULL;
+
+    // attr type is string
+    attr[1] = (st_attr_data*)malloc(sizeof(st_attr_data));
+    assert_non_null(attr[1]);
+    attr[1]->component_type = ST_COMPONENT_DEFULAT;
+    attr[1]->attr_type = ST_ATTR_CUSTOM;
+    attr[1]->custom_attr_name = strdup("testAttr");
+    attr[1]->custom_cap_name = strdup("testCap");
+    attr[1]->value.data_type = ST_DATA_TYPE_STRING;
+    attr[1]->value.data.string = "tempVal";
+    attr[1]->unit = strdup("testUnit");
+    attr[1]->data = strdup("testData");
+    attr[1]->state_change = true;
+    attr[1]->related_command_id = NULL;
+
+    // attr type is raw json
+    attr[2] = (st_attr_data*)malloc(sizeof(st_attr_data));
+    assert_non_null(attr[2]);
+    attr[2]->component_type = ST_COMPONENT_DEFULAT;
+    attr[2]->attr_type = ST_ATTR_CUSTOM;
+    attr[2]->custom_attr_name = strdup("testAttr");
+    attr[2]->custom_cap_name = strdup("testCap");
+    attr[2]->value.data_type = ST_DATA_TYPE_RAW_JSON;
+    attr[2]->value.data.raw_json = "{\"key1\":2,\"key2\":5}";
+    attr[2]->unit = strdup("testUnit");
+    attr[2]->data = strdup("testData");
+    attr[2]->state_change = true;
+    attr[2]->related_command_id = NULL;
+
+    // attr type is boolean json
+    attr[3] = (st_attr_data*)malloc(sizeof(st_attr_data));
+    assert_non_null(attr[3]);
+    attr[3]->component_type = ST_COMPONENT_DEFULAT;
+    attr[3]->attr_type = ST_ATTR_CUSTOM;
+    attr[3]->custom_attr_name = strdup("testAttr");
+    attr[3]->custom_cap_name = strdup("testCap");
+    attr[3]->value.data_type = ST_DATA_TYPE_BOOLEAN;
+    attr[3]->value.data.boolean = true;
+    attr[3]->unit = strdup("testUnit");
+    attr[3]->data = strdup("testData");
+    attr[3]->state_change = true;
+    attr[3]->related_command_id = NULL;
+
+    // When
+    sequence_number = st_cap_send_attr_v2(context, attr, 4);
+    // Then
+    assert_true(sequence_number > 0);
+    c = internal_context->evt_mqttcli;
+    final_chunk = c->write_pending_queue.head;
+    /* packet header(2bytes) + MQTTTopiclength(2bytes) + MQTTTopicstring("TCTEST", 6bytes) + packetId(2bytes) = 12 */
+    assert_st_cap_attr_v2_send(final_chunk->chunk_data + 12, "main", "testCap",attr, sequence_number);
+
+    // Teardown
+    for (int i = 0; i < 4; i++) {
+        free(attr[i]->custom_attr_name);
+        free(attr[i]->custom_cap_name);
+    }
+    st_mqtt_destroy(internal_context->evt_mqttcli);
+
+    free(context);
 }

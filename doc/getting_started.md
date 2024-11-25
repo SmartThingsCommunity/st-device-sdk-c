@@ -40,7 +40,7 @@ A device profile contains the components, capabilities, and metadata (ID, name, 
 
 You can find out more about SmartThings device profile at [SmartThings Device Profile](https://developer.smartthings.com/docs/devices/device-profiles).
 
-Click the _DEFINE DEVICE PROFILE_ &rightarrow; _ADD A DEVICE PROFILE_ and then fill out required information (e.g. Basic infor, Component & Capability, UI display)
+Click the _DEFINE DEVICE PROFILE_ &rightarrow; _CREATE DEVICE PROFILE_ or _ADD A DEVICE PROFILE_ and then fill out required information (e.g. Basic infor, Component & Capability, UI display)
 
 ![create device profile](./res/create-device-profile.gif)
 
@@ -238,7 +238,8 @@ Your IoT device needs two pieces of information when connecting to the SmartThin
          "id": "DIP_UUID",
          "majorVersion": 0,
          "minorVersion": 1
-       }
+       },
+       "productId": "PRODUCT_ID_UUID"
      }
    }
    ```
@@ -348,8 +349,8 @@ Please refer [here](https://developer.smartthings.com/docs/devices/direct-connec
 Go to ***Add device*** and click ***My Testing Devices*** or ***Scan QR code***. You can now see and add your self-published devices.  
 ![add device 1](./res/add_device1.png)
 ![add device 2](./res/add_device2.png)
+![add device 2](./res/add_device3.png)
 
 3. **Control device**  
 You can control test device from dash board action and device plug user interface  
 ![device control 1](./res/device_control1.png)
-![device control 2](./res/device_control2.png)

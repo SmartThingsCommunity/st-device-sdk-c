@@ -318,6 +318,10 @@ static bool is_valid_onboarding_id_len(size_t len, unsigned char ssid_version)
 {
 	size_t max_len;
 
+#if defined(CONFIG_STDK_IOT_CORE_EASYSETUP_BLE)
+	return true;
+#endif
+
 	max_len = (ssid_version == 4 ? ONBOARDINGID_E4_MAX_LEN : ONBOARDINGID_E5_MAX_LEN);
 	if (len > max_len) {
 		return false;
