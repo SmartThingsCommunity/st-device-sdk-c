@@ -119,8 +119,6 @@ iot_error_t iot_easysetup_ble_ecdh_compute_shared_signature(
     iot_security_context_t *context;
     iot_security_cert_id_t cert_id;
     unsigned char random[ECDH_BLE_RANDOM_LEN * 2] = { 0 };
-    unsigned char secret[IOT_SECURITY_SECRET_LEN] = { 0 };
-    unsigned char iv[IOT_SECURITY_IV_LEN] = { 0 };
     iot_security_buffer_t cert_device_buf = { 0 };
     iot_security_buffer_t cert_sub_buf = { 0 };
     iot_security_buffer_t cert_blob_buf = { 0 };

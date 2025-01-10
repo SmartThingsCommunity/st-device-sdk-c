@@ -315,7 +315,6 @@ iot_error_t _iot_easysetup_ble_msg_encrypt(struct iot_context *context, int cmd,
 	iot_error_t err = IOT_ERROR_NONE;
 	iot_security_buffer_t msg_buf = { 0 };
 	iot_security_context_t *security_context = context->easysetup_security_context;
-	uint32_t offset = 0;
 	uint32_t buf_idx;
 
 	// payload max size = 3byte unsigned integer max - aes encryption padding size

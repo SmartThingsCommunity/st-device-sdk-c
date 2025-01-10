@@ -22,6 +22,7 @@
 #include <string.h>
 #include <iot_error.h>
 #include <iot_bsp_wifi.h>
+#include <time.h>
 
 iot_error_t __wrap_iot_bsp_wifi_get_mac(struct iot_mac *wifi_mac)
 {
@@ -78,7 +79,7 @@ uint16_t __wrap_iot_bsp_wifi_get_scan_result(iot_wifi_scan_result_t *scan_result
     return mock_scan_num;
 }
 
-iot_error_t __wrap_iot_bsp_system_set_time_in_sec(const char* time_in_sec)
+iot_error_t __wrap_iot_bsp_system_set_time_in_sec(time_t time_in_sec)
 {
     check_expected(time_in_sec);
     return IOT_ERROR_NONE;

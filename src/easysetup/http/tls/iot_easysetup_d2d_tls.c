@@ -83,7 +83,6 @@ char *_es_json_parse_string(JSON_H *json, const char *name)
 STATIC_FUNCTION
 iot_error_t _es_time_set(unsigned char *time)
 {
-	char time_str[11] = {0,};
 	iot_error_t err = IOT_ERROR_NONE;
 	struct tm tm = { 0 };
 	time_t now = 0;
@@ -115,9 +114,7 @@ iot_error_t _es_time_set(unsigned char *time)
 	tm.tm_mon -= 1;
 
 	now = mktime(&tm);
-	snprintf(time_str, sizeof(time_str), "%ld", now);
-
-	err = iot_bsp_system_set_time_in_sec(time_str);
+	err = iot_bsp_system_set_time_in_sec(now);
 	if (err) {
 		IOT_ERROR("Time set error!!");
 		IOT_ES_DUMP(IOT_DEBUG_LEVEL_ERROR, IOT_DUMP_EASYSETUP_INVALID_TIME, err);

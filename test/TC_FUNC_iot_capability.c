@@ -809,6 +809,7 @@ void TC_iot_noti_sub_cb_rate_limit_reached_SUCCESS(void **state)
 extern iot_error_t _iot_parse_noti_data(void *data, iot_noti_data_t *noti_data);
 #define NOTI_TEST_UUID  "123e4567-e89b-12d3-a456-426614174000"
 #define NOTI_TEST_TIME  "1591326145"
+#define NOTI_TEST_TIME_IN_INT  1591326145
 struct parse_noti_test_data {
     char *payload;
     int expected_result;
@@ -860,7 +861,7 @@ void TC_iot_parse_noti_data_expired_jwt(void** state)
 
     for (int i = 0; i < 3; i++) {
         if (test_data[i].expected_result == IOT_ERROR_NONE) {
-            expect_string(__wrap_iot_bsp_system_set_time_in_sec, time_in_sec, NOTI_TEST_TIME);
+            expect_value(__wrap_iot_bsp_system_set_time_in_sec, time_in_sec, NOTI_TEST_TIME_IN_INT);
         }
         err = _iot_parse_noti_data((void*)test_data[i].payload, &notification);
         assert_int_equal(err, test_data[i].expected_result);

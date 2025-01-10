@@ -389,7 +389,7 @@ iot_security_cipher_params_t* _generate_device_cipher(unsigned char *iv_data, si
     return _generate_cipher(SERVER_KEYPAIR->curve25519_pk, DEVICE_KEYPAIR->curve25519_sk, iv_data, iv_length);
 }
 
-char *_generate_post_keyinfo_payload(int year, char *time_to_set, size_t time_to_set_len)
+char *_generate_post_keyinfo_payload(int year, time_t *time_to_set)
 {
     char *post_message;
     JSON_H *root = NULL;
@@ -404,7 +404,6 @@ char *_generate_post_keyinfo_payload(int year, char *time_to_set, size_t time_to
     unsigned char *b64url_regionaldatetime;
     unsigned char *b64url_timezoneid;
     struct tm test_tm;
-    time_t test_time;
     unsigned char* spub = _get_server_test_pubkey();
 
 
@@ -434,8 +433,7 @@ char *_generate_post_keyinfo_payload(int year, char *time_to_set, size_t time_to
     test_tm.tm_min = 40;
     test_tm.tm_sec = 14;
 
-    test_time = mktime(&test_tm);
-    snprintf(time_to_set, time_to_set_len, "%ld", test_time);
+    *time_to_set = mktime(&test_tm);
 
     b64url_datetime = (unsigned char*) malloc(IOT_SECURITY_B64_ENCODE_LEN(strlen(datetime)));
     b64url_regionaldatetime = (unsigned char*) malloc(IOT_SECURITY_B64_ENCODE_LEN(strlen(regionaldatetime)));

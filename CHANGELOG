@@ -1,5 +1,16 @@
 # HISTORY
 
+## 2.0.3 : Changes for version 2.0.3
+
+Enhancements or amendments:
+
+- Update 2.0 release description
+- Remove unnessary duplicate conversions between string and integer in time type
+
+Bug fixed:
+
+- Fix wrong task queue manipulation logic in mqtt client
+
 ## 2.0.2 : Changes for version 2.0.2
 
 Enhancements or amendments:

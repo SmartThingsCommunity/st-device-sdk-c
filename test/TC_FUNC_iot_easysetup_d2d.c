@@ -212,7 +212,7 @@ void TC_STATIC_es_keyinfo_handler_success(void **state)
     struct iot_context *context;
     iot_security_cipher_params_t *device_cipher;
     iot_security_cipher_params_t *server_cipher;
-    char *time_to_set;
+    time_t time_to_set;
 
     // Given: time is under 32bit time_t (Y2038)
     context = (struct iot_context *)*state;
@@ -222,10 +222,8 @@ void TC_STATIC_es_keyinfo_handler_success(void **state)
     assert_int_equal(err, IOT_ERROR_NONE);
     server_cipher = _generate_server_cipher(device_cipher->iv.p, device_cipher->iv.len);
     assert_non_null(server_cipher);
-    time_to_set = calloc(sizeof(char), 11);
-    assert_non_null(time_to_set);
-    in_payload = _generate_post_keyinfo_payload(2020, time_to_set, 11);
-    expect_string(__wrap_iot_bsp_system_set_time_in_sec, time_in_sec, time_to_set);
+    in_payload = _generate_post_keyinfo_payload(2020, &time_to_set);
+    expect_value(__wrap_iot_bsp_system_set_time_in_sec, time_in_sec, time_to_set);
     // When
     err = _es_keyinfo_handler(context, in_payload, &out_payload);
     // Then
@@ -238,7 +236,6 @@ void TC_STATIC_es_keyinfo_handler_success(void **state)
     _free_cipher(server_cipher);
     free(out_payload);
     free(in_payload);
-    free(time_to_set);
 }
 
 void TC_STATIC_es_keyinfo_handler_success_with_y2038(void **state)
@@ -249,7 +246,7 @@ void TC_STATIC_es_keyinfo_handler_success_with_y2038(void **state)
     struct iot_context *context;
     iot_security_cipher_params_t *device_cipher;
     iot_security_cipher_params_t *server_cipher;
-    char *time_to_set;
+    time_t time_to_set;
 
     // Given: time is over 32bit time_t (Y2038)
     context = (struct iot_context *)*state;
@@ -259,10 +256,8 @@ void TC_STATIC_es_keyinfo_handler_success_with_y2038(void **state)
     assert_int_equal(err, IOT_ERROR_NONE);
     server_cipher = _generate_server_cipher(device_cipher->iv.p, device_cipher->iv.len);
     assert_non_null(server_cipher);
-    time_to_set = calloc(sizeof(char), 11);
-    assert_non_null(time_to_set);
-    in_payload = _generate_post_keyinfo_payload(2038, time_to_set, 11);
-    expect_string(__wrap_iot_bsp_system_set_time_in_sec, time_in_sec, time_to_set);
+    in_payload = _generate_post_keyinfo_payload(2038, &time_to_set);
+    expect_value(__wrap_iot_bsp_system_set_time_in_sec, time_in_sec, time_to_set);
     // When
     err = _es_keyinfo_handler(context, in_payload, &out_payload);
     // Then
@@ -275,7 +270,6 @@ void TC_STATIC_es_keyinfo_handler_success_with_y2038(void **state)
     _free_cipher(server_cipher);
     free(out_payload);
     free(in_payload);
-    free(time_to_set);
 }
 
 struct test_wifi_provisioning_data {

@@ -10,6 +10,17 @@ We also provide examples so that so that you can refer to how this core device l
 
 It is distributed in source form and written in C99 for the purpose of portability to most platforms.
 
+## SmartThings SDK version 2.0 Release
+
+With the release of SmartThings SDK version 2.0, we decided to no longer support softAP-based ST app connections. 
+If you want to use softAP-based SmartThings SDK, you should use SmartThings SDK version 1.X. 
+The currently provided softAP-based SmartThings SDK can be used, but new feature upgrades are no longer planned to be supported for softAP-base SmartThings SDK.
+
+Because softAP-based devices have technical limitations in supporting the functions planned by SmartThings, we have released SmartThings SDK version 2.0, which provides BLE-based connection with SmartThings APP.
+If the chipset to be used in the product supports BLE, it is recommended to use a BLE-based SmartThings SDK.
+
+Using BLE is expected to not only support new SmartThings features, but also improve device search and connection stability with the SmartThings APP.
+
 ## Main features
 
 This core device library provides the following features :

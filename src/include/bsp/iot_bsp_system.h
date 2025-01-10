@@ -21,6 +21,7 @@
 
 #include "iot_error.h"
 #include <stddef.h>
+#include <time.h>
 
 #ifdef __cplusplus
 extern "C" {
@@ -67,21 +68,20 @@ void iot_bsp_system_poweroff();
 /**
  * @brief Get system time in second.
  *
- * @param[out] buf A pointer to data array to store the system time in second.
- * @param[in] buf_len The length of buffer.
+ * @param[out] time_in_sec A pointer to time_t data to store the system time in second.
  * @retval IOT_ERROR_NONE Set time successful.
  * @retval IOT_ERROR_INVALID_ARGS Invalid argument.
  */
-iot_error_t iot_bsp_system_get_time_in_sec(char* buf, unsigned int buf_len);
+iot_error_t iot_bsp_system_get_time_in_sec(time_t *time_in_sec);
 
 /**
  * @brief Set system time in second.
  *
- * @param[in] time_in_sec A time value in second from struct timeval's tv_sec (ex : 1546300800)
+ * @param[in] time_in_sec A time value in second (ex : 1546300800)
  * @retval IOT_ERROR_NONE Set time successful.
  * @retval IOT_ERROR_INVALID_ARGS Invalid argument.
  */
-iot_error_t iot_bsp_system_set_time_in_sec(const char* time_in_sec);
+iot_error_t iot_bsp_system_set_time_in_sec(time_t time_in_sec);
 
 #ifdef __cplusplus
 }

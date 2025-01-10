@@ -29,6 +29,17 @@ First, please sign in to the [Developer Workspace](https://developer.smartthings
 
 To create project for direct connected device. Please select _New Project_ &rightarrow; _Device Integration_ &rightarrow; _Direct-connected_  
 
+If you have a plan to commercialize a product, I recommend creating an organizational workspace instead of a private workspace.
+You cannot request the certification in private workspace.
+
+If you find the person mark at the top-right in Developer Workspace, you can get the link of the request form for an organization workspace.
+- If you need new organization, selcet Create New Organization in Type of Organization Change
+- If you want to join or remove an existing organization, select Add User to Existing Organization or Remove User from Existing Organization
+
+MNid can be found next to the organization name at the top right of the developer workspace page that is a member of the organization.
+
+Once the application is completed, the progress status will be sent to the email address you applied for.
+
 ![create project](./res/create-project.gif)
 
 
@@ -113,6 +124,8 @@ Copy public key string from keygen output (`nFN5x***uQusQ****ZHoBSFaAoP9***kNdLn
 
 ### (Optional)Generate Device QR code
 Using device QR code could be helpful while device onboarding. QR code should have format like below. (Please refer here for more details)
+
+This link is [QR code design template] (https://developer.smartthings.com/docs/devices/direct-connected/publish#qr-code-design-template).
 
 **{Your mnId}**: 4-digit alphanumeric mnId of your account  
 **{Device onboardingId}**: 3-digit number Onboarding ID, you can find it from your developer workspace project “Device Onboarding” > “Other Info” page  

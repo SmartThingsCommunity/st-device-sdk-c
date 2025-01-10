@@ -19,6 +19,7 @@
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
+#include <time.h>
 #if defined(STDK_IOT_CORE_SERIALIZE_CBOR)
 #include <cbor.h>
 #endif
@@ -486,7 +487,6 @@ iot_error_t _iot_parse_noti_data(void *data, iot_noti_data_t *noti_data)
 	JSON_H *item = NULL;
 	char *noti_type_string = NULL;
 	char *payload = NULL;
-	char time_str[11] = {0,};
 	char *subitem_str = NULL;
 
 	json = JSON_PARSE(data);
@@ -526,9 +526,8 @@ iot_error_t _iot_parse_noti_data(void *data, iot_noti_data_t *noti_data)
 			goto out_noti_parse;
 		}
 
-		snprintf(time_str, sizeof(time_str), "%d", item->valueint);
-		IOT_INFO("Set SNTP with current time %s", time_str);
-		iot_bsp_system_set_time_in_sec(time_str);
+		IOT_INFO("Set SNTP with current time %d", item->valueint);
+		iot_bsp_system_set_time_in_sec((time_t)item->valueint);
 		IOT_DUMP(IOT_DEBUG_LEVEL_INFO, IOT_DUMP_CAPABILITY_EXPIRED_JWT_RECEIVED, item->valueint, 0);
 	} else if (!strncmp(noti_type_string, SERVER_NOTI_TYPE_RATE_LIMIT_REACHED, strlen(SERVER_NOTI_TYPE_RATE_LIMIT_REACHED))) {
 		noti_data->type = _IOT_NOTI_TYPE_RATE_LIMIT;

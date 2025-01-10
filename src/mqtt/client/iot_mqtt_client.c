@@ -1155,11 +1155,11 @@ static void _iot_mqtt_delete_pending_task(MQTTClient *client)
 	if (queue == NULL)
 		return;
 
-	queue_data_iter = queue->head;
-	queue_data_prev = NULL;
-
 	if((iot_os_mutex_lock(&queue->lock)) != IOT_OS_TRUE)
 		return;
+
+	queue_data_iter = queue->head;
+	queue_data_prev = NULL;
 
 	while (queue_data_iter) {
 		if (((device_work_data_t *)(queue_data_iter->data))->owner_id == client) {
@@ -1172,6 +1172,11 @@ static void _iot_mqtt_delete_pending_task(MQTTClient *client)
 				iot_os_free(queue_data_iter->data);
 				iot_os_free(queue_data_iter);
 				queue_data_iter = queue->head;
+			} else if (queue_data_iter == queue->tail) {
+				queue->tail = queue_data_prev;
+				iot_os_free(queue_data_iter->data);
+				iot_os_free(queue_data_iter);
+				queue_data_iter = NULL;
 			} else {
 				queue_data_prev->next = queue_data_iter->next;
 				iot_os_free(queue_data_iter->data);
