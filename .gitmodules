@@ -1,0 +1,12 @@
+[submodule "src/deps/libsodium/libsodium"]
+	path = src/deps/libsodium/libsodium
+	url = https://github.com/jedisct1/libsodium.git
+[submodule "src/deps/json/cJSON"]
+	path = src/deps/json/cJSON
+	url = https://github.com/DaveGamble/cJSON.git
+[submodule "src/deps/mbedtls/mbedtls"]
+	path = src/deps/mbedtls/mbedtls
+	url = https://github.com/ARMmbed/mbedtls.git
+[submodule "src/deps/curl/curl"]
+	path = src/deps/curl/curl
+	url = https://github.com/curl/curl.git

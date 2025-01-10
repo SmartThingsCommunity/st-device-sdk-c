@@ -1,0 +1,11 @@
+src/deps/curl/curl/
+src/deps/json/cJSON/
+src/deps/libsodium/libsodium/
+src/deps/lwip/lwip/
+src/deps/mbedtls/mbedtls/
+tools/keygen/linux/ed25519*
+tools/keygen/linux/output_*
+tools/keygen/output_*
+doc/doxygen/
+build/
+output/
