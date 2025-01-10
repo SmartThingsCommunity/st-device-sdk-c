@@ -53,8 +53,9 @@
 #define PREERR_STR_LEN          32
 #define STR_DEFAULT_LEN         64
 
-
+#if defined(CONFIG_STDK_IOT_CORE_EASYSETUP_X509)
 static unsigned char sec_random[RANDOM_LEN*2] = {0};
+#endif
 static bool confirm_check;
 static unsigned int ownership_validation_type;
 
@@ -110,7 +111,6 @@ char *_es_json_parse_string(JSON_H *json, const char *name)
 STATIC_FUNCTION
 iot_error_t _es_time_set(unsigned char *time)
 {
-	char time_str[11] = {0,};
 	iot_error_t err = IOT_ERROR_NONE;
 	struct tm tm = { 0 };
 	time_t now = 0;
@@ -142,9 +142,7 @@ iot_error_t _es_time_set(unsigned char *time)
 	tm.tm_mon -= 1;
 
 	now = mktime(&tm);
-	snprintf(time_str, sizeof(time_str), "%lld", (long long)now);
-
-	err = iot_bsp_system_set_time_in_sec(time_str);
+	err = iot_bsp_system_set_time_in_sec(now);
 	if (err) {
 		IOT_ERROR("Time set error!!");
 		IOT_ES_DUMP(IOT_DEBUG_LEVEL_ERROR, IOT_DUMP_EASYSETUP_INVALID_TIME, err);
@@ -1172,6 +1170,9 @@ iot_error_t _es_confirm_check_manager(struct iot_context *ctx, enum ownership_va
 				IOT_INFO("OVF_BIT_BUTTON confirm");
 				IOT_ES_DUMP(IOT_DEBUG_LEVEL_INFO, IOT_DUMP_EASYSETUP_GET_OWNER_CONFIRM, 0);
 				confirm_check = false;
+			} else if (!curr_event) {
+				err = IOT_ERROR_EASYSETUP_CONFIRM_TIMEOUT;
+				goto out;
 			} else {
 				IOT_ERROR("OVF_BIT_BUTTON confirm failed");
 				IOT_ES_DUMP(IOT_DEBUG_LEVEL_ERROR, IOT_DUMP_EASYSETUP_CONFIRM_DENIED, 0);

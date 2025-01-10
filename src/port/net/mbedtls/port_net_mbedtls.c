@@ -374,6 +374,7 @@ PORT_NET_CONTEXT port_net_listen(char *port, port_net_tls_config *config)
 		}
 		new_net_context->is_tls_connection = false;
 	}
+	mbedtls_net_free(&listen_fd);
 
 	return (PORT_NET_CONTEXT)new_net_context;
 exit:

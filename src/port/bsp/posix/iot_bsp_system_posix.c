@@ -43,26 +43,22 @@ void iot_bsp_system_poweroff()
 	exit(0);
 }
 
-iot_error_t iot_bsp_system_get_time_in_sec(char* buf, unsigned int buf_len)
+iot_error_t iot_bsp_system_get_time_in_sec(time_t *time_in_sec)
 {
-	IOT_WARN_CHECK(buf == NULL, IOT_ERROR_INVALID_ARGS, "buffer for time is NULL");
-
 	struct timespec ts = {0,};
 
 	clock_gettime(CLOCK_REALTIME, &ts);
-	snprintf(buf, buf_len, "%ld", ts.tv_sec);
+	*time_in_sec = ts.tv_sec;
 
 	return IOT_ERROR_NONE;
 }
 
-iot_error_t iot_bsp_system_set_time_in_sec(const char* time_in_sec)
+iot_error_t iot_bsp_system_set_time_in_sec(time_t time_in_sec)
 {
-	IOT_WARN_CHECK(time_in_sec == NULL, IOT_ERROR_INVALID_ARGS, "time data is NULL");
-
 	struct timespec ts = {0,};
 	int ret;
 
-	sscanf(time_in_sec, "%ld", &ts.tv_sec);
+	ts.tv_sec = time_in_sec;
 	ret = clock_settime(CLOCK_REALTIME, &ts);
 	if (ret == -1)
 		return IOT_ERROR_INVALID_ARGS;

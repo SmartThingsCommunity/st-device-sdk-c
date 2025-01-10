@@ -27,6 +27,16 @@ extern "C" {
 #endif
 
 /**
+ * @brief	Generate random uuid with key
+ * This function generate random uuid value from key
+ * @param[out]	uuid		created random uuid
+ * @param[in]	key			key info to put in genrating random uuid
+ * @param[in]	key_len		size of key info
+ * @return	IOT_ERROR_NONE on success
+ */
+iot_error_t iot_get_random_uuid_from_key(struct iot_uuid *uuid, char *key, size_t key_len);
+
+/**
  * @brief	Change mac to random uuid
  * This function changes mac to random uuid
  * @param[out]	uuid		created random uuid

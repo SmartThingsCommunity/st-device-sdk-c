@@ -29,7 +29,6 @@ iot_error_t iot_easysetup_create_ble_advertise_packet(struct iot_context *ctx)
 	char *serial = NULL;
 	size_t length;
 	size_t base64_written = 0;
-	int i;
 	iot_error_t err = IOT_ERROR_NONE;
 	unsigned char hash_buffer[IOT_SECURITY_SHA256_LEN] = { 0, };
 	unsigned char base64url_buffer[IOT_SECURITY_B64_ENCODE_LEN(IOT_SECURITY_SHA256_LEN)] = { 0, };

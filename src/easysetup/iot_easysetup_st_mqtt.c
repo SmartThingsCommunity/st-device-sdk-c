@@ -31,6 +31,7 @@
 #include "iot_os_util.h"
 #include "iot_bsp_system.h"
 #include "security/iot_security_manager.h"
+#include "iot_uuid.h"
 
 #include "JSON.h"
 #if defined(STDK_IOT_CORE_SERIALIZE_CBOR)
@@ -42,7 +43,6 @@ gg_connection_request_status _check_connection_response(char *response_payload, 
 	JSON_H *response_json = NULL;
 	JSON_H *event_json = NULL;
 	JSON_H *cur_time_json = NULL;
-	char time_str[11] = {0,};
 	gg_connection_request_status response_ret = GG_CONNECTION_REQUEST_STATUS_FAIL;
 	char *response_payload_str = NULL;
 
@@ -88,9 +88,8 @@ gg_connection_request_status _check_connection_response(char *response_payload, 
 				response_ret = GG_CONNECTION_REQUEST_STATUS_FAIL;
 				goto out;
 			}
-			snprintf(time_str, sizeof(time_str), "%d", cur_time_json->valueint);
-			IOT_INFO("Set SNTP with current time %s", time_str);
-			iot_bsp_system_set_time_in_sec(time_str);
+			IOT_INFO("Set SNTP with current time %d", cur_time_json->valueint);
+			iot_bsp_system_set_time_in_sec((time_t)cur_time_json->valueint);
 
 			response_ret = GG_CONNECTION_REQUEST_STATUS_FAIL;
 		} else if (!strncmp(event_json->valuestring, "connect.success", 15)) {
@@ -123,7 +122,6 @@ static void mqtt_reg_sub_cb(st_mqtt_msg *md, void *userData)
 	JSON_H *cur_time = NULL;
 	JSON_H *dip_key = NULL;
 	JSON_H *dip_item = NULL;
-	char time_str[11] = {0,};
 	char *svr_did_str = NULL;
 	enum iot_command_type iot_cmd;
 	struct iot_dip_data *reged_dip = NULL;
@@ -174,10 +172,8 @@ static void mqtt_reg_sub_cb(st_mqtt_msg *md, void *userData)
 					__func__, mqtt_payload);
 				goto reg_sub_out;
 			}
-
-			snprintf(time_str, sizeof(time_str), "%d", cur_time->valueint);
-			IOT_INFO("Set SNTP with current time %s", time_str);
-			iot_bsp_system_set_time_in_sec(time_str);
+			IOT_INFO("Set SNTP with current time %d", cur_time->valueint);
+			iot_bsp_system_set_time_in_sec((time_t)cur_time->valueint);
 
 			iot_cmd = IOT_COMMAND_CLOUD_REGISTERING;
 			if (iot_command_send(ctx, iot_cmd, NULL, 0) != IOT_ERROR_NONE) {
@@ -494,7 +490,7 @@ void *_iot_es_mqtt_registration_cbor(struct iot_context *ctx,
 {
 	struct iot_devconf_prov_data *devconf;
 	struct iot_device_info *dev_info;
-	struct timeval tv = {0,};
+	time_t cur_time = 0;
 	CborEncoder root = {0};
 	CborEncoder root_map = {0};
 	CborEncoder dip_key_map = {0};
@@ -913,12 +909,18 @@ iot_error_t _iot_es_mqtt_connect(struct iot_context *ctx, st_mqtt_client target_
 	struct iot_cloud_prov_data *cloud_prov;
 	char *root_cert = NULL;
 	size_t root_cert_len;
+	struct iot_uuid uuid;
 
-	/* Use mac based random client_id for GreatGate */
-	iot_ret = iot_get_random_id_str(client_id, sizeof(client_id));
-	if (iot_ret != IOT_ERROR_NONE) {
-		IOT_ERROR("Cannot get random_id for client_id");
-		return iot_ret;
+	iot_ret = iot_get_random_uuid_from_key(&uuid, username, strlen(username));
+	if (iot_ret) {
+		IOT_ERROR("iot_get_random_uuid returned error : %d", iot_ret);
+	    return iot_ret;
+	}
+
+	iot_ret = iot_util_convert_uuid_str(&uuid, client_id, sizeof(client_id));
+	if (iot_ret) {
+		IOT_ERROR("iot_util_convert_uuid_str returned error : %d", iot_ret);
+	    return iot_ret;
 	}
 
 	cloud_prov = &ctx->prov_data.cloud;
