@@ -1,0 +1,21 @@
+{
+  "onboardingConfig": {
+    "deviceOnboardingId": "NAME",
+    "mnId": "MNID",
+    "setupId": "999",
+    "vid": "VID",
+    "deviceTypeId": "TYPE",
+    "ownershipValidationTypes": [
+      "JUSTWORKS",
+      "BUTTON",
+      "PIN",
+      "QR"
+    ],
+    "identityType": "ED25519",
+    "deviceIntegrationProfileKey": {
+      "id": "DIP_UUID",
+      "majorVersion": 0,
+      "minorVersion": 1
+    }
+  }
+}

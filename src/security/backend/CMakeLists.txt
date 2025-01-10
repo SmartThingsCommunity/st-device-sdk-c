@@ -1,0 +1,5 @@
+if(${CONFIG_STDK_IOT_CORE_SECURITY_BACKEND_SOFTWARE})
+	add_subdirectory(software)
+elseif(${CONFIG_STDK_IOT_CORE_SECURITY_BACKEND_HARDWARE})
+	add_subdirectory(hardware)
+endif()
