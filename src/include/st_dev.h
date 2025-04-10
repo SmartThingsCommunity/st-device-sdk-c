@@ -265,6 +265,61 @@ typedef enum iot_dump_mode {
     IOT_DUMP_MODE_NEED_DUMP_STATE = (1 << 1),    /**< @brief add dump_state in log_dump */
 } iot_dump_mode_t;
 
+/**
+ * @brief ST Server type
+ */
+typedef enum {
+    SERVER_TYPE_UNKNOWN,	                /**< @brief Unknown Server */
+    SERVER_TYPE_AP_NORTH_EAST2,	        /**< @brief AP North East2 server location */
+    SERVER_TYPE_US_EAST1,               /**< @brief US East1 server location */
+    SERVER_TYPE_EU_WEST1,               /**< @brief EU West1 server location */
+} st_server_type;
+
+/**
+ * @brief Device identity type
+ */
+typedef enum {
+    ST_IDENTITY_METHOD_NONE,
+    ST_IDENTITY_METHOD_MANUAL_ED25519,           /**< Ed25519 device keys are included in config. This option for develop */
+    ST_IDENTITY_METHOD_EMBEDDED_KEY,    /**< Device identity is embedded on device during manufacturing. This option for commercial. */
+} st_identity_method;
+
+/**
+ * @brief Device configuration data
+ */
+typedef struct {
+    /* Registration Info */
+    char *device_id;                    /**< @brief Optional, If device_id is presented, it skip onboarding process. */
+    st_server_type server_type;         /**< @brief Server info for device to connect. Only valid when device_is is presented */
+
+    /* Device Identity */
+    st_identity_method id_method;       /**< @brief Method for this device to provide its identity. */
+    union _identity {
+        struct _ed25519 {
+            char *sn;
+            char *pubkey;
+            char *prikey;
+        } ed25519;
+    } identity;                         /**< @brief identity should be provided only when METHOD_MANUAL is set */
+
+    /**
+     * Device Onboarding Info
+     *
+     * Below onboarding info is neede for onboarding process.
+     **/
+    char *onboarding_id;
+    char *mnId;
+    char *setup_id;
+    char *vid;
+    char *device_type_id;
+    char **ownership_validation_types;
+
+    /* Device Profile Info */
+    char *dip_id;
+    int dip_major_version;
+    int dip_minor_version;
+} st_device_config_t;
+
 //////////////////////////////////////////////////////////////
 
 #define ST_CAP_CREATE_ATTR_NUMBER(cap_handle, attribute, value_number, unit, data, output_attr)\
@@ -601,6 +656,14 @@ int st_change_device_name(IOT_CTX *iot_ctx, const char *new_name);
  * negative integer for error case.
  */
 int st_cap_send_attr_v2(IOT_CTX *iot_ctx, st_attr_data* attr_data[], uint8_t attr_num);
+
+/**
+ * @brief	Initialize ST device
+ * @details	This function initializes a ST device.
+ * @param[in]	config	configuration data for a ST device
+ * @return		return IOT_CTX handle(a pointer) if it succeeds, or NULL if it fails
+ */
+IOT_CTX* st_device_init(st_device_config_t *config);
 
 #ifdef __cplusplus
 }

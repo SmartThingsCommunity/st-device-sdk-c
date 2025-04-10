@@ -75,6 +75,13 @@ const static struct iot_caps_firmwareUpdate {
         const unsigned char property;
         const unsigned char valueType;
     } attr_lastUpdateStatusReason;
+
+    const struct firmwareUpdate_attr_updateAvailable {
+        const char *name;
+        const unsigned char property;
+        const unsigned char valueType;
+    } attr_updateAvailable;
+
     const struct firmwareUpdate_cmd_checkForFirmwareUpdate { const char* name; } cmd_checkForFirmwareUpdate;
     const struct firmwareUpdate_cmd_updateFirmware { const char* name; } cmd_updateFirmware;
 } caps_helper_firmwareUpdate = {
@@ -115,6 +122,13 @@ const static struct iot_caps_firmwareUpdate {
         .property = 0,
         .valueType = VALUE_TYPE_STRING,
     },
+
+    .attr_updateAvailable = {
+        .name = "updateAvailable",
+        .property = 0,
+        .valueType = VALUE_TYPE_BOOLEAN,
+    },
+
     .cmd_checkForFirmwareUpdate = { .name = "checkForFirmwareUpdate" },
     .cmd_updateFirmware = { .name = "updateFirmware" },
 };

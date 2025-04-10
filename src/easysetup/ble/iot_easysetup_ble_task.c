@@ -64,15 +64,15 @@ static int _es_process_accepted_connection(void *handle)
 	size_t len;
 	int cmd;
 
-        while (1) {
-			iot_os_delay(10);
-			if (g_check_process) {
-				len = g_write_callback_len;
-				g_check_process = 0;
-				IOT_INFO("ble event reported");
-				break;
-			}
+	while (1) {
+		iot_os_delay(10);
+		if (g_check_process) {
+			len = g_write_callback_len;
+			g_check_process = 0;
+			IOT_INFO("ble event reported");
+			break;
 		}
+	}
 
 	cmd = g_write_cmd_num - 1;
 
@@ -89,16 +89,17 @@ static void _es_ble_task(void *pvParameters)
 
 	iot_err = iot_easysetup_create_ble_advertise_packet(context);
 	if (iot_err != IOT_ERROR_NONE) {
-	    IOT_ERROR("Can't create ble advertise packet for easysetup.(%d)", iot_err);
-		return;
+		IOT_ERROR("Can't create ble advertise packet for easysetup.(%d)", iot_err);
+		goto exit_task;
 	}
 
 	iot_bsp_ble_init(es_msg_assemble);
 
 	while (!is_es_ble_deinit_processing()) {
-	    _es_process_accepted_connection(NULL);
+		_es_process_accepted_connection(NULL);
 	}
 
+exit_task:
 	/*set es_ble_task_handle to null, prevent duplicate delete in es_ble_deinit*/
 	es_ble_task_handle = NULL;
 	iot_os_thread_delete(NULL);

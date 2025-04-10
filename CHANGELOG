@@ -1,5 +1,30 @@
 # HISTORY
 
+## 2.1.1 : Changes for version 2.1.1
+
+Bug fixed:
+
+- Fix build error during esp32 example build
+
+## 2.1.0 : Changes for version 2.1.0
+
+New Improvements or features:
+
+- Update D2D onboarding protocol to use hased SN to improve security.
+- Add Quick PoC example for linux distribution
+
+Enhancements or amendments:
+
+- Add raspberry pi example and porting.
+- Improve esp32 flash operation to make sure commit change.
+- Add esp32 nv encrypted image generator.
+- Improve DIP update logic to make fast to update DIP after FOTA.
+- Support BL602 board porting.
+
+Bug fixed:
+
+- Fix BLE MTU issue with specific AOS version.
+
 ## 2.0.3 : Changes for version 2.0.3
 
 Enhancements or amendments:

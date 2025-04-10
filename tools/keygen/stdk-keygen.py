@@ -167,6 +167,7 @@ class Nv():
     def prepare_repo(self, sub_path, sn):
         csv_file = "stnv.csv"
         image_file = "stnv-" + sn + ".bin"
+        keys_file = "stnv-" + sn + "-keys.bin"
 
         repo_dir = os.path.join(sub_path, "stnv")
 
@@ -175,6 +176,8 @@ class Nv():
 
         self._csvfile = os.path.join(repo_dir, csv_file)
         self._imagefile = os.path.join(repo_dir, image_file)
+        self._keysfile = keys_file
+        self._repodir = repo_dir
         self._sn = sn
 
     def generate_csv(self, pubkey_b64, seckey_b64):
@@ -200,6 +203,43 @@ class Nv():
         cmd += " " + self._csvfile
         cmd += " " + self._imagefile
         cmd += " 0x4000"
+        if "esp32" in esp_tools_dir:
+            cmd += " --version 1"
+        cmd += " > /dev/null"
+        result = os.system(cmd)
+        if result != 0:
+            raise TypeError("failed to generate NV images")
+
+    def generate_key(self):
+        esp_tools_dir = os.environ.get('IDF_PATH')
+        if (esp_tools_dir is None) or (esp_tools_dir == ""):
+            raise TypeError("ERROR: set IDF_PATH for stnv image")
+        else:
+            nv_gen_tools = os.path.join(esp_tools_dir, "components/nvs_flash/nvs_partition_generator/nvs_partition_gen.py")
+
+        cmd = "python " + nv_gen_tools
+        cmd += " generate-key"
+        cmd += " --keyfile " + self._keysfile
+        cmd += " --outdir " + self._repodir
+        cmd += " > /dev/null"
+        result = os.system(cmd)
+        if result != 0:
+            raise TypeError("failed to generate key")
+
+    def generate_encpyt_image(self):
+        esp_tools_dir = os.environ.get('IDF_PATH')
+        if (esp_tools_dir is None) or (esp_tools_dir == ""):
+            raise TypeError("ERROR: set IDF_PATH for stnv image")
+        else:
+            nv_gen_tools = os.path.join(esp_tools_dir, "components/nvs_flash/nvs_partition_generator/nvs_partition_gen.py")
+
+        keys_file = os.path.join(self._repodir, "keys", self._keysfile)
+        cmd = "python " + nv_gen_tools
+        cmd += " encrypt "
+        cmd += " " + self._csvfile
+        cmd += " " + self._imagefile
+        cmd += " 0x4000"
+        cmd += " --inputkey " + keys_file
         if "esp32" in esp_tools_dir:
             cmd += " --version 1"
         cmd += " > /dev/null"
@@ -262,6 +302,13 @@ def individual(args, qrcode_imported):
         nv.prepare_repo(sub_path, sn)
         nv.generate_csv(edkey.get_pubkey_b64(), edkey.get_seckey_b64())
         nv.generate_image()
+    elif args.nv == 'esp-encrypt':
+        # Generate NV encrpyt image file
+        nv = Nv()
+        nv.prepare_repo(sub_path, sn)
+        nv.generate_csv(edkey.get_pubkey_b64(), edkey.get_seckey_b64())
+        nv.generate_key()
+        nv.generate_encpyt_image()
     if args.qr is True and qrcode_imported is not None:
         #Generate QRcode imagea
         file = os.path.join(args.path, onboardingFile)
@@ -302,6 +349,10 @@ def bulk(args, qrcode_imported):
             edkey = Ed25519Key(sn)
             edkey.generate()
             edkey.savetofile(os.path.join(sub_path, sn))
+
+            formatter = Formatter(sn, edkey.get_pubkey_b64().decode('utf-8'), edkey.get_seckey_b64().decode('utf-8'), args.firmware)
+            formatter.generate_device_info_json(os.path.join(sub_path, sn))
+
             batch_item['sn'] = sn
             batch_item['keyType'] = 'ECPUBKEY'
             batch_item['keyCrv'] = 'ED25519'
@@ -315,6 +366,13 @@ def bulk(args, qrcode_imported):
                 nv.prepare_repo(os.path.join(sub_path, sn), sn)
                 nv.generate_csv(edkey.get_pubkey_b64(), edkey.get_seckey_b64())
                 nv.generate_image()
+            elif args.nv == 'esp-encrypt':
+                # Generate NV encrpyt image file
+                nv = Nv()
+                nv.prepare_repo(sub_path, sn)
+                nv.generate_csv(edkey.get_pubkey_b64(), edkey.get_seckey_b64())
+                nv.generate_key()
+                nv.generate_encpyt_image()
 
             if args.qr is True and qrcode_imported is not None and data is not None:
                 #Generate QRcode image
@@ -351,7 +409,7 @@ def main():
 
     parser.add_argument(
         '--nv',
-        choices=['esp'],
+        choices=['esp', 'esp-encrypt'],
         help="generate nv image for choiced chipset")
 
     parser.add_argument(

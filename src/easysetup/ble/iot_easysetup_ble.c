@@ -537,7 +537,7 @@ iot_error_t iot_easysetup_init(struct iot_context *ctx)
 		IOT_ES_DUMP(IOT_DEBUG_LEVEL_ERROR, IOT_DUMP_EASYSETUP_MEM_ALLOC_ERROR, 0);
 		iot_security_cipher_deinit(ctx->easysetup_security_context);
 		return IOT_ERROR_MEM_ALLOC;
-		}
+	}
 	memset(log_buffer, '\0', CONFIG_STDK_IOT_CORE_EASYSETUP_HTTP_LOG_SIZE);
 	log_len = 0;
 	dump_enable= true;

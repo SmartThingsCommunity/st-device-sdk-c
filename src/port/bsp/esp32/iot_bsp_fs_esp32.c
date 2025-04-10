@@ -143,7 +143,7 @@ iot_error_t iot_bsp_fs_deinit()
 
 iot_error_t iot_bsp_fs_open(const char* filename, iot_bsp_fs_open_mode_t mode, iot_bsp_fs_handle_t* handle)
 {
-	nvs_handle nvs_handle;
+	nvs_handle_t nvs_handle;
 	nvs_open_mode nvs_open_mode;
 
 	if (mode == FS_READONLY) {
@@ -166,7 +166,7 @@ iot_error_t iot_bsp_fs_open(const char* filename, iot_bsp_fs_open_mode_t mode, i
 #if defined(CONFIG_STDK_IOT_CORE_SUPPORT_STNV_PARTITION)
 iot_error_t iot_bsp_fs_open_from_stnv(const char* filename, iot_bsp_fs_handle_t* handle)
 {
-	nvs_handle nvs_handle;
+	nvs_handle_t nvs_handle;
 	nvs_open_mode nvs_open_mode = NVS_READONLY;
 
 	esp_err_t ret = nvs_open_from_partition(STDK_NV_DATA_PARTITION, STDK_NV_DATA_NAMESPACE, nvs_open_mode, &nvs_handle);
@@ -222,6 +222,9 @@ iot_error_t iot_bsp_fs_write(iot_bsp_fs_handle_t handle, const char* data, unsig
 	esp_err_t ret = nvs_set_str(handle.fd, handle.filename, data);
 	IOT_DEBUG_CHECK(ret != ESP_OK, IOT_ERROR_FS_WRITE_FAIL, "nvs write failed [%s]", _get_error_string(ret));
 
+	ret = nvs_commit(handle.fd);
+	IOT_DEBUG_CHECK(ret != ESP_OK, IOT_ERROR_FS_WRITE_FAIL, "nvs commit failed [%s]", _get_error_string(ret));
+
 	return IOT_ERROR_NONE;
 }
 
@@ -238,7 +241,7 @@ iot_error_t iot_bsp_fs_remove(const char* filename)
 		return IOT_ERROR_INVALID_ARGS;
 	}
 
-	nvs_handle nvs_handle;
+	nvs_handle_t nvs_handle;
 	nvs_open_mode nvs_open_mode = NVS_READWRITE;
 
 	esp_err_t ret = nvs_open(STDK_NV_DATA_NAMESPACE, nvs_open_mode, &nvs_handle);
@@ -255,7 +258,12 @@ iot_error_t iot_bsp_fs_remove(const char* filename)
 		}
 	}
 
-	nvs_close(nvs_handle);
+	ret = nvs_commit(nvs_handle);
+        if (ret != ESP_OK) {
+            IOT_DEBUG("nvs commit failed [%s]", _get_error_string(ret));
+            nvs_close(nvs_handle);
+            return IOT_ERROR_FS_REMOVE_FAIL;
+        }
 
 	return IOT_ERROR_NONE;
 }

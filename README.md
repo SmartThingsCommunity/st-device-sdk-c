@@ -53,6 +53,12 @@ We are managing two git branch categories. One is `develop` branch. The other is
 - `develop` branch : Latest devleoping features. Recommand for new feature test or POC.
 - `release/v{version}` branchs : Tested and stable branchs. Recommand for Commercial product.
 
+## Quick PoC development on Linux distribution
+
+You can build and test the SDK on your Linux distribution environment without real target board. In this way, you can easily make PoC demo for your product and check your IoT device feasibility on SmartThings platform. Also in real product developing, building and testing on Linux environment can accelerate product development speed.
+
+We provide `example/posix` example to demonstrate how to build and test the SDK on Linux distribution. But before running the example, you should acquire [Getting Started](./doc/getting_started.md) to be familiar with the SDK development process and register your test device profile on [Developer Workspace](https://developer.smartthings.com/workspace/). And this example skips onboarding(registering) process, so before test, you should register your device on the cloud manually with [manual onboarding tool](./tools/manual_onboarding/README.md) provided in `tools/manual_onboarding` folder.
+
 ## Learn more
 
 For more information, please review the following documents:
@@ -63,9 +69,13 @@ For more information, please review the following documents:
 - [Capabilities Reference](https://developer.smartthings.com/docs/devices/capabilities/capabilities-reference) : This page serves as a reference for the supported capabilities.
 - [Developer Workspace](https://developer.smartthings.com/workspace/) : It provides functions related to device information registration and device integration in the SmartThings cloud.
 
-## Contact
+## Commercialization
 
-If you have any issue, or want to commercialize your IoT devices using this SDK, please contact stdk@samsung.com or open new issue.
+For commercialization, refer to the following [link](https://github.com/SmartThingsCommunity/st-device-sdk-c/blob/main/doc/Commercialization_Guide).
+
+If you have any issue, or want to commercialize your IoT devices using this SDK, please use the following contact point.
+- Commercializatioin : partners@smartthings.com
+- Technical inquiry : open new issue on Github
 
 ## License
 

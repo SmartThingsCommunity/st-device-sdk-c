@@ -38,6 +38,29 @@ else ifeq ($(CONFIG_STDK_IOT_CORE_BSP_SUPPORT_EMW3166),y)
 else ifeq ($(CONFIG_STDK_IOT_CORE_BSP_SUPPORT_EMW3080),y)
 	COMPONENT_SRCDIRS += port/bsp/emw3080
 	COMPONENT_ADD_INCLUDEDIRS += include/bsp/emw3080
+else ifeq ($(CONFIG_STDK_IOT_CORE_BSP_SUPPORT_BL602),y)
+	include $(BL60X_SDK_PATH)/components/network/ble/ble_common.mk
+	CPPFLAGS += -DSTDK_IOT_CORE_BSP_SUPPORT_BL602
+	CPPFLAGS += -DMBEDTLS_ECDH_LEGACY_CONTEXT
+	CPPFLAGS += -U__STDC_HOSTED__
+	COMPONENT_SRCDIRS += port/bsp/bl602
+
+	COMPONENT_ADD_INCLUDEDIRS += include/bsp/bl602
+	COMPONENT_SRCDIRS += deps/json/cJSON
+	COMPONENT_SRCDIRS += \
+	deps/libsodium/libsodium/src/libsodium/sodium \
+	deps/libsodium/libsodium/src/libsodium/crypto_sign \
+	deps/libsodium/libsodium/src/libsodium/crypto_sign/ed25519 \
+	deps/libsodium/libsodium/src/libsodium/crypto_sign/ed25519/ref10 \
+	deps/libsodium/libsodium/src/libsodium/crypto_hash/sha512/cp \
+	deps/libsodium/libsodium/src/libsodium/crypto_core/ed25519/ref10
+
+	COMPONENT_ADD_INCLUDEDIRS += deps/json/cJSON
+	COMPONENT_ADD_INCLUDEDIRS += deps/libsodium/libsodium/src/libsodium/include
+	COMPONENT_ADD_INCLUDEDIRS += deps/libsodium/port/include/sodium
+
+	CFLAGS += -I$(IOT_CORE_PATH)/src/deps/libsodium/port/include
+	CFLAGS += -I$(IOT_CORE_PATH)/src/deps/libsodium/libsodium/src/libsodium/include/sodium
 else ifeq ($(CONFIG_STDK_IOT_CORE_BSP_SUPPORT_TIZENRT),y)
 	COMPONENT_SRCDIRS += port/bsp/tizenrt
 	COMPONENT_ADD_INCLUDEDIRS += include/bsp/tizenrt
@@ -76,6 +99,11 @@ else ifeq ($(CONFIG_STDK_IOT_CORE_SECURITY_BACKEND_HARDWARE),y)
 endif
 
 COMPONENT_SRCDIRS += easysetup
+
+ifdef CONFIG_STDK_IOT_CORE_EASYSETUP_BLE
+COMPONENT_SRCDIRS += easysetup/ble
+COMPONENT_SRCDIRS += easysetup/discovery/advertiser
+endif
 
 ifdef CONFIG_STDK_IOT_CORE_EASYSETUP_DISCOVERY_SSID
 COMPONENT_SRCDIRS += easysetup/discovery/ssid

@@ -178,21 +178,21 @@ iot_error_t iot_wifi_ctrl_request(struct iot_context *ctx,
 
 iot_error_t iot_ble_ctrl_request(struct iot_context *ctx)
 {
-    iot_error_t iot_err = IOT_ERROR_NONE;
+	iot_error_t iot_err = IOT_ERROR_NONE;
 
-    IOT_INFO("BLE onboarding start!!\n");
+	IOT_INFO("BLE onboarding start!!\n");
 
-    if (!ctx) {
-        IOT_ERROR("There is no ctx\n");
-        return IOT_ERROR_BAD_REQ;
-    }
+	if (!ctx) {
+		IOT_ERROR("There is no ctx\n");
+		return IOT_ERROR_BAD_REQ;
+	}
 
-    iot_err = iot_easysetup_init(ctx);
-    IOT_MEM_CHECK("ES_INIT DONE >>PT<<");
-    if (iot_err != IOT_ERROR_NONE) {
-        IOT_ERROR("failed to iot_easysetup_init(%d)", iot_err);
-    }
-    return iot_err;
+	iot_err = iot_easysetup_init(ctx);
+	IOT_MEM_CHECK("ES_INIT DONE >>PT<<");
+	if (iot_err != IOT_ERROR_NONE) {
+		IOT_ERROR("failed to iot_easysetup_init(%d)", iot_err);
+	}
+	return iot_err;
 }
 
 static void _easysetup_request_work_handler(struct iot_context *ctx, device_work_param param)
@@ -269,7 +269,7 @@ iot_error_t iot_state_update(struct iot_context *ctx,
 	state_data.opt = opt;
 
 	err = iot_command_send(ctx, IOT_COMMAND_STATE_UPDATE,
-		                    &state_data, sizeof(struct iot_state_data));
+						&state_data, sizeof(struct iot_state_data));
 
 	return err;
 }
