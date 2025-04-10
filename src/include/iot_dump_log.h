@@ -229,6 +229,7 @@ typedef enum {
 	IOT_DUMP_EASYSETUP_BLE_ECDH_SETUP_FAIL = 0x0555, /* arg1: line number, arg2: err number */
 	IOT_DUMP_EASYSETUP_SHARED_SIGNATURE_CREATION_FAIL = 0x0556, /* arg1: line number, arg2: err number */
 	IOT_DUMP_EASYSETUP_SHARED_DATA_CREATION_FAIL = 0x0557, /* arg1: line number, arg2: err number */
+	IOT_DUMP_EASYSETUP_PUBLIC_KEY_GET_FAIL = 0x0558, /* arg1: line number, arg2: err number */
 	/* Otm */
 	IOT_DUMP_EASYSETUP_CONFIRM_NOT_SUPPORT = 0x0561, /* arg1: line number, arg2: return value */
 	IOT_DUMP_EASYSETUP_CONFIRM_TIMEOUT = 0x0562, /* arg1: line number, arg2: 0 */

@@ -23,8 +23,10 @@
 #include "iot_debug.h"
 #include "iot_bsp_ble.h"
 
-#define HEADER_LEN_IN_MTU          (12)
-#define MAX_MTU                   (183)
+#define RESPONSE_HEADER_LEN		(9)
+#define INDICATION_HEADER_LEN		(3)
+#define MIN_MTU_SIZE		(23)
+#define MAX_ATT_VALUE_LEN		(512)
 
 enum msg_state_e{
     MSG_STATE_IDLE = 0,
@@ -35,7 +37,7 @@ enum msg_state_e{
 struct msg_state_t{
     enum msg_state_e state;
     bool                    msg_is_completed;
-    uint32_t                mtu;
+    uint32_t                max_att_len;
     uint8_t                 op_code;
     uint8_t                 cmd_num;
     uint8_t                 transaction_id;
@@ -67,7 +69,7 @@ struct transfor_data{
 static struct msg_state_t msg_state = {
     .state = MSG_STATE_IDLE,
     .msg_is_completed = false,
-    .mtu = 0,
+    .max_att_len = 0,
     .op_code = 0,
     .cmd_num = 0,
     .transaction_id = 0,
@@ -84,7 +86,7 @@ static void _es_msg_state_reset(void)
 
     msg_state.state = MSG_STATE_IDLE;
     msg_state.msg_is_completed = false;
-    msg_state.mtu = 0;
+    msg_state.max_att_len = 0;
     msg_state.op_code = 0;
     msg_state.total_size = 0;
     msg_state.data_continued = 0;
@@ -113,6 +115,7 @@ bool es_msg_assemble(uint8_t *buf, uint32_t len)
 
     struct transfor_data *data = (struct transfor_data *)buf;
     uint32_t total_size, offset;
+    uint32_t max_att_len = 0;
     bool duplicated_cmd = false;
 
     total_size  = data->total_size[0];
@@ -153,7 +156,8 @@ bool es_msg_assemble(uint8_t *buf, uint32_t len)
             }
 
             if (msg_state.data == NULL) {
-                msg_state.mtu = iot_bsp_ble_get_mtu() - HEADER_LEN_IN_MTU;
+                max_att_len = iot_bsp_ble_get_mtu() - INDICATION_HEADER_LEN;
+                msg_state.max_att_len = (max_att_len > MAX_ATT_VALUE_LEN) ? (MAX_ATT_VALUE_LEN - RESPONSE_HEADER_LEN) : (max_att_len - RESPONSE_HEADER_LEN);
                 msg_state.data_count = data->chunk_data_continued + 1;
                 msg_state.data = (iot_security_buffer_t *)iot_os_malloc(sizeof(iot_security_buffer_t) * msg_state.data_count);
                 if(msg_state.data == NULL) {
@@ -185,7 +189,7 @@ bool es_msg_assemble(uint8_t *buf, uint32_t len)
 			if (msg_state.data[msg_state.data_idx].p)
 	            memcpy(msg_state.data[msg_state.data_idx].p, data->segment_data, data->segment_len);
 
-            if ((total_size <= msg_state.mtu)
+            if ((total_size <= msg_state.max_att_len)
              && (total_size == data->segment_len)) {
                 IOT_INFO("msg transfer is completed");
                 msg_state.msg_is_completed = true;
@@ -218,9 +222,10 @@ bool es_msg_assemble(uint8_t *buf, uint32_t len)
 
 iot_error_t es_msg_disassemble(uint8_t *buf, uint32_t len, uint8_t data_continued, int cmd)
 {
-    uint32_t sent_len = 0;
-    struct transfor_data *ind;
-    int ind_ret = 0;
+	uint32_t sent_len = 0;
+	uint32_t max_att_len = 0;
+	struct transfor_data *ind;
+	int ind_ret = 0;
 
     if (NULL == buf || 0 == len) {
         IOT_ERROR("transferred request data is NULL");
@@ -232,17 +237,23 @@ iot_error_t es_msg_disassemble(uint8_t *buf, uint32_t len, uint8_t data_continue
         return IOT_ERROR_NONE;
     }
 
-    if (msg_state.state != MSG_STATE_IDLE) {
-        IOT_ERROR("state isn't available to send the message[%d]", msg_state.state);
-        return IOT_ERROR_BAD_REQ;
-    }
-    msg_state.mtu = iot_bsp_ble_get_mtu() - HEADER_LEN_IN_MTU;
+	if (msg_state.state != MSG_STATE_IDLE) {
+		IOT_ERROR("state isn't available to send the message[%d]", msg_state.state);
+		return IOT_ERROR_BAD_REQ;
+	}
 
-    ind = (struct transfor_data *)malloc(sizeof(struct transfor_data) - 0 + msg_state.mtu);
-    if(NULL == ind) {
-        IOT_ERROR("memory alloc fail for indication");
-        return IOT_ERROR_MEM_ALLOC;
-    }
+	max_att_len = iot_bsp_ble_get_mtu() - INDICATION_HEADER_LEN;
+	if (max_att_len < (MIN_MTU_SIZE - INDICATION_HEADER_LEN)) {
+		IOT_WARN("mtu size(%d) is under the minimum mtu size", (max_att_len + INDICATION_HEADER_LEN));
+		max_att_len = MIN_MTU_SIZE - INDICATION_HEADER_LEN;
+	}
+	msg_state.max_att_len = (max_att_len > MAX_ATT_VALUE_LEN) ? (MAX_ATT_VALUE_LEN - RESPONSE_HEADER_LEN) : (max_att_len - RESPONSE_HEADER_LEN);
+
+	ind = (struct transfor_data *)malloc(sizeof(struct transfor_data) - 0 + msg_state.max_att_len);
+	if(NULL == ind) {
+		IOT_ERROR("memory alloc fail for indication");
+		return IOT_ERROR_MEM_ALLOC;
+	}
 
     msg_state.state = MSG_STATE_DISASSEMBLE;
 
@@ -250,20 +261,20 @@ iot_error_t es_msg_disassemble(uint8_t *buf, uint32_t len, uint8_t data_continue
     ind->cmd_num        = msg_state.cmd_num;
     ind->transaction_id = msg_state.transaction_id;
 
-    while(sent_len < len) {
-        if (ind->op_code == 0) {
-            ind->total_size[0] = (uint8_t)(len & 0x000000ff);
-            ind->total_size[1] = (uint8_t)((len & 0x0000ff00) >> 8);
-            ind->total_size[2] = (uint8_t)((len & 0x00ff0000) >> 16);
-            ind->chunk_data_continued = data_continued;
-        } else {
-            ind->offset[0] = (uint8_t)(sent_len & 0x000000ff);
-            ind->offset[1] = (uint8_t)((sent_len & 0x0000ff00) >> 8);
-            ind->offset[2] = (uint8_t)((sent_len & 0x00ff0000) >> 16);
-            ind->segmented_data_continued = (int)(len/msg_state.mtu) - ind->op_code;
-        }
-        ind->segment_len = (sent_len + msg_state.mtu <= len) ? msg_state.mtu : (len - sent_len);
-        memcpy(ind->segment_data, buf + sent_len, ind->segment_len);
+	while(sent_len < len && msg_state.max_att_len != 0) {
+		if (ind->op_code == 0) {
+			ind->total_size[0] = (uint8_t)(len & 0x000000ff);
+			ind->total_size[1] = (uint8_t)((len & 0x0000ff00) >> 8);
+			ind->total_size[2] = (uint8_t)((len & 0x00ff0000) >> 16);
+			ind->chunk_data_continued = data_continued;
+		} else {
+			ind->offset[0] = (uint8_t)(sent_len & 0x000000ff);
+			ind->offset[1] = (uint8_t)((sent_len & 0x0000ff00) >> 8);
+			ind->offset[2] = (uint8_t)((sent_len & 0x00ff0000) >> 16);
+			ind->segmented_data_continued = (int)(len/msg_state.max_att_len) - ind->op_code;
+		}
+		ind->segment_len = (sent_len + msg_state.max_att_len <= len) ? msg_state.max_att_len : (len - sent_len);
+		memcpy(ind->segment_data, buf + sent_len, ind->segment_len);
 
         IOT_INFO("Send [%d] [%d] / [%d]", data_continued, sent_len, len);
         ind_ret = iot_send_indication((uint8_t*)ind,sizeof(struct transfor_data) - 0 + ind->segment_len);

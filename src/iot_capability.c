@@ -36,7 +36,7 @@
 #define MAX_SQNUM 0x7FFFFFFF
 
 STATIC_FUNCTION
-iot_error_t _iot_parse_noti_data(void *data, iot_noti_data_t *noti_data);
+iot_error_t _iot_parse_noti_data(struct iot_context *ctx, void *data, iot_noti_data_t *noti_data);
 
 static iot_error_t _iot_parse_cmd_data(JSON_H* cmditem, char** component,
 			char** capability, char** command, iot_cap_cmd_data_t* cmd_data);
@@ -479,7 +479,7 @@ int st_cap_send_attr(IOT_EVENT *event[], uint8_t evt_num)
 }
 
 STATIC_FUNCTION
-iot_error_t _iot_parse_noti_data(void *data, iot_noti_data_t *noti_data)
+iot_error_t _iot_parse_noti_data(struct iot_context *ctx, void *data, iot_noti_data_t *noti_data)
 {
 	iot_error_t err = IOT_ERROR_NONE;
 	JSON_H *json = NULL;
@@ -654,6 +654,15 @@ iot_error_t _iot_parse_noti_data(void *data, iot_noti_data_t *noti_data)
 				}
 			}
 		}
+        } else if (!strncmp(noti_type_string, SERVER_NOTI_TYPE_DEVICE_UPDATED, strlen(SERVER_NOTI_TYPE_DEVICE_UPDATED))) {
+               err = iot_misc_info_store(IOT_MISC_INFO_DIP, (const void *)ctx->devconf.dip);
+               if (err != IOT_ERROR_NONE) {
+                       IOT_ERROR("Store DIP failed!! (%d)", err);
+               } else {
+                       IOT_INFO("Update DIP succeed");
+                       ctx->dip_need_update = false;
+               }
+               err = IOT_ERROR_BAD_REQ;
 	} else {
 		IOT_WARN("There is no noti_type matched");
 		err = IOT_ERROR_BAD_REQ;
@@ -688,7 +697,7 @@ void iot_noti_sub_cb(struct iot_context *ctx, char *payload)
 	memset(&noti_data, 0, sizeof(iot_noti_data_t));
 
 	IOT_DUMP(IOT_DEBUG_LEVEL_INFO, IOT_DUMP_CAPABILITY_NOTI_RECEIVED, 0, 0);
-	err = _iot_parse_noti_data((void *)payload, &noti_data);
+	err = _iot_parse_noti_data(ctx, (void *)payload, &noti_data);
 	if (err != IOT_ERROR_NONE) {
 		IOT_INFO("Ignore notification");
 		return;

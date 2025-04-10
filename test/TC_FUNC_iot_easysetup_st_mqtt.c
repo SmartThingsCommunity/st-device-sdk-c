@@ -34,6 +34,7 @@
 #define REG_TEST_ROOM_ID "7be9ec0b-8819-44f9-ac26-2f4e46f48731"
 #define REG_TEST_DIP_ID "2154ccfc-84d1-432f-8c0d-5651b5a0da8e"
 #define REG_TEST_HASHED_SN "VNZCGRB2VIt+4QckH7OWZPp8UxulH/nZDCDgXpPHr1M" //stdktest00000001
+#define REG_TEST_COMBO_SN "mEjwVaheS8yMJ2QeHLbqlgWsuVmsJmgEGCuGeCQ1BXE=" //stdktest00000001
 #define REG_TEST_LABEL "testLabel"
 #define REG_TEST_MNID   "fTST"
 #define REG_TEST_VID    "TEST_VID"
@@ -53,8 +54,8 @@ void TC_STATIC_iot_es_mqtt_registration_success(void **state)
 #else
 extern void *_iot_es_mqtt_registration_json(struct iot_context *ctx, char *dip_id, size_t *msglen, bool self_reged);
 static void
-assert_es_mqtt_registration_json(struct iot_context *context, char *payload, size_t msglen, bool self_reged);
-static struct iot_context *generate_es_mqtt_registration_context(bool use_opt, bool use_d2d);
+assert_es_mqtt_registration_json(struct iot_context *context, char *payload, size_t msglen, bool self_reged, bool serial_type);
+static struct iot_context *generate_es_mqtt_registration_context(bool use_opt, bool use_d2d, bool serial_type);
 struct registration_test_condition {
     bool use_opt;
     bool use_d2d;
@@ -71,22 +72,30 @@ void TC_STATIC_iot_es_mqtt_registration_SUCCESS(void **state)
         {true, false}, {true, true}
     };
 
-    for (int i = 0; i < 4; i++) {
-        // Given
-        context = generate_es_mqtt_registration_context(condition[i].use_opt, condition[i].use_d2d);
-        // When
-        output_str = _iot_es_mqtt_registration_json(context, dip_id, &msglen, condition[i].use_d2d);
-        // Then
-        assert_es_mqtt_registration_json(context, output_str, msglen, condition[i].use_d2d);
-        // Teardown
-        free(output_str);
-        free(context->devconf.dip);
-        free(context);
-    }
+    /*
+        serial type for the registration has hashed sn and combo sn
+        if serial_type is true, serial type is combo sn
+        if serial_type is false, serial type is hashed sn
+    */
+    bool serial_type; //serial_type(Hashed sn, Combo sn)
 
+    for (int sn_type_count = 0; sn_type_count < 2; sn_type_count++) {
+        for (int i = 0; i < 4; i++) {
+            // Given
+            context = generate_es_mqtt_registration_context(condition[i].use_opt, condition[i].use_d2d, serial_type);
+            // When
+            output_str = _iot_es_mqtt_registration_json(context, dip_id, &msglen, condition[i].use_d2d);
+            // Then
+            assert_es_mqtt_registration_json(context, output_str, msglen, condition[i].use_d2d, serial_type);
+            // Teardown
+            free(output_str);
+            free(context->devconf.dip);
+            free(context);
+        }
+    }
 }
 
-struct iot_context *generate_es_mqtt_registration_context(bool use_opt, bool use_d2d)
+struct iot_context *generate_es_mqtt_registration_context(bool use_opt, bool use_d2d, bool serial_type)
 {
     struct iot_context *context;
     struct iot_devconf_prov_data *devconf;
@@ -105,6 +114,13 @@ struct iot_context *generate_es_mqtt_registration_context(bool use_opt, bool use
 
     devconf = &context->devconf;
     devconf->hashed_sn = REG_TEST_HASHED_SN;
+    if (serial_type) {
+        devconf->combo_sn = iot_os_malloc(sizeof(REG_TEST_COMBO_SN) + 1);
+        assert_non_null(devconf->combo_sn);
+
+        memset(devconf->combo_sn, '\0', sizeof(REG_TEST_COMBO_SN) + 1);
+        memcpy(devconf->combo_sn, REG_TEST_COMBO_SN, sizeof(REG_TEST_COMBO_SN) + 1);
+    }
     devconf->mnid = REG_TEST_MNID;
     devconf->vid = REG_TEST_VID;
     devconf->device_type = REG_TEST_DEVICE_TYPE;
@@ -126,7 +142,7 @@ struct iot_context *generate_es_mqtt_registration_context(bool use_opt, bool use
     return context;
 }
 
-void assert_es_mqtt_registration_json(struct iot_context *context, char *payload, size_t msglen, bool self_reged)
+void assert_es_mqtt_registration_json(struct iot_context *context, char *payload, size_t msglen, bool self_reged, bool serial_type)
 {
     JSON_H *root;
 
@@ -145,8 +161,13 @@ void assert_es_mqtt_registration_json(struct iot_context *context, char *payload
         assert_string_equal(context->prov_data.cloud.room,
                             JSON_GET_STRING_VALUE(JSON_GET_OBJECT_ITEM(root, "roomId")));
     } else if (self_reged == false) {
-        assert_string_equal(context->devconf.hashed_sn,
-                            JSON_GET_STRING_VALUE(JSON_GET_OBJECT_ITEM(root, "serialHash")));
+        if (serial_type)
+            assert_string_equal(REG_TEST_COMBO_SN,
+                                JSON_GET_STRING_VALUE(JSON_GET_OBJECT_ITEM(root, "serialHash")));
+        else
+            assert_string_equal(REG_TEST_HASHED_SN,
+                                JSON_GET_STRING_VALUE(JSON_GET_OBJECT_ITEM(root, "serialHash")));
+
         assert_non_null(JSON_GET_OBJECT_ITEM(root, "provisioningTs"));
     } else {
         assert_null(JSON_GET_OBJECT_ITEM(root, "serialHash"));

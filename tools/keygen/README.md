@@ -36,7 +36,7 @@ pip install pynacl --user
 ## Usage
 
 ```sh
-stdk-keygen.py [-h] [--mnid MNID] [--firmware version] [--input csv] [--output csv] [--nv {esp}] [--qr] [--path PATH]
+stdk-keygen.py [-h] [--mnid MNID] [--firmware version] [--input csv] [--output csv] [--nv {esp, esp-encrypt}] [--qr] [--path PATH]
 ```
 
 ### Individual

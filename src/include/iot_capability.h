@@ -26,6 +26,7 @@
 #define SERVER_NOTI_TYPE_RATE_LIMIT_REACHED "rate.limit.reached"
 #define SERVER_NOTI_TYPE_QUOTA_REACHED "quota.reached"
 #define SERVER_NOTI_TYPE_PREFERENCE_UPDATED "device.preferences"
+#define SERVER_NOTI_TYPE_DEVICE_UPDATED "device.updated"
 
 enum iot_cap_unit_type {
 	IOT_CAP_UNIT_TYPE_UNUSED,
