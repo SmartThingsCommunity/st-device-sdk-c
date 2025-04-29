@@ -72,12 +72,6 @@ iot_error_t iot_wifi_ctrl_request(struct iot_context *ctx,
 			iot_easysetup_deinit(ctx);
 		}
 
-		if (ctx->scan_result) {
-			free(ctx->scan_result);
-			ctx->scan_result = NULL;
-		}
-		ctx->scan_num = 0;
-
 		if (wifi_mode == IOT_WIFI_MODE_STATION) {
 			memcpy(wifi_conf.ssid, ctx->prov_data.wifi.ssid,
 				strlen(ctx->prov_data.wifi.ssid));
@@ -1665,6 +1659,105 @@ iot_error_t iot_cleanup(struct iot_context *ctx, bool reboot)
 
 	return IOT_ERROR_NONE;
 }
+
+#if defined(CONFIG_STDK_IOT_CORE_EASYSETUP_WIFI_UPDATE)
+iot_error_t iot_update_wifi_info(struct iot_context *ctx)
+{
+    int ret;
+    int i;
+    st_mqtt_msg msg = {0};
+    JSON_H *evt_root = NULL;
+    JSON_H *evt_arr = NULL;
+    JSON_H *evt_item = NULL;
+    JSON_H *prov_data = NULL;
+    JSON_H *value = NULL;
+    char time_in_ms[16]; /* 155934720000 is '2019-06-01 00:00:00.00 UTC' */
+
+    if (ctx->curr_state != IOT_STATE_CLOUD_CONNECTED || ctx->evt_mqttcli == NULL) {
+        IOT_ERROR("Target has not connected to server yet!!");
+        return IOT_ERROR_BAD_REQ;
+    }
+
+    if (ctx->rate_limit) {
+        IOT_WARN("Exceed rate limit. Can't send attributes for a while");
+        return IOT_ERROR_BAD_REQ;
+    }
+
+    if (ctx->event_sequence_num == MAX_SQNUM) {
+        ctx->event_sequence_num = 0;
+    }
+    ctx->event_sequence_num = (ctx->event_sequence_num + 1) & MAX_SQNUM;
+
+    evt_root = JSON_CREATE_OBJECT();
+    evt_arr = JSON_CREATE_ARRAY();
+    JSON_ADD_ITEM_TO_OBJECT(evt_root, "deviceEvents", evt_arr);
+
+    evt_item = JSON_CREATE_OBJECT();
+    JSON_ADD_STRING_TO_OBJECT(evt_item, "component", "main");
+    JSON_ADD_STRING_TO_OBJECT(evt_item, "capability", "samsungim.wifi");
+    JSON_ADD_STRING_TO_OBJECT(evt_item, "attribute", "connectionInfo");
+
+    /* providerData */
+    prov_data = JSON_CREATE_OBJECT();
+    JSON_ADD_NUMBER_TO_OBJECT(prov_data, "sequenceNumber", ctx->event_sequence_num);
+    if (iot_get_time_in_ms(time_in_ms, sizeof(time_in_ms)) != IOT_ERROR_NONE)
+        IOT_WARN("Cannot add optional timestamp value");
+    else
+        JSON_ADD_STRING_TO_OBJECT(prov_data, "timestamp", time_in_ms);
+    JSON_ADD_STRING_TO_OBJECT(prov_data, "stateChange", "Y");
+    JSON_ADD_ITEM_TO_OBJECT(evt_item, "providerData", prov_data);
+
+    value = JSON_CREATE_OBJECT();
+    JSON_ADD_STRING_TO_OBJECT(value, "ssid", ctx->prov_data.wifi.ssid);
+
+    for (i = 0; i < ctx->scan_num; i++) {
+        if (!strcmp(ctx->prov_data.wifi.ssid, (char*)ctx->scan_result[i].ssid)) {
+            JSON_ADD_NUMBER_TO_OBJECT(value, "rssi", (double) ctx->scan_result[i].rssi);
+            JSON_ADD_NUMBER_TO_OBJECT(value, "securityType", ctx->scan_result[i].authmode);
+            JSON_ADD_NUMBER_TO_OBJECT(value, "state", 1);
+        }
+    }
+    JSON_ADD_ITEM_TO_OBJECT(evt_item, "value", value);
+
+    if (ctx->scan_result) {
+        free(ctx->scan_result);
+        ctx->scan_result = NULL;
+    }
+    ctx->scan_num = 0;
+
+    JSON_ADD_ITEM_TO_ARRAY(evt_arr, evt_item);
+
+#if defined(STDK_IOT_CORE_SERIALIZE_CBOR)
+    iot_serialize_json2cbor(evt_root, (uint8_t **)&msg.payload, (size_t *)&msg.payloadlen);
+#else
+    msg.payload = JSON_PRINT(evt_root);
+    if (msg.payload != NULL) {
+        msg.payloadlen = strlen(msg.payload);
+    }
+#endif
+    JSON_DELETE(evt_root);
+    if (msg.payload == NULL) {
+        IOT_ERROR("Fail to transfer to payload");
+        return IOT_ERROR_BAD_REQ;
+    }
+    msg.qos = st_mqtt_qos1;
+    msg.retained = false;
+    msg.topic = ctx->mqtt_event_topic;
+
+    IOT_INFO("publish event, topic : %s, payload :\n%s",
+            ctx->mqtt_event_topic, (char *)msg.payload);
+
+    ret = st_mqtt_publish_async(ctx->evt_mqttcli, &msg);
+    if (ret) {
+        IOT_WARN("MQTT pub error(%d)", ret);
+        free(msg.payload);
+        return IOT_ERROR_MQTT_PUBLISH_FAIL;
+    }
+
+    free(msg.payload);
+    return IOT_ERROR_NONE;
+}
+#endif
 
 /**************************************************************
 *                       Synchronous Call                      *

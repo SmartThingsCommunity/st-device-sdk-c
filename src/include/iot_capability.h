@@ -28,6 +28,8 @@
 #define SERVER_NOTI_TYPE_PREFERENCE_UPDATED "device.preferences"
 #define SERVER_NOTI_TYPE_DEVICE_UPDATED "device.updated"
 
+#define MAX_SQNUM 0x7FFFFFFF
+
 enum iot_cap_unit_type {
 	IOT_CAP_UNIT_TYPE_UNUSED,
 	IOT_CAP_UNIT_TYPE_STRING,

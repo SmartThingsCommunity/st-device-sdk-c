@@ -1,5 +1,15 @@
 # HISTORY
 
+## 2.2.0 : Changes for version 2.2.0
+
+New Improvements or features:
+
+- Add Wifi update feature.(Device can change Wifi after onboarding)
+
+Enhancements or amendments:
+
+- Add antiSnoringPillow Capability helper header
+
 ## 2.1.1 : Changes for version 2.1.1
 
 Bug fixed:

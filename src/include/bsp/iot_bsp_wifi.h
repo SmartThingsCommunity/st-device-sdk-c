@@ -32,7 +32,7 @@ extern "C" {
 #define IOT_WIFI_MAX_BSSID_LEN (6)
 #define IOT_WIFI_MAX_SCAN_RESULT (100)
 #define IOT_SOFT_AP_CHANNEL (1)
-#define IOT_WIFI_CMD_TIMEOUT	5000
+#define IOT_WIFI_CMD_TIMEOUT	10000
 
 typedef enum {
 	IOT_WIFI_MODE_OFF = 0,

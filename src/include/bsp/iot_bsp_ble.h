@@ -67,22 +67,6 @@ void iot_bsp_ble_deinit(void);
 uint32_t iot_bsp_ble_get_mtu(void);
 
 /**
- * @brief  Initialize GATT.
- *
- * This function initializes GATT.
- *
- * @param[in] Wi-Fi update support 
- */
-void iot_bsp_gatt_init(bool wifi_update_enabled);
-
-/**
- * @brief  Set onboarding completion.
- *
- * @param[in] Onboarding complete status
- */
-void iot_bsp_ble_set_onboarding_completion(bool onboarding_complete);
-
-/**
  * @brief  Create advertise packet
  *
  * This function creates advertise packet
@@ -91,7 +75,7 @@ void iot_bsp_ble_set_onboarding_completion(bool onboarding_complete);
  * @param[in] Setup ID
  * @param[in] Serial number
  */
-void iot_create_advertise_packet(char *mnid, char *setupid, char *serial);
+void iot_create_advertise_packet(char *mnid, char *setupid, char *serial, bool wifi_update_enabled);
 
 /**
  * @brief  Create response packet

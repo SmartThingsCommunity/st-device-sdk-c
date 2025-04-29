@@ -87,6 +87,7 @@ static void gatts_event_handler(esp_gatts_cb_event_t event, esp_gatt_if_t gatts_
 #define PACKET_VERSION        0x83
 #define SERVICE_ID            0x0c
 #define OOB_SERVICE_INFO      0x05
+#define WIFI_UPDATE_SERVICE_INFO 0x03
 #define SERVICE_FEATURE       0x59
 #define SETUP_AVAILABLE_NETWORK_BLE    0x04
 
@@ -134,7 +135,6 @@ static uint8_t scan_response_data[PACKET_MAX_SIZE];
 static size_t scan_response_len;
 static uint8_t manufacturer_id[2] = {0x75, 0x00};
 static iot_bsp_ble_event_cb_t ble_event_cb;
-static bool g_onboarding_complete;
 
 CharWriteCallback CharWriteCb;
 
@@ -211,16 +211,6 @@ static void gap_event_handler(esp_gap_ble_cb_event_t event, esp_ble_gap_cb_param
 	}
 }
 
-static bool iot_bsp_ble_get_onboarding_completion(void)
-{
-	return g_onboarding_complete;
-}
-
-void iot_bsp_ble_set_onboarding_completion(bool onboarding_complete)
-{
-	g_onboarding_complete = onboarding_complete;
-}
-
 void set_advertise_mac_addr(uint8_t **mac)
 {
 	int i;
@@ -249,7 +239,7 @@ void set_advertise_mac_addr(uint8_t **mac)
 	*mac = lmac;
 }
 
-void iot_create_advertise_packet(char *mnid, char *setupid, char *serial)
+void iot_create_advertise_packet(char *mnid, char *setupid, char *serial, bool wifi_update_enabled)
 {
 	uint8_t *mac;
 	int count = 0;
@@ -283,7 +273,11 @@ void iot_create_advertise_packet(char *mnid, char *setupid, char *serial)
 	adv_data[count++] = CONTROL_VERSION_ACTIVE_SCAN_REQUIRED;
 	adv_data[count++] = SERVICE_ID;
 	adv_data[count++] = PACKET_VERSION;
-	adv_data[count++] = OOB_SERVICE_INFO;
+	if (wifi_update_enabled == false) {
+		adv_data[count++] = OOB_SERVICE_INFO;
+	} else {
+		adv_data[count++] = WIFI_UPDATE_SERVICE_INFO;
+	}
 	adv_data[count++] = SERVICE_FEATURE;
 
 	mnid_len = strlen(mnid);
@@ -564,14 +558,22 @@ static void gatts_event_handler(esp_gatts_cb_event_t event, esp_gatt_if_t gatts_
 	case ESP_GATTS_DISCONNECT_EVT:
 		ESP_LOGI(GATTS_TAG, "ESP_GATTS_DISCONNECT_EVT, disconnect reason 0x%x", param->disconnect.reason);
 
-		/* Start ble advertisement only when onboarding is not completed */
-		bool onboarding_completed = iot_bsp_ble_get_onboarding_completion();
-		if (onboarding_completed == false) {
-			esp_err_t start_adv_ret = esp_ble_gap_start_advertising(&adv_params);
-			if (start_adv_ret != ESP_OK) {
-				ESP_LOGE(GATTS_TAG, "start ble advertisement failed, error code = 0x%x\n", start_adv_ret);
-			}
+		raw_adv_ret = esp_ble_gap_config_adv_data_raw(adv_data, adv_data_len);
+		if (raw_adv_ret){
+			ESP_LOGE(GATTS_TAG,"config raw adv data failed, error code = %x\n", raw_adv_ret);
 		}
+		adv_config_done |= ADV_CONFIG_FLAG;
+		raw_scan_ret = esp_ble_gap_config_scan_rsp_data_raw(scan_response_data, scan_response_len);
+		if (raw_scan_ret){
+			ESP_LOGE(GATTS_TAG,"config raw scan rsp data failed, error code = %x\n", raw_scan_ret);
+		}
+		adv_config_done |= SCAN_RSP_CONFIG_FLAG;
+
+		esp_err_t start_adv_ret = esp_ble_gap_start_advertising(&adv_params);
+		if (start_adv_ret != ESP_OK) {
+			ESP_LOGE(GATTS_TAG, "start ble advertisement failed, error code = 0x%x\n", start_adv_ret);
+		}
+
 		if (ble_event_cb) {
 			ble_event_cb(IOT_BLE_EVENT_GATT_LEAVE, IOT_ERROR_NONE);
 		}
@@ -654,12 +656,10 @@ void iot_bsp_ble_init(CharWriteCallback cb)
 		return;
 	}
 
-	if (g_onboarding_complete == false) {
-		ret = esp_ble_gatts_app_register(PROFILE_APP_ID);
-		if (ret){
-			ESP_LOGE(GATTS_TAG,"gatts app register error, error code = %x\n", ret);
-			return;
-		}
+	ret = esp_ble_gatts_app_register(PROFILE_APP_ID);
+	if (ret) {
+		ESP_LOGE(GATTS_TAG,"gatts app register error, error code = %x\n", ret);
+		return;
 	}
 
 	g_mtu = GATTS_MTU_MAX;

@@ -261,6 +261,8 @@ static void mqtt_reg_sub_cb(st_mqtt_msg *md, void *userData)
 
 	item = JSON_GET_OBJECT_ITEM(json, "deviceId");
 	if (item != NULL && !reged_data->updated) {
+		iot_noti_data_t noti_data;
+		memset(&noti_data, 0, sizeof(iot_noti_data_t));
 		svr_did_str = JSON_PRINT(item);
 		if (svr_did_str == NULL) {
 			IOT_ERROR("Can't print server's did str!!");
@@ -278,6 +280,13 @@ static void mqtt_reg_sub_cb(st_mqtt_msg *md, void *userData)
 		if (iot_command_send(ctx, iot_cmd, NULL, 0) != IOT_ERROR_NONE) {
 			IOT_ERROR("Cannot send cloud registered cmd!!");
 		}
+
+		noti_data.type = _IOT_NOTI_TYPE_DEV_ONBOARDED;
+		if (iot_command_send(ctx, IOT_COMMAND_NOTIFICATION_RECEIVED,
+					&noti_data, sizeof(noti_data)) != IOT_ERROR_NONE) {
+							IOT_ERROR("Cannot send dev onboarded cmd!!");
+		}
+
 	}
 
 reg_sub_out:

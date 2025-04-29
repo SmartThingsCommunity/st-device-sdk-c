@@ -53,7 +53,11 @@
 #define IOT_DEVICE_NAME_MAX_LENGTH		20
 
 #define NEXT_STATE_TIMEOUT_MS			(100000)
+#if defined(CONFIG_STDK_IOT_CORE_EASYSETUP_BLE)
+#define EASYSETUP_TIMEOUT_MS			(0)     /* No timeout for BLE onboarding */
+#else
 #define EASYSETUP_TIMEOUT_MS			(300000) /* 5 min */
+#endif
 #define REGISTRATION_TIMEOUT_MS			(900000) /* 15 min */
 
 #define GG_CONNECTION_RESPONSE_TIMEOUT_MS	(5000)
@@ -66,6 +70,7 @@ enum _iot_noti_type {
 	_IOT_NOTI_TYPE_UNKNOWN = IOT_NOTI_TYPE_UNKNOWN,
 
 	_IOT_NOTI_TYPE_DEV_DELETED = IOT_NOTI_TYPE_DEV_DELETED,
+	_IOT_NOTI_TYPE_DEV_ONBOARDED = IOT_NOTI_TYPE_DEV_ONBOARDED,
 	_IOT_NOTI_TYPE_RATE_LIMIT = IOT_NOTI_TYPE_RATE_LIMIT,
 	_IOT_NOTI_TYPE_QUOTA_REACHED = IOT_NOTI_TYPE_QUOTA_REACHED,
 	_IOT_NOTI_TYPE_SEND_FAILED = IOT_NOTI_TYPE_SEND_FAILED,
@@ -109,7 +114,7 @@ enum iot_easysetup_ble_step {
 	IOT_EASYSETUP_BLE_STEP_SETUPCOMPLETE,
 	IOT_EASYSETUP_BLE_STEP_LOG_SYSTEMINFO,
 	IOT_EASYSETUP_BLE_STEP_LOG_GET_DUMP,
-	IOT_EASYSETUP_BLE_STEP_OFFLINE_DIAGNOSTICS_CONNECTOION_INFO,
+        IOT_EASYSETUP_BLE_STEP_OFFLINE_DIAGNOSTICS_CONNECTION_INFO,
 	IOT_EASYSETUP_BLE_STEP_OFFLINE_DIAGNOSTICS_RECOVERY,
 	IOT_EASYSETUP_BLE_STEP_SETUPCOMPLETE_RESPONSE,
 	IOT_EASYSETUP_BLE_INVALID_STEP,
@@ -374,19 +379,18 @@ struct iot_context {
 
 	struct iot_st_ecode last_st_ecode;				/**< @brief last happended device error code to send SmartThings App */
 
-	bool is_wifi_station;						/**< @brief indicator if wifi is station mode or not */
-	iot_error_t es_network_status;					/**< @brief to check network connection status*/
-	bool request_disconnect;					/**< @brief to check disconnection request for ble connection*/
-	bool cloud_connection_pause;					/**< @brief cloud connection needs to pause*/
-	int wifi_candidate_frequency;					/**< @brief the frequency of wifi candiate from st app */
-	bool d2d_event_request;						/**< @brief check event from d2d process*/
-	bool onboarding_complete;					/**< @brief to check onboarding completion status*/
+	bool is_wifi_station;		/**< @brief indicator if wifi is station mode or not */
+	iot_error_t es_network_status;			/**< @brief to check network connection status*/
+	bool cloud_connection_pause;			/**< @brief cloud connection needs to pause*/
+	int wifi_candidate_frequency;			/**< @brief the frequency of wifi candiate from st app */
+	bool wifi_update_enabled; 			/**< @brief to check onboarding completion status*/
+        bool d2d_event_request;                         /**< @brief check event from d2d process*/
 
-	unsigned int connection_retry_count; 				/**< @brief MQTT server connection retry count */
-	iot_os_timer_handle next_connection_retry_timer;		/**< @brief timer for next connection retry count */
-	iot_os_timer cloud_con_timer;					/**< @brief timer for cloud connection check */
-
-        bool dip_need_update;                                           /** @brief Is DIP updated(by softwoare update etc.) */
+	unsigned int connection_retry_count; 	/**< @brief MQTT server connection retry count */
+	iot_os_timer_handle next_connection_retry_timer;	/**< @brief timer for next connection retry count */
+	iot_os_timer cloud_con_timer;			/**< @brief timer for cloud connection check */
+	bool ble_connected; 				/**< @brief indicator if ble connected */
+  bool dip_need_update;                                           /** @brief Is DIP updated(by softwoare update etc.) */
 };
 
 typedef void* device_work_param;

@@ -70,13 +70,13 @@ iot_error_t iot_easysetup_create_ble_advertise_packet(struct iot_context *ctx)
 	memcpy(ctx->devconf.hashed_sn, base64url_buffer, base64_written);
 
 #if defined(CONFIG_STDK_IOT_CORE_EASYSETUP_X509)
-	iot_create_advertise_packet(ctx->devconf.mnid, ctx->devconf.setupid, (char *)serial);
+	iot_create_advertise_packet(ctx->devconf.mnid, ctx->devconf.setupid, (char *)serial, ctx->wifi_update_enabled);
 	iot_create_scan_response_packet(ctx->devconf.device_onboarding_id, (char *)serial);
 #else
 	memcpy(hybrid_serial, ctx->devconf.hashed_sn, HASH_SERIAL_NUMBER_HYBRID_PORTION);
 	memcpy(hybrid_serial + HASH_SERIAL_NUMBER_HYBRID_PORTION, serial + length - PLAIN_SERIAL_NUMBER_HYBRID_PORTION,
 		PLAIN_SERIAL_NUMBER_HYBRID_PORTION);
-	iot_create_advertise_packet(ctx->devconf.mnid, ctx->devconf.setupid, (char *)hybrid_serial);
+	iot_create_advertise_packet(ctx->devconf.mnid, ctx->devconf.setupid, (char *)hybrid_serial, ctx->wifi_update_enabled);
 	iot_create_scan_response_packet(ctx->devconf.device_onboarding_id, (char *)hybrid_serial);
 #endif
 

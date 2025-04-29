@@ -34,6 +34,13 @@ config STDK_IOT_CORE_EASYSETUP_DISCOVERY_ADVERTISER
     help
        If this option is enabled, STDK will use ble advertisement for easy setup.
 
+config STDK_IOT_CORE_EASYSETUP_WIFI_UPDATE
+    bool "Enable wifi update functionality"
+    default n
+    depends on STDK_IOT_CORE_EASYSETUP_BLE
+    help
+       If this option is enabled, The device enable wifi update functionality.
+
 config STDK_IOT_CORE_EASYSETUP_HTTP_USE_SOCKET_API
     bool "Use socket for easysetup http"
     default n

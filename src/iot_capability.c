@@ -33,7 +33,6 @@
 #include "JSON.h"
 #include "st_caps.h"
 
-#define MAX_SQNUM 0x7FFFFFFF
 
 STATIC_FUNCTION
 iot_error_t _iot_parse_noti_data(struct iot_context *ctx, void *data, iot_noti_data_t *noti_data);
