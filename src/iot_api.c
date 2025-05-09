@@ -1670,7 +1670,6 @@ iot_error_t iot_update_wifi_info(struct iot_context *ctx)
     JSON_H *evt_arr = NULL;
     JSON_H *evt_item = NULL;
     JSON_H *prov_data = NULL;
-    JSON_H *value = NULL;
     char time_in_ms[16]; /* 155934720000 is '2019-06-01 00:00:00.00 UTC' */
 
     if (ctx->curr_state != IOT_STATE_CLOUD_CONNECTED || ctx->evt_mqttcli == NULL) {
@@ -1694,8 +1693,9 @@ iot_error_t iot_update_wifi_info(struct iot_context *ctx)
 
     evt_item = JSON_CREATE_OBJECT();
     JSON_ADD_STRING_TO_OBJECT(evt_item, "component", "main");
-    JSON_ADD_STRING_TO_OBJECT(evt_item, "capability", "samsungim.wifi");
-    JSON_ADD_STRING_TO_OBJECT(evt_item, "attribute", "connectionInfo");
+    JSON_ADD_STRING_TO_OBJECT(evt_item, "capability", "wifiInformation");
+    JSON_ADD_STRING_TO_OBJECT(evt_item, "attribute", "ssid");
+    JSON_ADD_STRING_TO_OBJECT(evt_item, "value", ctx->prov_data.wifi.ssid);
 
     /* providerData */
     prov_data = JSON_CREATE_OBJECT();
@@ -1706,18 +1706,6 @@ iot_error_t iot_update_wifi_info(struct iot_context *ctx)
         JSON_ADD_STRING_TO_OBJECT(prov_data, "timestamp", time_in_ms);
     JSON_ADD_STRING_TO_OBJECT(prov_data, "stateChange", "Y");
     JSON_ADD_ITEM_TO_OBJECT(evt_item, "providerData", prov_data);
-
-    value = JSON_CREATE_OBJECT();
-    JSON_ADD_STRING_TO_OBJECT(value, "ssid", ctx->prov_data.wifi.ssid);
-
-    for (i = 0; i < ctx->scan_num; i++) {
-        if (!strcmp(ctx->prov_data.wifi.ssid, (char*)ctx->scan_result[i].ssid)) {
-            JSON_ADD_NUMBER_TO_OBJECT(value, "rssi", (double) ctx->scan_result[i].rssi);
-            JSON_ADD_NUMBER_TO_OBJECT(value, "securityType", ctx->scan_result[i].authmode);
-            JSON_ADD_NUMBER_TO_OBJECT(value, "state", 1);
-        }
-    }
-    JSON_ADD_ITEM_TO_OBJECT(evt_item, "value", value);
 
     if (ctx->scan_result) {
         free(ctx->scan_result);
