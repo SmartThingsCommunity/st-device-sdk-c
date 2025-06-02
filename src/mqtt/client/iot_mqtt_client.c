@@ -449,6 +449,12 @@ static int _iot_mqtt_run_write_stream(MQTTClient *client)
 		goto exit;
 	}
 
+	rc = port_net_write_poll(client->net_ctx, MQTT_WRITE_TIMEOUT);
+	if (rc <= 0) {
+		written = E_ST_MQTT_NETWORK_ERROR;
+		goto exit;
+	}
+
 	while (written != w_chunk->chunk_size) {
 		rc = _iot_mqtt_write_net(client->net_ctx, &w_chunk->chunk_data[written],
 				w_chunk->chunk_size - written);
@@ -1567,6 +1573,10 @@ int st_mqtt_publish(st_mqtt_client client, st_mqtt_msg *msg)
 		goto exit;
 	}
 	rc = _iot_mqtt_wait_for(c, pub_packet);
+
+	if (c->work_queue) {
+		_iot_mqtt_signal_pending_work(c);
+	}
 
 exit:
 	IOT_DUMP(IOT_DEBUG_LEVEL_INFO, IOT_DUMP_MQTT_PUBLISH, rc, 0);

@@ -1,6 +1,15 @@
 # HISTORY
 
-## 2.2.1 : Changes for version 2.2.0
+## 2.2.2 : Changes for version 2.2.2
+
+Bug fixed:
+
+- ESP32 wifi reconnect to AP on wifi failure
+- Add ESP32 wifi error handling
+- Resolve stuck issue after sending MQTT publish packet
+- Add write timeout in MQTT client
+
+## 2.2.1 : Changes for version 2.2.1
 
 Enhancements or amendments:
 

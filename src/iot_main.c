@@ -586,7 +586,7 @@ static iot_error_t _do_iot_main_command(struct iot_context *ctx,
 				break;
 			}
 
-			if (!ctx->is_wifi_station) {
+			if (!ctx->is_wifi_station || iot_bsp_wifi_get_status() != IOT_ERROR_NONE) {
 				err = iot_wifi_ctrl_request(ctx, IOT_WIFI_MODE_STATION);
 				if (err != IOT_ERROR_NONE) {
 					IOT_ERROR("Can't send WIFI mode command(%d)", err);
@@ -684,6 +684,13 @@ static iot_error_t _do_iot_main_command(struct iot_context *ctx,
 				iot_es_disconnect(ctx, IOT_CONNECT_TYPE_REGISTRATION);
 			}
 			ctx->es_network_status = err;
+
+                        /* Update wifi update enable state */
+                        ctx->wifi_update_enabled = true;
+                        err = iot_nv_set_wifi_prov_data(&ctx->prov_data.wifi);
+                        if (err) {
+                            IOT_ERROR("failed to set the wifi prov data");
+                        }
 			iot_state_update(ctx, IOT_STATE_CLOUD_DISCONNECTED, 0);
 			IOT_MEM_CHECK("CLOUD_REGISTERED DONE >>PT<<");
 			break;
@@ -709,7 +716,8 @@ static iot_error_t _do_iot_main_command(struct iot_context *ctx,
 				break;
 			}
                         /* if wifi info is not set, skip it */
-			if (ctx->prov_data.wifi.ssid[0] && !ctx->is_wifi_station) {
+			if (ctx->prov_data.wifi.ssid[0] && (!ctx->is_wifi_station ||
+					iot_bsp_wifi_get_status() != IOT_ERROR_NONE)) {
 				err = iot_wifi_ctrl_request(ctx, IOT_WIFI_MODE_STATION);
 				if (err != IOT_ERROR_NONE) {
 					IOT_ERROR("Can't send WIFI mode command(%d)", err);

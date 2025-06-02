@@ -44,6 +44,8 @@ int port_net_read(PORT_NET_CONTEXT ctx, void *buf, size_t len);
 
 int port_net_read_poll(PORT_NET_CONTEXT ctx, unsigned int wait_time_ms);
 
+int port_net_write_poll(PORT_NET_CONTEXT ctx, unsigned int wait_time_ms);
+
 int port_net_write(PORT_NET_CONTEXT ctx, void *buf, size_t len);
 
 void port_net_close(PORT_NET_CONTEXT ctx);

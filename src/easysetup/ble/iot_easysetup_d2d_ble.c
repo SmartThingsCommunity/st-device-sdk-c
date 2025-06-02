@@ -1996,16 +1996,17 @@ iot_error_t _es_wifiprovisioninginfo_handler(struct iot_context *ctx, char *in_p
 
 	if (ctx->lookup_id == NULL) {
 		ctx->lookup_id = iot_os_malloc(IOT_REG_UUID_STR_LEN + 1);
+
+                err = iot_get_random_id_str(ctx->lookup_id,
+                        (IOT_REG_UUID_STR_LEN + 1));
+                if (err != IOT_ERROR_NONE) {
+                    IOT_ERROR("failed to get new lookup_id(%d)", err);
+                    IOT_ES_DUMP(IOT_DEBUG_LEVEL_ERROR, IOT_DUMP_EASYSETUP_LOOKUPID_GENERATE_FAIL, err);
+                    err = IOT_ERROR_EASYSETUP_LOOKUPID_GENERATE_FAIL;
+                    goto out;
+                }
 	}
 
-	err = iot_get_random_id_str(ctx->lookup_id,
-			(IOT_REG_UUID_STR_LEN + 1));
-	if (err != IOT_ERROR_NONE) {
-		IOT_ERROR("failed to get new lookup_id(%d)", err);
-		IOT_ES_DUMP(IOT_DEBUG_LEVEL_ERROR, IOT_DUMP_EASYSETUP_LOOKUPID_GENERATE_FAIL, err);
-		err = IOT_ERROR_EASYSETUP_LOOKUPID_GENERATE_FAIL;
-		goto out;
-	}
 
 	IOT_DEBUG("lookupid = %s", ctx->lookup_id);
 
