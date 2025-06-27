@@ -19,6 +19,7 @@
 #ifndef _IOT_SECURITY_COMMON_H_
 #define _IOT_SECURITY_COMMON_H_
 
+#include <stdio.h>
 #include <string.h>
 #include <stdbool.h>
 #include "iot_security_error.h"

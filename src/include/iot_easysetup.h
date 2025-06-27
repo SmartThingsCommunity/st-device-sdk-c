@@ -32,7 +32,7 @@ enum ownership_validation_feature {
 	OVF_BIT_BUTTON,
 	OVF_BIT_PIN,
 	OVF_BIT_SERIAL_NUMBER,
-        OVF_BIT_ULTRA_SOUND,
+	OVF_BIT_ULTRA_SOUND,
 	OVF_BIT_HASHED_SERIAL_NUMBER,
 	OVF_BIT_MAX_FEATURE = OVF_BIT_HASHED_SERIAL_NUMBER,
 };
@@ -165,15 +165,6 @@ iot_error_t iot_easysetup_request_handler(struct iot_context *ctx, struct iot_ea
 iot_error_t iot_easysetup_create_ssid(struct iot_devconf_prov_data *devconf, char *ssid, size_t ssid_len);
 
 /**
- * @brief   Create BLE Advertise Packet
- * @details This function create BLE advertise packet for this device
- * @param[in]   ctx     iot_context
- * @return  iot_state_t
- * @retval  IOT_ERROR_NONE  success
- */
-iot_error_t iot_easysetup_create_ble_advertise_packet(struct iot_context *ctx);
-
-/**
  * @brief	Start easysetup device-to-device sequence
  * @details	This function makes wifi mode as soft-ap and starts httpd
  * @param[in]	ctx	iot_context handle
@@ -190,6 +181,15 @@ iot_error_t iot_easysetup_init(struct iot_context *ctx);
  * @return	void
  */
 void iot_easysetup_deinit(struct iot_context *ctx);
+
+/**
+ * @brief   Start BLE advertisement
+ * @details This function start BLE advertisement
+ * @param[in]   ctx     iot_context
+ * @return  iot_error_t
+ * @retval  IOT_ERROR_NONE  success
+ */
+iot_error_t iot_easysetup_start_ble_advertisement(struct iot_context *ctx);
 
 #ifdef __cplusplus
 }

@@ -1,5 +1,22 @@
 # HISTORY
 
+## 2.2.3 : Changes for version 2.2.3
+
+New Improvements or features:
+
+- Add Porting code for BK7236 board
+- Add BLE onboarding feature for raspberry example
+
+Enhancements or amendments:
+
+- Refactoring BLE porting APIs
+  -- Remove BLE adv manufacturer type internal format (Move to SDK core)
+  -- Integrate BLE porting callbacks to one struct
+
+Bug fixed:
+
+- Make SDK not proceed next step if the device isn't confined during onboarding
+
 ## 2.2.2 : Changes for version 2.2.2
 
 Bug fixed:

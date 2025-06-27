@@ -114,7 +114,7 @@ enum iot_easysetup_ble_step {
 	IOT_EASYSETUP_BLE_STEP_SETUPCOMPLETE,
 	IOT_EASYSETUP_BLE_STEP_LOG_SYSTEMINFO,
 	IOT_EASYSETUP_BLE_STEP_LOG_GET_DUMP,
-        IOT_EASYSETUP_BLE_STEP_OFFLINE_DIAGNOSTICS_CONNECTION_INFO,
+	IOT_EASYSETUP_BLE_STEP_OFFLINE_DIAGNOSTICS_CONNECTION_INFO,
 	IOT_EASYSETUP_BLE_STEP_OFFLINE_DIAGNOSTICS_RECOVERY,
 	IOT_EASYSETUP_BLE_STEP_SETUPCOMPLETE_RESPONSE,
 	IOT_EASYSETUP_BLE_INVALID_STEP,
@@ -339,7 +339,7 @@ struct iot_context {
 	struct iot_device_prov_data prov_data;				/**< @brief allocated device provisioning data */
 	struct iot_devconf_prov_data devconf;				/**< @brief allocated device configuration data */
 	struct iot_device_info device_info;				/**< @brief allocated device information data */
-        st_server_type server_type;                                     /**< @brief Server info for device to connect. */
+	st_server_type server_type;                                     /**< @brief Server info for device to connect. */
 
 	iot_security_context_t *easysetup_security_context;		/**< @brief security context ref. for easy-setup process */
 
@@ -381,16 +381,17 @@ struct iot_context {
 
 	bool is_wifi_station;		/**< @brief indicator if wifi is station mode or not */
 	iot_error_t es_network_status;			/**< @brief to check network connection status*/
+	bool otm_confirmed;				/**< @brief to check user confirmation*/
 	bool cloud_connection_pause;			/**< @brief cloud connection needs to pause*/
 	int wifi_candidate_frequency;			/**< @brief the frequency of wifi candiate from st app */
 	bool wifi_update_enabled; 			/**< @brief to check onboarding completion status*/
-        bool d2d_event_request;                         /**< @brief check event from d2d process*/
+	bool d2d_event_request;                         /**< @brief check event from d2d process*/
 
 	unsigned int connection_retry_count; 	/**< @brief MQTT server connection retry count */
 	iot_os_timer_handle next_connection_retry_timer;	/**< @brief timer for next connection retry count */
 	iot_os_timer cloud_con_timer;			/**< @brief timer for cloud connection check */
 	bool ble_connected; 				/**< @brief indicator if ble connected */
-  bool dip_need_update;                                           /** @brief Is DIP updated(by softwoare update etc.) */
+	bool dip_need_update;                                           /** @brief Is DIP updated(by softwoare update etc.) */
 };
 
 typedef void* device_work_param;

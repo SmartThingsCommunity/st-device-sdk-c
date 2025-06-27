@@ -162,11 +162,11 @@ static iot_error_t _check_prov_status(struct iot_context *ctx, bool cmd_only)
 					IOT_INFO("Current deviceID: %s (%d)\n", ctx->iot_reg_data.deviceId, str_len);
 				}
                                 
-                                if (ctx->devconf.dip) {
-                                    ctx->dip_need_update = _unlikely_with_stored_dip(ctx->devconf.dip);
-                                }
-                                ctx->iot_reg_data.updated = true;
-                                next_state = IOT_STATE_CLOUD_DISCONNECTED;
+				if (ctx->devconf.dip) {
+					ctx->dip_need_update = _unlikely_with_stored_dip(ctx->devconf.dip);
+				}
+				ctx->iot_reg_data.updated = true;
+				next_state = IOT_STATE_CLOUD_DISCONNECTED;
 				ctx->wifi_update_enabled = true;
 				free(usr_id);
 			}
@@ -359,12 +359,6 @@ static iot_error_t _do_state_updating(struct iot_context *ctx, iot_state_t new_s
 	switch (ctx->curr_state) {
 	case IOT_STATE_INITIALIZED:
 		if (new_state == IOT_STATE_PROV_ENTER) {
-			iot_err = iot_wifi_ctrl_request(ctx, IOT_WIFI_MODE_SCAN);
-			if (iot_err != IOT_ERROR_NONE) {
-				IOT_ERROR("Can't control WIFI mode scan.(%d)", iot_err);
-				return iot_err;
-			}
-
 #if defined(CONFIG_STDK_IOT_CORE_EASYSETUP_DISCOVERY_SSID)
 			/*wifi soft-ap mode w/ ssid E4 format*/
 			iot_err = iot_wifi_ctrl_request(ctx, IOT_WIFI_MODE_SOFTAP);
@@ -386,12 +380,12 @@ static iot_error_t _do_state_updating(struct iot_context *ctx, iot_state_t new_s
 			IOT_MEM_CHECK("ES_PROV_ENTER DONE >>PT<<");
 		} else if (new_state == IOT_STATE_CLOUD_DISCONNECTED) {
 #if defined(CONFIG_STDK_IOT_CORE_EASYSETUP_BLE)
-                        iot_err = iot_ble_ctrl_request(ctx);
-                        if (iot_err != IOT_ERROR_NONE) {
-                                IOT_ERROR("Can't send BLE.(%d)", iot_err);
-                                IOT_DUMP_MAIN(ERROR, BASE, iot_err);
-                                return iot_err;
-                        }
+			iot_err = iot_ble_ctrl_request(ctx);
+			if (iot_err != IOT_ERROR_NONE) {
+				IOT_ERROR("Can't send BLE.(%d)", iot_err);
+				IOT_DUMP_MAIN(ERROR, BASE, iot_err);
+				return iot_err;
+			}
 #endif
 			iot_cmd = IOT_COMMAND_CLOUD_CONNECTING;
 			iot_err = iot_command_send(ctx, iot_cmd, NULL, 0);
@@ -465,9 +459,9 @@ static iot_error_t _do_state_updating(struct iot_context *ctx, iot_state_t new_s
 			return IOT_ERROR_INVALID_ARGS;
 		break;
 	case IOT_STATE_CLOUD_DISCONNECTED:
-		if (new_state == IOT_STATE_CLOUD_CONNECTED) {
+		if (new_state == IOT_STATE_CLOUD_CONNECTED)
 			_get_device_preference(ctx);
-		} else
+		else
 			return IOT_ERROR_INVALID_ARGS;
 		break;
 	case IOT_STATE_CLOUD_CONNECTED:
@@ -484,15 +478,13 @@ static iot_error_t _do_state_updating(struct iot_context *ctx, iot_state_t new_s
 
 	if (timeout_ms) {
 		IOT_INFO("Current timeout : %u for %d", timeout_ms, ctx->curr_state);
-		if (ctx->state_timer) {
+		if (ctx->state_timer)
 			iot_os_timer_delete(ctx->state_timer);
-		}
 		ctx->state_timer = iot_os_timer_create(_iot_state_timeout_cb, timeout_ms, ctx);
-		if (!ctx->state_timer) {
+		if (!ctx->state_timer)
 			IOT_ERROR("Failed to create state timer");
-		} else {
+		else
 			iot_os_timer_start(ctx->state_timer);
-		}
 	} else if (ctx->state_timer) {
 		iot_os_timer_delete(ctx->state_timer);
 		ctx->state_timer = NULL;
@@ -526,7 +518,7 @@ static iot_error_t _do_state_updating(struct iot_context *ctx, iot_state_t new_s
 			break;
 		case IOT_STATE_CLOUD_CONNECTED :
 #if defined(CONFIG_STDK_IOT_CORE_EASYSETUP_WIFI_UPDATE)
-                        iot_update_wifi_info(ctx);
+			iot_update_wifi_info(ctx);
 #endif
 			iot_cap_call_init_cb(ctx->cap_handle_list);
 			if (ctx->status_maps & IOT_STATUS_CONNECTING) {
@@ -591,8 +583,8 @@ static iot_error_t _do_iot_main_command(struct iot_context *ctx,
 				if (err != IOT_ERROR_NONE) {
 					IOT_ERROR("Can't send WIFI mode command(%d)", err);
 					ctx->es_network_status = err;
-                                        iot_easysetup_deinit(ctx);
-                                        break;
+					iot_easysetup_deinit(ctx);
+					break;
 				}
 			}
 
@@ -620,11 +612,10 @@ static iot_error_t _do_iot_main_command(struct iot_context *ctx,
 				else
 					ctx->es_network_status = IOT_ERROR_CONN_STA_NO_INTERNET;
 
-				if (ctx->ble_connected) {
+				if (ctx->ble_connected)
 					iot_command_send(ctx, IOT_COMMAND_CLOUD_REGISTERING, NULL, 0);
-				} else {
+				else
 					IOT_INFO("BLE disconnect is requested");
-				}
 			} else {
 				ctx->es_network_status = err;
 				ctx->registered_msg_requested = true;
@@ -648,8 +639,7 @@ static iot_error_t _do_iot_main_command(struct iot_context *ctx,
 			}
 
 			if (ctx->iot_reg_data.dip) {
-				err = iot_misc_info_store(IOT_MISC_INFO_DIP,
-						(const void *)ctx->iot_reg_data.dip);
+				err = iot_misc_info_store(IOT_MISC_INFO_DIP,(const void *)ctx->iot_reg_data.dip);
 				if (err != IOT_ERROR_NONE) {
 					IOT_ERROR("Store DIP failed!! (%d)", err);
 					IOT_DUMP_MAIN(ERROR, BASE, err);
@@ -660,8 +650,7 @@ static iot_error_t _do_iot_main_command(struct iot_context *ctx,
 			}
 
 			if (ctx->iot_reg_data.locationId) {
-				err = iot_misc_info_store(IOT_MISC_INFO_LOCATION,
-						(const void *)ctx->iot_reg_data.locationId);
+				err = iot_misc_info_store(IOT_MISC_INFO_LOCATION,(const void *)ctx->iot_reg_data.locationId);
 				if (err != IOT_ERROR_NONE) {
 					IOT_ERROR("Store LocationId failed!! (%d)", err);
 					IOT_DUMP_MAIN(ERROR, BASE, err);
@@ -685,25 +674,25 @@ static iot_error_t _do_iot_main_command(struct iot_context *ctx,
 			}
 			ctx->es_network_status = err;
 
-                        /* Update wifi update enable state */
-                        ctx->wifi_update_enabled = true;
-                        err = iot_nv_set_wifi_prov_data(&ctx->prov_data.wifi);
-                        if (err) {
-                            IOT_ERROR("failed to set the wifi prov data");
-                        }
+			/* Update wifi update enable state */
+			ctx->wifi_update_enabled = true;
+			err = iot_nv_set_wifi_prov_data(&ctx->prov_data.wifi);
+			if (err) {
+				IOT_ERROR("failed to set the wifi prov data");
+			}
 			iot_state_update(ctx, IOT_STATE_CLOUD_DISCONNECTED, 0);
 			IOT_MEM_CHECK("CLOUD_REGISTERED DONE >>PT<<");
 			break;
 		case IOT_COMMAND_CLOUD_CONNECTING:
 			if (ctx->next_connection_retry_timer) {
-                            iot_os_timer_delete(ctx->next_connection_retry_timer);
-                            ctx->next_connection_retry_timer = NULL;
-                        }
+				iot_os_timer_delete(ctx->next_connection_retry_timer);
+				ctx->next_connection_retry_timer = NULL;
+			}
 
 			if ((_con_timeout_check(ctx)) && (ctx->d2d_event_request)) {
 				iot_easysetup_deinit(ctx);
-                                iot_command_send(ctx, IOT_COMMAND_CLOUD_CONNECTING, NULL, 0);
-                                break;
+				iot_command_send(ctx, IOT_COMMAND_CLOUD_CONNECTING, NULL, 0);
+				break;
 			}
 			if (ctx->curr_state != IOT_STATE_CLOUD_DISCONNECTED) {
 				IOT_INFO("Not Disconnected state skip connecting");
@@ -721,10 +710,10 @@ static iot_error_t _do_iot_main_command(struct iot_context *ctx,
 				err = iot_wifi_ctrl_request(ctx, IOT_WIFI_MODE_STATION);
 				if (err != IOT_ERROR_NONE) {
 					IOT_ERROR("Can't send WIFI mode command(%d)", err);
-                                        ctx->es_network_status = err;
-                                        if (ctx->d2d_event_request) {
-                                            iot_easysetup_deinit(ctx);
-                                        }
+					ctx->es_network_status = err;
+					if (ctx->d2d_event_request) {
+						iot_easysetup_deinit(ctx);
+					}
 					iot_command_send(ctx, IOT_COMMAND_CLOUD_CONNECTING, NULL, 0);
 					break;
 				}
@@ -737,8 +726,7 @@ static iot_error_t _do_iot_main_command(struct iot_context *ctx,
 			}
 
 			err = iot_es_connect(ctx, IOT_CONNECT_TYPE_COMMUNICATION);
-			if (err == IOT_ERROR_MQTT_REJECT_CONNECT ||
-					err == IOT_ERROR_INVALID_ARGS) {
+			if (err == IOT_ERROR_MQTT_REJECT_CONNECT ||	err == IOT_ERROR_INVALID_ARGS) {
 				iot_noti_data_t noti_data;
 				memset(&noti_data, 0, sizeof(iot_noti_data_t));
 				noti_data.type = _IOT_NOTI_TYPE_DEV_DELETED;
@@ -748,12 +736,12 @@ static iot_error_t _do_iot_main_command(struct iot_context *ctx,
 						&noti_data, sizeof(noti_data));
 			} else if (err != IOT_ERROR_NONE) {
 				unsigned int next_retry_time;
-                                if (!ctx->d2d_event_request) {
-                                    ctx->connection_retry_count++;
-                                    next_retry_time = iot_util_generator_backoff(ctx->connection_retry_count, 64);
-                                } else {
-                                    next_retry_time = 2000;
-                                }
+				if (!ctx->d2d_event_request) {
+					ctx->connection_retry_count++;
+					next_retry_time = iot_util_generator_backoff(ctx->connection_retry_count, 64);
+				} else {
+					next_retry_time = 2000;
+				}
 				IOT_ERROR("failed to iot_es_connect for communication try count %d next after %d ms",
 						ctx->connection_retry_count, next_retry_time);
 

@@ -1,0 +1,34 @@
+From 7ab0b71e385018fcf8efb4caae2c472d62756635 Mon Sep 17 00:00:00 2001
+From: Biman Paul <biman.paul@samsung.com>
+Date: Mon, 2 Jun 2025 15:09:49 +0530
+Subject: [PATCH 3/3] add manufacturer data at the end
+
+---
+ src/shared/ad.c | 4 ++--
+ 1 file changed, 2 insertions(+), 2 deletions(-)
+
+diff --git a/src/shared/ad.c b/src/shared/ad.c
+index 27b76dc81..115a8af0a 100644
+--- a/src/shared/ad.c
++++ b/src/shared/ad.c
+@@ -539,8 +539,6 @@ uint8_t *bt_ad_generate(struct bt_ad *ad, size_t *length)
+ 
+ 	serialize_solicit_uuids(ad->solicit_uuids, adv_data, &pos);
+ 
+-	serialize_manuf_data(ad->manufacturer_data, adv_data, &pos);
+-
+ 	serialize_service_data(ad->service_data, adv_data, &pos);
+ 
+ 	serialize_name(ad->name, adv_data, &pos);
+@@ -549,6 +547,8 @@ uint8_t *bt_ad_generate(struct bt_ad *ad, size_t *length)
+ 
+ 	serialize_data(ad->data, adv_data, &pos);
+ 
++	serialize_manuf_data(ad->manufacturer_data, adv_data, &pos);
++
+ 	return adv_data;
+ }
+ 
+-- 
+2.34.1
+

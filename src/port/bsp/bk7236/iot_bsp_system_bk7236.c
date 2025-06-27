@@ -1,6 +1,6 @@
 /* ***************************************************************************
  *
- * Copyright 2020 Samsung Electronics All Rights Reserved.
+ * Copyright 2019 Samsung Electronics All Rights Reserved.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -15,60 +15,55 @@
  * language governing permissions and limitations under the License.
  *
  ****************************************************************************/
-
 #include <stdio.h>
-#include <stdlib.h>
-#include <time.h>
-#include <unistd.h>
-#include <sys/utsname.h>
+#include <components/system.h>
+#include <driver/aon_rtc.h>
 #include "iot_bsp_system.h"
 #include "iot_debug.h"
 
-#define MACHINE_ID_FILE "/etc/machine-id"
-#define MACHINE_ID_LEN_BYTES 16
 
-static struct utsname uname_data;
-
-const char* iot_bsp_get_bsp_name(void)
+const char* iot_bsp_get_bsp_name()
 {
-	uname(&uname_data);
-	return uname_data.sysname;
+    return "BK7236";
 }
 
-const char* iot_bsp_get_bsp_version_string(void)
+const char* iot_bsp_get_bsp_version_string()
 {
-	uname(&uname_data);
-	return uname_data.version;
+	return "";
 }
 
-void iot_bsp_system_reboot(void)
+void iot_bsp_system_reboot()
 {
-	exit(0);
+    // Disable scheduler on this core.
+	bk_reboot();
 }
 
-void iot_bsp_system_poweroff(void)
+void iot_bsp_system_poweroff()
 {
-	exit(0);
+	iot_bsp_system_reboot(); // no poweroff feature.
 }
+
 
 iot_error_t iot_bsp_system_get_time_in_sec(time_t *time_in_sec)
 {
-	struct timespec ts = {0,};
-
-	clock_gettime(CLOCK_REALTIME, &ts);
-	time_in_sec = ts.tv_sec;
-
+	struct timeval tv = {0,};
+	bk_rtc_gettimeofday(&tv, NULL);
+	*time_in_sec = tv.tv_sec;
 	return IOT_ERROR_NONE;
 }
 
 iot_error_t iot_bsp_system_set_time_in_sec(time_t time_in_sec)
 {
-	IOT_WARN_CHECK(time_in_sec == NULL, IOT_ERROR_INVALID_ARGS, "time data is NULL");
-
-	struct timespec ts = {0,};
-
-	time_in_sec = ts.tv_sec;
-	clock_settime(CLOCK_REALTIME, &ts);
-
+	struct timeval tv = {0,};
+	tv.tv_sec = time_in_sec;
+	bk_rtc_settimeofday(&tv,NULL);
 	return IOT_ERROR_NONE;
 }
+
+int __wrap_gettimeofday(struct timeval *tv, struct timezone *tz)
+{
+	return bk_rtc_gettimeofday(tv, tz);
+}
+
+__attribute__((alias("__wrap_gettimeofday")))
+int gettimeofday(struct timeval*, void*);

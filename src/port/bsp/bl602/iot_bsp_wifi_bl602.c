@@ -558,3 +558,8 @@ bool iot_bsp_wifi_is_dhcp_success()
     }
     return false;
 }
+
+iot_error_t iot_bsp_wifi_get_status(void)
+{
+    return s_latest_disconnect_reason;
+}

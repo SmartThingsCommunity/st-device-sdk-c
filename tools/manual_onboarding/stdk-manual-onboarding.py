@@ -4,6 +4,7 @@ import requests
 import json
 import uuid
 import re
+from packaging.version import Version, parse
 
 class bcolors:
     HEADER = '\033[95m'
@@ -21,7 +22,6 @@ server_type_url = {"AP_NORTH_EAST2" : "mqtt-regional-apnortheast2.api.smartthing
         "EU_WEST1" : "mqtt-regional-euwest1.api.smartthings.com"}
 
 smartthings_api_url = {"smartthings" : "https://api.smartthings.com",
-        "dossier" : "https://dossier-global.api.smartthings.com",
         "greatgate" : "https://greatgate-http.api.smartthings.com",
         }
 user_PAT= ""
@@ -84,13 +84,11 @@ chosen_room = room_lists[chooseFromList([i["name"] for i in room_lists]) - 1]
 print("")
 
 # 3. Get user choice for device profile of device.
-response = requestSmartThingsAPI("Get", "deviceintegrationprofiles", ST_api_server="dossier")
-if not response:
-    exit(1)
-dip_lists = response.json()["items"]
-print(bcolors.BOLD + "3. Choose device profile of the device : " + bcolors.ENDC)
-chosen_dip = dip_lists[chooseFromList([i["name"] for i in dip_lists]) - 1]
-response = requestSmartThingsAPI("Get", "deviceprofiles/" + chosen_dip["deviceProfileId"])
+dip_id = input(bcolors.BOLD + "3 - 1. Enter Device Profile ID\n: " + bcolors.ENDC);
+dip_version = input(bcolors.BOLD + "3 - 2. Enter Device Profile Version\n: " + bcolors.ENDC);
+dip_version = parse(dip_version)
+dip_version_id = input(bcolors.BOLD + "3 - 3. Enter Device Profile Version ID\n: " + bcolors.ENDC);
+response = requestSmartThingsAPI("Get", "deviceprofiles/" + dip_version_id)
 if not response:
     exit(1)
 chosen_dp = response.json()
@@ -105,7 +103,8 @@ print("")
 
 print("Location : " + chosen_location["name"])
 print("Room : " + chosen_room["name"])
-print("Device Profile : " + chosen_dip["name"])
+print("Device Profile name : " + chosen_dp["name"])
+print("Device Profile ID/Version : " + dip_id + "/" + str(dip_version.major) + "." + str(dip_version.minor))
 print("Device Serial : " + serial)
 if label:
     print("(Option) Device Label : " + label)
@@ -121,7 +120,11 @@ if ready == "Yes" or ready == "yes":
             "locationId" : chosen_location["locationId"],
             "roomId" : chosen_room["roomId"],
             "type" : "MQTT",
-            "deviceIntegrationProfileKey" : chosen_dip["key"]
+            "deviceIntegrationProfileKey" : {
+                "id" : dip_id,
+                "majorVersion" : dip_version.major,
+                "minorVersion" : dip_version.minor
+                }
             }
     if label:
         reg_msg["label"] = label

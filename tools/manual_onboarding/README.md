@@ -32,7 +32,7 @@ stdk-onboarding.py
 
 ![choose location and room](./res/manual_onboarding_choose_location_room.png)
 
-3. Choose device profile of the device. (You can find your device profile name on Developer Workspace. Click the _Device Profile_ under _Develop_ tab on your Project. Please refer [Getting Started](../../doc/getting_started.md#register-a-device-on-developer-workspace) document.)
+3. Input device profile information. (You can find your device profile information on Developer Workspace. Click the _Device Profile_ under _Develop_ tab on your Project. Please refer [Getting Started](../../doc/getting_started.md#register-a-device-on-developer-workspace) document.)
 
 ![choose device profile](./res/manual_onboarding_choose_device_profile.png)
 
