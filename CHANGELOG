@@ -1,5 +1,11 @@
 # HISTORY
 
+## 2.2.4 : Changes for version 2.2.4
+
+Bug fixed:
+
+- Fix that mn data is null in ble adv packet
+
 ## 2.2.3 : Changes for version 2.2.3
 
 New Improvements or features:
