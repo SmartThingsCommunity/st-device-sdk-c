@@ -421,5 +421,15 @@ iot_error_t iot_set_st_ecode_from_conn_error(struct iot_context *ctx, iot_error_
  */
 iot_error_t iot_cleanup(struct iot_context *ctx, bool reboot);
 
+#if defined(CONFIG_STDK_IOT_CORE_EASYSETUP_WIFI_UPDATE)
+/**
+ * @brief	Update wifi info
+ * @details	This function update wifi info via "samsungim.wifi" Capability
+ * @param[in]	ctx			iot-core context
+ * @retval	IOT_ERROR_NONE                  success.
+ */
+iot_error_t iot_update_wifi_info(struct iot_context *ctx);
+#endif
+
 #endif /* _IOT_INTERNAL_H_ */
 

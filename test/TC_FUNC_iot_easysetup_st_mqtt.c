@@ -52,13 +52,12 @@ void TC_STATIC_iot_es_mqtt_registration_success(void **state)
     //TODO: test for cbor
 }
 #else
-extern void *_iot_es_mqtt_registration_json(struct iot_context *ctx, char *dip_id, size_t *msglen, bool self_reged);
+extern void *_iot_es_mqtt_registration_json(struct iot_context *ctx, char *dip_id, size_t *msglen);
 static void
-assert_es_mqtt_registration_json(struct iot_context *context, char *payload, size_t msglen, bool self_reged, bool serial_type);
-static struct iot_context *generate_es_mqtt_registration_context(bool use_opt, bool use_d2d, bool serial_type);
+assert_es_mqtt_registration_json(struct iot_context *context, char *payload, size_t msglen, bool serial_type);
+static struct iot_context *generate_es_mqtt_registration_context(bool use_opt, bool serial_type);
 struct registration_test_condition {
     bool use_opt;
-    bool use_d2d;
 };
 
 void TC_STATIC_iot_es_mqtt_registration_SUCCESS(void **state)
@@ -67,9 +66,8 @@ void TC_STATIC_iot_es_mqtt_registration_SUCCESS(void **state)
     size_t msglen;
     struct iot_context *context;
     char *dip_id = REG_TEST_DIP_ID;
-    struct registration_test_condition condition[4] = {
-        {false, false}, {false, true},
-        {true, false}, {true, true}
+    struct registration_test_condition condition[2] = {
+        {false}, {true},
     };
 
     /*
@@ -80,13 +78,13 @@ void TC_STATIC_iot_es_mqtt_registration_SUCCESS(void **state)
     bool serial_type; //serial_type(Hashed sn, Combo sn)
 
     for (int sn_type_count = 0; sn_type_count < 2; sn_type_count++) {
-        for (int i = 0; i < 4; i++) {
+        for (int i = 0; i < 2; i++) {
             // Given
-            context = generate_es_mqtt_registration_context(condition[i].use_opt, condition[i].use_d2d, serial_type);
+            context = generate_es_mqtt_registration_context(condition[i].use_opt, serial_type);
             // When
-            output_str = _iot_es_mqtt_registration_json(context, dip_id, &msglen, condition[i].use_d2d);
+            output_str = _iot_es_mqtt_registration_json(context, dip_id, &msglen);
             // Then
-            assert_es_mqtt_registration_json(context, output_str, msglen, condition[i].use_d2d, serial_type);
+            assert_es_mqtt_registration_json(context, output_str, msglen, serial_type);
             // Teardown
             free(output_str);
             free(context->devconf.dip);
@@ -95,7 +93,7 @@ void TC_STATIC_iot_es_mqtt_registration_SUCCESS(void **state)
     }
 }
 
-struct iot_context *generate_es_mqtt_registration_context(bool use_opt, bool use_d2d, bool serial_type)
+struct iot_context *generate_es_mqtt_registration_context(bool use_opt, bool serial_type)
 {
     struct iot_context *context;
     struct iot_devconf_prov_data *devconf;
@@ -106,11 +104,6 @@ struct iot_context *generate_es_mqtt_registration_context(bool use_opt, bool use
     memset(context, '\0', sizeof(struct iot_context));
 
     context->lookup_id = REG_TEST_LOOKUP_ID;
-    if (use_d2d) {
-        context->prov_data.cloud.location = REG_TEST_LOCATION_ID;
-        context->prov_data.cloud.room = REG_TEST_ROOM_ID;
-        context->prov_data.cloud.label = REG_TEST_LABEL;
-    }
 
     devconf = &context->devconf;
     devconf->hashed_sn = REG_TEST_HASHED_SN;
@@ -142,7 +135,7 @@ struct iot_context *generate_es_mqtt_registration_context(bool use_opt, bool use
     return context;
 }
 
-void assert_es_mqtt_registration_json(struct iot_context *context, char *payload, size_t msglen, bool self_reged, bool serial_type)
+void assert_es_mqtt_registration_json(struct iot_context *context, char *payload, size_t msglen, bool serial_type)
 {
     JSON_H *root;
 
@@ -157,10 +150,10 @@ void assert_es_mqtt_registration_json(struct iot_context *context, char *payload
         assert_string_equal(context->prov_data.cloud.location,
                             JSON_GET_STRING_VALUE(JSON_GET_OBJECT_ITEM(root, "locationId")));
     }
-    if (context->prov_data.cloud.room && self_reged == false) {
+    if (context->prov_data.cloud.room) {
         assert_string_equal(context->prov_data.cloud.room,
                             JSON_GET_STRING_VALUE(JSON_GET_OBJECT_ITEM(root, "roomId")));
-    } else if (self_reged == false) {
+    } else {
         if (serial_type)
             assert_string_equal(REG_TEST_COMBO_SN,
                                 JSON_GET_STRING_VALUE(JSON_GET_OBJECT_ITEM(root, "serialHash")));
@@ -169,10 +162,6 @@ void assert_es_mqtt_registration_json(struct iot_context *context, char *payload
                                 JSON_GET_STRING_VALUE(JSON_GET_OBJECT_ITEM(root, "serialHash")));
 
         assert_non_null(JSON_GET_OBJECT_ITEM(root, "provisioningTs"));
-    } else {
-        assert_null(JSON_GET_OBJECT_ITEM(root, "serialHash"));
-        assert_null(JSON_GET_OBJECT_ITEM(root, "provisioningTs"));
-        assert_null(JSON_GET_OBJECT_ITEM(root, "roomId"));
     }
 
     if (context->prov_data.cloud.label) {

@@ -561,8 +561,5 @@ bool iot_bsp_wifi_is_dhcp_success()
 
 iot_error_t iot_bsp_wifi_get_status(void)
 {
-    iot_error_t ret = IOT_ERROR_NONE;
-
-	ret = s_latest_disconnect_reason;
-	return ret;
+    return s_latest_disconnect_reason;
 }

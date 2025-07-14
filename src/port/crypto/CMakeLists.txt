@@ -14,3 +14,7 @@ if(CONFIG_STDK_IOT_CORE_BSP_SUPPORT_ESP32 OR
 		CONFIG_STDK_IOT_CORE_BSP_SUPPORT_ESP32C3)
 	target_link_libraries(iotcore PRIVATE idf::mbedtls idf::espressif__libsodium)
 endif()
+
+if(CONFIG_STDK_IOT_CORE_BSP_SUPPORT_BK7236)
+	target_link_libraries(iotcore PRIVATE sodium)
+endif()

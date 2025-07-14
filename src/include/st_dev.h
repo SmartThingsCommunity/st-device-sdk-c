@@ -168,6 +168,7 @@ typedef enum iot_noti_type {
 	IOT_NOTI_TYPE_UNKNOWN = -1,		/**< @brief For undefined type. */
 
 	IOT_NOTI_TYPE_DEV_DELETED,		/**< @brief For device deleted event. */
+	IOT_NOTI_TYPE_DEV_ONBOARDED,		/**< @brief For device onboarded event. */
 	IOT_NOTI_TYPE_RATE_LIMIT,		/**< @brief For rate limit event. */
 	IOT_NOTI_TYPE_QUOTA_REACHED,		/**< @brief For data quota reached event. */
 	IOT_NOTI_TYPE_SEND_FAILED,		/**< @brief For send failed event. */

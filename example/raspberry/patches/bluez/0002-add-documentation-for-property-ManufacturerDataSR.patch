@@ -1,0 +1,29 @@
+From 9a3c6d5b8654a6f2519193786d6a1f7a40575597 Mon Sep 17 00:00:00 2001
+From: Biman Paul <biman.paul@samsung.com>
+Date: Mon, 2 Jun 2025 15:06:19 +0530
+Subject: [PATCH 2/3] add documentation for property ManufacturerDataSR
+
+---
+ doc/advertising-api.txt | 6 ++++++
+ 1 file changed, 6 insertions(+)
+
+diff --git a/doc/advertising-api.txt b/doc/advertising-api.txt
+index c6ee93450..8ed5180aa 100644
+--- a/doc/advertising-api.txt
++++ b/doc/advertising-api.txt
+@@ -51,6 +51,12 @@ Properties	string Type
+ 			the Advertising Data.  Keys are the Manufacturer ID
+ 			to associate with the data.
+ 
++		dict ManufacturerDataSR
++
++			Manufactuer Data fields to include in
++			the Scan Response Data.  Keys are the Manufacturer ID
++			to associate with the data.
++
+ 		array{string} SolicitUUIDs
+ 
+ 			Array of UUIDs to include in "Service Solicitation"
+-- 
+2.34.1
+

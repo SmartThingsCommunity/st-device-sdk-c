@@ -162,10 +162,10 @@ For additional information about API parameters, please refer to the [API docume
 
 | APIs                                                         | Description                |
 | ------------------------------------------------------------ | -------------------------- |
-| iot_error_t iot_bsp_system_get_time_in_sec  ( char *  buf, unsigned int  buf_len ) | Get system time in second. |
+| iot_error_t iot_bsp_system_get_time_in_sec  ( time_t *  time_in_sec ) | Get system time in second. |
 | void iot_bsp_system_poweroff  (  )                           | Shutdown system.           |
 | void iot_bsp_system_reboot  (  )                             | Restart system.            |
-| iot_error_t iot_bsp_system_set_time_in_sec  ( const char *  time_in_sec ) | Set system time in second. |
+| iot_error_t iot_bsp_system_set_time_in_sec  ( time_t  time_in_sec ) | Set system time in second. |
 | const char *iot_bsp_get_bsp_name  (  )                       | Get bsp name.              |
 | const char *iot_bsp_get_bsp_version_string  (  )             | Get bsp version string.    |
 
@@ -188,15 +188,12 @@ For additional information about API parameters, please refer to the [API docume
 
 | APIs                                                         | Description                                                  |
 | ------------------------------------------------------------ | ------------------------------------------------------------ |
-| void iot_bsp_ble_init(CharWriteCallback cb)                  | Initialize BLE function.                                     |
+| iot_error_t iot_bsp_ble_init( iot_ble_cbs_t *  ble_cbs)      | Initialize BLE function.                                     |
 | void iot_bsp_ble_deinit(void)                                | Deinitizlize BLE function.                                   |
-| void iot_bsp_send_indication(uint8_t *buf, uint32_t len)     | Send indication.                                             |
-| void iot_bsp_create_advertise_packet(char *mnid, char *setupid, char *serial) | Create Advertise packet.                    |
-| void iot_bsp_create_scan_response_packet(char *device_onboarding_id, char *serial) | Create Scan Response packet.           |
-| void iot_bsp_gatt_init(void)                                 | Initialize Gatt function.                                    |
-| uint32_t iot_bsp_ble_get_mtu(void)                           | Get MTU size.                                                |
-| iot_error_t iot_bsp_ble_register_event_cb(iot_bsp_ble_event_cb_t cb)      | Register BLE event callback.                    |
-| void iot_bsp_ble_clear_event_cb(void)                        | Clear BLE event callback.                                    |
+| int iot_send_indication( uint8_t *  buf, uint32_t  len )     | Send indication.                                             |
+| uint32_t iot_bsp_ble_get_mtu(  )                             | Get MTU size.                                                |
+| int iot_bsp_ble_start_adv( uint16_t  mn_code, uint8_t *  mn_data, size_t  mn_data_len, char *  local_name )      | Start BLE advertiserment. |
+| int iot_bsp_ble_get_mac_address( uint8_t  mac_address[6] )   | Get BLE MAC address.                                         |
 
 #### Debug
 
@@ -223,11 +220,6 @@ These APIs are related to operating system.
 | int iot_os_mutex_lock  ( iot_os_mutex *  mutex )             | This function will lock mutex before critical section        |
 | int iot_os_mutex_unlock  ( iot_os_mutex *  mutex )           | This function will unlock mutex after critical section       |
 | iot_os_mutex_destroy(iot_os_mutex* mutex)                    | This function will destroy mutex       |
-| iot_os_queue* iot_os_queue_create  ( int  queue_length,  <br/>  int  item_size ) | This function create queue and return queue handle           |
-| void iot_os_queue_delete  ( iot_os_queue *  queue_handle )   | This function delete queue                                   |
-| int iot_os_queue_receive  ( iot_os_queue *  queue_handle,  <br/>  void *  data,  <br/>  unsigned int  wait_time_ms ) | This function will receive item from the front of queue      |
-| int iot_os_queue_reset  ( iot_os_queue *  queue_handle )     | This function reset queue                                    |
-| int iot_os_queue_send  ( iot_os_queue *  queue_handle,  <br/>  void *  data,  <br/>  unsigned int  wait_time_ms ) | This function will send item to the back of queue            |
 | int iot_os_thread_create  ( void *  thread_function,  <br/>  const char *  name,  <br/>  int  stack_size,  <br/>  void *  data,  <br/>  int  priority,  <br/>  iot_os_thread *  thread_handle ) | This function create and run thread                          |
 | void iot_os_thread_delete  ( iot_os_thread  thread_handle )  | This function delete thread                                  |
 | void iot_os_thread_yield  (  )                               | This function yields task                                    |

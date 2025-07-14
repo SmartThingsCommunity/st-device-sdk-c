@@ -17,11 +17,11 @@
  ****************************************************************************/
 
 #include <string.h>
+
 #include "easysetup_ble.h"
 #include "iot_os_util.h"
 #include "iot_debug.h"
 #include "iot_easysetup.h"
-#include "easysetup_ble.h"
 #include "iot_bsp_ble.h"
 
 #define RX_BUFFER_MAX    512
@@ -64,7 +64,7 @@ static int _es_process_accepted_connection(void *handle)
 	size_t len;
 	int cmd;
 
-	while (1) {
+        while (1) {
 		iot_os_delay(10);
 		if (g_check_process) {
 			len = g_write_callback_len;
@@ -87,13 +87,11 @@ static void _es_ble_task(void *pvParameters)
 {
 	iot_error_t iot_err = IOT_ERROR_NONE;
 
-	iot_err = iot_easysetup_create_ble_advertise_packet(context);
+	iot_err = iot_easysetup_start_ble_advertisement(context);
 	if (iot_err != IOT_ERROR_NONE) {
 		IOT_ERROR("Can't create ble advertise packet for easysetup.(%d)", iot_err);
 		goto exit_task;
 	}
-
-	iot_bsp_ble_init(es_msg_assemble);
 
 	while (!is_es_ble_deinit_processing()) {
 		_es_process_accepted_connection(NULL);

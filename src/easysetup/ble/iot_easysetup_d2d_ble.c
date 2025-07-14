@@ -1126,11 +1126,17 @@ skip_time_set:
 		goto exit_secret;
 	}
 
-	for (i = OVF_BIT_JUSTWORKS; i <= OVF_BIT_MAX_FEATURE; i++) {
-		if ((i == OVF_BIT_JUSTWORKS) && ctx->add_justworks) {
-			JSON_ADD_ITEM_TO_ARRAY(array, JSON_CREATE_NUMBER(i));
-		} else if (ctx->devconf.ownership_validation_type & (unsigned)(1 << i)) {
-			JSON_ADD_ITEM_TO_ARRAY(array, JSON_CREATE_NUMBER(i));
+	if (ctx->wifi_update_enabled) {
+#if defined(CONFIG_STDK_IOT_CORE_EASYSETUP_WIFI_UPDATE)
+            JSON_ADD_ITEM_TO_ARRAY(array, JSON_CREATE_NUMBER(OVF_BIT_HASHED_SERIAL_NUMBER));
+#endif
+	} else {
+		for (i = OVF_BIT_JUSTWORKS; i <= OVF_BIT_MAX_FEATURE; i++) {
+			if ((i == OVF_BIT_JUSTWORKS) && ctx->add_justworks) {
+				JSON_ADD_ITEM_TO_ARRAY(array, JSON_CREATE_NUMBER(i));
+			} else if (ctx->devconf.ownership_validation_type & (unsigned)(1 << i)) {
+				JSON_ADD_ITEM_TO_ARRAY(array, JSON_CREATE_NUMBER(i));
+			}
 		}
 	}
 
@@ -1161,9 +1167,15 @@ exit:
 STATIC_FUNCTION
 unsigned int _es_is_otm_feature_supported(struct iot_context *ctx, enum ownership_validation_feature confirm_feature)
 {
-	unsigned int confirm_support;
+	unsigned int confirm_support = 0;
 
-	confirm_support = ((1u << (unsigned)confirm_feature) & ownership_validation_type);
+	if (ctx->wifi_update_enabled) {
+#if defined(CONFIG_STDK_IOT_CORE_EASYSETUP_WIFI_UPDATE)
+            confirm_support = ((1u << (unsigned)confirm_feature) & (1u << (unsigned)OVF_BIT_HASHED_SERIAL_NUMBER));
+#endif
+        } else {
+            confirm_support = ((1u << (unsigned)confirm_feature) & ownership_validation_type);
+        }
 	ownership_validation_type = (~(1u << (unsigned)confirm_feature) & ownership_validation_type);
 	IOT_INFO("confirm featuer info[%d] : %d", ownership_validation_type, confirm_support);
 	return confirm_support;
@@ -1200,6 +1212,8 @@ iot_error_t _es_confirm_check_manager(struct iot_context *ctx, enum ownership_va
 		case OVF_BIT_JUSTWORKS:
 			IOT_INFO("There is no confirmation request. The check is skipped");
 			IOT_ES_DUMP(IOT_DEBUG_LEVEL_INFO, IOT_DUMP_EASYSETUP_OTMTYPE_JUSTWORK, 0);
+
+			ctx->otm_confirmed = true;
 			break;
 		case OVF_BIT_QR:
 			is_qr = 1;
@@ -1248,6 +1262,8 @@ iot_error_t _es_confirm_check_manager(struct iot_context *ctx, enum ownership_va
 				}
 				goto out;
 			}
+
+			ctx->otm_confirmed = true;
 			break;
 		case OVF_BIT_HASHED_SERIAL_NUMBER:
 			IOT_INFO("Hashed Serial number confirmation is requested");
@@ -1287,6 +1303,8 @@ iot_error_t _es_confirm_check_manager(struct iot_context *ctx, enum ownership_va
 				err = IOT_ERROR_EASYSETUP_CONFIRM_DENIED;
 				goto out;
 			}
+
+			ctx->otm_confirmed = true;
 			break;
 		case OVF_BIT_BUTTON:
 			IOT_INFO("The button confirmation is requested");
@@ -1314,6 +1332,8 @@ iot_error_t _es_confirm_check_manager(struct iot_context *ctx, enum ownership_va
 				err = IOT_ERROR_EASYSETUP_CONFIRM_DENIED;
 				goto out;
 			}
+
+			ctx->otm_confirmed = true;
 			break;
 		case OVF_BIT_PIN:
 			IOT_INFO("The pin number confirmation is requested");
@@ -1403,6 +1423,8 @@ iot_error_t _es_confirminfo_handler(struct iot_context *ctx, char *in_payload, c
 		err = IOT_ERROR_EASYSETUP_JSON_CREATE_ERROR;
 		goto out;
 	}
+
+	ctx->otm_confirmed = true;
 
 	JSON_ADD_NUMBER_TO_OBJECT(root, "errorcode", 0);
 
@@ -1510,6 +1532,9 @@ iot_error_t _es_confirm_handler(struct iot_context *ctx, char *in_payload, char 
 		err = IOT_ERROR_EASYSETUP_JSON_CREATE_ERROR;
 		goto out;
 	}
+
+	ctx->otm_confirmed = true;
+
 	output_ptr = JSON_PRINT(root);
 
 	*out_payload = output_ptr;
@@ -1973,24 +1998,26 @@ iot_error_t _es_wifiprovisioninginfo_handler(struct iot_context *ctx, char *in_p
 		goto out;
 	}
 
-	iot_api_prov_data_mem_free(&ctx->prov_data);
-	err = _es_cloud_prov_parse(ctx, (char *)in_payload);
-	if (err) {
-		IOT_ERROR("failed to parse cloud_prov");
-		goto out;
+	if (!ctx->wifi_update_enabled) {
+		iot_api_prov_data_mem_free(&ctx->prov_data);
+		err = _es_cloud_prov_parse(ctx, (char *)in_payload);
+		if (err) {
+			IOT_ERROR("failed to parse cloud_prov");
+			goto out;
+		}
 	}
 
 	if (ctx->lookup_id == NULL) {
 		ctx->lookup_id = iot_os_malloc(IOT_REG_UUID_STR_LEN + 1);
-	}
 
-	err = iot_get_random_id_str(ctx->lookup_id,
-			(IOT_REG_UUID_STR_LEN + 1));
-	if (err != IOT_ERROR_NONE) {
-		IOT_ERROR("failed to get new lookup_id(%d)", err);
-		IOT_ES_DUMP(IOT_DEBUG_LEVEL_ERROR, IOT_DUMP_EASYSETUP_LOOKUPID_GENERATE_FAIL, err);
-		err = IOT_ERROR_EASYSETUP_LOOKUPID_GENERATE_FAIL;
-		goto out;
+		err = iot_get_random_id_str(ctx->lookup_id,
+				(IOT_REG_UUID_STR_LEN + 1));
+		if (err != IOT_ERROR_NONE) {
+			IOT_ERROR("failed to get new lookup_id(%d)", err);
+			IOT_ES_DUMP(IOT_DEBUG_LEVEL_ERROR, IOT_DUMP_EASYSETUP_LOOKUPID_GENERATE_FAIL, err);
+			err = IOT_ERROR_EASYSETUP_LOOKUPID_GENERATE_FAIL;
+			goto out;
+		}
 	}
 
 	IOT_DEBUG("lookupid = %s", ctx->lookup_id);
@@ -2036,23 +2063,68 @@ out:
 	return err;
 }
 
+static void _next_connection_retry_timeout(iot_os_timer_handle handle, void *user_data)
+{
+	struct iot_context *ctx = (struct iot_context *)user_data;
+	IOT_INFO("Timeout");
+
+	iot_command_send(ctx, IOT_COMMAND_CLOUD_CONNECTING, NULL, 0);
+}
+
 STATIC_FUNCTION
 iot_error_t _es_setupcomplete_handler(struct iot_context *ctx, char *in_payload, char **out_payload)
 {
 	iot_error_t err = IOT_ERROR_NONE;
+	JSON_H *root = NULL;
+	char *output_ptr = NULL;
 
 	IOT_INFO("_es_setupcomplete_handler");
 
-	ctx->es_network_status = IOT_ERROR_NONE;
-	ctx->d2d_event_request = true;
-
-	err = iot_state_update(ctx, IOT_STATE_PROV_DONE, 0);
-	if (err) {
-		IOT_ERROR("cannot update state to prov_done (%d)", err);
-		IOT_ES_DUMP(IOT_DEBUG_LEVEL_ERROR, IOT_DUMP_EASYSETUP_INTERNAL_SERVER_ERROR, err);
-		err = IOT_ERROR_EASYSETUP_INTERNAL_SERVER_ERROR;
+	root = JSON_CREATE_OBJECT();
+	if (!root) {
+		IOT_ERROR("json create failed");
+		IOT_ES_DUMP(IOT_DEBUG_LEVEL_ERROR, IOT_DUMP_EASYSETUP_JSON_CREATE_ERROR, 0);
+		err = IOT_ERROR_EASYSETUP_JSON_CREATE_ERROR;
+		goto out;
 	}
 
+	ctx->d2d_event_request = true;
+	ctx->is_wifi_station = false;
+
+	if (ctx->wifi_update_enabled) {
+		if (ctx->next_connection_retry_timer) {
+			iot_os_timer_delete(ctx->next_connection_retry_timer);
+			ctx->next_connection_retry_timer = iot_os_timer_create(_next_connection_retry_timeout, 2000, ctx);
+			if (!ctx->next_connection_retry_timer) {
+				IOT_ERROR("failed to malloc for reconnection timer");
+				err = IOT_ERROR_EASYSETUP_INTERNAL_SERVER_ERROR;
+				goto out;
+			} else {
+				iot_os_timer_start(ctx->next_connection_retry_timer);
+			}
+		} else {
+			IOT_INFO("send  DISCONNECTED");
+			err = iot_state_update(ctx, IOT_STATE_CLOUD_DISCONNECTED, 0);
+			if (err) {
+				IOT_ERROR("failed to parse wifi_prov");
+				IOT_ES_DUMP(IOT_DEBUG_LEVEL_ERROR, IOT_DUMP_EASYSETUP_INTERNAL_SERVER_ERROR, err);
+				err = IOT_ERROR_EASYSETUP_INTERNAL_SERVER_ERROR;
+				goto out;
+			}
+		}
+	} else {
+		IOT_INFO("send  PROV_DONE");
+		err = iot_state_update(ctx, IOT_STATE_PROV_DONE, 0);
+	}
+
+	JSON_ADD_NUMBER_TO_OBJECT(root, "errorcode", err);
+
+	output_ptr = JSON_PRINT(root);
+	*out_payload = output_ptr;
+out:
+	if (root) {
+		JSON_DELETE(root);
+	}
 	return err;
 }
 

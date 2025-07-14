@@ -72,12 +72,6 @@ iot_error_t iot_wifi_ctrl_request(struct iot_context *ctx,
 			iot_easysetup_deinit(ctx);
 		}
 
-		if (ctx->scan_result) {
-			free(ctx->scan_result);
-			ctx->scan_result = NULL;
-		}
-		ctx->scan_num = 0;
-
 		if (wifi_mode == IOT_WIFI_MODE_STATION) {
 			memcpy(wifi_conf.ssid, ctx->prov_data.wifi.ssid,
 				strlen(ctx->prov_data.wifi.ssid));
@@ -1665,6 +1659,179 @@ iot_error_t iot_cleanup(struct iot_context *ctx, bool reboot)
 
 	return IOT_ERROR_NONE;
 }
+
+#if defined(CONFIG_STDK_IOT_CORE_EASYSETUP_WIFI_UPDATE)
+static JSON_H *_iot_make_wifi_evt_data(void)
+{
+    JSON_H *evt_item = NULL;
+    evt_item = JSON_CREATE_OBJECT();
+    JSON_ADD_STRING_TO_OBJECT(evt_item, "component", "main");
+    JSON_ADD_STRING_TO_OBJECT(evt_item, "capability", "wifiInformation");
+    return evt_item;
+}
+
+static JSON_H *_iot_make_prov_data(int seq_num)
+{
+    JSON_H *prov_data = NULL;
+    char time_in_ms[16]; /* 155934720000 is '2019-06-01 00:00:00.00 UTC' */
+
+    prov_data = JSON_CREATE_OBJECT();
+    JSON_ADD_NUMBER_TO_OBJECT(prov_data, "sequenceNumber", seq_num);
+
+    if (iot_get_time_in_ms(time_in_ms, sizeof(time_in_ms)) != IOT_ERROR_NONE)
+        IOT_WARN("Cannot add optional timestamp value");
+    else
+        JSON_ADD_STRING_TO_OBJECT(prov_data, "timestamp", time_in_ms);
+
+    JSON_ADD_STRING_TO_OBJECT(prov_data, "stateChange", "Y");
+
+    return prov_data;
+}
+
+static JSON_H *_iot_make_wifi_ssid_evt_data(char * ssidName, int seq_num)
+{
+    JSON_H *evt_item = NULL;
+
+    evt_item = _iot_make_wifi_evt_data();
+
+    JSON_ADD_STRING_TO_OBJECT(evt_item, "attribute", "ssid");
+    JSON_ADD_STRING_TO_OBJECT(evt_item, "value", ssidName);
+    JSON_ADD_ITEM_TO_OBJECT(evt_item, "providerData", _iot_make_prov_data(seq_num));
+
+    return evt_item;
+}
+
+static JSON_H *_iot_make_wifi_freq_evt_data(iot_wifi_freq_t freq, int seq_num)
+{
+    JSON_H *evt_item = NULL;
+    JSON_H *evt_array = NULL;
+
+    evt_item = _iot_make_wifi_evt_data();
+    evt_array = JSON_CREATE_ARRAY();
+
+    JSON_ADD_STRING_TO_OBJECT(evt_item, "attribute", "supportedWiFiFrequencies");
+    switch(freq) {
+        case IOT_WIFI_FREQ_2_4G_ONLY :
+            JSON_ADD_ITEM_TO_ARRAY(evt_array, JSON_CREATE_STRING("2.4G"));
+        break;
+        case IOT_WIFI_FREQ_5G_ONLY :
+            JSON_ADD_ITEM_TO_ARRAY(evt_array, JSON_CREATE_STRING("5G"));
+        break;
+        case IOT_WIFI_FREQ_2_4G_5G_BOTH :
+            JSON_ADD_ITEM_TO_ARRAY(evt_array, JSON_CREATE_STRING("2.4G"));
+            JSON_ADD_ITEM_TO_ARRAY(evt_array, JSON_CREATE_STRING("5G"));
+        break;
+        default :
+			break;
+    }
+    JSON_ADD_ITEM_TO_OBJECT(evt_item, "value", evt_array);
+    JSON_ADD_ITEM_TO_OBJECT(evt_item, "providerData", _iot_make_prov_data(seq_num));
+
+    return evt_item;
+}
+
+static JSON_H *_iot_make_wifi_auth_evt_data(iot_wifi_auth_mode_bits_t auth_mode, int seq_num)
+{
+    JSON_H *evt_item = NULL;
+    JSON_H *evt_array = NULL;
+
+    evt_item = _iot_make_wifi_evt_data();
+    evt_array = JSON_CREATE_ARRAY();
+
+    JSON_ADD_STRING_TO_OBJECT(evt_item, "attribute", "supportedWiFiAuthTypes");
+
+    if(auth_mode & IOT_WIFI_AUTH_MODE_BIT(IOT_WIFI_AUTH_OPEN)) {
+        JSON_ADD_ITEM_TO_ARRAY(evt_array, JSON_CREATE_STRING("OPEN"));
+    }
+    if(auth_mode & IOT_WIFI_AUTH_MODE_BIT(IOT_WIFI_AUTH_WEP)) {
+        JSON_ADD_ITEM_TO_ARRAY(evt_array, JSON_CREATE_STRING("WEP"));
+    }
+    if(auth_mode & IOT_WIFI_AUTH_MODE_BIT(IOT_WIFI_AUTH_WPA_PSK)
+        || auth_mode & IOT_WIFI_AUTH_MODE_BIT(IOT_WIFI_AUTH_WPA_WPA2_PSK)) {
+        JSON_ADD_ITEM_TO_ARRAY(evt_array, JSON_CREATE_STRING("WPA-PSK"));
+    }
+    if(auth_mode & IOT_WIFI_AUTH_MODE_BIT(IOT_WIFI_AUTH_WPA2_PSK)
+        || auth_mode & IOT_WIFI_AUTH_MODE_BIT(IOT_WIFI_AUTH_WPA_WPA2_PSK)) {
+        JSON_ADD_ITEM_TO_ARRAY(evt_array, JSON_CREATE_STRING("WPA2-PSK"));
+    }
+    if(auth_mode & IOT_WIFI_AUTH_MODE_BIT(IOT_WIFI_AUTH_WPA2_ENTERPRISE)) {
+        JSON_ADD_ITEM_TO_ARRAY(evt_array, JSON_CREATE_STRING("EAP"));
+    }
+    if(auth_mode & IOT_WIFI_AUTH_MODE_BIT(IOT_WIFI_AUTH_WPA3_PERSONAL)) {
+        JSON_ADD_ITEM_TO_ARRAY(evt_array, JSON_CREATE_STRING("SAE"));
+    }
+    JSON_ADD_ITEM_TO_OBJECT(evt_item, "value", evt_array);
+    JSON_ADD_ITEM_TO_OBJECT(evt_item, "providerData", _iot_make_prov_data(seq_num));
+
+    return evt_item;
+}
+
+iot_error_t iot_update_wifi_info(struct iot_context *ctx)
+{
+    int ret;
+    st_mqtt_msg msg = {0};
+    JSON_H *evt_root = NULL;
+    JSON_H *evt_arr = NULL;
+
+    if (ctx->curr_state != IOT_STATE_CLOUD_CONNECTED || ctx->evt_mqttcli == NULL) {
+        IOT_ERROR("Target has not connected to server yet!!");
+        return IOT_ERROR_BAD_REQ;
+    }
+
+    if (ctx->rate_limit) {
+        IOT_WARN("Exceed rate limit. Can't send attributes for a while");
+        return IOT_ERROR_BAD_REQ;
+    }
+
+    if (ctx->event_sequence_num == MAX_SQNUM) {
+        ctx->event_sequence_num = 0;
+    }
+    ctx->event_sequence_num = (ctx->event_sequence_num + 1) & MAX_SQNUM;
+
+    evt_root = JSON_CREATE_OBJECT();
+    evt_arr = JSON_CREATE_ARRAY();
+    JSON_ADD_ITEM_TO_OBJECT(evt_root, "deviceEvents", evt_arr);
+
+    JSON_ADD_ITEM_TO_ARRAY(evt_arr, _iot_make_wifi_ssid_evt_data(ctx->prov_data.wifi.ssid, ctx->event_sequence_num));
+    JSON_ADD_ITEM_TO_ARRAY(evt_arr, _iot_make_wifi_freq_evt_data(iot_bsp_wifi_get_freq(), ctx->event_sequence_num));
+    JSON_ADD_ITEM_TO_ARRAY(evt_arr, _iot_make_wifi_auth_evt_data(iot_bsp_wifi_get_auth_mode(), ctx->event_sequence_num));
+
+    if (ctx->scan_result) {
+        free(ctx->scan_result);
+        ctx->scan_result = NULL;
+    }
+    ctx->scan_num = 0;
+#if defined(STDK_IOT_CORE_SERIALIZE_CBOR)
+    iot_serialize_json2cbor(evt_root, (uint8_t **)&msg.payload, (size_t *)&msg.payloadlen);
+#else
+    msg.payload = JSON_PRINT(evt_root);
+    if (msg.payload != NULL) {
+        msg.payloadlen = strlen(msg.payload);
+    }
+#endif
+    JSON_DELETE(evt_root);
+    if (msg.payload == NULL) {
+        IOT_ERROR("Fail to transfer to payload");
+        return IOT_ERROR_BAD_REQ;
+    }
+    msg.qos = st_mqtt_qos1;
+    msg.retained = false;
+    msg.topic = ctx->mqtt_event_topic;
+
+    IOT_INFO("publish event, topic : %s, payload :\n%s",
+            ctx->mqtt_event_topic, (char *)msg.payload);
+
+    ret = st_mqtt_publish_async(ctx->evt_mqttcli, &msg);
+    if (ret) {
+        IOT_WARN("MQTT pub error(%d)", ret);
+        free(msg.payload);
+        return IOT_ERROR_MQTT_PUBLISH_FAIL;
+    }
+
+    free(msg.payload);
+    return IOT_ERROR_NONE;
+}
+#endif
 
 /**************************************************************
 *                       Synchronous Call                      *

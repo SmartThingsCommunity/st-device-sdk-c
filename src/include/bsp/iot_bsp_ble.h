@@ -24,6 +24,9 @@ extern "C" {
 #endif
 
 #include "iot_error.h"
+#include <stdint.h>
+#include <stdbool.h>
+#include <stddef.h>
 
 #if !defined(CONFIG_STDK_IOT_CORE_EASYSETUP_X509)
 #define HASH_SERIAL_NUMBER_HYBRID_PORTION 4
@@ -31,23 +34,45 @@ extern "C" {
 #define HYBRID_SERIAL_NUMBER_SIZE (HASH_SERIAL_NUMBER_HYBRID_PORTION + PLAIN_SERIAL_NUMBER_HYBRID_PORTION)
 #endif
 
+/**
+ * @brief Enums for BLE connection events.
+ */
 typedef enum {
-       IOT_BLE_EVENT_GATT_JOIN,
-       IOT_BLE_EVENT_GATT_LEAVE,
-       IOT_BLE_EVENT_GATT_FAIL,
-} iot_ble_event_t;
+    IOT_BLE_CONNECTION_EVENT_CONNECTED,         /**< @brief Event for BLE connection */
+    IOT_BLE_CONNECTION_EVENT_DISCONNECTED,      /**< @brief Event for BLE disconnection */
+} iot_ble_conn_evt_t;
 
-typedef bool (*CharWriteCallback)(uint8_t *buf, uint32_t len);
-typedef void (*iot_bsp_ble_event_cb_t)(iot_ble_event_t event, iot_error_t error);
+/**
+ * @brief Callback definition for BLE connection events.
+ *
+ * @param[in] evt Event for BLE connection.
+ */
+typedef void (*iot_bsp_ble_connection_cb_t)(iot_ble_conn_evt_t evt);
+
+/**
+ * @brief Callback definition for BLE GATT write event.
+ *
+ * @param[in] buf received data for write event
+ * @param[in] len data length
+ */
+typedef bool (*iot_bsp_ble_write_cb_t)(uint8_t *buf, uint32_t len);
+
+/**
+ * @brief Callback functions for BLE port layer
+ */
+typedef struct {
+    iot_bsp_ble_connection_cb_t conn_cb;
+    iot_bsp_ble_write_cb_t write_cb;
+} iot_ble_cbs_t;
 
 /**
  * @brief  Initialize BLE function.
  *
  * This function initializes BLE function
  *
- * @param[in] cb event callback function pointer
+ * @param[in] ble_cbs BLE callbacks
  */
-void iot_bsp_ble_init(CharWriteCallback cb);
+iot_error_t iot_bsp_ble_init(iot_ble_cbs_t *ble_cbs);
 
 /**
  * @brief  Deinitizlize BLE function.
@@ -67,43 +92,6 @@ void iot_bsp_ble_deinit(void);
 uint32_t iot_bsp_ble_get_mtu(void);
 
 /**
- * @brief  Initialize GATT.
- *
- * This function initializes GATT.
- *
- * @param[in] Wi-Fi update support 
- */
-void iot_bsp_gatt_init(bool wifi_update_enabled);
-
-/**
- * @brief  Set onboarding completion.
- *
- * @param[in] Onboarding complete status
- */
-void iot_bsp_ble_set_onboarding_completion(bool onboarding_complete);
-
-/**
- * @brief  Create advertise packet
- *
- * This function creates advertise packet
- *
- * @param[in] Manufacturer ID
- * @param[in] Setup ID
- * @param[in] Serial number
- */
-void iot_create_advertise_packet(char *mnid, char *setupid, char *serial);
-
-/**
- * @brief  Create response packet
- *
- * This function creates response packet
- *
- * @param[in] Device onboarding name
- * @param[in] Serial number
- */
-void iot_create_scan_response_packet(char *device_onboarding_id, char *serial);
-
-/**
  * @brief  Send indication
  *
  * This function sends the indication
@@ -118,20 +106,29 @@ void iot_create_scan_response_packet(char *device_onboarding_id, char *serial);
 int iot_send_indication(uint8_t *buf, uint32_t len);
 
 /**
- * @brief  Register BLE event callback
- * This function must be support for BLE onboarding
- * @param[in] cb event callback function pointer
+ * @brief  Start BLE advertisement
+ *
+ * @param[in] mn_code 2 bytes manufacturer code for manufacturer data in advertisement
+ * @param[in] mn_data manufacturer data in advertisement
+ * @param[in] mn_data_len mn_data length
+ * @param[in] local_name local name in advertisement
+ *
  * @return
- * IOT_ERROR_NONE : Success
- * IOT_ERROR_BAD_REQ : Not supported
- * IOT_ERROR_INVALID_ARGS : Callback function is null
+ *   0 : Send Success
+ *   1 : Send Fail
  */
-iot_error_t iot_bsp_ble_register_event_cb(iot_bsp_ble_event_cb_t cb);
+int iot_bsp_ble_start_adv(uint16_t mn_code, uint8_t *mn_data, size_t mn_data_len, char *local_name);
 
 /**
- * @brief  Clear BLE event callback
+ * @brief  Get BLE MAC address
+ *
+ * @param[out] mac_address 6 btyes mac address
+ *
+ * @return
+ *   0 : Send Success
+ *   1 : Send Fail
  */
-void iot_bsp_ble_clear_event_cb(void);
+int iot_bsp_ble_get_mac_address(uint8_t mac_address[6]);
 
 #if defined(__cplusplus)
 }

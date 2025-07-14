@@ -435,9 +435,35 @@ int port_net_read_poll(PORT_NET_CONTEXT ctx, unsigned int wait_time_ms)
 	if (wait_time_ms == PORT_NET_WAIT_FOREVER) {
 		ret = select(socket + 1, &fdset, NULL, NULL, NULL);
 	} else {
-		timeout.tv_sec = wait_time_ms;
-		timeout.tv_usec = 0;
+		timeout.tv_sec = wait_time_ms / 1000;
+		timeout.tv_usec = (wait_time_ms % 1000) * 1000;
 		ret = select(socket + 1, &fdset, NULL, NULL, &timeout);
+	}
+
+	return ret;
+}
+
+int port_net_write_poll(PORT_NET_CONTEXT ctx, unsigned int wait_time_ms)
+{
+	struct timeval timeout;
+	fd_set fdset;
+	int socket;
+	int ret;
+	port_net_mbedtls_context_t *_ctx = (port_net_mbedtls_context_t *)ctx;
+
+	if (_ctx == NULL) {
+		return -1;
+	}
+
+	socket = _ctx->sock_fd.fd;
+	FD_ZERO(&fdset);
+	FD_SET(socket, &fdset);
+	if (wait_time_ms == PORT_NET_WAIT_FOREVER) {
+		ret = select(socket + 1, NULL, &fdset, NULL, NULL);
+	} else {
+		timeout.tv_sec = wait_time_ms / 1000;
+		timeout.tv_usec = (wait_time_ms % 1000) * 1000;
+		ret = select(socket + 1, NULL, &fdset, NULL, &timeout);
 	}
 
 	return ret;

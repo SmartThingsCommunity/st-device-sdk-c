@@ -22,6 +22,7 @@
 #include <unistd.h>
 #include <string.h>
 #include <errno.h>
+#include <time.h>
 
 #include <netdb.h>
 #include <sys/types.h>
@@ -266,4 +267,15 @@ iot_wifi_auth_mode_bits_t iot_bsp_wifi_get_auth_mode(void)
 	supported_mode_bits ^= IOT_WIFI_AUTH_MODE_BIT(IOT_WIFI_AUTH_WPA3_PERSONAL);
 
 	return supported_mode_bits;
+}
+
+iot_error_t iot_bsp_wifi_get_status(void)
+{
+	return IOT_ERROR_NONE;
+}
+
+bool iot_bsp_wifi_is_dhcp_success()
+{
+	/* TODO */
+	return true;
 }

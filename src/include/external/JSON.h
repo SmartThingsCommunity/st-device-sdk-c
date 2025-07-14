@@ -102,6 +102,10 @@ static inline JSON_H *JSON_GET_ARRAY_ITEM(const JSON_H *array, int index) {
     return cJSON_GetArrayItem(array, index);
 }
 
+static inline void JSON_DELETE_ARRAY_ITEM(JSON_H *array, int index) {
+    return cJSON_DeleteItemFromArray(array, index);
+}
+
 static inline JSON_H *JSON_PARSE(const char *value) {
     return cJSON_Parse(value);
 }

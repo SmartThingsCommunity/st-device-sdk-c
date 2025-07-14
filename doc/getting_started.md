@@ -342,6 +342,14 @@ void app_main(void)
 
 &nbsp;
 
+### Configuration
+
+Regarding configuration, we provide [samples](https://github.com/SmartThingsCommunity/st-device-sdk-c-ref/tree/main/apps) in STDK Reference.
+Please determine the required configuration based on the product specifications and refer to [samples](https://github.com/SmartThingsCommunity/st-device-sdk-c-ref/tree/main/apps) for usage.
+For explanations related to STDK configuration, please refer to [the provided link](./STDK_Config.md).
+
+&nbsp;
+
 ### Build the App
 
 There are README files in each example foler. And it explains how to build the example in each chipset environment with SmartThings Device SDK.

@@ -19,18 +19,16 @@
 #include <stdlib.h>
 #include <string.h>
 #include <sys/time.h>
+
 #include "freertos/FreeRTOS.h"
 #include "freertos/task.h"
 #include "freertos/event_groups.h"
-#include "sdkconfig.h"
 
 #include "esp_system.h"
 #include "esp_log.h"
 #include "nvs_flash.h"
-
 #include "esp_bt.h"
 #include "esp_mac.h"
-
 #include "esp_gap_ble_api.h"
 #include "esp_gatts_api.h"
 #include "esp_bt_defs.h"
@@ -39,115 +37,37 @@
 
 #include "iot_bsp_ble.h"
 
+/* LOG TAG */
 #define GATTS_TAG "BLE_ONBOARD"
 
-///Declare the static function
-static void gatts_event_handler(esp_gatts_cb_event_t event, esp_gatt_if_t gatts_if, esp_ble_gatts_cb_param_t *param);
-
-#define BLE_ONBOARDING_SERVICE_UUID   0xFD1D
-#define GATTS_DESCR_UUID_TEST_A       0x3333
-#define GATTS_NUM_HANDLE_TEST_A       4
-
-#define TEST_DEVICE_NAME              "BLE_ONBOARDING"
-#define TEST_MANUFACTURER_DATA_LEN    17
-
-#define GATTS_CHAR_VAL_LEN_MAX        1024
-
-#define PREPARE_BUF_MAX_SIZE          1024
-
-#define MAX_CHAR_LEN                  1024
 #define PROFILE_APP_ID 0
 
-#define DISPLAY_SERIAL_NUMBER_SIZE 4
+/* GATT server config */
+#define BLE_ONBOARDING_SERVICE_UUID   0xFD1D
+#define GATTS_NUM_HANDLE       4
+#define GATTS_CHAR_VAL_LEN_MAX        1024
 
+/* Advertising Define */
 #define PACKET_MAX_SIZE     31
-#define MAC_ADD_COUNT       6
-#define BT_MAC_LENGTH       6
-
 #define ADV_FLAG_LEN            0x02
 #define ADV_FLAG_TYPE           0x01
 #define ADV_FLAG_VALUE          0x04
-#define ADV_SERVICE_DATA_LEN    0x1B
+#define ADV_MANUFACTURER_DATA_TYPE        0xFF
+#define ADV_LOCAL_NAME_TYPE         0x09
 
 #define ADV_CONFIG_FLAG         (1 << 0)
 #define SCAN_RSP_CONFIG_FLAG    (1 << 1)
 
-#define CUSTOM_DATA_TYPE        0xFF
-#if defined(CONFIG_STDK_IOT_CORE_EASYSETUP_X509)
-#define CUSTOM_DATA_LEN         0x06
-#define CUSTOM_TYPE             0x02
-#define CUSTOM_TYPE_DATA_LEN    0x04
-#else
-#define CUSTOM_DATA_LEN         0x0A
-#define CUSTOM_TYPE             0x03
-#define CUSTOM_TYPE_DATA_LEN    0x08
-#endif
-
-#define CONTROL_VERSION_ACTIVE_SCAN_REQUIRED    0x42
-#define PACKET_VERSION        0x83
-#define SERVICE_ID            0x0c
-#define OOB_SERVICE_INFO      0x05
-#define SERVICE_FEATURE       0x59
-#define SETUP_AVAILABLE_NETWORK_BLE    0x04
-
-#define BT_ADDRESS_TRANSFER         0x01
-
-#define SCAN_RESP_FLAG_TYPE         0x09
-#if defined(CONFIG_STDK_IOT_CORE_EASYSETUP_X509)
-#define SCAN_RESP_MF_DATA_LEN       0x06
-#define MAX_DEVICE_NAME_DATA_LEN    0x16
-#else
-#define SCAN_RESP_MF_DATA_LEN       0x0A
-#define MAX_DEVICE_NAME_DATA_LEN    0x12
-#endif
-
 #define GATTS_MTU_MAX    517
 
-int indication_need_confirmed;
-int gatt_connected;
-static uint8_t ble_onboarding_char_uuid[16] = {0x09, 0x0E, 0xE6, 0x80, 0x02, 0x30, 0xC7, 0xA4, 0x8E, 0x4F, 0x2D, 0xAE, 0x0E, 0x0F, 0x94, 0xBE};
-size_t device_onboarding_id_len;
-
-static uint8_t char_val[MAX_CHAR_LEN] = {0x00};
-static esp_gatt_char_prop_t char_property = 0;
-
-static esp_attr_value_t ble_onboard_char = {
-		.attr_max_len = GATTS_CHAR_VAL_LEN_MAX,
-		.attr_len     = sizeof(char_val),
-		.attr_value   = char_val,
-	};
-
-/* ble status */
+/* BLE status */
 enum esp_ble_status {
 	ESP_BLE_STATUS_UNKNOWN,
 	ESP_BLE_STATUS_INIT,
 	ESP_BLE_STATUS_DEINIT,
 };
 
-static enum esp_ble_status g_ble_status = ESP_BLE_STATUS_UNKNOWN;
-static uint32_t g_mtu = 0;
-static uint8_t adv_config_done = 0;
-static uint8_t adv_data[PACKET_MAX_SIZE];
-static size_t adv_data_len;
-static size_t adv_data_mac_address_offset;
-static uint8_t scan_response_data[PACKET_MAX_SIZE];
-static size_t scan_response_len;
-static uint8_t manufacturer_id[2] = {0x75, 0x00};
-static iot_bsp_ble_event_cb_t ble_event_cb;
-static bool g_onboarding_complete;
-
-CharWriteCallback CharWriteCb;
-
-static esp_ble_adv_params_t adv_params = {
-		.adv_int_min        = 0x20,
-		.adv_int_max        = 0x40,
-		.adv_type           = ADV_TYPE_IND,
-		.own_addr_type      = BLE_ADDR_TYPE_PUBLIC,
-		.channel_map        = ADV_CHNL_ALL,
-		.adv_filter_policy = ADV_FILTER_ALLOW_SCAN_ANY_CON_ANY,
-	};
-
-
+/* GATT profile info struct */
 struct gatts_profile_inst {
 	uint16_t gatts_if;
 	uint16_t app_id;
@@ -162,23 +82,50 @@ struct gatts_profile_inst {
 	esp_bt_uuid_t descr_uuid;
 };
 
+/* GATT Characteristic info */
+static uint8_t ble_onboarding_char_uuid[16] = {0x09, 0x0E, 0xE6, 0x80, 0x02, 0x30, 0xC7, 0xA4, 0x8E, 0x4F, 0x2D, 0xAE, 0x0E, 0x0F, 0x94, 0xBE};
+static uint8_t char_val[GATTS_CHAR_VAL_LEN_MAX] = {0x00};
+static esp_attr_value_t ble_onboard_char = {
+    .attr_max_len = GATTS_CHAR_VAL_LEN_MAX,
+    .attr_len     = sizeof(char_val),
+    .attr_value   = char_val,
+};
+
+/* Advertising parameters */
+static esp_ble_adv_params_t adv_params = {
+    .adv_int_min        = 0x20,
+    .adv_int_max        = 0x40,
+    .adv_type           = ADV_TYPE_IND,
+    .own_addr_type      = BLE_ADDR_TYPE_PUBLIC,
+    .channel_map        = ADV_CHNL_ALL,
+    .adv_filter_policy = ADV_FILTER_ALLOW_SCAN_ANY_CON_ANY,
+};
+
 /* One gatt-based profile one app_id and one gatts_if, this array will store the gatts_if returned by ESP_GATTS_REG_EVT */
 static struct gatts_profile_inst gl_profile = {
 	.gatts_if = ESP_GATT_IF_NONE,       /* Not get the gatt_if, so initial is ESP_GATT_IF_NONE */
 };
+
+static int indication_need_confirmed;
+static int gatt_connected;
+static uint8_t adv_config_done = 0;
+static uint8_t is_advertising = 0;;
+static enum esp_ble_status g_ble_status = ESP_BLE_STATUS_UNKNOWN;
+static uint32_t g_mtu = 0;
+static iot_ble_cbs_t *g_ble_cbs;
 
 static void gap_event_handler(esp_gap_ble_cb_event_t event, esp_ble_gap_cb_param_t *param)
 {
 	switch (event) {
 	case ESP_GAP_BLE_ADV_DATA_RAW_SET_COMPLETE_EVT:
 		adv_config_done &= (~ADV_CONFIG_FLAG);
-		if (adv_config_done==0){
+		if (adv_config_done == 0 && is_advertising == 0){
 			esp_ble_gap_start_advertising(&adv_params);
 		}
 		break;
 	case ESP_GAP_BLE_SCAN_RSP_DATA_RAW_SET_COMPLETE_EVT:
 		adv_config_done &= (~SCAN_RSP_CONFIG_FLAG);
-		if (adv_config_done==0){
+		if (adv_config_done == 0 && is_advertising == 0){
 			esp_ble_gap_start_advertising(&adv_params);
 		}
 		break;
@@ -187,6 +134,7 @@ static void gap_event_handler(esp_gap_ble_cb_event_t event, esp_ble_gap_cb_param
 		if (param->adv_start_cmpl.status != ESP_BT_STATUS_SUCCESS) {
 			ESP_LOGE(GATTS_TAG,"Advertising start failed\n");
 		} else {
+                    is_advertising = 1;
 			ESP_LOGI(GATTS_TAG, "Start adv successfully\n");
 		}
 		break;
@@ -194,6 +142,7 @@ static void gap_event_handler(esp_gap_ble_cb_event_t event, esp_ble_gap_cb_param
 		if (param->adv_stop_cmpl.status != ESP_BT_STATUS_SUCCESS) {
 			ESP_LOGE(GATTS_TAG,"Advertising stop failed\n");
 		} else {
+                    is_advertising = 0;
 			ESP_LOGI(GATTS_TAG, "Stop adv successfully\n");
 		}
 		break;
@@ -211,172 +160,83 @@ static void gap_event_handler(esp_gap_ble_cb_event_t event, esp_ble_gap_cb_param
 	}
 }
 
-static bool iot_bsp_ble_get_onboarding_completion(void)
+int iot_bsp_ble_get_mac_address(uint8_t mac_address[6])
 {
-	return g_onboarding_complete;
+    esp_err_t err = esp_read_mac(mac_address, ESP_MAC_BT);
+    if (err != ESP_OK) {
+        ESP_LOGE(GATTS_TAG, "failed to read bt mac\n");
+        return -1;
+    }
+
+    return 0;
 }
 
-void iot_bsp_ble_set_onboarding_completion(bool onboarding_complete)
+int iot_bsp_ble_start_adv(uint16_t mn_code, uint8_t *mn_data, size_t mn_data_len, char *local_name)
 {
-	g_onboarding_complete = onboarding_complete;
-}
+    size_t offset_ind = 0;
+    size_t offset_scan_res = 0;
+    size_t mn_data_size_in_ind = 0;
+    size_t mn_data_size_in_scan_res = 0;
+    esp_err_t esp_ret;
+    uint8_t adv_data[PACKET_MAX_SIZE];
+    size_t adv_data_len;
+    uint8_t scan_response_data[PACKET_MAX_SIZE];
+    size_t scan_response_len;
 
-void set_advertise_mac_addr(uint8_t **mac)
-{
-	int i;
-	int counter = adv_data_mac_address_offset;
-	uint8_t *lmac = NULL;
+    /* Advertising Flag Type */
+    adv_data[offset_ind++] = ADV_FLAG_LEN;
+    adv_data[offset_ind++] = ADV_FLAG_TYPE;
+    adv_data[offset_ind++] = ADV_FLAG_VALUE;
 
-	lmac = (uint8_t *)malloc(BT_MAC_LENGTH);
-	if (!lmac) {
-		ESP_LOGE(GATTS_TAG,"failed to malloc for lmac\n");
-		*mac = NULL;
-		return;
-	}
+    /* Advertising Manufacturer Data Type */
+    /* Flag Size(Length(1byte) + Flag Length) +
+     * Manufacturer Size(Length(1byte) + Type(1byte) + ManufacturerCode(2bytes) + Manufacturer Data Length */
+    if ((1 + ADV_FLAG_LEN) + (1 + 1 + 2 + mn_data_len) >  PACKET_MAX_SIZE) {
+        mn_data_size_in_ind = PACKET_MAX_SIZE - (ADV_FLAG_LEN + 1) - (4);
+        mn_data_size_in_scan_res = mn_data_len - mn_data_size_in_ind;
+    } else {
+        mn_data_size_in_ind = mn_data_len;
+        mn_data_size_in_scan_res = 0;
+    }
 
-	esp_err_t err = esp_read_mac(lmac, ESP_MAC_BT);
-	if (err != ESP_OK) {
-		ESP_LOGE(GATTS_TAG,"failed to read bt mac\n");
-		free(lmac);
-		*mac = NULL;
-		return;
-	}
+    adv_data[offset_ind++] = mn_data_size_in_ind + 3;
+    adv_data[offset_ind++] = ADV_MANUFACTURER_DATA_TYPE;
+    adv_data[offset_ind++] = (mn_code & 0xFF);
+    adv_data[offset_ind++] = ((mn_code >> 8) & 0xFF);
+    memcpy(adv_data + offset_ind, mn_data, mn_data_size_in_ind);
+    offset_ind += mn_data_size_in_ind;
 
-	for (i = 0; i < BT_MAC_LENGTH; i++) {
-		adv_data[counter++] = lmac[i];
-	}
+    adv_data_len = offset_ind;
 
-	*mac = lmac;
-}
+    /* Advertising Scan Local Name Type */
+    scan_response_data[offset_scan_res++] = strlen(local_name) + 1;
+    scan_response_data[offset_scan_res++] = ADV_LOCAL_NAME_TYPE;
+    memcpy(scan_response_data + offset_scan_res, local_name, strlen(local_name));
+    offset_scan_res += strlen(local_name);
 
-void iot_create_advertise_packet(char *mnid, char *setupid, char *serial)
-{
-	uint8_t *mac;
-	int count = 0;
-	int i;
-	int mnid_len = 0;
-	int setupid_len = 0;
+    /* Advertising Scan Manufacturer Data Type */
+    if (mn_data_size_in_scan_res) {
+        scan_response_data[offset_scan_res++] = mn_data_size_in_scan_res + 3;
+        scan_response_data[offset_scan_res++] = ADV_MANUFACTURER_DATA_TYPE;
+        scan_response_data[offset_scan_res++] = (mn_code & 0xFF);
+        scan_response_data[offset_scan_res++] = ((mn_code >> 8) & 0xFF);
+        memcpy(scan_response_data + offset_scan_res, mn_data + mn_data_size_in_ind, mn_data_size_in_scan_res);
+        offset_scan_res += mn_data_size_in_scan_res;
+    }
 
-#if !defined(CONFIG_STDK_IOT_CORE_EASYSETUP_X509)
-	char *hybrid_serial = serial;
-#else
-	int serial_len = 0;
-	unsigned char display_serial[DISPLAY_SERIAL_NUMBER_SIZE + 1] = { 0,};
+    scan_response_len = offset_scan_res;
 
-	serial_len = strlen(serial);
+    adv_config_done |= (ADV_CONFIG_FLAG | SCAN_RSP_CONFIG_FLAG);
+    esp_ret = esp_ble_gap_config_adv_data_raw(adv_data, adv_data_len);
+    if (esp_ret){
+        ESP_LOGE(GATTS_TAG,"config raw adv data failed, error code = %x\n", esp_ret);
+    }
+    esp_ret = esp_ble_gap_config_scan_rsp_data_raw(scan_response_data, scan_response_len);
+    if (esp_ret){
+        ESP_LOGE(GATTS_TAG,"config raw scan rsp data failed, error code = %x\n", esp_ret);
+    }
 
-	for (i = 0; i < DISPLAY_SERIAL_NUMBER_SIZE; i++) {
-		display_serial[i] = serial[serial_len - DISPLAY_SERIAL_NUMBER_SIZE + i];
-	}
-	display_serial[DISPLAY_SERIAL_NUMBER_SIZE] = '\0';
-	ESP_LOGI(GATTS_TAG, ">> Display_Serial [%c%c%c%c] <<", display_serial[0], display_serial[1],
-		display_serial[2], display_serial[3]);
-#endif
-
-	adv_data[count++] = ADV_FLAG_LEN;
-	adv_data[count++] = ADV_FLAG_TYPE;
-	adv_data[count++] = ADV_FLAG_VALUE;
-	adv_data[count++] = ADV_SERVICE_DATA_LEN;
-	adv_data[count++] = CUSTOM_DATA_TYPE;
-	adv_data[count++] = manufacturer_id[0];
-	adv_data[count++] = manufacturer_id[1];
-	adv_data[count++] = CONTROL_VERSION_ACTIVE_SCAN_REQUIRED;
-	adv_data[count++] = SERVICE_ID;
-	adv_data[count++] = PACKET_VERSION;
-	adv_data[count++] = OOB_SERVICE_INFO;
-	adv_data[count++] = SERVICE_FEATURE;
-
-	mnid_len = strlen(mnid);
-
-	for(i = 0; i < mnid_len; i ++) {
-		adv_data[count++] = (uint8_t ) mnid[i];
-	}
-
-	setupid_len = strlen(setupid);
-
-	for(i = 0; i < setupid_len; i ++) {
-		adv_data[count++] = (uint8_t ) setupid[i];
-	}
-
-	adv_data[count++] = SETUP_AVAILABLE_NETWORK_BLE;
-	adv_data[count++] = BT_ADDRESS_TRANSFER;
-
-	adv_data_mac_address_offset = count;
-	count += MAC_ADD_COUNT;
-	set_advertise_mac_addr(&mac);
-
-	adv_data[count++] = CUSTOM_DATA_LEN;
-	adv_data[count++] = CUSTOM_TYPE;
-	adv_data[count++] = CUSTOM_TYPE_DATA_LEN;
-#if defined(CONFIG_STDK_IOT_CORE_EASYSETUP_X509)
-	adv_data[count++] = display_serial[0];
-#else
-	adv_data[count++] = hybrid_serial[0];
-#endif
-
-	adv_data_len = count;
-
-	printf("\n");
-	for(i = 0; i < count; i ++) {
-		printf("0x%x,  ", adv_data[i]);
-	}
-	printf("\n");
-}
-
-void iot_create_scan_response_packet(char *device_onboarding_id, char *serial)
-{
-	int count = 0;
-	int i;
-#if !defined(CONFIG_STDK_IOT_CORE_EASYSETUP_X509)
-	char *hybrid_serial = serial;
-#else
-	int serial_len = 0;
-	size_t device_onboarding_id_len = 0;
-	unsigned char display_serial[DISPLAY_SERIAL_NUMBER_SIZE + 1] = { 0,};
-
-	serial_len = strlen(serial);
-
-	for (i = 0; i < DISPLAY_SERIAL_NUMBER_SIZE; i++) {
-		display_serial[i] = serial[serial_len - DISPLAY_SERIAL_NUMBER_SIZE + i];
-	}
-	display_serial[DISPLAY_SERIAL_NUMBER_SIZE] = '\0';
-#endif
-
-	device_onboarding_id_len = (strlen(device_onboarding_id) > MAX_DEVICE_NAME_DATA_LEN) ? MAX_DEVICE_NAME_DATA_LEN : strlen(device_onboarding_id);
-
-	scan_response_data[count++] = device_onboarding_id_len + 1;
-	scan_response_data[count++] = SCAN_RESP_FLAG_TYPE;
-
-	for (i = 0; i < device_onboarding_id_len; i++) {
-		scan_response_data[count++] = (uint8_t ) device_onboarding_id[i];
-	}
-
-	scan_response_data[count++] = SCAN_RESP_MF_DATA_LEN;
-	scan_response_data[count++] = CUSTOM_DATA_TYPE;
-	scan_response_data[count++] = manufacturer_id[0];
-	scan_response_data[count++] = manufacturer_id[1];
-
-#if defined(CONFIG_STDK_IOT_CORE_EASYSETUP_X509)
-	for (i = 1; i < DISPLAY_SERIAL_NUMBER_SIZE; i++) {
-		scan_response_data[count++] = (uint8_t ) display_serial[i];
-	}
-#else
-	for (i = 1; i < HYBRID_SERIAL_NUMBER_SIZE; i++) {
-		scan_response_data[count++] = (uint8_t ) hybrid_serial[i];
-	}
-#endif
-
-	scan_response_len = count;
-
-	for (i = count; i < PACKET_MAX_SIZE; i++) {
-		scan_response_data[count++] = 0;
-	}
-
-	printf("\n");
-	for(i = 0; i < PACKET_MAX_SIZE; i ++) {
-		printf("0x%x,  ", scan_response_data[i]);
-	}
-	printf("\n");
+    return 0;
 }
 
 int iot_send_indication(uint8_t *buf, uint32_t len)
@@ -407,6 +267,7 @@ int iot_send_indication(uint8_t *buf, uint32_t len)
 static void gatts_event_handler(esp_gatts_cb_event_t event, esp_gatt_if_t gatts_if, esp_ble_gatts_cb_param_t *param)
 {
 	esp_attr_control_t control;
+        esp_err_t esp_ret;
 	if (event == ESP_GATTS_REG_EVT) {
 		if (param->reg.status == ESP_GATT_OK) {
 			gl_profile.gatts_if = gatts_if;
@@ -429,23 +290,7 @@ static void gatts_event_handler(esp_gatts_cb_event_t event, esp_gatt_if_t gatts_
 		gl_profile.service_id.id.inst_id = 0x00;
 		gl_profile.service_id.id.uuid.len = ESP_UUID_LEN_16;
 		gl_profile.service_id.id.uuid.uuid.uuid16 = BLE_ONBOARDING_SERVICE_UUID;
-
-		esp_err_t set_dev_name_ret = esp_ble_gap_set_device_name(TEST_DEVICE_NAME);
-		if (set_dev_name_ret){
-			ESP_LOGE(GATTS_TAG,"set device name failed, error code = %x\n", set_dev_name_ret);
-		}
-		esp_err_t raw_adv_ret = esp_ble_gap_config_adv_data_raw(adv_data, adv_data_len);
-		if (raw_adv_ret){
-			ESP_LOGE(GATTS_TAG,"config raw adv data failed, error code = %x\n", raw_adv_ret);
-		}
-		adv_config_done |= ADV_CONFIG_FLAG;
-		esp_err_t raw_scan_ret = esp_ble_gap_config_scan_rsp_data_raw(scan_response_data, scan_response_len);
-		if (raw_scan_ret){
-			ESP_LOGE(GATTS_TAG,"config raw scan rsp data failed, error code = %x\n", raw_scan_ret);
-		}
-		adv_config_done |= SCAN_RSP_CONFIG_FLAG;
-
-		esp_ble_gatts_create_service(gatts_if, &gl_profile.service_id, GATTS_NUM_HANDLE_TEST_A);
+		esp_ble_gatts_create_service(gatts_if, &gl_profile.service_id, GATTS_NUM_HANDLE);
 		break;
 	case ESP_GATTS_READ_EVT: {
 		ESP_LOGI(GATTS_TAG, "GATT_READ_EVT, conn_id %u, trans_id %lu, handle %u\n", param->read.conn_id, param->read.trans_id, param->read.handle);
@@ -466,8 +311,8 @@ static void gatts_event_handler(esp_gatts_cb_event_t event, esp_gatt_if_t gatts_
 
 		if (param->write.handle == gl_profile.char_handle) {
 			// Do further process here
-			if (CharWriteCb) {
-				CharWriteCb(param->write.value, param->write.len);
+			if (g_ble_cbs && g_ble_cbs->write_cb) {
+			    g_ble_cbs->write_cb(param->write.value, param->write.len);
 			}
 		}
 		break;
@@ -490,11 +335,13 @@ static void gatts_event_handler(esp_gatts_cb_event_t event, esp_gatt_if_t gatts_
 
 		control.auto_rsp = ESP_GATT_RSP_BY_APP;
 		esp_ble_gatts_start_service(gl_profile.service_handle);
-		char_property = ESP_GATT_CHAR_PROP_BIT_READ | ESP_GATT_CHAR_PROP_BIT_WRITE | ESP_GATT_CHAR_PROP_BIT_NOTIFY | ESP_GATT_CHAR_PROP_BIT_INDICATE;
-		esp_err_t add_char_ret = esp_ble_gatts_add_char(gl_profile.service_handle, &gl_profile.char_uuid,
-				ESP_GATT_PERM_READ | ESP_GATT_PERM_WRITE, char_property, &ble_onboard_char, &control);
-		if (add_char_ret){
-			ESP_LOGE(GATTS_TAG,"add char failed, error code =%x\n",add_char_ret);
+		esp_ret = esp_ble_gatts_add_char(gl_profile.service_handle, &gl_profile.char_uuid,
+				ESP_GATT_PERM_READ | ESP_GATT_PERM_WRITE,
+                                ESP_GATT_CHAR_PROP_BIT_READ | ESP_GATT_CHAR_PROP_BIT_WRITE |
+                                ESP_GATT_CHAR_PROP_BIT_NOTIFY | ESP_GATT_CHAR_PROP_BIT_INDICATE
+                                , &ble_onboard_char, &control);
+		if (esp_ret){
+			ESP_LOGE(GATTS_TAG,"add char failed, error code =%x\n",esp_ret);
 		}
 		break;
 	case ESP_GATTS_ADD_INCL_SRVC_EVT:
@@ -509,16 +356,16 @@ static void gatts_event_handler(esp_gatts_cb_event_t event, esp_gatt_if_t gatts_
 
 		gl_profile.descr_uuid.len = ESP_UUID_LEN_16;
 		gl_profile.descr_uuid.uuid.uuid16 = ESP_GATT_UUID_CHAR_CLIENT_CONFIG;
-		esp_err_t get_attr_ret = esp_ble_gatts_get_attr_value(param->add_char.attr_handle,  &length, &prf_char);
-		if (get_attr_ret == ESP_FAIL){
+		esp_ret = esp_ble_gatts_get_attr_value(param->add_char.attr_handle,  &length, &prf_char);
+		if (esp_ret == ESP_FAIL){
 			ESP_LOGE(GATTS_TAG,"ILLEGAL HANDLE\n");
 		}
 
 		ESP_LOGI(GATTS_TAG, "the gatts demo char length = %x\n", length);
-		esp_err_t add_descr_ret = esp_ble_gatts_add_char_descr(gl_profile.service_handle, &gl_profile.descr_uuid,
+		esp_ret = esp_ble_gatts_add_char_descr(gl_profile.service_handle, &gl_profile.descr_uuid,
 				ESP_GATT_PERM_READ | ESP_GATT_PERM_WRITE, NULL, NULL);
-		if (add_descr_ret){
-			ESP_LOGE(GATTS_TAG,"add char descr failed, error code =%x\n", add_descr_ret);
+		if (esp_ret){
+			ESP_LOGE(GATTS_TAG,"add char descr failed, error code =%x\n", esp_ret);
 		}
 		break;
 	}
@@ -550,12 +397,14 @@ static void gatts_event_handler(esp_gatts_cb_event_t event, esp_gatt_if_t gatts_
 		gl_profile.conn_id = param->connect.conn_id;
 		//start sent the update connection parameters to the peer device.
 		esp_ble_gap_update_conn_params(&conn_params);
-		esp_err_t stop_adv_ret = esp_ble_gap_stop_advertising();
-		if (stop_adv_ret != ESP_OK) {
-			ESP_LOGE(GATTS_TAG, "stop ble advertisement failed, error code = 0x%x\n", stop_adv_ret);
-		}
-		if (ble_event_cb) {
-			ble_event_cb(IOT_BLE_EVENT_GATT_JOIN, IOT_ERROR_NONE);
+                if (is_advertising) {
+                    esp_ret = esp_ble_gap_stop_advertising();
+                    if (esp_ret != ESP_OK) {
+                        ESP_LOGE(GATTS_TAG, "stop ble advertisement failed, error code = 0x%x\n", esp_ret);
+                    }
+                }
+		if (g_ble_cbs && g_ble_cbs->conn_cb) {
+                    g_ble_cbs->conn_cb(IOT_BLE_CONNECTION_EVENT_CONNECTED);
 		}
 		gatt_connected = 1;
 		indication_need_confirmed = 0;
@@ -563,17 +412,14 @@ static void gatts_event_handler(esp_gatts_cb_event_t event, esp_gatt_if_t gatts_
 	}
 	case ESP_GATTS_DISCONNECT_EVT:
 		ESP_LOGI(GATTS_TAG, "ESP_GATTS_DISCONNECT_EVT, disconnect reason 0x%x", param->disconnect.reason);
-
-		/* Start ble advertisement only when onboarding is not completed */
-		bool onboarding_completed = iot_bsp_ble_get_onboarding_completion();
-		if (onboarding_completed == false) {
-			esp_err_t start_adv_ret = esp_ble_gap_start_advertising(&adv_params);
-			if (start_adv_ret != ESP_OK) {
-				ESP_LOGE(GATTS_TAG, "start ble advertisement failed, error code = 0x%x\n", start_adv_ret);
-			}
-		}
-		if (ble_event_cb) {
-			ble_event_cb(IOT_BLE_EVENT_GATT_LEAVE, IOT_ERROR_NONE);
+                if (!is_advertising) {
+                    esp_ret = esp_ble_gap_start_advertising(&adv_params);
+                    if (esp_ret != ESP_OK) {
+                        ESP_LOGE(GATTS_TAG, "start ble advertisement failed, error code = 0x%x\n", esp_ret);
+                    }
+                }
+		if (g_ble_cbs && g_ble_cbs->conn_cb) {
+                    g_ble_cbs->conn_cb(IOT_BLE_CONNECTION_EVENT_DISCONNECTED);
 		}
 		gatt_connected = 0;
 		indication_need_confirmed = 0;
@@ -595,13 +441,13 @@ static void gatts_event_handler(esp_gatts_cb_event_t event, esp_gatt_if_t gatts_
 	}
 }
 
-void iot_bsp_ble_init(CharWriteCallback cb)
+iot_error_t iot_bsp_ble_init(iot_ble_cbs_t *ble_cbs)
 {
 	esp_err_t ret;
 
 	if (g_ble_status == ESP_BLE_STATUS_INIT) {
 		ESP_LOGI(GATTS_TAG, "ESP BLE already initialised");
-		return;
+		return IOT_ERROR_BAD_REQ;
 	}
 
 	// Initialize NVS.
@@ -612,8 +458,6 @@ void iot_bsp_ble_init(CharWriteCallback cb)
 	}
 	ESP_ERROR_CHECK( ret );
 
-	CharWriteCb = cb;
-
 	if (g_ble_status == ESP_BLE_STATUS_UNKNOWN) {
 		ESP_ERROR_CHECK(esp_bt_controller_mem_release(ESP_BT_MODE_CLASSIC_BT));
 	}
@@ -622,23 +466,23 @@ void iot_bsp_ble_init(CharWriteCallback cb)
 	ret = esp_bt_controller_init(&bt_cfg);
 	if (ret) {
 		ESP_LOGE(GATTS_TAG,"%s initialize controller failed: %s\n", __func__, esp_err_to_name(ret));
-		return;
+		return IOT_ERROR_BAD_REQ;
 	}
-
 	ret = esp_bt_controller_enable(ESP_BT_MODE_BLE);
 	if (ret) {
 		ESP_LOGE(GATTS_TAG,"%s enable controller failed: %s\n", __func__, esp_err_to_name(ret));
-		return;
+		return IOT_ERROR_BAD_REQ;
 	}
+
 	ret = esp_bluedroid_init();
 	if (ret) {
 		ESP_LOGE(GATTS_TAG,"%s init bluetooth failed: %s\n", __func__, esp_err_to_name(ret));
-		return;
+		return IOT_ERROR_BAD_REQ;
 	}
 	ret = esp_bluedroid_enable();
 	if (ret) {
 		ESP_LOGE(GATTS_TAG,"%s enable bluetooth failed: %s\n", __func__, esp_err_to_name(ret));
-		return;
+		return IOT_ERROR_BAD_REQ;
 	}
 
 	g_ble_status = ESP_BLE_STATUS_INIT;
@@ -646,20 +490,18 @@ void iot_bsp_ble_init(CharWriteCallback cb)
 	ret = esp_ble_gatts_register_callback(gatts_event_handler);
 	if (ret){
 		ESP_LOGE(GATTS_TAG,"gatts register error, error code = %x\n", ret);
-		return;
+		return IOT_ERROR_BAD_REQ;
 	}
 	ret = esp_ble_gap_register_callback(gap_event_handler);
 	if (ret){
 		ESP_LOGE(GATTS_TAG,"gap register error, error code = %x\n", ret);
-		return;
+		return IOT_ERROR_BAD_REQ;
 	}
 
-	if (g_onboarding_complete == false) {
-		ret = esp_ble_gatts_app_register(PROFILE_APP_ID);
-		if (ret){
-			ESP_LOGE(GATTS_TAG,"gatts app register error, error code = %x\n", ret);
-			return;
-		}
+	ret = esp_ble_gatts_app_register(PROFILE_APP_ID);
+	if (ret) {
+		ESP_LOGE(GATTS_TAG,"gatts app register error, error code = %x\n", ret);
+		return IOT_ERROR_BAD_REQ;
 	}
 
 	g_mtu = GATTS_MTU_MAX;
@@ -668,16 +510,8 @@ void iot_bsp_ble_init(CharWriteCallback cb)
 		ESP_LOGE(GATTS_TAG,"set local  MTU failed, error code = %x\n", local_mtu_ret);
 	}
 
-	return;
-}
+        g_ble_cbs = ble_cbs;
 
-iot_error_t iot_bsp_ble_register_event_cb(iot_bsp_ble_event_cb_t cb)
-{
-	if (cb == NULL) {
-		return IOT_ERROR_INVALID_ARGS;
-	}
-
-	ble_event_cb = cb;
 	return IOT_ERROR_NONE;
 }
 
@@ -715,8 +549,7 @@ void iot_bsp_ble_deinit(void)
 	}
 
 	g_ble_status = ESP_BLE_STATUS_DEINIT;
-	CharWriteCb = NULL;
-	ble_event_cb = NULL;
+	g_ble_cbs = NULL;
 	return;
 }
 

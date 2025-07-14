@@ -922,8 +922,6 @@ void TC_iot_wifi_ctrl_request_IOT_WIFI_MODE_OFF(void **state) {
     context = (struct iot_context*) malloc(sizeof(struct iot_context));
     assert_non_null(context);
     memset(context, '\0', sizeof(struct iot_context));
-    context->scan_num = 3;
-    context->scan_result = (iot_wifi_scan_result_t*) malloc ( context->scan_num * sizeof(iot_wifi_scan_result_t));
     expect_value(__wrap_iot_bsp_wifi_set_mode, conf->mode, IOT_WIFI_MODE_OFF);
     will_return(__wrap_iot_bsp_wifi_set_mode, IOT_ERROR_NONE);
 
@@ -933,8 +931,6 @@ void TC_iot_wifi_ctrl_request_IOT_WIFI_MODE_OFF(void **state) {
     // Then
     assert_int_equal(err, IOT_ERROR_NONE);
     assert_int_equal(context->es_http_ready, 0);
-    assert_int_equal(context->scan_num, 0);
-    assert_null(context->scan_result);
 
     // Teardown
     free(context);

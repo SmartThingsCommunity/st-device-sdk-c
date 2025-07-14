@@ -1,5 +1,53 @@
 # HISTORY
 
+## 2.2.4 : Changes for version 2.2.4
+
+Bug fixed:
+
+- Fix that mn data is null in ble adv packet
+
+## 2.2.3 : Changes for version 2.2.3
+
+New Improvements or features:
+
+- Add Porting code for BK7236 board
+- Add BLE onboarding feature for raspberry example
+
+Enhancements or amendments:
+
+- Refactoring BLE porting APIs
+  -- Remove BLE adv manufacturer type internal format (Move to SDK core)
+  -- Integrate BLE porting callbacks to one struct
+
+Bug fixed:
+
+- Make SDK not proceed next step if the device isn't confined during onboarding
+
+## 2.2.2 : Changes for version 2.2.2
+
+Bug fixed:
+
+- ESP32 wifi reconnect to AP on wifi failure
+- Add ESP32 wifi error handling
+- Resolve stuck issue after sending MQTT publish packet
+- Add write timeout in MQTT client
+
+## 2.2.1 : Changes for version 2.2.1
+
+Enhancements or amendments:
+
+- Replace wifi update Capability from custom to standard
+
+## 2.2.0 : Changes for version 2.2.0
+
+New Improvements or features:
+
+- Add Wifi update feature.(Device can change Wifi after onboarding)
+
+Enhancements or amendments:
+
+- Add antiSnoringPillow Capability helper header
+
 ## 2.1.1 : Changes for version 2.1.1
 
 Bug fixed:

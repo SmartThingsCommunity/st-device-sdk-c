@@ -5,6 +5,12 @@ pkg_check_modules(GIO2 REQUIRED gio-2.0)
 
 target_sources(iotcore
         PRIVATE
+        bluez/advertisement.c
+        bluez/bluez_device.c
+        bluez/bluez_gdbus_util.c
+        bluez/gatt_service.c
+        gdbus/gdbus_util.c
+        iot_bsp_ble.c
         iot_bsp_debug_linux.c
         iot_bsp_fs_linux.c
         iot_bsp_nv_data_linux.c
