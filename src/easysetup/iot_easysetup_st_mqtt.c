@@ -1033,9 +1033,7 @@ iot_error_t _iot_es_mqtt_connect(struct iot_context *ctx, st_mqtt_client target_
 				iot_ret = IOT_ERROR_MQTT_CONNECT_FAIL;
 				break;
 			}
-			IOT_WARN("Rejected by Server!! cleanup all & reboot");
-
-			iot_cleanup(ctx, true);
+			IOT_WARN("Rejected by Server!!");
 			iot_ret = IOT_ERROR_MQTT_REJECT_CONNECT;
 			break;
 

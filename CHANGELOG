@@ -1,5 +1,22 @@
 # HISTORY
 
+## 2.3.0 : Change for version 2.3.0
+
+Enhancements or amendments:
+
+- Can get server environment(prod, acc, stg) info via st_info_get func
+- Can add each DIP info corresponding each environment(prod, acc, stg) in onboarding_config
+- Add sound detection capability helper
+- Add reboot config option for device delete event
+
+Bug fixed:
+
+- Limit BLE adv local name max size
+- Deinit BLE module after onboarding complete
+- Clean up queue and other memory when clean up device
+- Fix ble message overflow
+- Add wifi wrong password error case in ESP32
+
 ## 2.2.4 : Changes for version 2.2.4
 
 Bug fixed:

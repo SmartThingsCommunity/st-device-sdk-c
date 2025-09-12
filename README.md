@@ -71,7 +71,7 @@ For more information, please review the following documents:
 
 ## Commercialization
 
-For commercialization, refer to the following [link](https://github.com/SmartThingsCommunity/st-device-sdk-c/blob/main/doc/Commercialization_Guide).
+For commercialization, refer to the following [link](https://github.com/SmartThingsCommunity/st-device-sdk-c/blob/main/doc/Commercialization_Guide.md).
 
 If you have any issue, or want to commercialize your IoT devices using this SDK, please use the following contact point.
 - Commercializatioin : partners@smartthings.com

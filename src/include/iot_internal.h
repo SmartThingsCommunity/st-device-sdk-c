@@ -421,6 +421,14 @@ iot_error_t iot_set_st_ecode_from_conn_error(struct iot_context *ctx, iot_error_
  */
 iot_error_t iot_cleanup(struct iot_context *ctx, bool reboot);
 
+/**
+ * @brief      update dip depends on server type
+ *
+ * @param[in]  ctx                     iot-core context
+ * @param[in]  server_type             server type
+ */
+void iot_update_dip_from_server_type(struct iot_context *ctx, iot_server_type_t server_type);
+
 #if defined(CONFIG_STDK_IOT_CORE_EASYSETUP_WIFI_UPDATE)
 /**
  * @brief	Update wifi info

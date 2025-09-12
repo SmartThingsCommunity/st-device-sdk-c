@@ -1932,6 +1932,8 @@ iot_error_t _es_cloud_prov_parse(struct iot_context *ctx, char *in_payload)
 	cloud_prov->broker_url = url.domain;
 	cloud_prov->broker_port = url.port;
 
+        iot_update_dip_from_server_type(ctx, iot_util_get_server_type(cloud_prov->broker_url));
+
 	err = iot_nv_set_cloud_prov_data(cloud_prov);
 	if (err) {
 		IOT_ERROR("failed to set the cloud prov data");

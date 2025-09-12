@@ -128,6 +128,7 @@ static void esp_wifi_event_post_to_user(void* arg, esp_event_base_t base, int32_
 			case WIFI_REASON_NO_AP_FOUND:
 				s_latest_disconnect_reason = IOT_ERROR_CONN_STA_AP_NOT_FOUND;
 				break;
+			case WIFI_REASON_4WAY_HANDSHAKE_TIMEOUT:
 			case WIFI_REASON_AUTH_FAIL:
 				s_latest_disconnect_reason = IOT_ERROR_CONN_STA_AUTH_FAIL;
 				break;

@@ -43,8 +43,6 @@
 #define DEVICE_WORK_QUEUE_KILL_SIGNAL		(1 << 1)
 #define DEVICE_WORK_QUEUE_TASK_SIGNAL_ALL	(DEVICE_PENDING_WORK_SIGNAL | DEVICE_WORK_QUEUE_KILL_SIGNAL)
 
-#define IOT_USR_INTERACT_BIT_CMD_DONE		(1u << 4u)
-
 #define IOT_MAIN_TASK_DEFAULT_CYCLE		100		/* in ms */
 #define IOT_MQTT_CONNECT_CRITICAL_REJECT_MAX	3
 #define IOT_RATE_LIMIT_BREAK_TIME		60000
@@ -230,6 +228,10 @@ struct iot_devconf_prov_data {
 	char *combo_sn; 						/**< @brief combo serial, self-generating values during onboarding process */
 	unsigned char ssid_version;					/**< @brief ssid version */
 	struct iot_dip_data *dip;					/**< @brief Device Integration Profile data, determined in devworks, optional */
+        struct iot_dip_data *prod_dip;          /**< @brief PROD Device Integration Profile data, determined in devworks, optional */
+        struct iot_dip_data *acc_dip;           /**< @brief ACC Device Integration Profile data, determined in devworks, optional */
+        struct iot_dip_data *stg_dip;           /**< @brief STG Device Integration Profile data, determined in devworks, optional */
+        struct iot_dip_data *dev_dip;           /**< @brief DEV Device Integration Profile data, determined in devworks, optional */
 };
 
 /**
@@ -375,7 +377,6 @@ struct iot_context {
 
 	unsigned int mqtt_connection_success_count; 			/**< @brief MQTT connection success count */
 	unsigned int mqtt_connection_try_count; 			/**< @brief MQTT connection try count */
-	bool usr_delete_req;						/**< @brief whether self-device-card-deleting requested from usr */
 
 	struct iot_st_ecode last_st_ecode;				/**< @brief last happended device error code to send SmartThings App */
 

@@ -24,12 +24,15 @@
 #include <iot_error.h>
 #include <iot_bsp_ble.h>
 
+#define MAX_BLE_ADV_SIZE (31)
+#define MAX_LOCAL_NAME_SIZE (18)
+
 typedef struct
 {
 	uint16_t mn_code;
 	size_t mn_data_len;
 	uint8_t *mn_data; /* BLE AD Type : 0xFF */
-	char *local_name; /* BLE AD Type : 0x09, Null-terminated char */
+	char local_name[MAX_BLE_ADV_SIZE]; /* BLE AD Type : 0x09, Null-terminated char */
 } adv_data;
 
 static void generate_hybrid_serial(struct iot_context *ctx, uint8_t *hybrid_serial_out)
@@ -173,8 +176,11 @@ static void print_adv_data(adv_data *data)
 
 static int generate_advertise_data(struct iot_context *ctx, adv_data *data)
 {
+    size_t local_name_size;
+
     data->mn_code = BLE_MANUFACTURER_CODE_SAMSUNG;
-    data->local_name = (char *)ctx->devconf.device_onboarding_id;
+    local_name_size = strlen(ctx->devconf.device_onboarding_id) > MAX_LOCAL_NAME_SIZE ? MAX_LOCAL_NAME_SIZE : strlen(ctx->devconf.device_onboarding_id);
+    memcpy(data->local_name, ctx->devconf.device_onboarding_id, local_name_size);
     generate_manufacturer_data(ctx, &data->mn_data, &data->mn_data_len);
     print_adv_data(data);
     return 0;

@@ -93,6 +93,13 @@ int __wrap_port_net_read_poll(PORT_NET_CONTEXT ctx, unsigned int wait_time_ms)
     return 1;
 }
 
+int __wrap_port_net_write_poll(PORT_NET_CONTEXT ctx, unsigned int wait_time_ms)
+{
+    UNUSED(ctx);
+    UNUSED(wait_time_ms);
+    return 1;
+}
+
 void __wrap_port_net_free(PORT_NET_CONTEXT ctx)
 {
     UNUSED(ctx);

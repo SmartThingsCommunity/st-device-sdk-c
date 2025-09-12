@@ -54,6 +54,7 @@ if(CMAKE_C_COMPILER_ID STREQUAL "GNU" AND CMAKE_BUILD_TYPE MATCHES UnitTest)
         port_net_write
         port_net_connect
         port_net_read_poll
+        port_net_write_poll
         port_net_close
         port_net_free
         )

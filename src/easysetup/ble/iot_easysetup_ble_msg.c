@@ -23,11 +23,6 @@
 #include "iot_debug.h"
 #include "iot_bsp_ble.h"
 
-#define RESPONSE_HEADER_LEN		(9)
-#define INDICATION_HEADER_LEN		(3)
-#define MIN_MTU_SIZE		(23)
-#define MAX_ATT_VALUE_LEN		(512)
-
 enum msg_state_e{
     MSG_STATE_IDLE = 0,
     MSG_STATE_ASSEMBLE,
@@ -123,6 +118,13 @@ bool es_msg_assemble(uint8_t *buf, uint32_t len)
     total_size += data->total_size[2] << 16;
     offset = total_size;
 
+    // prevent for buffer overflow
+    if (data->segment_len > total_size) {
+        IOT_ERROR("Not available data is transferred. segment length is larger than total size.");
+        _es_msg_state_reset();
+        return false;
+    }
+
     IOT_INFO("op_code : %d, cmd_num : %d, transaction_id : %d, chunk_data_continued : %d, total_size : %d",
         data->op_code, data->cmd_num, data->transaction_id, data->chunk_data_continued, total_size);
 
@@ -131,14 +133,19 @@ bool es_msg_assemble(uint8_t *buf, uint32_t len)
             if ((data->op_code == msg_state.op_code + 1) && (data->cmd_num == msg_state.cmd_num)
                  && (data->transaction_id == msg_state.transaction_id))
             {
-                msg_state.op_code = data->op_code;
-                memcpy(msg_state.data[msg_state.data_idx].p + offset, data->segment_data, data->segment_len);
-                if (offset + data->segment_len >= msg_state.data[msg_state.data_idx].len) {
+                // prevent for buffer overflow
+                if (offset + data->segment_len > msg_state.data[msg_state.data_idx].len) {
+                    IOT_ERROR("Not available data is transferred. offset + segment length is larger than total size.");
+                    _es_msg_state_reset();
+                    break;
+                }else if (offset + data->segment_len == msg_state.data[msg_state.data_idx].len) {
                     msg_state.msg_is_completed = true;
                 }
+                msg_state.op_code = data->op_code;
+                memcpy(msg_state.data[msg_state.data_idx].p + offset, data->segment_data, data->segment_len);
                 break;
             }
-            IOT_ERROR("Not available data is transfered");
+            IOT_ERROR("Not available data is transferred");
             _es_msg_state_reset();
             break;
         case MSG_STATE_DISASSEMBLE:
@@ -285,7 +292,8 @@ iot_error_t es_msg_disassemble(uint8_t *buf, uint32_t len, uint8_t data_continue
     }
 
     msg_state.state = MSG_STATE_IDLE;
-    msg_state.cmd_num = 0;
+    if(data_continued == 0)
+        msg_state.cmd_num = 0;
     free(ind);
     if (ind_ret)
         return IOT_ERROR_CONN_BLE_INDICATION_FAIL;

@@ -19,6 +19,7 @@
 #ifndef _IOT_UTIL_H_
 #define _IOT_UTIL_H_
 
+#include "st_dev.h"
 #include "iot_error.h"
 #include "iot_os_util.h"
 #include "iot_bsp_wifi.h"
@@ -207,6 +208,13 @@ uint16_t iot_util_convert_channel_freq(uint8_t channel);
  * @return	Wi-Fi channel
  */
 uint8_t iot_util_convert_freq_channel(uint16_t freq);
+
+/**
+ * @brief       To convert server url to server_type enum
+ * @param[in]   server url string
+ * @return      server type correspond to serever url
+ */
+iot_server_type_t iot_util_get_server_type(char *server_url);
 
 #ifdef __cplusplus
 }

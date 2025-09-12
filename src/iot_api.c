@@ -332,6 +332,46 @@ static bool is_valid_ssid_version(unsigned char version)
 	return false;
 }
 
+struct iot_dip_data* _load_dip_info_from_json(JSON_H *dip)
+{
+       struct iot_dip_data *new_dip = NULL;
+       JSON_H *item = NULL;
+       iot_error_t iot_err = IOT_ERROR_NONE;
+
+       new_dip = iot_os_malloc(sizeof(struct iot_dip_data));
+       if (!new_dip)
+               return NULL;
+       memset(new_dip, 0, sizeof(struct iot_dip_data));
+
+       item = JSON_GET_OBJECT_ITEM(dip, "id");
+       if (!item) {
+               free(new_dip);
+               return NULL;
+       }
+
+       iot_err = iot_util_convert_str_uuid(JSON_GET_STRING_VALUE(item),
+                                               &new_dip->dip_id);
+       if (iot_err != IOT_ERROR_NONE) {
+               free(new_dip);
+               return NULL;
+       }
+
+       item = JSON_GET_OBJECT_ITEM(dip, "majorVersion");
+       if (!item) {
+               free(new_dip);
+               return NULL;
+       }
+       new_dip->dip_major_version = item->valueint;
+
+       /* minorVersion is optional, default 0 */
+       item = JSON_GET_OBJECT_ITEM(dip, "minorVersion");
+       if (item) {
+               new_dip->dip_minor_version = item->valueint;
+       }
+
+       return new_dip;
+}
+
 static const char name_onboardingConfig[] = "onboardingConfig";
 static const char name_deviceOnboardingId[] = "deviceOnboardingId";
 static const char name_mnId[] = "mnId";
@@ -351,6 +391,7 @@ iot_error_t iot_api_onboarding_config_load(unsigned char *onboarding_config,
 	JSON_H *config = NULL;
 	JSON_H *dip = NULL;
 	JSON_H *item = NULL;
+        JSON_H *env = NULL;
 	char *data = NULL;
 	char *device_onboarding_id = NULL;
 	char *mnid = NULL;
@@ -362,7 +403,6 @@ iot_error_t iot_api_onboarding_config_load(unsigned char *onboarding_config,
 	iot_security_key_type_t pk_type;
 	size_t str_len = 0;
 	int i;
-	struct iot_dip_data *new_dip = NULL;
 #if defined(CONFIG_STDK_IOT_CORE_LOG_LEVEL_ERROR)
 	char *current_name = NULL;
 #endif
@@ -562,41 +602,40 @@ iot_error_t iot_api_onboarding_config_load(unsigned char *onboarding_config,
 #if defined(CONFIG_STDK_IOT_CORE_LOG_LEVEL_ERROR)
 		current_name = (char *)name_deviceIntegrationProfileId;
 #endif
-		new_dip = iot_os_malloc(sizeof(struct iot_dip_data));
-		if (!new_dip) {
-			iot_err = IOT_ERROR_MEM_ALLOC;
-			goto load_out;
-		}
-		memset(new_dip, 0, sizeof(struct iot_dip_data));
-
-		item = JSON_GET_OBJECT_ITEM(dip, "id");
-		if (!item) {
-			IOT_ERROR("Can't get id (NULL)");
-			iot_err = IOT_ERROR_UNINITIALIZED;
-			goto load_out;
-		}
-
-		iot_err = iot_util_convert_str_uuid(JSON_GET_STRING_VALUE(item),
-						&new_dip->dip_id);
-		if (iot_err != IOT_ERROR_NONE) {
-			IOT_ERROR("Can't convert uuid for dip_id(%d)", iot_err);
-			goto load_out;
-		}
-
-		item = JSON_GET_OBJECT_ITEM(dip, "majorVersion");
-		if (!item) {
-			IOT_ERROR("Can't get majorVersion (NULL)");
-			iot_err = IOT_ERROR_UNINITIALIZED;
-			goto load_out;
-		}
-		new_dip->dip_major_version = item->valueint;
-
-		/* minorVersion is optional, default 0 */
-		item = JSON_GET_OBJECT_ITEM(dip, "minorVersion");
-		if (item) {
-			new_dip->dip_minor_version = item->valueint;
-		}
+                devconf->dip = _load_dip_info_from_json(dip);
 	}
+
+        env = JSON_GET_OBJECT_ITEM(config, "prod");
+        if (env) {
+            dip = JSON_GET_OBJECT_ITEM(env, name_deviceIntegrationProfileId);
+            if (dip) {
+                devconf->prod_dip = _load_dip_info_from_json(dip);
+            }
+        }
+
+        env = JSON_GET_OBJECT_ITEM(config, "acc");
+        if (env) {
+            dip = JSON_GET_OBJECT_ITEM(env, name_deviceIntegrationProfileId);
+            if (dip) {
+                devconf->acc_dip = _load_dip_info_from_json(dip);
+            }
+        }
+
+        env = JSON_GET_OBJECT_ITEM(config, "stg");
+        if (env) {
+            dip = JSON_GET_OBJECT_ITEM(env, name_deviceIntegrationProfileId);
+            if (dip) {
+                devconf->stg_dip = _load_dip_info_from_json(dip);
+            }
+        }
+
+        env = JSON_GET_OBJECT_ITEM(config, "dev");
+        if (env) {
+            dip = JSON_GET_OBJECT_ITEM(env, name_deviceIntegrationProfileId);
+            if (dip) {
+                devconf->dev_dip = _load_dip_info_from_json(dip);
+            }
+        }
 
 	devconf->device_onboarding_id = device_onboarding_id;
 	devconf->mnid = mnid;
@@ -605,9 +644,6 @@ iot_error_t iot_api_onboarding_config_load(unsigned char *onboarding_config,
 	devconf->device_type = devicetypeid;
 	devconf->ownership_validation_type = ownership_validation_type;
 	devconf->pk_type = pk_type;
-	if (new_dip) {
-		devconf->dip = new_dip;
-	}
 	devconf->ssid_version = ssid_version;
 
 	if (root)
@@ -647,9 +683,6 @@ load_out:
 	}
 	if (data) {
 		iot_os_free(data);
-	}
-	if (new_dip) {
-		iot_os_free(new_dip);
 	}
 
 	return iot_err;
@@ -1022,6 +1055,16 @@ iot_error_t iot_device_cleanup(struct iot_context *ctx)
 
 	iot_api_prov_data_mem_free(&(ctx->prov_data));
 	memset(&(ctx->prov_data), 0x0, sizeof(ctx->prov_data));
+
+        if (ctx->iot_reg_data.dip) {
+            iot_os_free(ctx->iot_reg_data.dip);
+            ctx->iot_reg_data.dip = NULL;
+        }
+        if (ctx->iot_reg_data.locationId) {
+            iot_os_free(ctx->iot_reg_data.locationId);
+            ctx->iot_reg_data.locationId = NULL;
+        }
+        memset(&ctx->iot_reg_data, 0x0, sizeof(ctx->iot_reg_data));
 
 	iot_err = iot_nv_erase_prov_data();
 	if ((iot_err != IOT_ERROR_NONE) && (iot_err != IOT_ERROR_NV_DATA_NOT_EXIST)) {
@@ -1640,24 +1683,91 @@ iot_error_t iot_set_st_ecode(struct iot_context *ctx, iot_st_ecode_t ecode_type)
 
 iot_error_t iot_cleanup(struct iot_context *ctx, bool reboot)
 {
-	if (ctx->es_http_ready) {
-		ctx->es_http_ready = false;
-		iot_easysetup_deinit(ctx);
-	}
+    device_work_data_t work;
 
-	if (ctx->es_ble_ready) {
-		ctx->es_ble_ready = false;
-		iot_easysetup_deinit(ctx);
-	}
+    if (ctx->es_http_ready) {
+        ctx->es_http_ready = false;
+        iot_easysetup_deinit(ctx);
+    }
 
-	iot_device_cleanup(ctx);
-	ctx->curr_state = IOT_STATE_INITIALIZED;
+    if (ctx->es_ble_ready) {
+        ctx->es_ble_ready = false;
+        iot_easysetup_deinit(ctx);
+    }
 
-	if (reboot) {
-		IOT_REBOOT();
-	}
+    iot_device_cleanup(ctx);
+    while(iot_util_queue_receive(ctx->work_queue, &work) == IOT_ERROR_NONE) {
+    }
+    ctx->curr_state = IOT_STATE_INITIALIZED;
 
-	return IOT_ERROR_NONE;
+    if (reboot) {
+        IOT_REBOOT();
+    }
+
+    return IOT_ERROR_NONE;
+}
+
+void iot_update_dip_from_server_type(struct iot_context *ctx, iot_server_type_t server_type)
+{
+       switch(server_type) {
+               case IOT_SERVER_PROD_AP_NORTH_EAST2 :
+               case IOT_SERVER_PROD_US_EAST1 :
+               case IOT_SERVER_PROD_EU_WEST1 :
+                       if (ctx->devconf.prod_dip) {
+                               IOT_INFO("Using prod dip for %d server type", server_type);
+                               memcpy(ctx->devconf.dip->dip_id.id,
+                                               ctx->devconf.prod_dip->dip_id.id, IOT_UUID_BYTES);
+                               ctx->devconf.dip->dip_major_version =
+                                       ctx->devconf.prod_dip->dip_major_version;
+                               ctx->devconf.dip->dip_minor_version =
+                                       ctx->devconf.prod_dip->dip_minor_version;
+                       } else {
+                               IOT_INFO("Using default dip for %d server type", server_type);
+                       }
+                       break;
+               case IOT_SERVER_ACC_US_EAST2 :
+                       if (ctx->devconf.acc_dip) {
+                               IOT_INFO("Using acc dip for %d server type", server_type);
+                               memcpy(ctx->devconf.dip->dip_id.id,
+                                               ctx->devconf.acc_dip->dip_id.id, IOT_UUID_BYTES);
+                               ctx->devconf.dip->dip_major_version =
+                                       ctx->devconf.acc_dip->dip_major_version;
+                               ctx->devconf.dip->dip_minor_version =
+                                       ctx->devconf.acc_dip->dip_minor_version;
+                       } else {
+                               IOT_INFO("Using default dip for %d server type", server_type);
+                       }
+                       break;
+               case IOT_SERVER_STG_US_EAST1 :
+                       if (ctx->devconf.stg_dip) {
+                               IOT_INFO("Using stg dip for %d server type", server_type);
+                               memcpy(ctx->devconf.dip->dip_id.id,
+                                               ctx->devconf.stg_dip->dip_id.id, IOT_UUID_BYTES);
+                               ctx->devconf.dip->dip_major_version =
+                                       ctx->devconf.stg_dip->dip_major_version;
+                               ctx->devconf.dip->dip_minor_version =
+                                       ctx->devconf.stg_dip->dip_minor_version;
+                       } else {
+                               IOT_INFO("Using default dip for %d server type", server_type);
+                       }
+                       break;
+               case IOT_SERVER_DEV_US_EAST1 :
+                       if (ctx->devconf.dev_dip) {
+                               IOT_INFO("Using dev dip for %d server type", server_type);
+                               memcpy(ctx->devconf.dip->dip_id.id,
+                                               ctx->devconf.dev_dip->dip_id.id, IOT_UUID_BYTES);
+                               ctx->devconf.dip->dip_major_version =
+                                       ctx->devconf.dev_dip->dip_major_version;
+                               ctx->devconf.dip->dip_minor_version =
+                                       ctx->devconf.dev_dip->dip_minor_version;
+                       } else {
+                               IOT_INFO("Using default dip for %d server type", server_type);
+                       }
+                       break;
+               default:
+                       IOT_INFO("Using default dip for %d server type", server_type);
+                       break;
+       }
 }
 
 #if defined(CONFIG_STDK_IOT_CORE_EASYSETUP_WIFI_UPDATE)

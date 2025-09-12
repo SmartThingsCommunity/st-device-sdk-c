@@ -161,6 +161,8 @@ static iot_error_t _check_prov_status(struct iot_context *ctx, bool cmd_only)
 					ctx->iot_reg_data.deviceId[str_len] = '\0';
 					IOT_INFO("Current deviceID: %s (%d)\n", ctx->iot_reg_data.deviceId, str_len);
 				}
+
+                                iot_update_dip_from_server_type(ctx, iot_util_get_server_type(ctx->prov_data.cloud.broker_url));
                                 
 				if (ctx->devconf.dip) {
 					ctx->dip_need_update = _unlikely_with_stored_dip(ctx->devconf.dip);
@@ -261,7 +263,6 @@ STATIC_FUNCTION
 iot_error_t _delete_dev_card_by_usr(struct iot_context *ctx)
 {
 	iot_error_t iot_err = IOT_ERROR_NONE;
-	unsigned char curr_events;
 	st_mqtt_msg msg;
 	int ret;
 
@@ -274,9 +275,6 @@ iot_error_t _delete_dev_card_by_usr(struct iot_context *ctx)
 		return IOT_ERROR_NONE;
 	}
 
-	iot_os_eventgroup_clear_bits(ctx->usr_events, IOT_USR_INTERACT_BIT_CMD_DONE);
-	ctx->usr_delete_req = true;
-
 	/* GreatGate wants to receive 'empty' payload */
 	msg.payload = NULL;
 	msg.payloadlen = 0;
@@ -287,17 +285,7 @@ iot_error_t _delete_dev_card_by_usr(struct iot_context *ctx)
 	ret = st_mqtt_publish(ctx->evt_mqttcli, &msg);
 	if (ret) {
 		IOT_ERROR("error MQTTpub for %s(%d)", (char *)msg.topic, ret);
-		ctx->usr_delete_req = false;
 		iot_err = IOT_ERROR_BAD_REQ;
-	} else {
-		curr_events = iot_os_eventgroup_wait_bits(ctx->usr_events,
-			IOT_USR_INTERACT_BIT_CMD_DONE, true, (NEXT_STATE_TIMEOUT_MS / 2));
-
-		if (!(curr_events & IOT_USR_INTERACT_BIT_CMD_DONE)) {
-			IOT_ERROR("Timeout happened for device_card deleting");
-			ctx->usr_delete_req = false;
-			iot_err = IOT_ERROR_TIMEOUT;
-		}
 	}
 
 	return iot_err;
@@ -379,7 +367,7 @@ static iot_error_t _do_state_updating(struct iot_context *ctx, iot_state_t new_s
 			timeout_ms = EASYSETUP_TIMEOUT_MS;
 			IOT_MEM_CHECK("ES_PROV_ENTER DONE >>PT<<");
 		} else if (new_state == IOT_STATE_CLOUD_DISCONNECTED) {
-#if defined(CONFIG_STDK_IOT_CORE_EASYSETUP_BLE)
+#if defined(CONFIG_STDK_IOT_CORE_EASYSETUP_WIFI_UPDATE)
 			iot_err = iot_ble_ctrl_request(ctx);
 			if (iot_err != IOT_ERROR_NONE) {
 				IOT_ERROR("Can't send BLE.(%d)", iot_err);
@@ -730,7 +718,7 @@ static iot_error_t _do_iot_main_command(struct iot_context *ctx,
 				iot_noti_data_t noti_data;
 				memset(&noti_data, 0, sizeof(iot_noti_data_t));
 				noti_data.type = _IOT_NOTI_TYPE_DEV_DELETED;
-				IOT_WARN("Intended error case(reboot)");
+				IOT_WARN("Connecting fail by %d, send device delete event", err);
 				IOT_DUMP_MAIN(WARN, BASE, err);
 				iot_command_send(ctx, IOT_COMMAND_NOTIFICATION_RECEIVED,
 						&noti_data, sizeof(noti_data));
@@ -787,22 +775,17 @@ static iot_error_t _do_iot_main_command(struct iot_context *ctx,
 			IOT_DUMP_MAIN(INFO, BASE, noti->type);
 
 			if (noti->type == (iot_noti_type_t)_IOT_NOTI_TYPE_DEV_DELETED) {
-				if (ctx->usr_delete_req) {
-					IOT_INFO("Device-card deleting is done");
-					IOT_DUMP_MAIN(WARN, BASE, 0xC1EAC1EB);
+                            IOT_INFO("device deleted");
+                            IOT_DUMP_MAIN(WARN, BASE, 0xC1EAC1EA);
 
-					ctx->usr_delete_req = false;
-					iot_os_eventgroup_set_bits(ctx->usr_events,
-						IOT_USR_INTERACT_BIT_CMD_DONE);
-				} else {
-					IOT_INFO("cleanup device");
-					IOT_DUMP_MAIN(WARN, BASE, 0xC1EAC1EA);
+                            if (ctx->noti_cb)
+                                ctx->noti_cb(noti, ctx->noti_usr_data);
 
-					if (ctx->noti_cb)
-						ctx->noti_cb(noti, ctx->noti_usr_data);
-
-					iot_cleanup(ctx, true);
-				}
+#if defined(CONFIG_STDK_DO_NOT_REBOOT_AFTER_DEVICE_DELETE)
+                            iot_cleanup(ctx, false);
+#else
+                            iot_cleanup(ctx, true);
+#endif
 			} else if (noti->type == (iot_noti_type_t)_IOT_NOTI_TYPE_RATE_LIMIT) {
 				IOT_INFO("rate limit");
 				IOT_DUMP_MAIN(WARN, BASE, 0xBAD22222);
@@ -926,6 +909,10 @@ static void _device_work_queue_task(void *parm)
 			break;
 		}
 		if (curr_events & DEVICE_PENDING_WORK_SIGNAL) {
+                    if (iot_os_mutex_lock(&ctx->st_conn_lock) != IOT_OS_TRUE) {
+                        IOT_ERROR("Fail to get lock");
+                        continue;
+                    }
 			if (iot_util_queue_receive(ctx->work_queue,
 					&work) == IOT_ERROR_NONE) {
 				work.handler(ctx, work.param);
@@ -934,6 +921,7 @@ static void _device_work_queue_task(void *parm)
 				 */
 				iot_os_eventgroup_set_bits(ctx->work_queue_signal, DEVICE_PENDING_WORK_SIGNAL);
 			}
+                    iot_os_mutex_unlock(&ctx->st_conn_lock);
 		}
 	}
 	IOT_INFO("Exit device work queue task");
@@ -1586,6 +1574,35 @@ int st_info_get(IOT_CTX *iot_ctx, iot_info_type_t info_type, iot_info_data_t *in
 
 	case IOT_INFO_TYPE_IOT_PROVISIONED:
 		info_data->provisioned = iot_nv_prov_data_exist();
+		break;
+	case IOT_INFO_TYPE_IOT_SERVER_ENV:
+                if(ctx->prov_data.cloud.broker_url) {
+                    iot_server_type_t server_type = iot_util_get_server_type(ctx->prov_data.cloud.broker_url);
+                    switch(server_type) {
+                        case IOT_SERVER_PROD_AP_NORTH_EAST2 :
+                        case IOT_SERVER_PROD_US_EAST1:
+                        case IOT_SERVER_PROD_EU_WEST1:
+                        case IOT_SERVER_PROD_CHINA:
+                            info_data->server_env = SERVER_ENV_PRD;
+                            break;
+                        case IOT_SERVER_ACC_US_EAST2:
+                            info_data->server_env = SERVER_ENV_ACC;
+                            break;
+                        case IOT_SERVER_STG_US_EAST1:
+                        case IOT_SERVER_STG_CHINA:
+                            info_data->server_env = SERVER_ENV_STG;
+                            break;
+                        case IOT_SERVER_DEV_US_EAST1:
+                            info_data->server_env = SERVER_ENV_DEV;
+                            break;
+                        default:
+                            info_data->server_env = SERVER_ENV_UNKNOWN;
+                            break;
+                    }
+                } else {
+                    IOT_WARN("There is no server yet");
+                    iot_err = IOT_ERROR_BAD_REQ;
+                }
 		break;
 	default:
 		IOT_ERROR("Unsupported iot_info_type!!(%d)\n", info_type);

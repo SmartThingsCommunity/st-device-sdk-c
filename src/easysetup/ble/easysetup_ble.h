@@ -25,6 +25,11 @@ extern "C" {
 #include "iot_main.h"
 #include "iot_error.h"
 
+#define RESPONSE_HEADER_LEN		(9)
+#define INDICATION_HEADER_LEN		(3)
+#define MIN_MTU_SIZE		(23)
+#define MAX_ATT_VALUE_LEN		(512)
+
 enum cgi_type {
 	D2D_GET= 0,
 	D2D_POST,

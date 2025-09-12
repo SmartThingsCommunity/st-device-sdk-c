@@ -72,6 +72,30 @@ iot_error_t _iot_easysetup_con_timer_init(struct iot_context *ctx)
 	return err;
 }
 
+void _ble_deinit_request_handler(struct iot_context *ctx, device_work_param param)
+{
+    ctx->es_ble_ready = false;
+    es_ble_deinit();
+}
+
+void _send_ble_deinit_request()
+{
+	device_work_data_t work;
+	iot_error_t err;
+
+	work.handler = _ble_deinit_request_handler;
+	work.param = NULL;
+	work.owner_id = NULL;
+
+	err = iot_util_queue_send(context->work_queue, &work);
+	if (err != IOT_ERROR_NONE)
+	{
+		IOT_ERROR("Failed to send work queue %d", err);
+		return;
+	}
+	iot_os_eventgroup_set_bits(context->work_queue_signal, DEVICE_PENDING_WORK_SIGNAL);
+}
+
 /**
  * @brief            ble event callback
  * @details          This function handle ble event
@@ -145,6 +169,13 @@ void _iot_easysetup_ble_conn_cb(iot_ble_conn_evt_t evt)
 
 			context->otm_confirmed = false;
 			es_reset_transferdata();
+#if !defined(CONFIG_STDK_IOT_CORE_EASYSETUP_WIFI_UPDATE)
+                        // If there is no other ble service required except onboarding,
+                        // cleanup after onbarding complete.
+                        if (context->wifi_update_enabled) {
+                            _send_ble_deinit_request();
+                        }
+#endif
 			break;
 		default:
 			IOT_ERROR("Unknown event 0x%x", evt);
@@ -338,8 +369,15 @@ iot_error_t _iot_easysetup_ble_msg_encrypt(struct iot_context *context, int cmd,
 	iot_security_context_t *security_context = context->easysetup_security_context;
 	uint32_t buf_idx;
 
-	// payload max size = 3byte unsigned integer max - aes encryption padding size
-	static const uint32_t payload_size_limit = 0x00ffffff - 16;
+	uint32_t max_att_len = iot_bsp_ble_get_mtu();
+	if (max_att_len < MIN_MTU_SIZE) {
+		IOT_WARN("mtu size(%d) is under the minimum mtu size", max_att_len);
+		max_att_len = MIN_MTU_SIZE;
+	} else if(max_att_len > MAX_ATT_VALUE_LEN) {
+		IOT_WARN("mtu size(%d) is over the maximum mtu size", max_att_len);
+		max_att_len = MAX_ATT_VALUE_LEN;
+	}
+	uint32_t payload_size_limit = ((max_att_len - INDICATION_HEADER_LEN - RESPONSE_HEADER_LEN) << 8) - 16;
 
 	if (!security_context->cipher_params || !payload) {
 		IOT_ES_DUMP(IOT_DEBUG_LEVEL_ERROR, IOT_DUMP_EASYSETUP_INTERNAL_SERVER_ERROR, 0);
@@ -450,11 +488,6 @@ err_report:
 		payload = NULL;
 
 		if (cmd == IOT_EASYSETUP_BLE_STEP_SETUPCOMPLETE_RESPONSE) {
-			if (!iot_bsp_wifi_is_dhcp_success()) {
-				iot_set_st_ecode(context, IOT_ST_ECODE_NE12);
-				context->es_network_status = IOT_ERROR_CONN_STA_DHCP_FAIL;
-			}
-
 			switch (context->es_network_status) {
 				case IOT_ERROR_NONE:
 					err = context->es_network_status;

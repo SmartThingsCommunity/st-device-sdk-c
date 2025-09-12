@@ -510,6 +510,7 @@ iot_error_t iot_bsp_ble_init(iot_ble_cbs_t *ble_cbs)
 		ESP_LOGE(GATTS_TAG,"set local  MTU failed, error code = %x\n", local_mtu_ret);
 	}
 
+        is_advertising = 0;
         g_ble_cbs = ble_cbs;
 
 	return IOT_ERROR_NONE;
@@ -548,6 +549,7 @@ void iot_bsp_ble_deinit(void)
 		return;
 	}
 
+        is_advertising = 0;
 	g_ble_status = ESP_BLE_STATUS_DEINIT;
 	g_ble_cbs = NULL;
 	return;

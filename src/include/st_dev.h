@@ -243,7 +243,28 @@ typedef struct {
 typedef enum iot_info_type {
 	IOT_INFO_TYPE_IOT_STATUS_AND_STAT,		/**< @brief to get current st_status. */
 	IOT_INFO_TYPE_IOT_PROVISIONED,			/**< @brief to get provision state, provisioned or not */
+	IOT_INFO_TYPE_IOT_SERVER_ENV,			/**< @brief server environment info */
 } iot_info_type_t;
+
+typedef enum iot_server_type {
+        IOT_SERVER_PROD_AP_NORTH_EAST2,
+        IOT_SERVER_PROD_US_EAST1,
+        IOT_SERVER_PROD_EU_WEST1,
+        IOT_SERVER_PROD_CHINA,
+        IOT_SERVER_ACC_US_EAST2,
+        IOT_SERVER_STG_US_EAST1,
+        IOT_SERVER_STG_CHINA,
+        IOT_SERVER_DEV_US_EAST1,
+        IOT_SERVER_UNKNOWN,
+} iot_server_type_t;
+
+typedef enum {
+        SERVER_ENV_UNKNOWN,
+        SERVER_ENV_PRD,
+        SERVER_ENV_ACC,
+        SERVER_ENV_STG,
+        SERVER_ENV_DEV,
+} server_env_type;
 
 /**
  * @brief Contains data for iot-core information.
@@ -256,6 +277,7 @@ typedef union {
 	} st_status;
 	/* to get provisioned state case */
 	bool provisioned;				/**< @brief to check provisoned or not */
+        server_env_type server_env;
 } iot_info_data_t;
 
 /**
