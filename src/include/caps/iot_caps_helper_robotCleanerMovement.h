@@ -57,26 +57,30 @@ const static struct iot_caps_robotCleanerMovement {
         const char *value_cleaning;
         const char *value_pause;
     } attr_robotCleanerMovement;
-    const struct robotCleanerMovement_cmd_setRobotCleanerMovement { const char* name; } cmd_setRobotCleanerMovement;
+    const struct robotCleanerMovement_cmd_setRobotCleanerMovement {
+        const char *name;
+    } cmd_setRobotCleanerMovement;
 } caps_helper_robotCleanerMovement = {
     .id = "robotCleanerMovement",
-    .attr_robotCleanerMovement = {
-        .name = "robotCleanerMovement",
-        .property = ATTR_SET_VALUE_REQUIRED,
-        .valueType = VALUE_TYPE_STRING,
-        .values = {"homing", "idle", "charging", "alarm", "powerOff", "reserve", "point", "after", "cleaning", "pause"},
-        .value_homing = "homing",
-        .value_idle = "idle",
-        .value_charging = "charging",
-        .value_alarm = "alarm",
-        .value_powerOff = "powerOff",
-        .value_reserve = "reserve",
-        .value_point = "point",
-        .value_after = "after",
-        .value_cleaning = "cleaning",
-        .value_pause = "pause",
-    },
-    .cmd_setRobotCleanerMovement = { .name = "setRobotCleanerMovement" }, // arguments: mode(string) 
+    .attr_robotCleanerMovement =
+        {
+            .name = "robotCleanerMovement",
+            .property = ATTR_SET_VALUE_REQUIRED,
+            .valueType = VALUE_TYPE_STRING,
+            .values = {"homing", "idle", "charging", "alarm", "powerOff", "reserve", "point", "after", "cleaning",
+                       "pause"},
+            .value_homing = "homing",
+            .value_idle = "idle",
+            .value_charging = "charging",
+            .value_alarm = "alarm",
+            .value_powerOff = "powerOff",
+            .value_reserve = "reserve",
+            .value_point = "point",
+            .value_after = "after",
+            .value_cleaning = "cleaning",
+            .value_pause = "pause",
+        },
+    .cmd_setRobotCleanerMovement = {.name = "setRobotCleanerMovement"},  // arguments: mode(string)
 };
 
 #ifdef __cplusplus

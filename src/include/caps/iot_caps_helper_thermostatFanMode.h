@@ -56,36 +56,46 @@ const static struct iot_caps_thermostatFanMode {
         const char *value_followschedule;
         const char *value_on;
     } attr_supportedThermostatFanModes;
-    const struct thermostatFanMode_cmd_fanOn { const char* name; } cmd_fanOn;
-    const struct thermostatFanMode_cmd_fanCirculate { const char* name; } cmd_fanCirculate;
-    const struct thermostatFanMode_cmd_fanAuto { const char* name; } cmd_fanAuto;
-    const struct thermostatFanMode_cmd_setThermostatFanMode { const char* name; } cmd_setThermostatFanMode;
+    const struct thermostatFanMode_cmd_fanOn {
+        const char *name;
+    } cmd_fanOn;
+    const struct thermostatFanMode_cmd_fanCirculate {
+        const char *name;
+    } cmd_fanCirculate;
+    const struct thermostatFanMode_cmd_fanAuto {
+        const char *name;
+    } cmd_fanAuto;
+    const struct thermostatFanMode_cmd_setThermostatFanMode {
+        const char *name;
+    } cmd_setThermostatFanMode;
 } caps_helper_thermostatFanMode = {
     .id = "thermostatFanMode",
-    .attr_thermostatFanMode = {
-        .name = "thermostatFanMode",
-        .property = ATTR_SET_VALUE_REQUIRED,
-        .valueType = VALUE_TYPE_STRING,
-        .values = {"auto", "circulate", "followschedule", "on"},
-        .value_auto = "auto",
-        .value_circulate = "circulate",
-        .value_followschedule = "followschedule",
-        .value_on = "on",
-    },
-    .attr_supportedThermostatFanModes = {
-        .name = "supportedThermostatFanModes",
-        .property = ATTR_SET_VALUE_ARRAY,
-        .valueType = VALUE_TYPE_STRING,
-        .values = {"auto", "circulate", "followschedule", "on"},
-        .value_auto = "auto",
-        .value_circulate = "circulate",
-        .value_followschedule = "followschedule",
-        .value_on = "on",
-    },
-    .cmd_fanOn = { .name = "fanOn" },
-    .cmd_fanCirculate = { .name = "fanCirculate" },
-    .cmd_fanAuto = { .name = "fanAuto" },
-    .cmd_setThermostatFanMode = { .name = "setThermostatFanMode" }, // arguments: mode(string) 
+    .attr_thermostatFanMode =
+        {
+            .name = "thermostatFanMode",
+            .property = ATTR_SET_VALUE_REQUIRED,
+            .valueType = VALUE_TYPE_STRING,
+            .values = {"auto", "circulate", "followschedule", "on"},
+            .value_auto = "auto",
+            .value_circulate = "circulate",
+            .value_followschedule = "followschedule",
+            .value_on = "on",
+        },
+    .attr_supportedThermostatFanModes =
+        {
+            .name = "supportedThermostatFanModes",
+            .property = ATTR_SET_VALUE_ARRAY,
+            .valueType = VALUE_TYPE_STRING,
+            .values = {"auto", "circulate", "followschedule", "on"},
+            .value_auto = "auto",
+            .value_circulate = "circulate",
+            .value_followschedule = "followschedule",
+            .value_on = "on",
+        },
+    .cmd_fanOn = {.name = "fanOn"},
+    .cmd_fanCirculate = {.name = "fanCirculate"},
+    .cmd_fanAuto = {.name = "fanAuto"},
+    .cmd_setThermostatFanMode = {.name = "setThermostatFanMode"},  // arguments: mode(string)
 };
 
 #ifdef __cplusplus

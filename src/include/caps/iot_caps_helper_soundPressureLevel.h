@@ -43,15 +43,16 @@ const static struct iot_caps_soundPressureLevel {
     } attr_soundPressureLevel;
 } caps_helper_soundPressureLevel = {
     .id = "soundPressureLevel",
-    .attr_soundPressureLevel = {
-        .name = "soundPressureLevel",
-        .property = ATTR_SET_VALUE_MIN | ATTR_SET_VALUE_MAX | ATTR_SET_VALUE_REQUIRED,
-        .valueType = VALUE_TYPE_NUMBER,
-        .units = {"dB"},
-        .unit_dB = "dB",
-        .min = 0,
-        .max = 194,
-    },
+    .attr_soundPressureLevel =
+        {
+            .name = "soundPressureLevel",
+            .property = ATTR_SET_VALUE_MIN | ATTR_SET_VALUE_MAX | ATTR_SET_VALUE_REQUIRED,
+            .valueType = VALUE_TYPE_NUMBER,
+            .units = {"dB"},
+            .unit_dB = "dB",
+            .min = 0,
+            .max = 194,
+        },
 };
 
 #ifdef __cplusplus

@@ -33,16 +33,19 @@ const static struct iot_caps_ovenSetpoint {
         const unsigned char valueType;
         const int min;
     } attr_ovenSetpoint;
-    const struct ovenSetpoint_cmd_setOvenSetpoint { const char* name; } cmd_setOvenSetpoint;
+    const struct ovenSetpoint_cmd_setOvenSetpoint {
+        const char *name;
+    } cmd_setOvenSetpoint;
 } caps_helper_ovenSetpoint = {
     .id = "ovenSetpoint",
-    .attr_ovenSetpoint = {
-        .name = "ovenSetpoint",
-        .property = ATTR_SET_VALUE_MIN | ATTR_SET_VALUE_REQUIRED,
-        .valueType = VALUE_TYPE_INTEGER,
-        .min = 0,
-    },
-    .cmd_setOvenSetpoint = { .name = "setOvenSetpoint" }, // arguments: setpoint(integer) 
+    .attr_ovenSetpoint =
+        {
+            .name = "ovenSetpoint",
+            .property = ATTR_SET_VALUE_MIN | ATTR_SET_VALUE_REQUIRED,
+            .valueType = VALUE_TYPE_INTEGER,
+            .min = 0,
+        },
+    .cmd_setOvenSetpoint = {.name = "setOvenSetpoint"},  // arguments: setpoint(integer)
 };
 
 #ifdef __cplusplus

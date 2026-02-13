@@ -25,10 +25,7 @@
 extern "C" {
 #endif
 
-enum {
-    CAP_ENUM_PHMEASUREMENT_PH_UNIT_PH,
-    CAP_ENUM_PHMEASUREMENT_PH_UNIT_MAX
-};
+enum { CAP_ENUM_PHMEASUREMENT_PH_UNIT_PH, CAP_ENUM_PHMEASUREMENT_PH_UNIT_MAX };
 
 const static struct iot_caps_pHMeasurement {
     const char *id;
@@ -43,15 +40,16 @@ const static struct iot_caps_pHMeasurement {
     } attr_pH;
 } caps_helper_pHMeasurement = {
     .id = "pHMeasurement",
-    .attr_pH = {
-        .name = "pH",
-        .property = ATTR_SET_VALUE_MIN | ATTR_SET_VALUE_MAX | ATTR_SET_VALUE_REQUIRED,
-        .valueType = VALUE_TYPE_NUMBER,
-        .units = {"pH"},
-        .unit_pH = "pH",
-        .min = 0,
-        .max = 14,
-    },
+    .attr_pH =
+        {
+            .name = "pH",
+            .property = ATTR_SET_VALUE_MIN | ATTR_SET_VALUE_MAX | ATTR_SET_VALUE_REQUIRED,
+            .valueType = VALUE_TYPE_NUMBER,
+            .units = {"pH"},
+            .unit_pH = "pH",
+            .min = 0,
+            .max = 14,
+        },
 };
 
 #ifdef __cplusplus

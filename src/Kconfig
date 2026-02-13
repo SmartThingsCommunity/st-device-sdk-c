@@ -41,6 +41,13 @@ config STDK_IOT_CORE_EASYSETUP_WIFI_UPDATE
     help
        If this option is enabled, The device enable wifi update functionality.
 
+config STDK_IOT_CORE_EASYSETUP_OFFLINE_DIAGNOSTICS
+    bool "Enable offline diagnostics functionality"
+    default n
+    depends on STDK_IOT_CORE_EASYSETUP_BLE
+    help
+       If this option is enabled, the device enable offline diagnostics functionality.
+
 config STDK_IOT_CORE_EASYSETUP_HTTP_USE_SOCKET_API
     bool "Use socket for easysetup http"
     default n
@@ -194,6 +201,14 @@ config STDK_DEBUG_MEMORY_CHECK
     depends on STDK_IOT_CORE
     help
         If this debug option is enabled, IOT_MEM_CHECK will print memory utilization.
+
+config CONFIG_STDK_DO_NOT_REBOOT_AFTER_DEVICE_DELETE
+    bool "Do not reboot after receiving device delete event"
+    default n
+    depends on STDK_IOT_CORE
+    help
+       If it set yes, SDK do not reboot after receiving device delete event.
+       Default operation is that SDK reboots the device itself after receiving device delete event.
 
 menu "Security"
     depends on STDK_IOT_CORE

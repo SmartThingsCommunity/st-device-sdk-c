@@ -43,14 +43,15 @@ const static struct iot_caps_panicAlarm {
     } attr_panicAlarm;
 } caps_helper_panicAlarm = {
     .id = "panicAlarm",
-    .attr_panicAlarm = {
-        .name = "panicAlarm",
-        .property = ATTR_SET_VALUE_REQUIRED,
-        .valueType = VALUE_TYPE_STRING,
-        .values = {"panic", "clear"},
-        .value_panic = "panic",
-        .value_clear = "clear",
-    },
+    .attr_panicAlarm =
+        {
+            .name = "panicAlarm",
+            .property = ATTR_SET_VALUE_REQUIRED,
+            .valueType = VALUE_TYPE_STRING,
+            .values = {"panic", "clear"},
+            .value_panic = "panic",
+            .value_clear = "clear",
+        },
 };
 
 #ifdef __cplusplus

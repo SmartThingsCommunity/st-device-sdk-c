@@ -40,17 +40,19 @@ const static struct iot_caps_objectDetection {
     } attr_supportedValues;
 } caps_helper_objectDetection = {
     .id = "objectDetection",
-    .attr_detected = {
-        .name = "detected",
-        .property = ATTR_SET_VALUE_REQUIRED,
-        .valueType = VALUE_TYPE_OBJECT,
-    },
-    .attr_supportedValues = {
-        .name = "supportedValues",
-        .property = ATTR_SET_MAX_LENGTH | ATTR_SET_VALUE_ARRAY,
-        .valueType = VALUE_TYPE_STRING,
-        .max_length = 255,
-    },
+    .attr_detected =
+        {
+            .name = "detected",
+            .property = ATTR_SET_VALUE_REQUIRED,
+            .valueType = VALUE_TYPE_OBJECT,
+        },
+    .attr_supportedValues =
+        {
+            .name = "supportedValues",
+            .property = ATTR_SET_MAX_LENGTH | ATTR_SET_VALUE_ARRAY,
+            .valueType = VALUE_TYPE_STRING,
+            .max_length = 255,
+        },
 };
 
 #ifdef __cplusplus

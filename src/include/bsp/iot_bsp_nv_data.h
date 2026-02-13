@@ -38,7 +38,7 @@ extern "C" {
  *
  * @see iot_nv_data.h
  */
-const char* iot_bsp_nv_get_data_path(iot_nvd_t nv_type);
+const char *iot_bsp_nv_get_data_path(iot_nvd_t nv_type);
 
 #ifdef __cplusplus
 }

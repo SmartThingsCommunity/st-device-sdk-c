@@ -15,30 +15,26 @@
  * language governing permissions and limitations under the License.
  *
  ****************************************************************************/
-#include <stdarg.h>
-#include <stddef.h>
-#include <setjmp.h>
-#include <cmocka.h>
-#include <string.h>
 #include <iot_debug.h>
-#include <iot_log_file.h>
 #include <iot_dump_log.h>
 #include <iot_internal.h>
+#include <iot_log_file.h>
+#include <string.h>
 
 #include "TC_MOCK_functions.h"
+#include "cmocka_custom.h"
 
 static char sample_device_info[] = {
-        "{\n"
-        "\t\"deviceInfo\": {\n"
-        "\t\t\"firmwareVersion\": \"TEST_FIRMWARE_VERSION\",\n"
-        "\t\t\"privateKey\": \"TEST_DEVICE_SECRET_B64_KEY\",\n"
-        "\t\t\"publicKey\": \"TEST_DEVICE_PUBLIC_B64_KEY\",\n"
-        "\t\t\"serialNumber\": \"TEST_DEVICE_SERIAL_NUMBER\",\n"
-        "\t\t\"modelNumber\": \"TEST_MODEL_NUMBER\",\n"
-        "\t\t\"manufacturerName\": \"TEST_MANUFACTURER_NAME\"\n"
-        "\t}\n"
-        "}"
-};
+    "{\n"
+    "\t\"deviceInfo\": {\n"
+    "\t\t\"firmwareVersion\": \"TEST_FIRMWARE_VERSION\",\n"
+    "\t\t\"privateKey\": \"TEST_DEVICE_SECRET_B64_KEY\",\n"
+    "\t\t\"publicKey\": \"TEST_DEVICE_PUBLIC_B64_KEY\",\n"
+    "\t\t\"serialNumber\": \"TEST_DEVICE_SERIAL_NUMBER\",\n"
+    "\t\t\"modelNumber\": \"TEST_MODEL_NUMBER\",\n"
+    "\t\t\"manufacturerName\": \"TEST_MANUFACTURER_NAME\"\n"
+    "\t}\n"
+    "}"};
 
 static void write_log_lines(int number_of_lines)
 {
@@ -67,9 +63,9 @@ void TC_iot_dump_create_dump_state_failure(void **state)
 
     // Given :  max_log_dump_size is smaller than minimum
     max_log_dump_size = 1;
-    //when
+    // when
     err = st_create_log_dump((IOT_CTX *)context, &buf, max_log_dump_size, &allocated_size, mode);
-    //then : failure
+    // then : failure
     assert_int_not_equal(err, IOT_ERROR_NONE);
 
     mode = IOT_DUMP_MODE_NEED_BASE64 | IOT_DUMP_MODE_NEED_DUMP_STATE;
@@ -78,9 +74,9 @@ void TC_iot_dump_create_dump_state_failure(void **state)
         // Given: malloc failure
         do_not_use_mock_iot_os_malloc_failure();
         set_mock_iot_os_malloc_failure_with_index(i);
-        //when
+        // when
         err = st_create_log_dump((IOT_CTX *)context, &buf, max_log_dump_size, &allocated_size, mode);
-        //then : failure
+        // then : failure
         assert_int_not_equal(err, IOT_ERROR_NONE);
     }
     do_not_use_mock_iot_os_malloc_failure();
@@ -96,26 +92,26 @@ static void create_dump_test()
 
     struct iot_device_info *device_info;
 
-    //given: context is null, no base64, no dumpstate
-    //when:
+    // given: context is null, no base64, no dumpstate
+    // when:
     err = st_create_log_dump((IOT_CTX *)context, &buf, 500, &allocated_size, mode);
-    //then: success
+    // then: success
     assert_int_equal(err, IOT_ERROR_NONE);
     assert_non_null(buf);
     assert_true(allocated_size > 0);
     free(buf);
 
-    //given: context has device info, base64, dumpstate
-    context = (struct iot_context *) malloc((sizeof(struct iot_context)));
+    // given: context has device info, base64, dumpstate
+    context = (struct iot_context *)malloc((sizeof(struct iot_context)));
     memset(context, 0, sizeof(struct iot_context));
     device_info = &context->device_info;
     err = iot_api_device_info_load(sample_device_info, sizeof(sample_device_info), device_info);
     assert_int_equal(err, IOT_ERROR_NONE);
     mode = IOT_DUMP_MODE_NEED_BASE64 | IOT_DUMP_MODE_NEED_DUMP_STATE;
 
-    //when:
+    // when:
     err = st_create_log_dump((IOT_CTX *)context, &buf, 2048, &allocated_size, mode);
-    //then: success
+    // then: success
     assert_int_equal(err, IOT_ERROR_NONE);
     assert_non_null(buf);
     assert_true(allocated_size > 0);
@@ -144,13 +140,13 @@ void TC_iot_dump_create_dump_state_success(void **state)
 
     iot_log_file_init(log_file_type);
     // test with different log message size condition
-    for(int i = 0; i < 10; i++) {
-        write_log_lines(1<<i);
+    for (int i = 0; i < 10; i++) {
+        write_log_lines(1 << i);
         create_dump_test();
         iot_log_file_remove(log_file_type);
     }
     iot_log_file_exit();
-#endif //CONFIG_STDK_IOT_CORE_LOG_FILE
+#endif  // CONFIG_STDK_IOT_CORE_LOG_FILE
 }
 
 void TC_iot_dump_log(void **state)
@@ -160,4 +156,3 @@ void TC_iot_dump_log(void **state)
     iot_dump_log(IOT_DEBUG_LEVEL_INFO, 0xffffffff, 0, 0);
     iot_dump_log(IOT_DEBUG_LEVEL_DEBUG, 0xffffffff, 0, 0);
 }
-

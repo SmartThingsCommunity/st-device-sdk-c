@@ -36,13 +36,9 @@ stdk-onboarding.py
 
 ![choose device profile](./res/manual_onboarding_choose_device_profile.png)
 
-![device profile on DevWS](./res/DevWS_device_profile.png)
-
 4. Enter serial number for the device. You should enter registered serial number on your developer Workspace. (You can find registered device serial number in _Test Devices_ under _Test_ tab. Please refer [Getting Started](../../doc/getting_started.md#register-a-device-on-developer-workspace) document.)
 
 ![enter serial number](./res/manual_onboarding_enter_serial.png)
-
-![serial on DevWS](./res/DevWS_device_serial.png)
 
 5. Enter device label to show on SmartThings App. If you skip, default device label is device profile name.
 

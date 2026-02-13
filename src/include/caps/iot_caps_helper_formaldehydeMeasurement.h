@@ -45,16 +45,17 @@ const static struct iot_caps_formaldehydeMeasurement {
     } attr_formaldehydeLevel;
 } caps_helper_formaldehydeMeasurement = {
     .id = "formaldehydeMeasurement",
-    .attr_formaldehydeLevel = {
-        .name = "formaldehydeLevel",
-        .property = ATTR_SET_VALUE_MIN | ATTR_SET_VALUE_MAX | ATTR_SET_VALUE_REQUIRED | ATTR_SET_UNIT_REQUIRED,
-        .valueType = VALUE_TYPE_NUMBER,
-        .units = {"ppm", "mg/m^3"},
-        .unit_ppm = "ppm",
-        .unit_mg_per_m3 = "mg/m^3",
-        .min = 0,
-        .max = 1000000,
-    },
+    .attr_formaldehydeLevel =
+        {
+            .name = "formaldehydeLevel",
+            .property = ATTR_SET_VALUE_MIN | ATTR_SET_VALUE_MAX | ATTR_SET_VALUE_REQUIRED | ATTR_SET_UNIT_REQUIRED,
+            .valueType = VALUE_TYPE_NUMBER,
+            .units = {"ppm", "mg/m^3"},
+            .unit_ppm = "ppm",
+            .unit_mg_per_m3 = "mg/m^3",
+            .min = 0,
+            .max = 1000000,
+        },
 };
 
 #ifdef __cplusplus

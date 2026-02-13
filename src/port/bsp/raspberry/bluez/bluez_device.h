@@ -19,10 +19,8 @@
 #ifndef _BLUEZ_DEVICE_H_
 #define _BLUEZ_DEVICE_H_
 
-
 #ifdef __cplusplus
-extern "C"
-{
+extern "C" {
 #endif
 
 #include "iot_bsp_ble.h"

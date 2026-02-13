@@ -24,12 +24,12 @@ extern "C" {
 #endif
 
 /**
-  * @brief  Generate random number
-  *
-  * @details This function generates and returns a random number.
-  *
-  * @return unsigned int random number
-  */
+ * @brief  Generate random number
+ *
+ * @details This function generates and returns a random number.
+ *
+ * @return unsigned int random number
+ */
 unsigned int iot_bsp_random();
 
 #ifdef __cplusplus

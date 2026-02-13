@@ -46,21 +46,24 @@ const static struct iot_caps_energyMeter {
         const char *unit_kVAh;
         const double min;
     } attr_energy;
-    const struct energyMeter_cmd_resetEnergyMeter { const char* name; } cmd_resetEnergyMeter;
+    const struct energyMeter_cmd_resetEnergyMeter {
+        const char *name;
+    } cmd_resetEnergyMeter;
 } caps_helper_energyMeter = {
     .id = "energyMeter",
-    .attr_energy = {
-        .name = "energy",
-        .property = ATTR_SET_VALUE_MIN | ATTR_SET_VALUE_REQUIRED,
-        .valueType = VALUE_TYPE_NUMBER,
-        .units = {"Wh", "kWh", "mWh", "kVAh"},
-        .unit_Wh = "Wh",
-        .unit_kWh = "kWh",
-        .unit_mWh = "mWh",
-        .unit_kVAh = "kVAh",
-        .min = 0,
-    },
-    .cmd_resetEnergyMeter = { .name = "resetEnergyMeter" },
+    .attr_energy =
+        {
+            .name = "energy",
+            .property = ATTR_SET_VALUE_MIN | ATTR_SET_VALUE_REQUIRED,
+            .valueType = VALUE_TYPE_NUMBER,
+            .units = {"Wh", "kWh", "mWh", "kVAh"},
+            .unit_Wh = "Wh",
+            .unit_kWh = "kWh",
+            .unit_mWh = "mWh",
+            .unit_kVAh = "kVAh",
+            .min = 0,
+        },
+    .cmd_resetEnergyMeter = {.name = "resetEnergyMeter"},
 };
 
 #ifdef __cplusplus

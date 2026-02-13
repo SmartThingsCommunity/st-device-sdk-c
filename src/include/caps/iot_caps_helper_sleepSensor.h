@@ -43,14 +43,15 @@ const static struct iot_caps_sleepSensor {
     } attr_sleeping;
 } caps_helper_sleepSensor = {
     .id = "sleepSensor",
-    .attr_sleeping = {
-        .name = "sleeping",
-        .property = ATTR_SET_VALUE_REQUIRED,
-        .valueType = VALUE_TYPE_STRING,
-        .values = {"not sleeping", "sleeping"},
-        .value_not_sleeping = "not sleeping",
-        .value_sleeping = "sleeping",
-    },
+    .attr_sleeping =
+        {
+            .name = "sleeping",
+            .property = ATTR_SET_VALUE_REQUIRED,
+            .valueType = VALUE_TYPE_STRING,
+            .values = {"not sleeping", "sleeping"},
+            .value_not_sleeping = "not sleeping",
+            .value_sleeping = "sleeping",
+        },
 };
 
 #ifdef __cplusplus

@@ -42,14 +42,15 @@ const static struct iot_caps_bodyMassIndexMeasurement {
     } attr_bmiMeasurement;
 } caps_helper_bodyMassIndexMeasurement = {
     .id = "bodyMassIndexMeasurement",
-    .attr_bmiMeasurement = {
-        .name = "bmiMeasurement",
-        .property = ATTR_SET_VALUE_MIN | ATTR_SET_VALUE_REQUIRED,
-        .valueType = VALUE_TYPE_NUMBER,
-        .units = {"kg/m^2"},
-        .unit_kg_per_m2 = "kg/m^2",
-        .min = 0,
-    },
+    .attr_bmiMeasurement =
+        {
+            .name = "bmiMeasurement",
+            .property = ATTR_SET_VALUE_MIN | ATTR_SET_VALUE_REQUIRED,
+            .valueType = VALUE_TYPE_NUMBER,
+            .units = {"kg/m^2"},
+            .unit_kg_per_m2 = "kg/m^2",
+            .min = 0,
+        },
 };
 
 #ifdef __cplusplus

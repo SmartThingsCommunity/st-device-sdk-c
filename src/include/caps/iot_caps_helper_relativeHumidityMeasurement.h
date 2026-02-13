@@ -43,15 +43,16 @@ const static struct iot_caps_relativeHumidityMeasurement {
     } attr_humidity;
 } caps_helper_relativeHumidityMeasurement = {
     .id = "relativeHumidityMeasurement",
-    .attr_humidity = {
-        .name = "humidity",
-        .property = ATTR_SET_VALUE_MIN | ATTR_SET_VALUE_MAX | ATTR_SET_VALUE_REQUIRED,
-        .valueType = VALUE_TYPE_NUMBER,
-        .units = {"%"},
-        .unit_percent = "%",
-        .min = 0,
-        .max = 100,
-    },
+    .attr_humidity =
+        {
+            .name = "humidity",
+            .property = ATTR_SET_VALUE_MIN | ATTR_SET_VALUE_MAX | ATTR_SET_VALUE_REQUIRED,
+            .valueType = VALUE_TYPE_NUMBER,
+            .units = {"%"},
+            .unit_percent = "%",
+            .min = 0,
+            .max = 100,
+        },
 };
 
 #ifdef __cplusplus

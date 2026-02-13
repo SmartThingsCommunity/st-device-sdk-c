@@ -25,11 +25,7 @@
 extern "C" {
 #endif
 
-enum {
-    CAP_ENUM_SAMSUNGTV_SWITCH_VALUE_ON,
-    CAP_ENUM_SAMSUNGTV_SWITCH_VALUE_OFF,
-    CAP_ENUM_SAMSUNGTV_SWITCH_VALUE_MAX
-};
+enum { CAP_ENUM_SAMSUNGTV_SWITCH_VALUE_ON, CAP_ENUM_SAMSUNGTV_SWITCH_VALUE_OFF, CAP_ENUM_SAMSUNGTV_SWITCH_VALUE_MAX };
 
 enum {
     CAP_ENUM_SAMSUNGTV_MUTE_VALUE_MUTED,
@@ -106,77 +102,103 @@ const static struct iot_caps_samsungTV {
         const char *value_standard;
         const char *value_unknown;
     } attr_soundMode;
-    const struct samsungTV_cmd_on { const char* name; } cmd_on;
-    const struct samsungTV_cmd_off { const char* name; } cmd_off;
-    const struct samsungTV_cmd_mute { const char* name; } cmd_mute;
-    const struct samsungTV_cmd_unmute { const char* name; } cmd_unmute;
-    const struct samsungTV_cmd_setPictureMode { const char* name; } cmd_setPictureMode;
-    const struct samsungTV_cmd_setSoundMode { const char* name; } cmd_setSoundMode;
-    const struct samsungTV_cmd_volumeDown { const char* name; } cmd_volumeDown;
-    const struct samsungTV_cmd_showMessage { const char* name; } cmd_showMessage;
-    const struct samsungTV_cmd_volumeUp { const char* name; } cmd_volumeUp;
-    const struct samsungTV_cmd_setVolume { const char* name; } cmd_setVolume;
+    const struct samsungTV_cmd_on {
+        const char *name;
+    } cmd_on;
+    const struct samsungTV_cmd_off {
+        const char *name;
+    } cmd_off;
+    const struct samsungTV_cmd_mute {
+        const char *name;
+    } cmd_mute;
+    const struct samsungTV_cmd_unmute {
+        const char *name;
+    } cmd_unmute;
+    const struct samsungTV_cmd_setPictureMode {
+        const char *name;
+    } cmd_setPictureMode;
+    const struct samsungTV_cmd_setSoundMode {
+        const char *name;
+    } cmd_setSoundMode;
+    const struct samsungTV_cmd_volumeDown {
+        const char *name;
+    } cmd_volumeDown;
+    const struct samsungTV_cmd_showMessage {
+        const char *name;
+    } cmd_showMessage;
+    const struct samsungTV_cmd_volumeUp {
+        const char *name;
+    } cmd_volumeUp;
+    const struct samsungTV_cmd_setVolume {
+        const char *name;
+    } cmd_setVolume;
 } caps_helper_samsungTV = {
     .id = "samsungTV",
-    .attr_volume = {
-        .name = "volume",
-        .property = ATTR_SET_VALUE_MIN,
-        .valueType = VALUE_TYPE_INTEGER,
-        .min = 0,
-    },
-    .attr_messageButton = {
-        .name = "messageButton",
-        .property = 0,
-        .valueType = VALUE_TYPE_OBJECT,
-    },
-    .attr_switch = {
-        .name = "switch",
-        .property = 0,
-        .valueType = VALUE_TYPE_STRING,
-        .values = {"on", "off"},
-        .value_on = "on",
-        .value_off = "off",
-    },
-    .attr_mute = {
-        .name = "mute",
-        .property = 0,
-        .valueType = VALUE_TYPE_STRING,
-        .values = {"muted", "unknown", "unmuted"},
-        .value_muted = "muted",
-        .value_unknown = "unknown",
-        .value_unmuted = "unmuted",
-    },
-    .attr_pictureMode = {
-        .name = "pictureMode",
-        .property = 0,
-        .valueType = VALUE_TYPE_STRING,
-        .values = {"dynamic", "movie", "standard", "unknown"},
-        .value_dynamic = "dynamic",
-        .value_movie = "movie",
-        .value_standard = "standard",
-        .value_unknown = "unknown",
-    },
-    .attr_soundMode = {
-        .name = "soundMode",
-        .property = 0,
-        .valueType = VALUE_TYPE_STRING,
-        .values = {"clear voice", "movie", "music", "standard", "unknown"},
-        .value_clear_voice = "clear voice",
-        .value_movie = "movie",
-        .value_music = "music",
-        .value_standard = "standard",
-        .value_unknown = "unknown",
-    },
-    .cmd_on = { .name = "on" },
-    .cmd_off = { .name = "off" },
-    .cmd_mute = { .name = "mute" },
-    .cmd_unmute = { .name = "unmute" },
-    .cmd_setPictureMode = { .name = "setPictureMode" }, // arguments: pictureMode(string) 
-    .cmd_setSoundMode = { .name = "setSoundMode" }, // arguments: soundMode(string) 
-    .cmd_volumeDown = { .name = "volumeDown" },
-    .cmd_showMessage = { .name = "showMessage" }, // arguments: 1(string) 2(string) 3(string) 4(string) 
-    .cmd_volumeUp = { .name = "volumeUp" },
-    .cmd_setVolume = { .name = "setVolume" }, // arguments: volume(integer) 
+    .attr_volume =
+        {
+            .name = "volume",
+            .property = ATTR_SET_VALUE_MIN,
+            .valueType = VALUE_TYPE_INTEGER,
+            .min = 0,
+        },
+    .attr_messageButton =
+        {
+            .name = "messageButton",
+            .property = 0,
+            .valueType = VALUE_TYPE_OBJECT,
+        },
+    .attr_switch =
+        {
+            .name = "switch",
+            .property = 0,
+            .valueType = VALUE_TYPE_STRING,
+            .values = {"on", "off"},
+            .value_on = "on",
+            .value_off = "off",
+        },
+    .attr_mute =
+        {
+            .name = "mute",
+            .property = 0,
+            .valueType = VALUE_TYPE_STRING,
+            .values = {"muted", "unknown", "unmuted"},
+            .value_muted = "muted",
+            .value_unknown = "unknown",
+            .value_unmuted = "unmuted",
+        },
+    .attr_pictureMode =
+        {
+            .name = "pictureMode",
+            .property = 0,
+            .valueType = VALUE_TYPE_STRING,
+            .values = {"dynamic", "movie", "standard", "unknown"},
+            .value_dynamic = "dynamic",
+            .value_movie = "movie",
+            .value_standard = "standard",
+            .value_unknown = "unknown",
+        },
+    .attr_soundMode =
+        {
+            .name = "soundMode",
+            .property = 0,
+            .valueType = VALUE_TYPE_STRING,
+            .values = {"clear voice", "movie", "music", "standard", "unknown"},
+            .value_clear_voice = "clear voice",
+            .value_movie = "movie",
+            .value_music = "music",
+            .value_standard = "standard",
+            .value_unknown = "unknown",
+        },
+    .cmd_on = {.name = "on"},
+    .cmd_off = {.name = "off"},
+    .cmd_mute = {.name = "mute"},
+    .cmd_unmute = {.name = "unmute"},
+    .cmd_setPictureMode = {.name = "setPictureMode"},  // arguments: pictureMode(string)
+    .cmd_setSoundMode = {.name = "setSoundMode"},      // arguments: soundMode(string)
+    .cmd_volumeDown = {.name = "volumeDown"},
+    .cmd_showMessage = {.name = "showMessage"},  // arguments: 1(string) 2(string) 3(string) 4(string)
+    .cmd_volumeUp = {.name = "volumeUp"},
+    .cmd_setVolume = {.name = "setVolume"},  // arguments: volume(integer)
 };
 
 #ifdef __cplusplus

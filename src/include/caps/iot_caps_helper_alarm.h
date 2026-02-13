@@ -45,26 +45,35 @@ const static struct iot_caps_alarm {
         const char *value_siren;
         const char *value_strobe;
     } attr_alarm;
-    const struct alarm_cmd_both { const char* name; } cmd_both;
-    const struct alarm_cmd_siren { const char* name; } cmd_siren;
-    const struct alarm_cmd_off { const char* name; } cmd_off;
-    const struct alarm_cmd_strobe { const char* name; } cmd_strobe;
+    const struct alarm_cmd_both {
+        const char *name;
+    } cmd_both;
+    const struct alarm_cmd_siren {
+        const char *name;
+    } cmd_siren;
+    const struct alarm_cmd_off {
+        const char *name;
+    } cmd_off;
+    const struct alarm_cmd_strobe {
+        const char *name;
+    } cmd_strobe;
 } caps_helper_alarm = {
     .id = "alarm",
-    .attr_alarm = {
-        .name = "alarm",
-        .property = ATTR_SET_VALUE_REQUIRED,
-        .valueType = VALUE_TYPE_STRING,
-        .values = {"both", "off", "siren", "strobe"},
-        .value_both = "both",
-        .value_off = "off",
-        .value_siren = "siren",
-        .value_strobe = "strobe",
-    },
-    .cmd_both = { .name = "both" },
-    .cmd_siren = { .name = "siren" },
-    .cmd_off = { .name = "off" },
-    .cmd_strobe = { .name = "strobe" },
+    .attr_alarm =
+        {
+            .name = "alarm",
+            .property = ATTR_SET_VALUE_REQUIRED,
+            .valueType = VALUE_TYPE_STRING,
+            .values = {"both", "off", "siren", "strobe"},
+            .value_both = "both",
+            .value_off = "off",
+            .value_siren = "siren",
+            .value_strobe = "strobe",
+        },
+    .cmd_both = {.name = "both"},
+    .cmd_siren = {.name = "siren"},
+    .cmd_off = {.name = "off"},
+    .cmd_strobe = {.name = "strobe"},
 };
 
 #ifdef __cplusplus

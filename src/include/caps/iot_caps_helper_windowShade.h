@@ -59,35 +59,43 @@ const static struct iot_caps_windowShade {
         const char *value_close;
         const char *value_pause;
     } attr_supportedWindowShadeCommands;
-    const struct windowShade_cmd_close { const char* name; } cmd_close;
-    const struct windowShade_cmd_pause { const char* name; } cmd_pause;
-    const struct windowShade_cmd_open { const char* name; } cmd_open;
+    const struct windowShade_cmd_close {
+        const char *name;
+    } cmd_close;
+    const struct windowShade_cmd_pause {
+        const char *name;
+    } cmd_pause;
+    const struct windowShade_cmd_open {
+        const char *name;
+    } cmd_open;
 } caps_helper_windowShade = {
     .id = "windowShade",
-    .attr_windowShade = {
-        .name = "windowShade",
-        .property = ATTR_SET_VALUE_REQUIRED,
-        .valueType = VALUE_TYPE_STRING,
-        .values = {"closed", "closing", "open", "opening", "partially open", "unknown"},
-        .value_closed = "closed",
-        .value_closing = "closing",
-        .value_open = "open",
-        .value_opening = "opening",
-        .value_partially_open = "partially open",
-        .value_unknown = "unknown",
-    },
-    .attr_supportedWindowShadeCommands = {
-        .name = "supportedWindowShadeCommands",
-        .property = ATTR_SET_VALUE_ARRAY,
-        .valueType = VALUE_TYPE_STRING,
-        .values = {"open", "close", "pause"},
-        .value_open = "open",
-        .value_close = "close",
-        .value_pause = "pause",
-    },
-    .cmd_close = { .name = "close" },
-    .cmd_pause = { .name = "pause" },
-    .cmd_open = { .name = "open" },
+    .attr_windowShade =
+        {
+            .name = "windowShade",
+            .property = ATTR_SET_VALUE_REQUIRED,
+            .valueType = VALUE_TYPE_STRING,
+            .values = {"closed", "closing", "open", "opening", "partially open", "unknown"},
+            .value_closed = "closed",
+            .value_closing = "closing",
+            .value_open = "open",
+            .value_opening = "opening",
+            .value_partially_open = "partially open",
+            .value_unknown = "unknown",
+        },
+    .attr_supportedWindowShadeCommands =
+        {
+            .name = "supportedWindowShadeCommands",
+            .property = ATTR_SET_VALUE_ARRAY,
+            .valueType = VALUE_TYPE_STRING,
+            .values = {"open", "close", "pause"},
+            .value_open = "open",
+            .value_close = "close",
+            .value_pause = "pause",
+        },
+    .cmd_close = {.name = "close"},
+    .cmd_pause = {.name = "pause"},
+    .cmd_open = {.name = "open"},
 };
 
 #ifdef __cplusplus

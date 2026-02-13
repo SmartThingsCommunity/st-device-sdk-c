@@ -23,10 +23,11 @@
 extern "C" {
 #endif
 
-#include "iot_error.h"
-#include <stdint.h>
 #include <stdbool.h>
 #include <stddef.h>
+#include <stdint.h>
+
+#include "iot_error.h"
 
 #if !defined(CONFIG_STDK_IOT_CORE_EASYSETUP_X509)
 #define HASH_SERIAL_NUMBER_HYBRID_PORTION 4
@@ -38,8 +39,8 @@ extern "C" {
  * @brief Enums for BLE connection events.
  */
 typedef enum {
-    IOT_BLE_CONNECTION_EVENT_CONNECTED,         /**< @brief Event for BLE connection */
-    IOT_BLE_CONNECTION_EVENT_DISCONNECTED,      /**< @brief Event for BLE disconnection */
+    IOT_BLE_CONNECTION_EVENT_CONNECTED,    /**< @brief Event for BLE connection */
+    IOT_BLE_CONNECTION_EVENT_DISCONNECTED, /**< @brief Event for BLE disconnection */
 } iot_ble_conn_evt_t;
 
 /**

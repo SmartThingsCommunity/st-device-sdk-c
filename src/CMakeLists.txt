@@ -74,7 +74,8 @@ endforeach()
 target_include_directories(iotcore
         PRIVATE
         include/os
-        include/mqtt
+        include/mqtt/client
+        include/mqtt/packet
         include/external
         include/port
         ${STDK_INCLUDE_PATH}

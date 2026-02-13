@@ -25,10 +25,7 @@
 extern "C" {
 #endif
 
-enum {
-    CAP_ENUM_POWERMETER_POWER_UNIT_W,
-    CAP_ENUM_POWERMETER_POWER_UNIT_MAX
-};
+enum { CAP_ENUM_POWERMETER_POWER_UNIT_W, CAP_ENUM_POWERMETER_POWER_UNIT_MAX };
 
 const static struct iot_caps_powerMeter {
     const char *id;
@@ -42,14 +39,15 @@ const static struct iot_caps_powerMeter {
     } attr_power;
 } caps_helper_powerMeter = {
     .id = "powerMeter",
-    .attr_power = {
-        .name = "power",
-        .property = ATTR_SET_VALUE_MIN | ATTR_SET_VALUE_REQUIRED,
-        .valueType = VALUE_TYPE_NUMBER,
-        .units = {"W"},
-        .unit_W = "W",
-        .min = 0,
-    },
+    .attr_power =
+        {
+            .name = "power",
+            .property = ATTR_SET_VALUE_MIN | ATTR_SET_VALUE_REQUIRED,
+            .valueType = VALUE_TYPE_NUMBER,
+            .units = {"W"},
+            .unit_W = "W",
+            .min = 0,
+        },
 };
 
 #ifdef __cplusplus

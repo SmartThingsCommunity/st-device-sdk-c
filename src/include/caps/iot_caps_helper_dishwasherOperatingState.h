@@ -90,50 +90,57 @@ const static struct iot_caps_dishwasherOperatingState {
         const char *value_wash;
         const char *value_wrinklePrevent;
     } attr_dishwasherJobState;
-    const struct dishwasherOperatingState_cmd_setMachineState { const char* name; } cmd_setMachineState;
+    const struct dishwasherOperatingState_cmd_setMachineState {
+        const char *name;
+    } cmd_setMachineState;
 } caps_helper_dishwasherOperatingState = {
     .id = "dishwasherOperatingState",
-    .attr_completionTime = {
-        .name = "completionTime",
-        .property = ATTR_SET_VALUE_REQUIRED,
-        .valueType = VALUE_TYPE_STRING,
-    },
-    .attr_supportedMachineStates = {
-        .name = "supportedMachineStates",
-        .property = ATTR_SET_VALUE_REQUIRED | ATTR_SET_VALUE_ARRAY,
-        .valueType = VALUE_TYPE_STRING,
-        .values = {"pause", "run", "stop"},
-        .value_pause = "pause",
-        .value_run = "run",
-        .value_stop = "stop",
-    },
-    .attr_machineState = {
-        .name = "machineState",
-        .property = ATTR_SET_VALUE_REQUIRED,
-        .valueType = VALUE_TYPE_STRING,
-        .values = {"pause", "run", "stop"},
-        .value_pause = "pause",
-        .value_run = "run",
-        .value_stop = "stop",
-    },
-    .attr_dishwasherJobState = {
-        .name = "dishwasherJobState",
-        .property = ATTR_SET_VALUE_REQUIRED,
-        .valueType = VALUE_TYPE_STRING,
-        .values = {"airwash", "cooling", "drying", "finish", "preDrain", "prewash", "rinse", "spin", "unknown", "wash", "wrinklePrevent"},
-        .value_airwash = "airwash",
-        .value_cooling = "cooling",
-        .value_drying = "drying",
-        .value_finish = "finish",
-        .value_preDrain = "preDrain",
-        .value_prewash = "prewash",
-        .value_rinse = "rinse",
-        .value_spin = "spin",
-        .value_unknown = "unknown",
-        .value_wash = "wash",
-        .value_wrinklePrevent = "wrinklePrevent",
-    },
-    .cmd_setMachineState = { .name = "setMachineState" }, // arguments: state(string) 
+    .attr_completionTime =
+        {
+            .name = "completionTime",
+            .property = ATTR_SET_VALUE_REQUIRED,
+            .valueType = VALUE_TYPE_STRING,
+        },
+    .attr_supportedMachineStates =
+        {
+            .name = "supportedMachineStates",
+            .property = ATTR_SET_VALUE_REQUIRED | ATTR_SET_VALUE_ARRAY,
+            .valueType = VALUE_TYPE_STRING,
+            .values = {"pause", "run", "stop"},
+            .value_pause = "pause",
+            .value_run = "run",
+            .value_stop = "stop",
+        },
+    .attr_machineState =
+        {
+            .name = "machineState",
+            .property = ATTR_SET_VALUE_REQUIRED,
+            .valueType = VALUE_TYPE_STRING,
+            .values = {"pause", "run", "stop"},
+            .value_pause = "pause",
+            .value_run = "run",
+            .value_stop = "stop",
+        },
+    .attr_dishwasherJobState =
+        {
+            .name = "dishwasherJobState",
+            .property = ATTR_SET_VALUE_REQUIRED,
+            .valueType = VALUE_TYPE_STRING,
+            .values = {"airwash", "cooling", "drying", "finish", "preDrain", "prewash", "rinse", "spin", "unknown",
+                       "wash", "wrinklePrevent"},
+            .value_airwash = "airwash",
+            .value_cooling = "cooling",
+            .value_drying = "drying",
+            .value_finish = "finish",
+            .value_preDrain = "preDrain",
+            .value_prewash = "prewash",
+            .value_rinse = "rinse",
+            .value_spin = "spin",
+            .value_unknown = "unknown",
+            .value_wash = "wash",
+            .value_wrinklePrevent = "wrinklePrevent",
+        },
+    .cmd_setMachineState = {.name = "setMachineState"},  // arguments: state(string)
 };
 
 #ifdef __cplusplus

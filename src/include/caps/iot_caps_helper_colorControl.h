@@ -45,32 +45,41 @@ const static struct iot_caps_colorControl {
         const unsigned char valueType;
         const double min;
     } attr_saturation;
-    const struct colorControl_cmd_setHue { const char* name; } cmd_setHue;
-    const struct colorControl_cmd_setColor { const char* name; } cmd_setColor;
-    const struct colorControl_cmd_setSaturation { const char* name; } cmd_setSaturation;
+    const struct colorControl_cmd_setHue {
+        const char *name;
+    } cmd_setHue;
+    const struct colorControl_cmd_setColor {
+        const char *name;
+    } cmd_setColor;
+    const struct colorControl_cmd_setSaturation {
+        const char *name;
+    } cmd_setSaturation;
 } caps_helper_colorControl = {
     .id = "colorControl",
-    .attr_color = {
-        .name = "color",
-        .property = ATTR_SET_MAX_LENGTH,
-        .valueType = VALUE_TYPE_STRING,
-        .max_length = 255,
-    },
-    .attr_hue = {
-        .name = "hue",
-        .property = ATTR_SET_VALUE_MIN,
-        .valueType = VALUE_TYPE_NUMBER,
-        .min = 0,
-    },
-    .attr_saturation = {
-        .name = "saturation",
-        .property = ATTR_SET_VALUE_MIN,
-        .valueType = VALUE_TYPE_NUMBER,
-        .min = 0,
-    },
-    .cmd_setHue = { .name = "setHue" }, // arguments: hue(number) 
-    .cmd_setColor = { .name = "setColor" }, // arguments: color(object) 
-    .cmd_setSaturation = { .name = "setSaturation" }, // arguments: saturation(number) 
+    .attr_color =
+        {
+            .name = "color",
+            .property = ATTR_SET_MAX_LENGTH,
+            .valueType = VALUE_TYPE_STRING,
+            .max_length = 255,
+        },
+    .attr_hue =
+        {
+            .name = "hue",
+            .property = ATTR_SET_VALUE_MIN,
+            .valueType = VALUE_TYPE_NUMBER,
+            .min = 0,
+        },
+    .attr_saturation =
+        {
+            .name = "saturation",
+            .property = ATTR_SET_VALUE_MIN,
+            .valueType = VALUE_TYPE_NUMBER,
+            .min = 0,
+        },
+    .cmd_setHue = {.name = "setHue"},                // arguments: hue(number)
+    .cmd_setColor = {.name = "setColor"},            // arguments: color(object)
+    .cmd_setSaturation = {.name = "setSaturation"},  // arguments: saturation(number)
 };
 
 #ifdef __cplusplus

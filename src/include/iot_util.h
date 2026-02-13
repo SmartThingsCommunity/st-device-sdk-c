@@ -19,9 +19,10 @@
 #ifndef _IOT_UTIL_H_
 #define _IOT_UTIL_H_
 
+#include "iot_bsp_wifi.h"
 #include "iot_error.h"
 #include "iot_os_util.h"
-#include "iot_bsp_wifi.h"
+#include "st_dev.h"
 
 #ifdef __cplusplus
 extern "C" {
@@ -35,40 +36,40 @@ extern "C" {
  */
 void iot_util_dump_mem(char *tag, uint8_t *buf, size_t len);
 
-#define IOT_UUID_BYTES				(16)
+#define IOT_UUID_BYTES (16)
 
 /**
  * @brief Contains "uuid" data
  */
 struct iot_uuid {
-	unsigned char id[IOT_UUID_BYTES];	/**< @brief actual uuid values, 16 octet */
+    unsigned char id[IOT_UUID_BYTES]; /**< @brief actual uuid values, 16 octet */
 };
 
 /**
  * @brief Contains a "url parse" data
  */
 typedef struct {
-	char *protocol;		/**< @brief broker url's protocol part such as "ssl", "https" */
-	char *domain;		/**< @brief broker url's domain part such as "test.example.com" */
-	int port;		/**< @brief broker url's port number part such as 443, 8883' */
+    char *protocol; /**< @brief broker url's protocol part such as "ssl", "https" */
+    char *domain;   /**< @brief broker url's domain part such as "test.example.com" */
+    int port;       /**< @brief broker url's port number part such as 443, 8883' */
 } url_parse_t;
 
 /**
  * @brief iot_util_queue data struct
  */
 typedef struct iot_util_queue_data {
-	void *data;
-	struct iot_util_queue_data *next;
+    void *data;
+    struct iot_util_queue_data *next;
 } iot_util_queue_data_t;
 
 /**
  * @brief internal queue struct
  */
 typedef struct {
-	iot_os_mutex lock;
-	size_t item_size;
-	struct iot_util_queue_data *head;
-	struct iot_util_queue_data *tail;
+    iot_os_mutex lock;
+    size_t item_size;
+    struct iot_util_queue_data *head;
+    struct iot_util_queue_data *tail;
 } iot_util_queue_t;
 
 /**
@@ -83,7 +84,7 @@ typedef struct {
  *	If queue was not created, NULL is returned.
  *
  */
-iot_util_queue_t* iot_util_queue_create(size_t item_size);
+iot_util_queue_t *iot_util_queue_create(size_t item_size);
 
 /**
  * @brief	delete queue
@@ -93,7 +94,7 @@ iot_util_queue_t* iot_util_queue_create(size_t item_size);
  * @param[in] queue	queue struct pointer to be deleted
  *
  */
-void iot_util_queue_delete(iot_util_queue_t* queue);
+void iot_util_queue_delete(iot_util_queue_t *queue);
 
 /**
  * @brief	send message to the back of queue.
@@ -106,7 +107,7 @@ void iot_util_queue_delete(iot_util_queue_t* queue);
  * @return	return IOT_ERROR_NONE on success, or iot_error_t errors if it fails
  *
  */
-iot_error_t iot_util_queue_send(iot_util_queue_t* queue, void * data);
+iot_error_t iot_util_queue_send(iot_util_queue_t *queue, void *data);
 
 /**
  * @brief	receive message from the front of queue.
@@ -119,7 +120,7 @@ iot_error_t iot_util_queue_send(iot_util_queue_t* queue, void * data);
  * @return	return IOT_ERROR_NONE on success, or iot_error_t errors if it fails
  *
  */
-iot_error_t iot_util_queue_receive(iot_util_queue_t* queue, void * data);
+iot_error_t iot_util_queue_receive(iot_util_queue_t *queue, void *data);
 
 /**
  * @brief	generate retry back time.
@@ -157,7 +158,7 @@ iot_error_t validate_uuid_format(const char *str, size_t str_len);
  * @param[in]	uuid	allocated iot_uuid struct pointer to get iot_uuid value from str
  * @return	return IOT_ERROR_NONE on success, or iot_error_t errors if it fails
  */
-iot_error_t iot_util_convert_str_uuid(const char* str, struct iot_uuid* uuid);
+iot_error_t iot_util_convert_str_uuid(const char *str, struct iot_uuid *uuid);
 
 /**
  * @brief	iot_uuid struct based value to uuid type string converting function for st-iot-core
@@ -167,7 +168,7 @@ iot_error_t iot_util_convert_str_uuid(const char* str, struct iot_uuid* uuid);
  * @param[in]	max_sz	max size of allocated memory pointer
  * @return	return IOT_ERROR_NONE on success, or iot_error_t errors if it fails
  */
-iot_error_t iot_util_convert_uuid_str(struct iot_uuid* uuid, char* str, size_t max_sz);
+iot_error_t iot_util_convert_uuid_str(struct iot_uuid *uuid, char *str, size_t max_sz);
 
 /**
  * @brief	To convert WIFI mac string into iot_mac struct value
@@ -178,7 +179,7 @@ iot_error_t iot_util_convert_uuid_str(struct iot_uuid* uuid, char* str, size_t m
  * @retval	IOT_ERROR_NONE	success
  * @retval	IOT_ERROR_INVALID_ARGS	invalid arguments
  */
-iot_error_t iot_util_convert_str_mac(char* str, struct iot_mac* mac);
+iot_error_t iot_util_convert_str_mac(char *str, struct iot_mac *mac);
 
 /**
  * @brief	To convert iot_mac value intto WIFI mac string
@@ -190,7 +191,7 @@ iot_error_t iot_util_convert_str_mac(char* str, struct iot_mac* mac);
  * @retval	IOT_ERROR_NONE	success
  * @retval	IOT_ERROR_INVALID_ARGS invalid arguments
  */
-iot_error_t iot_util_convert_mac_str(struct iot_mac* mac, char* str, int max_sz);
+iot_error_t iot_util_convert_mac_str(struct iot_mac *mac, char *str, int max_sz);
 
 /**
  * @brief	To convert Wi-Fi channel into frequency value
@@ -207,6 +208,31 @@ uint16_t iot_util_convert_channel_freq(uint8_t channel);
  * @return	Wi-Fi channel
  */
 uint8_t iot_util_convert_freq_channel(uint16_t freq);
+
+/**
+ * @brief       To convert server url to server_type enum
+ * @param[in]   server url string
+ * @return      server type correspond to serever url
+ */
+iot_server_type_t iot_util_get_server_type(char *server_url);
+
+/**
+ * @brief       Print Wifi ssid securely
+ * @param[in]   func calling func name
+ * @param[in]   func_line line number of calling
+ * @param[in]   prefix custom prefix string
+ * @param[in]   ssid null terminated ssid string
+ */
+void iot_util_print_ssid_secure(const char *func, const int func_line, char *prefix, char *ssid);
+
+/**
+ * @brief       Print MAC address securely.
+ * @param[in]   func calling func name
+ * @param[in]   func_line line number of calling
+ * @param[in]   prefix custom prefix string
+ * @param[in]   mac_address mac address data
+ */
+void iot_util_print_mac_secure(const char *func, const int func_line, char *prefix, uint8_t *mac_address);
 
 #ifdef __cplusplus
 }

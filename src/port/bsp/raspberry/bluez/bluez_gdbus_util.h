@@ -22,8 +22,7 @@
 #include <gio/gio.h>
 
 #ifdef __cplusplus
-extern "C"
-{
+extern "C" {
 #endif
 
 #define BLUEZ_SERVICE_NAME "org.bluez"
@@ -49,8 +48,8 @@ extern "C"
 
 #define BLUEZ_DEVICE_IFACE "org.bluez.Device1"
 
-    char *find_bluez_adapter(void);
-    void bluez_gdbus_call_async_cb(GObject *source_object, GAsyncResult *res, gpointer user_data);
+char *find_bluez_adapter(void);
+void bluez_gdbus_call_async_cb(GObject *source_object, GAsyncResult *res, gpointer user_data);
 
 #ifdef __cplusplus
 }

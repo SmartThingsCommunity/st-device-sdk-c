@@ -33,16 +33,19 @@ const static struct iot_caps_fanSpeed {
         const unsigned char valueType;
         const int min;
     } attr_fanSpeed;
-    const struct fanSpeed_cmd_setFanSpeed { const char* name; } cmd_setFanSpeed;
+    const struct fanSpeed_cmd_setFanSpeed {
+        const char *name;
+    } cmd_setFanSpeed;
 } caps_helper_fanSpeed = {
     .id = "fanSpeed",
-    .attr_fanSpeed = {
-        .name = "fanSpeed",
-        .property = ATTR_SET_VALUE_MIN | ATTR_SET_VALUE_REQUIRED,
-        .valueType = VALUE_TYPE_INTEGER,
-        .min = 0,
-    },
-    .cmd_setFanSpeed = { .name = "setFanSpeed" }, // arguments: speed(integer) 
+    .attr_fanSpeed =
+        {
+            .name = "fanSpeed",
+            .property = ATTR_SET_VALUE_MIN | ATTR_SET_VALUE_REQUIRED,
+            .valueType = VALUE_TYPE_INTEGER,
+            .min = 0,
+        },
+    .cmd_setFanSpeed = {.name = "setFanSpeed"},  // arguments: speed(integer)
 };
 
 #ifdef __cplusplus

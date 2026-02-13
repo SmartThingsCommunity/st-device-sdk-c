@@ -25,11 +25,7 @@
 extern "C" {
 #endif
 
-enum {
-    CAP_ENUM_SWITCH_SWITCH_VALUE_ON,
-    CAP_ENUM_SWITCH_SWITCH_VALUE_OFF,
-    CAP_ENUM_SWITCH_SWITCH_VALUE_MAX
-};
+enum { CAP_ENUM_SWITCH_SWITCH_VALUE_ON, CAP_ENUM_SWITCH_SWITCH_VALUE_OFF, CAP_ENUM_SWITCH_SWITCH_VALUE_MAX };
 
 const static struct iot_caps_switch {
     const char *id;
@@ -41,20 +37,25 @@ const static struct iot_caps_switch {
         const char *value_on;
         const char *value_off;
     } attr_switch;
-    const struct switch_cmd_on { const char* name; } cmd_on;
-    const struct switch_cmd_off { const char* name; } cmd_off;
+    const struct switch_cmd_on {
+        const char *name;
+    } cmd_on;
+    const struct switch_cmd_off {
+        const char *name;
+    } cmd_off;
 } caps_helper_switch = {
     .id = "switch",
-    .attr_switch = {
-        .name = "switch",
-        .property = ATTR_SET_VALUE_REQUIRED,
-        .valueType = VALUE_TYPE_STRING,
-        .values = {"on", "off"},
-        .value_on = "on",
-        .value_off = "off",
-    },
-    .cmd_on = { .name = "on" },
-    .cmd_off = { .name = "off" },
+    .attr_switch =
+        {
+            .name = "switch",
+            .property = ATTR_SET_VALUE_REQUIRED,
+            .valueType = VALUE_TYPE_STRING,
+            .values = {"on", "off"},
+            .value_on = "on",
+            .value_off = "off",
+        },
+    .cmd_on = {.name = "on"},
+    .cmd_off = {.name = "off"},
 };
 
 #ifdef __cplusplus

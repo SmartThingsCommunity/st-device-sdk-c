@@ -26,8 +26,8 @@
 extern "C" {
 #endif
 
-#define IOT_SECURITY_STORAGE_BUF_MAX_LEN	2048
-#define IOT_SECURITY_STORAGE_FILENAME_MAX_LEN	64
+#define IOT_SECURITY_STORAGE_BUF_MAX_LEN 2048
+#define IOT_SECURITY_STORAGE_FILENAME_MAX_LEN 64
 
 /**
  * @brief	File identity referencing iot_nvd_t
@@ -40,19 +40,19 @@ typedef iot_nvd_t iot_security_storage_id_t;
  * 		'FACTORY' means a file injected from factory.
  */
 typedef enum {
-	IOT_SECURITY_STORAGE_TARGET_UNKNOWN = 0,
-	IOT_SECURITY_STORAGE_TARGET_NV,
-	IOT_SECURITY_STORAGE_TARGET_FACTORY,
-	IOT_SECURITY_STORAGE_TARGET_DI,
-	IOT_SECURITY_STORAGE_TARGET_STATIC,
-	IOT_SECURITY_STORAGE_TARGET_INVALID,
+    IOT_SECURITY_STORAGE_TARGET_UNKNOWN = 0,
+    IOT_SECURITY_STORAGE_TARGET_NV,
+    IOT_SECURITY_STORAGE_TARGET_FACTORY,
+    IOT_SECURITY_STORAGE_TARGET_DI,
+    IOT_SECURITY_STORAGE_TARGET_STATIC,
+    IOT_SECURITY_STORAGE_TARGET_INVALID,
 } iot_security_storage_target_t;
 
 /**
  * @brief	Used file identity in current context
  */
 struct iot_security_storage_params {
-	iot_security_storage_id_t storage_id;
+    iot_security_storage_id_t storage_id;
 };
 
 /**
@@ -97,7 +97,8 @@ iot_error_t iot_security_storage_deinit(iot_security_context_t *context);
  * @retval	IOT_ERROR_SECURITY_FS_CLOSE failed to close file after read the data in bsp layer
  * @retval	IOT_ERROR_SECURITY_FS_NOT_FOUND file does not exist in bsp layer
  */
-iot_error_t iot_security_storage_read(iot_security_context_t *context, iot_security_storage_id_t storage_id, iot_security_buffer_t *output_buf);
+iot_error_t iot_security_storage_read(iot_security_context_t *context, iot_security_storage_id_t storage_id,
+                                      iot_security_buffer_t *output_buf);
 
 /**
  * @brief	Write data to storage
@@ -123,7 +124,8 @@ iot_error_t iot_security_storage_read(iot_security_context_t *context, iot_secur
  * @retval	IOT_ERROR_SECURITY_FS_CLOSE failed to close file after write the data in bsp layer
  * @retval	IOT_ERROR_SECURITY_FS_NOT_FOUND file does not exist in bsp layer
  */
-iot_error_t iot_security_storage_write(iot_security_context_t *context, iot_security_storage_id_t storage_id, iot_security_buffer_t *input_buf);
+iot_error_t iot_security_storage_write(iot_security_context_t *context, iot_security_storage_id_t storage_id,
+                                       iot_security_buffer_t *input_buf);
 
 /**
  * @brief	Remove data from storage

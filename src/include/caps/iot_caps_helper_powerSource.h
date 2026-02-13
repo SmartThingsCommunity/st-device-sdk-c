@@ -47,16 +47,17 @@ const static struct iot_caps_powerSource {
     } attr_powerSource;
 } caps_helper_powerSource = {
     .id = "powerSource",
-    .attr_powerSource = {
-        .name = "powerSource",
-        .property = ATTR_SET_VALUE_REQUIRED,
-        .valueType = VALUE_TYPE_STRING,
-        .values = {"battery", "dc", "mains", "unknown"},
-        .value_battery = "battery",
-        .value_dc = "dc",
-        .value_mains = "mains",
-        .value_unknown = "unknown",
-    },
+    .attr_powerSource =
+        {
+            .name = "powerSource",
+            .property = ATTR_SET_VALUE_REQUIRED,
+            .valueType = VALUE_TYPE_STRING,
+            .values = {"battery", "dc", "mains", "unknown"},
+            .value_battery = "battery",
+            .value_dc = "dc",
+            .value_mains = "mains",
+            .value_unknown = "unknown",
+        },
 };
 
 #ifdef __cplusplus

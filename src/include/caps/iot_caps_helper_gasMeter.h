@@ -25,15 +25,9 @@
 extern "C" {
 #endif
 
-enum {
-    CAP_ENUM_GASMETER_GASMETER_UNIT_KWH,
-    CAP_ENUM_GASMETER_GASMETER_UNIT_MAX
-};
+enum { CAP_ENUM_GASMETER_GASMETER_UNIT_KWH, CAP_ENUM_GASMETER_GASMETER_UNIT_MAX };
 
-enum {
-    CAP_ENUM_GASMETER_GASMETERVOLUME_UNIT_M3,
-    CAP_ENUM_GASMETER_GASMETERVOLUME_UNIT_MAX
-};
+enum { CAP_ENUM_GASMETER_GASMETERVOLUME_UNIT_M3, CAP_ENUM_GASMETER_GASMETERVOLUME_UNIT_MAX };
 
 const static struct iot_caps_gasMeter {
     const char *id;
@@ -77,44 +71,50 @@ const static struct iot_caps_gasMeter {
     } attr_gasMeterConversion;
 } caps_helper_gasMeter = {
     .id = "gasMeter",
-    .attr_gasMeterTime = {
-        .name = "gasMeterTime",
-        .property = ATTR_SET_VALUE_REQUIRED,
-        .valueType = VALUE_TYPE_STRING,
-    },
-    .attr_gasMeter = {
-        .name = "gasMeter",
-        .property = ATTR_SET_VALUE_MIN | ATTR_SET_VALUE_REQUIRED,
-        .valueType = VALUE_TYPE_NUMBER,
-        .units = {"kWh"},
-        .unit_kWh = "kWh",
-        .min = 0,
-    },
-    .attr_gasMeterCalorific = {
-        .name = "gasMeterCalorific",
-        .property = ATTR_SET_VALUE_MIN | ATTR_SET_VALUE_REQUIRED,
-        .valueType = VALUE_TYPE_NUMBER,
-        .min = 0,
-    },
-    .attr_gasMeterVolume = {
-        .name = "gasMeterVolume",
-        .property = ATTR_SET_VALUE_MIN | ATTR_SET_VALUE_REQUIRED,
-        .valueType = VALUE_TYPE_NUMBER,
-        .units = {"m^3"},
-        .unit_m3 = "m^3",
-        .min = 0,
-    },
-    .attr_gasMeterPrecision = {
-        .name = "gasMeterPrecision",
-        .property = ATTR_SET_VALUE_REQUIRED,
-        .valueType = VALUE_TYPE_OBJECT,
-    },
-    .attr_gasMeterConversion = {
-        .name = "gasMeterConversion",
-        .property = ATTR_SET_VALUE_MIN | ATTR_SET_VALUE_REQUIRED,
-        .valueType = VALUE_TYPE_NUMBER,
-        .min = 0,
-    },
+    .attr_gasMeterTime =
+        {
+            .name = "gasMeterTime",
+            .property = ATTR_SET_VALUE_REQUIRED,
+            .valueType = VALUE_TYPE_STRING,
+        },
+    .attr_gasMeter =
+        {
+            .name = "gasMeter",
+            .property = ATTR_SET_VALUE_MIN | ATTR_SET_VALUE_REQUIRED,
+            .valueType = VALUE_TYPE_NUMBER,
+            .units = {"kWh"},
+            .unit_kWh = "kWh",
+            .min = 0,
+        },
+    .attr_gasMeterCalorific =
+        {
+            .name = "gasMeterCalorific",
+            .property = ATTR_SET_VALUE_MIN | ATTR_SET_VALUE_REQUIRED,
+            .valueType = VALUE_TYPE_NUMBER,
+            .min = 0,
+        },
+    .attr_gasMeterVolume =
+        {
+            .name = "gasMeterVolume",
+            .property = ATTR_SET_VALUE_MIN | ATTR_SET_VALUE_REQUIRED,
+            .valueType = VALUE_TYPE_NUMBER,
+            .units = {"m^3"},
+            .unit_m3 = "m^3",
+            .min = 0,
+        },
+    .attr_gasMeterPrecision =
+        {
+            .name = "gasMeterPrecision",
+            .property = ATTR_SET_VALUE_REQUIRED,
+            .valueType = VALUE_TYPE_OBJECT,
+        },
+    .attr_gasMeterConversion =
+        {
+            .name = "gasMeterConversion",
+            .property = ATTR_SET_VALUE_MIN | ATTR_SET_VALUE_REQUIRED,
+            .valueType = VALUE_TYPE_NUMBER,
+            .min = 0,
+        },
 };
 
 #ifdef __cplusplus

@@ -25,10 +25,7 @@
 extern "C" {
 #endif
 
-enum {
-    CAP_ENUM_BATTERY_BATTERY_UNIT_PERCENT,
-    CAP_ENUM_BATTERY_BATTERY_UNIT_MAX
-};
+enum { CAP_ENUM_BATTERY_BATTERY_UNIT_PERCENT, CAP_ENUM_BATTERY_BATTERY_UNIT_MAX };
 
 const static struct iot_caps_battery {
     const char *id;
@@ -43,15 +40,16 @@ const static struct iot_caps_battery {
     } attr_battery;
 } caps_helper_battery = {
     .id = "battery",
-    .attr_battery = {
-        .name = "battery",
-        .property = ATTR_SET_VALUE_MIN | ATTR_SET_VALUE_MAX | ATTR_SET_VALUE_REQUIRED,
-        .valueType = VALUE_TYPE_INTEGER,
-        .units = {"%"},
-        .unit_percent = "%",
-        .min = 0,
-        .max = 100,
-    },
+    .attr_battery =
+        {
+            .name = "battery",
+            .property = ATTR_SET_VALUE_MIN | ATTR_SET_VALUE_MAX | ATTR_SET_VALUE_REQUIRED,
+            .valueType = VALUE_TYPE_INTEGER,
+            .units = {"%"},
+            .unit_percent = "%",
+            .min = 0,
+            .max = 100,
+        },
 };
 
 #ifdef __cplusplus

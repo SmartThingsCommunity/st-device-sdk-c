@@ -18,50 +18,60 @@
 
 #include <stdio.h>
 #include <stdlib.h>
-#include <time.h>
 #include <sys/time.h>
-#include "esp_system.h"
-#include "soc/efuse_reg.h"
+#include <time.h>
 
+#include "esp_system.h"
 #include "iot_bsp_system.h"
 #include "iot_debug.h"
+#include "soc/efuse_reg.h"
 
-const char* iot_bsp_get_bsp_name()
+const char *iot_bsp_get_bsp_name()
 {
-       return "esp32";
+    return "esp32";
 }
 
-const char* iot_bsp_get_bsp_version_string()
+const char *iot_bsp_get_bsp_version_string()
 {
-       return esp_get_idf_version();
+    return esp_get_idf_version();
 }
 
 void iot_bsp_system_reboot()
 {
-	esp_restart();
+    esp_restart();
 }
 
 void iot_bsp_system_poweroff()
 {
-	esp_restart(); // no poweroff feature.
+    esp_restart();  // no poweroff feature.
 }
 
 iot_error_t iot_bsp_system_get_time_in_sec(time_t *time_in_sec)
 {
-	struct timeval tv = {0,};
+    struct timeval tv = {
+        0,
+    };
 
-	gettimeofday(&tv, NULL);
-	*time_in_sec = tv.tv_sec;
+    gettimeofday(&tv, NULL);
+    *time_in_sec = tv.tv_sec;
 
-	return IOT_ERROR_NONE;
+    return IOT_ERROR_NONE;
 }
 
 iot_error_t iot_bsp_system_set_time_in_sec(time_t time_in_sec)
 {
-	struct timeval tv = {0,};
+    struct timeval tv = {
+        0,
+    };
 
-	tv.tv_sec = time_in_sec;
-	settimeofday(&tv, NULL);
+    tv.tv_sec = time_in_sec;
+    settimeofday(&tv, NULL);
 
-	return IOT_ERROR_NONE;
+    return IOT_ERROR_NONE;
+}
+
+iot_error_t iot_bsp_system_set_timezone(char *timezoneid)
+{
+    // ESP32 doesn't support tinezome with timezone id type
+    return IOT_ERROR_BAD_REQ;
 }

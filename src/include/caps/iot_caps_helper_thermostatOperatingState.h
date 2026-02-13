@@ -53,19 +53,20 @@ const static struct iot_caps_thermostatOperatingState {
     } attr_thermostatOperatingState;
 } caps_helper_thermostatOperatingState = {
     .id = "thermostatOperatingState",
-    .attr_thermostatOperatingState = {
-        .name = "thermostatOperatingState",
-        .property = ATTR_SET_VALUE_REQUIRED,
-        .valueType = VALUE_TYPE_STRING,
-        .values = {"cooling", "fan only", "heating", "idle", "pending cool", "pending heat", "vent economizer"},
-        .value_cooling = "cooling",
-        .value_fan_only = "fan only",
-        .value_heating = "heating",
-        .value_idle = "idle",
-        .value_pending_cool = "pending cool",
-        .value_pending_heat = "pending heat",
-        .value_vent_economizer = "vent economizer",
-    },
+    .attr_thermostatOperatingState =
+        {
+            .name = "thermostatOperatingState",
+            .property = ATTR_SET_VALUE_REQUIRED,
+            .valueType = VALUE_TYPE_STRING,
+            .values = {"cooling", "fan only", "heating", "idle", "pending cool", "pending heat", "vent economizer"},
+            .value_cooling = "cooling",
+            .value_fan_only = "fan only",
+            .value_heating = "heating",
+            .value_idle = "idle",
+            .value_pending_cool = "pending cool",
+            .value_pending_heat = "pending heat",
+            .value_vent_economizer = "vent economizer",
+        },
 };
 
 #ifdef __cplusplus

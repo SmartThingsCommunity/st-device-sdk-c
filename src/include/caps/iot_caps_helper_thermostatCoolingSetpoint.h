@@ -43,20 +43,23 @@ const static struct iot_caps_thermostatCoolingSetpoint {
         const double min;
         const double max;
     } attr_coolingSetpoint;
-    const struct thermostatCoolingSetpoint_cmd_setCoolingSetpoint { const char* name; } cmd_setCoolingSetpoint;
+    const struct thermostatCoolingSetpoint_cmd_setCoolingSetpoint {
+        const char *name;
+    } cmd_setCoolingSetpoint;
 } caps_helper_thermostatCoolingSetpoint = {
     .id = "thermostatCoolingSetpoint",
-    .attr_coolingSetpoint = {
-        .name = "coolingSetpoint",
-        .property = ATTR_SET_VALUE_MIN | ATTR_SET_VALUE_MAX | ATTR_SET_VALUE_REQUIRED | ATTR_SET_UNIT_REQUIRED,
-        .valueType = VALUE_TYPE_NUMBER,
-        .units = {"F", "C"},
-        .unit_F = "F",
-        .unit_C = "C",
-        .min = -460,
-        .max = 10000,
-    },
-    .cmd_setCoolingSetpoint = { .name = "setCoolingSetpoint" }, // arguments: setpoint(number) 
+    .attr_coolingSetpoint =
+        {
+            .name = "coolingSetpoint",
+            .property = ATTR_SET_VALUE_MIN | ATTR_SET_VALUE_MAX | ATTR_SET_VALUE_REQUIRED | ATTR_SET_UNIT_REQUIRED,
+            .valueType = VALUE_TYPE_NUMBER,
+            .units = {"F", "C"},
+            .unit_F = "F",
+            .unit_C = "C",
+            .min = -460,
+            .max = 10000,
+        },
+    .cmd_setCoolingSetpoint = {.name = "setCoolingSetpoint"},  // arguments: setpoint(number)
 };
 
 #ifdef __cplusplus

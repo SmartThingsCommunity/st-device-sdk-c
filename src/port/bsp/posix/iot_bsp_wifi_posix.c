@@ -16,35 +16,30 @@
  *
  ****************************************************************************/
 
-#include <stdio.h>
-#include <stdlib.h>
-#include <stdbool.h>
-#include <unistd.h>
-#include <string.h>
-#include <errno.h>
-
-#include <netdb.h>
-#include <sys/types.h>
-#include <sys/socket.h>
-#include <netinet/in.h>
-#include <netinet/ip.h>
 #include <arpa/inet.h>
-#include <sys/ioctl.h>
-#include <bits/ioctls.h>
-#include <net/if.h>
+#include <errno.h>
 #include <linux/if_ether.h>
 #include <linux/if_packet.h>
 #include <net/ethernet.h>
-
-#include <netinet/in.h>
+#include <net/if.h>
 #include <net/route.h>
-#include <sys/types.h>
+#include <netdb.h>
+#include <netinet/in.h>
+#include <netinet/ip.h>
 #include <pwd.h>
+#include <stdbool.h>
+#include <stdio.h>
+#include <stdlib.h>
+#include <string.h>
+#include <sys/ioctl.h>
+#include <sys/socket.h>
+#include <sys/types.h>
+#include <unistd.h>
 
-#include "iot_debug.h"
 #include "iot_bsp_wifi.h"
+#include "iot_debug.h"
 
-#define IFACE_NAME	"wlan0"
+#define IFACE_NAME "wlan0"
 
 static int _create_socket()
 {
@@ -60,50 +55,50 @@ static int _create_socket()
 
 iot_error_t iot_bsp_wifi_init()
 {
-	return IOT_ERROR_NONE;
+    return IOT_ERROR_NONE;
 }
 
 iot_error_t iot_bsp_wifi_set_mode(iot_wifi_conf *conf)
 {
-	return IOT_ERROR_NONE;
+    return IOT_ERROR_NONE;
 }
 
 uint16_t iot_bsp_wifi_get_scan_result(iot_wifi_scan_result_t *scan_result)
 {
-	return 0;
+    return 0;
 }
 
 iot_error_t iot_bsp_wifi_get_mac(struct iot_mac *wifi_mac)
 {
-	struct ifreq ifr;
-	int sockfd = 0;
-	iot_error_t err = IOT_ERROR_NONE;
+    struct ifreq ifr;
+    int sockfd = 0;
+    iot_error_t err = IOT_ERROR_NONE;
 
-	sockfd = _create_socket();
-	if (sockfd < 0)
-		return IOT_ERROR_READ_FAIL;
+    sockfd = _create_socket();
+    if (sockfd < 0)
+        return IOT_ERROR_READ_FAIL;
 
-	strncpy(ifr.ifr_name, IFACE_NAME, IF_NAMESIZE);
-	if (ioctl(sockfd, SIOCGIFHWADDR, &ifr) < 0) {
-		IOT_ERROR("ioctl(%d, %s): 0x%x", errno, strerror(errno), SIOCGIFHWADDR);
-		err = IOT_ERROR_READ_FAIL;
-		goto mac_out;
-	}
-	memcpy(wifi_mac->addr, ifr.ifr_hwaddr.sa_data, sizeof(wifi_mac->addr));
+    strncpy(ifr.ifr_name, IFACE_NAME, IF_NAMESIZE);
+    if (ioctl(sockfd, SIOCGIFHWADDR, &ifr) < 0) {
+        IOT_ERROR("ioctl(%d, %s): 0x%x", errno, strerror(errno), SIOCGIFHWADDR);
+        err = IOT_ERROR_READ_FAIL;
+        goto mac_out;
+    }
+    memcpy(wifi_mac->addr, ifr.ifr_hwaddr.sa_data, sizeof(wifi_mac->addr));
 
 mac_out:
-	close(sockfd);
-	return err;
+    close(sockfd);
+    return err;
 }
 
 iot_wifi_freq_t iot_bsp_wifi_get_freq(void)
 {
-	return IOT_WIFI_FREQ_2_4G_ONLY;
+    return IOT_WIFI_FREQ_2_4G_ONLY;
 }
 
 iot_error_t iot_bsp_wifi_register_event_cb(iot_bsp_wifi_event_cb_t cb)
 {
-	return IOT_ERROR_BAD_REQ;
+    return IOT_ERROR_BAD_REQ;
 }
 
 void iot_bsp_wifi_clear_event_cb(void)
@@ -112,14 +107,14 @@ void iot_bsp_wifi_clear_event_cb(void)
 
 iot_wifi_auth_mode_bits_t iot_bsp_wifi_get_auth_mode(void)
 {
-	iot_wifi_auth_mode_bits_t supported_mode_bits = IOT_WIFI_AUTH_MODE_BIT_ALL;
-	supported_mode_bits ^= IOT_WIFI_AUTH_MODE_BIT(IOT_WIFI_AUTH_WPA2_ENTERPRISE);
-	supported_mode_bits ^= IOT_WIFI_AUTH_MODE_BIT(IOT_WIFI_AUTH_WPA3_PERSONAL);
+    iot_wifi_auth_mode_bits_t supported_mode_bits = IOT_WIFI_AUTH_MODE_BIT_ALL;
+    supported_mode_bits ^= IOT_WIFI_AUTH_MODE_BIT(IOT_WIFI_AUTH_WPA2_ENTERPRISE);
+    supported_mode_bits ^= IOT_WIFI_AUTH_MODE_BIT(IOT_WIFI_AUTH_WPA3_PERSONAL);
 
-	return supported_mode_bits;
+    return supported_mode_bits;
 }
 
 iot_error_t iot_bsp_wifi_get_status(void)
 {
-	return IOT_ERROR_NONE;
+    return IOT_ERROR_NONE;
 }

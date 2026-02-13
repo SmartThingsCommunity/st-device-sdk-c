@@ -7,5 +7,5 @@ idf_component_register(SRCS "main.c"
                     )
 
 set(stdk_config ${CMAKE_CURRENT_LIST_DIR}/stdkconfig.cmake)
-add_subdirectory(../../.. iotcore)
+add_subdirectory(../../../.. iotcore)
 target_link_libraries(${COMPONENT_LIB} PUBLIC iotcore)

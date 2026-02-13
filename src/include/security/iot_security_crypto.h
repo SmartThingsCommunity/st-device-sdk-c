@@ -29,8 +29,8 @@ extern "C" {
  * @brief Types of cipher operation
  */
 typedef enum iot_security_cipher_mode {
-	IOT_SECURITY_CIPHER_DECRYPT = 1,
-	IOT_SECURITY_CIPHER_ENCRYPT,
+    IOT_SECURITY_CIPHER_DECRYPT = 1,
+    IOT_SECURITY_CIPHER_ENCRYPT,
 } iot_security_cipher_mode_t;
 
 /**
@@ -98,7 +98,8 @@ iot_error_t iot_security_pk_set_sign_type(iot_security_context_t *context, iot_s
  * @retval	IOT_ERROR_SECURITY_PK_SIGN failed to calculate a signature
  * @retval	IOT_ERROR_SECURITY_PK_KEY_LEN a size of signature is not a expected size
  */
-iot_error_t iot_security_pk_sign(iot_security_context_t *context, iot_security_buffer_t *input_buf, iot_security_buffer_t *sig_buf);
+iot_error_t iot_security_pk_sign(iot_security_context_t *context, iot_security_buffer_t *input_buf,
+                                 iot_security_buffer_t *sig_buf);
 
 /**
  * @brief	Verify the signature
@@ -117,7 +118,8 @@ iot_error_t iot_security_pk_sign(iot_security_context_t *context, iot_security_b
  * @retval	IOT_ERROR_SECURITY_PK_KEY_LEN a size of signature is not a expected size
  * @retval	IOT_ERROR_SECURITY_PK_VERIFY the signature is mismatch
  */
-iot_error_t iot_security_pk_verify(iot_security_context_t *context, iot_security_buffer_t *input_buf, iot_security_buffer_t *sig_buf);
+iot_error_t iot_security_pk_verify(iot_security_context_t *context, iot_security_buffer_t *input_buf,
+                                   iot_security_buffer_t *sig_buf);
 
 /**
  * @brief	Initialize a cipher module in crypto sub system
@@ -151,7 +153,8 @@ iot_error_t iot_security_cipher_deinit(iot_security_context_t *context);
  * @retval	IOT_ERROR_SECURITY_BE_FUNC_NULL a pointer to a read function of backend is null
  * @retval	IOT_ERROR_SECURITY_CIPHER_PARAMS_NULL cipher parameter is null or has invalid data
  */
-iot_error_t iot_security_cipher_set_params(iot_security_context_t *context, iot_security_cipher_params_t *cipher_set_params);
+iot_error_t iot_security_cipher_set_params(iot_security_context_t *context,
+                                           iot_security_cipher_params_t *cipher_set_params);
 
 /**
  * @brief	Encrypt the data based on AES
@@ -173,7 +176,8 @@ iot_error_t iot_security_cipher_set_params(iot_security_context_t *context, iot_
  * @retval	IOT_ERROR_SECURITY_CIPHER_LIBRARY an error occurred in 3rd party library
  * @retval	IOT_ERROR_SECURITY_CIPHER_BUF_OVERFLOW the output buffer is not enough to store the result
  */
-iot_error_t iot_security_cipher_aes_encrypt(iot_security_context_t *context, iot_security_buffer_t *input_buf, iot_security_buffer_t *output_buf);
+iot_error_t iot_security_cipher_aes_encrypt(iot_security_context_t *context, iot_security_buffer_t *input_buf,
+                                            iot_security_buffer_t *output_buf);
 
 /**
  * @brief	Decrypt the data based on AES
@@ -195,7 +199,8 @@ iot_error_t iot_security_cipher_aes_encrypt(iot_security_context_t *context, iot
  * @retval	IOT_ERROR_SECURITY_CIPHER_LIBRARY an error occurred in 3rd party library
  * @retval	IOT_ERROR_SECURITY_CIPHER_BUF_OVERFLOW the output buffer is not enough to store the result
  */
-iot_error_t iot_security_cipher_aes_decrypt(iot_security_context_t *context, iot_security_buffer_t *input_buf, iot_security_buffer_t *output_buf);
+iot_error_t iot_security_cipher_aes_decrypt(iot_security_context_t *context, iot_security_buffer_t *input_buf,
+                                            iot_security_buffer_t *output_buf);
 
 #ifdef __cplusplus
 }

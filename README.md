@@ -30,6 +30,14 @@ This core device library provides the following features :
   - Connection APIs : You can do onboarding & MQTT connection by just calling only a few these APIs.
   - Capability APIs : More than hundred different capabilities can be implemented as only a few APIs.
 
+## Recommended Features
+
+These features are not required, but are supported by most Samsung products connected to SmartThings.
+In line with SmartThings' policy of extending these features to partner products, They are provides in the STDK.
+If you're considering a commercial product, SmartThings recommends these features as essential.
+
+- [WiFi Update](./doc/WiFi_Update.md)
+
 ## How to get started?
 
 This core device library includes platform-dependent parts that should be built in a specific toolchain or SDK. That is, if you do NOT use the pre-porting environment, you must first port them to the appropriate environment.
@@ -68,10 +76,11 @@ For more information, please review the following documents:
 - [Commercialization Guide](./doc/Commercialization_Guide.md) : It provides guide for ones who consider commercializing their IoT products with SDK.
 - [Capabilities Reference](https://developer.smartthings.com/docs/devices/capabilities/capabilities-reference) : This page serves as a reference for the supported capabilities.
 - [Developer Workspace](https://developer.smartthings.com/workspace/) : It provides functions related to device information registration and device integration in the SmartThings cloud.
+- [Capability Attribute Update](./doc/Capability_Attribute_Update.md) : This development page guides how to use Capability Attribute update APIs.
 
 ## Commercialization
 
-For commercialization, refer to the following [link](https://github.com/SmartThingsCommunity/st-device-sdk-c/blob/main/doc/Commercialization_Guide).
+For commercialization, refer to the following [link](https://github.com/SmartThingsCommunity/st-device-sdk-c/blob/main/doc/Commercialization_Guide.md).
 
 If you have any issue, or want to commercialize your IoT devices using this SDK, please use the following contact point.
 - Commercializatioin : partners@smartthings.com

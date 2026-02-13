@@ -25,10 +25,7 @@
 extern "C" {
 #endif
 
-enum {
-    CAP_ENUM_AUDIOVOLUME_VOLUME_UNIT_PERCENT,
-    CAP_ENUM_AUDIOVOLUME_VOLUME_UNIT_MAX
-};
+enum { CAP_ENUM_AUDIOVOLUME_VOLUME_UNIT_PERCENT, CAP_ENUM_AUDIOVOLUME_VOLUME_UNIT_MAX };
 
 const static struct iot_caps_audioVolume {
     const char *id;
@@ -41,23 +38,30 @@ const static struct iot_caps_audioVolume {
         const int min;
         const int max;
     } attr_volume;
-    const struct audioVolume_cmd_volumeDown { const char* name; } cmd_volumeDown;
-    const struct audioVolume_cmd_volumeUp { const char* name; } cmd_volumeUp;
-    const struct audioVolume_cmd_setVolume { const char* name; } cmd_setVolume;
+    const struct audioVolume_cmd_volumeDown {
+        const char *name;
+    } cmd_volumeDown;
+    const struct audioVolume_cmd_volumeUp {
+        const char *name;
+    } cmd_volumeUp;
+    const struct audioVolume_cmd_setVolume {
+        const char *name;
+    } cmd_setVolume;
 } caps_helper_audioVolume = {
     .id = "audioVolume",
-    .attr_volume = {
-        .name = "volume",
-        .property = ATTR_SET_VALUE_MIN | ATTR_SET_VALUE_MAX | ATTR_SET_VALUE_REQUIRED,
-        .valueType = VALUE_TYPE_INTEGER,
-        .units = {"%"},
-        .unit_percent = "%",
-        .min = 0,
-        .max = 100,
-    },
-    .cmd_volumeDown = { .name = "volumeDown" },
-    .cmd_volumeUp = { .name = "volumeUp" },
-    .cmd_setVolume = { .name = "setVolume" }, // arguments: volume(integer) 
+    .attr_volume =
+        {
+            .name = "volume",
+            .property = ATTR_SET_VALUE_MIN | ATTR_SET_VALUE_MAX | ATTR_SET_VALUE_REQUIRED,
+            .valueType = VALUE_TYPE_INTEGER,
+            .units = {"%"},
+            .unit_percent = "%",
+            .min = 0,
+            .max = 100,
+        },
+    .cmd_volumeDown = {.name = "volumeDown"},
+    .cmd_volumeUp = {.name = "volumeUp"},
+    .cmd_setVolume = {.name = "setVolume"},  // arguments: volume(integer)
 };
 
 #ifdef __cplusplus

@@ -35,7 +35,8 @@ iot_error_t iot_security_be_hardware_se_pk_load(iot_security_context_t *context)
  * @param[out]	sig_buf a pointer to a buffer to store the signature
  * @retval	IOT_ERROR_NONE success
  */
-iot_error_t iot_security_be_hardware_se_pk_sign(iot_security_context_t *context, iot_security_buffer_t *input_buf, iot_security_buffer_t *sig_buf);
+iot_error_t iot_security_be_hardware_se_pk_sign(iot_security_context_t *context, iot_security_buffer_t *input_buf,
+                                                iot_security_buffer_t *sig_buf);
 
 /**
  * @brief	Verify the signature
@@ -45,7 +46,8 @@ iot_error_t iot_security_be_hardware_se_pk_sign(iot_security_context_t *context,
  * @param[in]	sig_buf a pointer to a buffer to the signature
  * @retval	IOT_ERROR_NONE success
  */
-iot_error_t iot_security_be_hardware_se_pk_verify(iot_security_context_t *context, iot_security_buffer_t *input_buf, iot_security_buffer_t *sig_buf);
+iot_error_t iot_security_be_hardware_se_pk_verify(iot_security_context_t *context, iot_security_buffer_t *input_buf,
+                                                  iot_security_buffer_t *sig_buf);
 
 /**
  * @brief	Encrypt the data based on AES
@@ -55,7 +57,9 @@ iot_error_t iot_security_be_hardware_se_pk_verify(iot_security_context_t *contex
  * @param[out]	output_buf a pointer to a buffer to store the result
  * @retval	IOT_ERROR_NONE success
  */
-iot_error_t iot_security_be_hardware_se_cipher_aes_encrypt(iot_security_context_t *context, iot_security_buffer_t *input_buf, iot_security_buffer_t *output_buf);
+iot_error_t iot_security_be_hardware_se_cipher_aes_encrypt(iot_security_context_t *context,
+                                                           iot_security_buffer_t *input_buf,
+                                                           iot_security_buffer_t *output_buf);
 
 /**
  * @brief	Decrypt the data based on AES
@@ -65,7 +69,9 @@ iot_error_t iot_security_be_hardware_se_cipher_aes_encrypt(iot_security_context_
  * @param[out]	output_buf a pointer to a buffer to store the result
  * @retval	IOT_ERROR_NONE success
  */
-iot_error_t iot_security_be_hardware_se_cipher_aes_decrypt(iot_security_context_t *context, iot_security_buffer_t *input_buf, iot_security_buffer_t *output_buf);
+iot_error_t iot_security_be_hardware_se_cipher_aes_decrypt(iot_security_context_t *context,
+                                                           iot_security_buffer_t *input_buf,
+                                                           iot_security_buffer_t *output_buf);
 
 /**
  * @brief	Compute a shared secret
@@ -75,7 +81,9 @@ iot_error_t iot_security_be_hardware_se_cipher_aes_decrypt(iot_security_context_
  * @param[out]	output_buf a pointer to a buffer to store the shared secret
  * @retval	IOT_ERROR_NONE success
  */
-iot_error_t iot_security_be_hardware_se_ecdh_compute_shared_secret(iot_security_context_t *context, iot_security_buffer_t *input_buf, iot_security_buffer_t *output_buf);
+iot_error_t iot_security_be_hardware_se_ecdh_compute_shared_secret(iot_security_context_t *context,
+                                                                   iot_security_buffer_t *input_buf,
+                                                                   iot_security_buffer_t *output_buf);
 
 /**
  * @brief	Generate a ephemeral key pair
@@ -84,7 +92,8 @@ iot_error_t iot_security_be_hardware_se_ecdh_compute_shared_secret(iot_security_
  * @param[in]	key_id key identity to specific a ephemeral key pair
  * @retval	IOT_ERROR_NONE success
  */
-iot_error_t iot_security_be_hardware_se_manager_generate_key(iot_security_context_t *context, iot_security_key_id_t key_id);
+iot_error_t iot_security_be_hardware_se_manager_generate_key(iot_security_context_t *context,
+                                                             iot_security_key_id_t key_id);
 
 /**
  * @brief	Remove the generated ephemeral key pair
@@ -92,7 +101,8 @@ iot_error_t iot_security_be_hardware_se_manager_generate_key(iot_security_contex
  * @param[in]	key_id key identity to specific a ephemeral key pair
  * @retval	IOT_ERROR_NONE success
  */
-iot_error_t iot_security_be_hardware_se_manager_remove_key(iot_security_context_t *context, iot_security_key_id_t key_id);
+iot_error_t iot_security_be_hardware_se_manager_remove_key(iot_security_context_t *context,
+                                                           iot_security_key_id_t key_id);
 
 /**
  * @brief	Set the key for signature or encryption
@@ -111,7 +121,8 @@ iot_error_t iot_security_be_hardware_se_manager_set_key(iot_security_context_t *
  * @param[out]	key_buf a pointer to a buffer to store the key (64bytes raw type, need to fix 65bytes)
  * @retval	IOT_ERROR_NONE success
  */
-iot_error_t iot_security_be_hardware_se_manager_get_key(iot_security_context_t *context, iot_security_key_id_t key_id, iot_security_buffer_t *key_buf);
+iot_error_t iot_security_be_hardware_se_manager_get_key(iot_security_context_t *context, iot_security_key_id_t key_id,
+                                                        iot_security_buffer_t *key_buf);
 
 /**
  * @brief	Get the certificate
@@ -121,7 +132,9 @@ iot_error_t iot_security_be_hardware_se_manager_get_key(iot_security_context_t *
  * @param[out]	cert_buf a pointer to a buffer to store the raw type certificate
  * @retval	IOT_ERROR_NONE success
  */
-iot_error_t iot_security_be_hardware_se_manager_get_certificate(iot_security_context_t *context, iot_security_cert_id_t cert_id, iot_security_buffer_t *cert_buf);
+iot_error_t iot_security_be_hardware_se_manager_get_certificate(iot_security_context_t *context,
+                                                                iot_security_cert_id_t cert_id,
+                                                                iot_security_buffer_t *cert_buf);
 
 /**
  * @brief	Read data from storage
@@ -131,7 +144,9 @@ iot_error_t iot_security_be_hardware_se_manager_get_certificate(iot_security_con
  * @param[out]	data_buf a pointer to a security buffer for read data
  * @retval	IOT_ERROR_NONE success
  */
-iot_error_t iot_security_be_hardware_se_storage_read(iot_security_context_t *context, iot_security_storage_id_t storage_id, iot_security_buffer_t *data_buf);
+iot_error_t iot_security_be_hardware_se_storage_read(iot_security_context_t *context,
+                                                     iot_security_storage_id_t storage_id,
+                                                     iot_security_buffer_t *data_buf);
 
 /**
  * @brief	Write data to storage
@@ -141,7 +156,9 @@ iot_error_t iot_security_be_hardware_se_storage_read(iot_security_context_t *con
  * @param[in]	data_buf a pointer to a security buffer for write data
  * @retval	IOT_ERROR_NONE success
  */
-iot_error_t iot_security_be_hardware_se_storage_write(iot_security_context_t *context, iot_security_storage_id_t storage_id, iot_security_buffer_t *data_buf);
+iot_error_t iot_security_be_hardware_se_storage_write(iot_security_context_t *context,
+                                                      iot_security_storage_id_t storage_id,
+                                                      iot_security_buffer_t *data_buf);
 
 /**
  * @brief	Remove data from storage
@@ -150,7 +167,8 @@ iot_error_t iot_security_be_hardware_se_storage_write(iot_security_context_t *co
  * @param[in]	storage_id file identity of target to remove
  * @retval	IOT_ERROR_NONE success
  */
-iot_error_t iot_security_be_hardware_se_storage_remove(iot_security_context_t *context, iot_security_storage_id_t storage_id);
+iot_error_t iot_security_be_hardware_se_storage_remove(iot_security_context_t *context,
+                                                       iot_security_storage_id_t storage_id);
 
 /**
  * @brief Generates a user-specified number of random bytes and returns it in a new buffer.

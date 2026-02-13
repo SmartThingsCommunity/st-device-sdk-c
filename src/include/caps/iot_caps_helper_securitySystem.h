@@ -49,29 +49,37 @@ const static struct iot_caps_securitySystem {
         const char *value_armedStay;
         const char *value_disarmed;
     } attr_securitySystemStatus;
-    const struct securitySystem_cmd_armStay { const char* name; } cmd_armStay;
-    const struct securitySystem_cmd_disarm { const char* name; } cmd_disarm;
-    const struct securitySystem_cmd_armAway { const char* name; } cmd_armAway;
+    const struct securitySystem_cmd_armStay {
+        const char *name;
+    } cmd_armStay;
+    const struct securitySystem_cmd_disarm {
+        const char *name;
+    } cmd_disarm;
+    const struct securitySystem_cmd_armAway {
+        const char *name;
+    } cmd_armAway;
 } caps_helper_securitySystem = {
     .id = "securitySystem",
-    .attr_alarm = {
-        .name = "alarm",
-        .property = ATTR_SET_VALUE_REQUIRED | ATTR_SET_MAX_LENGTH,
-        .valueType = VALUE_TYPE_STRING,
-        .max_length = 255,
-    },
-    .attr_securitySystemStatus = {
-        .name = "securitySystemStatus",
-        .property = ATTR_SET_VALUE_REQUIRED,
-        .valueType = VALUE_TYPE_STRING,
-        .values = {"armedAway", "armedStay", "disarmed"},
-        .value_armedAway = "armedAway",
-        .value_armedStay = "armedStay",
-        .value_disarmed = "disarmed",
-    },
-    .cmd_armStay = { .name = "armStay" }, // arguments: bypassAll(boolean) 
-    .cmd_disarm = { .name = "disarm" },
-    .cmd_armAway = { .name = "armAway" }, // arguments: bypassAll(boolean) 
+    .attr_alarm =
+        {
+            .name = "alarm",
+            .property = ATTR_SET_VALUE_REQUIRED | ATTR_SET_MAX_LENGTH,
+            .valueType = VALUE_TYPE_STRING,
+            .max_length = 255,
+        },
+    .attr_securitySystemStatus =
+        {
+            .name = "securitySystemStatus",
+            .property = ATTR_SET_VALUE_REQUIRED,
+            .valueType = VALUE_TYPE_STRING,
+            .values = {"armedAway", "armedStay", "disarmed"},
+            .value_armedAway = "armedAway",
+            .value_armedStay = "armedStay",
+            .value_disarmed = "disarmed",
+        },
+    .cmd_armStay = {.name = "armStay"},  // arguments: bypassAll(boolean)
+    .cmd_disarm = {.name = "disarm"},
+    .cmd_armAway = {.name = "armAway"},  // arguments: bypassAll(boolean)
 };
 
 #ifdef __cplusplus

@@ -24,15 +24,14 @@
 #include "iot_bsp_ble.h"
 
 #ifdef __cplusplus
-extern "C"
-{
+extern "C" {
 #endif
 
-    void start_gatt_service(void);
-    void stop_gatt_service(void);
-    void register_gatt_application(void);
-    void send_data_over_gatt(uint8_t *data, uint32_t len);
-    uint16_t get_mtu(void);
+void start_gatt_service(void);
+void stop_gatt_service(void);
+void register_gatt_application(void);
+void send_data_over_gatt(uint8_t *data, uint32_t len);
+uint16_t get_mtu(void);
 
 #ifdef __cplusplus
 }

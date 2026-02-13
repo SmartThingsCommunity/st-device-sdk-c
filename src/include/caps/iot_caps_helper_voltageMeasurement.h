@@ -25,10 +25,7 @@
 extern "C" {
 #endif
 
-enum {
-    CAP_ENUM_VOLTAGEMEASUREMENT_VOLTAGE_UNIT_V,
-    CAP_ENUM_VOLTAGEMEASUREMENT_VOLTAGE_UNIT_MAX
-};
+enum { CAP_ENUM_VOLTAGEMEASUREMENT_VOLTAGE_UNIT_V, CAP_ENUM_VOLTAGEMEASUREMENT_VOLTAGE_UNIT_MAX };
 
 const static struct iot_caps_voltageMeasurement {
     const char *id;
@@ -42,14 +39,15 @@ const static struct iot_caps_voltageMeasurement {
     } attr_voltage;
 } caps_helper_voltageMeasurement = {
     .id = "voltageMeasurement",
-    .attr_voltage = {
-        .name = "voltage",
-        .property = ATTR_SET_VALUE_MIN | ATTR_SET_VALUE_REQUIRED,
-        .valueType = VALUE_TYPE_NUMBER,
-        .units = {"V"},
-        .unit_V = "V",
-        .min = 0,
-    },
+    .attr_voltage =
+        {
+            .name = "voltage",
+            .property = ATTR_SET_VALUE_MIN | ATTR_SET_VALUE_REQUIRED,
+            .valueType = VALUE_TYPE_NUMBER,
+            .units = {"V"},
+            .unit_V = "V",
+            .min = 0,
+        },
 };
 
 #ifdef __cplusplus

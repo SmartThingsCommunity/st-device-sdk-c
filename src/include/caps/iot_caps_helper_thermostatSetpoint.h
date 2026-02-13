@@ -45,16 +45,17 @@ const static struct iot_caps_thermostatSetpoint {
     } attr_thermostatSetpoint;
 } caps_helper_thermostatSetpoint = {
     .id = "thermostatSetpoint",
-    .attr_thermostatSetpoint = {
-        .name = "thermostatSetpoint",
-        .property = ATTR_SET_VALUE_MIN | ATTR_SET_VALUE_MAX | ATTR_SET_VALUE_REQUIRED | ATTR_SET_UNIT_REQUIRED,
-        .valueType = VALUE_TYPE_NUMBER,
-        .units = {"F", "C"},
-        .unit_F = "F",
-        .unit_C = "C",
-        .min = -460,
-        .max = 10000,
-    },
+    .attr_thermostatSetpoint =
+        {
+            .name = "thermostatSetpoint",
+            .property = ATTR_SET_VALUE_MIN | ATTR_SET_VALUE_MAX | ATTR_SET_VALUE_REQUIRED | ATTR_SET_UNIT_REQUIRED,
+            .valueType = VALUE_TYPE_NUMBER,
+            .units = {"F", "C"},
+            .unit_F = "F",
+            .unit_C = "C",
+            .min = -460,
+            .max = 10000,
+        },
 };
 
 #ifdef __cplusplus

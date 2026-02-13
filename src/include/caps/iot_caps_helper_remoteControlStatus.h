@@ -43,14 +43,15 @@ const static struct iot_caps_remoteControlStatus {
     } attr_remoteControlEnabled;
 } caps_helper_remoteControlStatus = {
     .id = "remoteControlStatus",
-    .attr_remoteControlEnabled = {
-        .name = "remoteControlEnabled",
-        .property = ATTR_SET_VALUE_REQUIRED,
-        .valueType = VALUE_TYPE_STRING,
-        .values = {"true", "false"},
-        .value_true = "true",
-        .value_false = "false",
-    },
+    .attr_remoteControlEnabled =
+        {
+            .name = "remoteControlEnabled",
+            .property = ATTR_SET_VALUE_REQUIRED,
+            .valueType = VALUE_TYPE_STRING,
+            .values = {"true", "false"},
+            .value_true = "true",
+            .value_false = "false",
+        },
 };
 
 #ifdef __cplusplus

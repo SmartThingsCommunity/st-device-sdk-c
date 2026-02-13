@@ -8,7 +8,8 @@ if(ENABLE_STDK_TEST)
                         ${st_device_sdk_c_SOURCE_DIR}/src/include/bsp
                         ${st_device_sdk_c_SOURCE_DIR}/src/include/bsp/posix
                         ${st_device_sdk_c_SOURCE_DIR}/src/include/os
-                        ${st_device_sdk_c_SOURCE_DIR}/src/include/mqtt
+                        ${st_device_sdk_c_SOURCE_DIR}/src/include/mqtt/client
+                        ${st_device_sdk_c_SOURCE_DIR}/src/include/mqtt/packet
                         ${st_device_sdk_c_SOURCE_DIR}/src/include/port
                         ${st_device_sdk_c_SOURCE_DIR}/src/include/security
                         ${st_device_sdk_c_SOURCE_DIR}/src/include/external

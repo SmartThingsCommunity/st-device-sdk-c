@@ -15,13 +15,14 @@
  * language governing permissions and limitations under the License.
  *
  ****************************************************************************/
-#include <stdint.h>
 #include <driver/trng.h>
+#include <stdint.h>
+
 #include "iot_bsp_random.h"
 #include "iot_debug.h"
 #include "iot_error.h"
 
 unsigned int iot_bsp_random()
 {
-	return bk_rand();
+    return bk_rand();
 }

@@ -23,15 +23,15 @@
 extern "C" {
 #endif
 
-#define PORT_NET_WAIT_FOREVER	0xffffffff
+#define PORT_NET_WAIT_FOREVER 0xffffffff
 
 typedef void *PORT_NET_CONTEXT;
 
 typedef struct {
-	char *ca_cert;		/**< @brief a pointer to a CA certificate chain */
-	unsigned int ca_cert_len;			/**< @brief a size of CA certificate chain */
-	char *device_cert;	/**< @brief a pointer to a device certificate chain */
-	unsigned int device_cert_len;		/**< @brief a size of device certificate chain */
+    char *ca_cert;                /**< @brief a pointer to a CA certificate chain */
+    unsigned int ca_cert_len;     /**< @brief a size of CA certificate chain */
+    char *device_cert;            /**< @brief a pointer to a device certificate chain */
+    unsigned int device_cert_len; /**< @brief a size of device certificate chain */
 } port_net_tls_config;
 
 void port_net_free(PORT_NET_CONTEXT ctx);

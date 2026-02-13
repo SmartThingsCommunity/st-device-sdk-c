@@ -23,95 +23,94 @@
 extern "C" {
 #endif
 
-#include <stdint.h>
 #include <stdbool.h>
+#include <stdint.h>
+
 #include "iot_error.h"
 
-#define IOT_WIFI_MAX_SSID_LEN	(32)
-#define IOT_WIFI_MAX_PASS_LEN	(64)
+#define IOT_WIFI_MAX_SSID_LEN (32)
+#define IOT_WIFI_MAX_PASS_LEN (64)
 #define IOT_WIFI_MAX_BSSID_LEN (6)
 #define IOT_WIFI_MAX_SCAN_RESULT (100)
 #define IOT_SOFT_AP_CHANNEL (1)
-#define IOT_WIFI_CMD_TIMEOUT	10000
+#define IOT_WIFI_CMD_TIMEOUT 10000
 
 typedef enum {
-	IOT_WIFI_MODE_OFF = 0,
-	IOT_WIFI_MODE_SCAN,
-	IOT_WIFI_MODE_STATION,
-	IOT_WIFI_MODE_SOFTAP,
-	IOT_WIFI_MODE_P2P,
+    IOT_WIFI_MODE_OFF = 0,
+    IOT_WIFI_MODE_SCAN,
+    IOT_WIFI_MODE_STATION,
+    IOT_WIFI_MODE_SOFTAP,
+    IOT_WIFI_MODE_P2P,
 
-	IOT_WIFI_MODE_UNDEFINED = 0x20,
+    IOT_WIFI_MODE_UNDEFINED = 0x20,
 } iot_wifi_mode_t;
 
 typedef enum {
-	IOT_WIFI_FREQ_2_4G_ONLY = 0,
-	IOT_WIFI_FREQ_5G_ONLY,
-	IOT_WIFI_FREQ_2_4G_5G_BOTH,
+    IOT_WIFI_FREQ_2_4G_ONLY = 0,
+    IOT_WIFI_FREQ_5G_ONLY,
+    IOT_WIFI_FREQ_2_4G_5G_BOTH,
 } iot_wifi_freq_t;
 
 typedef enum {
-	IOT_WIFI_AUTH_OPEN = 0,
-	IOT_WIFI_AUTH_WEP,
-	IOT_WIFI_AUTH_WPA_PSK,
-	IOT_WIFI_AUTH_WPA2_PSK,
-	IOT_WIFI_AUTH_WPA_WPA2_PSK,
-	IOT_WIFI_AUTH_WPA2_ENTERPRISE,
-	IOT_WIFI_AUTH_WPA3_PERSONAL,
-	IOT_WIFI_AUTH_UNKNOWN,
-	IOT_WIFI_AUTH_MAX
+    IOT_WIFI_AUTH_OPEN = 0,
+    IOT_WIFI_AUTH_WEP,
+    IOT_WIFI_AUTH_WPA_PSK,
+    IOT_WIFI_AUTH_WPA2_PSK,
+    IOT_WIFI_AUTH_WPA_WPA2_PSK,
+    IOT_WIFI_AUTH_WPA2_ENTERPRISE,
+    IOT_WIFI_AUTH_WPA3_PERSONAL,
+    IOT_WIFI_AUTH_UNKNOWN,
+    IOT_WIFI_AUTH_MAX
 } iot_wifi_auth_mode_t;
 
 typedef enum {
-	IOT_WIFI_EVENT_SOFTAP_STA_JOIN,
-	IOT_WIFI_EVENT_SOFTAP_STA_LEAVE,
-	IOT_WIFI_EVENT_SOFTAP_STA_FAIL,
+    IOT_WIFI_EVENT_SOFTAP_STA_JOIN,
+    IOT_WIFI_EVENT_SOFTAP_STA_LEAVE,
+    IOT_WIFI_EVENT_SOFTAP_STA_FAIL,
 } iot_wifi_event_t;
 
 typedef uint32_t iot_wifi_auth_mode_bits_t;
 
-static inline uint32_t _iot_wifi_auth_mode_bit(iot_wifi_auth_mode_t auth_mode) {
-	return (1u << auth_mode);
+static inline uint32_t _iot_wifi_auth_mode_bit(iot_wifi_auth_mode_t auth_mode)
+{
+    return (1u << auth_mode);
 }
-#define IOT_WIFI_AUTH_MODE_BIT(_auth_mode)	_iot_wifi_auth_mode_bit(_auth_mode)
+#define IOT_WIFI_AUTH_MODE_BIT(_auth_mode) _iot_wifi_auth_mode_bit(_auth_mode)
 
-#define IOT_WIFI_AUTH_MODE_BIT_ALL	(	\
-			IOT_WIFI_AUTH_MODE_BIT(IOT_WIFI_AUTH_OPEN) | \
-			IOT_WIFI_AUTH_MODE_BIT(IOT_WIFI_AUTH_WEP) | \
-			IOT_WIFI_AUTH_MODE_BIT(IOT_WIFI_AUTH_WPA_PSK) | \
-			IOT_WIFI_AUTH_MODE_BIT(IOT_WIFI_AUTH_WPA2_PSK) | \
-			IOT_WIFI_AUTH_MODE_BIT(IOT_WIFI_AUTH_WPA_WPA2_PSK) | \
-			IOT_WIFI_AUTH_MODE_BIT(IOT_WIFI_AUTH_WPA2_ENTERPRISE) | \
-			IOT_WIFI_AUTH_MODE_BIT(IOT_WIFI_AUTH_WPA3_PERSONAL)	)
+#define IOT_WIFI_AUTH_MODE_BIT_ALL                                                                                \
+    (IOT_WIFI_AUTH_MODE_BIT(IOT_WIFI_AUTH_OPEN) | IOT_WIFI_AUTH_MODE_BIT(IOT_WIFI_AUTH_WEP) |                     \
+     IOT_WIFI_AUTH_MODE_BIT(IOT_WIFI_AUTH_WPA_PSK) | IOT_WIFI_AUTH_MODE_BIT(IOT_WIFI_AUTH_WPA2_PSK) |             \
+     IOT_WIFI_AUTH_MODE_BIT(IOT_WIFI_AUTH_WPA_WPA2_PSK) | IOT_WIFI_AUTH_MODE_BIT(IOT_WIFI_AUTH_WPA2_ENTERPRISE) | \
+     IOT_WIFI_AUTH_MODE_BIT(IOT_WIFI_AUTH_WPA3_PERSONAL))
 
 /**
  * @brief Contains a "wifi stack configuration" data
  */
 typedef struct {
-	iot_wifi_mode_t mode;					/**< @brief wifi operation mode */
-	char ssid[IOT_WIFI_MAX_SSID_LEN+1];		/**< @brief wifi SSID string */
-	char pass[IOT_WIFI_MAX_PASS_LEN+1];		/**< @brief wifi password string */
-	uint8_t bssid[IOT_WIFI_MAX_BSSID_LEN];	/**< @brief wifi mac address */
-	iot_wifi_auth_mode_t authmode;			/**< @brief wifi authentication mode for station and softap*/
-	int wifi_candidate_frequency;			  /**< @brief the frequency of wifi candiate from st app*/
+    iot_wifi_mode_t mode;                  /**< @brief wifi operation mode */
+    char ssid[IOT_WIFI_MAX_SSID_LEN + 1];  /**< @brief wifi SSID string */
+    char pass[IOT_WIFI_MAX_PASS_LEN + 1];  /**< @brief wifi password string */
+    uint8_t bssid[IOT_WIFI_MAX_BSSID_LEN]; /**< @brief wifi mac address */
+    iot_wifi_auth_mode_t authmode;         /**< @brief wifi authentication mode for station and softap*/
+    int wifi_candidate_frequency;          /**< @brief the frequency of wifi candiate from st app*/
 } iot_wifi_conf;
 
 /**
  * @brief Contains a "wifi scan" data
  */
 typedef struct {
-	uint8_t bssid[IOT_WIFI_MAX_BSSID_LEN];	/**< @brief wifi mac address */
-	uint8_t ssid[IOT_WIFI_MAX_SSID_LEN+1];	/**< @brief wifi SSID string */
-	int8_t  rssi;							/**< @brief wifi signal strength */
-	uint16_t freq;							/**< @brief wifi operation channel */
-	iot_wifi_auth_mode_t authmode;			/**< @brief wifi authentication mode */
+    uint8_t bssid[IOT_WIFI_MAX_BSSID_LEN];   /**< @brief wifi mac address */
+    uint8_t ssid[IOT_WIFI_MAX_SSID_LEN + 1]; /**< @brief wifi SSID string */
+    int8_t rssi;                             /**< @brief wifi signal strength */
+    uint16_t freq;                           /**< @brief wifi operation channel */
+    iot_wifi_auth_mode_t authmode;           /**< @brief wifi authentication mode */
 } iot_wifi_scan_result_t;
 
 /**
  * @brief Contains "wifi mac" data
  */
 struct iot_mac {
-	unsigned char addr[IOT_WIFI_MAX_BSSID_LEN];	/**< @brief wifi mac address */
+    unsigned char addr[IOT_WIFI_MAX_BSSID_LEN]; /**< @brief wifi mac address */
 };
 
 /**
@@ -159,7 +158,6 @@ uint16_t iot_bsp_wifi_get_scan_result(iot_wifi_scan_result_t *scan_result);
  */
 iot_error_t iot_bsp_wifi_get_mac(struct iot_mac *wifi_mac);
 
-
 /**
  * @brief  Get the Wi-Fi Frequency band
  *
@@ -204,14 +202,14 @@ iot_wifi_auth_mode_bits_t iot_bsp_wifi_get_auth_mode(void);
 /**
  * @brief Check DHCP operation is success
  * @return true if DHCP operation is success
-*/
+ */
 bool iot_bsp_wifi_is_dhcp_success();
 
 /**
  * @brief Get Wi-Fi connection status from wpa_supplicant.
  * @details Get Wi-Fi status.
  * @return IOT_ERROR_NONE if successful
-*/
+ */
 iot_error_t iot_bsp_wifi_get_status();
 
 #ifdef __cplusplus

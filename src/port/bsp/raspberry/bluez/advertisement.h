@@ -19,12 +19,11 @@
 #ifndef _ADVERTISEMENT_H_
 #define _ADVERTISEMENT_H_
 
-#include <stdint.h>
 #include <stddef.h>
+#include <stdint.h>
 
 #ifdef __cplusplus
-extern "C"
-{
+extern "C" {
 #endif
 
 void start_advertisement_server(void);

@@ -16,10 +16,10 @@
  *
  ****************************************************************************/
 
-#include "iot_bsp_random.h"
 #include "esp_random.h"
+#include "iot_bsp_random.h"
 
 unsigned int iot_bsp_random()
 {
-	return esp_random();
+    return esp_random();
 }

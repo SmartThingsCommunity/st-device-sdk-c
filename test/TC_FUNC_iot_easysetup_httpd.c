@@ -15,27 +15,25 @@
  * language governing permissions and limitations under the License.
  *
  ****************************************************************************/
-#include <stdarg.h>
-#include <stddef.h>
-#include <setjmp.h>
-#include <cmocka.h>
+#include <arpa/inet.h>
+#include <errno.h>
+#include <external/JSON.h>
+#include <iot_easysetup.h>
+#include <iot_internal.h>
+#include <iot_main.h>
+#include <iot_security_crypto.h>
+#include <iot_security_util.h>
+#include <netinet/in.h>
+#include <security/iot_security_common.h>
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
 #include <sys/socket.h>
-#include <errno.h>
 #include <unistd.h>
-#include <netinet/in.h>
-#include <arpa/inet.h>
-#include <iot_main.h>
-#include <external/JSON.h>
-#include <iot_security_crypto.h>
-#include <iot_security_util.h>
-#include <iot_easysetup.h>
-#include <iot_internal.h>
-#include <security/iot_security_common.h>
-#include "TC_UTIL_easysetup_common.h"
+
 #include "../src/easysetup/http/easysetup_http.h"
+#include "TC_UTIL_easysetup_common.h"
+#include "cmocka_custom.h"
 
 int TC_iot_easysetup_httpd_setup(void **state)
 {
@@ -82,7 +80,7 @@ int TC_iot_easysetup_httpd_teardown(void **state)
     iot_security_cipher_deinit(context->easysetup_security_context);
     iot_security_deinit(context->easysetup_security_context);
 
-    return TC_iot_easysetup_common_teardown((void**) &context);
+    return TC_iot_easysetup_common_teardown((void **)&context);
 }
 
 static int _connect_to_server(char *server_addr)
@@ -120,9 +118,11 @@ static int _connect_to_server(char *server_addr)
     return sock;
 }
 
-typedef struct { char *name, *value; } header_t;
+typedef struct {
+    char *name, *value;
+} header_t;
 
-static void _parse_http_resonse(char* rx_buffer, int *out_res_code, char **body_ptr)
+static void _parse_http_resonse(char *rx_buffer, int *out_res_code, char **body_ptr)
 {
     char *protocol;
     char *res_code;
@@ -158,8 +158,8 @@ static void _parse_http_resonse(char* rx_buffer, int *out_res_code, char **body_
 
     t++;
     *body_ptr = t;
-    char* endptr = NULL;
-    *out_res_code = (int) strtol(res_code, &endptr, 10);
+    char *endptr = NULL;
+    *out_res_code = (int)strtol(res_code, &endptr, 10);
     assert_non_null(endptr);
 }
 
@@ -196,9 +196,13 @@ void TC_iot_easysetup_httpd_invalid_request(void **state)
     int sock;
     ssize_t len;
     char *request_message[REQ_MAX];
-    char recv_buffer[1024] = {0, };
+    char recv_buffer[1024] = {
+        0,
+    };
     char *get_request_message = "GET /invaliduri HTTP/1.1\r\nContent-Length: 0\r\n\r\n";
-    char *post_request_message = "POST /invaliduri HTTP/1.1\r\nContent-Type: application/json\r\nContent-Length: 18 \r\n\r\n{\"message\":\"invalid\"}";
+    char *post_request_message =
+        "POST /invaliduri HTTP/1.1\r\nContent-Type: application/json\r\nContent-Length: 18 "
+        "\r\n\r\n{\"message\":\"invalid\"}";
     char *invalid_method_message = "INVAL /deviceinfo HTTP/1.1\r\nContent-Length: 0\r\n\r\n";
 
     // Given
@@ -226,7 +230,7 @@ void TC_iot_easysetup_httpd_invalid_request(void **state)
     }
 }
 
-void assert_device_info_response(char* buffer)
+void assert_device_info_response(char *buffer)
 {
     JSON_H *root;
     JSON_H *item;
@@ -258,7 +262,9 @@ void TC_iot_easysetup_httpd_deviceinfo_success(void **state)
     iot_error_t err;
     struct iot_easysetup_payload *easysetup_req;
     device_work_data_t work_data;
-    char recv_buffer[1024] = {0, };
+    char recv_buffer[1024] = {
+        0,
+    };
     char *request_message = "GET /deviceinfo HTTP/1.1\r\nConnection: keep-alive\r\n\r\n";
 
     // Given
@@ -271,8 +277,7 @@ void TC_iot_easysetup_httpd_deviceinfo_success(void **state)
     assert_int_equal(len, strlen(request_message));
 
     // Given
-    iot_os_eventgroup_wait_bits(context->work_queue_signal,
-                                DEVICE_PENDING_WORK_SIGNAL, true, IOT_OS_MAX_DELAY);
+    iot_os_eventgroup_wait_bits(context->work_queue_signal, DEVICE_PENDING_WORK_SIGNAL, true, IOT_OS_MAX_DELAY);
     if (iot_util_queue_receive(context->work_queue, &work_data) == IOT_OS_FALSE) {
         assert_true(1);
     }
@@ -290,7 +295,8 @@ void TC_iot_easysetup_httpd_deviceinfo_success(void **state)
     close(sock);
 }
 
-void assert_keyinfo_http_response(char* buffer, iot_security_cipher_params_t *server_cipher, unsigned int expected_otm_support)
+void assert_keyinfo_http_response(char *buffer, iot_security_cipher_params_t *server_cipher,
+                                  unsigned int expected_otm_support)
 {
     int code;
     char *body;
@@ -311,7 +317,9 @@ void TC_iot_easysetup_httpd_keyinfo_single_transfer_success(void **state)
     iot_error_t err;
     struct iot_easysetup_payload *easysetup_req;
     device_work_data_t work_data;
-    char recv_buffer[1024] = {0, };
+    char recv_buffer[1024] = {
+        0,
+    };
     char *post_header = "POST /keyinfo HTTP/1.1\r\nConnection: keep-alive\r\nContent-Length: ";
     char *post_body;
     char *post_message;
@@ -333,8 +341,7 @@ void TC_iot_easysetup_httpd_keyinfo_single_transfer_success(void **state)
     post_message_len = strlen(post_header) + strlen(post_body) + strlen("4096\r\n\r\n") + 1;
     post_message = calloc(1, post_message_len);
     assert_non_null(post_message);
-    snprintf(post_message, post_message_len, "%s%zu\r\n\r\n%s",
-             post_header, strlen(post_body), post_body);
+    snprintf(post_message, post_message_len, "%s%zu\r\n\r\n%s", post_header, strlen(post_body), post_body);
     ref_step = IOT_EASYSETUP_STEP_KEYINFO;
     memset(recv_buffer, '\0', sizeof(recv_buffer));
     sock = _connect_to_server("127.0.0.1");
@@ -345,8 +352,7 @@ void TC_iot_easysetup_httpd_keyinfo_single_transfer_success(void **state)
     assert_int_equal(len, strlen(post_message));
 
     // Given
-    iot_os_eventgroup_wait_bits(context->work_queue_signal,
-                                DEVICE_PENDING_WORK_SIGNAL, true, IOT_OS_MAX_DELAY);
+    iot_os_eventgroup_wait_bits(context->work_queue_signal, DEVICE_PENDING_WORK_SIGNAL, true, IOT_OS_MAX_DELAY);
     if (iot_util_queue_receive(context->work_queue, &work_data) == IOT_OS_FALSE) {
         assert_true(1);
     }
@@ -377,7 +383,9 @@ void TC_iot_easysetup_httpd_keyinfo_separated_transfer_success(void **state)
     iot_error_t err;
     struct iot_easysetup_payload *easysetup_req;
     device_work_data_t work_data;
-    char recv_buffer[1024] = {0, };
+    char recv_buffer[1024] = {
+        0,
+    };
     char *post_header_prefix = "POST /keyinfo HTTP/1.1\r\nConnection: keep-alive\r\nContent-Length: ";
     char *post_body;
     char *post_header;
@@ -399,8 +407,7 @@ void TC_iot_easysetup_httpd_keyinfo_separated_transfer_success(void **state)
     post_header_len = strlen(post_header_prefix) + strlen("4096\r\n\r\n") + 1;
     post_header = calloc(1, post_header_len);
     assert_non_null(post_header);
-    snprintf(post_header, post_header_len, "%s%zu\r\n\r\n",
-             post_header_prefix, strlen(post_body));
+    snprintf(post_header, post_header_len, "%s%zu\r\n\r\n", post_header_prefix, strlen(post_body));
     ref_step = IOT_EASYSETUP_STEP_KEYINFO;
     memset(recv_buffer, '\0', sizeof(recv_buffer));
     sock = _connect_to_server("127.0.0.1");
@@ -409,15 +416,14 @@ void TC_iot_easysetup_httpd_keyinfo_separated_transfer_success(void **state)
     len = send(sock, post_header, strlen(post_header), 0);
     // Then
     assert_int_equal(len, strlen(post_header));
-    usleep(100); // to make sure send separately.
+    usleep(100);  // to make sure send separately.
     // When: send body only
     len = send(sock, post_body, strlen(post_body), 0);
     // Then
     assert_int_equal(len, strlen(post_body));
 
     // Given
-    iot_os_eventgroup_wait_bits(context->work_queue_signal,
-                                DEVICE_PENDING_WORK_SIGNAL, true, IOT_OS_MAX_DELAY);
+    iot_os_eventgroup_wait_bits(context->work_queue_signal, DEVICE_PENDING_WORK_SIGNAL, true, IOT_OS_MAX_DELAY);
     if (iot_util_queue_receive(context->work_queue, &work_data) == IOT_OS_FALSE) {
         assert_true(1);
     }

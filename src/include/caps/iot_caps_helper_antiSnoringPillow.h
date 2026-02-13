@@ -75,52 +75,63 @@ const static struct iot_caps_antiSnoringPillow {
         const unsigned char property;
         const unsigned char valueType;
     } attr_supportPillowOperationTimeGraph;
-    const struct antiSnoringPillow_cmd_on { const char* name; } cmd_on;
-    const struct antiSnoringPillow_cmd_off { const char* name; } cmd_off;
+    const struct antiSnoringPillow_cmd_on {
+        const char *name;
+    } cmd_on;
+    const struct antiSnoringPillow_cmd_off {
+        const char *name;
+    } cmd_off;
 } caps_helper_antiSnoringPillow = {
     .id = "antiSnoringPillow",
-    .attr_state = {
-        .name = "state",
-        .property = ATTR_SET_VALUE_REQUIRED,
-        .valueType = VALUE_TYPE_STRING,
-        .values = {"off", "preparing", "running", "stopped"},
-        .value_off = "off",
-        .value_preparing = "preparing",
-        .value_running = "running",
-        .value_stopped = "stopped",
-    },
-    .attr_snoringTime = {
-        .name = "snoringTime",
-        .property = ATTR_SET_VALUE_REQUIRED,
-        .valueType = VALUE_TYPE_INTEGER,
-    },
-    .attr_snoringTimeDelta = {
-        .name = "snoringTimeDelta",
-        .property = ATTR_SET_VALUE_REQUIRED,
-        .valueType = VALUE_TYPE_INTEGER,
-    },
-    .attr_supportSnoringTimeGraph = {
-        .name = "supportSnoringTimeGraph",
-        .property = ATTR_SET_VALUE_REQUIRED,
-        .valueType = VALUE_TYPE_BOOLEAN,
-    },
-    .attr_pillowOperationTime = {
-        .name = "pillowOperationTime",
-        .property = ATTR_SET_VALUE_REQUIRED,
-        .valueType = VALUE_TYPE_INTEGER,
-    },
-    .attr_pillowOperationTimeDelta = {
-        .name = "pillowOperationTimeDelta",
-        .property = ATTR_SET_VALUE_REQUIRED,
-        .valueType = VALUE_TYPE_INTEGER,
-    },
-    .attr_supportPillowOperationTimeGraph = {
-        .name = "supportPillowOperationTimeGraph",
-        .property = ATTR_SET_VALUE_REQUIRED,
-        .valueType = VALUE_TYPE_BOOLEAN,
-    },
-    .cmd_on = { .name = "on" },
-    .cmd_off = { .name = "off" },
+    .attr_state =
+        {
+            .name = "state",
+            .property = ATTR_SET_VALUE_REQUIRED,
+            .valueType = VALUE_TYPE_STRING,
+            .values = {"off", "preparing", "running", "stopped"},
+            .value_off = "off",
+            .value_preparing = "preparing",
+            .value_running = "running",
+            .value_stopped = "stopped",
+        },
+    .attr_snoringTime =
+        {
+            .name = "snoringTime",
+            .property = ATTR_SET_VALUE_REQUIRED,
+            .valueType = VALUE_TYPE_INTEGER,
+        },
+    .attr_snoringTimeDelta =
+        {
+            .name = "snoringTimeDelta",
+            .property = ATTR_SET_VALUE_REQUIRED,
+            .valueType = VALUE_TYPE_INTEGER,
+        },
+    .attr_supportSnoringTimeGraph =
+        {
+            .name = "supportSnoringTimeGraph",
+            .property = ATTR_SET_VALUE_REQUIRED,
+            .valueType = VALUE_TYPE_BOOLEAN,
+        },
+    .attr_pillowOperationTime =
+        {
+            .name = "pillowOperationTime",
+            .property = ATTR_SET_VALUE_REQUIRED,
+            .valueType = VALUE_TYPE_INTEGER,
+        },
+    .attr_pillowOperationTimeDelta =
+        {
+            .name = "pillowOperationTimeDelta",
+            .property = ATTR_SET_VALUE_REQUIRED,
+            .valueType = VALUE_TYPE_INTEGER,
+        },
+    .attr_supportPillowOperationTimeGraph =
+        {
+            .name = "supportPillowOperationTimeGraph",
+            .property = ATTR_SET_VALUE_REQUIRED,
+            .valueType = VALUE_TYPE_BOOLEAN,
+        },
+    .cmd_on = {.name = "on"},
+    .cmd_off = {.name = "off"},
 };
 
 #ifdef __cplusplus

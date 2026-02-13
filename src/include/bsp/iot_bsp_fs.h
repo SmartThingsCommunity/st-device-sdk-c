@@ -20,6 +20,7 @@
 #define _IOT_BSP_FS_H_
 
 #include <stddef.h>
+
 #include "iot_error.h"
 
 #ifdef __cplusplus
@@ -31,18 +32,15 @@ extern "C" {
  * @brief file system handle.
  */
 typedef struct {
-	int fd;
-	char filename[128];
+    int fd;
+    char filename[128];
 } iot_bsp_fs_handle_t;
 
 /**
  * @name iot_bsp_fs_open_mode_t
  * @brief file system open mode.
  */
-typedef enum {
-	FS_READONLY,
-	FS_READWRITE
-} iot_bsp_fs_open_mode_t;
+typedef enum { FS_READONLY, FS_READWRITE } iot_bsp_fs_open_mode_t;
 
 /**
  * @brief Initialize a file system.
@@ -72,7 +70,7 @@ iot_error_t iot_bsp_fs_deinit();
  * @retval IOT_ERROR_FS_NO_FILE No file.
  * @retval IOT_ERROR_FS_OPEN_FAIL File open failed.
  */
-iot_error_t iot_bsp_fs_open(const char* filename, iot_bsp_fs_open_mode_t mode, iot_bsp_fs_handle_t* handle);
+iot_error_t iot_bsp_fs_open(const char *filename, iot_bsp_fs_open_mode_t mode, iot_bsp_fs_handle_t *handle);
 
 /**
  * @brief Open a file from stnv partition
@@ -85,7 +83,7 @@ iot_error_t iot_bsp_fs_open(const char* filename, iot_bsp_fs_open_mode_t mode, i
  * @retval IOT_ERROR_FS_NO_FILE No file.
  * @retval IOT_ERROR_FS_OPEN_FAIL File open failed.
  */
-iot_error_t iot_bsp_fs_open_from_stnv(const char* filename, iot_bsp_fs_handle_t* handle);
+iot_error_t iot_bsp_fs_open_from_stnv(const char *filename, iot_bsp_fs_handle_t *handle);
 
 /**
  * @brief Read a file
@@ -97,7 +95,7 @@ iot_error_t iot_bsp_fs_open_from_stnv(const char* filename, iot_bsp_fs_handle_t*
  * @retval IOT_ERROR_FS_READ_FAIL File read failed.
  * @retval IOT_ERROR_FS_NO_FILE No file.
  */
-iot_error_t iot_bsp_fs_read(iot_bsp_fs_handle_t handle, char* buffer, size_t *length);
+iot_error_t iot_bsp_fs_read(iot_bsp_fs_handle_t handle, char *buffer, size_t *length);
 
 /**
  * @brief Write a file
@@ -108,7 +106,7 @@ iot_error_t iot_bsp_fs_read(iot_bsp_fs_handle_t handle, char* buffer, size_t *le
  * @retval IOT_ERROR_NONE File write successful.
  * @retval IOT_ERROR_FS_WRITE_FAIL File write failed.
  */
-iot_error_t iot_bsp_fs_write(iot_bsp_fs_handle_t handle, const char* data, size_t length);
+iot_error_t iot_bsp_fs_write(iot_bsp_fs_handle_t handle, const char *data, size_t length);
 
 /**
  * @brief Close a file
@@ -126,7 +124,7 @@ iot_error_t iot_bsp_fs_close(iot_bsp_fs_handle_t handle);
  * @retval IOT_ERROR_INVALID_ARGS Invalid filename
  * @retval IOT_ERROR_FS_REMOVE_FAIL File remove failed.
  */
-iot_error_t iot_bsp_fs_remove(const char* filename);
+iot_error_t iot_bsp_fs_remove(const char *filename);
 
 #ifdef __cplusplus
 }

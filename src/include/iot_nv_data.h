@@ -32,37 +32,37 @@ extern "C" {
  * @brief internal nv data codes.
  */
 typedef enum {
-	IOT_NVD_UNKNOWN = 0,
+    IOT_NVD_UNKNOWN = 0,
 
-	/* wifi prov data */
-	IOT_NVD_WIFI_PROV_STATUS,
-	IOT_NVD_AP_SSID,
-	IOT_NVD_AP_PASS,
-	IOT_NVD_AP_BSSID,
-	IOT_NVD_AP_AUTH_TYPE,
-	/* wifi prov data */
+    /* wifi prov data */
+    IOT_NVD_WIFI_PROV_STATUS,
+    IOT_NVD_AP_SSID,
+    IOT_NVD_AP_PASS,
+    IOT_NVD_AP_BSSID,
+    IOT_NVD_AP_AUTH_TYPE,
+    /* wifi prov data */
 
-	/* cloud prov data */
-	IOT_NVD_CLOUD_PROV_STATUS,
-	IOT_NVD_SERVER_URL,
-	IOT_NVD_SERVER_PORT,
-	IOT_NVD_LABEL,
-	/* cloud prov data */
+    /* cloud prov data */
+    IOT_NVD_CLOUD_PROV_STATUS,
+    IOT_NVD_SERVER_URL,
+    IOT_NVD_SERVER_PORT,
+    IOT_NVD_LABEL,
+    /* cloud prov data */
 
-	IOT_NVD_DEVICE_ID,
-	IOT_NVD_MISC_INFO,
+    IOT_NVD_DEVICE_ID,
+    IOT_NVD_MISC_INFO,
 
-	/* stored in stnv partition (manufacturer data) */
-	IOT_NVD_FACTORY,
-	IOT_NVD_PRIVATE_KEY = IOT_NVD_FACTORY,
-	IOT_NVD_PUBLIC_KEY,
-	IOT_NVD_ROOT_CA_CERT,
-	IOT_NVD_SUB_CA_CERT,
-	IOT_NVD_DEVICE_CERT,
-	IOT_NVD_SERIAL_NUM,
-	/* stored in stnv partition (manufacturer data) */
+    /* stored in stnv partition (manufacturer data) */
+    IOT_NVD_FACTORY,
+    IOT_NVD_PRIVATE_KEY = IOT_NVD_FACTORY,
+    IOT_NVD_PUBLIC_KEY,
+    IOT_NVD_ROOT_CA_CERT,
+    IOT_NVD_SUB_CA_CERT,
+    IOT_NVD_DEVICE_CERT,
+    IOT_NVD_SERIAL_NUM,
+    /* stored in stnv partition (manufacturer data) */
 
-	IOT_NVD_MAX
+    IOT_NVD_MAX
 } iot_nvd_t;
 
 /*
@@ -116,7 +116,7 @@ bool iot_nv_prov_data_exist(void);
  * @see iot_nv_get_wifi_prov_data
  * @see iot_nv_get_cloud_prov_data
  */
-iot_error_t iot_nv_get_prov_data(struct iot_device_prov_data* prov_data);
+iot_error_t iot_nv_get_prov_data(struct iot_device_prov_data *prov_data);
 
 /**
  * @brief Set provisioning data to the nv file-system.
@@ -129,7 +129,7 @@ iot_error_t iot_nv_get_prov_data(struct iot_device_prov_data* prov_data);
  * @see iot_nv_set_wifi_prov_data
  * @see iot_nv_set_cloud_prov_data
  */
-iot_error_t iot_nv_set_prov_data(struct iot_device_prov_data* prov_data);
+iot_error_t iot_nv_set_prov_data(struct iot_device_prov_data *prov_data);
 
 /**
  * @brief Erase wifi/cloud provisioning data.
@@ -150,7 +150,7 @@ iot_error_t iot_nv_erase_prov_data();
  *
  * @warning The caller is always responsible to free the allocated pointer after using the data.
  */
-iot_error_t iot_nv_get_wifi_prov_data(struct iot_wifi_prov_data* wifi_prov);
+iot_error_t iot_nv_get_wifi_prov_data(struct iot_wifi_prov_data *wifi_prov);
 
 /**
  * @brief Set wifi provisioning data to the nv file-system.
@@ -160,7 +160,7 @@ iot_error_t iot_nv_get_wifi_prov_data(struct iot_wifi_prov_data* wifi_prov);
  * @retval IOT_ERROR_INVALID_ARGS Invalid argument.
  * @retval IOT_ERROR_NV_DATA_ERROR Set nv data failed.
  */
-iot_error_t iot_nv_set_wifi_prov_data(struct iot_wifi_prov_data* wifi_prov);
+iot_error_t iot_nv_set_wifi_prov_data(struct iot_wifi_prov_data *wifi_prov);
 
 /**
  * @brief Get cloud provisioning data from the nv file-system.
@@ -172,7 +172,7 @@ iot_error_t iot_nv_set_wifi_prov_data(struct iot_wifi_prov_data* wifi_prov);
  *
  * @warning The caller is always responsible to free the allocated pointer after using the data.
  */
-iot_error_t iot_nv_get_cloud_prov_data(struct iot_cloud_prov_data* cloud_prov);
+iot_error_t iot_nv_get_cloud_prov_data(struct iot_cloud_prov_data *cloud_prov);
 
 /**
  * @brief Set cloud provisioning data to the nv file-system.
@@ -182,7 +182,7 @@ iot_error_t iot_nv_get_cloud_prov_data(struct iot_cloud_prov_data* cloud_prov);
  * @retval IOT_ERROR_INVALID_ARGS Invalid argument.
  * @retval IOT_ERROR_NV_DATA_ERROR Set nv data failed.
  */
-iot_error_t iot_nv_set_cloud_prov_data(struct iot_cloud_prov_data* cloud_prov);
+iot_error_t iot_nv_set_cloud_prov_data(struct iot_cloud_prov_data *cloud_prov);
 
 /**
  * @brief Get a certificate from the nv file-system.
@@ -197,7 +197,6 @@ iot_error_t iot_nv_set_cloud_prov_data(struct iot_cloud_prov_data* cloud_prov);
  * @warning The caller is always responsible to free the allocated pointer after using the data.
  */
 iot_error_t iot_nv_get_certificate(iot_security_cert_id_t cert_id, char **cert, size_t *cert_len);
-
 
 #if defined(CONIFG_STDK_IOT_CORE_EASYSETUP_SELF_CONTAINED_JWT)
 /**
@@ -224,7 +223,7 @@ iot_error_t _iot_nv_get_certificate_serial_number(char **cert_sn);
  *
  * @warning The caller is always responsible to free the allocated pointer after using the data.
  */
-iot_error_t iot_nv_get_device_id(char** device_id, size_t* len);
+iot_error_t iot_nv_get_device_id(char **device_id, size_t *len);
 
 /**
  * @brief Set a device id to the nv file-system.
@@ -234,7 +233,7 @@ iot_error_t iot_nv_get_device_id(char** device_id, size_t* len);
  * @retval IOT_ERROR_INVALID_ARGS Invalid argument.
  * @retval IOT_ERROR_NV_DATA_ERROR Set nv data failed.
  */
-iot_error_t iot_nv_set_device_id(const char* device_id);
+iot_error_t iot_nv_set_device_id(const char *device_id);
 
 /**
  * @brief Get a miscellaneous info from the nv file-system.
@@ -247,7 +246,7 @@ iot_error_t iot_nv_set_device_id(const char* device_id);
  *
  * @warning The caller is always responsible to free the allocated pointer after using the data.
  */
-iot_error_t iot_nv_get_misc_info(char** misc_info, size_t* len);
+iot_error_t iot_nv_get_misc_info(char **misc_info, size_t *len);
 
 /**
  * @brief Set a miscellaneous info to the nv file-system.
@@ -257,7 +256,7 @@ iot_error_t iot_nv_get_misc_info(char** misc_info, size_t* len);
  * @retval IOT_ERROR_INVALID_ARGS Invalid argument.
  * @retval IOT_ERROR_NV_DATA_ERROR Set nv data failed.
  */
-iot_error_t iot_nv_set_misc_info(const char* misc_info);
+iot_error_t iot_nv_set_misc_info(const char *misc_info);
 
 /**
  * @brief Get a serial number from the nv file-system.
@@ -270,7 +269,7 @@ iot_error_t iot_nv_set_misc_info(const char* misc_info);
  *
  * @warning The caller is always responsible to free the allocated pointer after using the data.
  */
-iot_error_t iot_nv_get_serial_number(char** sn, size_t* len);
+iot_error_t iot_nv_get_serial_number(char **sn, size_t *len);
 
 /**
  * @brief Erase a nv data.

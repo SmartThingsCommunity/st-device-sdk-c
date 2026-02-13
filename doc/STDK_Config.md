@@ -89,3 +89,7 @@
 #### CONFIG_STDK_IOT_CORE_EASYSETUP_WIFI_UPDATE
 - Type : Bool
 - Description : Enable wifi update functionality.
+
+#### CONFIG_STDK_IOT_CORE_EASYSETUP_OFFLINE_DIAGNOSTICS
+- Type : Bool
+- Description : Enable offline diagnostics feature. When enabled, SmartThings app can diagnose device offline issue.

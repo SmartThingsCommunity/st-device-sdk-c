@@ -43,14 +43,15 @@ const static struct iot_caps_filterStatus {
     } attr_filterStatus;
 } caps_helper_filterStatus = {
     .id = "filterStatus",
-    .attr_filterStatus = {
-        .name = "filterStatus",
-        .property = ATTR_SET_VALUE_REQUIRED,
-        .valueType = VALUE_TYPE_STRING,
-        .values = {"normal", "replace"},
-        .value_normal = "normal",
-        .value_replace = "replace",
-    },
+    .attr_filterStatus =
+        {
+            .name = "filterStatus",
+            .property = ATTR_SET_VALUE_REQUIRED,
+            .valueType = VALUE_TYPE_STRING,
+            .values = {"normal", "replace"},
+            .value_normal = "normal",
+            .value_replace = "replace",
+        },
 };
 
 #ifdef __cplusplus
