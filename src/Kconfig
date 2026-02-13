@@ -41,6 +41,13 @@ config STDK_IOT_CORE_EASYSETUP_WIFI_UPDATE
     help
        If this option is enabled, The device enable wifi update functionality.
 
+config STDK_IOT_CORE_EASYSETUP_OFFLINE_DIAGNOSTICS
+    bool "Enable offline diagnostics functionality"
+    default n
+    depends on STDK_IOT_CORE_EASYSETUP_BLE
+    help
+       If this option is enabled, the device enable offline diagnostics functionality.
+
 config STDK_IOT_CORE_EASYSETUP_HTTP_USE_SOCKET_API
     bool "Use socket for easysetup http"
     default n

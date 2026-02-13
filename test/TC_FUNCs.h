@@ -19,15 +19,47 @@
 #define ST_DEVICE_SDK_C_TCS_H
 
 // TCs for iot_util.c
-void TC_iot_util_get_random_uuid_success(void **state);
-void TC_iot_util_get_random_uuid_null_parameter(void **state);
-void TC_iot_util_convert_str_mac_success(void **state);
-void TC_iot_util_convert_str_mac_invalid_parameters(void **state);
+void TC_iot_util_dump_mem(void **state);
+void TC_iot_util_validate_uuid_format_null_str(void **state);
+void TC_iot_util_validate_uuid_format_invalid_clock_seq(void **state);
 void TC_iot_util_convert_str_uuid_success(void **state);
-void TC_iot_util_convert_str_uuid_invalid_parameters(void **state);
-void TC_iot_util_convert_channel_freq(void **state);
-void TC_iot_util_convert_mac_str_invalid_parameters(void **state);
+void TC_iot_util_convert_str_uuid_null_parameters(void **state);
+void TC_iot_util_convert_str_uuid_invalid_length(void **state);
+void TC_iot_util_convert_str_uuid_invalid_delimiters(void **state);
+void TC_iot_util_convert_str_uuid_invalid_characters(void **state);
+void TC_iot_util_convert_str_uuid_invalid_format(void **state);
+void TC_iot_util_convert_str_uuid_invalid_version(void **state);
+void TC_iot_util_convert_uuid_str_null_uuid(void **state);
+void TC_iot_util_convert_uuid_str_null_buffer(void **state);
+void TC_iot_util_convert_uuid_str_insufficient_buffer(void **state);
+void TC_iot_util_convert_str_mac_success(void **state);
+void TC_iot_util_convert_str_mac_null_parameters(void **state);
+void TC_iot_util_convert_str_mac_invalid_length(void **state);
+void TC_iot_util_convert_str_mac_invalid_format(void **state);
+void TC_iot_util_convert_str_mac_invalid_characters(void **state);
+void TC_iot_util_convert_str_mac_invalid_segment_format(void **state);
+void TC_iot_util_convert_mac_str_null_mac(void **state);
+void TC_iot_util_convert_mac_str_null_buffer(void **state);
+void TC_iot_util_convert_mac_str_null_output_buffer(void **state);
+void TC_iot_util_convert_mac_str_insufficient_buffer(void **state);
 void TC_iot_util_convert_mac_str_success(void **state);
+void TC_iot_util_convert_channel_freq_success(void **state);
+void TC_iot_util_convert_freq_channel_success(void **state);
+void TC_iot_util_url_parse_success(void **state);
+void TC_iot_util_url_parse_negative_cases(void **state);
+void TC_iot_util_queue_create_negative_cases(void **state);
+void TC_iot_util_queue_delete_edge_cases(void **state);
+void TC_iot_util_queue_send_negative_cases(void **state);
+void TC_iot_util_queue_receive_negative_cases(void **state);
+void TC_iot_util_generator_backoff(void **state);
+void TC_iot_util_get_server_type_success(void **state);
+void TC_iot_util_get_server_type_null_url(void **state);
+void TC_iot_util_get_server_type_empty_url(void **state);
+void TC_iot_util_get_server_type_unknown_domain(void **state);
+void TC_iot_util_get_server_type_partial_url(void **state);
+void TC_iot_util_get_server_type_wrong_domain(void **state);
+void TC_iot_util_print_ssid_secure_positive(void **state);
+void TC_iot_util_print_mac_secure_positive(void **state);
 
 // TCs for iot_api.c
 int TC_iot_api_memleak_detect_setup(void **state);
@@ -75,10 +107,31 @@ void TC_iot_wifi_ctrl_request_IOT_WIFI_MODE_SOFTAP(void **state);
 void TC_iot_cleanup_success(void **state);
 
 // TCs for iot_uuid.c
-void TC_iot_uuid_from_mac(void **state);
-void TC_iot_uuid_from_mac_internal_failure(void **state);
-void TC_iot_random_uuid_from_mac(void **state);
-void TC_iot_random_uuid_from_mac_internal_failure(void **state);
+void TC_iot_get_uuid_from_mac(void **state);
+void TC_iot_get_uuid_from_mac_internal_failure(void **state);
+void TC_iot_get_uuid_from_mac_null_parameter(void **state);
+void TC_iot_get_uuid_from_mac_empty_mac(void **state);
+void TC_iot_get_uuid_from_mac_short_mac(void **state);
+void TC_iot_get_uuid_from_mac_long_mac(void **state);
+void TC_iot_get_random_uuid_from_mac(void **state);
+void TC_iot_get_random_uuid_from_mac_internal_failure(void **state);
+void TC_iot_get_random_uuid_from_mac_null_parameter(void **state);
+void TC_iot_get_random_uuid_from_mac_wifi_failure(void **state);
+void TC_iot_get_random_uuid_from_mac_malloc_failure(void **state);
+void TC_iot_get_random_uuid_from_mac_invalid_mac(void **state);
+void TC_iot_get_random_uuid_from_mac_empty_mac(void **state);
+void TC_iot_get_random_uuid_null_parameter(void **state);
+void TC_iot_get_random_uuid_random_failure(void **state);
+void TC_iot_get_random_uuid_success(void **state);
+void TC_iot_get_random_uuid_from_key_null_uuid(void **state);
+void TC_iot_get_random_uuid_from_key_null_key(void **state);
+void TC_iot_get_random_uuid_from_key_zero_length(void **state);
+void TC_iot_get_random_uuid_from_key_large_length(void **state);
+void TC_iot_get_random_uuid_from_key_wifi_failure(void **state);
+void TC_iot_get_random_uuid_boundary_test(void **state);
+void TC_iot_get_random_uuid_from_key_empty_string(void **state);
+void TC_iot_get_random_uuid_multiple_calls(void **state);
+void TC_iot_get_random_uuid_structure_validation(void **state);
 
 // TCs for iot_capability.c
 int TC_iot_capability_setup(void **state);
@@ -97,19 +150,19 @@ void TC_st_cap_send_attr_success(void **state);
 void TC_st_cap_send_attr_invalid_parameter(void **state);
 void TC_iot_cap_sub_cb_success(void **state);
 void TC_iot_noti_sub_cb_rate_limit_reached_SUCCESS(void **state);
-void TC_iot_parse_noti_data_device_deleted(void** state);
-void TC_iot_parse_noti_data_expired_jwt(void** state);
-void TC_iot_parse_noti_data_quota_reached(void** state);
-void TC_iot_parse_noti_data_rate_limit(void** state);
-void TC_st_cap_create_attr_with_id_success(void** state);
-void TC_st_cap_create_attr_with_option_null_parameter(void** state);
-void TC_st_cap_create_attr_with_option_failure(void** state);
-void TC_st_cap_create_attr_with_option_internal_failure(void** state);
-void TC_st_cap_create_attr_with_option_success(void** state);
+void TC_iot_parse_noti_data_device_deleted(void **state);
+void TC_iot_parse_noti_data_expired_jwt(void **state);
+void TC_iot_parse_noti_data_quota_reached(void **state);
+void TC_iot_parse_noti_data_rate_limit(void **state);
+void TC_st_cap_create_attr_with_id_success(void **state);
+void TC_st_cap_create_attr_with_option_null_parameter(void **state);
+void TC_st_cap_create_attr_with_option_failure(void **state);
+void TC_st_cap_create_attr_with_option_internal_failure(void **state);
+void TC_st_cap_create_attr_with_option_success(void **state);
 void TC_st_cap_cmd_set_cb_internal_failure(void **state);
 void TC_iot_cap_commands_cb_failure(void **state);
 void TC_iot_cap_commands_cb_success(void **state);
-void TC_iot_parse_noti_data_presference_updated(void** state);
+void TC_iot_parse_noti_data_presference_updated(void **state);
 void TC_iot_cap_call_init_cb_null_parameteer(void **state);
 void TC_iot_cap_call_init_cb_success(void **state);
 void TC_st_cap_send_attr_v2_null_parameter(void **state);
@@ -129,9 +182,9 @@ void TC_iot_nv_get_serial_number_null_parameters(void **state);
 void TC_iot_nv_get_device_id_null_parameters(void **state);
 void TC_iot_nv_set_device_id_null_parameter(void **state);
 void TC_iot_nv_get_set_erase_device_id_success(void **state);
-void TC_iot_nv_erase_internal_failure(void** state);
-void TC_iot_nv_get_data_from_device_info_failure(void** state);
-void TC_iot_nv_get_data_from_device_info_success(void** state);
+void TC_iot_nv_erase_internal_failure(void **state);
+void TC_iot_nv_get_data_from_device_info_failure(void **state);
+void TC_iot_nv_get_data_from_device_info_success(void **state);
 
 // TCs for iot_easysetup_d2d.c
 int TC_iot_easysetup_common_setup(void **state);
@@ -155,11 +208,11 @@ void TC_STATIC_es_confirminfo_handler_justworks_and_pin(void **state);
 void TC_STATIC_es_confirminfo_handler_qr_code(void **state);
 void TC_STATIC_es_confirminfo_handler_serial_number(void **state);
 void TC_STATIC_es_confirminfo_handler_button(void **state);
-void TC_STATIC_es_confirm_handler_success(void** state);
-void TC_STATIC_es_confirm_handler_invalid_pin(void** state);
-void TC_STATIC_es_confirm_handler_non_pin_otm(void** state);
-void TC_STATIC_es_confirm_handler_invalid_payload(void** state);
-void TC_STATIC_es_setupcomplete_handler_success(void** state);
+void TC_STATIC_es_confirm_handler_success(void **state);
+void TC_STATIC_es_confirm_handler_invalid_pin(void **state);
+void TC_STATIC_es_confirm_handler_non_pin_otm(void **state);
+void TC_STATIC_es_confirm_handler_invalid_payload(void **state);
+void TC_STATIC_es_setupcomplete_handler_success(void **state);
 void TC_st_conn_ownership_confirm_SUCCESS(void **state);
 void TC_st_conn_ownership_confirm_DENY(void **state);
 
@@ -171,15 +224,15 @@ void TC_st_conn_init_wrong_device_info(void **state);
 void TC_st_conn_init_success(void **state);
 void TC_st_conn_cleanup_invalid_parameters(void **state);
 void TC_st_conn_cleanup_success(void **state);
-void TC_easysetup_resources_create_delete_success(void** state);
+void TC_easysetup_resources_create_delete_success(void **state);
 void TC_check_prov_data_validation(void **state);
 
 // TCs for iot_mqtt_client.c
-void TC_st_mqtt_create_success(void** state);
-void TC_st_mqtt_create_failure(void** state);
-void TC_st_mqtt_connect_with_connack_rc(void** state);
-void TC_st_mqtt_disconnect_success(void** state);
-void TC_st_mqtt_publish_success(void** state);
+void TC_st_mqtt_create_success(void **state);
+void TC_st_mqtt_create_failure(void **state);
+void TC_st_mqtt_connect_with_connack_rc(void **state);
+void TC_st_mqtt_disconnect_success(void **state);
+void TC_st_mqtt_publish_success(void **state);
 
 // TCs for iot_security_common.c
 void TC_iot_security_init_malloc_failure(void **state);
@@ -354,18 +407,64 @@ void TC_STATIC_iot_es_mqtt_registration_SUCCESS(void **state);
 void TC_STATIC_iot_parse_sequence_num_SUCCESS(void **state);
 void TC_STATIC_iot_parse_sequence_num_FAILURE(void **state);
 void TC_STATIC_iot_mqtt_registration_client_callback_SUCCESS(void **state);
+void TC_STATIC_iot_parse_sequence_num_NULL_payload(void **state);
+void TC_STATIC_iot_parse_sequence_num_empty_string(void **state);
+void TC_STATIC_iot_parse_sequence_num_invalid_json(void **state);
+void TC_STATIC_iot_parse_sequence_num_no_device_events(void **state);
+void TC_STATIC_iot_parse_sequence_num_empty_device_events(void **state);
+void TC_STATIC_iot_es_mqtt_registration_json_NULL_context(void **state);
+void TC_STATIC_iot_es_mqtt_registration_json_no_serial(void **state);
+void TC_STATIC_iot_es_mqtt_registration_json_no_lookup_id(void **state);
+void TC_STATIC_iot_es_mqtt_registration_json_no_dip_data(void **state);
+void TC_STATIC_iot_mqtt_registration_client_callback_NULL_context(void **state);
+void TC_STATIC_iot_mqtt_registration_client_callback_NULL_payload(void **state);
+void TC_STATIC_iot_mqtt_registration_client_callback_invalid_event(void **state);
+void TC_STATIC_iot_mqtt_registration_client_callback_invalid_json(void **state);
+void TC_STATIC_iot_mqtt_registration_client_callback_expired_jwt(void **state);
+void TC_STATIC_iot_mqtt_registration_client_callback_error_event(void **state);
+void TC_STATIC_check_connection_response_NULL_payload(void **state);
+void TC_STATIC_check_connection_response_empty_payload(void **state);
+void TC_STATIC_check_connection_response_invalid_json(void **state);
+void TC_STATIC_check_connection_response_no_event(void **state);
+void TC_STATIC_check_connection_response_expired_jwt_no_current_time(void **state);
+void TC_STATIC_check_connection_response_unknown_event(void **state);
+void TC_STATIC_iot_es_mqtt_connect_NULL_context(void **state);
+void TC_STATIC_iot_es_mqtt_connect_NULL_username(void **state);
+void TC_STATIC_iot_es_mqtt_connect_NULL_sign_data(void **state);
+void TC_STATIC_iot_es_connect_NULL_context(void **state);
+void TC_STATIC_iot_es_connect_invalid_conn_type(void **state);
+void TC_STATIC_iot_es_connect_rate_limit(void **state);
+void TC_STATIC_iot_es_disconnect_NULL_context(void **state);
+void TC_STATIC_iot_es_disconnect_invalid_conn_type(void **state);
+void TC_STATIC_iot_es_disconnect_no_mqtt_context(void **state);
+void TC_STATIC_iot_es_set_broker_url_port_invalid_server_type(void **state);
+void TC_STATIC_iot_es_set_broker_url_port_unsupported_server_type(void **state);
+void TC_STATIC_iot_update_dip_NULL_context(void **state);
+void TC_STATIC_iot_update_dip_NULL_mqtt_client(void **state);
+void TC_STATIC_iot_update_dip_no_dip_data(void **state);
+void TC_STATIC_iot_es_mqtt_registration_NULL_context(void **state);
+void TC_STATIC_iot_es_mqtt_registration_NULL_mqtt_context(void **state);
+void TC_STATIC_iot_es_mqtt_registration_no_serial_numbers(void **state);
 
 // TCs for iot_easysetup_http_parser.c
 void TC_es_msg_parser_VALID_GET_METHOD(void **state);
 void TC_es_msg_parser_INVALID_GET_METHOD(void **state);
-void TC_es_msg_parser_VALID_POST_METHOD(void** state);
+void TC_es_msg_parser_VALID_POST_METHOD(void **state);
 void TC_es_msg_parser_INVALID_POST_METHOD(void **state);
 
 // TCs for iot_eassetup_http.c
 void TC_iot_easysetup_gen_post_payload_NULL_IN_PAYLOAD(void **state);
 void TC_iot_easysetup_gen_post_payload_CMD_INVALID_STEP(void **state);
 void TC_iot_easysetup_gen_post_payload_CMD_INVALID_SEQUENCE(void **state);
+void TC_iot_easysetup_gen_post_payload_NULL_CONTEXT(void **state);
+void TC_iot_easysetup_gen_post_payload_SETUPCOMPLETE_NULL_PAYLOAD(void **state);
 void TC_iot_easysetup_gen_get_payload_CMD_INVALID_STEP(void **state);
 void TC_iot_easysetup_gen_get_payload_CMD_INVALID_SEQUENCE(void **state);
+void TC_iot_easysetup_gen_get_payload_NULL_CONTEXT(void **state);
+void TC_http_msg_handler_INVALID_CMD(void **state);
+void TC_http_msg_handler_INVALID_TYPE(void **state);
+void TC_http_msg_handler_NULL_DATA_BUF_POST(void **state);
+void TC_iot_easysetup_init_NULL_CONTEXT(void **state);
+void TC_iot_easysetup_deinit_NULL_CONTEXT(void **state);
 
-#endif //ST_DEVICE_SDK_C_TCS_H
+#endif  // ST_DEVICE_SDK_C_TCS_H

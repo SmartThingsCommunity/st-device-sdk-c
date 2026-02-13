@@ -45,15 +45,16 @@ const static struct iot_caps_smokeDetector {
     } attr_smoke;
 } caps_helper_smokeDetector = {
     .id = "smokeDetector",
-    .attr_smoke = {
-        .name = "smoke",
-        .property = ATTR_SET_VALUE_REQUIRED,
-        .valueType = VALUE_TYPE_STRING,
-        .values = {"clear", "detected", "tested"},
-        .value_clear = "clear",
-        .value_detected = "detected",
-        .value_tested = "tested",
-    },
+    .attr_smoke =
+        {
+            .name = "smoke",
+            .property = ATTR_SET_VALUE_REQUIRED,
+            .valueType = VALUE_TYPE_STRING,
+            .values = {"clear", "detected", "tested"},
+            .value_clear = "clear",
+            .value_detected = "detected",
+            .value_tested = "tested",
+        },
 };
 
 #ifdef __cplusplus

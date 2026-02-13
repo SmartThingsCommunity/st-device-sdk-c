@@ -27,10 +27,12 @@ extern "C" {
 
 const static struct iot_caps_tone {
     const char *id;
-    const struct tone_cmd_beep { const char* name; } cmd_beep;
+    const struct tone_cmd_beep {
+        const char *name;
+    } cmd_beep;
 } caps_helper_tone = {
     .id = "tone",
-    .cmd_beep = { .name = "beep" },
+    .cmd_beep = {.name = "beep"},
 };
 
 #ifdef __cplusplus

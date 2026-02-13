@@ -41,18 +41,21 @@ const static struct iot_caps_rapidCooling {
         const char *value_off;
         const char *value_on;
     } attr_rapidCooling;
-    const struct rapidCooling_cmd_setRapidCooling { const char* name; } cmd_setRapidCooling;
+    const struct rapidCooling_cmd_setRapidCooling {
+        const char *name;
+    } cmd_setRapidCooling;
 } caps_helper_rapidCooling = {
     .id = "rapidCooling",
-    .attr_rapidCooling = {
-        .name = "rapidCooling",
-        .property = ATTR_SET_VALUE_REQUIRED,
-        .valueType = VALUE_TYPE_STRING,
-        .values = {"off", "on"},
-        .value_off = "off",
-        .value_on = "on",
-    },
-    .cmd_setRapidCooling = { .name = "setRapidCooling" }, // arguments: rapidCooling(string) 
+    .attr_rapidCooling =
+        {
+            .name = "rapidCooling",
+            .property = ATTR_SET_VALUE_REQUIRED,
+            .valueType = VALUE_TYPE_STRING,
+            .values = {"off", "on"},
+            .value_off = "off",
+            .value_on = "on",
+        },
+    .cmd_setRapidCooling = {.name = "setRapidCooling"},  // arguments: rapidCooling(string)
 };
 
 #ifdef __cplusplus

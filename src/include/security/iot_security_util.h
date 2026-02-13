@@ -19,15 +19,17 @@
 #ifndef _IOT_SECURITY_UTIL_H_
 #define _IOT_SECURITY_UTIL_H_
 
+#include <stddef.h>
+
 #include "iot_error.h"
 
 #ifdef __cplusplus
 extern "C" {
 #endif
 
-#define IOT_SECURITY_B64_ALIGN_LEN(x)	(((x) + 3) & ~3u)
-#define IOT_SECURITY_B64_ENCODE_LEN(x)	((((x) + 2) / 3) * 4 + 1)
-#define IOT_SECURITY_B64_DECODE_LEN(x)	(IOT_SECURITY_B64_ALIGN_LEN(x) / 4 * 3 + 1)
+#define IOT_SECURITY_B64_ALIGN_LEN(x) (((x) + 3) & ~3u)
+#define IOT_SECURITY_B64_ENCODE_LEN(x) ((((x) + 2) / 3) * 4 + 1)
+#define IOT_SECURITY_B64_DECODE_LEN(x) (IOT_SECURITY_B64_ALIGN_LEN(x) / 4 * 3 + 1)
 
 /**
  * @brief	Encode a string as a base64 string
@@ -40,7 +42,8 @@ extern "C" {
  * @retval	IOT_ERROR_INVALID_ARGS input parameter is invalid
  * @retval	IOT_ERROR_SECURITY_BASE64_ENCODE failed to encode the string
  */
-iot_error_t iot_security_base64_encode(const unsigned char *src, size_t src_len, unsigned char *dst, size_t dst_len, size_t *out_len);
+iot_error_t iot_security_base64_encode(const unsigned char *src, size_t src_len, unsigned char *dst, size_t dst_len,
+                                       size_t *out_len);
 
 /**
  * @brief	Decode a base64 string as a string
@@ -53,7 +56,8 @@ iot_error_t iot_security_base64_encode(const unsigned char *src, size_t src_len,
  * @retval	IOT_ERROR_INVALID_ARGS input parameter is invalid
  * @retval	IOT_ERROR_SECURITY_BASE64_DECODE failed to decode the string
  */
-iot_error_t iot_security_base64_decode(const unsigned char *src, size_t src_len, unsigned char *dst, size_t dst_len, size_t *out_len);
+iot_error_t iot_security_base64_decode(const unsigned char *src, size_t src_len, unsigned char *dst, size_t dst_len,
+                                       size_t *out_len);
 
 /**
  * @brief	Encode a string as a urlsafe base64 string
@@ -68,7 +72,8 @@ iot_error_t iot_security_base64_decode(const unsigned char *src, size_t src_len,
  * @retval	IOT_ERROR_INVALID_ARGS input parameter is invalid
  * @retval	IOT_ERROR_SECURITY_BASE64_URL_ENCODE failed to encode the string as urlsafe
  */
-iot_error_t iot_security_base64_encode_urlsafe(const unsigned char *src, size_t src_len, unsigned char *dst, size_t dst_len, size_t *out_len);
+iot_error_t iot_security_base64_encode_urlsafe(const unsigned char *src, size_t src_len, unsigned char *dst,
+                                               size_t dst_len, size_t *out_len);
 
 /**
  * @brief	Decode a urlsafe base64 string as a string
@@ -82,7 +87,8 @@ iot_error_t iot_security_base64_encode_urlsafe(const unsigned char *src, size_t 
  * @retval	IOT_ERROR_MEM_ALLOC memory allocation for align buffer is failed
  * @retval	IOT_ERROR_SECURITY_BASE64_URL_DECODE failed to encode the string as urlsafe
  */
-iot_error_t iot_security_base64_decode_urlsafe(const unsigned char *src, size_t src_len, unsigned char *dst, size_t dst_len, size_t *out_len);
+iot_error_t iot_security_base64_decode_urlsafe(const unsigned char *src, size_t src_len, unsigned char *dst,
+                                               size_t dst_len, size_t *out_len);
 
 /**
  * @brief	Generate a digest by sha512 hash

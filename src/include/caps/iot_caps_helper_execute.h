@@ -32,15 +32,18 @@ const static struct iot_caps_execute {
         const unsigned char property;
         const unsigned char valueType;
     } attr_data;
-    const struct execute_cmd_execute { const char* name; } cmd_execute;
+    const struct execute_cmd_execute {
+        const char *name;
+    } cmd_execute;
 } caps_helper_execute = {
     .id = "execute",
-    .attr_data = {
-        .name = "data",
-        .property = ATTR_SET_VALUE_REQUIRED,
-        .valueType = VALUE_TYPE_OBJECT,
-    },
-    .cmd_execute = { .name = "execute" }, // arguments: command(string) args(object) 
+    .attr_data =
+        {
+            .name = "data",
+            .property = ATTR_SET_VALUE_REQUIRED,
+            .valueType = VALUE_TYPE_OBJECT,
+        },
+    .cmd_execute = {.name = "execute"},  // arguments: command(string) args(object)
 };
 
 #ifdef __cplusplus

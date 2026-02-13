@@ -36,13 +36,14 @@ const static struct iot_caps_ultravioletIndex {
     } attr_ultravioletIndex;
 } caps_helper_ultravioletIndex = {
     .id = "ultravioletIndex",
-    .attr_ultravioletIndex = {
-        .name = "ultravioletIndex",
-        .property = ATTR_SET_VALUE_MIN | ATTR_SET_VALUE_MAX | ATTR_SET_VALUE_REQUIRED,
-        .valueType = VALUE_TYPE_NUMBER,
-        .min = 0,
-        .max = 255,
-    },
+    .attr_ultravioletIndex =
+        {
+            .name = "ultravioletIndex",
+            .property = ATTR_SET_VALUE_MIN | ATTR_SET_VALUE_MAX | ATTR_SET_VALUE_REQUIRED,
+            .valueType = VALUE_TYPE_NUMBER,
+            .min = 0,
+            .max = 255,
+        },
 };
 
 #ifdef __cplusplus

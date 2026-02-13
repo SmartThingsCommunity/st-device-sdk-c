@@ -22,18 +22,18 @@
 #ifdef __cplusplus
 extern "C" {
 #endif
-#include "iot_main.h"
 #include "iot_error.h"
+#include "iot_main.h"
 
-#define RESPONSE_HEADER_LEN		(9)
-#define INDICATION_HEADER_LEN		(3)
-#define MIN_MTU_SIZE		(23)
-#define MAX_ATT_VALUE_LEN		(512)
+#define RESPONSE_HEADER_LEN (9)
+#define INDICATION_HEADER_LEN (3)
+#define MIN_MTU_SIZE (23)
+#define MAX_ATT_VALUE_LEN (512)
 
 enum cgi_type {
-	D2D_GET= 0,
-	D2D_POST,
-	D2D_ERROR,
+    D2D_GET = 0,
+    D2D_POST,
+    D2D_ERROR,
 };
 
 void es_ble_init(void);
@@ -46,11 +46,13 @@ bool es_msg_assemble(uint8_t *buf, uint32_t len);
 iot_error_t es_msg_disassemble(uint8_t *buf, uint32_t len, uint8_t data_continued, int cmd);
 void es_msg_dispatch(iot_security_buffer_t *buf, uint8_t buf_count, uint8_t cmd_num);
 void es_reset_transferdata(void);
-iot_error_t iot_easysetup_ble_ecdh_compute_shared_signature(iot_security_context_t **state,
-                                    unsigned char *sec_random, unsigned char **dev_cert, unsigned char **sub_cert,
-                                    unsigned char **spub_key, size_t *spub_key_len, unsigned char **signature, size_t *signature_len);
+iot_error_t iot_easysetup_ble_ecdh_compute_shared_signature(iot_security_context_t **state, unsigned char *sec_random,
+                                                            unsigned char **dev_cert, unsigned char **sub_cert,
+                                                            unsigned char **spub_key, size_t *spub_key_len,
+                                                            unsigned char **signature, size_t *signature_len);
 iot_error_t iot_easysetup_ble_ecdh_init(iot_security_context_t **state);
 iot_error_t iot_easysetup_ble_ecdh_teardown(void **state);
+iot_error_t iot_easysetup_ble_send_response(int cmd, char *payload, size_t payload_len);
 
 /**
  * @brief            ble message handler
@@ -59,7 +61,7 @@ iot_error_t iot_easysetup_ble_ecdh_teardown(void **state);
  * @param[in]        data_buf		transferred data from the mobile
  * @param[out]       data_buf_len   the length of transferred data
  */
-void iot_easysetup_ble_msg_handler(int cmd, char* data_buf, size_t data_buf_len);
+void iot_easysetup_ble_msg_handler(int cmd, char *data_buf, size_t data_buf_len);
 
 #ifdef __cplusplus
 }

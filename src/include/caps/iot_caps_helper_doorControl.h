@@ -47,23 +47,28 @@ const static struct iot_caps_doorControl {
         const char *value_opening;
         const char *value_unknown;
     } attr_door;
-    const struct doorControl_cmd_close { const char* name; } cmd_close;
-    const struct doorControl_cmd_open { const char* name; } cmd_open;
+    const struct doorControl_cmd_close {
+        const char *name;
+    } cmd_close;
+    const struct doorControl_cmd_open {
+        const char *name;
+    } cmd_open;
 } caps_helper_doorControl = {
     .id = "doorControl",
-    .attr_door = {
-        .name = "door",
-        .property = ATTR_SET_VALUE_REQUIRED,
-        .valueType = VALUE_TYPE_STRING,
-        .values = {"closed", "closing", "open", "opening", "unknown"},
-        .value_closed = "closed",
-        .value_closing = "closing",
-        .value_open = "open",
-        .value_opening = "opening",
-        .value_unknown = "unknown",
-    },
-    .cmd_close = { .name = "close" },
-    .cmd_open = { .name = "open" },
+    .attr_door =
+        {
+            .name = "door",
+            .property = ATTR_SET_VALUE_REQUIRED,
+            .valueType = VALUE_TYPE_STRING,
+            .values = {"closed", "closing", "open", "opening", "unknown"},
+            .value_closed = "closed",
+            .value_closing = "closing",
+            .value_open = "open",
+            .value_opening = "opening",
+            .value_unknown = "unknown",
+        },
+    .cmd_close = {.name = "close"},
+    .cmd_open = {.name = "open"},
 };
 
 #ifdef __cplusplus

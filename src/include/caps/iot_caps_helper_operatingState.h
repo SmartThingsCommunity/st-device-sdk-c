@@ -53,28 +53,32 @@ const static struct iot_caps_operatingState {
         const char *value_running;
         const char *value_ready;
     } attr_machineState;
-    const struct operatingState_cmd_setMachineState { const char* name; } cmd_setMachineState;
+    const struct operatingState_cmd_setMachineState {
+        const char *name;
+    } cmd_setMachineState;
 } caps_helper_operatingState = {
     .id = "operatingState",
-    .attr_supportedMachineStates = {
-        .name = "supportedMachineStates",
-        .property = ATTR_SET_VALUE_REQUIRED | ATTR_SET_VALUE_ARRAY,
-        .valueType = VALUE_TYPE_STRING,
-        .values = {"paused", "running", "ready"},
-        .value_paused = "paused",
-        .value_running = "running",
-        .value_ready = "ready",
-    },
-    .attr_machineState = {
-        .name = "machineState",
-        .property = ATTR_SET_VALUE_REQUIRED,
-        .valueType = VALUE_TYPE_STRING,
-        .values = {"paused", "running", "ready"},
-        .value_paused = "paused",
-        .value_running = "running",
-        .value_ready = "ready",
-    },
-    .cmd_setMachineState = { .name = "setMachineState" }, // arguments: state(string) 
+    .attr_supportedMachineStates =
+        {
+            .name = "supportedMachineStates",
+            .property = ATTR_SET_VALUE_REQUIRED | ATTR_SET_VALUE_ARRAY,
+            .valueType = VALUE_TYPE_STRING,
+            .values = {"paused", "running", "ready"},
+            .value_paused = "paused",
+            .value_running = "running",
+            .value_ready = "ready",
+        },
+    .attr_machineState =
+        {
+            .name = "machineState",
+            .property = ATTR_SET_VALUE_REQUIRED,
+            .valueType = VALUE_TYPE_STRING,
+            .values = {"paused", "running", "ready"},
+            .value_paused = "paused",
+            .value_running = "running",
+            .value_ready = "ready",
+        },
+    .cmd_setMachineState = {.name = "setMachineState"},  // arguments: state(string)
 };
 
 #ifdef __cplusplus

@@ -1,6 +1,6 @@
 /* ***************************************************************************
  *
- * Copyright 2019 Samsung Electronics All Rights Reserved.
+ * Copyright (c) 2020 Samsung Electronics All Rights Reserved.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -16,27 +16,27 @@
  *
  ****************************************************************************/
 
-#ifndef _IOT_ESP_UART_CLI_H_
-#define _IOT_ESP_UART_CLI_H_
+#ifndef CMOCKA_CUSTOM_H
+#define CMOCKA_CUSTOM_H
 
-#define ARRAY_SIZE(x) (int)(sizeof(x)/sizeof(x[0]))
-#define CLI_TASK_PRIORITY (5)
-#define CLI_TASK_SIZE    (8192)
-#define MAX_UART_LINE_SIZE    (1024)
-typedef void (* command_function_t)(char *string);
+/**
+ * These headers or their equivalents MUST be included prior to cmocka.h.
+ * @code
+ * #include <stdarg.h>
+ * #include <stddef.h>
+ * #include <setjmp.h>
+ * #include <stdint.h>
+ * @endcode
+ *
+ * This allows test applications to use custom definitions of C standard
+ * library functions and types.
+ */
+// clang-format off
+#include <stdarg.h>
+#include <stddef.h>
+#include <setjmp.h>
+#include <stdint.h>
+#include <cmocka.h>
+// clang-format on
 
-typedef struct cli_command {
-    char *command;
-    char *help_string;
-    command_function_t command_fn;
-} cli_cmd_t;
-
-typedef struct cli_command_list {
-    cli_cmd_t* cmd;
-    struct cli_command_list* next;
-} cli_cmd_list_t;
-
-void uart_cli_main();
-void cli_register_command(cli_cmd_t* cmd);
-
-#endif /* _IOT_ESP_UART_CLI_H_ */
+#endif  // CMOCKA_CUSTOM_H

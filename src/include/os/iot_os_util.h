@@ -18,8 +18,8 @@
 
 #ifndef _IOT_OS_UTIL_H_
 #define _IOT_OS_UTIL_H_
-#include <stdlib.h>
 #include <stdbool.h>
+#include <stdlib.h>
 
 typedef void *iot_os_thread;
 typedef void iot_os_eventgroup;
@@ -30,9 +30,8 @@ typedef void *iot_os_timer_handle;
 /**
  * @brief Contains a mutex data.
  */
-typedef struct iot_os_mutex
-{
-	iot_os_sem* sem;	/**< @brief semaphore */
+typedef struct iot_os_mutex {
+    iot_os_sem *sem; /**< @brief semaphore */
 } iot_os_mutex;
 
 #define IOT_DELAY(x) iot_os_delay(x)
@@ -41,7 +40,7 @@ typedef struct iot_os_mutex
 #define IOT_OS_TRUE iot_os_true
 #define IOT_OS_FALSE iot_os_false
 
-#define IOT_OS_WAIT_FOREVER	0xffffffff
+#define IOT_OS_WAIT_FOREVER 0xffffffff
 
 extern const unsigned int iot_os_max_delay;
 extern const unsigned int iot_os_true;
@@ -54,14 +53,14 @@ typedef void (*iot_os_timer_cb)(iot_os_timer_handle timer_handle, void *user_dat
  * @return
  *  return is string of os name
  */
-const char* iot_os_get_os_name();
+const char *iot_os_get_os_name();
 
 /*
  * @brief get os version string
  * @return
  *  return is string of os version
  */
-const char* iot_os_get_os_version_string();
+const char *iot_os_get_os_version_string();
 
 /**
  * @brief	create and run thread
@@ -80,8 +79,8 @@ const char* iot_os_get_os_version_string();
  *	IOT_OS_TRUE : success
  *	otherwise :  fail
  */
-int iot_os_thread_create(void * thread_function, const char* name, int stack_size,
-	void* data, int priority, iot_os_thread* thread_handle);
+int iot_os_thread_create(void *thread_function, const char *name, int stack_size, void *data, int priority,
+                         iot_os_thread *thread_handle);
 
 /**
  * @brief	delete thread
@@ -112,7 +111,7 @@ void iot_os_thread_yield();
  *	IOT_OS_TRUE : success
  *	otherwise :  fail
  */
-int iot_os_thread_get_current_handle(iot_os_thread* thread_handle);
+int iot_os_thread_get_current_handle(iot_os_thread *thread_handle);
 
 /**
  * @brief	create eventgroup
@@ -125,7 +124,7 @@ int iot_os_thread_get_current_handle(iot_os_thread* thread_handle);
  *	If eventgroup was not created, NULL is returned.
  *
  */
-iot_os_eventgroup* iot_os_eventgroup_create(void);
+iot_os_eventgroup *iot_os_eventgroup_create(void);
 
 /**
  * @brief	delete eventgroup
@@ -135,7 +134,7 @@ iot_os_eventgroup* iot_os_eventgroup_create(void);
  * @param[in] eventgroup_handle	eventgroup handle of eventgroup to delete
  *
  */
-void iot_os_eventgroup_delete(iot_os_eventgroup* eventgroup_handle);
+void iot_os_eventgroup_delete(iot_os_eventgroup *eventgroup_handle);
 
 /**
  * @brief	wait for bit of group of bits to become set
@@ -154,8 +153,8 @@ void iot_os_eventgroup_delete(iot_os_eventgroup* eventgroup_handle);
  *  if you wait for bit0 and bit3, can check with  was setted, return will be 0b101 = 5
  *
  */
-unsigned char iot_os_eventgroup_wait_bits(iot_os_eventgroup* eventgroup_handle,
-	const unsigned char bits_to_wait_for, const int clear_on_exit, const unsigned int wait_time_ms);
+unsigned char iot_os_eventgroup_wait_bits(iot_os_eventgroup *eventgroup_handle, const unsigned char bits_to_wait_for,
+                                          const int clear_on_exit, const unsigned int wait_time_ms);
 /**
  * @brief	set bit/bits of eventgroup
  *
@@ -170,8 +169,7 @@ unsigned char iot_os_eventgroup_wait_bits(iot_os_eventgroup* eventgroup_handle,
  *	return IOT_OS_TRUE on success, IOT_OS_FALSE on failure
  *
  */
-int iot_os_eventgroup_set_bits(iot_os_eventgroup* eventgroup_handle,
-	const unsigned char bits_to_set);
+int iot_os_eventgroup_set_bits(iot_os_eventgroup *eventgroup_handle, const unsigned char bits_to_set);
 /**
  * @brief	clear bit/bits of eventgroup
  *
@@ -186,9 +184,7 @@ int iot_os_eventgroup_set_bits(iot_os_eventgroup* eventgroup_handle,
  *	return IOT_OS_TRUE on success, IOT_OS_FALSE on failure
  *
  */
-int iot_os_eventgroup_clear_bits(iot_os_eventgroup* eventgroup_handle,
-	const unsigned char bits_to_clear);
-
+int iot_os_eventgroup_clear_bits(iot_os_eventgroup *eventgroup_handle, const unsigned char bits_to_clear);
 
 /**
  * @brief	create mutex
@@ -201,7 +197,7 @@ int iot_os_eventgroup_clear_bits(iot_os_eventgroup* eventgroup_handle,
  *	IOT_OS_TRUE : success
  *	otherwise : fail
  */
-int iot_os_mutex_init(iot_os_mutex* mutex);
+int iot_os_mutex_init(iot_os_mutex *mutex);
 
 /**
  * @brief	mutex lock
@@ -214,7 +210,7 @@ int iot_os_mutex_init(iot_os_mutex* mutex);
  *	IOT_OS_TRUE : success
  *	otherwise : fail
  */
-int iot_os_mutex_lock(iot_os_mutex* mutex);
+int iot_os_mutex_lock(iot_os_mutex *mutex);
 
 /**
  * @brief	mutex unlock
@@ -227,7 +223,7 @@ int iot_os_mutex_lock(iot_os_mutex* mutex);
  *	IOT_OS_TRUE : success
  *	otherwise : fail
  */
-int iot_os_mutex_unlock(iot_os_mutex* mutex);
+int iot_os_mutex_unlock(iot_os_mutex *mutex);
 
 /**
  * @brief	destroy mutex
@@ -236,7 +232,7 @@ int iot_os_mutex_unlock(iot_os_mutex* mutex);
  *
  * @param[in] mutex	handle of mutex.
  */
-void iot_os_mutex_destroy(iot_os_mutex* mutex);
+void iot_os_mutex_destroy(iot_os_mutex *mutex);
 
 /**
  * @brief	delay a thread
@@ -259,7 +255,7 @@ void iot_os_delay(unsigned int delay_ms);
  *	IOT_ERROR_NONE : success
  *	otherwise : fail
  */
-int iot_os_timer_init(iot_os_timer* timer);
+int iot_os_timer_init(iot_os_timer *timer);
 
 /**
  * @brief	check timer expired
@@ -306,7 +302,7 @@ unsigned int iot_os_timer_left_ms(iot_os_timer timer);
  * @param[in] timer	pointer of timer to destroy
  *
  */
-void iot_os_timer_destroy(iot_os_timer* timer);
+void iot_os_timer_destroy(iot_os_timer *timer);
 
 /**
  * @brief	create timer
@@ -372,7 +368,6 @@ int iot_os_timer_stop(iot_os_timer_handle timer_handle);
  */
 bool iot_os_timer_is_active(iot_os_timer_handle timer_handle);
 
-
 #if defined(CONFIG_STDK_IOT_CORE_OS_SUPPORT_POSIX)
 /**
  * @brief	allocate memory
@@ -431,11 +426,26 @@ void iot_os_free(void *ptr);
 char *iot_os_strdup(const char *src);
 #else
 #include <string.h>
-static inline void *iot_os_malloc(size_t size) { return malloc(size); }
-static inline void *iot_os_calloc(size_t nmemb, size_t size) { return calloc(nmemb, size); }
-static inline void *iot_os_realloc(void *ptr, size_t size) { return realloc(ptr, size); }
-static inline void iot_os_free(void *ptr) { return free(ptr); }
-static inline char *iot_os_strdup(const char *src) { return strdup(src); }
+static inline void *iot_os_malloc(size_t size)
+{
+    return malloc(size);
+}
+static inline void *iot_os_calloc(size_t nmemb, size_t size)
+{
+    return calloc(nmemb, size);
+}
+static inline void *iot_os_realloc(void *ptr, size_t size)
+{
+    return realloc(ptr, size);
+}
+static inline void iot_os_free(void *ptr)
+{
+    return free(ptr);
+}
+static inline char *iot_os_strdup(const char *src)
+{
+    return strdup(src);
+}
 #endif
 
 #endif /* _IOT_OS_UTIL_H_ */

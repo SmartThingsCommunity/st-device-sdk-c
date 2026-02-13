@@ -37,20 +37,24 @@ const static struct iot_caps_mode {
         const unsigned char property;
         const unsigned char valueType;
     } attr_mode;
-    const struct mode_cmd_setMode { const char* name; } cmd_setMode;
+    const struct mode_cmd_setMode {
+        const char *name;
+    } cmd_setMode;
 } caps_helper_mode = {
     .id = "mode",
-    .attr_supportedModes = {
-        .name = "supportedModes",
-        .property = ATTR_SET_VALUE_ARRAY,
-        .valueType = VALUE_TYPE_STRING,
-    },
-    .attr_mode = {
-        .name = "mode",
-        .property = ATTR_SET_VALUE_REQUIRED,
-        .valueType = VALUE_TYPE_STRING,
-    },
-    .cmd_setMode = { .name = "setMode" }, // arguments: mode(string) 
+    .attr_supportedModes =
+        {
+            .name = "supportedModes",
+            .property = ATTR_SET_VALUE_ARRAY,
+            .valueType = VALUE_TYPE_STRING,
+        },
+    .attr_mode =
+        {
+            .name = "mode",
+            .property = ATTR_SET_VALUE_REQUIRED,
+            .valueType = VALUE_TYPE_STRING,
+        },
+    .cmd_setMode = {.name = "setMode"},  // arguments: mode(string)
 };
 
 #ifdef __cplusplus

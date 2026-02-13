@@ -27,10 +27,12 @@ extern "C" {
 
 const static struct iot_caps_refresh {
     const char *id;
-    const struct refresh_cmd_refresh { const char* name; } cmd_refresh;
+    const struct refresh_cmd_refresh {
+        const char *name;
+    } cmd_refresh;
 } caps_helper_refresh = {
     .id = "refresh",
-    .cmd_refresh = { .name = "refresh" },
+    .cmd_refresh = {.name = "refresh"},
 };
 
 #ifdef __cplusplus

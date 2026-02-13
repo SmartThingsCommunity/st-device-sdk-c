@@ -23,20 +23,18 @@
 #include <glib.h>
 
 #ifdef __cplusplus
-extern "C"
-{
+extern "C" {
 #endif
 
 GDBusConnection *get_gdbus_connection(void);
 
 int gdbus_init_loop();
 
-int gdbus_method_call_sync(char *service, char *object_path, char *iface,
-				   char *method, GVariant *parameter, GVariant **reply);
+int gdbus_method_call_sync(char *service, char *object_path, char *iface, char *method, GVariant *parameter,
+                           GVariant **reply);
 
-int gdbus_method_call_async(char *service, char *object_path,
-				char *iface, char *method, GVariant *parameter,
-				GAsyncReadyCallback asyncCB, gpointer cdData);
+int gdbus_method_call_async(char *service, char *object_path, char *iface, char *method, GVariant *parameter,
+                            GAsyncReadyCallback asyncCB, gpointer cdData);
 
 guint gdbus_register_object(const char *path, const gchar *xml, GDBusInterfaceVTable vtable);
 

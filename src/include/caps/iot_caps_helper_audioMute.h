@@ -25,11 +25,7 @@
 extern "C" {
 #endif
 
-enum {
-    CAP_ENUM_AUDIOMUTE_MUTE_VALUE_MUTED,
-    CAP_ENUM_AUDIOMUTE_MUTE_VALUE_UNMUTED,
-    CAP_ENUM_AUDIOMUTE_MUTE_VALUE_MAX
-};
+enum { CAP_ENUM_AUDIOMUTE_MUTE_VALUE_MUTED, CAP_ENUM_AUDIOMUTE_MUTE_VALUE_UNMUTED, CAP_ENUM_AUDIOMUTE_MUTE_VALUE_MAX };
 
 const static struct iot_caps_audioMute {
     const char *id;
@@ -41,22 +37,29 @@ const static struct iot_caps_audioMute {
         const char *value_muted;
         const char *value_unmuted;
     } attr_mute;
-    const struct audioMute_cmd_unmute { const char* name; } cmd_unmute;
-    const struct audioMute_cmd_setMute { const char* name; } cmd_setMute;
-    const struct audioMute_cmd_mute { const char* name; } cmd_mute;
+    const struct audioMute_cmd_unmute {
+        const char *name;
+    } cmd_unmute;
+    const struct audioMute_cmd_setMute {
+        const char *name;
+    } cmd_setMute;
+    const struct audioMute_cmd_mute {
+        const char *name;
+    } cmd_mute;
 } caps_helper_audioMute = {
     .id = "audioMute",
-    .attr_mute = {
-        .name = "mute",
-        .property = ATTR_SET_VALUE_REQUIRED,
-        .valueType = VALUE_TYPE_STRING,
-        .values = {"muted", "unmuted"},
-        .value_muted = "muted",
-        .value_unmuted = "unmuted",
-    },
-    .cmd_unmute = { .name = "unmute" },
-    .cmd_setMute = { .name = "setMute" }, // arguments: state(string) 
-    .cmd_mute = { .name = "mute" },
+    .attr_mute =
+        {
+            .name = "mute",
+            .property = ATTR_SET_VALUE_REQUIRED,
+            .valueType = VALUE_TYPE_STRING,
+            .values = {"muted", "unmuted"},
+            .value_muted = "muted",
+            .value_unmuted = "unmuted",
+        },
+    .cmd_unmute = {.name = "unmute"},
+    .cmd_setMute = {.name = "setMute"},  // arguments: state(string)
+    .cmd_mute = {.name = "mute"},
 };
 
 #ifdef __cplusplus

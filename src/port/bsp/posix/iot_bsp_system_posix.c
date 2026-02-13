@@ -20,48 +20,61 @@
 #include <stdlib.h>
 #include <time.h>
 #include <unistd.h>
+
 #include "iot_bsp_system.h"
 #include "iot_debug.h"
 
-const char* iot_bsp_get_bsp_name()
+const char *iot_bsp_get_bsp_name()
 {
-       return "posix";
+    return "posix";
 }
 
-const char* iot_bsp_get_bsp_version_string()
+const char *iot_bsp_get_bsp_version_string()
 {
-       return "";
+    return "";
 }
 
 void iot_bsp_system_reboot()
 {
-	exit(0);
+    exit(0);
 }
 
 void iot_bsp_system_poweroff()
 {
-	exit(0);
+    exit(0);
 }
 
 iot_error_t iot_bsp_system_get_time_in_sec(time_t *time_in_sec)
 {
-	struct timespec ts = {0,};
+    struct timespec ts = {
+        0,
+    };
 
-	clock_gettime(CLOCK_REALTIME, &ts);
-	*time_in_sec = ts.tv_sec;
+    clock_gettime(CLOCK_REALTIME, &ts);
+    *time_in_sec = ts.tv_sec;
 
-	return IOT_ERROR_NONE;
+    return IOT_ERROR_NONE;
 }
 
 iot_error_t iot_bsp_system_set_time_in_sec(time_t time_in_sec)
 {
-	struct timespec ts = {0,};
-	int ret;
+    struct timespec ts = {
+        0,
+    };
+    int ret;
 
-	ts.tv_sec = time_in_sec;
-	ret = clock_settime(CLOCK_REALTIME, &ts);
-	if (ret == -1)
-		return IOT_ERROR_INVALID_ARGS;
+    ts.tv_sec = time_in_sec;
+    ret = clock_settime(CLOCK_REALTIME, &ts);
+    if (ret == -1)
+        return IOT_ERROR_INVALID_ARGS;
 
-	return IOT_ERROR_NONE;
+    return IOT_ERROR_NONE;
+}
+
+iot_error_t iot_bsp_system_set_timezone(char *timezoneid)
+{
+    setenv("TZ", timezoneid, 1);
+    tzset();
+
+    return IOT_ERROR_NONE;
 }

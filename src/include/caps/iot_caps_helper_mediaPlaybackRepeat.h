@@ -43,19 +43,22 @@ const static struct iot_caps_mediaPlaybackRepeat {
         const char *value_off;
         const char *value_one;
     } attr_playbackRepeatMode;
-    const struct mediaPlaybackRepeat_cmd_setPlaybackRepeatMode { const char* name; } cmd_setPlaybackRepeatMode;
+    const struct mediaPlaybackRepeat_cmd_setPlaybackRepeatMode {
+        const char *name;
+    } cmd_setPlaybackRepeatMode;
 } caps_helper_mediaPlaybackRepeat = {
     .id = "mediaPlaybackRepeat",
-    .attr_playbackRepeatMode = {
-        .name = "playbackRepeatMode",
-        .property = ATTR_SET_VALUE_REQUIRED,
-        .valueType = VALUE_TYPE_STRING,
-        .values = {"all", "off", "one"},
-        .value_all = "all",
-        .value_off = "off",
-        .value_one = "one",
-    },
-    .cmd_setPlaybackRepeatMode = { .name = "setPlaybackRepeatMode" }, // arguments: mode(string) 
+    .attr_playbackRepeatMode =
+        {
+            .name = "playbackRepeatMode",
+            .property = ATTR_SET_VALUE_REQUIRED,
+            .valueType = VALUE_TYPE_STRING,
+            .values = {"all", "off", "one"},
+            .value_all = "all",
+            .value_off = "off",
+            .value_one = "one",
+        },
+    .cmd_setPlaybackRepeatMode = {.name = "setPlaybackRepeatMode"},  // arguments: mode(string)
 };
 
 #ifdef __cplusplus

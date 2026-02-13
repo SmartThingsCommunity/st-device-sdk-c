@@ -25,11 +25,7 @@
 extern "C" {
 #endif
 
-enum {
-    CAP_ENUM_VALVE_VALVE_VALUE_CLOSED,
-    CAP_ENUM_VALVE_VALVE_VALUE_OPEN,
-    CAP_ENUM_VALVE_VALVE_VALUE_MAX
-};
+enum { CAP_ENUM_VALVE_VALVE_VALUE_CLOSED, CAP_ENUM_VALVE_VALVE_VALUE_OPEN, CAP_ENUM_VALVE_VALVE_VALUE_MAX };
 
 const static struct iot_caps_valve {
     const char *id;
@@ -41,20 +37,25 @@ const static struct iot_caps_valve {
         const char *value_closed;
         const char *value_open;
     } attr_valve;
-    const struct valve_cmd_close { const char* name; } cmd_close;
-    const struct valve_cmd_open { const char* name; } cmd_open;
+    const struct valve_cmd_close {
+        const char *name;
+    } cmd_close;
+    const struct valve_cmd_open {
+        const char *name;
+    } cmd_open;
 } caps_helper_valve = {
     .id = "valve",
-    .attr_valve = {
-        .name = "valve",
-        .property = ATTR_SET_VALUE_REQUIRED,
-        .valueType = VALUE_TYPE_STRING,
-        .values = {"closed", "open"},
-        .value_closed = "closed",
-        .value_open = "open",
-    },
-    .cmd_close = { .name = "close" },
-    .cmd_open = { .name = "open" },
+    .attr_valve =
+        {
+            .name = "valve",
+            .property = ATTR_SET_VALUE_REQUIRED,
+            .valueType = VALUE_TYPE_STRING,
+            .values = {"closed", "open"},
+            .value_closed = "closed",
+            .value_open = "open",
+        },
+    .cmd_close = {.name = "close"},
+    .cmd_open = {.name = "open"},
 };
 
 #ifdef __cplusplus

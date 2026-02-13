@@ -27,10 +27,12 @@ extern "C" {
 
 const static struct iot_caps_momentary {
     const char *id;
-    const struct momentary_cmd_push { const char* name; } cmd_push;
+    const struct momentary_cmd_push {
+        const char *name;
+    } cmd_push;
 } caps_helper_momentary = {
     .id = "momentary",
-    .cmd_push = { .name = "push" },
+    .cmd_push = {.name = "push"},
 };
 
 #ifdef __cplusplus

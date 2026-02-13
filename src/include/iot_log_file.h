@@ -19,18 +19,17 @@
 #ifndef _IOT_LOG_FILE_H_
 #define _IOT_LOG_FILE_H_
 
-#include "iot_internal.h"
-#include "iot_main.h"
-#include "iot_debug.h"
-#include "iot_bsp_debug.h"
-
-#include <stdlib.h>
 #include <stdio.h>
+#include <stdlib.h>
 #include <string.h>
 
+#include "iot_bsp_debug.h"
+#include "iot_debug.h"
+#include "iot_internal.h"
+#include "iot_main.h"
+
 #ifdef __cplusplus
-extern "C"
-{
+extern "C" {
 #endif
 
 #define IOT_LOG_FILE_TRUE 1
@@ -50,7 +49,7 @@ extern "C"
 #define IOT_LOG_FILE_ERROR(fmt, args...) printf(IOT_LOG_FILE_COLOR_RED fmt IOT_LOG_FILE_COLOR_END, ##args)
 
 #define IOT_LOG_FILE_MAX_STRING_SIZE 128 /* Max input string size */
-#define IOT_LOG_FILE_MARGIN_CNT 1		 /* magin count */
+#define IOT_LOG_FILE_MARGIN_CNT 1        /* magin count */
 
 #define IOT_LOG_FILE_EVENT_SYNC_REQ_BIT (1u << 0u)
 #define IOT_LOG_FILE_EVENT_BIT_ALL (IOT_LOG_FILE_EVENT_SYNC_REQ_BIT)
@@ -80,64 +79,54 @@ extern "C"
 #define IOT_LOG_FILE_FLASH_HEADER_SIZE (sizeof(struct iot_log_file_header_tag))
 #define IOT_LOG_FILE_FLASH_BUF_SIZE (2 * IOT_LOG_FILE_FLASH_SECTOR_SIZE)
 
-
-typedef enum
-{
-	RAM_ONLY,
-	FLASH_WITH_RAM,
+typedef enum {
+    RAM_ONLY,
+    FLASH_WITH_RAM,
 } iot_log_file_type_t;
 
-typedef struct
-{
-	unsigned int start_addr;
-	unsigned int tail_addr;
-	unsigned int cur_addr;
-	size_t log_size;
-	size_t max_log_size;
+typedef struct {
+    unsigned int start_addr;
+    unsigned int tail_addr;
+    unsigned int cur_addr;
+    size_t log_size;
+    size_t max_log_size;
 
-	iot_log_file_type_t file_type;
+    iot_log_file_type_t file_type;
 } iot_log_file_handle_t;
 
-typedef enum
-{
-	NORMAL,
-	NO_MAGIC,
-	LOAD_FAIL,
+typedef enum {
+    NORMAL,
+    NO_MAGIC,
+    LOAD_FAIL,
 } iot_log_file_header_state_t;
 
-struct iot_log_file_buf_tag
-{
-	bool enable;
-	unsigned int cnt;
-	char buf[IOT_LOG_FILE_RAM_BUF_SIZE];
-	bool overridden;
-
+struct iot_log_file_buf_tag {
+    bool enable;
+    unsigned int cnt;
+    char buf[IOT_LOG_FILE_RAM_BUF_SIZE];
+    bool overridden;
 };
 
-struct iot_log_file_sector_tag
-{
-	unsigned int num;
-	unsigned int offset;
+struct iot_log_file_sector_tag {
+    unsigned int num;
+    unsigned int offset;
 };
 
-struct iot_log_file_header_tag
-{
-	char magic_code[4];
-	unsigned int file_size;
-	unsigned int written_size;
-	struct iot_log_file_sector_tag sector;
-	unsigned int checksum;
+struct iot_log_file_header_tag {
+    char magic_code[4];
+    unsigned int file_size;
+    unsigned int written_size;
+    struct iot_log_file_sector_tag sector;
+    unsigned int checksum;
 };
 
-struct iot_log_file_ctx
-{
-	struct iot_log_file_buf_tag log_buf;
-	iot_os_eventgroup *events;
-	struct iot_log_file_header_tag file_header;
-	char file_buf[IOT_LOG_FILE_FLASH_BUF_SIZE];
-	bool file_opened;
+struct iot_log_file_ctx {
+    struct iot_log_file_buf_tag log_buf;
+    iot_os_eventgroup *events;
+    struct iot_log_file_header_tag file_header;
+    char file_buf[IOT_LOG_FILE_FLASH_BUF_SIZE];
+    bool file_opened;
 };
-
 
 /**
  * @brief Initialize a log file system.
@@ -164,14 +153,14 @@ int iot_log_file_store(const char *log_data, size_t log_size);
 
 /**
  * @brief Log file synchronize with ram log data.
- * 
+ *
  * @details This function store log data on ram to flash memory
  */
 void iot_log_file_sync(void);
 
 /**
  * @brief Remove Iot log file
- * 
+ *
  * @details This function remove log data
  * @param[in] type Type of log file system for deleting.
  * @retval IOT_ERROR_NONE Log file remove successful.
@@ -181,7 +170,7 @@ iot_error_t iot_log_file_remove(iot_log_file_type_t type);
 
 /**
  * @brief Open Iot log file to read
- * 
+ *
  * @details This function make ready to read, if this function is called, log will be saved any more.
  * @param[out] filesize Log file size
  * @param[in] file_type Type of log file system for accessing.
@@ -201,7 +190,7 @@ iot_log_file_handle_t *iot_log_file_open(size_t *filesize, iot_log_file_type_t f
 iot_error_t iot_log_file_seek(iot_log_file_handle_t *file_handle, int seek_offset, unsigned int origin_addr);
 /**
  * @brief Read file data using file handle
- * 
+ *
  * @details You can read log file as much as you want using file handle
  * @param[in] file_handle Handle to access file
  * @param[out] buffer Buffer where read data will be located
@@ -210,14 +199,13 @@ iot_error_t iot_log_file_seek(iot_log_file_handle_t *file_handle, int seek_offse
  * @retval IOT_ERROR_NONE log file read successful.
  * @retval IOT_ERROR_READ_FAIL log file read failed.
  */
-iot_error_t iot_log_file_read(iot_log_file_handle_t *file_handle,
-	void *buffer, size_t buf_size, size_t *read_size);
+iot_error_t iot_log_file_read(iot_log_file_handle_t *file_handle, void *buffer, size_t buf_size, size_t *read_size);
 
 /**
  * @brief Close opened log file
- * 
+ *
  * @details This function makes close opend file handle,
- 			And saving log data to flash memory will be started from this function called.
+                        And saving log data to flash memory will be started from this function called.
  * @param[in] file_handle A file to close
  * @retval IOT_ERROR_NONE log file close successful.
  * @retval IOT_ERROR_INVALID_ARGS log file close failed.
@@ -229,4 +217,3 @@ iot_error_t iot_log_file_close(iot_log_file_handle_t *file_handle);
 #endif
 
 #endif /* _IOT_LOG_FILE_H_ */
-

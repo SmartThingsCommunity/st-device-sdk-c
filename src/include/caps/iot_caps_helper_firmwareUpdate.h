@@ -82,55 +82,66 @@ const static struct iot_caps_firmwareUpdate {
         const unsigned char valueType;
     } attr_updateAvailable;
 
-    const struct firmwareUpdate_cmd_checkForFirmwareUpdate { const char* name; } cmd_checkForFirmwareUpdate;
-    const struct firmwareUpdate_cmd_updateFirmware { const char* name; } cmd_updateFirmware;
+    const struct firmwareUpdate_cmd_checkForFirmwareUpdate {
+        const char *name;
+    } cmd_checkForFirmwareUpdate;
+    const struct firmwareUpdate_cmd_updateFirmware {
+        const char *name;
+    } cmd_updateFirmware;
 } caps_helper_firmwareUpdate = {
     .id = "firmwareUpdate",
-    .attr_lastUpdateStatus = {
-        .name = "lastUpdateStatus",
-        .property = 0,
-        .valueType = VALUE_TYPE_STRING,
-        .values = {"updateSucceeded", "updateFailed"},
-        .value_updateSucceeded = "updateSucceeded",
-        .value_updateFailed = "updateFailed",
-    },
-    .attr_state = {
-        .name = "state",
-        .property = 0,
-        .valueType = VALUE_TYPE_STRING,
-        .values = {"normalOperation", "updateInProgress"},
-        .value_normalOperation = "normalOperation",
-        .value_updateInProgress = "updateInProgress",
-    },
-    .attr_currentVersion = {
-        .name = "currentVersion",
-        .property = 0,
-        .valueType = VALUE_TYPE_STRING,
-    },
-    .attr_lastUpdateTime = {
-        .name = "lastUpdateTime",
-        .property = 0,
-        .valueType = VALUE_TYPE_STRING,
-    },
-    .attr_availableVersion = {
-        .name = "availableVersion",
-        .property = 0,
-        .valueType = VALUE_TYPE_STRING,
-    },
-    .attr_lastUpdateStatusReason = {
-        .name = "lastUpdateStatusReason",
-        .property = 0,
-        .valueType = VALUE_TYPE_STRING,
-    },
+    .attr_lastUpdateStatus =
+        {
+            .name = "lastUpdateStatus",
+            .property = 0,
+            .valueType = VALUE_TYPE_STRING,
+            .values = {"updateSucceeded", "updateFailed"},
+            .value_updateSucceeded = "updateSucceeded",
+            .value_updateFailed = "updateFailed",
+        },
+    .attr_state =
+        {
+            .name = "state",
+            .property = 0,
+            .valueType = VALUE_TYPE_STRING,
+            .values = {"normalOperation", "updateInProgress"},
+            .value_normalOperation = "normalOperation",
+            .value_updateInProgress = "updateInProgress",
+        },
+    .attr_currentVersion =
+        {
+            .name = "currentVersion",
+            .property = 0,
+            .valueType = VALUE_TYPE_STRING,
+        },
+    .attr_lastUpdateTime =
+        {
+            .name = "lastUpdateTime",
+            .property = 0,
+            .valueType = VALUE_TYPE_STRING,
+        },
+    .attr_availableVersion =
+        {
+            .name = "availableVersion",
+            .property = 0,
+            .valueType = VALUE_TYPE_STRING,
+        },
+    .attr_lastUpdateStatusReason =
+        {
+            .name = "lastUpdateStatusReason",
+            .property = 0,
+            .valueType = VALUE_TYPE_STRING,
+        },
 
-    .attr_updateAvailable = {
-        .name = "updateAvailable",
-        .property = 0,
-        .valueType = VALUE_TYPE_BOOLEAN,
-    },
+    .attr_updateAvailable =
+        {
+            .name = "updateAvailable",
+            .property = 0,
+            .valueType = VALUE_TYPE_BOOLEAN,
+        },
 
-    .cmd_checkForFirmwareUpdate = { .name = "checkForFirmwareUpdate" },
-    .cmd_updateFirmware = { .name = "updateFirmware" },
+    .cmd_checkForFirmwareUpdate = {.name = "checkForFirmwareUpdate"},
+    .cmd_updateFirmware = {.name = "updateFirmware"},
 };
 
 #ifdef __cplusplus

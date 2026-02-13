@@ -16,7 +16,6 @@
  *
  ****************************************************************************/
 
-
 //#define CONFIG_TARGET_WEMOS_D1_R32
 #ifdef CONFIG_TARGET_WEMOS_D1_R32
 
@@ -27,7 +26,7 @@
 
 #define GPIO_OUTPUT_NOUSE1 17
 #define GPIO_OUTPUT_NOUSE2 25
-#else // ESP32_DEVKITC_V4
+#else  // ESP32_DEVKITC_V4
 
 #define GPIO_INPUT_BUTTON 0
 
@@ -64,5 +63,5 @@ enum button_event_type {
 };
 
 void change_switch_state(int switch_state);
-int get_button_event(int* button_event_type, int* button_event_count);
+int get_button_event(int *button_event_type, int *button_event_count);
 void iot_gpio_init(void);

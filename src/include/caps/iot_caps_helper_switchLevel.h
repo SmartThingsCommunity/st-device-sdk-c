@@ -25,10 +25,7 @@
 extern "C" {
 #endif
 
-enum {
-    CAP_ENUM_SWITCHLEVEL_LEVEL_UNIT_PERCENT,
-    CAP_ENUM_SWITCHLEVEL_LEVEL_UNIT_MAX
-};
+enum { CAP_ENUM_SWITCHLEVEL_LEVEL_UNIT_PERCENT, CAP_ENUM_SWITCHLEVEL_LEVEL_UNIT_MAX };
 
 const static struct iot_caps_switchLevel {
     const char *id;
@@ -41,19 +38,22 @@ const static struct iot_caps_switchLevel {
         const int min;
         const int max;
     } attr_level;
-    const struct switchLevel_cmd_setLevel { const char* name; } cmd_setLevel;
+    const struct switchLevel_cmd_setLevel {
+        const char *name;
+    } cmd_setLevel;
 } caps_helper_switchLevel = {
     .id = "switchLevel",
-    .attr_level = {
-        .name = "level",
-        .property = ATTR_SET_VALUE_MIN | ATTR_SET_VALUE_MAX | ATTR_SET_VALUE_REQUIRED,
-        .valueType = VALUE_TYPE_INTEGER,
-        .units = {"%"},
-        .unit_percent = "%",
-        .min = 0,
-        .max = 100,
-    },
-    .cmd_setLevel = { .name = "setLevel" }, // arguments: level(integer) rate(integer) 
+    .attr_level =
+        {
+            .name = "level",
+            .property = ATTR_SET_VALUE_MIN | ATTR_SET_VALUE_MAX | ATTR_SET_VALUE_REQUIRED,
+            .valueType = VALUE_TYPE_INTEGER,
+            .units = {"%"},
+            .unit_percent = "%",
+            .min = 0,
+            .max = 100,
+        },
+    .cmd_setLevel = {.name = "setLevel"},  // arguments: level(integer) rate(integer)
 };
 
 #ifdef __cplusplus

@@ -25,10 +25,7 @@
 extern "C" {
 #endif
 
-enum {
-    CAP_ENUM_AIRQUALITYSENSOR_AIRQUALITY_UNIT_CAQI,
-    CAP_ENUM_AIRQUALITYSENSOR_AIRQUALITY_UNIT_MAX
-};
+enum { CAP_ENUM_AIRQUALITYSENSOR_AIRQUALITY_UNIT_CAQI, CAP_ENUM_AIRQUALITYSENSOR_AIRQUALITY_UNIT_MAX };
 
 const static struct iot_caps_airQualitySensor {
     const char *id;
@@ -43,15 +40,16 @@ const static struct iot_caps_airQualitySensor {
     } attr_airQuality;
 } caps_helper_airQualitySensor = {
     .id = "airQualitySensor",
-    .attr_airQuality = {
-        .name = "airQuality",
-        .property = ATTR_SET_VALUE_MIN | ATTR_SET_VALUE_MAX | ATTR_SET_VALUE_REQUIRED,
-        .valueType = VALUE_TYPE_INTEGER,
-        .units = {"CAQI"},
-        .unit_CAQI = "CAQI",
-        .min = 0,
-        .max = 100,
-    },
+    .attr_airQuality =
+        {
+            .name = "airQuality",
+            .property = ATTR_SET_VALUE_MIN | ATTR_SET_VALUE_MAX | ATTR_SET_VALUE_REQUIRED,
+            .valueType = VALUE_TYPE_INTEGER,
+            .units = {"CAQI"},
+            .unit_CAQI = "CAQI",
+            .min = 0,
+            .max = 100,
+        },
 };
 
 #ifdef __cplusplus

@@ -25,10 +25,7 @@
 extern "C" {
 #endif
 
-enum {
-    CAP_ENUM_FINEDUSTSENSOR_FINEDUSTLEVEL_UNIT_UG_PER_M3,
-    CAP_ENUM_FINEDUSTSENSOR_FINEDUSTLEVEL_UNIT_MAX
-};
+enum { CAP_ENUM_FINEDUSTSENSOR_FINEDUSTLEVEL_UNIT_UG_PER_M3, CAP_ENUM_FINEDUSTSENSOR_FINEDUSTLEVEL_UNIT_MAX };
 
 const static struct iot_caps_fineDustSensor {
     const char *id;
@@ -42,14 +39,15 @@ const static struct iot_caps_fineDustSensor {
     } attr_fineDustLevel;
 } caps_helper_fineDustSensor = {
     .id = "fineDustSensor",
-    .attr_fineDustLevel = {
-        .name = "fineDustLevel",
-        .property = ATTR_SET_VALUE_MIN | ATTR_SET_VALUE_REQUIRED,
-        .valueType = VALUE_TYPE_INTEGER,
-        .units = {"μg/m^3"},
-        .unit_ug_per_m3 = "μg/m^3",
-        .min = 0,
-    },
+    .attr_fineDustLevel =
+        {
+            .name = "fineDustLevel",
+            .property = ATTR_SET_VALUE_MIN | ATTR_SET_VALUE_REQUIRED,
+            .valueType = VALUE_TYPE_INTEGER,
+            .units = {"μg/m^3"},
+            .unit_ug_per_m3 = "μg/m^3",
+            .min = 0,
+        },
 };
 
 #ifdef __cplusplus

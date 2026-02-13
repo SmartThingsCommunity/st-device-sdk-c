@@ -51,18 +51,19 @@ const static struct iot_caps_radonHealthConcern {
     } attr_radonHealthConcern;
 } caps_helper_radonHealthConcern = {
     .id = "radonHealthConcern",
-    .attr_radonHealthConcern = {
-        .name = "radonHealthConcern",
-        .property = ATTR_SET_VALUE_REQUIRED,
-        .valueType = VALUE_TYPE_STRING,
-        .values = {"good", "moderate", "slightlyUnhealthy", "unhealthy", "veryUnhealthy", "hazardous"},
-        .value_good = "good",
-        .value_moderate = "moderate",
-        .value_slightlyUnhealthy = "slightlyUnhealthy",
-        .value_unhealthy = "unhealthy",
-        .value_veryUnhealthy = "veryUnhealthy",
-        .value_hazardous = "hazardous",
-    },
+    .attr_radonHealthConcern =
+        {
+            .name = "radonHealthConcern",
+            .property = ATTR_SET_VALUE_REQUIRED,
+            .valueType = VALUE_TYPE_STRING,
+            .values = {"good", "moderate", "slightlyUnhealthy", "unhealthy", "veryUnhealthy", "hazardous"},
+            .value_good = "good",
+            .value_moderate = "moderate",
+            .value_slightlyUnhealthy = "slightlyUnhealthy",
+            .value_unhealthy = "unhealthy",
+            .value_veryUnhealthy = "veryUnhealthy",
+            .value_hazardous = "hazardous",
+        },
 };
 
 #ifdef __cplusplus

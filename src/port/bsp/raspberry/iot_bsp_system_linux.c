@@ -16,11 +16,13 @@
  *
  ****************************************************************************/
 
+#include <gio/gio.h>
 #include <stdio.h>
 #include <stdlib.h>
+#include <sys/utsname.h>
 #include <time.h>
 #include <unistd.h>
-#include <sys/utsname.h>
+
 #include "iot_bsp_system.h"
 #include "iot_debug.h"
 
@@ -29,47 +31,77 @@
 
 static struct utsname uname_data;
 
-const char* iot_bsp_get_bsp_name(void)
+const char *iot_bsp_get_bsp_name(void)
 {
-	uname(&uname_data);
-	return uname_data.sysname;
+    uname(&uname_data);
+    return uname_data.sysname;
 }
 
-const char* iot_bsp_get_bsp_version_string(void)
+const char *iot_bsp_get_bsp_version_string(void)
 {
-	uname(&uname_data);
-	return uname_data.version;
+    uname(&uname_data);
+    return uname_data.version;
 }
 
 void iot_bsp_system_reboot(void)
 {
-	exit(0);
+    exit(0);
 }
 
 void iot_bsp_system_poweroff(void)
 {
-	exit(0);
+    exit(0);
 }
 
 iot_error_t iot_bsp_system_get_time_in_sec(time_t *time_in_sec)
 {
-	struct timespec ts = {0,};
+    struct timespec ts = {
+        0,
+    };
 
-	clock_gettime(CLOCK_REALTIME, &ts);
-	*time_in_sec = ts.tv_sec;
+    clock_gettime(CLOCK_REALTIME, &ts);
+    *time_in_sec = ts.tv_sec;
 
-	return IOT_ERROR_NONE;
+    return IOT_ERROR_NONE;
 }
 
 iot_error_t iot_bsp_system_set_time_in_sec(time_t time_in_sec)
 {
-	struct timespec ts = {0,};
-	int ret;
+    struct timespec ts = {
+        0,
+    };
+    int ret;
 
-	ts.tv_sec = time_in_sec;
-	ret = clock_settime(CLOCK_REALTIME, &ts);
-	if (ret == -1)
-		return IOT_ERROR_INVALID_ARGS;
-	
-	return IOT_ERROR_NONE;
+    ts.tv_sec = time_in_sec;
+    ret = clock_settime(CLOCK_REALTIME, &ts);
+    if (ret == -1)
+        return IOT_ERROR_INVALID_ARGS;
+
+    return IOT_ERROR_NONE;
+}
+
+iot_error_t iot_bsp_system_set_timezone(char *timezoneid)
+{
+    GDBusConnection *dbus_connection;
+    g_autoptr(GError) error = NULL;
+    GVariant *reply;
+
+    dbus_connection = g_bus_get_sync(G_BUS_TYPE_SYSTEM, NULL, &error);
+    if (error) {
+        printf("failed to get gdbus connection %s\n", error->message);
+        g_clear_error(&error);
+        return IOT_ERROR_BAD_REQ;
+    }
+
+    reply = g_dbus_connection_call_sync(
+        dbus_connection, "org.freedesktop.timedate1", "/org/freedesktop/timedate1", "org.freedesktop.timedate1",
+        "SetTimezone", g_variant_new("(sb)", timezoneid, 0), NULL, G_DBUS_CALL_FLAGS_NONE, 5000, NULL, &error);
+
+    if (error) {
+        printf("Error while sending dbus method call %s\n", error->message);
+        g_clear_error(&error);
+        return IOT_ERROR_BAD_REQ;
+    }
+
+    return IOT_ERROR_NONE;
 }

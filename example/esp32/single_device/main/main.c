@@ -20,27 +20,24 @@
 #include <stdlib.h>
 #include <string.h>
 
-#include "st_dev.h"
 #include "device_control.h"
-
 #include "freertos/FreeRTOS.h"
 #include "freertos/task.h"
-
-#include "iot_uart_cli.h"
 #include "iot_cli_cmd.h"
+#include "iot_uart_cli.h"
+#include "st_dev.h"
 
 // onboarding_config_start is null-terminated string
-extern const uint8_t onboarding_config_start[]    asm("_binary_onboarding_config_json_start");
-extern const uint8_t onboarding_config_end[]    asm("_binary_onboarding_config_json_end");
+extern const uint8_t onboarding_config_start[] asm("_binary_onboarding_config_json_start");
+extern const uint8_t onboarding_config_end[] asm("_binary_onboarding_config_json_end");
 
 // device_info_start is null-terminated string
-extern const uint8_t device_info_start[]    asm("_binary_device_info_json_start");
-extern const uint8_t device_info_end[]        asm("_binary_device_info_json_end");
+extern const uint8_t device_info_start[] asm("_binary_device_info_json_start");
+extern const uint8_t device_info_end[] asm("_binary_device_info_json_end");
 
-static iot_status_t g_iot_status = IOT_STATUS_IDLE;
-static iot_stat_lv_t g_iot_stat_lv;
+static st_device_status g_device_status = ST_DEVICE_STATUS_INIT;
 
-IOT_CTX* iot_ctx = NULL;
+IOT_CTX *iot_ctx = NULL;
 IOT_CAP_HANDLE *cap_handle = NULL;
 int switch_state = SWITCH_OFF;
 
@@ -49,12 +46,11 @@ static void update_switch_attribute(int state)
     int32_t sequence_no = 1;
 
     /* Send initial switch attribute */
-	if (state == SWITCH_OFF) {
-	    ST_CAP_SEND_ATTR_STRING(cap_handle, "switch", "off", NULL, NULL, sequence_no);
-	}
-	else {
-		ST_CAP_SEND_ATTR_STRING(cap_handle, "switch", "on", NULL, NULL, sequence_no);
-	}
+    if (state == SWITCH_OFF) {
+        ST_CAP_SEND_ATTR_STRING(cap_handle, "switch", "off", NULL, NULL, sequence_no);
+    } else {
+        ST_CAP_SEND_ATTR_STRING(cap_handle, "switch", "on", NULL, NULL, sequence_no);
+    }
 
     if (sequence_no < 0)
         printf("fail to send switch value\n");
@@ -66,47 +62,45 @@ static void cap_switch_init_cb(IOT_CAP_HANDLE *handle, void *usr_data)
 {
     printf("Init switch attribute\n");
 
-	update_switch_attribute(switch_state);
+    update_switch_attribute(switch_state);
 }
 
-static void cap_switch_cmd_off_cb(IOT_CAP_HANDLE *handle,
-                           iot_cap_cmd_data_t *cmd_data, void *usr_data)
+static void cap_switch_cmd_off_cb(IOT_CAP_HANDLE *handle, iot_cap_cmd_data_t *cmd_data, void *usr_data)
 {
     printf("OFF command received\n");
 
-	switch_state = SWITCH_OFF;
-	update_switch_attribute(SWITCH_OFF);
-	change_switch_state(SWITCH_OFF);
+    switch_state = SWITCH_OFF;
+    update_switch_attribute(SWITCH_OFF);
+    change_switch_state(SWITCH_OFF);
 }
 
-static void cap_switch_cmd_on_cb(IOT_CAP_HANDLE *handle,
-                          iot_cap_cmd_data_t *cmd_data, void *usr_data)
+static void cap_switch_cmd_on_cb(IOT_CAP_HANDLE *handle, iot_cap_cmd_data_t *cmd_data, void *usr_data)
 {
     printf("ON command received\n");
 
-	switch_state = SWITCH_ON;
-	update_switch_attribute(SWITCH_ON);
-	change_switch_state(SWITCH_ON);
+    switch_state = SWITCH_ON;
+    update_switch_attribute(SWITCH_ON);
+    change_switch_state(SWITCH_ON);
 }
 
-
-
-static void iot_status_cb(iot_status_t status,
-                          iot_stat_lv_t stat_lv, void *usr_data)
+static void iot_status_cb(st_device_status device_status, void *usr_data)
 {
-    g_iot_status = status;
-    g_iot_stat_lv = stat_lv;
-
-    printf("status: %d, stat: %d\n", g_iot_status, g_iot_stat_lv);
-
-    switch(status)
-    {
-        case IOT_STATUS_NEED_INTERACT:
+    printf("Device status %d\n", device_status);
+    g_device_status = device_status;
+    switch (device_status) {
+        case ST_DEVICE_STATUS_INIT:
             break;
-        case IOT_STATUS_IDLE:
-        case IOT_STATUS_CONNECTING:
+        case ST_DEVICE_STATUS_ONBOARDING_READY:
             break;
-        default:
+        case ST_DEVICE_STATUS_ONBOARDING_START:
+            break;
+        case ST_DEVICE_STATUS_ONBOARDING_NEED_CONFIRM:
+            break;
+        case ST_DEVICE_STATUS_ONBOARDING_ONBOARDED:
+            break;
+        case ST_DEVICE_STATUS_CLOUD_DISCONNECTED:
+            break;
+        case ST_DEVICE_STATUS_CLOUD_CONNECTED:
             break;
     }
 }
@@ -118,33 +112,35 @@ static void iot_noti_cb(iot_noti_data_t *noti_data, void *noti_usr_data)
     if (noti_data->type == IOT_NOTI_TYPE_DEV_DELETED) {
         printf("[device deleted]\n");
     } else if (noti_data->type == IOT_NOTI_TYPE_RATE_LIMIT) {
-        printf("[rate limit] Remaining time:%d, sequence number:%d\n",
-               noti_data->raw.rate_limit.remainingTime, noti_data->raw.rate_limit.sequenceNumber);
-    } else if(noti_data->type == IOT_NOTI_TYPE_PREFERENCE_UPDATED) {
-		for (int i = 0; i < noti_data->raw.preferences.preferences_num; i++) {
-			printf("[preference update] name : %s value : ", noti_data->raw.preferences.preferences_data[i].preference_name);
-			if (noti_data->raw.preferences.preferences_data[i].preference_data.type == IOT_CAP_VAL_TYPE_NULL)
-				printf("NULL\n");
-			else if (noti_data->raw.preferences.preferences_data[i].preference_data.type == IOT_CAP_VAL_TYPE_STRING)
-				printf("%s\n", noti_data->raw.preferences.preferences_data[i].preference_data.string);
-			else if (noti_data->raw.preferences.preferences_data[i].preference_data.type == IOT_CAP_VAL_TYPE_NUMBER)
-				printf("%f\n", noti_data->raw.preferences.preferences_data[i].preference_data.number);
-			else if (noti_data->raw.preferences.preferences_data[i].preference_data.type == IOT_CAP_VAL_TYPE_INTEGER)
-				printf("%d\n", noti_data->raw.preferences.preferences_data[i].preference_data.integer);
-			else if (noti_data->raw.preferences.preferences_data[i].preference_data.type == IOT_CAP_VAL_TYPE_BOOLEAN)
-				printf("%s\n", noti_data->raw.preferences.preferences_data[i].preference_data.boolean ? "true" : "false");
-			else
-				printf("Unknown type\n");
-		}
-	}
+        printf("[rate limit] Remaining time:%d, sequence number:%d\n", noti_data->raw.rate_limit.remainingTime,
+               noti_data->raw.rate_limit.sequenceNumber);
+    } else if (noti_data->type == IOT_NOTI_TYPE_PREFERENCE_UPDATED) {
+        for (int i = 0; i < noti_data->raw.preferences.preferences_num; i++) {
+            printf("[preference update] name : %s value : ",
+                   noti_data->raw.preferences.preferences_data[i].preference_name);
+            if (noti_data->raw.preferences.preferences_data[i].preference_data.type == IOT_CAP_VAL_TYPE_NULL)
+                printf("NULL\n");
+            else if (noti_data->raw.preferences.preferences_data[i].preference_data.type == IOT_CAP_VAL_TYPE_STRING)
+                printf("%s\n", noti_data->raw.preferences.preferences_data[i].preference_data.string);
+            else if (noti_data->raw.preferences.preferences_data[i].preference_data.type == IOT_CAP_VAL_TYPE_NUMBER)
+                printf("%f\n", noti_data->raw.preferences.preferences_data[i].preference_data.number);
+            else if (noti_data->raw.preferences.preferences_data[i].preference_data.type == IOT_CAP_VAL_TYPE_INTEGER)
+                printf("%d\n", noti_data->raw.preferences.preferences_data[i].preference_data.integer);
+            else if (noti_data->raw.preferences.preferences_data[i].preference_data.type == IOT_CAP_VAL_TYPE_BOOLEAN)
+                printf("%s\n",
+                       noti_data->raw.preferences.preferences_data[i].preference_data.boolean ? "true" : "false");
+            else
+                printf("Unknown type\n");
+        }
+    }
 }
 
 static void connection_start(void)
 {
     int err;
-    
-	// process on-boarding procedure. There is nothing more to do on the app side than call the API.
-    err = st_conn_start(iot_ctx, (st_status_cb)&iot_status_cb, IOT_STATUS_ALL, NULL, NULL);
+
+    // process on-boarding procedure. There is nothing more to do on the app side than call the API.
+    err = st_conn_start(iot_ctx, (st_status_cb)&iot_status_cb, NULL, NULL);
     if (err) {
         printf("fail to start connection. err:%d\n", err);
     }
@@ -160,18 +156,18 @@ void button_event(int type, int count)
 {
     if (type == BUTTON_SHORT_PRESS) {
         printf("Button short press, count: %d\n", count);
-        switch(count) {
+        switch (count) {
             case 1:
-                if (g_iot_status == IOT_STATUS_NEED_INTERACT) {
+                if (g_device_status == ST_DEVICE_STATUS_ONBOARDING_NEED_CONFIRM) {
                     st_conn_ownership_confirm(iot_ctx, true);
                 } else {
                     if (switch_state == SWITCH_ON) {
-						switch_state = SWITCH_OFF;
+                        switch_state = SWITCH_OFF;
                     } else {
-						switch_state = SWITCH_ON;
+                        switch_state = SWITCH_ON;
                     }
                     change_switch_state(switch_state);
-					update_switch_attribute(switch_state);
+                    update_switch_attribute(switch_state);
                 }
                 break;
             case 5:
@@ -182,7 +178,7 @@ void button_event(int type, int count)
                 break;
         }
     } else if (type == BUTTON_LONG_PRESS) {
-        printf("Button long press, iot_status: %d\n", g_iot_status);
+        printf("Button long press\n");
         st_conn_cleanup(iot_ctx, false);
         xTaskCreate(connection_start_task, "connection_task", 1024 * 3, NULL, 10, NULL);
     }
@@ -201,7 +197,6 @@ static void app_main_task(void *arg)
         vTaskDelay(10 / portTICK_PERIOD_MS);
     }
 }
-
 
 void app_main(void)
 {
@@ -225,9 +220,9 @@ void app_main(void)
       4. st_conn_start(); (called in function 'connection_start')
      */
 
-    unsigned char *onboarding_config = (unsigned char *) onboarding_config_start;
+    unsigned char *onboarding_config = (unsigned char *)onboarding_config_start;
     unsigned int onboarding_config_len = onboarding_config_end - onboarding_config_start;
-    unsigned char *device_info = (unsigned char *) device_info_start;
+    unsigned char *device_info = (unsigned char *)device_info_start;
     unsigned int device_info_len = device_info_end - device_info_start;
 
     int iot_err;

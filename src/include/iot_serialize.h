@@ -25,10 +25,10 @@
 extern "C" {
 #endif
 
-#define IOT_CBOR_MAX_BUF_LEN	1024
+#define IOT_CBOR_MAX_BUF_LEN 1024
 /* In case of nano newlib, it doesn't support float printf,sprintf family */
-#define IOT_SERIALIZE_SPRINTF_FLOAT	0
-#define IOT_SERIALIZE_DECIMAL_PRECISION	1000000
+#define IOT_SERIALIZE_SPRINTF_FLOAT 0
+#define IOT_SERIALIZE_DECIMAL_PRECISION 1000000
 
 /**
  * @brief	Convert cbor payload to json payload

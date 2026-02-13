@@ -59,42 +59,56 @@ const static struct iot_caps_mediaPlayback {
         const char *value_fast_forwarding;
         const char *value_rewinding;
     } attr_playbackStatus;
-    const struct mediaPlayback_cmd_setPlaybackStatus { const char* name; } cmd_setPlaybackStatus;
-    const struct mediaPlayback_cmd_play { const char* name; } cmd_play;
-    const struct mediaPlayback_cmd_pause { const char* name; } cmd_pause;
-    const struct mediaPlayback_cmd_rewind { const char* name; } cmd_rewind;
-    const struct mediaPlayback_cmd_fastForward { const char* name; } cmd_fastForward;
-    const struct mediaPlayback_cmd_stop { const char* name; } cmd_stop;
+    const struct mediaPlayback_cmd_setPlaybackStatus {
+        const char *name;
+    } cmd_setPlaybackStatus;
+    const struct mediaPlayback_cmd_play {
+        const char *name;
+    } cmd_play;
+    const struct mediaPlayback_cmd_pause {
+        const char *name;
+    } cmd_pause;
+    const struct mediaPlayback_cmd_rewind {
+        const char *name;
+    } cmd_rewind;
+    const struct mediaPlayback_cmd_fastForward {
+        const char *name;
+    } cmd_fastForward;
+    const struct mediaPlayback_cmd_stop {
+        const char *name;
+    } cmd_stop;
 } caps_helper_mediaPlayback = {
     .id = "mediaPlayback",
-    .attr_supportedPlaybackCommands = {
-        .name = "supportedPlaybackCommands",
-        .property = ATTR_SET_VALUE_ARRAY,
-        .valueType = VALUE_TYPE_STRING,
-        .values = {"pause", "play", "stop", "fastForward", "rewind"},
-        .value_pause = "pause",
-        .value_play = "play",
-        .value_stop = "stop",
-        .value_fastForward = "fastForward",
-        .value_rewind = "rewind",
-    },
-    .attr_playbackStatus = {
-        .name = "playbackStatus",
-        .property = 0,
-        .valueType = VALUE_TYPE_STRING,
-        .values = {"paused", "playing", "stopped", "fast forwarding", "rewinding"},
-        .value_paused = "paused",
-        .value_playing = "playing",
-        .value_stopped = "stopped",
-        .value_fast_forwarding = "fast forwarding",
-        .value_rewinding = "rewinding",
-    },
-    .cmd_setPlaybackStatus = { .name = "setPlaybackStatus" }, // arguments: status(string) 
-    .cmd_play = { .name = "play" },
-    .cmd_pause = { .name = "pause" },
-    .cmd_rewind = { .name = "rewind" },
-    .cmd_fastForward = { .name = "fastForward" },
-    .cmd_stop = { .name = "stop" },
+    .attr_supportedPlaybackCommands =
+        {
+            .name = "supportedPlaybackCommands",
+            .property = ATTR_SET_VALUE_ARRAY,
+            .valueType = VALUE_TYPE_STRING,
+            .values = {"pause", "play", "stop", "fastForward", "rewind"},
+            .value_pause = "pause",
+            .value_play = "play",
+            .value_stop = "stop",
+            .value_fastForward = "fastForward",
+            .value_rewind = "rewind",
+        },
+    .attr_playbackStatus =
+        {
+            .name = "playbackStatus",
+            .property = 0,
+            .valueType = VALUE_TYPE_STRING,
+            .values = {"paused", "playing", "stopped", "fast forwarding", "rewinding"},
+            .value_paused = "paused",
+            .value_playing = "playing",
+            .value_stopped = "stopped",
+            .value_fast_forwarding = "fast forwarding",
+            .value_rewinding = "rewinding",
+        },
+    .cmd_setPlaybackStatus = {.name = "setPlaybackStatus"},  // arguments: status(string)
+    .cmd_play = {.name = "play"},
+    .cmd_pause = {.name = "pause"},
+    .cmd_rewind = {.name = "rewind"},
+    .cmd_fastForward = {.name = "fastForward"},
+    .cmd_stop = {.name = "stop"},
 };
 
 #ifdef __cplusplus

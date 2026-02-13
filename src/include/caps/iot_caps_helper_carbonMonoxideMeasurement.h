@@ -43,15 +43,16 @@ const static struct iot_caps_carbonMonoxideMeasurement {
     } attr_carbonMonoxideLevel;
 } caps_helper_carbonMonoxideMeasurement = {
     .id = "carbonMonoxideMeasurement",
-    .attr_carbonMonoxideLevel = {
-        .name = "carbonMonoxideLevel",
-        .property = ATTR_SET_VALUE_MIN | ATTR_SET_VALUE_MAX | ATTR_SET_VALUE_REQUIRED | ATTR_SET_UNIT_REQUIRED,
-        .valueType = VALUE_TYPE_NUMBER,
-        .units = {"ppm"},
-        .unit_ppm = "ppm",
-        .min = 0,
-        .max = 1000000,
-    },
+    .attr_carbonMonoxideLevel =
+        {
+            .name = "carbonMonoxideLevel",
+            .property = ATTR_SET_VALUE_MIN | ATTR_SET_VALUE_MAX | ATTR_SET_VALUE_REQUIRED | ATTR_SET_UNIT_REQUIRED,
+            .valueType = VALUE_TYPE_NUMBER,
+            .units = {"ppm"},
+            .unit_ppm = "ppm",
+            .min = 0,
+            .max = 1000000,
+        },
 };
 
 #ifdef __cplusplus

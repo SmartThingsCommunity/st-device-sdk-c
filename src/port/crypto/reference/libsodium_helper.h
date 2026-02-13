@@ -25,9 +25,11 @@
 extern "C" {
 #endif
 
-iot_error_t libsodium_helper_pk_sign_ed25519(iot_security_pk_params_t *pk_params, iot_security_buffer_t *input_buf, iot_security_buffer_t *sig_buf);
+iot_error_t libsodium_helper_pk_sign_ed25519(iot_security_pk_params_t *pk_params, iot_security_buffer_t *input_buf,
+                                             iot_security_buffer_t *sig_buf);
 
-iot_error_t libsodium_helper_pk_verify_ed25519(iot_security_pk_params_t *pk_params, iot_security_buffer_t *input_buf, iot_security_buffer_t *sig_buf);
+iot_error_t libsodium_helper_pk_verify_ed25519(iot_security_pk_params_t *pk_params, iot_security_buffer_t *input_buf,
+                                               iot_security_buffer_t *sig_buf);
 
 #ifdef __cplusplus
 }

@@ -29,7 +29,7 @@ extern "C" {
 #define DLLExport __declspec(dllexport)
 #elif defined(LINUX_SO)
 #define DLLImport extern
-#define DLLExport  __attribute__ ((visibility ("default")))
+#define DLLExport __attribute__((visibility("default")))
 #else
 #define DLLImport
 #define DLLExport
@@ -37,86 +37,88 @@ extern "C" {
 
 #include <iot_util.h>
 
-#define ST_MQTT_TCP_KEEPALIVE_IDLE	(300)		/**< @brief tcp keep alive idle with seconds unit */
-#define ST_MQTT_TCP_KEEPALIVE_COUNT	(3)		/**< @brief tcp keep alive count */
-#define ST_MQTT_TCP_KEEPALIVE_INTERVAL	(2)		/**< @brief tcp keep alive intrval */
+#define ST_MQTT_TCP_KEEPALIVE_IDLE (300)   /**< @brief tcp keep alive idle with seconds unit */
+#define ST_MQTT_TCP_KEEPALIVE_COUNT (3)    /**< @brief tcp keep alive count */
+#define ST_MQTT_TCP_KEEPALIVE_INTERVAL (2) /**< @brief tcp keep alive intrval */
 
-typedef void* st_mqtt_client;
+typedef void *st_mqtt_client;
 
 typedef struct st_mqtt_broker_info {
-	char *url;						/**< @brief server address */
-	int port;						/**< @brief server port */
-	const unsigned char *ca_cert;	/**< @brief a pointer to a CA certificate */
-	unsigned int ca_cert_len;		/**< @brief a size of CA certificate */
+    char *url;                    /**< @brief server address */
+    int port;                     /**< @brief server port */
+    const unsigned char *ca_cert; /**< @brief a pointer to a CA certificate */
+    unsigned int ca_cert_len;     /**< @brief a size of CA certificate */
 
-	char ssl;						/**< @brief ssl support */
+    char ssl; /**< @brief ssl support */
 } st_mqtt_broker_info_t;
 
-typedef struct
-{
-	/** Version of MQTT to be used.  3 = 3.1 4 = 3.1.1 5 = 5.0 */
-	unsigned char mqtt_ver;			/**< @brief MQTT version */
-	char *username;					/**< @brief connection user name */
-	char *password;					/**< @brief connection passwor  */
-	char *clientid;					/**< @brief connectino client id */
+typedef struct {
+    /** Version of MQTT to be used.  3 = 3.1 4 = 3.1.1 5 = 5.0 */
+    unsigned char mqtt_ver; /**< @brief MQTT version */
+    char *username;         /**< @brief connection user name */
+    char *password;         /**< @brief connection passwor  */
+    char *clientid;         /**< @brief connectino client id */
 
-	unsigned short alive_interval;	/**< @brief PING request period */
-	unsigned char cleansession;		/**< @brief request clean session */
+    unsigned short alive_interval; /**< @brief PING request period */
+    unsigned char cleansession;    /**< @brief request clean session */
 
-	unsigned char will_flag;		/**< @brief using will property */
-	char *will_topic;				/**< @brief MQTT will topic */
-	char *will_message;				/**< @brief MQTT will message */
-	unsigned char will_retained;	/**< @brief MQTT will retained */
-	char will_qos;					/**< @brief MQTT will qos */
+    unsigned char will_flag;     /**< @brief using will property */
+    char *will_topic;            /**< @brief MQTT will topic */
+    char *will_message;          /**< @brief MQTT will message */
+    unsigned char will_retained; /**< @brief MQTT will retained */
+    char will_qos;               /**< @brief MQTT will qos */
 } st_mqtt_connect_data;
 
-#define st_mqtt_default_alive_interval	120
-#define st_mqtt_connect_data_initializer  { 4, NULL, NULL, NULL, st_mqtt_default_alive_interval, 1, 0, NULL, NULL, 0, 0}
+#define st_mqtt_default_alive_interval 120
+#define st_mqtt_connect_data_initializer                                            \
+    {                                                                               \
+        4, NULL, NULL, NULL, st_mqtt_default_alive_interval, 1, 0, NULL, NULL, 0, 0 \
+    }
 
 typedef struct st_mqtt_msg {
-	void *topic;					/**< @brief MQTT publish packet topic */
-	int topiclen;					/**< @brief MQTT publish packet topic length */
-	void *payload;					/**< @brief MQTT publish packet payload */
-	int payloadlen;					/**< @brief MQTT publish packet payload length */
+    void *topic;    /**< @brief MQTT publish packet topic */
+    int topiclen;   /**< @brief MQTT publish packet topic length */
+    void *payload;  /**< @brief MQTT publish packet payload */
+    int payloadlen; /**< @brief MQTT publish packet payload length */
 
-	int qos;						/**< @brief MQTT publish packet QoS */
-	unsigned char retained;			/**< @brief MQTT publish packet retained */
+    int qos;                /**< @brief MQTT publish packet QoS */
+    unsigned char retained; /**< @brief MQTT publish packet retained */
 } st_mqtt_msg;
 
 typedef enum {
-	MQTT_DISCONNECTED_NETWORK_ERROR,
-	MQTT_DISCONNECTED_PING_FAIL,
-	MQTT_DISCONNECTED_PING_TIMEOUT,
+    MQTT_DISCONNECTED_NETWORK_ERROR,
+    MQTT_DISCONNECTED_PING_FAIL,
+    MQTT_DISCONNECTED_PING_TIMEOUT,
 } st_mqtt_evt_dis_reason;
 
 typedef enum {
-	ST_MQTT_EVENT_MSG_DELIVERED = 1,
-	ST_MQTT_EVENT_PUBLISH_FAILED = 2,
-	ST_MQTT_EVENT_PUBLISH_TIMEOUT = 3,
-	ST_MQTT_EVENT_DISCONNECTED = 4,
+    ST_MQTT_EVENT_MSG_DELIVERED = 1,
+    ST_MQTT_EVENT_PUBLISH_FAILED = 2,
+    ST_MQTT_EVENT_PUBLISH_TIMEOUT = 3,
+    ST_MQTT_EVENT_DISCONNECTED = 4,
 } st_mqtt_event;
 
 typedef void (*st_mqtt_event_callback)(st_mqtt_event event, void *event_data, void *usr_data);
 
 enum {
-	st_mqtt_qos0,					/* MQTT QoS0 */
-	st_mqtt_qos1,					/* MQTT QoS1 */
-	st_mqtt_qos2					/* MQTT QoS2 */
+    st_mqtt_qos0, /* MQTT QoS0 */
+    st_mqtt_qos1, /* MQTT QoS1 */
+    st_mqtt_qos2  /* MQTT QoS2 */
 };
 
 enum {
-	E_ST_MQTT_FAILURE = -1,							/* MQTT operation fail */
-	E_ST_MQTT_DISCONNECTED = -2,					/* MQTT disconnect */
-	E_ST_MQTT_BUFFER_OVERFLOW = -3,					/* MQTT buffer overflow */
-	E_ST_MQTT_UNNACCEPTABLE_PROTOCOL = -4,			/* MQTT server does not support version requested by client */
-	E_ST_MQTT_SERVER_UNAVAILABLE = -5,				/* MQTT service is unavailable */
-	E_ST_MQTT_CLIENTID_REJECTED = -6,				/* MQTT connection client id not allowed by server */
-	E_ST_MQTT_BAD_USERNAME_OR_PASSWORD = -7,		/* MQTT connection username or password is malformed */
-	E_ST_MQTT_NOT_AUTHORIZED = -8,					/* MQTT client is not authorized to connect */
-	E_ST_MQTT_NETWORK_ERROR = -9,					/* MQTT network error */
-	E_ST_MQTT_PACKET_TIMEOUT = -10,					/* MQTT MQTT pending packet timeout */
-	E_ST_MQTT_PING_FAIL = -11,						/* MQTT send ping fail */
-	E_ST_MQTT_PING_TIMEOUT = -12,					/* MQTT send ping timeout */
+    E_ST_MQTT_FAILURE = -1,                  /* MQTT operation fail */
+    E_ST_MQTT_DISCONNECTED = -2,             /* MQTT disconnect */
+    E_ST_MQTT_BUFFER_OVERFLOW = -3,          /* MQTT buffer overflow */
+    E_ST_MQTT_UNNACCEPTABLE_PROTOCOL = -4,   /* MQTT server does not support version requested by client */
+    E_ST_MQTT_SERVER_UNAVAILABLE = -5,       /* MQTT service is unavailable */
+    E_ST_MQTT_CLIENTID_REJECTED = -6,        /* MQTT connection client id not allowed by server */
+    E_ST_MQTT_BAD_USERNAME_OR_PASSWORD = -7, /* MQTT connection username or password is malformed */
+    E_ST_MQTT_NOT_AUTHORIZED = -8,           /* MQTT client is not authorized to connect */
+    E_ST_MQTT_NETWORK_ERROR = -9,            /* MQTT network error */
+    E_ST_MQTT_PACKET_TIMEOUT = -10,          /* MQTT MQTT pending packet timeout */
+    E_ST_MQTT_PING_FAIL = -11,               /* MQTT send ping fail */
+    E_ST_MQTT_PING_TIMEOUT = -12,            /* MQTT send ping timeout */
 };
 
 /**
@@ -128,7 +130,8 @@ enum {
  * @param work_queue_signal - work queue signal for MQTT client to send after puting work.
  * @return success code
  */
-DLLExport int st_mqtt_create(st_mqtt_client *client, st_mqtt_event_callback callback_fp, void *user_data, iot_util_queue_t *work_queue, iot_os_eventgroup *work_queue_signal);
+DLLExport int st_mqtt_create(st_mqtt_client *client, st_mqtt_event_callback callback_fp, void *user_data,
+                             iot_util_queue_t *work_queue, iot_os_eventgroup *work_queue_signal);
 
 /** MQTT Connect - send an MQTT connect packet down the network and wait for a Connack
  *  @param client - the client object to use
@@ -160,7 +163,6 @@ DLLExport int st_mqtt_publish_async(st_mqtt_client client, st_mqtt_msg *msg);
  */
 DLLExport void st_mqtt_change_ping_period(st_mqtt_client client, unsigned int new_period);
 
-
 /** MQTT Subscribe - send an MQTT subscribe packet and wait for suback before returning.
  *  @param client - the client object to use
  *  @param count - subscribe topic count
@@ -168,7 +170,7 @@ DLLExport void st_mqtt_change_ping_period(st_mqtt_client client, unsigned int ne
  *  @param qos - request subscribe QoS level
  *  @return success code
  */
-DLLExport int st_mqtt_subscribe(st_mqtt_client client, int count, char* topics[], int qos[]);
+DLLExport int st_mqtt_subscribe(st_mqtt_client client, int count, char *topics[], int qos[]);
 
 /** MQTT Subscribe - send an MQTT unsubscribe packet and wait for unsuback before returning.
  *  @param client - the client object to use
@@ -176,7 +178,7 @@ DLLExport int st_mqtt_subscribe(st_mqtt_client client, int count, char* topics[]
  *  @param topics - the topic filters to unsubscribe from
  *  @return success code
  */
-DLLExport int st_mqtt_unsubscribe(st_mqtt_client client, int count, char* topics[]);
+DLLExport int st_mqtt_unsubscribe(st_mqtt_client client, int count, char *topics[]);
 
 /** MQTT Disconnect - send an MQTT disconnect packet and close the connection
  *  @param client - the client object to use

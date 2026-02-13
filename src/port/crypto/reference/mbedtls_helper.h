@@ -25,25 +25,36 @@
 extern "C" {
 #endif
 
-iot_error_t mbedtls_helper_sha512(const unsigned char *input, size_t input_len, unsigned char *output, size_t output_len);
+iot_error_t mbedtls_helper_sha512(const unsigned char *input, size_t input_len, unsigned char *output,
+                                  size_t output_len);
 
-iot_error_t mbedtls_helper_sha256(const unsigned char *input, size_t input_len, unsigned char *output, size_t output_len);
+iot_error_t mbedtls_helper_sha256(const unsigned char *input, size_t input_len, unsigned char *output,
+                                  size_t output_len);
 
 iot_error_t mbedtls_helper_gen_secp256r1_keypair(iot_security_buffer_t *seckey_buf, iot_security_buffer_t *pubkey_buf);
 
-iot_error_t mbedtls_helper_pk_sign_rsa(iot_security_pk_params_t *pk_params, iot_security_buffer_t *input_buf, iot_security_buffer_t *sig_buf);
+iot_error_t mbedtls_helper_pk_sign_rsa(iot_security_pk_params_t *pk_params, iot_security_buffer_t *input_buf,
+                                       iot_security_buffer_t *sig_buf);
 
-iot_error_t mbedtls_helper_pk_sign_ecdsa(iot_security_pk_params_t *pk_params, iot_security_buffer_t *input_buf, iot_security_buffer_t *sig_buf);
+iot_error_t mbedtls_helper_pk_sign_ecdsa(iot_security_pk_params_t *pk_params, iot_security_buffer_t *input_buf,
+                                         iot_security_buffer_t *sig_buf);
 
-iot_error_t mbedtls_helper_pk_verify_rsa(iot_security_pk_params_t *pk_params, iot_security_buffer_t *input_buf, iot_security_buffer_t *sig_buf);
+iot_error_t mbedtls_helper_pk_verify_rsa(iot_security_pk_params_t *pk_params, iot_security_buffer_t *input_buf,
+                                         iot_security_buffer_t *sig_buf);
 
-iot_error_t mbedtls_helper_pk_verify_ecdsa(iot_security_pk_params_t *pk_params, iot_security_buffer_t *input_buf, iot_security_buffer_t *sig_buf);
+iot_error_t mbedtls_helper_pk_verify_ecdsa(iot_security_pk_params_t *pk_params, iot_security_buffer_t *input_buf,
+                                           iot_security_buffer_t *sig_buf);
 
-iot_error_t mbedtls_helper_cipher_aes(iot_security_cipher_params_t *cipher_params, iot_security_buffer_t *input_buf, iot_security_buffer_t *output_buf, bool is_encrypt);
+iot_error_t mbedtls_helper_cipher_aes(iot_security_cipher_params_t *cipher_params, iot_security_buffer_t *input_buf,
+                                      iot_security_buffer_t *output_buf, bool is_encrypt);
 
-iot_error_t mbedtls_helper_ecdh_compute_shared_ecdsa(iot_security_buffer_t *t_seckey_buf, iot_security_buffer_t *c_pubkey_buf, iot_security_buffer_t *output_buf);
+iot_error_t mbedtls_helper_ecdh_compute_shared_ecdsa(iot_security_buffer_t *t_seckey_buf,
+                                                     iot_security_buffer_t *c_pubkey_buf,
+                                                     iot_security_buffer_t *output_buf);
 
-iot_error_t mbedtls_helper_ecdh_compute_shared_ed25519(iot_security_buffer_t *t_seckey_buf, iot_security_buffer_t *c_pubkey_buf, iot_security_buffer_t *output_buf);
+iot_error_t mbedtls_helper_ecdh_compute_shared_ed25519(iot_security_buffer_t *t_seckey_buf,
+                                                       iot_security_buffer_t *c_pubkey_buf,
+                                                       iot_security_buffer_t *output_buf);
 
 #ifdef __cplusplus
 }

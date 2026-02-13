@@ -30,13 +30,14 @@ extern "C" {
  * @brief internal debug level.
  */
 typedef enum {
-	IOT_DEBUG_LEVEL_NONE = 0,
-	IOT_DEBUG_LEVEL_ERROR,
-	IOT_DEBUG_LEVEL_WARN,
-	IOT_DEBUG_LEVEL_INFO,
-	IOT_DEBUG_LEVEL_DEBUG,
+    IOT_DEBUG_LEVEL_NONE = 0,
+    IOT_DEBUG_LEVEL_ERROR,
+    IOT_DEBUG_LEVEL_WARN,
+    IOT_DEBUG_LEVEL_INFO,
+    IOT_DEBUG_LEVEL_SENSITIVE_INFO,
+    IOT_DEBUG_LEVEL_DEBUG,
 
-	IOT_DEBUG_LEVEL_MAX
+    IOT_DEBUG_LEVEL_MAX
 } iot_debug_level_t;
 
 #ifdef SUPPORT_TC_ON_STATIC_FUNC
@@ -47,17 +48,18 @@ typedef enum {
 #define STATIC_VARIABLE static
 #endif
 
-
 #define IOT_DEBUG_PREFIX "[IoT]"
 #define COLOR_CYAN "\033[0;36m"
 #define COLOR_END "\033[0;m"
 
 extern void iot_dump_log(iot_debug_level_t level, dump_log_id_t log_id, int arg1, int arg2);
 
-extern void iot_bsp_debug(iot_debug_level_t level, const char* tag, const char* fmt, ...);
-extern void iot_bsp_debug_check_heap(const char* tag, const char* func, const int line, const char* fmt, ...);
+extern void iot_bsp_debug(iot_debug_level_t level, const char *tag, const char *fmt, ...);
+extern void iot_bsp_debug_check_heap(const char *tag, const char *func, const int line, const char *fmt, ...);
+extern void iot_util_print_ssid_secure(const char *func, const int func_line, char *prefix, char *ssid);
+extern void iot_util_print_mac_secure(const char *func, const int func_line, char *prefix, uint8_t *mac_address);
 #if defined(CONFIG_STDK_IOT_CORE_EASYSETUP_LOG_SUPPORT_NO_USE_LOGFILE)
-extern void iot_debug_save_log(char* buf);
+extern void iot_debug_save_log(char *buf);
 extern char *iot_debug_get_log(void);
 #endif
 
@@ -72,7 +74,8 @@ extern char *iot_debug_get_log(void);
  * Macro to use log function
  */
 #if defined(CONFIG_STDK_IOT_CORE_LOG_LEVEL_ERROR)
-#define IOT_ERROR(fmt, args...) iot_bsp_debug(IOT_DEBUG_LEVEL_ERROR, IOT_DEBUG_PREFIX, "%s(%d) > "fmt, __FUNCTION__, __LINE__, ##args)
+#define IOT_ERROR(fmt, args...) \
+    iot_bsp_debug(IOT_DEBUG_LEVEL_ERROR, IOT_DEBUG_PREFIX, "%s(%d) > " fmt, __FUNCTION__, __LINE__, ##args)
 #else
 #define IOT_ERROR(fmt, args...)
 #endif
@@ -83,7 +86,8 @@ extern char *iot_debug_get_log(void);
  * Macro to use log function
  */
 #if defined(CONFIG_STDK_IOT_CORE_LOG_LEVEL_WARN)
-#define IOT_WARN(fmt, args...) iot_bsp_debug(IOT_DEBUG_LEVEL_WARN, IOT_DEBUG_PREFIX, "%s(%d) > "fmt, __FUNCTION__, __LINE__, ##args)
+#define IOT_WARN(fmt, args...) \
+    iot_bsp_debug(IOT_DEBUG_LEVEL_WARN, IOT_DEBUG_PREFIX, "%s(%d) > " fmt, __FUNCTION__, __LINE__, ##args)
 #else
 #define IOT_WARN(fmt, args...)
 #endif
@@ -94,12 +98,29 @@ extern char *iot_debug_get_log(void);
  * Macro to use log function
  */
 #if defined(CONFIG_STDK_IOT_CORE_LOG_LEVEL_INFO)
-#define IOT_INFO(fmt, args...) iot_bsp_debug(IOT_DEBUG_LEVEL_INFO, IOT_DEBUG_PREFIX, "%s(%d) > "fmt, __FUNCTION__, __LINE__, ##args)
-#define IOT_REMARK(fmt, args...) iot_bsp_debug(IOT_DEBUG_LEVEL_INFO, IOT_DEBUG_PREFIX, "%s(%d) > "fmt, __FUNCTION__, __LINE__, ##args)
+#define IOT_INFO(fmt, args...) \
+    iot_bsp_debug(IOT_DEBUG_LEVEL_INFO, IOT_DEBUG_PREFIX, "%s(%d) > " fmt, __FUNCTION__, __LINE__, ##args)
+#define IOT_REMARK(fmt, args...) \
+    iot_bsp_debug(IOT_DEBUG_LEVEL_INFO, IOT_DEBUG_PREFIX, "%s(%d) > " fmt, __FUNCTION__, __LINE__, ##args)
 #else
 #define IOT_INFO(fmt, args...)
 #define IOT_REMARK(fmt, args...)
 #endif
+
+/**
+ * @brief Sensitive info level logging macro.
+ *
+ * Macro to use log function
+ */
+#if defined(CONFIG_STDK_IOT_CORE_LOG_LEVEL_SENSITIVE_INFO)
+#define IOT_SENSITIVE_INFO(fmt, args...) \
+    iot_bsp_debug(IOT_DEBUG_LEVEL_SENSITIVE_INFO, IOT_DEBUG_PREFIX, "%s(%d) > " fmt, __FUNCTION__, __LINE__, ##args)
+#else
+#define IOT_SENSITIVE_INFO(fmt, args...)
+#endif
+
+#define IOT_SENSITIVE_INFO_SSID(prefix, ssid) iot_util_print_ssid_secure(__FUNCTION__, __LINE__, prefix, ssid)
+#define IOT_SENSITIVE_INFO_MAC(prefix, mac) iot_util_print_mac_secure(__FUNCTION__, __LINE__, prefix, mac)
 
 /**
  * @brief Debug level logging macro.
@@ -107,17 +128,23 @@ extern char *iot_debug_get_log(void);
  * Macro to use log function
  */
 #if defined(CONFIG_STDK_IOT_CORE_LOG_LEVEL_DEBUG)
-#define IOT_DEBUG(fmt, args...) iot_bsp_debug(IOT_DEBUG_LEVEL_DEBUG, IOT_DEBUG_PREFIX, "%s(%d) > "fmt, __FUNCTION__, __LINE__, ##args)
-#define HIT() iot_bsp_debug(IOT_DEBUG_LEVEL_DEBUG, IOT_DEBUG_PREFIX, "%s(%d) > " COLOR_CYAN ">>>HIT<<<" COLOR_END, __FUNCTION__, __LINE__)
-#define ENTER() iot_bsp_debug(IOT_DEBUG_LEVEL_DEBUG, IOT_DEBUG_PREFIX, "%s(%d) > " COLOR_CYAN "ENTER >>>>" COLOR_END, __FUNCTION__, __LINE__)
-#define LEAVE() iot_bsp_debug(IOT_DEBUG_LEVEL_DEBUG, IOT_DEBUG_PREFIX, "%s(%d) > " COLOR_CYAN "LEAVE <<<<" COLOR_END, __FUNCTION__, __LINE__)
+#define IOT_DEBUG(fmt, args...) \
+    iot_bsp_debug(IOT_DEBUG_LEVEL_DEBUG, IOT_DEBUG_PREFIX, "%s(%d) > " fmt, __FUNCTION__, __LINE__, ##args)
+#define HIT()                                                                                                          \
+    iot_bsp_debug(IOT_DEBUG_LEVEL_DEBUG, IOT_DEBUG_PREFIX, "%s(%d) > " COLOR_CYAN ">>>HIT<<<" COLOR_END, __FUNCTION__, \
+                  __LINE__)
+#define ENTER()                                                                                           \
+    iot_bsp_debug(IOT_DEBUG_LEVEL_DEBUG, IOT_DEBUG_PREFIX, "%s(%d) > " COLOR_CYAN "ENTER >>>>" COLOR_END, \
+                  __FUNCTION__, __LINE__)
+#define LEAVE()                                                                                           \
+    iot_bsp_debug(IOT_DEBUG_LEVEL_DEBUG, IOT_DEBUG_PREFIX, "%s(%d) > " COLOR_CYAN "LEAVE <<<<" COLOR_END, \
+                  __FUNCTION__, __LINE__)
 #else
 #define IOT_DEBUG(fmt, args...)
 #define HIT()
 #define ENTER()
 #define LEAVE()
 #endif
-
 
 /**
  * @brief Memory(heap) checking macro.
@@ -134,26 +161,29 @@ extern char *iot_debug_get_log(void);
  *
  * Macro to check condition
  */
-#define IOT_ERROR_CHECK(condition, ret, fmt, args...) do { \
-		if ((condition)) { \
-			IOT_ERROR(fmt, ##args); \
-			return (ret); \
-		} \
-} while (0)
+#define IOT_ERROR_CHECK(condition, ret, fmt, args...) \
+    do {                                              \
+        if ((condition)) {                            \
+            IOT_ERROR(fmt, ##args);                   \
+            return (ret);                             \
+        }                                             \
+    } while (0)
 
-#define IOT_WARN_CHECK(condition, ret, fmt, args...) do { \
-		if ((condition)) { \
-			IOT_WARN(fmt, ##args); \
-			return (ret); \
-		} \
-} while (0)
+#define IOT_WARN_CHECK(condition, ret, fmt, args...) \
+    do {                                             \
+        if ((condition)) {                           \
+            IOT_WARN(fmt, ##args);                   \
+            return (ret);                            \
+        }                                            \
+    } while (0)
 
-#define IOT_DEBUG_CHECK(condition, ret, fmt, args...) do { \
-		if ((condition)) { \
-			IOT_DEBUG(fmt, ##args); \
-			return (ret); \
-		} \
-} while (0)
+#define IOT_DEBUG_CHECK(condition, ret, fmt, args...) \
+    do {                                              \
+        if ((condition)) {                            \
+            IOT_DEBUG(fmt, ##args);                   \
+            return (ret);                             \
+        }                                             \
+    } while (0)
 
 #ifdef __cplusplus
 }

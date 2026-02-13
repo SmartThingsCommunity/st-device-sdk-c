@@ -55,7 +55,8 @@ iot_error_t port_crypto_sha256(const unsigned char *input, size_t input_len, uns
  * @retval	IOT_ERROR_NONE success
  * @retval	IOT_ERROR_INVALID_ARGS input parameter is invalid
  */
-iot_error_t port_crypto_generate_key(iot_security_key_id_t key_type, iot_security_buffer_t *seckey_buf, iot_security_buffer_t *pubkey_buf);
+iot_error_t port_crypto_generate_key(iot_security_key_id_t key_type, iot_security_buffer_t *seckey_buf,
+                                     iot_security_buffer_t *pubkey_buf);
 
 /**
  * @brief	Create a signature
@@ -65,7 +66,8 @@ iot_error_t port_crypto_generate_key(iot_security_key_id_t key_type, iot_securit
  * @retval	IOT_ERROR_NONE success
  * @retval	IOT_ERROR_INVALID_ARGS input parameter is invalid
  */
-iot_error_t port_crypto_pk_sign(iot_security_pk_params_t *pk_params, iot_security_buffer_t *input_buf, iot_security_buffer_t *sig_buf);
+iot_error_t port_crypto_pk_sign(iot_security_pk_params_t *pk_params, iot_security_buffer_t *input_buf,
+                                iot_security_buffer_t *sig_buf);
 
 /**
  * @brief	Verify a signature
@@ -75,7 +77,8 @@ iot_error_t port_crypto_pk_sign(iot_security_pk_params_t *pk_params, iot_securit
  * @retval	IOT_ERROR_NONE success
  * @retval	IOT_ERROR_INVALID_ARGS input parameter is invalid
  */
-iot_error_t port_crypto_pk_verify(iot_security_pk_params_t *pk_params, iot_security_buffer_t *input_buf, iot_security_buffer_t *sig_buf);
+iot_error_t port_crypto_pk_verify(iot_security_pk_params_t *pk_params, iot_security_buffer_t *input_buf,
+                                  iot_security_buffer_t *sig_buf);
 
 /**
  * @brief	Encrypt input data
@@ -85,7 +88,8 @@ iot_error_t port_crypto_pk_verify(iot_security_pk_params_t *pk_params, iot_secur
  * @retval	IOT_ERROR_NONE success
  * @retval	IOT_ERROR_INVALID_ARGS input parameter is invalid
  */
-iot_error_t port_crypto_cipher_encrypt(iot_security_cipher_params_t *cipher_params, iot_security_buffer_t *input_buf, iot_security_buffer_t *output_buf);
+iot_error_t port_crypto_cipher_encrypt(iot_security_cipher_params_t *cipher_params, iot_security_buffer_t *input_buf,
+                                       iot_security_buffer_t *output_buf);
 
 /**
  * @brief	Decrypt input data
@@ -95,7 +99,8 @@ iot_error_t port_crypto_cipher_encrypt(iot_security_cipher_params_t *cipher_para
  * @retval	IOT_ERROR_NONE success
  * @retval	IOT_ERROR_INVALID_ARGS input parameter is invalid
  */
-iot_error_t port_crypto_cipher_decrypt(iot_security_cipher_params_t *cipher_params, iot_security_buffer_t *input_buf, iot_security_buffer_t *output_buf);
+iot_error_t port_crypto_cipher_decrypt(iot_security_cipher_params_t *cipher_params, iot_security_buffer_t *input_buf,
+                                       iot_security_buffer_t *output_buf);
 
 /**
  * @brief	Compute share key
@@ -106,7 +111,8 @@ iot_error_t port_crypto_cipher_decrypt(iot_security_cipher_params_t *cipher_para
  * @retval	IOT_ERROR_NONE success
  * @retval	IOT_ERROR_INVALID_ARGS input parameter is invalid
  */
-iot_error_t port_crypto_compute_ecdh_shared(iot_security_key_type_t key_type, iot_security_buffer_t *t_seckey_buf, iot_security_buffer_t *c_pubkey_buf, iot_security_buffer_t *output_buf);
+iot_error_t port_crypto_compute_ecdh_shared(iot_security_key_type_t key_type, iot_security_buffer_t *t_seckey_buf,
+                                            iot_security_buffer_t *c_pubkey_buf, iot_security_buffer_t *output_buf);
 
 #ifdef __cplusplus
 }

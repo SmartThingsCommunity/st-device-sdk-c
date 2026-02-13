@@ -19,60 +19,64 @@
 #ifndef _IOT_INTERNAL_H_
 #define _IOT_INTERNAL_H_
 
+#include "iot_bsp_wifi.h"
 #include "iot_capability.h"
 #include "iot_serialize.h"
-#include "iot_bsp_wifi.h"
 
 #define IOT_TASK_NAME "iot-task"
-#define IOT_TASK_STACK_SIZE (1024*5)
+#define IOT_TASK_STACK_SIZE (1024 * 5)
 #define IOT_TASK_PRIORITY (4)
 #define IOT_QUEUE_LENGTH (10)
 
 #define IOT_TOPIC_SIZE (100)
 #define IOT_PAYLOAD_SIZE (1024)
 
-#define IOT_SUB_TOPIC_REGISTRATION_PREFIX	"/v1/registrations/notification"
-#define IOT_SUB_TOPIC_REGISTRATION_PREFIX_SIZE	strlen(IOT_SUB_TOPIC_REGISTRATION_PREFIX)
-#define IOT_SUB_TOPIC_COMMAND_PREFIX		"/v1/commands"
-#define IOT_SUB_TOPIC_COMMAND_PREFIX_SIZE		strlen(IOT_SUB_TOPIC_COMMAND_PREFIX)
-#define IOT_SUB_TOPIC_NOTIFICATION_PREFIX	"/v1/notifications"
-#define IOT_SUB_TOPIC_NOTIFICATION_PREFIX_SIZE	strlen(IOT_SUB_TOPIC_NOTIFICATION_PREFIX)
+#define IOT_SUB_TOPIC_REGISTRATION_PREFIX "/v1/registrations/notification"
+#define IOT_SUB_TOPIC_REGISTRATION_PREFIX_SIZE strlen(IOT_SUB_TOPIC_REGISTRATION_PREFIX)
+#define IOT_SUB_TOPIC_COMMAND_PREFIX "/v1/commands"
+#define IOT_SUB_TOPIC_COMMAND_PREFIX_SIZE strlen(IOT_SUB_TOPIC_COMMAND_PREFIX)
+#define IOT_SUB_TOPIC_NOTIFICATION_PREFIX "/v1/notifications"
+#define IOT_SUB_TOPIC_NOTIFICATION_PREFIX_SIZE strlen(IOT_SUB_TOPIC_NOTIFICATION_PREFIX)
 
 #if defined(STDK_IOT_CORE_SERIALIZE_CBOR)
-#define IOT_PUB_TOPIC_REGISTRATION	"/v1/registrations/cbor"
-#define IOT_SUB_TOPIC_REGISTRATION	"/v1/registrations/notification/%s/cbor"
+#define IOT_PUB_TOPIC_REGISTRATION "/v1/registrations/cbor"
+#define IOT_SUB_TOPIC_REGISTRATION "/v1/registrations/notification/%s/cbor"
 
-#define IOT_PUB_TOPIC_EVENT		"/v1/deviceEvents/%s/cbor"
-#define IOT_SUB_TOPIC_COMMAND		"/v1/commands/%s/cbor"
-#define IOT_SUB_TOPIC_NOTIFICATION	"/v1/notifications/%s/cbor"
-#define IOT_PUB_TOPIC_HEALTH		"/v1/health/cbor"
-#define IOT_PUB_TOPIC_DEVICES_UPDATE		"/v1/devices/update/cbor"
-#define IOT_PUB_TOPIC_GET_PREFERENCES		"/v1/devices/preferences/get/cbor"
+#define IOT_PUB_TOPIC_EVENT "/v1/deviceEvents/%s/cbor"
+#define IOT_SUB_TOPIC_COMMAND "/v1/commands/%s/cbor"
+#define IOT_SUB_TOPIC_NOTIFICATION "/v1/notifications/%s/cbor"
+#define IOT_PUB_TOPIC_HEALTH "/v1/health/cbor"
+#define IOT_PUB_TOPIC_DEVICES_UPDATE "/v1/devices/update/cbor"
+#define IOT_PUB_TOPIC_DEVICES_CREATE "/v1/devices/create/cbor"
+#define IOT_PUB_TOPIC_GET_PREFERENCES "/v1/devices/preferences/get/cbor"
+#define IOT_PUB_TOPIC_GET "/v1/devices/get/cbor"
 #else
-#define IOT_PUB_TOPIC_REGISTRATION	"/v1/registrations"
-#define IOT_SUB_TOPIC_REGISTRATION	"/v1/registrations/notification/%s"
+#define IOT_PUB_TOPIC_REGISTRATION "/v1/registrations"
+#define IOT_SUB_TOPIC_REGISTRATION "/v1/registrations/notification/%s"
 
-#define IOT_PUB_TOPIC_EVENT		"/v1/deviceEvents/%s"
-#define IOT_SUB_TOPIC_COMMAND		"/v1/commands/%s"
-#define IOT_SUB_TOPIC_NOTIFICATION	"/v1/notifications/%s"
-#define IOT_PUB_TOPIC_HEALTH		"/v1/health"
-#define IOT_PUB_TOPIC_DEVICES_UPDATE		"/v1/devices/update"
-#define IOT_PUB_TOPIC_GET_PREFERENCES		"/v1/devices/preferences/get"
+#define IOT_PUB_TOPIC_EVENT "/v1/deviceEvents/%s"
+#define IOT_SUB_TOPIC_COMMAND "/v1/commands/%s"
+#define IOT_SUB_TOPIC_NOTIFICATION "/v1/notifications/%s"
+#define IOT_PUB_TOPIC_HEALTH "/v1/health"
+#define IOT_PUB_TOPIC_DEVICES_UPDATE "/v1/devices/update"
+#define IOT_PUB_TOPIC_DEVICES_CREATE "/v1/devices/create"
+#define IOT_PUB_TOPIC_GET_PREFERENCES "/v1/devices/preferences/get"
+#define IOT_PUB_TOPIC_GET "/v1/devices/get"
 #endif
 
-#define IOT_PUB_TOPIC_DELETE	"/v1/devices/delete"
+#define IOT_PUB_TOPIC_DELETE "/v1/devices/delete"
 
 /* MQTT Pre-defined constant */
-#define IOT_DEFAULT_TIMEOUT 		12000	/* milli-seconds */
-#define IOT_MQTT_KEEPALIVE_INTERVAL	120		/* seconds */
+#define IOT_DEFAULT_TIMEOUT 12000       /* milli-seconds */
+#define IOT_MQTT_KEEPALIVE_INTERVAL 120 /* seconds */
 
 /**
  * @brief Contains a enumeration values for types of iot_misc_info.
  */
 typedef enum {
-	IOT_MISC_INFO_DIP = 0,	/**< @brief For Device Integration Profile information */
-	IOT_MISC_INFO_LOCATION,	/**< @brief for Device's location ID */
-	IOT_MISC_PREV_ERR,      /**< @brief for err code for help contents of app */
+    IOT_MISC_INFO_DIP = 0,  /**< @brief For Device Integration Profile information */
+    IOT_MISC_INFO_LOCATION, /**< @brief for Device's location ID */
+    IOT_MISC_PREV_ERR,      /**< @brief for err code for help contents of app */
 } iot_misc_info_t;
 
 /* Core */
@@ -87,8 +91,8 @@ typedef enum {
  * @retval	IOT_ERROR_MEM_ALLOC		memory allocation failed
  * @retval	IOT_ERROR_BAD_REQ		queue send error
  */
-iot_error_t iot_command_send(struct iot_context *ctx,
-	enum iot_command_type cmd_type, const void *param, int param_size);
+iot_error_t iot_command_send(struct iot_context *ctx, enum iot_command_type cmd_type, const void *param,
+                             int param_size);
 
 /**
  * @brief       wifi status check
@@ -108,8 +112,7 @@ iot_error_t iot_wifi_get_status(struct iot_context *ctx);
  * @retval	IOT_ERROR_MEM_ALLOC		memory allocation failed
  * @retval	IOT_ERROR_BAD_REQ		queue send error
  */
-iot_error_t iot_wifi_ctrl_request(struct iot_context *ctx,
-		iot_wifi_mode_t wifi_mode);
+iot_error_t iot_wifi_ctrl_request(struct iot_context *ctx, iot_wifi_mode_t wifi_mode);
 
 /**
  * @brief   send ble control request
@@ -131,8 +134,7 @@ iot_error_t iot_ble_ctrl_request(struct iot_context *ctx);
  * @retval	IOT_ERROR_MEM_ALLOC		memory allocation failed
  * @retval	IOT_ERROR_BAD_REQ		queue send error
  */
-iot_error_t iot_state_update(struct iot_context *ctx,
-	iot_state_t new_state, int opt);
+iot_error_t iot_state_update(struct iot_context *ctx, iot_state_t new_state, int opt);
 
 /**
  * @brief	change iot_state timeout value
@@ -144,20 +146,19 @@ iot_error_t iot_state_update(struct iot_context *ctx,
  * @retval	IOT_ERROR_INVALID_ARGS	unsupported or invalid params
  * @retval	IOT_ERROR_BAD_REQ		queue send error
  */
-iot_error_t iot_state_timeout_change(struct iot_context *ctx,
-	iot_state_t target_state, unsigned int new_timeout_ms);
+iot_error_t iot_state_timeout_change(struct iot_context *ctx, iot_state_t target_state, unsigned int new_timeout_ms);
 
 /**
  * @brief	send easysetup cgi payload manipulation request
- * @details	easysetup cgi payload manipulation should be done at iot-task. This function sends payload to iot-task via queue
+ * @details	easysetup cgi payload manipulation should be done at iot-task. This function sends payload to iot-task
+ * via queue
  * @param[in]	ctx				iot-core context
  * @param[in]	step			indicates which uri(command) is dealing with
  * @param[in]	payload			payload data - mostly json data
  * @retval	IOT_ERROR_NONE		success.
  * @retval	IOT_ERROR_BAD_REQ	queue send error
  */
-iot_error_t iot_easysetup_request(struct iot_context *ctx,
-	enum iot_easysetup_step step, const void *payload);
+iot_error_t iot_easysetup_request(struct iot_context *ctx, enum iot_easysetup_step step, const void *payload);
 
 /**
  * @brief	load "onboarding_config.json" from application source directory
@@ -191,8 +192,8 @@ iot_error_t iot_easysetup_request(struct iot_context *ctx,
  }
  * @endcode
  */
-iot_error_t iot_api_onboarding_config_load(unsigned char *onboarding_config,
-		unsigned int onboarding_config_len, struct iot_devconf_prov_data *devconf);
+iot_error_t iot_api_onboarding_config_load(unsigned char *onboarding_config, unsigned int onboarding_config_len,
+                                           struct iot_devconf_prov_data *devconf);
 
 /**
  * @brief	load "device_info.json" from application source directory
@@ -209,15 +210,15 @@ iot_error_t iot_api_onboarding_config_load(unsigned char *onboarding_config,
  * @par example
  * @code
 {
-	"deviceInfo": {
-		"firmwareVersion": "FwVer0011A",
+        "deviceInfo": {
+                "firmwareVersion": "FwVer0011A",
     ...
-	}
+        }
 }
  * @endcode
  */
-iot_error_t iot_api_device_info_load(unsigned char *device_info,
-		unsigned int device_info_len, struct iot_device_info *info);
+iot_error_t iot_api_device_info_load(unsigned char *device_info, unsigned int device_info_len,
+                                     struct iot_device_info *info);
 
 /**
  * @brief	free onboarding config memory
@@ -255,16 +256,16 @@ void iot_api_prov_data_mem_free(struct iot_device_prov_data *prov);
  * @par example
  * @code
    {
-	"nvProfile": {
-		"privateKey": "privateKey", // Client (= Device) Private key
-		"publicKey": "publicKey", // Client (= Device) Public key
-		"serialNumber": "serialNumber" // Device Serial Number
-	}
+        "nvProfile": {
+                "privateKey": "privateKey", // Client (= Device) Private key
+                "publicKey": "publicKey", // Client (= Device) Public key
+                "serialNumber": "serialNumber" // Device Serial Number
+        }
    }
  * @endcode
  */
-iot_error_t iot_api_read_device_identity(unsigned char *device_nv_info,
-      unsigned int device_nv_info_len, const char *object, char **nv_data);
+iot_error_t iot_api_read_device_identity(unsigned char *device_nv_info, unsigned int device_nv_info_len,
+                                         const char *object, char **nv_data);
 #endif
 
 /**
@@ -342,7 +343,6 @@ iot_error_t iot_get_time_in_sec(char *buf, size_t buf_len);
  */
 iot_error_t iot_get_time_in_sec_by_long(long *sec);
 
-
 /**
  * @brief	get time data in msec
  * @details	this function tries to get time value in millisecond by string
@@ -399,7 +399,6 @@ iot_error_t iot_get_st_ecode(struct iot_context *ctx, struct iot_st_ecode *st_ec
  */
 iot_error_t iot_set_st_ecode(struct iot_context *ctx, iot_st_ecode_t ecode);
 
-
 /**
  * @brief	set device error code for SmartThings App from internal connection error
  * @details	this function converts device error code from iot_error_t type connection error.
@@ -439,5 +438,13 @@ void iot_update_dip_from_server_type(struct iot_context *ctx, iot_server_type_t 
 iot_error_t iot_update_wifi_info(struct iot_context *ctx);
 #endif
 
-#endif /* _IOT_INTERNAL_H_ */
+/**
+ * @brief	Update child devices health status in server
+ *
+ * @param[in]	ctx  iot-core context
+ * @param[in]	target_child_dev  target child device to update health. Update all child devices status if NULL
+ * @retval	IOT_ERROR_NONE                  success.
+ */
+iot_error_t iot_update_child_devices_health(struct iot_context *ctx, iot_child_device *target_child_dev);
 
+#endif /* _IOT_INTERNAL_H_ */

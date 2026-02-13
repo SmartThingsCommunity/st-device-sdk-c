@@ -4,7 +4,7 @@
 message("Enter component.cmake")
 
 if(CONFIG_STDK_IOT_CORE)
-	set(STDK_INCLUDE_PATH "${STDK_INCLUDE_PATH}" include include/bsp include/os include/mqtt)
+	set(STDK_INCLUDE_PATH "${STDK_INCLUDE_PATH}" include include/bsp include/os include/mqtt/client include/mqtt/packet)
 	set(STDK_INCLUDE_PATH "${STDK_INCLUDE_PATH}" include/external)
 
 	if(CONFIG_STDK_IOT_CORE_BSP_SUPPORT_ESP32 OR

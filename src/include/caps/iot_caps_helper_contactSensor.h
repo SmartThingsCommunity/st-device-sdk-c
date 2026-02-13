@@ -43,14 +43,15 @@ const static struct iot_caps_contactSensor {
     } attr_contact;
 } caps_helper_contactSensor = {
     .id = "contactSensor",
-    .attr_contact = {
-        .name = "contact",
-        .property = ATTR_SET_VALUE_REQUIRED,
-        .valueType = VALUE_TYPE_STRING,
-        .values = {"closed", "open"},
-        .value_closed = "closed",
-        .value_open = "open",
-    },
+    .attr_contact =
+        {
+            .name = "contact",
+            .property = ATTR_SET_VALUE_REQUIRED,
+            .valueType = VALUE_TYPE_STRING,
+            .values = {"closed", "open"},
+            .value_closed = "closed",
+            .value_open = "open",
+        },
 };
 
 #ifdef __cplusplus

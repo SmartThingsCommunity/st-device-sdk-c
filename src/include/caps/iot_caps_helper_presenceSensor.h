@@ -43,14 +43,15 @@ const static struct iot_caps_presenceSensor {
     } attr_presence;
 } caps_helper_presenceSensor = {
     .id = "presenceSensor",
-    .attr_presence = {
-        .name = "presence",
-        .property = ATTR_SET_VALUE_REQUIRED,
-        .valueType = VALUE_TYPE_STRING,
-        .values = {"present", "not present"},
-        .value_present = "present",
-        .value_not_present = "not present",
-    },
+    .attr_presence =
+        {
+            .name = "presence",
+            .property = ATTR_SET_VALUE_REQUIRED,
+            .valueType = VALUE_TYPE_STRING,
+            .values = {"present", "not present"},
+            .value_present = "present",
+            .value_not_present = "not present",
+        },
 };
 
 #ifdef __cplusplus

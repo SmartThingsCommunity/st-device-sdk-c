@@ -17,21 +17,22 @@
  ****************************************************************************/
 #include <hosal_rng.h>
 #include <stdint.h>
+
 #include "iot_bsp_random.h"
 #include "iot_debug.h"
 #include "iot_error.h"
 
 unsigned int iot_bsp_random()
 {
-	int ret = -1;
-	unsigned int random;
-	/*init rng */
-	hosal_rng_init();
-	ret = hosal_random_num_read(&random, sizeof(random)/sizeof(uint32_t));
-	if (0 != ret) {
+    int ret = -1;
+    unsigned int random;
+    /*init rng */
+    hosal_rng_init();
+    ret = hosal_random_num_read(&random, sizeof(random) / sizeof(uint32_t));
+    if (0 != ret) {
         IOT_ERROR("rng read error\r\n");
-		return IOT_ERROR_INVALID_ARGS;
+        return IOT_ERROR_INVALID_ARGS;
     }
 
-	return random;
+    return random;
 }

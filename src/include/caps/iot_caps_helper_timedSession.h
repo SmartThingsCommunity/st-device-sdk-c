@@ -50,33 +50,45 @@ const static struct iot_caps_timedSession {
         const char *value_running;
         const char *value_stopped;
     } attr_sessionStatus;
-    const struct timedSession_cmd_cancel { const char* name; } cmd_cancel;
-    const struct timedSession_cmd_start { const char* name; } cmd_start;
-    const struct timedSession_cmd_setCompletionTime { const char* name; } cmd_setCompletionTime;
-    const struct timedSession_cmd_pause { const char* name; } cmd_pause;
-    const struct timedSession_cmd_stop { const char* name; } cmd_stop;
+    const struct timedSession_cmd_cancel {
+        const char *name;
+    } cmd_cancel;
+    const struct timedSession_cmd_start {
+        const char *name;
+    } cmd_start;
+    const struct timedSession_cmd_setCompletionTime {
+        const char *name;
+    } cmd_setCompletionTime;
+    const struct timedSession_cmd_pause {
+        const char *name;
+    } cmd_pause;
+    const struct timedSession_cmd_stop {
+        const char *name;
+    } cmd_stop;
 } caps_helper_timedSession = {
     .id = "timedSession",
-    .attr_completionTime = {
-        .name = "completionTime",
-        .property = ATTR_SET_VALUE_REQUIRED,
-        .valueType = VALUE_TYPE_STRING,
-    },
-    .attr_sessionStatus = {
-        .name = "sessionStatus",
-        .property = ATTR_SET_VALUE_REQUIRED,
-        .valueType = VALUE_TYPE_STRING,
-        .values = {"canceled", "paused", "running", "stopped"},
-        .value_canceled = "canceled",
-        .value_paused = "paused",
-        .value_running = "running",
-        .value_stopped = "stopped",
-    },
-    .cmd_cancel = { .name = "cancel" },
-    .cmd_start = { .name = "start" },
-    .cmd_setCompletionTime = { .name = "setCompletionTime" }, // arguments: completionTime(string) 
-    .cmd_pause = { .name = "pause" },
-    .cmd_stop = { .name = "stop" },
+    .attr_completionTime =
+        {
+            .name = "completionTime",
+            .property = ATTR_SET_VALUE_REQUIRED,
+            .valueType = VALUE_TYPE_STRING,
+        },
+    .attr_sessionStatus =
+        {
+            .name = "sessionStatus",
+            .property = ATTR_SET_VALUE_REQUIRED,
+            .valueType = VALUE_TYPE_STRING,
+            .values = {"canceled", "paused", "running", "stopped"},
+            .value_canceled = "canceled",
+            .value_paused = "paused",
+            .value_running = "running",
+            .value_stopped = "stopped",
+        },
+    .cmd_cancel = {.name = "cancel"},
+    .cmd_start = {.name = "start"},
+    .cmd_setCompletionTime = {.name = "setCompletionTime"},  // arguments: completionTime(string)
+    .cmd_pause = {.name = "pause"},
+    .cmd_stop = {.name = "stop"},
 };
 
 #ifdef __cplusplus

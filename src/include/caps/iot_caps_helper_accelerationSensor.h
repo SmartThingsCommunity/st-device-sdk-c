@@ -43,14 +43,15 @@ const static struct iot_caps_accelerationSensor {
     } attr_acceleration;
 } caps_helper_accelerationSensor = {
     .id = "accelerationSensor",
-    .attr_acceleration = {
-        .name = "acceleration",
-        .property = ATTR_SET_VALUE_REQUIRED,
-        .valueType = VALUE_TYPE_STRING,
-        .values = {"active", "inactive"},
-        .value_active = "active",
-        .value_inactive = "inactive",
-    },
+    .attr_acceleration =
+        {
+            .name = "acceleration",
+            .property = ATTR_SET_VALUE_REQUIRED,
+            .valueType = VALUE_TYPE_STRING,
+            .values = {"active", "inactive"},
+            .value_active = "active",
+            .value_inactive = "inactive",
+        },
 };
 
 #ifdef __cplusplus

@@ -43,20 +43,23 @@ const static struct iot_caps_thermostatHeatingSetpoint {
         const double min;
         const double max;
     } attr_heatingSetpoint;
-    const struct thermostatHeatingSetpoint_cmd_setHeatingSetpoint { const char* name; } cmd_setHeatingSetpoint;
+    const struct thermostatHeatingSetpoint_cmd_setHeatingSetpoint {
+        const char *name;
+    } cmd_setHeatingSetpoint;
 } caps_helper_thermostatHeatingSetpoint = {
     .id = "thermostatHeatingSetpoint",
-    .attr_heatingSetpoint = {
-        .name = "heatingSetpoint",
-        .property = ATTR_SET_VALUE_MIN | ATTR_SET_VALUE_MAX | ATTR_SET_VALUE_REQUIRED | ATTR_SET_UNIT_REQUIRED,
-        .valueType = VALUE_TYPE_NUMBER,
-        .units = {"F", "C"},
-        .unit_F = "F",
-        .unit_C = "C",
-        .min = -460,
-        .max = 10000,
-    },
-    .cmd_setHeatingSetpoint = { .name = "setHeatingSetpoint" }, // arguments: setpoint(number) 
+    .attr_heatingSetpoint =
+        {
+            .name = "heatingSetpoint",
+            .property = ATTR_SET_VALUE_MIN | ATTR_SET_VALUE_MAX | ATTR_SET_VALUE_REQUIRED | ATTR_SET_UNIT_REQUIRED,
+            .valueType = VALUE_TYPE_NUMBER,
+            .units = {"F", "C"},
+            .unit_F = "F",
+            .unit_C = "C",
+            .min = -460,
+            .max = 10000,
+        },
+    .cmd_setHeatingSetpoint = {.name = "setHeatingSetpoint"},  // arguments: setpoint(number)
 };
 
 #ifdef __cplusplus

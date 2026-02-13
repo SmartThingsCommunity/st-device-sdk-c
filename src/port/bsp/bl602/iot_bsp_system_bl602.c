@@ -15,63 +15,67 @@
  * language governing permissions and limitations under the License.
  *
  ****************************************************************************/
+#include <FreeRTOS.h>
 #include <stdio.h>
 #include <sys/time.h>
-#include <FreeRTOS.h>
 #include <task.h>
-#include "hal_sys.h"
+
 #include "bl_timer.h"
+#include "hal_sys.h"
 #include "iot_bsp_system.h"
 #include "iot_debug.h"
 
-
-const char* iot_bsp_get_bsp_name()
+const char *iot_bsp_get_bsp_name()
 {
-       return "bl602";
+    return "bl602";
 }
 
-const char* iot_bsp_get_bsp_version_string()
+const char *iot_bsp_get_bsp_version_string()
 {
     setenv("CONFIG_CHIP_NAME", "BL602", 1);
-	getenv("BL_SDK_VER");
-	return BL_SDK_VER;
+    getenv("BL_SDK_VER");
+    return BL_SDK_VER;
 }
 
 void iot_bsp_system_reboot()
 {
     // Disable scheduler on this core.
     vTaskSuspendAll();
-	hal_sys_reset();	
+    hal_sys_reset();
 }
 
 void iot_bsp_system_poweroff()
 {
-	iot_bsp_system_reboot(); // no poweroff feature.
+    iot_bsp_system_reboot();  // no poweroff feature.
 }
 
 iot_error_t iot_bsp_system_get_time_in_sec(time_t *time_in_sec)
 {
-	struct timeval tv = {0,};
+    struct timeval tv = {
+        0,
+    };
 
-	gettimeofday(&tv, NULL);
-	*time_in_sec = tv.tv_sec;
+    gettimeofday(&tv, NULL);
+    *time_in_sec = tv.tv_sec;
 
-	return IOT_ERROR_NONE;
+    return IOT_ERROR_NONE;
 }
 
 iot_error_t iot_bsp_system_set_time_in_sec(time_t time_in_sec)
 {
-	IOT_WARN_CHECK(time_in_sec == NULL, IOT_ERROR_INVALID_ARGS, "time data is NULL");
+    IOT_WARN_CHECK(time_in_sec == NULL, IOT_ERROR_INVALID_ARGS, "time data is NULL");
 
-	struct timeval tv = {0,};
+    struct timeval tv = {
+        0,
+    };
 
-	tv.tv_sec = time_in_sec;
-	settimeofday(&tv, NULL);
+    tv.tv_sec = time_in_sec;
+    settimeofday(&tv, NULL);
 
-	return IOT_ERROR_NONE;
+    return IOT_ERROR_NONE;
 }
 
 clock_t clock()
 {
-	return bl_timer_now_us();
+    return bl_timer_now_us();
 }

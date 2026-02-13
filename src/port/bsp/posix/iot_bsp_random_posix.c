@@ -16,24 +16,26 @@
  *
  ****************************************************************************/
 
-#include <stdlib.h>
 #include <stdint.h>
+#include <stdlib.h>
 #include <time.h>
+
 #include "iot_bsp_random.h"
 
 unsigned int iot_bsp_random()
 {
-	static int seed = 0;
+    static int seed = 0;
 
-	if (seed == 0) {
-		srand(time(NULL));
-		seed = 1;
-	}
+    if (seed == 0) {
+        srand(time(NULL));
+        seed = 1;
+    }
 
-	uint32_t rand1 = rand() << 24;
-	uint32_t rand2 = (rand() << 16) & 0x00FF0000;
-	uint32_t rand3 = (rand() << 8) & 0x0000FF00;;
-	uint32_t rand4 = rand() & 0x000000FF;
+    uint32_t rand1 = rand() << 24;
+    uint32_t rand2 = (rand() << 16) & 0x00FF0000;
+    uint32_t rand3 = (rand() << 8) & 0x0000FF00;
+    ;
+    uint32_t rand4 = rand() & 0x000000FF;
 
-	return (rand1 | rand2 | rand3 | rand4) % UINT32_MAX;
+    return (rand1 | rand2 | rand3 | rand4) % UINT32_MAX;
 }

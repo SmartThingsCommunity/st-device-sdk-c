@@ -43,15 +43,16 @@ const static struct iot_caps_equivalentCarbonDioxideMeasurement {
     } attr_equivalentCarbonDioxideMeasurement;
 } caps_helper_equivalentCarbonDioxideMeasurement = {
     .id = "equivalentCarbonDioxideMeasurement",
-    .attr_equivalentCarbonDioxideMeasurement = {
-        .name = "equivalentCarbonDioxideMeasurement",
-        .property = ATTR_SET_VALUE_MIN | ATTR_SET_VALUE_MAX | ATTR_SET_VALUE_REQUIRED,
-        .valueType = VALUE_TYPE_NUMBER,
-        .units = {"ppm"},
-        .unit_ppm = "ppm",
-        .min = 0,
-        .max = 1000000,
-    },
+    .attr_equivalentCarbonDioxideMeasurement =
+        {
+            .name = "equivalentCarbonDioxideMeasurement",
+            .property = ATTR_SET_VALUE_MIN | ATTR_SET_VALUE_MAX | ATTR_SET_VALUE_REQUIRED,
+            .valueType = VALUE_TYPE_NUMBER,
+            .units = {"ppm"},
+            .unit_ppm = "ppm",
+            .min = 0,
+            .max = 1000000,
+        },
 };
 
 #ifdef __cplusplus

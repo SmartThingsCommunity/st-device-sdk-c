@@ -22,18 +22,19 @@
 #ifdef __cplusplus
 extern "C" {
 #endif
-#include "iot_main.h"
 #include "iot_error.h"
+#include "iot_main.h"
 
 enum cgi_type {
-	D2D_GET= 0,
-	D2D_POST,
-	D2D_ERROR,
+    D2D_GET = 0,
+    D2D_POST,
+    D2D_ERROR,
 };
 
-void http_msg_handler(int cmd, char **buffer, enum cgi_type type, char* data_buf);
+void http_msg_handler(int cmd, char **buffer, enum cgi_type type, char *data_buf);
 
-iot_error_t es_msg_parser(char *rx_buffer, size_t rx_buffer_len, char **payload, int *cmd, int *type, size_t *content_len);
+iot_error_t es_msg_parser(char *rx_buffer, size_t rx_buffer_len, char **payload, int *cmd, int *type,
+                          size_t *content_len);
 
 void es_http_init(void);
 

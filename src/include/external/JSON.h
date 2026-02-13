@@ -26,147 +26,179 @@
 #include <cJSON.h>
 typedef cJSON JSON_H;
 
-static inline JSON_H *JSON_CREATE_OBJECT(void) {
+static inline JSON_H *JSON_CREATE_OBJECT(void)
+{
     return cJSON_CreateObject();
 }
 
-static inline JSON_H *JSON_GET_OBJECT_ITEM(const JSON_H * const obj, const char * const string) {
+static inline JSON_H *JSON_GET_OBJECT_ITEM(const JSON_H *const obj, const char *const string)
+{
     return cJSON_GetObjectItem(obj, string);
 }
 
-static inline JSON_H *JSON_GET_CHILD_ITEM(const JSON_H * const obj) {
+static inline JSON_H *JSON_GET_CHILD_ITEM(const JSON_H *const obj)
+{
     return ((cJSON *)obj)->child;
 }
 
-static inline JSON_H *JSON_GET_NEXT_ITEM(const JSON_H * const obj) {
+static inline JSON_H *JSON_GET_NEXT_ITEM(const JSON_H *const obj)
+{
     return ((cJSON *)obj)->next;
 }
 
-static inline char *JSON_GET_OBJECT_ITEM_STRING(const JSON_H * const obj) {
+static inline char *JSON_GET_OBJECT_ITEM_STRING(const JSON_H *const obj)
+{
     return ((cJSON *)obj)->string;
 }
 
-static inline double JSON_GET_NUMBER_VALUE(const JSON_H * const item) {
+static inline double JSON_GET_NUMBER_VALUE(const JSON_H *const item)
+{
     return ((cJSON *)item)->valuedouble;
 }
 
-static inline JSON_H *JSON_DUPLICATE(const JSON_H* item, bool recurse) {
-	return cJSON_Duplicate(item, recurse);
+static inline JSON_H *JSON_DUPLICATE(const JSON_H *item, bool recurse)
+{
+    return cJSON_Duplicate(item, recurse);
 }
 
-static inline void JSON_ADD_ITEM_TO_OBJECT(JSON_H *obj, const char *string, JSON_H *item) {
+static inline void JSON_ADD_ITEM_TO_OBJECT(JSON_H *obj, const char *string, JSON_H *item)
+{
     cJSON_AddItemToObject(obj, string, item);
 }
 
-static inline void JSON_ADD_NUMBER_TO_OBJECT(JSON_H * const obj, const char * const name, const double number) {
+static inline void JSON_ADD_NUMBER_TO_OBJECT(JSON_H *const obj, const char *const name, const double number)
+{
     cJSON_AddNumberToObject(obj, name, number);
 }
 
-static inline void JSON_ADD_STRING_TO_OBJECT(JSON_H * const obj, const char * const name, const char * const string) {
+static inline void JSON_ADD_STRING_TO_OBJECT(JSON_H *const obj, const char *const name, const char *const string)
+{
     cJSON_AddStringToObject(obj, name, string);
 }
 
-static inline void JSON_ADD_BOOL_TO_OBJECT(JSON_H * const obj, const char * const name, const bool boolean) {
-	cJSON_AddBoolToObject(obj, name, boolean);
+static inline void JSON_ADD_BOOL_TO_OBJECT(JSON_H *const obj, const char *const name, const bool boolean)
+{
+    cJSON_AddBoolToObject(obj, name, boolean);
 }
 
-static inline JSON_H *JSON_CREATE_STRING(const char *string) {
+static inline JSON_H *JSON_CREATE_STRING(const char *string)
+{
     return cJSON_CreateString(string);
 }
 
-static inline char *JSON_PRINT(const JSON_H *item) {
+static inline char *JSON_PRINT(const JSON_H *item)
+{
     return cJSON_PrintUnformatted(item);
 }
 
-static inline void JSON_DELETE(JSON_H *item) {
+static inline void JSON_DELETE(JSON_H *item)
+{
     cJSON_Delete(item);
 }
 
-static inline JSON_H *JSON_CREATE_ARRAY(void) {
+static inline JSON_H *JSON_CREATE_ARRAY(void)
+{
     return cJSON_CreateArray();
 }
 
-static inline JSON_H *JSON_CREATE_STRING_ARRAY(const char **strings, int count) {
+static inline JSON_H *JSON_CREATE_STRING_ARRAY(const char **strings, int count)
+{
     return cJSON_CreateStringArray(strings, count);
 }
 
-static inline void JSON_ADD_ITEM_TO_ARRAY(JSON_H *array, JSON_H *item) {
+static inline void JSON_ADD_ITEM_TO_ARRAY(JSON_H *array, JSON_H *item)
+{
     cJSON_AddItemToArray(array, item);
 }
 
-static inline int JSON_GET_ARRAY_SIZE(const JSON_H *array) {
+static inline int JSON_GET_ARRAY_SIZE(const JSON_H *array)
+{
     return cJSON_GetArraySize(array);
 }
 
-static inline JSON_H *JSON_GET_ARRAY_ITEM(const JSON_H *array, int index) {
+static inline JSON_H *JSON_GET_ARRAY_ITEM(const JSON_H *array, int index)
+{
     return cJSON_GetArrayItem(array, index);
 }
 
-static inline void JSON_DELETE_ARRAY_ITEM(JSON_H *array, int index) {
+static inline void JSON_DELETE_ARRAY_ITEM(JSON_H *array, int index)
+{
     return cJSON_DeleteItemFromArray(array, index);
 }
 
-static inline JSON_H *JSON_PARSE(const char *value) {
+static inline JSON_H *JSON_PARSE(const char *value)
+{
     return cJSON_Parse(value);
 }
 
-static inline char *JSON_GET_STRING_VALUE(JSON_H *item) {
+static inline char *JSON_GET_STRING_VALUE(JSON_H *item)
+{
     return cJSON_GetStringValue(item);
 }
 
-static inline JSON_H *JSON_CREATE_NUMBER(double num) {
+static inline JSON_H *JSON_CREATE_NUMBER(double num)
+{
     return cJSON_CreateNumber(num);
 }
 
-static inline void JSON_FREE(void *obj) {
+static inline void JSON_FREE(void *obj)
+{
     cJSON_free(obj);
 }
 
-static inline bool JSON_IS_STRING(const JSON_H * const item) {
+static inline bool JSON_IS_STRING(const JSON_H *const item)
+{
     return cJSON_IsString(item);
 }
 
-static inline bool JSON_IS_NUMBER(const JSON_H * const item) {
+static inline bool JSON_IS_NUMBER(const JSON_H *const item)
+{
     return cJSON_IsNumber(item);
 }
 
-static inline bool JSON_IS_OBJECT(const JSON_H * const item) {
+static inline bool JSON_IS_OBJECT(const JSON_H *const item)
+{
     return cJSON_IsObject(item);
 }
 
-static inline bool JSON_IS_ARRAY(const JSON_H * const item) {
+static inline bool JSON_IS_ARRAY(const JSON_H *const item)
+{
     return cJSON_IsArray(item);
 }
 
-static inline bool JSON_IS_BOOL(const JSON_H * const item) {
+static inline bool JSON_IS_BOOL(const JSON_H *const item)
+{
     return cJSON_IsBool(item);
 }
 
-static inline bool JSON_IS_TRUE(const JSON_H * const item) {
+static inline bool JSON_IS_TRUE(const JSON_H *const item)
+{
     return cJSON_IsTrue(item);
 }
 
-static inline bool JSON_IS_FALSE(const JSON_H * const item) {
+static inline bool JSON_IS_FALSE(const JSON_H *const item)
+{
     return cJSON_IsFalse(item);
 }
 
-static inline void JSON_REPLACE_ITEM_IN_OBJ_CASESENS(JSON_H *obj, const char *string, JSON_H *newitem) {
-	cJSON_ReplaceItemInObjectCaseSensitive(obj, string, newitem);
+static inline void JSON_REPLACE_ITEM_IN_OBJ_CASESENS(JSON_H *obj, const char *string, JSON_H *newitem)
+{
+    cJSON_ReplaceItemInObjectCaseSensitive(obj, string, newitem);
 }
 
 #else
 typedef void JSON_H;
 JSON_H *JSON_CREATE_OBJECT(void);
-JSON_H *JSON_GET_OBJECT_ITEM(const JSON_H * const obj, const char * const string);
-JSON_H *JSON_GET_CHILD_ITEM(const JSON_H * const obj);
-JSON_H *JSON_GET_NEXT_ITEM(const JSON_H * const obj);
-char *JSON_GET_OBJECT_ITEM_STRING(const JSON_H * const obj);
-double JSON_GET_NUMBER_VALUE(const JSON_H * const item);
-JSON_H *JSON_DUPLICATE(const JSON_H* item, bool recurse);
+JSON_H *JSON_GET_OBJECT_ITEM(const JSON_H *const obj, const char *const string);
+JSON_H *JSON_GET_CHILD_ITEM(const JSON_H *const obj);
+JSON_H *JSON_GET_NEXT_ITEM(const JSON_H *const obj);
+char *JSON_GET_OBJECT_ITEM_STRING(const JSON_H *const obj);
+double JSON_GET_NUMBER_VALUE(const JSON_H *const item);
+JSON_H *JSON_DUPLICATE(const JSON_H *item, bool recurse);
 void JSON_ADD_ITEM_TO_OBJECT(JSON_H *obj, const char *string, JSON_H *item);
-void JSON_ADD_NUMBER_TO_OBJECT(JSON_H * const obj, const char * const name, const double number);
-void JSON_ADD_STRING_TO_OBJECT(JSON_H * const obj, const char * const name, const char * const string);
-void JSON_ADD_BOOL_TO_OBJECT(JSON_H * const obj, const char * const name, const bool boolean);
+void JSON_ADD_NUMBER_TO_OBJECT(JSON_H *const obj, const char *const name, const double number);
+void JSON_ADD_STRING_TO_OBJECT(JSON_H *const obj, const char *const name, const char *const string);
+void JSON_ADD_BOOL_TO_OBJECT(JSON_H *const obj, const char *const name, const bool boolean);
 JSON_H *JSON_CREATE_STRING(const char *string);
 JSON_H *JSON_CREATE_STRING_ARRAY(const char **strings, int count);
 char *JSON_PRINT(const JSON_H *item);
@@ -179,16 +211,14 @@ JSON_H *JSON_PARSE(const char *value);
 char *JSON_GET_STRING_VALUE(JSON_H *item);
 JSON_H *JSON_CREATE_NUMBER(double num);
 void JSON_FREE(void *obj);
-bool JSON_IS_STRING(const JSON_H * const item);
-bool JSON_IS_NUMBER(const JSON_H * const item);
-bool JSON_IS_OBJECT(const JSON_H * const item);
-bool JSON_IS_ARRAY(const JSON_H * const item);
-bool JSON_IS_BOOL(const JSON_H * const item);
-bool JSON_IS_TRUE(const JSON_H * const item);
-bool JSON_IS_FALSE(const JSON_H * const item);
+bool JSON_IS_STRING(const JSON_H *const item);
+bool JSON_IS_NUMBER(const JSON_H *const item);
+bool JSON_IS_OBJECT(const JSON_H *const item);
+bool JSON_IS_ARRAY(const JSON_H *const item);
+bool JSON_IS_BOOL(const JSON_H *const item);
+bool JSON_IS_TRUE(const JSON_H *const item);
+bool JSON_IS_FALSE(const JSON_H *const item);
 void JSON_REPLACE_ITEM_IN_OBJ_CASESENS(JSON_H *obj, const char *string, JSON_H *newitem);
 #endif
 
-
-
-#endif //ST_DEVICE_SDK_C_JSON_H
+#endif  // ST_DEVICE_SDK_C_JSON_H

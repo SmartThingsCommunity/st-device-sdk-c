@@ -16,14 +16,12 @@
  *
  ****************************************************************************/
 
+#include <signal.h>
 #include <stdio.h>
 #include <stdlib.h>
-#include <signal.h>
 #include <unistd.h>
 
 #include "st_dev.h"
-
-static iot_status_t g_iot_status;
 
 IOT_CTX *ctx = NULL;
 
@@ -43,11 +41,25 @@ void event_loop()
     printf("\nExit\n");
 }
 
-static void iot_status_cb(iot_status_t status,
-                          iot_stat_lv_t stat_lv, void *usr_data)
+static void iot_status_cb(st_device_status device_status, void *usr_data)
 {
-    g_iot_status = status;
-    printf("iot_status: %d, lv: %d\n", status, stat_lv);
+    printf("Device status %d\n", device_status);
+    switch (device_status) {
+        case ST_DEVICE_STATUS_INIT:
+            break;
+        case ST_DEVICE_STATUS_ONBOARDING_READY:
+            break;
+        case ST_DEVICE_STATUS_ONBOARDING_START:
+            break;
+        case ST_DEVICE_STATUS_ONBOARDING_NEED_CONFIRM:
+            break;
+        case ST_DEVICE_STATUS_ONBOARDING_ONBOARDED:
+            break;
+        case ST_DEVICE_STATUS_CLOUD_DISCONNECTED:
+            break;
+        case ST_DEVICE_STATUS_CLOUD_CONNECTED:
+            break;
+    }
 }
 
 void cap_switch_init_cb(IOT_CAP_HANDLE *handle, void *usr_data)
@@ -63,8 +75,7 @@ void cap_switch_init_cb(IOT_CAP_HANDLE *handle, void *usr_data)
         printf("Sequence number return : %d\n", sequence_no);
 }
 
-void cap_switch_cmd_off_cb(IOT_CAP_HANDLE *handle,
-                           iot_cap_cmd_data_t *cmd_data, void *usr_data)
+void cap_switch_cmd_off_cb(IOT_CAP_HANDLE *handle, iot_cap_cmd_data_t *cmd_data, void *usr_data)
 {
     int32_t sequence_no = 1;
 
@@ -79,8 +90,7 @@ void cap_switch_cmd_off_cb(IOT_CAP_HANDLE *handle,
         printf("Sequence number return : %d\n", sequence_no);
 }
 
-void cap_switch_cmd_on_cb(IOT_CAP_HANDLE *handle,
-                          iot_cap_cmd_data_t *cmd_data, void *usr_data)
+void cap_switch_cmd_on_cb(IOT_CAP_HANDLE *handle, iot_cap_cmd_data_t *cmd_data, void *usr_data)
 {
     int32_t sequence_no = 1;
 
@@ -102,36 +112,36 @@ void iot_noti_cb(iot_noti_data_t *noti_data, void *noti_usr_data)
     if (noti_data->type == IOT_NOTI_TYPE_DEV_DELETED) {
         printf("[device deleted]\n");
     } else if (noti_data->type == IOT_NOTI_TYPE_RATE_LIMIT) {
-        printf("[rate limit] Remaining time:%d, sequence number:%d\n",
-               noti_data->raw.rate_limit.remainingTime, noti_data->raw.rate_limit.sequenceNumber);
+        printf("[rate limit] Remaining time:%d, sequence number:%d\n", noti_data->raw.rate_limit.remainingTime,
+               noti_data->raw.rate_limit.sequenceNumber);
     }
 }
 
 void main(void)
 {
-/** SmartThings Device SDK(STDK) aims to make it easier to develop IoT devices by providing
- *  IoT solution on existing chip vendor SW architecture.
- *
- *  This posix example doesn't provide onboarding(registering process) part.
- *  So you should register your device manually with the manual registering tool provided in tools directory.
- *  (For real commercial product, you should refer other chip examples)
- *
- *  Then you can simply develop a basic application by just calling the APIs provided by SDK
- *  like below.
- *
- *  //create a iot context
- *  1. st_device_init();
- *
- *  //create a handle to process capability
- *  2. st_cap_handle_init();
- *
- *  //register a callback function to process capability command when it comes from the SmartThings Server.
- *  3. st_cap_cmd_set_cb();
- *
- *  //start device to connect SmartThings platform. There is nothing more to do on the app side than call the API.
- *  4. st_conn_start();
- *
- * */
+    /** SmartThings Device SDK(STDK) aims to make it easier to develop IoT devices by providing
+     *  IoT solution on existing chip vendor SW architecture.
+     *
+     *  This posix example doesn't provide onboarding(registering process) part.
+     *  So you should register your device manually with the manual registering tool provided in tools directory.
+     *  (For real commercial product, you should refer other chip examples)
+     *
+     *  Then you can simply develop a basic application by just calling the APIs provided by SDK
+     *  like below.
+     *
+     *  //create a iot context
+     *  1. st_device_init();
+     *
+     *  //create a handle to process capability
+     *  2. st_cap_handle_init();
+     *
+     *  //register a callback function to process capability command when it comes from the SmartThings Server.
+     *  3. st_cap_cmd_set_cb();
+     *
+     *  //start device to connect SmartThings platform. There is nothing more to do on the app side than call the API.
+     *  4. st_conn_start();
+     *
+     * */
 
     st_device_config_t dev_config = {0};
     /* Below is config example.
@@ -189,7 +199,7 @@ void main(void)
     }
 
     // 4. process on-boarding procedure. There is nothing more to do on the app side than call the API.
-    st_conn_start(ctx, (st_status_cb)&iot_status_cb, IOT_STATUS_ALL, NULL, NULL);
+    st_conn_start(ctx, (st_status_cb)&iot_status_cb, NULL, NULL);
 
     // exit by using Ctrl+C
     signal(SIGINT, signal_handler);

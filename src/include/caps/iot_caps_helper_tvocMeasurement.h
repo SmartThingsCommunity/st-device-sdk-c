@@ -25,10 +25,7 @@
 extern "C" {
 #endif
 
-enum {
-    CAP_ENUM_TVOCMEASUREMENT_TVOCLEVEL_UNIT_PPM,
-    CAP_ENUM_TVOCMEASUREMENT_TVOCLEVEL_UNIT_MAX
-};
+enum { CAP_ENUM_TVOCMEASUREMENT_TVOCLEVEL_UNIT_PPM, CAP_ENUM_TVOCMEASUREMENT_TVOCLEVEL_UNIT_MAX };
 
 const static struct iot_caps_tvocMeasurement {
     const char *id;
@@ -43,15 +40,16 @@ const static struct iot_caps_tvocMeasurement {
     } attr_tvocLevel;
 } caps_helper_tvocMeasurement = {
     .id = "tvocMeasurement",
-    .attr_tvocLevel = {
-        .name = "tvocLevel",
-        .property = ATTR_SET_VALUE_MIN | ATTR_SET_VALUE_MAX | ATTR_SET_VALUE_REQUIRED | ATTR_SET_UNIT_REQUIRED,
-        .valueType = VALUE_TYPE_NUMBER,
-        .units = {"ppm"},
-        .unit_ppm = "ppm",
-        .min = 0,
-        .max = 1000000,
-    },
+    .attr_tvocLevel =
+        {
+            .name = "tvocLevel",
+            .property = ATTR_SET_VALUE_MIN | ATTR_SET_VALUE_MAX | ATTR_SET_VALUE_REQUIRED | ATTR_SET_UNIT_REQUIRED,
+            .valueType = VALUE_TYPE_NUMBER,
+            .units = {"ppm"},
+            .unit_ppm = "ppm",
+            .min = 0,
+            .max = 1000000,
+        },
 };
 
 #ifdef __cplusplus

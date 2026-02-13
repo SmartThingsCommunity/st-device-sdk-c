@@ -25,10 +25,7 @@
 extern "C" {
 #endif
 
-enum {
-    CAP_ENUM_THREEAXIS_THREEAXIS_UNIT_MG,
-    CAP_ENUM_THREEAXIS_THREEAXIS_UNIT_MAX
-};
+enum { CAP_ENUM_THREEAXIS_THREEAXIS_UNIT_MG, CAP_ENUM_THREEAXIS_THREEAXIS_UNIT_MAX };
 
 const static struct iot_caps_threeAxis {
     const char *id;
@@ -43,15 +40,16 @@ const static struct iot_caps_threeAxis {
     } attr_threeAxis;
 } caps_helper_threeAxis = {
     .id = "threeAxis",
-    .attr_threeAxis = {
-        .name = "threeAxis",
-        .property = ATTR_SET_VALUE_MIN | ATTR_SET_VALUE_MAX | ATTR_SET_VALUE_REQUIRED | ATTR_SET_VALUE_ARRAY,
-        .valueType = VALUE_TYPE_INTEGER,
-        .units = {"mG"},
-        .unit_mG = "mG",
-        .min = -10000,
-        .max = 10000,
-    },
+    .attr_threeAxis =
+        {
+            .name = "threeAxis",
+            .property = ATTR_SET_VALUE_MIN | ATTR_SET_VALUE_MAX | ATTR_SET_VALUE_REQUIRED | ATTR_SET_VALUE_ARRAY,
+            .valueType = VALUE_TYPE_INTEGER,
+            .units = {"mG"},
+            .unit_mG = "mG",
+            .min = -10000,
+            .max = 10000,
+        },
 };
 
 #ifdef __cplusplus

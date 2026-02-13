@@ -42,25 +42,30 @@ const static struct iot_caps_imageCapture {
         const unsigned char property;
         const unsigned char valueType;
     } attr_captureTime;
-    const struct imageCapture_cmd_take { const char* name; } cmd_take;
+    const struct imageCapture_cmd_take {
+        const char *name;
+    } cmd_take;
 } caps_helper_imageCapture = {
     .id = "imageCapture",
-    .attr_encrypted = {
-        .name = "encrypted",
-        .property = ATTR_SET_VALUE_REQUIRED,
-        .valueType = VALUE_TYPE_BOOLEAN,
-    },
-    .attr_image = {
-        .name = "image",
-        .property = ATTR_SET_VALUE_REQUIRED,
-        .valueType = VALUE_TYPE_STRING,
-    },
-    .attr_captureTime = {
-        .name = "captureTime",
-        .property = ATTR_SET_VALUE_REQUIRED,
-        .valueType = VALUE_TYPE_STRING,
-    },
-    .cmd_take = { .name = "take" }, // arguments: correlationId(string) reason(string) 
+    .attr_encrypted =
+        {
+            .name = "encrypted",
+            .property = ATTR_SET_VALUE_REQUIRED,
+            .valueType = VALUE_TYPE_BOOLEAN,
+        },
+    .attr_image =
+        {
+            .name = "image",
+            .property = ATTR_SET_VALUE_REQUIRED,
+            .valueType = VALUE_TYPE_STRING,
+        },
+    .attr_captureTime =
+        {
+            .name = "captureTime",
+            .property = ATTR_SET_VALUE_REQUIRED,
+            .valueType = VALUE_TYPE_STRING,
+        },
+    .cmd_take = {.name = "take"},  // arguments: correlationId(string) reason(string)
 };
 
 #ifdef __cplusplus

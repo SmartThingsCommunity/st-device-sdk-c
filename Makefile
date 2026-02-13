@@ -26,7 +26,7 @@ CFLAGS	:= -std=c99 -D_GNU_SOURCE
 CFLAGS	+= $(STDK_CFLAGS)
 
 
-INCS	:= -I/usr/include -Isrc/include -Isrc/include/mqtt -Isrc/include/os -Isrc/include/bsp -Isrc/include/external -I$(NET_DIR) -Isrc/include/port
+INCS	:= -I/usr/include -Isrc/include -Isrc/include/mqtt/client -Isrc/include/mqtt/packet -Isrc/include/os -Isrc/include/bsp -Isrc/include/external -I$(NET_DIR) -Isrc/include/port
 INCS	+= -Isrc/include/security
 INCS	+= -I$(CBOR_DIR)
 

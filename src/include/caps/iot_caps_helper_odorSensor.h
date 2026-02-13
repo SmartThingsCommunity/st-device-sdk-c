@@ -35,12 +35,13 @@ const static struct iot_caps_odorSensor {
     } attr_odorLevel;
 } caps_helper_odorSensor = {
     .id = "odorSensor",
-    .attr_odorLevel = {
-        .name = "odorLevel",
-        .property = ATTR_SET_VALUE_MIN | ATTR_SET_VALUE_REQUIRED,
-        .valueType = VALUE_TYPE_INTEGER,
-        .min = 0,
-    },
+    .attr_odorLevel =
+        {
+            .name = "odorLevel",
+            .property = ATTR_SET_VALUE_MIN | ATTR_SET_VALUE_REQUIRED,
+            .valueType = VALUE_TYPE_INTEGER,
+            .min = 0,
+        },
 };
 
 #ifdef __cplusplus

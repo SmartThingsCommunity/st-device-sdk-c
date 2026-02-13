@@ -25,10 +25,7 @@
 extern "C" {
 #endif
 
-enum {
-    CAP_ENUM_SIGNALSTRENGTH_RSSI_UNIT_DBM,
-    CAP_ENUM_SIGNALSTRENGTH_RSSI_UNIT_MAX
-};
+enum { CAP_ENUM_SIGNALSTRENGTH_RSSI_UNIT_DBM, CAP_ENUM_SIGNALSTRENGTH_RSSI_UNIT_MAX };
 
 const static struct iot_caps_signalStrength {
     const char *id;
@@ -50,22 +47,24 @@ const static struct iot_caps_signalStrength {
     } attr_lqi;
 } caps_helper_signalStrength = {
     .id = "signalStrength",
-    .attr_rssi = {
-        .name = "rssi",
-        .property = ATTR_SET_VALUE_MIN | ATTR_SET_VALUE_MAX | ATTR_SET_VALUE_REQUIRED,
-        .valueType = VALUE_TYPE_NUMBER,
-        .units = {"dBm"},
-        .unit_dBm = "dBm",
-        .min = -200,
-        .max = 0,
-    },
-    .attr_lqi = {
-        .name = "lqi",
-        .property = ATTR_SET_VALUE_MIN | ATTR_SET_VALUE_MAX | ATTR_SET_VALUE_REQUIRED,
-        .valueType = VALUE_TYPE_INTEGER,
-        .min = 0,
-        .max = 255,
-    },
+    .attr_rssi =
+        {
+            .name = "rssi",
+            .property = ATTR_SET_VALUE_MIN | ATTR_SET_VALUE_MAX | ATTR_SET_VALUE_REQUIRED,
+            .valueType = VALUE_TYPE_NUMBER,
+            .units = {"dBm"},
+            .unit_dBm = "dBm",
+            .min = -200,
+            .max = 0,
+        },
+    .attr_lqi =
+        {
+            .name = "lqi",
+            .property = ATTR_SET_VALUE_MIN | ATTR_SET_VALUE_MAX | ATTR_SET_VALUE_REQUIRED,
+            .valueType = VALUE_TYPE_INTEGER,
+            .min = 0,
+            .max = 255,
+        },
 };
 
 #ifdef __cplusplus

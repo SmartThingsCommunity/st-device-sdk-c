@@ -42,14 +42,15 @@ const static struct iot_caps_veryFineDustSensor {
     } attr_veryFineDustLevel;
 } caps_helper_veryFineDustSensor = {
     .id = "veryFineDustSensor",
-    .attr_veryFineDustLevel = {
-        .name = "veryFineDustLevel",
-        .property = ATTR_SET_VALUE_MIN | ATTR_SET_VALUE_REQUIRED,
-        .valueType = VALUE_TYPE_INTEGER,
-        .units = {"μg/m^3"},
-        .unit_ug_per_m3 = "μg/m^3",
-        .min = 0,
-    },
+    .attr_veryFineDustLevel =
+        {
+            .name = "veryFineDustLevel",
+            .property = ATTR_SET_VALUE_MIN | ATTR_SET_VALUE_REQUIRED,
+            .valueType = VALUE_TYPE_INTEGER,
+            .units = {"μg/m^3"},
+            .unit_ug_per_m3 = "μg/m^3",
+            .min = 0,
+        },
 };
 
 #ifdef __cplusplus

@@ -111,7 +111,8 @@ iot_error_t iot_security_manager_set_key(iot_security_context_t *context, iot_se
  * @retval	IOT_ERROR_SECURITY_KEY_NO_PERMISSION can not get key because do not have permission
  * @retval	IOT_ERROR_SECURITY_MANAGER_KEY_GET failed to get key
  */
-iot_error_t iot_security_manager_get_key(iot_security_context_t *context, iot_security_key_id_t key_id, iot_security_buffer_t *key_buf);
+iot_error_t iot_security_manager_get_key(iot_security_context_t *context, iot_security_key_id_t key_id,
+                                         iot_security_buffer_t *key_buf);
 
 /**
  * @brief	Get the certificate
@@ -130,7 +131,8 @@ iot_error_t iot_security_manager_get_key(iot_security_context_t *context, iot_se
  * @retval	IOT_ERROR_SECURITY_MANAGER_CERT_GET failed to get certificate
  * @retval	IOT_ERROR_NV_DATA_ERROR cert_id is not a supported static certificate
  */
-iot_error_t iot_security_manager_get_certificate(iot_security_context_t *context, iot_security_cert_id_t cert_id, iot_security_buffer_t *cert_buf);
+iot_error_t iot_security_manager_get_certificate(iot_security_context_t *context, iot_security_cert_id_t cert_id,
+                                                 iot_security_buffer_t *cert_buf);
 
 #ifdef __cplusplus
 }

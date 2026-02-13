@@ -15,14 +15,11 @@
  * language governing permissions and limitations under the License.
  *
  ****************************************************************************/
-#include <stdarg.h>
-#include <stddef.h>
-#include <setjmp.h>
-#include <cmocka.h>
-#include <string.h>
 #include <stdbool.h>
 #include <stdlib.h>
+#include <string.h>
 
+#include "cmocka_custom.h"
 
 #define MAX_MOCKED_IOT_OS_MALLOC_IN_TC 10
 static unsigned int _mock_malloc_failure_index;
@@ -57,13 +54,12 @@ void do_not_use_mock_iot_os_malloc_failure()
 void *__wrap_iot_os_malloc(size_t size)
 {
     if (_mock_iot_os_malloc_start && _mock_iot_os_malloc_failure_at[_mock_malloc_failure_index]) {
-        if (++_mock_malloc_failure_index >= MAX_MOCKED_IOT_OS_MALLOC_IN_TC ) {
+        if (++_mock_malloc_failure_index >= MAX_MOCKED_IOT_OS_MALLOC_IN_TC) {
             _mock_malloc_failure_index = MAX_MOCKED_IOT_OS_MALLOC_IN_TC - 1;
         }
         return NULL;
-    }
-    else if (_mock_iot_os_malloc_start && !_mock_iot_os_malloc_failure_at[_mock_malloc_failure_index]){
-        if (++_mock_malloc_failure_index >= MAX_MOCKED_IOT_OS_MALLOC_IN_TC ) {
+    } else if (_mock_iot_os_malloc_start && !_mock_iot_os_malloc_failure_at[_mock_malloc_failure_index]) {
+        if (++_mock_malloc_failure_index >= MAX_MOCKED_IOT_OS_MALLOC_IN_TC) {
             _mock_malloc_failure_index = MAX_MOCKED_IOT_OS_MALLOC_IN_TC - 1;
         }
         if (_mock_detect_memory_leak)
@@ -78,7 +74,7 @@ void *__wrap_iot_os_malloc(size_t size)
     }
 }
 
-void __wrap_iot_os_free(void* ptr)
+void __wrap_iot_os_free(void *ptr)
 {
     if (_mock_detect_memory_leak)
         return test_free(ptr);
@@ -86,7 +82,7 @@ void __wrap_iot_os_free(void* ptr)
         return free(ptr);
 }
 
-void *__wrap_iot_os_realloc(void* ptr, size_t size)
+void *__wrap_iot_os_realloc(void *ptr, size_t size)
 {
     if (_mock_detect_memory_leak)
         return test_realloc(ptr, size);
@@ -117,10 +113,12 @@ void set_mock_detect_memory_leak(bool detect)
 
 void __wrap_iot_os_delay(unsigned int delay_ms)
 {
-	struct timespec ts = {0,};
+    struct timespec ts = {
+        0,
+    };
 
-	ts.tv_sec = delay_ms / 1000;
-	ts.tv_nsec = (delay_ms % 1000) * 1000000;
+    ts.tv_sec = delay_ms / 1000;
+    ts.tv_nsec = (delay_ms % 1000) * 1000000;
 
-	nanosleep(&ts, NULL);
+    nanosleep(&ts, NULL);
 }

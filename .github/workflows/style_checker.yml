@@ -1,0 +1,33 @@
+# This starter workflow is for a CMake project running on a single platform. There is a different starter workflow if you need cross-platform coverage.
+# See: https://github.com/actions/starter-workflows/blob/main/ci/cmake-multi-platform.yml
+name: StyleChecker
+
+on:
+  pull_request:
+    branches: [ "develop" ]
+
+jobs:
+  styleCheck:
+    # The CMake configure and build commands are platform agnostic and should work equally well on Windows or Mac.
+    # You can convert this to a matrix build if you need cross-platform coverage.
+    # See: https://docs.github.com/en/free-pro-team@latest/actions/learn-github-actions/managing-complex-workflows#using-a-build-matrix
+    runs-on: [ code-linux, code-default ]
+
+    steps:
+    - uses: actions/checkout@v4
+
+    - name: Install clang-format
+      run: |
+        sudo apt-get update
+        sudo apt install -y clang-format
+      
+    - name: Check style
+      run: |
+        git fetch origin ${{ github.base_ref }}:${{ github.base_ref }}
+        git clang-format --commit ${{ github.base_ref }} --style file --diff -q | tee replacement.diff
+        if grep -q . "replacement.diff"; then
+          echo "Style violation"
+          exit 1
+        else
+          exit 0
+        fi

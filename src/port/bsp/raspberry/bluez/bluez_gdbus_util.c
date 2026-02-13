@@ -21,8 +21,8 @@
 #include <gio/gio.h>
 #include <glib.h>
 
-#include "iot_debug.h"
 #include "../gdbus/gdbus_util.h"
+#include "iot_debug.h"
 
 static char *_extract_bluez_adapter_path(GVariantIter *iter)
 {
@@ -33,18 +33,12 @@ static char *_extract_bluez_adapter_path(GVariantIter *iter)
     GVariant *last_variant;
 
     /* Parse the signature: oa{sa{sv}}} */
-    while (g_variant_iter_loop(iter, "{&oa{sa{sv}}}", &object_path,
-                               &interface_iter))
-    {
-
+    while (g_variant_iter_loop(iter, "{&oa{sa{sv}}}", &object_path, &interface_iter)) {
         if (object_path == NULL)
             continue;
 
         IOT_DEBUG("Object Path: %s", object_path);
-        while (g_variant_iter_loop(interface_iter, "{&sa{sv}}",
-                                   &interface_str, &svc_iter))
-        {
-
+        while (g_variant_iter_loop(interface_iter, "{&sa{sv}}", &interface_str, &svc_iter)) {
             if (g_strcmp0(interface_str, LE_ADVERTISING_MANAGER_IFACE) != 0)
                 continue;
 
@@ -66,14 +60,9 @@ char *find_bluez_adapter(void)
     GVariant *value;
     char *adapter_path = NULL;
 
-    ret = gdbus_method_call_sync((char *)BLUEZ_SERVICE_NAME,
-                                 (char *)"/",
-                                 (char *)DBUS_OM_IFACE,
-                                 (char *)"GetManagedObjects",
-                                 NULL,
-                                 &reply);
-    if (ret)
-    {
+    ret = gdbus_method_call_sync((char *)BLUEZ_SERVICE_NAME, (char *)"/", (char *)DBUS_OM_IFACE,
+                                 (char *)"GetManagedObjects", NULL, &reply);
+    if (ret) {
         IOT_ERROR("error while sending get interface method call %d", ret);
         return NULL;
     }
@@ -87,8 +76,7 @@ char *find_bluez_adapter(void)
     return adapter_path;
 }
 
-void bluez_gdbus_call_async_cb(GObject *source_object,
-                               GAsyncResult *res, gpointer user_data)
+void bluez_gdbus_call_async_cb(GObject *source_object, GAsyncResult *res, gpointer user_data)
 {
     IOT_DEBUG("bluez_gdbus_util: Enter in bluez_gdbus_call_async_cb");
     GError *error = NULL;
@@ -98,8 +86,7 @@ void bluez_gdbus_call_async_cb(GObject *source_object,
     system_gconn = get_gdbus_connection();
     value = g_dbus_connection_call_finish(system_gconn, res, &error);
 
-    if (error)
-    {
+    if (error) {
         IOT_ERROR("Error : %s", error->message);
         g_clear_error(&error);
         return;

@@ -58,7 +58,7 @@ iot_error_t iot_get_uuid_from_mac(struct iot_uuid *uuid);
  * @param[in]	uuid	allocated iot_uuid struct pointer to get random iot_uuid value
  * @return	return IOT_ERROR_NONE on success, or iot_error_t errors if it fails
  */
-iot_error_t iot_get_random_uuid(struct iot_uuid* uuid);
+iot_error_t iot_get_random_uuid(struct iot_uuid *uuid);
 
 #ifdef __cplusplus
 }

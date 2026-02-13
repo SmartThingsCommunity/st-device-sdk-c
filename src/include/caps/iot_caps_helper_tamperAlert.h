@@ -43,14 +43,15 @@ const static struct iot_caps_tamperAlert {
     } attr_tamper;
 } caps_helper_tamperAlert = {
     .id = "tamperAlert",
-    .attr_tamper = {
-        .name = "tamper",
-        .property = ATTR_SET_VALUE_REQUIRED,
-        .valueType = VALUE_TYPE_STRING,
-        .values = {"clear", "detected"},
-        .value_clear = "clear",
-        .value_detected = "detected",
-    },
+    .attr_tamper =
+        {
+            .name = "tamper",
+            .property = ATTR_SET_VALUE_REQUIRED,
+            .valueType = VALUE_TYPE_STRING,
+            .values = {"clear", "detected"},
+            .value_clear = "clear",
+            .value_detected = "detected",
+        },
 };
 
 #ifdef __cplusplus

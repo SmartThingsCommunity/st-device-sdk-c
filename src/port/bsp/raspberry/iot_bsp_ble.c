@@ -46,36 +46,36 @@ void iot_bsp_ble_deinit(void)
 
 int iot_bsp_ble_start_adv(uint16_t mn_code, uint8_t *mn_data, size_t mn_data_len, char *local_name)
 {
-	stop_advertisement();
-	set_advertisement_data(mn_code, mn_data, mn_data_len, local_name);
-	start_advertisement();
-	return 0;
+    stop_advertisement();
+    set_advertisement_data(mn_code, mn_data, mn_data_len, local_name);
+    start_advertisement();
+    return 0;
 }
 
 int iot_bsp_ble_stop_adv(void)
 {
-	stop_advertisement();
-	return 0;
+    stop_advertisement();
+    return 0;
 }
 
 int iot_send_indication(uint8_t *buf, uint32_t len)
 {
-	send_data_over_gatt(buf, len);
-	return 0;
+    send_data_over_gatt(buf, len);
+    return 0;
 }
 
 uint32_t iot_bsp_ble_get_mtu(void)
 {
-	return get_mtu();
+    return get_mtu();
 }
 
 int iot_bsp_ble_get_mac_address(uint8_t mac_address[6])
 {
-	return get_bt_dev_address(mac_address);
+    return get_bt_dev_address(mac_address);
 }
 
 int iot_bsp_ble_disconnect(void)
 {
-	disconnect_bluez_device();
-	return 0;
+    disconnect_bluez_device();
+    return 0;
 }

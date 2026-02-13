@@ -54,10 +54,7 @@ enum {
     CAP_ENUM_OVENOPERATINGSTATE_MACHINESTATE_VALUE_MAX
 };
 
-enum {
-    CAP_ENUM_OVENOPERATINGSTATE_PROGRESS_UNIT_PERCENT,
-    CAP_ENUM_OVENOPERATINGSTATE_PROGRESS_UNIT_MAX
-};
+enum { CAP_ENUM_OVENOPERATINGSTATE_PROGRESS_UNIT_PERCENT, CAP_ENUM_OVENOPERATINGSTATE_PROGRESS_UNIT_MAX };
 
 const static struct iot_caps_ovenOperatingState {
     const char *id;
@@ -122,75 +119,89 @@ const static struct iot_caps_ovenOperatingState {
         const char *value_running;
         const char *value_paused;
     } attr_machineState;
-    const struct ovenOperatingState_cmd_start { const char* name; } cmd_start;
-    const struct ovenOperatingState_cmd_stop { const char* name; } cmd_stop;
-    const struct ovenOperatingState_cmd_setMachineState { const char* name; } cmd_setMachineState;
+    const struct ovenOperatingState_cmd_start {
+        const char *name;
+    } cmd_start;
+    const struct ovenOperatingState_cmd_stop {
+        const char *name;
+    } cmd_stop;
+    const struct ovenOperatingState_cmd_setMachineState {
+        const char *name;
+    } cmd_setMachineState;
 } caps_helper_ovenOperatingState = {
     .id = "ovenOperatingState",
-    .attr_ovenJobState = {
-        .name = "ovenJobState",
-        .property = 0,
-        .valueType = VALUE_TYPE_STRING,
-        .values = {"cleaning", "cooking", "cooling", "draining", "preheat", "ready", "rinsing", "finished", "scheduledStart", "warming", "defrosting", "sensing", "searing", "fastPreheat", "scheduledEnd", "stoneHeating", "timeHoldPreheat"},
-        .value_cleaning = "cleaning",
-        .value_cooking = "cooking",
-        .value_cooling = "cooling",
-        .value_draining = "draining",
-        .value_preheat = "preheat",
-        .value_ready = "ready",
-        .value_rinsing = "rinsing",
-        .value_finished = "finished",
-        .value_scheduledStart = "scheduledStart",
-        .value_warming = "warming",
-        .value_defrosting = "defrosting",
-        .value_sensing = "sensing",
-        .value_searing = "searing",
-        .value_fastPreheat = "fastPreheat",
-        .value_scheduledEnd = "scheduledEnd",
-        .value_stoneHeating = "stoneHeating",
-        .value_timeHoldPreheat = "timeHoldPreheat",
-    },
-    .attr_completionTime = {
-        .name = "completionTime",
-        .property = ATTR_SET_VALUE_REQUIRED,
-        .valueType = VALUE_TYPE_STRING,
-    },
-    .attr_supportedMachineStates = {
-        .name = "supportedMachineStates",
-        .property = ATTR_SET_VALUE_ARRAY,
-        .valueType = VALUE_TYPE_STRING,
-        .values = {"ready", "running", "paused"},
-        .value_ready = "ready",
-        .value_running = "running",
-        .value_paused = "paused",
-    },
-    .attr_progress = {
-        .name = "progress",
-        .property = ATTR_SET_VALUE_MIN | ATTR_SET_VALUE_MAX | ATTR_SET_VALUE_REQUIRED,
-        .valueType = VALUE_TYPE_INTEGER,
-        .units = {"%"},
-        .unit_percent = "%",
-        .min = 0,
-        .max = 100,
-    },
-    .attr_operationTime = {
-        .name = "operationTime",
-        .property = ATTR_SET_VALUE_MIN,
-        .valueType = VALUE_TYPE_INTEGER,
-        .min = 0,
-    },
-    .attr_machineState = {
-        .name = "machineState",
-        .property = 0,
-        .valueType = VALUE_TYPE_STRING,
-        .values = {"ready", "running", "paused"},
-        .value_ready = "ready",
-        .value_running = "running",
-        .value_paused = "paused",
-    },
-    .cmd_start = { .name = "start" }, // arguments: mode(string) time(integer) setpoint(integer) 
-    .cmd_stop = { .name = "stop" },
-    .cmd_setMachineState = { .name = "setMachineState" }, // arguments: state(string) 
+    .attr_ovenJobState =
+        {
+            .name = "ovenJobState",
+            .property = 0,
+            .valueType = VALUE_TYPE_STRING,
+            .values = {"cleaning", "cooking", "cooling", "draining", "preheat", "ready", "rinsing", "finished",
+                       "scheduledStart", "warming", "defrosting", "sensing", "searing", "fastPreheat", "scheduledEnd",
+                       "stoneHeating", "timeHoldPreheat"},
+            .value_cleaning = "cleaning",
+            .value_cooking = "cooking",
+            .value_cooling = "cooling",
+            .value_draining = "draining",
+            .value_preheat = "preheat",
+            .value_ready = "ready",
+            .value_rinsing = "rinsing",
+            .value_finished = "finished",
+            .value_scheduledStart = "scheduledStart",
+            .value_warming = "warming",
+            .value_defrosting = "defrosting",
+            .value_sensing = "sensing",
+            .value_searing = "searing",
+            .value_fastPreheat = "fastPreheat",
+            .value_scheduledEnd = "scheduledEnd",
+            .value_stoneHeating = "stoneHeating",
+            .value_timeHoldPreheat = "timeHoldPreheat",
+        },
+    .attr_completionTime =
+        {
+            .name = "completionTime",
+            .property = ATTR_SET_VALUE_REQUIRED,
+            .valueType = VALUE_TYPE_STRING,
+        },
+    .attr_supportedMachineStates =
+        {
+            .name = "supportedMachineStates",
+            .property = ATTR_SET_VALUE_ARRAY,
+            .valueType = VALUE_TYPE_STRING,
+            .values = {"ready", "running", "paused"},
+            .value_ready = "ready",
+            .value_running = "running",
+            .value_paused = "paused",
+        },
+    .attr_progress =
+        {
+            .name = "progress",
+            .property = ATTR_SET_VALUE_MIN | ATTR_SET_VALUE_MAX | ATTR_SET_VALUE_REQUIRED,
+            .valueType = VALUE_TYPE_INTEGER,
+            .units = {"%"},
+            .unit_percent = "%",
+            .min = 0,
+            .max = 100,
+        },
+    .attr_operationTime =
+        {
+            .name = "operationTime",
+            .property = ATTR_SET_VALUE_MIN,
+            .valueType = VALUE_TYPE_INTEGER,
+            .min = 0,
+        },
+    .attr_machineState =
+        {
+            .name = "machineState",
+            .property = 0,
+            .valueType = VALUE_TYPE_STRING,
+            .values = {"ready", "running", "paused"},
+            .value_ready = "ready",
+            .value_running = "running",
+            .value_paused = "paused",
+        },
+    .cmd_start = {.name = "start"},  // arguments: mode(string) time(integer) setpoint(integer)
+    .cmd_stop = {.name = "stop"},
+    .cmd_setMachineState = {.name = "setMachineState"},  // arguments: state(string)
 };
 
 #ifdef __cplusplus

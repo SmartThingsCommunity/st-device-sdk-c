@@ -53,24 +53,27 @@ const static struct iot_caps_activityLightingMode {
         const char *value_cozy;
         const char *value_soft;
     } attr_lightingMode;
-    const struct activityLightingMode_cmd_setLightingMode { const char* name; } cmd_setLightingMode;
+    const struct activityLightingMode_cmd_setLightingMode {
+        const char *name;
+    } cmd_setLightingMode;
 } caps_helper_activityLightingMode = {
     .id = "activityLightingMode",
-    .attr_lightingMode = {
-        .name = "lightingMode",
-        .property = ATTR_SET_VALUE_REQUIRED,
-        .valueType = VALUE_TYPE_STRING,
-        .values = {"reading", "writing", "computer", "night", "sleepPreparation", "day", "cozy", "soft"},
-        .value_reading = "reading",
-        .value_writing = "writing",
-        .value_computer = "computer",
-        .value_night = "night",
-        .value_sleepPreparation = "sleepPreparation",
-        .value_day = "day",
-        .value_cozy = "cozy",
-        .value_soft = "soft",
-    },
-    .cmd_setLightingMode = { .name = "setLightingMode" }, // arguments: lightingMode(string) 
+    .attr_lightingMode =
+        {
+            .name = "lightingMode",
+            .property = ATTR_SET_VALUE_REQUIRED,
+            .valueType = VALUE_TYPE_STRING,
+            .values = {"reading", "writing", "computer", "night", "sleepPreparation", "day", "cozy", "soft"},
+            .value_reading = "reading",
+            .value_writing = "writing",
+            .value_computer = "computer",
+            .value_night = "night",
+            .value_sleepPreparation = "sleepPreparation",
+            .value_day = "day",
+            .value_cozy = "cozy",
+            .value_soft = "soft",
+        },
+    .cmd_setLightingMode = {.name = "setLightingMode"},  // arguments: lightingMode(string)
 };
 
 #ifdef __cplusplus

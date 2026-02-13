@@ -1,5 +1,20 @@
 # HISTORY
 
+## 2.3.1 : Change for version 2.3.1
+
+New improvements or features:
+- Add offline diagnostic feature
+
+Enhancements or amendments:
+- Add sensitive info type log
+- Add unittest and code style checker Github workflow
+- Modify manual onboarding script using paho MQTT python library
+- Reformat code based on style rule
+- Replace device callback status with intuitive and efficient ones
+
+Bug fixed:
+- Update vid along with DIP update
+
 ## 2.3.0 : Change for version 2.3.0
 
 Enhancements or amendments:

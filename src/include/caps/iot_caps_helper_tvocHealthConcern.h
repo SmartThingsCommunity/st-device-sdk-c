@@ -32,7 +32,7 @@ enum {
     CAP_ENUM_TVOCHEALTHCONCERN_VALUE_UNHEALTHY,
     CAP_ENUM_TVOCHEALTHCONCERN_VALUE_VERY_UNHEALTHY,
     CAP_ENUM_TVOCHEALTHCONCERN_VALUE_HAZARDOUS,
-	CAP_ENUM_TVOCHEALTHCONCERN_VALUE_MAX,
+    CAP_ENUM_TVOCHEALTHCONCERN_VALUE_MAX,
 };
 
 const static struct iot_caps_tvocHealthConcern {
@@ -51,18 +51,19 @@ const static struct iot_caps_tvocHealthConcern {
     } attr_tvocHealthConcern;
 } caps_helper_tvocHealthConcern = {
     .id = "tvocHealthConcern",
-    .attr_tvocHealthConcern = {
-        .name = "tvocHealthConcern",
-        .property = ATTR_SET_VALUE_REQUIRED,
-        .valueType = VALUE_TYPE_STRING,
-        .values = {"good", "moderate", "slightlyUnhealthy", "unhealthy", "veryUnhealthy", "hazardous"},
-        .value_good = "good",
-        .value_moderate = "moderate",
-        .value_slightly_unhealthy = "slightlyUnhealthy",
-        .value_unhealthy = "unhealthy",
-        .value_very_unhealthy = "veryUnhealthy",
-        .value_hazardous = "hazardous",
-    },
+    .attr_tvocHealthConcern =
+        {
+            .name = "tvocHealthConcern",
+            .property = ATTR_SET_VALUE_REQUIRED,
+            .valueType = VALUE_TYPE_STRING,
+            .values = {"good", "moderate", "slightlyUnhealthy", "unhealthy", "veryUnhealthy", "hazardous"},
+            .value_good = "good",
+            .value_moderate = "moderate",
+            .value_slightly_unhealthy = "slightlyUnhealthy",
+            .value_unhealthy = "unhealthy",
+            .value_very_unhealthy = "veryUnhealthy",
+            .value_hazardous = "hazardous",
+        },
 };
 
 #ifdef __cplusplus

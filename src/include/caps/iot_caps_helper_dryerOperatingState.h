@@ -92,51 +92,58 @@ const static struct iot_caps_dryerOperatingState {
         const char *value_sanitizing;
         const char *value_internalCare;
     } attr_dryerJobState;
-    const struct dryerOperatingState_cmd_setMachineState { const char* name; } cmd_setMachineState;
+    const struct dryerOperatingState_cmd_setMachineState {
+        const char *name;
+    } cmd_setMachineState;
 } caps_helper_dryerOperatingState = {
     .id = "dryerOperatingState",
-    .attr_completionTime = {
-        .name = "completionTime",
-        .property = ATTR_SET_VALUE_REQUIRED,
-        .valueType = VALUE_TYPE_STRING,
-    },
-    .attr_supportedMachineStates = {
-        .name = "supportedMachineStates",
-        .property = ATTR_SET_VALUE_REQUIRED | ATTR_SET_VALUE_ARRAY,
-        .valueType = VALUE_TYPE_STRING,
-        .values = {"pause", "run", "stop"},
-        .value_pause = "pause",
-        .value_run = "run",
-        .value_stop = "stop",
-    },
-    .attr_machineState = {
-        .name = "machineState",
-        .property = ATTR_SET_VALUE_REQUIRED,
-        .valueType = VALUE_TYPE_STRING,
-        .values = {"pause", "run", "stop"},
-        .value_pause = "pause",
-        .value_run = "run",
-        .value_stop = "stop",
-    },
-    .attr_dryerJobState = {
-        .name = "dryerJobState",
-        .property = ATTR_SET_VALUE_REQUIRED,
-        .valueType = VALUE_TYPE_STRING,
-        .values = {"cooling", "delayWash", "drying", "finished", "none", "refreshing", "weightSensing", "wrinklePrevent", "dehumidifying", "aIDrying", "sanitizing", "internalCare"},
-        .value_cooling = "cooling",
-        .value_delayWash = "delayWash",
-        .value_drying = "drying",
-        .value_finished = "finished",
-        .value_none = "none",
-        .value_refreshing = "refreshing",
-        .value_weightSensing = "weightSensing",
-        .value_wrinklePrevent = "wrinklePrevent",
-        .value_dehumidifying = "dehumidifying",
-        .value_aIDrying = "aIDrying",
-        .value_sanitizing = "sanitizing",
-        .value_internalCare = "internalCare",
-    },
-    .cmd_setMachineState = { .name = "setMachineState" }, // arguments: state(string) 
+    .attr_completionTime =
+        {
+            .name = "completionTime",
+            .property = ATTR_SET_VALUE_REQUIRED,
+            .valueType = VALUE_TYPE_STRING,
+        },
+    .attr_supportedMachineStates =
+        {
+            .name = "supportedMachineStates",
+            .property = ATTR_SET_VALUE_REQUIRED | ATTR_SET_VALUE_ARRAY,
+            .valueType = VALUE_TYPE_STRING,
+            .values = {"pause", "run", "stop"},
+            .value_pause = "pause",
+            .value_run = "run",
+            .value_stop = "stop",
+        },
+    .attr_machineState =
+        {
+            .name = "machineState",
+            .property = ATTR_SET_VALUE_REQUIRED,
+            .valueType = VALUE_TYPE_STRING,
+            .values = {"pause", "run", "stop"},
+            .value_pause = "pause",
+            .value_run = "run",
+            .value_stop = "stop",
+        },
+    .attr_dryerJobState =
+        {
+            .name = "dryerJobState",
+            .property = ATTR_SET_VALUE_REQUIRED,
+            .valueType = VALUE_TYPE_STRING,
+            .values = {"cooling", "delayWash", "drying", "finished", "none", "refreshing", "weightSensing",
+                       "wrinklePrevent", "dehumidifying", "aIDrying", "sanitizing", "internalCare"},
+            .value_cooling = "cooling",
+            .value_delayWash = "delayWash",
+            .value_drying = "drying",
+            .value_finished = "finished",
+            .value_none = "none",
+            .value_refreshing = "refreshing",
+            .value_weightSensing = "weightSensing",
+            .value_wrinklePrevent = "wrinklePrevent",
+            .value_dehumidifying = "dehumidifying",
+            .value_aIDrying = "aIDrying",
+            .value_sanitizing = "sanitizing",
+            .value_internalCare = "internalCare",
+        },
+    .cmd_setMachineState = {.name = "setMachineState"},  // arguments: state(string)
 };
 
 #ifdef __cplusplus

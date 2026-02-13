@@ -15,37 +15,35 @@
  * language governing permissions and limitations under the License.
  *
  ****************************************************************************/
-#include <stdio.h>
+#include <bsp/iot_bsp_nv_data.h>
+#include <certs/root_ca.h>
+#include <iot_nv_data.h>
+#include <iot_util.h>
+#include <security/iot_security_manager.h>
+#include <setjmp.h>
 #include <stdarg.h>
 #include <stddef.h>
-#include <setjmp.h>
-#include <cmocka.h>
-#include <iot_nv_data.h>
-#include <certs/root_ca.h>
+#include <stdio.h>
 #include <string.h>
-#include <iot_util.h>
-#include <bsp/iot_bsp_nv_data.h>
-#include <security/iot_security_manager.h>
+
 #include "TC_MOCK_functions.h"
-#define UNUSED(x) (void**)(x)
+#include "cmocka_custom.h"
+#define UNUSED(x) (void **)(x)
 
-typedef enum {
-    NONE,
-    DONE
-} wifi_status_cmd_t;
+typedef enum { NONE, DONE } wifi_status_cmd_t;
 
-#define SAMPLE_PUBLIC_KEY	"BKb7+m1Mo8OuMsodM91ohz/+rZKDc/otzUPSn4UkCUk="
+#define SAMPLE_PUBLIC_KEY "BKb7+m1Mo8OuMsodM91ohz/+rZKDc/otzUPSn4UkCUk="
 
 static char sample_device_info[] = {
-        "{\n"
-        "\t\"deviceInfo\": {\n"
-        "\t\t\"firmwareVersion\": \"testFirmwareVersion\",\n"
-        "\t\t\"privateKey\": \"ztqmQ24u86J9bpFLjaoMfwauUZwKLjUIGsnrDwwnDM8=\",\n"
-        "\t\t\"publicKey\": \"" SAMPLE_PUBLIC_KEY "\",\n"
-        "\t\t\"serialNumber\": \"STDKtESt7968d226\"\n"
-        "\t}\n"
-        "}"
-};
+    "{\n"
+    "\t\"deviceInfo\": {\n"
+    "\t\t\"firmwareVersion\": \"testFirmwareVersion\",\n"
+    "\t\t\"privateKey\": \"ztqmQ24u86J9bpFLjaoMfwauUZwKLjUIGsnrDwwnDM8=\",\n"
+    "\t\t\"publicKey\": \"" SAMPLE_PUBLIC_KEY
+    "\",\n"
+    "\t\t\"serialNumber\": \"STDKtESt7968d226\"\n"
+    "\t}\n"
+    "}"};
 
 static const char *sample_wifi_ssid = "fakeSsid_04_XXXXXX";
 static const char *sample_wifi_password = "fakePassword1";
@@ -100,7 +98,7 @@ void TC_iot_nv_get_wifi_prov_data_success(void **state)
 
     // When
     err = iot_nv_get_wifi_prov_data(wifi_prov);
-    //Then
+    // Then
     assert_int_equal(err, IOT_ERROR_NONE);
     assert_memory_equal(wifi_prov->ssid, sample_wifi_ssid, strlen(sample_wifi_ssid));
     assert_memory_equal(wifi_prov->password, sample_wifi_password, strlen(sample_wifi_password));
@@ -111,7 +109,6 @@ void TC_iot_nv_get_wifi_prov_data_success(void **state)
     // Local teardown
     _teardown_wifi_prov_data();
 
-
     // Given : Status done only
     _setup_wifi_prov_status(DONE);
 
@@ -119,12 +116,11 @@ void TC_iot_nv_get_wifi_prov_data_success(void **state)
 
     // When
     err = iot_nv_get_wifi_prov_data(wifi_prov);
-    //Then
+    // Then
     assert_int_equal(err, IOT_ERROR_NONE);
 
     // Local teardown
     _teardown_wifi_prov_data();
-
 
     // Given : Status none only
     _setup_wifi_prov_status(NONE);
@@ -149,7 +145,7 @@ void TC_iot_nv_get_wifi_prov_data_null_parameters(void **state)
 
     // When : All parameters null
     err = iot_nv_get_wifi_prov_data(NULL);
-    //Then
+    // Then
     assert_int_not_equal(err, IOT_ERROR_NONE);
 }
 
@@ -251,12 +247,12 @@ void TC_iot_nv_get_serial_number_null_parameters(void **state)
 
     // When: All parameters null
     err = iot_nv_get_serial_number(NULL, NULL);
-    //Then
+    // Then
     assert_int_not_equal(err, IOT_ERROR_NONE);
 
     // When: Key is null
     err = iot_nv_get_serial_number(NULL, &serial_number_len);
-    //Then
+    // Then
     assert_int_not_equal(err, IOT_ERROR_NONE);
     assert_int_equal(serial_number_len, 0);
 
@@ -309,7 +305,6 @@ void TC_iot_nv_get_set_erase_device_id_success(void **state)
     char *got_device_id;
     size_t len;
 
-
     // When: set device id
     err = iot_nv_set_device_id(set_device_id);
     // Then:
@@ -331,7 +326,7 @@ void TC_iot_nv_get_set_erase_device_id_success(void **state)
     free(got_device_id);
 }
 
-void TC_iot_nv_erase_internal_failure(void** state)
+void TC_iot_nv_erase_internal_failure(void **state)
 {
     iot_error_t err;
 
@@ -346,45 +341,45 @@ void TC_iot_nv_erase_internal_failure(void** state)
     assert_int_equal(err, IOT_ERROR_NV_DATA_NOT_EXIST);
 }
 
-void TC_iot_nv_get_data_from_device_info_failure(void** state)
+void TC_iot_nv_get_data_from_device_info_failure(void **state)
 {
-	iot_error_t err;
-	iot_security_buffer_t buf;
-	iot_nvd_t nv_id;
+    iot_error_t err;
+    iot_security_buffer_t buf;
+    iot_nvd_t nv_id;
 
-	// When: null
-	err = iot_nv_get_data_from_device_info(nv_id, NULL);
-	// Then
-	assert_int_equal(err, IOT_ERROR_INVALID_ARGS);
+    // When: null
+    err = iot_nv_get_data_from_device_info(nv_id, NULL);
+    // Then
+    assert_int_equal(err, IOT_ERROR_INVALID_ARGS);
 
-	// Given: id not in device info
-	nv_id = IOT_NVD_SERVER_URL;
-	// When
-	err = iot_nv_get_data_from_device_info(nv_id, &buf);
-	// Then
-	assert_int_equal(err, IOT_ERROR_NV_DATA_ERROR);
+    // Given: id not in device info
+    nv_id = IOT_NVD_SERVER_URL;
+    // When
+    err = iot_nv_get_data_from_device_info(nv_id, &buf);
+    // Then
+    assert_int_equal(err, IOT_ERROR_NV_DATA_ERROR);
 }
 
-void TC_iot_nv_get_data_from_device_info_success(void** state)
+void TC_iot_nv_get_data_from_device_info_success(void **state)
 {
-	iot_error_t err;
-	iot_nvd_t nv_id;
-	iot_security_buffer_t buf;
-	char *sample_public_key = SAMPLE_PUBLIC_KEY;
+    iot_error_t err;
+    iot_nvd_t nv_id;
+    iot_security_buffer_t buf;
+    char *sample_public_key = SAMPLE_PUBLIC_KEY;
 
-	// Given
-	nv_id = IOT_NVD_PUBLIC_KEY;
-	// When
-	err = iot_nv_get_data_from_device_info(nv_id, &buf);
-	// Then
-	assert_int_equal(err, IOT_ERROR_NONE);
-	assert_non_null(buf.p);
-	assert_int_not_equal(buf.len, 0);
-	assert_memory_equal(buf.p, sample_public_key, strlen(sample_public_key));
+    // Given
+    nv_id = IOT_NVD_PUBLIC_KEY;
+    // When
+    err = iot_nv_get_data_from_device_info(nv_id, &buf);
+    // Then
+    assert_int_equal(err, IOT_ERROR_NONE);
+    assert_non_null(buf.p);
+    assert_int_not_equal(buf.len, 0);
+    assert_memory_equal(buf.p, sample_public_key, strlen(sample_public_key));
 }
 
 #define SECURITY_TYPE_MAX 10
-extern iot_error_t _iot_nv_write_data(const iot_nvd_t nv_type, const char* data, size_t size);
+extern iot_error_t _iot_nv_write_data(const iot_nvd_t nv_type, const char *data, size_t size);
 
 static void _setup_wifi_prov_status(wifi_status_cmd_t cmd)
 {
@@ -402,18 +397,18 @@ static void _setup_wifi_prov_status(wifi_status_cmd_t cmd)
 static void _setup_wifi_prov_data(iot_nvd_t nv_type)
 {
     iot_error_t err;
-    char data[SECURITY_TYPE_MAX] = {0,};
+    char data[SECURITY_TYPE_MAX] = {
+        0,
+    };
 
     switch (nv_type) {
         case IOT_NVD_AP_SSID: {
-            err = _iot_nv_write_data(IOT_NVD_AP_SSID, sample_wifi_ssid,
-                                     strlen(sample_wifi_ssid));
+            err = _iot_nv_write_data(IOT_NVD_AP_SSID, sample_wifi_ssid, strlen(sample_wifi_ssid));
             assert_int_equal(err, IOT_ERROR_NONE);
             break;
         }
         case IOT_NVD_AP_PASS: {
-            err = _iot_nv_write_data(IOT_NVD_AP_PASS, sample_wifi_password,
-                                     strlen(sample_wifi_password));
+            err = _iot_nv_write_data(IOT_NVD_AP_PASS, sample_wifi_password, strlen(sample_wifi_password));
             assert_int_equal(err, IOT_ERROR_NONE);
             break;
         }
@@ -421,8 +416,7 @@ static void _setup_wifi_prov_data(iot_nvd_t nv_type)
             err = iot_util_convert_str_mac((char *)sample_wifi_bssid_str, &sample_wifi_bssid);
             assert_int_equal(err, IOT_ERROR_NONE);
 
-            err = _iot_nv_write_data(IOT_NVD_AP_BSSID, sample_wifi_bssid_str,
-                                     strlen(sample_wifi_bssid_str));
+            err = _iot_nv_write_data(IOT_NVD_AP_BSSID, sample_wifi_bssid_str, strlen(sample_wifi_bssid_str));
             assert_int_equal(err, IOT_ERROR_NONE);
             break;
         }

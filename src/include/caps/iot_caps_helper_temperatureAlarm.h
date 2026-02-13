@@ -47,16 +47,17 @@ const static struct iot_caps_temperatureAlarm {
     } attr_temperatureAlarm;
 } caps_helper_temperatureAlarm = {
     .id = "temperatureAlarm",
-    .attr_temperatureAlarm = {
-        .name = "temperatureAlarm",
-        .property = ATTR_SET_VALUE_REQUIRED,
-        .valueType = VALUE_TYPE_STRING,
-        .values = {"cleared", "freeze", "heat", "rateOfRise"},
-        .value_cleared = "cleared",
-        .value_freeze = "freeze",
-        .value_heat = "heat",
-        .value_rateOfRise = "rateOfRise",
-    },
+    .attr_temperatureAlarm =
+        {
+            .name = "temperatureAlarm",
+            .property = ATTR_SET_VALUE_REQUIRED,
+            .valueType = VALUE_TYPE_STRING,
+            .values = {"cleared", "freeze", "heat", "rateOfRise"},
+            .value_cleared = "cleared",
+            .value_freeze = "freeze",
+            .value_heat = "heat",
+            .value_rateOfRise = "rateOfRise",
+        },
 };
 
 #ifdef __cplusplus

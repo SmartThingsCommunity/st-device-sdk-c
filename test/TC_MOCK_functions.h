@@ -29,4 +29,4 @@ void set_mock_detect_memory_leak(bool detect);
 void port_net_mock_reset_read_stream(unsigned char *read_stream, size_t size);
 void port_net_mock_reset_socket_status(int status);
 
-#endif //ST_DEVICE_SDK_C_TC_MOCK_FUNCTIONS_H
+#endif  // ST_DEVICE_SDK_C_TC_MOCK_FUNCTIONS_H

@@ -19,6 +19,7 @@
 #ifndef _IOT_SECURITY_ERROR_H_
 #define _IOT_SECURITY_ERROR_H_
 
+// clang-format off
 #define IOT_ERROR_SECURITY_INIT                 (IOT_ERROR_SECURITY_BASE - 1)
 #define IOT_ERROR_SECURITY_DEINIT               (IOT_ERROR_SECURITY_BASE - 2)
 #define IOT_ERROR_SECURITY_CONTEXT_NULL         (IOT_ERROR_SECURITY_BASE - 3)
@@ -102,11 +103,12 @@
 #define IOT_ERROR_SECURITY_BASE64_URL_DECODE    (IOT_ERROR_SECURITY_BASE - 404)
 #define IOT_ERROR_SECURITY_INVALID_ARGS         IOT_ERROR_INVALID_ARGS
 #define IOT_ERROR_SECURITY_MEM_ALLOC            IOT_ERROR_MEM_ALLOC
+// clang-format on
 
-#define IOT_ERROR_DUMP_AND_RETURN(error, arg) \
-	do { \
-		IOT_DUMP(IOT_DEBUG_LEVEL_ERROR, IOT_DUMP_SECURITY_##error, __LINE__, arg); \
-		return IOT_ERROR_SECURITY_##error; \
-	} while (0)
+#define IOT_ERROR_DUMP_AND_RETURN(error, arg)                                      \
+    do {                                                                           \
+        IOT_DUMP(IOT_DEBUG_LEVEL_ERROR, IOT_DUMP_SECURITY_##error, __LINE__, arg); \
+        return IOT_ERROR_SECURITY_##error;                                         \
+    } while (0)
 
 #endif /* _IOT_SECURITY_ERROR_H_ */

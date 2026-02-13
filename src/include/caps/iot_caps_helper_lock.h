@@ -45,22 +45,27 @@ const static struct iot_caps_lock {
         const char *value_unlocked;
         const char *value_unlocked_with_timeout;
     } attr_lock;
-    const struct lock_cmd_lock { const char* name; } cmd_lock;
-    const struct lock_cmd_unlock { const char* name; } cmd_unlock;
+    const struct lock_cmd_lock {
+        const char *name;
+    } cmd_lock;
+    const struct lock_cmd_unlock {
+        const char *name;
+    } cmd_unlock;
 } caps_helper_lock = {
     .id = "lock",
-    .attr_lock = {
-        .name = "lock",
-        .property = ATTR_SET_VALUE_REQUIRED,
-        .valueType = VALUE_TYPE_STRING,
-        .values = {"locked", "unknown", "unlocked", "unlocked with timeout"},
-        .value_locked = "locked",
-        .value_unknown = "unknown",
-        .value_unlocked = "unlocked",
-        .value_unlocked_with_timeout = "unlocked with timeout",
-    },
-    .cmd_lock = { .name = "lock" },
-    .cmd_unlock = { .name = "unlock" },
+    .attr_lock =
+        {
+            .name = "lock",
+            .property = ATTR_SET_VALUE_REQUIRED,
+            .valueType = VALUE_TYPE_STRING,
+            .values = {"locked", "unknown", "unlocked", "unlocked with timeout"},
+            .value_locked = "locked",
+            .value_unknown = "unknown",
+            .value_unlocked = "unlocked",
+            .value_unlocked_with_timeout = "unlocked with timeout",
+        },
+    .cmd_lock = {.name = "lock"},
+    .cmd_unlock = {.name = "unlock"},
 };
 
 #ifdef __cplusplus

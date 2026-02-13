@@ -15,16 +15,14 @@
  * language governing permissions and limitations under the License.
  *
  ****************************************************************************/
-#include <stdarg.h>
-#include <stddef.h>
-#include <setjmp.h>
-#include <cmocka.h>
-#include <string.h>
+#include <iot_error.h>
+#include <os/iot_os_util.h>
 #include <stdbool.h>
 #include <stdlib.h>
-#include <iot_error.h>
+#include <string.h>
+
+#include "cmocka_custom.h"
 #include "port_net.h"
-#include <os/iot_os_util.h>
 #define UNUSED(x) (void)(x)
 
 static unsigned char *mock_read_stream;
@@ -37,7 +35,7 @@ void port_net_mock_reset_read_stream(unsigned char *read_stream, size_t size)
     mock_read_stream_offset = 0;
 }
 
-static int mock_socket_status; // 0 : initialized, 1 : connected, 2 : not-connected
+static int mock_socket_status;  // 0 : initialized, 1 : connected, 2 : not-connected
 void port_net_mock_reset_socket_status(int status)
 {
     mock_socket_status = status;
@@ -70,7 +68,7 @@ int __wrap_port_net_write(PORT_NET_CONTEXT ctx, void *buf, size_t len)
 PORT_NET_CONTEXT __wrap_port_net_connect(char *address, char *port, port_net_tls_config *config)
 {
     UNUSED(address);
-	UNUSED(config);
+    UNUSED(config);
     if (mock_socket_status == 1)
         return (PORT_NET_CONTEXT)1;
     return NULL;

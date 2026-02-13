@@ -1,0 +1,17 @@
+---
+BasedOnStyle: Google
+
+ColumnLimit: 120
+IndentWidth: 4
+UseTab: Never
+
+AllowShortFunctionsOnASingleLine: None
+AllowShortIfStatementsOnASingleLine: Never
+AllowShortLoopsOnASingleLine: false
+BreakBeforeBraces: Linux
+DerivePointerAlignment: false
+IndentCaseLabels: true
+PointerAlignment: Right
+
+SortIncludes: true
+IncludeBlocks: Regroup

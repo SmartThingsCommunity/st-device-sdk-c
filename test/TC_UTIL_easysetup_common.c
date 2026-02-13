@@ -15,58 +15,59 @@
  * language governing permissions and limitations under the License.
  *
  ****************************************************************************/
-#include <stdarg.h>
-#include <stddef.h>
-#include <setjmp.h>
-#include <cmocka.h>
-#include <st_dev.h>
-#include <string.h>
-#include <time.h>
-#include <iot_main.h>
-#include <iot_internal.h>
-#include <iot_nv_data.h>
-#include <iot_error.h>
-#include <iot_easysetup.h>
+#include "TC_UTIL_easysetup_common.h"
+
 #include <bsp/iot_bsp_random.h>
 #include <external/JSON.h>
+#include <iot_easysetup.h>
+#include <iot_error.h>
+#include <iot_internal.h>
+#include <iot_main.h>
+#include <iot_nv_data.h>
 #include <iot_security_crypto.h>
 #include <iot_security_ecdh.h>
 #include <iot_security_util.h>
-#include "TC_MOCK_functions.h"
-#include "TC_UTIL_easysetup_common.h"
 #include <sodium.h>
+#include <st_dev.h>
+#include <string.h>
+#include <time.h>
+
+#include "TC_MOCK_functions.h"
+#include "cmocka_custom.h"
 
 static char sample_device_info[] = {
-        "{\n"
-        "\t\"deviceInfo\": {\n"
-        "\t\t\"firmwareVersion\": \""TEST_FIRMWARE_VERSION"\",\n"
-        "\t\t\"privateKey\": \""TEST_DEVICE_SECRET_B64_KEY"\",\n"
-        "\t\t\"publicKey\": \""TEST_DEVICE_PUBLIC_B64_KEY"\",\n"
-        "\t\t\"serialNumber\": \""TEST_DEVICE_SERIAL_NUMBER"\"\n"
-        "\t}\n"
-        "}"
-};
+    "{\n"
+    "\t\"deviceInfo\": {\n"
+    "\t\t\"firmwareVersion\": \"" TEST_FIRMWARE_VERSION
+    "\",\n"
+    "\t\t\"privateKey\": \"" TEST_DEVICE_SECRET_B64_KEY
+    "\",\n"
+    "\t\t\"publicKey\": \"" TEST_DEVICE_PUBLIC_B64_KEY
+    "\",\n"
+    "\t\t\"serialNumber\": \"" TEST_DEVICE_SERIAL_NUMBER
+    "\"\n"
+    "\t}\n"
+    "}"};
 
 static char sample_onboarding_config[] = {
-        "{\n"
-        "  \"onboardingConfig\": {\n"
-        "    \"deviceOnboardingId\": \"STDK\",\n"
-        "    \"mnId\": \"fTST\",\n"
-        "    \"setupId\": \"001\",\n"
-        "    \"vid\": \"STDK_BULB_0001\",\n"
-        "    \"deviceTypeId\": \"Switch\",\n"
-        "    \"ownershipValidationTypes\": [\n"
-        "      \"BUTTON\"\n"
-        "    ],\n"
-        "    \"identityType\": \"ED25519\"\n"
-        "  }\n"
-        "}"
-};
+    "{\n"
+    "  \"onboardingConfig\": {\n"
+    "    \"deviceOnboardingId\": \"STDK\",\n"
+    "    \"mnId\": \"fTST\",\n"
+    "    \"setupId\": \"001\",\n"
+    "    \"vid\": \"STDK_BULB_0001\",\n"
+    "    \"deviceTypeId\": \"Switch\",\n"
+    "    \"ownershipValidationTypes\": [\n"
+    "      \"BUTTON\"\n"
+    "    ],\n"
+    "    \"identityType\": \"ED25519\"\n"
+    "  }\n"
+    "}"};
 
-static struct tc_key_pair* SERVER_KEYPAIR;
-static struct tc_key_pair* DEVICE_KEYPAIR;
+static struct tc_key_pair *SERVER_KEYPAIR;
+static struct tc_key_pair *DEVICE_KEYPAIR;
 
-unsigned char * _get_server_test_pubkey()
+unsigned char *_get_server_test_pubkey()
 {
     if (SERVER_KEYPAIR) {
         return SERVER_KEYPAIR->curve25519_pk;
@@ -88,7 +89,7 @@ int TC_iot_easysetup_common_setup(void **state)
 #endif
     assert_int_equal(err, IOT_ERROR_NONE);
 
-    context = (struct iot_context *) malloc((sizeof(struct iot_context)));
+    context = (struct iot_context *)malloc((sizeof(struct iot_context)));
     assert_non_null(context);
     memset(context, '\0', sizeof(struct iot_context));
     devconf = &context->devconf;
@@ -106,11 +107,13 @@ int TC_iot_easysetup_common_setup(void **state)
     err = iot_security_cipher_init(context->easysetup_security_context);
     assert_int_equal(err, IOT_ERROR_NONE);
 
-    SERVER_KEYPAIR = _generate_test_keypair((const unsigned char*)TEST_SERVER_PUBLIC_B64_KEY, strlen(TEST_SERVER_PUBLIC_B64_KEY),
-                                            (const unsigned char*)TEST_SERVER_SECRET_B64_KEY, strlen(TEST_SERVER_SECRET_B64_KEY));
+    SERVER_KEYPAIR =
+        _generate_test_keypair((const unsigned char *)TEST_SERVER_PUBLIC_B64_KEY, strlen(TEST_SERVER_PUBLIC_B64_KEY),
+                               (const unsigned char *)TEST_SERVER_SECRET_B64_KEY, strlen(TEST_SERVER_SECRET_B64_KEY));
     assert_non_null(SERVER_KEYPAIR);
-    DEVICE_KEYPAIR = _generate_test_keypair((const unsigned char*)TEST_DEVICE_PUBLIC_B64_KEY, strlen(TEST_DEVICE_PUBLIC_B64_KEY),
-                                            (const unsigned char*)TEST_DEVICE_SECRET_B64_KEY, strlen(TEST_DEVICE_SECRET_B64_KEY));
+    DEVICE_KEYPAIR =
+        _generate_test_keypair((const unsigned char *)TEST_DEVICE_PUBLIC_B64_KEY, strlen(TEST_DEVICE_PUBLIC_B64_KEY),
+                               (const unsigned char *)TEST_DEVICE_SECRET_B64_KEY, strlen(TEST_DEVICE_SECRET_B64_KEY));
     assert_non_null(DEVICE_KEYPAIR);
 
     *state = context;
@@ -151,25 +154,25 @@ int TC_iot_easysetup_common_teardown(void **state)
     return 0;
 }
 
-struct tc_key_pair* _generate_test_keypair(const unsigned char *pk_b64url, size_t pk_b64url_len,
-                                                  const unsigned char *sk_b64url, size_t sk_b64url_len)
+struct tc_key_pair *_generate_test_keypair(const unsigned char *pk_b64url, size_t pk_b64url_len,
+                                           const unsigned char *sk_b64url, size_t sk_b64url_len)
 {
     struct tc_key_pair *keypair;
     iot_error_t err;
     size_t out_length;
     int ret;
 
-    keypair = (struct tc_key_pair *) malloc(sizeof(struct tc_key_pair));
+    keypair = (struct tc_key_pair *)malloc(sizeof(struct tc_key_pair));
     assert_non_null(keypair);
     memset(keypair, '\0', sizeof(struct tc_key_pair));
 
-    err = iot_security_base64_decode(pk_b64url, pk_b64url_len,
-                                   keypair->ed25519_pk, sizeof(keypair->ed25519_pk), &out_length);
+    err = iot_security_base64_decode(pk_b64url, pk_b64url_len, keypair->ed25519_pk, sizeof(keypair->ed25519_pk),
+                                     &out_length);
     assert_int_equal(err, IOT_ERROR_NONE);
     assert_int_equal(out_length, IOT_SECURITY_ED25519_LEN);
 
-    err = iot_security_base64_decode(sk_b64url, sk_b64url_len,
-                                   keypair->ed25519_sk, sizeof(keypair->ed25519_sk), &out_length);
+    err = iot_security_base64_decode(sk_b64url, sk_b64url_len, keypair->ed25519_sk, sizeof(keypair->ed25519_sk),
+                                     &out_length);
     assert_int_equal(err, IOT_ERROR_NONE);
     assert_int_equal(out_length, IOT_SECURITY_ED25519_LEN);
 
@@ -202,12 +205,11 @@ void _free_cipher(iot_security_cipher_params_t *cipher)
     free(cipher);
 }
 
-
 char *_encrypt_and_encode_message(iot_security_cipher_params_t *cipher, unsigned char *message, size_t message_length)
 {
     iot_security_context_t *security_context = NULL;
-    iot_security_buffer_t message_buffer = { 0 };
-    iot_security_buffer_t aes256_message_buffer = { 0 };
+    iot_security_buffer_t message_buffer = {0};
+    iot_security_buffer_t aes256_message_buffer = {0};
     size_t b64_aes256_len;
     size_t out_length;
     unsigned char *b64url_aes256_message;
@@ -231,9 +233,10 @@ char *_encrypt_and_encode_message(iot_security_cipher_params_t *cipher, unsigned
     assert_int_equal(err, IOT_ERROR_NONE);
 
     b64_aes256_len = IOT_SECURITY_B64_ENCODE_LEN(aes256_message_buffer.len);
-    b64url_aes256_message = (unsigned char *) malloc(b64_aes256_len);
+    b64url_aes256_message = (unsigned char *)malloc(b64_aes256_len);
     assert_non_null(b64url_aes256_message);
-    err = iot_security_base64_encode_urlsafe(aes256_message_buffer.p, aes256_message_buffer.len, b64url_aes256_message, b64_aes256_len, &out_length);
+    err = iot_security_base64_encode_urlsafe(aes256_message_buffer.p, aes256_message_buffer.len, b64url_aes256_message,
+                                             b64_aes256_len, &out_length);
     assert_int_equal(err, IOT_ERROR_NONE);
 
     free(aes256_message_buffer.p);
@@ -246,12 +249,13 @@ char *_encrypt_and_encode_message(iot_security_cipher_params_t *cipher, unsigned
     return b64url_aes256_message;
 }
 
-char *_decode_and_decrypt_message(iot_security_cipher_params_t *cipher, unsigned char *b64url_aes256_message, size_t b64url_aes256_message_length)
+char *_decode_and_decrypt_message(iot_security_cipher_params_t *cipher, unsigned char *b64url_aes256_message,
+                                  size_t b64url_aes256_message_length)
 {
     iot_error_t err;
     iot_security_context_t *security_context = NULL;
-    iot_security_buffer_t plain_message_buffer = { 0 };
-    iot_security_buffer_t aes256_message_buffer = { 0 };
+    iot_security_buffer_t plain_message_buffer = {0};
+    iot_security_buffer_t aes256_message_buffer = {0};
     size_t aes256_message_actual_length;
     assert_non_null(cipher);
     assert_non_null(b64url_aes256_message);
@@ -270,9 +274,9 @@ char *_decode_and_decrypt_message(iot_security_cipher_params_t *cipher, unsigned
     aes256_message_buffer.p = malloc(aes256_message_buffer.len);
     assert_non_null(aes256_message_buffer.p);
 
-    err = iot_security_base64_decode_urlsafe(b64url_aes256_message, b64url_aes256_message_length,
-                             aes256_message_buffer.p, aes256_message_buffer.len,
-                             &aes256_message_actual_length);
+    err =
+        iot_security_base64_decode_urlsafe(b64url_aes256_message, b64url_aes256_message_length, aes256_message_buffer.p,
+                                           aes256_message_buffer.len, &aes256_message_actual_length);
     assert_int_equal(err, IOT_ERROR_NONE);
 
     // Decrypt
@@ -293,7 +297,7 @@ char *_decode_and_decrypt_message(iot_security_cipher_params_t *cipher, unsigned
 
 static void _generate_hash_token(unsigned char *hash_token, size_t hash_token_size)
 {
-    unsigned char rand_ascii[IOT_SECURITY_SHA256_LEN * 2 + 1] = {0 };
+    unsigned char rand_ascii[IOT_SECURITY_SHA256_LEN * 2 + 1] = {0};
     iot_error_t err;
     char tmp[3] = {0};
     size_t out_length;
@@ -303,9 +307,8 @@ static void _generate_hash_token(unsigned char *hash_token, size_t hash_token_si
     assert_true(hash_token_size >= IOT_SECURITY_SHA256_LEN);
 
     memset(rand_ascii, '\0', sizeof(rand_ascii));
-    err = iot_security_base64_decode((const unsigned char*)TEST_SRAND, strlen(TEST_SRAND),
-                                   rand_ascii, sizeof(rand_ascii),
-                                   &out_length);
+    err = iot_security_base64_decode((const unsigned char *)TEST_SRAND, strlen(TEST_SRAND), rand_ascii,
+                                     sizeof(rand_ascii), &out_length);
     assert_int_equal(err, IOT_ERROR_NONE);
     assert_int_equal(out_length, IOT_SECURITY_SHA256_LEN * 2);
 
@@ -316,13 +319,14 @@ static void _generate_hash_token(unsigned char *hash_token, size_t hash_token_si
     }
 }
 
-static iot_security_cipher_params_t* _generate_cipher(unsigned char *pk, unsigned char *sk, unsigned char *iv, size_t iv_len)
+static iot_security_cipher_params_t *_generate_cipher(unsigned char *pk, unsigned char *sk, unsigned char *iv,
+                                                      size_t iv_len)
 {
     iot_error_t err;
     iot_security_context_t *security_context;
-    iot_security_cipher_params_t* cipher = NULL;
-    iot_security_ecdh_params_t ecdh_params = { 0 };
-    iot_security_buffer_t shared_secret = { 0 };
+    iot_security_cipher_params_t *cipher = NULL;
+    iot_security_ecdh_params_t ecdh_params = {0};
+    iot_security_buffer_t shared_secret = {0};
     unsigned char hash_token[IOT_SECURITY_SHA256_LEN];
     unsigned char *master_secret = NULL;
 
@@ -338,7 +342,7 @@ static iot_security_cipher_params_t* _generate_cipher(unsigned char *pk, unsigne
     assert_non_null(cipher);
     memset(cipher, '\0', sizeof(iot_security_cipher_params_t));
     cipher->iv.len = IOT_SECURITY_IV_LEN;
-    cipher->iv.p = (unsigned char *) malloc(IOT_SECURITY_IV_LEN);
+    cipher->iv.p = (unsigned char *)malloc(IOT_SECURITY_IV_LEN);
     assert_non_null(cipher->iv.p);
     if (iv) {
         assert_int_equal(iv_len, IOT_SECURITY_IV_LEN);
@@ -379,12 +383,12 @@ static iot_security_cipher_params_t* _generate_cipher(unsigned char *pk, unsigne
     return cipher;
 }
 
-iot_security_cipher_params_t* _generate_server_cipher(unsigned char *iv_data, size_t iv_length)
+iot_security_cipher_params_t *_generate_server_cipher(unsigned char *iv_data, size_t iv_length)
 {
     return _generate_cipher(DEVICE_KEYPAIR->curve25519_pk, SERVER_KEYPAIR->curve25519_sk, iv_data, iv_length);
 }
 
-iot_security_cipher_params_t* _generate_device_cipher(unsigned char *iv_data, size_t iv_length)
+iot_security_cipher_params_t *_generate_device_cipher(unsigned char *iv_data, size_t iv_length)
 {
     return _generate_cipher(SERVER_KEYPAIR->curve25519_pk, DEVICE_KEYPAIR->curve25519_sk, iv_data, iv_length);
 }
@@ -404,8 +408,7 @@ char *_generate_post_keyinfo_payload(int year, time_t *time_to_set)
     unsigned char *b64url_regionaldatetime;
     unsigned char *b64url_timezoneid;
     struct tm test_tm;
-    unsigned char* spub = _get_server_test_pubkey();
-
+    unsigned char *spub = _get_server_test_pubkey();
 
     assert_non_null(spub);
     assert_non_null(time_to_set);
@@ -417,8 +420,8 @@ char *_generate_post_keyinfo_payload(int year, time_t *time_to_set)
 
     curve25519_server_pk_b64 = malloc(curve25519_server_pk_b64_len);
     memset(curve25519_server_pk_b64, '\0', curve25519_server_pk_b64_len);
-    err = iot_security_base64_encode_urlsafe(spub, IOT_SECURITY_ED25519_LEN,
-                                           curve25519_server_pk_b64, curve25519_server_pk_b64_len, &out_length);
+    err = iot_security_base64_encode_urlsafe(spub, IOT_SECURITY_ED25519_LEN, curve25519_server_pk_b64,
+                                             curve25519_server_pk_b64_len, &out_length);
     assert_int_equal(err, IOT_ERROR_NONE);
 
     snprintf(datetime, sizeof(datetime), "%04d-03-25T02.40.14 UTC", year);
@@ -435,28 +438,28 @@ char *_generate_post_keyinfo_payload(int year, time_t *time_to_set)
 
     *time_to_set = mktime(&test_tm);
 
-    b64url_datetime = (unsigned char*) malloc(IOT_SECURITY_B64_ENCODE_LEN(strlen(datetime)));
-    b64url_regionaldatetime = (unsigned char*) malloc(IOT_SECURITY_B64_ENCODE_LEN(strlen(regionaldatetime)));
-    b64url_timezoneid = (unsigned char*) malloc(IOT_SECURITY_B64_ENCODE_LEN(strlen(timezoneid)));
+    b64url_datetime = (unsigned char *)malloc(IOT_SECURITY_B64_ENCODE_LEN(strlen(datetime)));
+    b64url_regionaldatetime = (unsigned char *)malloc(IOT_SECURITY_B64_ENCODE_LEN(strlen(regionaldatetime)));
+    b64url_timezoneid = (unsigned char *)malloc(IOT_SECURITY_B64_ENCODE_LEN(strlen(timezoneid)));
 
-    err = iot_security_base64_encode_urlsafe(datetime, strlen(datetime),
-                                           b64url_datetime, IOT_SECURITY_B64_ENCODE_LEN(strlen(datetime)), &out_length);
+    err = iot_security_base64_encode_urlsafe(datetime, strlen(datetime), b64url_datetime,
+                                             IOT_SECURITY_B64_ENCODE_LEN(strlen(datetime)), &out_length);
     assert_int_equal(err, IOT_ERROR_NONE);
 
-    err = iot_security_base64_encode_urlsafe(regionaldatetime, strlen(regionaldatetime),
-                                           b64url_regionaldatetime, IOT_SECURITY_B64_ENCODE_LEN(strlen(regionaldatetime)), &out_length);
+    err = iot_security_base64_encode_urlsafe(regionaldatetime, strlen(regionaldatetime), b64url_regionaldatetime,
+                                             IOT_SECURITY_B64_ENCODE_LEN(strlen(regionaldatetime)), &out_length);
     assert_int_equal(err, IOT_ERROR_NONE);
 
-    err = iot_security_base64_encode_urlsafe(timezoneid, strlen(timezoneid),
-                                           b64url_timezoneid, IOT_SECURITY_B64_ENCODE_LEN(strlen(datetime)), &out_length);
+    err = iot_security_base64_encode_urlsafe(timezoneid, strlen(timezoneid), b64url_timezoneid,
+                                             IOT_SECURITY_B64_ENCODE_LEN(strlen(datetime)), &out_length);
     assert_int_equal(err, IOT_ERROR_NONE);
 
     root = JSON_CREATE_OBJECT();
     assert_non_null(root);
-    JSON_ADD_ITEM_TO_OBJECT(root, "spub", JSON_CREATE_STRING((const char *) curve25519_server_pk_b64));
+    JSON_ADD_ITEM_TO_OBJECT(root, "spub", JSON_CREATE_STRING((const char *)curve25519_server_pk_b64));
     JSON_ADD_ITEM_TO_OBJECT(root, "rand", JSON_CREATE_STRING(TEST_SRAND));
-    JSON_ADD_ITEM_TO_OBJECT(root, "datetime", JSON_CREATE_STRING((const char *) b64url_datetime));
-    JSON_ADD_ITEM_TO_OBJECT(root, "regionaldatetime", JSON_CREATE_STRING((const char *) b64url_regionaldatetime));
+    JSON_ADD_ITEM_TO_OBJECT(root, "datetime", JSON_CREATE_STRING((const char *)b64url_datetime));
+    JSON_ADD_ITEM_TO_OBJECT(root, "regionaldatetime", JSON_CREATE_STRING((const char *)b64url_regionaldatetime));
     JSON_ADD_ITEM_TO_OBJECT(root, "timezoneid", JSON_CREATE_STRING((const char *)b64url_timezoneid));
     post_message = JSON_PRINT(root);
     JSON_DELETE(root);
@@ -513,13 +516,14 @@ void assert_keyinfo(char *payload, iot_security_cipher_params_t *server_cipher, 
     item = JSON_GET_OBJECT_ITEM(root, "message");
     assert_non_null(item);
     b64url_aes256_message = JSON_GET_STRING_VALUE(item);
-    assert_true(strlen( b64url_aes256_message) > 10);
+    assert_true(strlen(b64url_aes256_message) > 10);
 
-    plain_message = _decode_and_decrypt_message(server_cipher, (unsigned char*) b64url_aes256_message, strlen(b64url_aes256_message));
+    plain_message = _decode_and_decrypt_message(server_cipher, (unsigned char *)b64url_aes256_message,
+                                                strlen(b64url_aes256_message));
     JSON_DELETE(root);
 
     // validate values
-    root = JSON_PARSE((const char*) plain_message);
+    root = JSON_PARSE((const char *)plain_message);
     assert_non_null(root);
     array = JSON_GET_OBJECT_ITEM(root, "otmSupportFeatures");
     assert_non_null(array);

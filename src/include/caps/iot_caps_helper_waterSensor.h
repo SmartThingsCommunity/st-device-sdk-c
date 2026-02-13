@@ -43,14 +43,15 @@ const static struct iot_caps_waterSensor {
     } attr_water;
 } caps_helper_waterSensor = {
     .id = "waterSensor",
-    .attr_water = {
-        .name = "water",
-        .property = ATTR_SET_VALUE_REQUIRED,
-        .valueType = VALUE_TYPE_STRING,
-        .values = {"dry", "wet"},
-        .value_dry = "dry",
-        .value_wet = "wet",
-    },
+    .attr_water =
+        {
+            .name = "water",
+            .property = ATTR_SET_VALUE_REQUIRED,
+            .valueType = VALUE_TYPE_STRING,
+            .values = {"dry", "wet"},
+            .value_dry = "dry",
+            .value_wet = "wet",
+        },
 };
 
 #ifdef __cplusplus
