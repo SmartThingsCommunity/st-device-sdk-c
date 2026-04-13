@@ -28,6 +28,14 @@ if(ENABLE_STDK_TEST)
         set(SECURITY_EXTRA_SRCS TC_FUNC_iot_security_be_bsp.c)
     endif()
 
+    if(CONFIG_STDK_IOT_CORE_EASYSETUP_HTTP)
+        set(EASYSETUP_EXTRA_SRCS
+            TC_FUNC_iot_easysetup_d2d_tcp.c
+            TC_FUNC_iot_easysetup_httpd.c
+            TC_FUNC_iot_easysetup_http_parser.c
+            TC_FUNC_iot_easysetup_http.c)
+    endif()
+
     add_executable(stdk_test
                    TEST_main.c
                    TC_MOCK_iot_bsp.c
@@ -38,7 +46,6 @@ if(ENABLE_STDK_TEST)
                    TC_FUNC_iot_uuid.c
                    TC_FUNC_iot_capability.c
                    TC_FUNC_iot_nv_data.c
-                   TC_FUNC_iot_easysetup_d2d.c
                    TC_FUNC_iot_main.c
                    TC_FUNC_iot_mqtt_client.c
                    TC_FUNC_iot_security_common.c
@@ -49,12 +56,10 @@ if(ENABLE_STDK_TEST)
                    TC_FUNC_iot_security_helper.c
                    TC_FUNC_iot_security_helper_ed25519.c
                    ${SECURITY_EXTRA_SRCS}
+                   ${EASYSETUP_EXTRA_SRCS}
                    TC_FUNC_iot_wt.c
-                   TC_FUNC_iot_easysetup_httpd.c
                    TC_FUNC_iot_dump_log.c
                    TC_FUNC_iot_easysetup_st_mqtt.c
-                   TC_FUNC_iot_easysetup_http_parser.c
-                   TC_FUNC_iot_easysetup_http.c
                    TC_UTIL_easysetup_common.c
 				   )
 

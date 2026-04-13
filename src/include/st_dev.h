@@ -233,6 +233,7 @@ typedef enum iot_info_type {
     IOT_INFO_TYPE_IOT_DEVICE_STATUS, /**< @brief to get current device status */
     IOT_INFO_TYPE_IOT_PROVISIONED,   /**< @brief to get provision state, provisioned or not */
     IOT_INFO_TYPE_IOT_SERVER_ENV,    /**< @brief server environment info */
+    IOT_INFO_TYPE_IOT_DEVICEID,      /**< @brief to get deviceId */
 } iot_info_type_t;
 
 typedef enum iot_server_type {
@@ -255,6 +256,8 @@ typedef enum {
     SERVER_ENV_DEV,
 } server_env_type;
 
+#define IOT_DEVICE_ID_LEN (36)
+
 /**
  * @brief Contains data for iot-core information.
  */
@@ -263,6 +266,7 @@ typedef union {
     /* to get provisioned state case */
     bool provisioned; /**< @brief to check provisoned or not */
     server_env_type server_env;
+    char device_id[IOT_DEVICE_ID_LEN + 1]; /**< @brief uuid format deviceId info */
 } iot_info_data_t;
 
 /**
@@ -412,6 +416,52 @@ typedef struct {
             output_seq_num = st_cap_send_attr(&attr, 1);                                                 \
             st_cap_free_attr(attr);                                                                      \
         }                                                                                                \
+    }
+
+#define ST_CAP_CREATE_ATTR_OBJECT(cap_handle, attribute, value_object, unit, data, output_attr) \
+    {                                                                                           \
+        iot_cap_val_t value;                                                                    \
+                                                                                                \
+        value.type = IOT_CAP_VAL_TYPE_JSON_OBJECT;                                              \
+        value.json_object = value_object;                                                       \
+        output_attr = st_cap_create_attr(cap_handle, attribute, &value, unit, data);            \
+    }
+
+#define ST_CAP_SEND_ATTR_OBJECT(cap_handle, attribute, value_object, unit, data, output_seq_num) \
+    {                                                                                            \
+        IOT_EVENT *attr = NULL;                                                                  \
+        iot_cap_val_t value;                                                                     \
+                                                                                                 \
+        value.type = IOT_CAP_VAL_TYPE_JSON_OBJECT;                                               \
+        value.json_object = value_object;                                                        \
+        attr = st_cap_create_attr(cap_handle, attribute, &value, unit, data);                    \
+        if (attr != NULL) {                                                                      \
+            output_seq_num = st_cap_send_attr(&attr, 1);                                         \
+            st_cap_free_attr(attr);                                                              \
+        }                                                                                        \
+    }
+
+#define ST_CAP_CREATE_ATTR_BOOLEAN(cap_handle, attribute, value_boolean, unit, data, output_attr) \
+    {                                                                                             \
+        iot_cap_val_t value;                                                                      \
+                                                                                                  \
+        value.type = IOT_CAP_VAL_TYPE_BOOLEAN;                                                    \
+        value.boolean = value_boolean;                                                            \
+        output_attr = st_cap_create_attr(cap_handle, attribute, &value, unit, data);              \
+    }
+
+#define ST_CAP_SEND_ATTR_BOOLEAN(cap_handle, attribute, value_boolean, unit, data, output_seq_num) \
+    {                                                                                              \
+        IOT_EVENT *attr = NULL;                                                                    \
+        iot_cap_val_t value;                                                                       \
+                                                                                                   \
+        value.type = IOT_CAP_VAL_TYPE_BOOLEAN;                                                     \
+        value.boolean = value_boolean;                                                             \
+        attr = st_cap_create_attr(cap_handle, attribute, &value, unit, data);                      \
+        if (attr != NULL) {                                                                        \
+            output_seq_num = st_cap_send_attr(&attr, 1);                                           \
+            st_cap_free_attr(attr);                                                                \
+        }                                                                                          \
     }
 
 /**

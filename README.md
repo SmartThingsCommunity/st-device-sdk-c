@@ -77,6 +77,7 @@ For more information, please review the following documents:
 - [Capabilities Reference](https://developer.smartthings.com/docs/devices/capabilities/capabilities-reference) : This page serves as a reference for the supported capabilities.
 - [Developer Workspace](https://developer.smartthings.com/workspace/) : It provides functions related to device information registration and device integration in the SmartThings cloud.
 - [Capability Attribute Update](./doc/Capability_Attribute_Update.md) : This development page guides how to use Capability Attribute update APIs.
+- [Device Registration](./doc/onboarding_seq_flow.md) : This page is a guide explaining the device registration process.
 
 ## Commercialization
 

@@ -103,7 +103,8 @@ static bool _unlikely_with_stored_dip(struct iot_dip_data *chk_dip)
     return false;
 }
 
-static iot_error_t _check_prov_status(struct iot_context *ctx, bool cmd_only)
+STATIC_FUNCTION
+iot_error_t _check_prov_status(struct iot_context *ctx, bool cmd_only)
 {
     iot_error_t err;
     ctx->iot_reg_data.new_reged = false;
@@ -286,7 +287,8 @@ iot_error_t _delete_dev_card_by_usr(struct iot_context *ctx)
     return iot_err;
 }
 
-static void _get_device_preference(struct iot_context *ctx)
+STATIC_FUNCTION
+void _get_device_preference(struct iot_context *ctx)
 {
     st_mqtt_msg msg = {0};
 
@@ -322,7 +324,8 @@ static void _get_device_info_in_server(struct iot_context *ctx)
     st_mqtt_publish_async(ctx->evt_mqttcli, &msg);
 }
 
-static void _iot_state_timeout_cb(iot_os_timer_handle handle, void *user_data)
+STATIC_FUNCTION
+void _iot_state_timeout_cb(iot_os_timer_handle handle, void *user_data)
 {
     struct iot_context *ctx = (struct iot_context *)user_data;
     IOT_INFO("Timeout");
@@ -348,7 +351,8 @@ static void _iot_state_timeout_cb(iot_os_timer_handle handle, void *user_data)
     }
 }
 
-static iot_error_t _do_state_updating(struct iot_context *ctx, iot_state_t new_state, int opt)
+STATIC_FUNCTION
+iot_error_t _do_state_updating(struct iot_context *ctx, iot_state_t new_state, int opt)
 {
     iot_error_t iot_err = IOT_ERROR_NONE;
     enum iot_command_type iot_cmd;
@@ -536,7 +540,8 @@ static iot_error_t _do_state_updating(struct iot_context *ctx, iot_state_t new_s
     return iot_err;
 }
 
-static void _next_connection_retry_timeout(iot_os_timer_handle handle, void *user_data)
+STATIC_FUNCTION
+void _next_connection_retry_timeout(iot_os_timer_handle handle, void *user_data)
 {
     struct iot_context *ctx = (struct iot_context *)user_data;
     IOT_INFO("Timeout");
@@ -558,7 +563,8 @@ bool _con_timeout_check(struct iot_context *ctx)
     return expired;
 }
 
-static iot_error_t _do_iot_main_command(struct iot_context *ctx, struct iot_command *cmd)
+STATIC_FUNCTION
+iot_error_t _do_iot_main_command(struct iot_context *ctx, struct iot_command *cmd)
 {
     iot_error_t err = IOT_ERROR_NONE;
     iot_noti_data_t *noti = NULL;
@@ -869,7 +875,8 @@ static iot_error_t _do_iot_main_command(struct iot_context *ctx, struct iot_comm
     return err;
 }
 
-static void _command_work_handler(struct iot_context *ctx, device_work_param param)
+STATIC_FUNCTION
+void _command_work_handler(struct iot_context *ctx, device_work_param param)
 {
     struct iot_command *cmd_data = (struct iot_command *)param;
 
@@ -1601,6 +1608,15 @@ int st_info_get(IOT_CTX *iot_ctx, iot_info_type_t info_type, iot_info_data_t *in
                 }
             } else {
                 IOT_WARN("There is no server yet");
+                iot_err = IOT_ERROR_BAD_REQ;
+            }
+            break;
+        case IOT_INFO_TYPE_IOT_DEVICEID:
+            if (ctx->iot_reg_data.deviceId[0]) {
+                memcpy(info_data->device_id, ctx->iot_reg_data.deviceId, IOT_DEVICE_ID_LEN);
+                info_data->device_id[IOT_DEVICE_ID_LEN] = '\0';
+            } else {
+                IOT_WARN("There is no deviceId yet");
                 iot_err = IOT_ERROR_BAD_REQ;
             }
             break;

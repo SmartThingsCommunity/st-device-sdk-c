@@ -36,14 +36,19 @@
 STATIC_FUNCTION
 iot_error_t _iot_parse_noti_data(struct iot_context *ctx, void *data, iot_noti_data_t *noti_data);
 
-static iot_error_t _iot_parse_cmd_data(JSON_H *cmditem, char **component, char **capability, char **command,
-                                       iot_cap_cmd_data_t *cmd_data);
+STATIC_FUNCTION
+iot_error_t _iot_parse_cmd_data(JSON_H *cmditem, char **component, char **capability, char **command,
+                                iot_cap_cmd_data_t *cmd_data);
 static JSON_H *_iot_make_evt_data(const char *component, const char *capability, iot_cap_evt_data_t *evt_data,
                                   int seq_num);
-static void _iot_free_val(iot_cap_val_t *val);
-static void _iot_free_unit(iot_cap_unit_t *unit);
-static void _iot_free_cmd_data(iot_cap_cmd_data_t *cmd_data);
-static void _iot_free_evt_data(iot_cap_evt_data_t *evt_data);
+STATIC_FUNCTION
+void _iot_free_val(iot_cap_val_t *val);
+STATIC_FUNCTION
+void _iot_free_unit(iot_cap_unit_t *unit);
+STATIC_FUNCTION
+void _iot_free_cmd_data(iot_cap_cmd_data_t *cmd_data);
+STATIC_FUNCTION
+void _iot_free_evt_data(iot_cap_evt_data_t *evt_data);
 static IOT_EVENT *_iot_cap_create_attr(const char *attribute, iot_cap_val_t *value, const char *unit, const char *data);
 
 /**************************************************************
@@ -1213,7 +1218,8 @@ out:
         JSON_DELETE(json);
 }
 
-static iot_error_t _iot_parse_cmd_data_v2(JSON_H *cmditem, st_command_data *cmd_data)
+STATIC_FUNCTION
+iot_error_t _iot_parse_cmd_data_v2(JSON_H *cmditem, st_command_data *cmd_data)
 {
     JSON_H *cap_component = NULL;
     JSON_H *cap_capability = NULL;
@@ -1288,7 +1294,8 @@ static iot_error_t _iot_parse_cmd_data_v2(JSON_H *cmditem, st_command_data *cmd_
     return IOT_ERROR_NONE;
 }
 
-static void _iot_free_cmd_data_v2(st_command_data *cmd_data)
+STATIC_FUNCTION
+void _iot_free_cmd_data_v2(st_command_data *cmd_data)
 {
     int i;
 
@@ -1393,8 +1400,9 @@ out:
 }
 
 /* Internal API */
-static iot_error_t _iot_parse_cmd_data(JSON_H *cmditem, char **component, char **capability, char **command,
-                                       iot_cap_cmd_data_t *cmd_data)
+STATIC_FUNCTION
+iot_error_t _iot_parse_cmd_data(JSON_H *cmditem, char **component, char **capability, char **command,
+                                iot_cap_cmd_data_t *cmd_data)
 {
     JSON_H *cap_component = NULL;
     JSON_H *cap_capability = NULL;
@@ -1601,7 +1609,8 @@ void iot_cap_call_init_cb(iot_cap_handle_list_t *cap_handle_list)
     }
 }
 
-static void _iot_free_val(iot_cap_val_t *val)
+STATIC_FUNCTION
+void _iot_free_val(iot_cap_val_t *val)
 {
     int i;
 
@@ -1623,7 +1632,8 @@ static void _iot_free_val(iot_cap_val_t *val)
     }
 }
 
-static void _iot_free_unit(iot_cap_unit_t *unit)
+STATIC_FUNCTION
+void _iot_free_unit(iot_cap_unit_t *unit)
 {
     if (unit == NULL) {
         return;
@@ -1634,7 +1644,8 @@ static void _iot_free_unit(iot_cap_unit_t *unit)
     }
 }
 
-static void _iot_free_cmd_data(iot_cap_cmd_data_t *cmd_data)
+STATIC_FUNCTION
+void _iot_free_cmd_data(iot_cap_cmd_data_t *cmd_data)
 {
     int i;
 
@@ -1644,7 +1655,7 @@ static void _iot_free_cmd_data(iot_cap_cmd_data_t *cmd_data)
 
     for (i = 0; i < cmd_data->num_args; i++) {
         if (cmd_data->args_str[i] != NULL) {
-            free(cmd_data->args_str[i]);
+            iot_os_free(cmd_data->args_str[i]);
         }
         _iot_free_val(&cmd_data->cmd_data[i]);
     }
@@ -1658,7 +1669,8 @@ static void _iot_free_cmd_data(iot_cap_cmd_data_t *cmd_data)
     }
 }
 
-static void _iot_free_evt_data(iot_cap_evt_data_t *evt_data)
+STATIC_FUNCTION
+void _iot_free_evt_data(iot_cap_evt_data_t *evt_data)
 {
     if (evt_data == NULL) {
         return;

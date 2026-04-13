@@ -1,5 +1,5 @@
 # Capability Attribute Update
-Capability is basic data model in SmartThings IoT echo system. So for your device to work with SmartThings, first you need to model your device with Capability base. To acquire Capability data model knowledge, please visit [SmartThings Developers site](https://developer.smartthings.com/docs/devices/capabilities/) and check.
+Capability is the basic data model in the SmartThings IoT ecosystem. Therefore, for your device to work with SmartThings, you first need to model your device using Capabilities as a base. To acquire Capability data model knowledge, please visit [SmartThings Developers site](https://developer.smartthings.com/docs/devices/capabilities/) and check.
 
 After modeling your device with several Capabilities, you can map your device's status with each Capability's Attribute. So your device's status can be expressed with several Capability Attribute values. SmartThings Mobile App renders the value to appropriate UI/UX and shows users current device's status with it. For example, assuming your device is power switch and you model it with [Switch Capability](https://developer.smartthings.com/docs/devices/capabilities/capabilities-reference#switch). And if the device's power status is off, you can update the device's Switch Capability's switch attribute with "off" value. Users can check the device's status on SmartThings Mobile App device page.
 
@@ -7,7 +7,7 @@ After modeling your device with several Capabilities, you can map your device's 
 
 ## How to update Capability Attribute using the SDK
 
-In the SDK, we provide below APIs for a device to update's it's Capability Attribute up-to-date.
+In the SDK, we provide the following APIs for a device to update its Capability Attribute.
 
 ```c
 IOT_EVENT *st_cap_create_attr(IOT_CAP_HANDLE *cap_handle, const char *attribute, iot_cap_val_t *value, const char *unit,
@@ -16,11 +16,11 @@ int st_cap_send_attr(IOT_EVENT *event[], uint8_t evt_num);
 void st_cap_free_attr(IOT_EVENT *event);
 ```
 
-First you can create a Capability Attribute with `st_cap_create_attr()`. And then you can update the Capability Attribute with `st_cap_send_attr()`. After finishing update, you need to free the created Capability Attribute data with `st_cap_free_attr()` to prevent memory leak.
+First, you can create a Capability Attribute with `st_cap_create_attr()`. Then, you can update the Capability Attribute with `st_cap_send_attr()`. After finishing update, you need to free the created Capability Attribute data with `st_cap_free_attr()` to prevent memory leak.
 
 ### Updating Capability Attribute Example
 
-Assuming there is power switch device with Switch Capability. And a user flips power switch from off to on and the device wants to update it's status to "on" on cloud. Here is device app example code.
+Assuming there is a power switch device with Switch Capability. When a user flips the power switch from off to on, the device wants to update its status to "on" in the cloud. Here is device app example code.
 
 ```c
 int output_seq_num;
@@ -36,7 +36,7 @@ if (attr != NULL) {
 }
 ```
 
-In above example, `switch_cap_handle` is defined ahead with Switch Capability. According to [documentation](https://developer.smartthings.com/docs/devices/capabilities/capabilities-reference#switch), "switch" Attribute of Switch Capability has STRING type enum values("off", "on"). So it sets value type with STRING and string value with "on". "switch" Attribute doesn't have any Unit and Data options, so set NULL for both parameters. After creating Attribute data, it sends data to cloud using `st_cap_send_attr()` and free the data memory.
+In above example, `switch_cap_handle` is defined ahead with Switch Capability. According to the [documentation](https://developer.smartthings.com/docs/devices/capabilities/capabilities-reference#switch), the "switch" Attribute of the Switch Capability has enum STRING values ("off", "on"). So it sets value type with STRING and string value with "on". "switch" Attribute doesn't have any Unit and Data options, so set NULL for both parameters. After creating Attribute data, it sends data to cloud using `st_cap_send_attr()` and free the data memory.
 
 ### Creating Capability Attribute data
 
@@ -90,7 +90,7 @@ IOT_EVENT *st_cap_create_attr(IOT_CAP_HANDLE *cap_handle, const char *attribute,
   attr = st_cap_create_attr(sound_detection_cap_handle, "supportedSoundTypes", &value, NULL, NULL); // sound_detection_cap_handle is defined ahead
   ```
 
-* Creating obejct type Attribute
+* Creating object type Attribute
 
   Here is "levelRange" Attribute([Switch Level Capability](https://developer.smartthings.com/docs/devices/capabilities/capabilities-reference#switchLevel)) example for object type Attribute.
 
@@ -149,11 +149,11 @@ As you see, it can send several Attributes data at one time. If you have a bunch
 
 ### Capability Attribute macro functions
 
-Updating Attribute might be frequently used in your device app. So to save your time, we provide some macro functions for freqeutnly used data types. You can easily create and update those data type Attribute with the predefined macros.
+Updating Attribute might be frequently used in your device app. Therefore, to save your time, we provide some macro functions for frequently used data types. You can easily create and update those data type Attribute with the predefined macros.
 
 * Creating or Updating string type Attribute macros
 
-  Here is updating string type "switch" Attribute([Switch Capability](https://developer.smartthings.com/docs/devices/capabilities/capabilities-reference#switch)) example with macros.
+  Here is an example of updating the string type "switch" Attribute([Switch Capability](https://developer.smartthings.com/docs/devices/capabilities/capabilities-reference#switch)) using macros.
   ```c
   /* 
    * ST_CAP_CREATE_ATTR_STRING(cap_handle, attribute, value_string, unit, data, output_attr)
@@ -175,7 +175,7 @@ Updating Attribute might be frequently used in your device app. So to save your 
 
 * Creating or Updating number type Attribute macros
 
-  Here is updating number type "temperature" Attribute([Temperature Measurement Capability](https://developer.smartthings.com/docs/devices/capabilities/capabilities-reference#temperatureMeasurement)) example with macros.
+  Here is an example of updating the number type "temperature" Attribute([Temperature Measurement Capability](https://developer.smartthings.com/docs/devices/capabilities/capabilities-reference#temperatureMeasurement)) using macros.
   ```c
   /* 
    * ST_CAP_CREATE_ATTR_NUMBER(cap_handle, attribute, value_number, unit, data, output_attr)
@@ -197,7 +197,7 @@ Updating Attribute might be frequently used in your device app. So to save your 
 
 * Creating or Updating string array type Attribute macros
 
-  Here is updating string array type "supportedSoundTypes" Attribute([Sound Detection Capability](https://developer.smartthings.com/docs/devices/capabilities/capabilities-reference#soundDetection)) example with macros.
+  Here is an example of updating the string array type "supportedSoundTypes" Attribute([Sound Detection Capability](https://developer.smartthings.com/docs/devices/capabilities/capabilities-reference#soundDetection)) using macros.
   ```c
   /* 
    * ST_CAP_CREATE_ATTR_STRINGS_ARRAY(cap_handle, attribute, value_string_array, array_num, unit, data, output_attr)
@@ -219,6 +219,50 @@ Updating Attribute might be frequently used in your device app. So to save your 
   ST_CAP_SEND_ATTR_STRINGS_ARRAY(sound_detection_cap_handle, "supportedSoundTypes", supported_sound_detection_type, 2, NULL, NULL, output_seq_num); // sound_detection_cap_handle is defined ahead
   ```
 
+* Creating or Updating object type Attribute macros
+
+  Here is an example of updating the object type "levelRange" Attribute([Switch Level Capability](https://developer.smartthings.com/docs/devices/capabilities/capabilities-reference#switchLevel)) using macros.
+  ```c
+  /* 
+   * ST_CAP_CREATE_ATTR_OBJECT(cap_handle, attribute, value_object, unit, data, output_attr)
+   * ST_CAP_SEND_ATTR_OBJECT(cap_handle, attribute, value_object, unit, data, output_seq_num)
+   *
+   * Updating object type Attribute with macros example.
+  **/
+  int output_seq_num;
+  IOT_EVENT *attr = NULL;
+  ST_CAP_CREATE_ATTR_OBJECT(switch_level_cap_handle, "levelRange", "{\"minimum\" : 0, \"maximum\" : 100, \"step\" : 2}", NULL, NULL, attr); // switch_level_cap_handle is defined ahead
+  if (attr != NULL) {
+      output_seq_num = st_cap_send_attr(&attr, 1);
+      st_cap_free_attr(attr);
+  }
+  // or
+  int output_seq_num;
+  ST_CAP_SEND_ATTR_OBJECT(switch_level_cap_handle, "levelRange", "{\"minimum\" : 0, \"maximum\" : 100, \"step\" : 2}", NULL, NULL, output_seq_num); // switch_level_cap_handle is defined ahead
+  ```
+
+* Creating or Updating boolean type Attribute macros
+
+  Here is an example of updating the boolean type "updateAvailable" Attribute([Firmware Update Capability](https://developer.smartthings.com/docs/devices/capabilities/capabilities-reference#firmwareUpdate)) using macros.
+  ```c
+  /* 
+   * ST_CAP_CREATE_ATTR_BOOLEAN(cap_handle, attribute, value_boolean, unit, data, output_attr)
+   * ST_CAP_SEND_ATTR_BOOLEAN(cap_handle, attribute, value_boolean, unit, data, output_seq_num)
+   *
+   * Updating boolean type Attribute with macros example.
+  **/
+  int output_seq_num;
+  IOT_EVENT *attr = NULL;
+  ST_CAP_CREATE_ATTR_BOOLEAN(firmware_update_cap_handle, "updateAvailable", true, NULL, NULL, attr); // firmware_update_cap_handle is defined ahead
+  if (attr != NULL) {
+      output_seq_num = st_cap_send_attr(&attr, 1);
+      st_cap_free_attr(attr);
+  }
+  // or
+  int output_seq_num;
+  ST_CAP_SEND_ATTR_BOOLEAN(firmware_update_cap_handle, "updateAvailable", true, NULL, NULL, output_seq_num); // firmware_update_cap_handle is defined ahead
+  ```
+
 ***
 
 ## Capability Attribute option
@@ -227,11 +271,11 @@ There are some advanced options you can choose when creating Attribute data.
 
 ### Hiding Attribute update history
 
-When most of attribute are updated, they leave updating history and users can see on History page on SmartThings App.
+When most attributes are updated, they leave an update history that users can see on the History page in the SmartThings App.
 
 ![Attribute History Page](./res/attribute_history.png)
 
-Users can check when and how status is updated on History page. But some Attribute data might be meaningless to show like raw data and annoying because it changes so frequently. So if you want the Attribute not to leave any update history and show on History page, you can set `displayed` option in `iot_cap_val_t` struct.
+Users can check when and how the status is updated on the History page. However, some Attribute data might be meaningless to display, such as raw data, and can be annoying because it changes so frequently. Therefore, if you want the Attribute not to leave any update history or appear on the History page, you can set the `displayed` option in the `iot_cap_val_t` struct.
 
 Example
 ```c
@@ -254,11 +298,11 @@ if (attr != NULL) {
 
 ### Force state change
 
-All of Attribute update events are notified to users only when there is Attribute value change. That mean even if a device sends update of a Attribute data but the value of the Attribute is same with previous one, the event are not sent to users.
+All Attribute update events are reported to users only when there is a Attribute value change. This means that even if a device sends an update of Attribute data, if the value of the Attribute is the same as the previous one, the event is not sent to users.
 
-Think of push Attribute in [button Capability](https://developer.smartthings.com/docs/devices/capabilities/capabilities-reference#button). When a user pushs a button first time, a device with push Attribute may update value with "pushed" and the updated value might be notified to the user. But when next time the user pushs the button again, even though the device updates the Attribute value with "pushed", it will not be sent to the user because value is not changed. In this case, you can forcibly update Attribute state and send the updated value to the user.
+Think of push Attribute in [button Capability](https://developer.smartthings.com/docs/devices/capabilities/capabilities-reference#button). When a user pushes a button for the first time, a device with the push Attribute may update the value with "pushed", and the updated value might be notified to the user. However, when the user pushes the button again, even though the device updates the Attribute value with "pushed", it will not be sent to the user because the value is not changed. In this case, you can forcibly update Attribute state and send the updated value to the user.
 
-In SDK, you can set `state_change` option in `iot_cap_val_t` struct to forcibly update the Attribute data.
+In the SDK, you can set `state_change` option in the `iot_cap_val_t` struct to forcibly update the Attribute data.
 
 Example
 ```c
@@ -277,3 +321,13 @@ if (attr != NULL) {
     st_cap_free_attr(attr);
 }
 ```
+
+***
+
+## Capability Attribute update fail cases
+
+### Rate Limit
+
+There is a count limit for a device to update Attributes per minute. It is currently set to 50, and when a device reaches that count, the server bans the device connection for the next minute. This policy was introduced to prevent excessive network traffic by any device. Therefore, the device app should manage its own Attribute update count to avoid disconnection.
+
+There are some best practices to reduce the Attribute update count. First, the device app should try to send multiple Attributes at once if possible. With `st_cap_send_attr` [multiple sending function](#sending-capability-attribute-data), you can save on update counts. Second, the device app should update the Attribute only when there is a change. In many cases, the device app updates Attributes periodically or performs initial updates several times, even when there is no changed value for the Attribute. Those cases are mainly the cause of rate limit rejection.

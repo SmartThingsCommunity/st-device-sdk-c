@@ -1,5 +1,13 @@
 # HISTORY
 
+## 2.3.2 : Change for version 2.3.2
+
+Enhancements or amendments:
+- Remove redundant ble thread.
+- Add Capability helper macro functions for object and bool type.
+- Inlcude WPA3 authentication method in Wifi scan list.
+- Complement guide documents.
+
 ## 2.3.1 : Change for version 2.3.1
 
 New improvements or features:

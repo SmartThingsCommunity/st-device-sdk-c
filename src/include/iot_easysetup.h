@@ -146,6 +146,14 @@ enum ownership_validation_feature {
 // clang-format on
 
 /**
+ * @brief	Get easysetup command response
+ * @param[in]	ctx		iot_context handle
+ * @param[in]	request		easysetup payload as input
+ * @return	return struct iot_easysetup_payload(a pointer) if it succeeds, or NULL if it fails
+ */
+struct iot_easysetup_payload *iot_easysetup_get_response(struct iot_context *ctx, struct iot_easysetup_payload request);
+
+/**
  * @brief	easysetup cgi request handler
  * @details	This function runs from iot-task by executing actual cgi payload manipulation.<br>
  * 		result will be transferred to httpd task (tiT) as easysetup response queue parameter.

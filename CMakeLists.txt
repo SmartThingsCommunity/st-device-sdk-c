@@ -50,6 +50,7 @@ if(CMAKE_C_COMPILER_ID STREQUAL "GNU" AND CMAKE_BUILD_TYPE MATCHES UnitTest)
         iot_bsp_wifi_get_mac
         iot_bsp_wifi_set_mode
         iot_bsp_system_set_time_in_sec
+        iot_bsp_system_reboot
         port_net_read
         port_net_write
         port_net_connect

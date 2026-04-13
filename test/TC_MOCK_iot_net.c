@@ -57,11 +57,48 @@ int __wrap_port_net_read(PORT_NET_CONTEXT ctx, void *buf, size_t len)
     return ret;
 }
 
+static int mock_port_net_write_failure = 0;
+static int mock_port_net_write_skip_buf_check = 0;
+static int mock_port_net_write_skip_len_check = 0;
+
+void set_mock_port_net_write_failure(int failure)
+{
+    mock_port_net_write_failure = failure;
+}
+
+void set_mock_port_net_write_skip_buf_check(int skip)
+{
+    mock_port_net_write_skip_buf_check = skip;
+}
+
+void set_mock_port_net_write_skip_len_check(int skip)
+{
+    mock_port_net_write_skip_len_check = skip;
+}
+
+void reset_mock_port_net_write_skip_flags(void)
+{
+    mock_port_net_write_skip_buf_check = 0;
+    mock_port_net_write_skip_len_check = 0;
+}
+
 int __wrap_port_net_write(PORT_NET_CONTEXT ctx, void *buf, size_t len)
 {
     UNUSED(ctx);
-    check_expected_ptr(buf);
-    check_expected(len);
+
+    // If we're simulating a failure, return -1 immediately
+    if (mock_port_net_write_failure) {
+        mock_port_net_write_failure = 0;  // Reset the flag
+        return -1;
+    }
+
+    // Otherwise, check expectations as usual
+    if (!mock_port_net_write_skip_buf_check) {
+        check_expected_ptr(buf);
+    }
+    if (!mock_port_net_write_skip_len_check) {
+        check_expected(len);
+    }
     return len;
 }
 

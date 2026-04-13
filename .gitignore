@@ -9,3 +9,8 @@ tools/keygen/output_*
 doc/doxygen/
 build/
 output/
+
+.agents
+.cline
+.clinerules
+.clineignore

@@ -492,6 +492,43 @@ void TC_iot_api_onboarding_config_without_dip_id(void **state)
     iot_api_onboarding_config_mem_free(&devconf);
 }
 
+static char onboarding_profile_without_vid[] = {
+    "{\n"
+    "  \"onboardingConfig\": {\n"
+    "    \"deviceOnboardingId\": \"STDK\",\n"
+    "    \"mnId\": \"fTST\",\n"
+    "    \"setupId\": \"001\",\n"
+    "    \"deviceTypeId\": \"Switch\",\n"
+    "    \"ownershipValidationTypes\": [\n"
+    "      \"JUSTWORKS\"\n"
+    "    ],\n"
+    "    \"identityType\": \"ED25519\",\n"
+    "    \"deviceIntegrationProfileKey\": {\n"
+    "      \"id\": \"52aa1078-0fdd-4dca-943f-87ac0fe5ee5f\",\n"
+    "      \"majorVersion\": 0,\n"
+    "      \"minorVersion\": 1\n"
+    "    },\n"
+    "    \"productId\": \"52aa1078-0fdd-4dca-943f-87ac0fe5ee5f\"\n"
+    "  }\n"
+    "}"};
+
+void TC_iot_api_onboarding_config_without_vid(void **state)
+{
+    iot_error_t err;
+    struct iot_devconf_prov_data devconf;
+    UNUSED(state);
+
+    // Given
+    memset(&devconf, '\0', sizeof(struct iot_devconf_prov_data));
+    err = iot_api_onboarding_config_load(onboarding_profile_without_vid, sizeof(onboarding_profile_without_vid),
+                                         &devconf);
+    // Then: returns success
+    assert_int_equal(err, IOT_ERROR_NONE);
+
+    // Local teardown
+    iot_api_onboarding_config_mem_free(&devconf);
+}
+
 void TC_iot_get_time_in_sec_null_parameters(void **state)
 {
     iot_error_t err;
