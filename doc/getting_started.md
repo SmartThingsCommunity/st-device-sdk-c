@@ -8,40 +8,61 @@ This article demonstrates how to integrate a direct-connected device with SmartT
 
 ## Workflow
 
-In the documents, we will show how to develop simple switch example with SmartThings SDK.
+In the documents, we will show how to develop simple switch example with SmartThings Device SDK.
 
-Before developing deivces, you need to register your device profile, onboarding information and device information on [Developer Workspace](https://developer.smartthings.com/workspace/projects).
+Before developing deivces, you need to register your device profile, onboarding information and device information on [SmartThings Developer Center](https://developer.smartthings.com/).
 
-And with the informaiton, you can start developing your device application with SmartThings SDK.
+And with the informaiton, you can start developing your device application with SmartThings Device SDK.
 
-- [Register a Device on Developer Workspace](#register-a-device-on-developer-workspace)
+- [Register a Device on SmartThings Developer Center](#register-a-device-on-smartthings-developer-center)
 - [Develop a Device Application](#develop-a-device-application)
+- [Device Registration](./doc/onboarding_seq_flow.md)
+- [Guide for Mobile Error Codes](./mobile_error_codes_guide.md)
 
 &nbsp;
 
-## Register a Device on Developer Workspace
+## Register a Device on SmartThings Developer Center
 
-First, please sign in to the [Developer Workspace](https://developer.smartthings.com/workspace/) with a Samsung Account.
+- **First, please sign in to the [SmartThings Developer Center](https://developer.smartthings.com/) with a Samsung Account**
 
 ![sign in](./res/sign_in.png)
 
-### Create a new project
+&nbsp;
 
-To create project for direct connected device. Please select _New Project_ &rightarrow; _Device Integration_ &rightarrow; _Direct-connected_  
+### Create a new product
 
-If you have a plan to commercialize a product, I recommend creating an organizational workspace instead of a private workspace.
-You cannot request the certification in private workspace.
+The product info defines how this device is shown at SmartThings mobile app catalog. 
+You can define device’s category and its regional availability.
+> **_NOTE:_**  If user or tester samsung account country is not in availability list, they can't onboard the device. Please check the regional availability before device test or production.
 
-If you find the person mark at the top-right in Developer Workspace, you can get the link of the request form for an organization workspace.
-- If you need new organization, selcet Create New Organization in Type of Organization Change
-- If you want to join or remove an existing organization, select Add User to Existing Organization or Remove User from Existing Organization
+- **To create project for direct connected device. Please select _Get Started_ &rightarrow; _Create a Product_**
 
-MNid can be found next to the organization name at the top right of the developer workspace page that is a member of the organization.
+![create product](./res/create-product.png)
 
-Once the application is completed, the progress status will be sent to the email address you applied for.
+- **To select Direct Connected in the supported list**
 
-![create project](./res/create-project.gif)
+![select direct connected](./res/select_direct_connected.png)
 
+- **To make Product Details**
+
+![select product_details](./res/select_product_details.png)
+
+![make product_details](./res/make_product_details.png)
+
+> **_NOTE:_**  If you need to restrict the usage of your device to a specific country, please select the region accordingly.
+![select region](./res/select_region.png)
+
+&nbsp;
+
+### Add a brand
+If your brand has certified devices released in the country of the Samsung account, you can find the brand in the SmartThings app.
+This information will provide your company details to SmartThings and help with the certification process.
+
+- **To enter the requirements for the brand detail**
+
+![select brand](./res/select_brand.png)
+
+![make brand_details](./res/make_brand_details.png)
 
 &nbsp;
 
@@ -51,51 +72,48 @@ A device profile contains the components, capabilities, and metadata (ID, name, 
 
 You can find out more about SmartThings device profile at [SmartThings Device Profile](https://developer.smartthings.com/docs/devices/device-profiles).
 
-Click the _DEFINE DEVICE PROFILE_ &rightarrow; _CREATE DEVICE PROFILE_ or _ADD A DEVICE PROFILE_ and then fill out required information (e.g. Basic infor, Component & Capability, UI display)
+- **To create device profile**
 
-![create device profile](./res/create-device-profile.gif)
+![create device profile](./res/create-device-profile.png)
+
+- **To fill out required information (e.g. Basic infor, Component & Capability, UI display)**
+  
+![make device profile](./res/make-device-profile.png)
 
 &nbsp;
 
-The "[Health Check](https://developer.smartthings.com/docs/devices/capabilities/capabilities-reference#healthCheck)" capability is automatically added for all direct connected devices. Please leave it and add your capabilities  
+- **To complete capability list for your device selecting _Edit capabilities_**
+
+> **_NOTE:_**  The "[Health Check](https://developer.smartthings.com/docs/devices/capabilities/capabilities-reference#healthCheck)" capability is automatically added for all direct connected devices. Please leave it and add your capabilities  
+
+![edit capabilities](./res/edit_capabilities.png)
 
 &nbsp;
 
-### Add a device onboarding
+### Add a device onboarding profile
 
 The device onboarding guides device owners when their device is first registering and connecting to SmartThings.  You can customize the screens presented by adding a device onboarding.  The ownership validation type is also defined at this stage.
 
-![create device onboarding](./res/create-device-onboarding.gif)
+- **To fill out onboarding profile info**
 
-&nbsp;  
+![create device onboarding](./res/create-device-onboarding.png)
 
+- **To make the onboarding guide for users**
 
-### Add a product info
+![make onboarding guide](./res/make-onboarding-guide.png)
 
-The product info defines how this device is shown at SmartThings mobile app catalog. 
-You can define device’s category and its regional availability.
-> **_NOTE:_**  If user or tester samsung account country is not in availability list, they can't onboard the device. Please check the regional availability before device test or production.
+- **To add onboarding images**
 
-![create product info](./res/add-product-info.gif)  
+![add onboarding images](./res/add-onboarding-images.png)
 
-&nbsp;  
-  
-
-### Deploy your device to test
-
-You can start testing by deploying your device to test from _Test_ &rightarrow; _Test Devices_ or _Overview_ page.  You will be able to see your device in the SmartThings mobile app when in Developer Mode only when after it has been deployed for testing.
-- [SmartThings Device Publishing Process](https://developer.smartthings.com/docs/devices/direct-connected/publish)
-
-![deplay to test](./res/deploy_to_test_switch.png)
-
-&nbsp;  
+&nbsp;
 
 ### Register test devices
 
 You can add identity of device for authenticating your device to SmartThings cloud. This requires device information like serial number and device public key (ED25519).
 Because maximum number of test device is limited per user, Once you reaches maximum number of test device, you should remove one of existing one.
 
-![register test device](./res/register-test-device.gif)
+![register test device](./res/register_test_device.png)
 
 This example shows how to create ED25519 key pair with SDK tools. You can get device_info.json file as a result from tools/keygen/output_{ serialNumber}
 
@@ -103,22 +121,22 @@ Key generator utility (stdk-keygen.py) is located at `st-device-sdk-c/tools/keyg
 Serial number for testing device would be randomly generated by this tool which has STDK + 12-digit alphanumberic format.
 
 ```sh
-$ cd {SDK_ROOT}/tools/keygen/
-$ python3 stdk-keygen.py --firmware switch_example_001
+$cd st-device-sdk-c-ref/iot-core/tools/keygen/
+$python stdk-keygen.py --firmware switch_example_001
 Use following serial number and public key
 for the identity of your device in Developer Workspace.
 
 Serial Number:
-STDK**E90W***uCX
+STDKPaY2kJRN2JCj
 
 Public Key:
-nFN5x***uQusQ****ZHoBSFaAoP9***kNdLnjDJRew=
+aQWowDtAgtc1dLjii2HZjgrXMrUCoRJXBcHaH+2Vzfk=
 ```
 
-Copy `STDK**E90W***uCX` from keygen output and paste it into “Device serial number” field of “Register A Test Device” page.
-Copy public key string from keygen output (`nFN5x***uQusQ****ZHoBSFaAoP9***kNdLnjDJRew=` in this example) and paste it into “Device Public Key” field.
+Copy `STDKPaY2kJRN2JCj` from keygen output and paste it into “Serial Number” field of “Register Test Devices” page.
+Copy public key string from keygen output (`aQWowDtAgtc1dLjii2HZjgrXMrUCoRJXBcHaH+2Vzfk=` in this example) and paste it into “Public Key” field.
 
-![adding test device](./res/adding_test_device2.png)
+![register_devices](./res/register_devices.png)
 
 If you want to get more information for keygen tool, refer [STDK Key Generation](https://github.com/SmartThingsCommunity/st-device-sdk-c/blob/main/doc/STDK_Key_Generation.md)
 &nbsp;
@@ -155,7 +173,7 @@ This is the information that the IoT device shall have in order to connect to th
 
 If you use a sample device application in example directory from this git repository, please download it and then, just overwrite the existing `onboarding_config.json` file with the new one you downloaded. In fact, overwriting is just one of several possible ways to inject it to the device. If the json information is guaranteed to be a parameter in the `st_conn_init()` function, you can refer to it differently according to your own development way.
 
-<img src="res/downloading_onboarding_config_file_switch.png" style="zoom:70%;"/>
+![onboarding config](./res/onboarding_config.png)
 
 &nbsp;
 
@@ -356,9 +374,21 @@ There are README files in each example foler. And it explains how to build the e
 
 &nbsp;
 
+### Guide for Collaborating on Development with Multiple Developers
+
+- Option 1: Share and use the Owner's account
+- Option 2: Each developer uses their own account following the guide below
+  - The Owner creates an Organization in the Console.
+  - The Owner invites members using the Invite Member button in Organization Settings.
+  - After being registered as an organization member, invite them as a member of the Owner's location in the ST app.
+    - If they are not a Location member, the following error will occur from the server during device registration: </br> "Device owner does not have access to profile ******* nor is it owned by location member!"
+
+&nbsp;
+
 ### Test
 
-The SmartThings App should be used to control an IoT device that is running with the SmartThings Platform. Go to application market place (e.g. Play Store, App Store, Galaxy Store) and download the SmartThings app on your mobile device.
+The SmartThings App should be used to control an IoT device that is running with the SmartThings Platform. Go to application market place (e.g. Play Store, App Store, Galaxy Store) and download the SmartThings app on your mobile device.<br>
+__Please refer to [error code guide](./mobile_error_codes_guide.md) for onboarding issues.__
 
 1. **Enable developer mode**  
 You need to enable the ***Developer Mode*** in the SmartThings app before start testing.  

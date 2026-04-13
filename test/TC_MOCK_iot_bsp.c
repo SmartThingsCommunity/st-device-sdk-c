@@ -16,8 +16,10 @@
  *
  ****************************************************************************/
 #include <iot_bsp_random.h>
+#include <iot_bsp_system.h>
 #include <iot_bsp_wifi.h>
 #include <iot_error.h>
+#include <iot_nv_data.h>
 #include <string.h>
 #include <time.h>
 
@@ -92,4 +94,9 @@ iot_error_t __wrap_iot_bsp_wifi_set_mode(iot_wifi_conf *conf)
 unsigned int __wrap_iot_bsp_random(void)
 {
     return mock_type(unsigned int);
+}
+
+void __wrap_iot_bsp_system_reboot(void)
+{
+    return;
 }

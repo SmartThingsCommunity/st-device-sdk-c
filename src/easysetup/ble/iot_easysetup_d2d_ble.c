@@ -1578,7 +1578,7 @@ iot_error_t _es_wifiscaninfo_handler(struct iot_context *ctx, char *in_payload, 
             IOT_ERROR("Invalid args");
         } else {
             if ((data = JSON_GET_OBJECT_ITEM(root, "data")) == NULL) {
-                IOT_ERROR("no data info");
+                IOT_INFO("no data info");
             } else {
                 if ((wifi_credential = JSON_GET_OBJECT_ITEM(data, "mobileWifiCredential")) == NULL) {
                     IOT_ERROR("no mobileWifiCredential");
@@ -1601,11 +1601,14 @@ iot_error_t _es_wifiscaninfo_handler(struct iot_context *ctx, char *in_payload, 
     }
     ctx->cloud_connection_pause = true;
 
-    // optional : some chipsets don't support wifi scan mode during working AP mode
-    err = iot_wifi_ctrl_request(ctx, IOT_WIFI_MODE_SCAN);
-    if (err != IOT_ERROR_NONE) {
-        IOT_INFO("Can't control WIFI mode scan.(%d)", err);
-        IOT_ES_DUMP(IOT_DEBUG_LEVEL_INFO, IOT_DUMP_EASYSETUP_WIFI_SCAN_NOT_FOUND, err);
+    if (!ctx->scan_num) {
+        err = iot_wifi_ctrl_request(ctx, IOT_WIFI_MODE_SCAN);
+        if (err != IOT_ERROR_NONE) {
+            IOT_INFO("Can't control WIFI mode scan.(%d)", err);
+            IOT_ES_DUMP(IOT_DEBUG_LEVEL_INFO, IOT_DUMP_EASYSETUP_WIFI_SCAN_NOT_FOUND, err);
+            err = IOT_ERROR_EASYSETUP_WIFI_SCAN_NOT_FOUND;
+            goto out;
+        }
     }
 
     array = JSON_CREATE_ARRAY();
@@ -1616,48 +1619,50 @@ iot_error_t _es_wifiscaninfo_handler(struct iot_context *ctx, char *in_payload, 
         return err;
     }
 
-    for (i = 0; i < ctx->scan_num; i++) {
-        if ((ctx->scan_result[i].authmode < IOT_WIFI_AUTH_OPEN) ||
-            (ctx->scan_result[i].authmode >= IOT_WIFI_AUTH_WPA2_ENTERPRISE)) {
-            IOT_DEBUG("Unsupported authType %d, %s", ctx->scan_result[i].authmode, (char *)ctx->scan_result[i].ssid);
-            continue;
-        }
-        snprintf(wifi_bssid, sizeof(wifi_bssid), "%02X:%02X:%02X:%02X:%02X:%02X", ctx->scan_result[i].bssid[0],
-                 ctx->scan_result[i].bssid[1], ctx->scan_result[i].bssid[2], ctx->scan_result[i].bssid[3],
-                 ctx->scan_result[i].bssid[4], ctx->scan_result[i].bssid[5]);
-
-        array_obj = JSON_CREATE_OBJECT();
-        if (!array_obj) {
-            IOT_ERROR("json create failed");
-            if (array) {
-                JSON_DELETE(array);
-            }
-            IOT_ES_DUMP(IOT_DEBUG_LEVEL_ERROR, IOT_DUMP_EASYSETUP_JSON_CREATE_ERROR, 0);
-            err = IOT_ERROR_EASYSETUP_JSON_CREATE_ERROR;
-            goto out;
-        }
-        JSON_ADD_ITEM_TO_OBJECT(array_obj, "bssid", JSON_CREATE_STRING(wifi_bssid));
-        if (!strcmp(ssid, (char *)ctx->scan_result[i].ssid)) {
-            found_matched_ssid = 1;
-        }
-        JSON_ADD_ITEM_TO_OBJECT(array_obj, "ssid", JSON_CREATE_STRING((char *)ctx->scan_result[i].ssid));
-        JSON_ADD_NUMBER_TO_OBJECT(array_obj, "rssi", (double)ctx->scan_result[i].rssi);
-        JSON_ADD_NUMBER_TO_OBJECT(array_obj, "frequency", (double)ctx->scan_result[i].freq);
-        JSON_ADD_NUMBER_TO_OBJECT(array_obj, "authType", ctx->scan_result[i].authmode);
-        JSON_ADD_ITEM_TO_ARRAY(array, array_obj);
-    }
-
-    if ((ctx->scan_num) && (!found_matched_ssid) && (freq)) {
-        ctx->wifi_candidate_frequency = freq;
-        ctx->scan_num = 0;
-        err = iot_wifi_ctrl_request(ctx, IOT_WIFI_MODE_SCAN);
-        if (err != IOT_ERROR_NONE) {
-            IOT_ERROR("Can't control WIFI mode scan.(%d)", err);
-            IOT_ES_DUMP(IOT_DEBUG_LEVEL_INFO, IOT_DUMP_EASYSETUP_WIFI_SCAN_NOT_FOUND, err);
-        }
+    if (wifi_credential) {
         for (i = 0; i < ctx->scan_num; i++) {
             if ((ctx->scan_result[i].authmode < IOT_WIFI_AUTH_OPEN) ||
-                (ctx->scan_result[i].authmode >= IOT_WIFI_AUTH_WPA2_ENTERPRISE)) {
+                (ctx->scan_result[i].authmode >= IOT_WIFI_AUTH_UNKNOWN)) {
+                IOT_DEBUG("Unsupported authType %d, %s", ctx->scan_result[i].authmode,
+                          (char *)ctx->scan_result[i].ssid);
+                continue;
+            }
+
+            if (!strcmp(ssid, (char *)ctx->scan_result[i].ssid)) {
+                found_matched_ssid = 1;
+                array_obj = JSON_CREATE_OBJECT();
+                if (!array_obj) {
+                    IOT_ERROR("json create failed");
+                    if (array) {
+                        JSON_DELETE(array);
+                    }
+                    IOT_ES_DUMP(IOT_DEBUG_LEVEL_ERROR, IOT_DUMP_EASYSETUP_JSON_CREATE_ERROR, 0);
+                    err = IOT_ERROR_EASYSETUP_JSON_CREATE_ERROR;
+                    goto out;
+                }
+
+                snprintf(wifi_bssid, sizeof(wifi_bssid), "%02X:%02X:%02X:%02X:%02X:%02X", ctx->scan_result[i].bssid[0],
+                         ctx->scan_result[i].bssid[1], ctx->scan_result[i].bssid[2], ctx->scan_result[i].bssid[3],
+                         ctx->scan_result[i].bssid[4], ctx->scan_result[i].bssid[5]);
+
+                JSON_ADD_ITEM_TO_OBJECT(array_obj, "bssid", JSON_CREATE_STRING(wifi_bssid));
+
+                JSON_ADD_ITEM_TO_OBJECT(array_obj, "ssid", JSON_CREATE_STRING((char *)ctx->scan_result[i].ssid));
+                JSON_ADD_NUMBER_TO_OBJECT(array_obj, "rssi", (double)ctx->scan_result[i].rssi);
+                JSON_ADD_NUMBER_TO_OBJECT(array_obj, "frequency", (double)ctx->scan_result[i].freq);
+                JSON_ADD_NUMBER_TO_OBJECT(array_obj, "authType", ctx->scan_result[i].authmode);
+                JSON_ADD_ITEM_TO_ARRAY(array, array_obj);
+            }
+        }
+    }
+
+    if (!found_matched_ssid) {
+        if (freq)
+            ctx->wifi_candidate_frequency = freq;
+
+        for (i = 0; i < ctx->scan_num; i++) {
+            if ((ctx->scan_result[i].authmode < IOT_WIFI_AUTH_OPEN) ||
+                (ctx->scan_result[i].authmode >= IOT_WIFI_AUTH_UNKNOWN)) {
                 IOT_DEBUG("Unsupported authType %d, %s", ctx->scan_result[i].authmode,
                           (char *)ctx->scan_result[i].ssid);
                 continue;
@@ -2507,57 +2512,58 @@ void offline_diagnostics_wifi_update_command_handler(struct iot_context *ctx, de
 }
 #endif
 
-iot_error_t iot_easysetup_request_handler(struct iot_context *ctx, struct iot_easysetup_payload request)
+struct iot_easysetup_payload *iot_easysetup_get_response(struct iot_context *ctx, struct iot_easysetup_payload request)
 {
+    struct iot_easysetup_payload *response = NULL;
     iot_error_t err = IOT_ERROR_NONE;
-    struct iot_easysetup_payload response = {
-        0,
-    };
-
-    if (!ctx)
-        return IOT_ERROR_EASYSETUP_INTERNAL_SERVER_ERROR;
 
     IOT_DEBUG(" request.step = %d", request.step);
-    response.step = request.step;
-    response.payload = NULL;
+    response = (struct iot_easysetup_payload *)iot_os_malloc(sizeof(struct iot_easysetup_payload));
+    if (response == NULL) {
+        IOT_ERROR("Failed to malloc response");
+        return NULL;
+    }
+    memset(response, 0, sizeof(struct iot_easysetup_payload));
+    response->step = request.step;
+    response->payload = NULL;
 
     switch ((enum iot_easysetup_ble_step)request.step) {
         case IOT_EASYSETUP_BLE_STEP_DEVICEINFO:
 #if defined(CONFIG_STDK_IOT_CORE_EASYSETUP_X509)
-            err = _es_deviceinfo_handler(ctx, request.payload, &response.payload);
+            err = _es_deviceinfo_handler(ctx, request.payload, &response->payload);
 #else
-            err = _es_deviceinfo_handler(ctx, &response.payload);
+            err = _es_deviceinfo_handler(ctx, &response->payload);
 #endif
             break;
         case IOT_EASYSETUP_BLE_STEP_WIFISCANINFO:
-            err = _es_wifiscaninfo_handler(ctx, request.payload, &response.payload);
+            err = _es_wifiscaninfo_handler(ctx, request.payload, &response->payload);
             break;
         case IOT_EASYSETUP_BLE_STEP_KEYINFO:
-            err = _es_keyinfo_handler(ctx, request.payload, &response.payload);
+            err = _es_keyinfo_handler(ctx, request.payload, &response->payload);
             break;
         case IOT_EASYSETUP_BLE_STEP_CONFIRMINFO:
-            err = _es_confirminfo_handler(ctx, request.payload, &response.payload);
+            err = _es_confirminfo_handler(ctx, request.payload, &response->payload);
             break;
         case IOT_EASYSETUP_BLE_STEP_CONFIRM:
-            err = _es_confirm_handler(ctx, request.payload, &response.payload);
+            err = _es_confirm_handler(ctx, request.payload, &response->payload);
             break;
         case IOT_EASYSETUP_BLE_STEP_WIFIPROVIONINGINFO:
-            err = _es_wifiprovisioninginfo_handler(ctx, request.payload, &response.payload);
+            err = _es_wifiprovisioninginfo_handler(ctx, request.payload, &response->payload);
             break;
         case IOT_EASYSETUP_BLE_STEP_SETUPCOMPLETE:
-            err = _es_setupcomplete_handler(ctx, request.payload, &response.payload);
+            err = _es_setupcomplete_handler(ctx, request.payload, &response->payload);
             break;
         case IOT_EASYSETUP_BLE_STEP_LOG_SYSTEMINFO:
-            err = _es_log_systeminfo_handler(ctx, &response.payload);
+            err = _es_log_systeminfo_handler(ctx, &response->payload);
             break;
         case IOT_EASYSETUP_BLE_STEP_LOG_GET_DUMP:
-            err = _es_log_get_dump_handler(ctx, &response.payload);
+            err = _es_log_get_dump_handler(ctx, &response->payload);
             break;
         case IOT_EASYSETUP_BLE_STEP_OFFLINE_DIAGNOSTICS_CONNECTION_INFO:
-            err = _es_offline_diagnostics_connection_info_handler(ctx, &response.payload);
+            err = _es_offline_diagnostics_connection_info_handler(ctx, &response->payload);
             break;
         case IOT_EASYSETUP_BLE_STEP_OFFLINE_DIAGNOSTICS_RECOVERY:
-            err = _es_offline_diagnostics_recovery_handler(ctx, request.payload, &response.payload);
+            err = _es_offline_diagnostics_recovery_handler(ctx, request.payload, &response->payload);
             break;
         default:
             err = IOT_ERROR_EASYSETUP_INTERNAL_SERVER_ERROR;
@@ -2567,20 +2573,34 @@ iot_error_t iot_easysetup_request_handler(struct iot_context *ctx, struct iot_ea
         IOT_ERROR("failed to handle step %d (%d)", request.step, err);
     }
 
-    response.err = err;
+    response->err = err;
+    return response;
+}
 
-    if (ctx->easysetup_resp_queue) {
-        err = iot_util_queue_send(ctx->easysetup_resp_queue, &response);
-        if (err != IOT_ERROR_NONE) {
-            IOT_ERROR("Cannot put the response into easysetup_resp_queue");
-            err = IOT_ERROR_EASYSETUP_QUEUE_SEND_ERROR;
+iot_error_t iot_easysetup_request_handler(struct iot_context *ctx, struct iot_easysetup_payload request)
+{
+    iot_error_t err = IOT_ERROR_NONE;
+    struct iot_easysetup_payload *response = NULL;
+
+    if (!ctx)
+        return IOT_ERROR_EASYSETUP_INTERNAL_SERVER_ERROR;
+
+    response = iot_easysetup_get_response(ctx, request);
+    if (response != NULL) {
+        if (ctx->easysetup_resp_queue) {
+            err = iot_util_queue_send(ctx->easysetup_resp_queue, response);
+            if (err != IOT_ERROR_NONE) {
+                IOT_ERROR("Cannot put the response into easysetup_resp_queue");
+                err = IOT_ERROR_EASYSETUP_QUEUE_SEND_ERROR;
+            } else {
+                iot_os_eventgroup_set_bits(ctx->iot_events, IOT_EVENT_BIT_EASYSETUP_RESP);
+                err = IOT_ERROR_NONE;
+            }
         } else {
-            iot_os_eventgroup_set_bits(ctx->iot_events, IOT_EVENT_BIT_EASYSETUP_RESP);
-            err = IOT_ERROR_NONE;
+            IOT_ERROR("easysetup_resp_queue is deleted");
+            err = IOT_ERROR_EASYSETUP_INTERNAL_SERVER_ERROR;
         }
-    } else {
-        IOT_ERROR("easysetup_resp_queue is deleted");
-        err = IOT_ERROR_EASYSETUP_INTERNAL_SERVER_ERROR;
+        iot_os_free(response);
     }
 
     return err;

@@ -208,9 +208,9 @@ iot_error_t _iot_easysetup_gen_payload(struct iot_context *ctx, int cmd, char *i
                                        size_t *payload_len)
 {
     iot_error_t err = IOT_ERROR_NONE;
-    struct iot_easysetup_payload response;
+    struct iot_easysetup_payload request = {0};
+    struct iot_easysetup_payload *response = NULL;
     int cur_step;
-    unsigned char curr_event;
 
     cur_step = cmd;
 
@@ -248,44 +248,27 @@ iot_error_t _iot_easysetup_gen_payload(struct iot_context *ctx, int cmd, char *i
     else
         ref_step = 0;
 
-    err = iot_easysetup_request(ctx, cur_step, in_payload);
-    if (err) {
-        IOT_ERROR("easysetup request failed %d (%d)", cur_step, err);
-        if (err == IOT_ERROR_EASYSETUP_QUEUE_SEND_ERROR) {
-            IOT_ES_DUMP(IOT_DEBUG_LEVEL_ERROR, IOT_DUMP_EASYSETUP_QUEUE_FAIL, 1);
-        } else {
-            IOT_ES_DUMP(IOT_DEBUG_LEVEL_ERROR, IOT_DUMP_EASYSETUP_INTERNAL_SERVER_ERROR, err);
-            err = IOT_ERROR_EASYSETUP_INTERNAL_SERVER_ERROR;
-        }
+    request.step = cur_step;
+    request.payload = in_payload;
+    response = iot_easysetup_get_response(ctx, request);
+    if (response == NULL) {
+        err = IOT_ERROR_EASYSETUP_INTERNAL_SERVER_ERROR;
         goto post_exit;
     }
-    IOT_INFO("waiting.. response for [%d]", cmd);
-    IOT_ES_DUMP(IOT_DEBUG_LEVEL_INFO, IOT_DUMP_EASYSETUP_WAIT_RESPONSE, cmd);
 
-    curr_event = iot_os_eventgroup_wait_bits(ctx->iot_events, IOT_EVENT_BIT_EASYSETUP_RESP, true, IOT_OS_MAX_DELAY);
-    if (curr_event & IOT_EVENT_BIT_EASYSETUP_RESP) {
-        IOT_DEBUG("easysetup response for [%d]", cmd);
-    } else {
-        IOT_ERROR("unexpected event for [%d]: 0x%x", cmd, curr_event);
-    }
-
-    err = iot_util_queue_receive(ctx->easysetup_resp_queue, &response);
-    if ((err == IOT_ERROR_NONE) && (response.step != cur_step)) {
-        IOT_ERROR("unexpected response %d:%d", cur_step, response.step);
-        IOT_ES_DUMP(IOT_DEBUG_LEVEL_ERROR, IOT_DUMP_EASYSETUP_INTERNAL_SERVER_ERROR, response.step);
-        if (response.payload)
-            free(response.payload);
-        err = IOT_ERROR_EASYSETUP_INTERNAL_SERVER_ERROR;
-    } else if (err == IOT_ERROR_NONE) {
-        if (!response.err) {
-            *out_payload = response.payload;
-            *payload_len = response.payload_len;
+    if (response->step != cur_step) {
+        IOT_ERROR("unexpected response %d:%d", cur_step, response->step);
+        IOT_ES_DUMP(IOT_DEBUG_LEVEL_ERROR, IOT_DUMP_EASYSETUP_INTERNAL_SERVER_ERROR, response->step);
+        if (response->payload) {
+            free(response->payload);
         }
-        err = response.err;
+        err = IOT_ERROR_EASYSETUP_INTERNAL_SERVER_ERROR;
     } else {
-        IOT_ERROR("easysetup response queue receive failed");
-        IOT_ES_DUMP(IOT_DEBUG_LEVEL_ERROR, IOT_DUMP_EASYSETUP_QUEUE_FAIL, 0);
-        err = IOT_ERROR_EASYSETUP_QUEUE_RECV_ERROR;
+        if (!response->err) {
+            *out_payload = response->payload;
+            *payload_len = response->payload_len;
+        }
+        err = response->err;
     }
 
     if (err != IOT_ERROR_NONE && err != IOT_ERROR_EASYSETUP_REQUEST_PENDING) {
@@ -306,7 +289,11 @@ iot_error_t _iot_easysetup_gen_payload(struct iot_context *ctx, int cmd, char *i
                 break;
         }
     }
+
 post_exit:
+    if (response) {
+        iot_os_free(response);
+    }
     return err;
 }
 

@@ -491,21 +491,18 @@ iot_error_t iot_api_onboarding_config_load(unsigned char *onboarding_config, uns
 
     /* vid */
     item = JSON_GET_OBJECT_ITEM(config, name_vid);
-    if (!item) {
-#if defined(CONFIG_STDK_IOT_CORE_LOG_LEVEL_ERROR)
-        current_name = (char *)name_vid;
-#endif
-        iot_err = IOT_ERROR_UNINITIALIZED;
-        goto load_out;
+    if (item) {
+        str_len = strlen(JSON_GET_STRING_VALUE(item));
+        vid = iot_os_malloc(str_len + 1);
+        if (!vid) {
+            iot_err = IOT_ERROR_MEM_ALLOC;
+            goto load_out;
+        }
+        strncpy(vid, JSON_GET_STRING_VALUE(item), str_len);
+        vid[str_len] = '\0';
+    } else {
+        IOT_DEBUG("vid not provided in onboarding config");
     }
-    str_len = strlen(JSON_GET_STRING_VALUE(item));
-    vid = iot_os_malloc(str_len + 1);
-    if (!vid) {
-        iot_err = IOT_ERROR_MEM_ALLOC;
-        goto load_out;
-    }
-    strncpy(vid, JSON_GET_STRING_VALUE(item), str_len);
-    vid[str_len] = '\0';
 
     /* device_type_id */
     item = JSON_GET_OBJECT_ITEM(config, name_deviceTypeId);

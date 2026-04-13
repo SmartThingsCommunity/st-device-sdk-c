@@ -40,8 +40,6 @@ void es_ble_init(void);
 
 void es_ble_deinit(void);
 
-void es_ble_deinit_processing_set(bool flag);
-
 bool es_msg_assemble(uint8_t *buf, uint32_t len);
 iot_error_t es_msg_disassemble(uint8_t *buf, uint32_t len, uint8_t data_continued, int cmd);
 void es_msg_dispatch(iot_security_buffer_t *buf, uint8_t buf_count, uint8_t cmd_num);

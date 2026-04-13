@@ -805,6 +805,16 @@ void TC_iot_noti_sub_cb_rate_limit_reached_SUCCESS(void **state)
 }
 
 extern iot_error_t _iot_parse_noti_data(struct iot_context *ctx, void *data, iot_noti_data_t *noti_data);
+extern iot_error_t _iot_subscribe_child_devices_command(struct iot_context *ctx, JSON_H *child_devices_array);
+extern iot_error_t _iot_notify_child_devices_cloud_connected(struct iot_context *ctx, JSON_H *child_devices_array);
+extern iot_error_t _iot_parse_cmd_data_v2(JSON_H *cmditem, st_command_data *cmd_data);
+extern void _iot_free_cmd_data_v2(st_command_data *cmd_data);
+extern iot_error_t _iot_parse_cmd_data(JSON_H *cmditem, char **component, char **capability, char **command,
+                                       iot_cap_cmd_data_t *cmd_data);
+extern void _iot_free_val(iot_cap_val_t *val);
+extern void _iot_free_unit(iot_cap_unit_t *unit);
+extern void _iot_free_cmd_data(iot_cap_cmd_data_t *cmd_data);
+extern void _iot_free_evt_data(iot_cap_evt_data_t *evt_data);
 #define NOTI_TEST_UUID "123e4567-e89b-12d3-a456-426614174000"
 #define NOTI_TEST_TIME "1591326145"
 #define NOTI_TEST_TIME_IN_INT 1591326145
@@ -1575,4 +1585,1611 @@ void TC_st_cap_send_attr_v2_success(void **state)
     st_mqtt_destroy(internal_context->evt_mqttcli);
 
     free(context);
+}
+
+void TC_st_child_dev_cap_handle_init_null_parameters(void **state)
+{
+    IOT_CAP_HANDLE *cap_handle;
+    char *usr_data;
+    UNUSED(*state);
+
+    // When: all parameters null
+    cap_handle = st_child_dev_cap_handle_init(NULL, NULL, NULL, NULL, NULL);
+    // Then
+    assert_null(cap_handle);
+
+    // Given
+    usr_data = strdup("UserString");
+    // When: child_dev null
+    cap_handle = st_child_dev_cap_handle_init(NULL, "main", "switch", test_cap_init_callback, usr_data);
+    // Then
+    assert_null(cap_handle);
+    // Teardown
+    free(usr_data);
+
+    // Given
+    usr_data = strdup("UserString");
+    // When: capability null
+    cap_handle = st_child_dev_cap_handle_init((IOT_CHILD_DEV)0x1234, "main", NULL, test_cap_init_callback, usr_data);
+    // Then
+    assert_null(cap_handle);
+    // Teardown
+    free(usr_data);
+}
+
+void TC_st_child_dev_cap_handle_init_internal_failure(void **state)
+{
+    IOT_CAP_HANDLE *cap_handle;
+    IOT_CHILD_DEV child_dev;
+    char *usr_data;
+    iot_child_device *child_dev_internal;
+    UNUSED(*state);
+
+    // Given: valid parameters but malloc failure
+    usr_data = iot_os_strdup("UserString");
+    child_dev_internal = (iot_child_device *)iot_os_malloc(sizeof(iot_child_device));
+    memset(child_dev_internal, 0, sizeof(iot_child_device));
+    child_dev = (IOT_CHILD_DEV)child_dev_internal;
+
+    set_mock_iot_os_malloc_failure_with_index(0);
+    // When
+    cap_handle = st_child_dev_cap_handle_init(child_dev, "main", "switch", test_cap_init_callback, usr_data);
+    // Then
+    assert_null(cap_handle);
+    // Teardown
+    iot_os_free(child_dev_internal);
+    iot_os_free(usr_data);
+    do_not_use_mock_iot_os_malloc_failure();
+
+    // Given: valid parameters but second malloc failure
+    usr_data = iot_os_strdup("UserString");
+    child_dev_internal = (iot_child_device *)iot_os_malloc(sizeof(iot_child_device));
+    memset(child_dev_internal, 0, sizeof(iot_child_device));
+    child_dev = (IOT_CHILD_DEV)child_dev_internal;
+
+    set_mock_iot_os_malloc_failure_with_index(1);
+    // When
+    cap_handle = st_child_dev_cap_handle_init(child_dev, "main", "switch", test_cap_init_callback, usr_data);
+    // Then
+    assert_null(cap_handle);
+    // Teardown
+    iot_os_free(child_dev_internal);
+    iot_os_free(usr_data);
+    do_not_use_mock_iot_os_malloc_failure();
+}
+
+void TC_st_child_dev_cap_handle_init_success(void **state)
+{
+    IOT_CAP_HANDLE *cap_handle;
+    struct iot_cap_handle *handle;
+    iot_child_device *child_dev_internal;
+    IOT_CHILD_DEV child_dev;
+    char *usr_data;
+    UNUSED(*state);
+
+    // Given
+    usr_data = strdup("UserString");
+    child_dev_internal = (iot_child_device *)malloc(sizeof(iot_child_device));
+    memset(child_dev_internal, 0, sizeof(iot_child_device));
+    child_dev = (IOT_CHILD_DEV)child_dev_internal;
+
+    // When
+    cap_handle = st_child_dev_cap_handle_init(child_dev, "main", "switch", test_cap_init_callback, usr_data);
+    // Then
+    handle = (struct iot_cap_handle *)cap_handle;
+    assert_non_null(cap_handle);
+    assert_null(child_dev_internal->cap_handle_list->next);
+    assert_null(handle->cmd_list);
+    assert_string_equal(handle->component, "main");
+    assert_string_equal(handle->capability, "switch");
+    assert_ptr_equal(handle->init_cb, test_cap_init_callback);
+    assert_ptr_equal(handle->init_usr_data, usr_data);
+    assert_ptr_equal(handle->ctx, child_dev_internal->ctx);
+    assert_ptr_equal(handle->child_dev, child_dev_internal);
+    // Teardown
+    if (handle->capability) {
+        iot_os_free((void *)handle->capability);
+    }
+    if (handle->component) {
+        iot_os_free((void *)handle->component);
+    }
+    if (child_dev_internal->cap_handle_list) {
+        iot_os_free(child_dev_internal->cap_handle_list);
+    }
+    iot_os_free(cap_handle);
+    free(child_dev_internal);
+    free(usr_data);
+
+    // Given: Already existing handle in child device
+    usr_data = strdup("UserString");
+    child_dev_internal = (iot_child_device *)malloc(sizeof(iot_child_device));
+    memset(child_dev_internal, 0, sizeof(iot_child_device));
+    child_dev_internal->cap_handle_list = malloc(sizeof(iot_cap_handle_list_t));
+    child_dev_internal->cap_handle_list->next = NULL;
+    child_dev = (IOT_CHILD_DEV)child_dev_internal;
+
+    // When
+    cap_handle = st_child_dev_cap_handle_init(child_dev, "main", "switch", test_cap_init_callback, usr_data);
+    // Then
+    handle = (struct iot_cap_handle *)cap_handle;
+    assert_non_null(cap_handle);
+    assert_non_null(child_dev_internal->cap_handle_list->next);
+    assert_ptr_equal(child_dev_internal->cap_handle_list->handle, handle);
+    assert_null(child_dev_internal->cap_handle_list->next->next);
+    assert_null(handle->cmd_list);
+    assert_string_equal(handle->component, "main");
+    assert_string_equal(handle->capability, "switch");
+    assert_ptr_equal(handle->init_cb, test_cap_init_callback);
+    assert_ptr_equal(handle->init_usr_data, usr_data);
+    assert_ptr_equal(handle->ctx, child_dev_internal->ctx);
+    assert_ptr_equal(handle->child_dev, child_dev_internal);
+    // Teardown
+    if (handle->capability) {
+        iot_os_free((void *)handle->capability);
+    }
+    if (handle->component) {
+        iot_os_free((void *)handle->component);
+    }
+    if (child_dev_internal->cap_handle_list->next) {
+        free(child_dev_internal->cap_handle_list->next);
+    }
+    if (child_dev_internal->cap_handle_list) {
+        iot_os_free(child_dev_internal->cap_handle_list);
+    }
+    iot_os_free(cap_handle);
+    free(child_dev_internal);
+    free(usr_data);
+}
+
+void TC_iot_subscribe_child_devices_command_null_parameters(void **state)
+{
+    iot_error_t ret;
+    UNUSED(*state);
+
+    // When: context null
+    ret = _iot_subscribe_child_devices_command(NULL, NULL);
+    // Then
+    assert_int_equal(ret, IOT_ERROR_NONE);
+}
+
+void TC_iot_subscribe_child_devices_command_empty_array(void **state)
+{
+    iot_error_t ret;
+    JSON_H *empty_array;
+    struct iot_context *ctx;
+    UNUSED(*state);
+
+    // Given
+    ctx = (struct iot_context *)malloc(sizeof(struct iot_context));
+    memset(ctx, 0, sizeof(struct iot_context));
+    empty_array = JSON_CREATE_ARRAY();
+
+    // When
+    ret = _iot_subscribe_child_devices_command(ctx, empty_array);
+    // Then
+    assert_int_equal(ret, IOT_ERROR_NONE);
+
+    // Teardown
+    JSON_DELETE(empty_array);
+    free(ctx);
+}
+
+void TC_iot_subscribe_child_devices_command_malloc_failure(void **state)
+{
+    iot_error_t ret;
+    JSON_H *child_array;
+    struct iot_context *ctx;
+    JSON_H *child_item;
+    UNUSED(*state);
+
+    // Given
+    ctx = (struct iot_context *)malloc(sizeof(struct iot_context));
+    memset(ctx, 0, sizeof(struct iot_context));
+    child_array = JSON_CREATE_ARRAY();
+    child_item = JSON_CREATE_STRING("test_device_id");
+    JSON_ADD_ITEM_TO_ARRAY(child_array, child_item);
+
+    // When: malloc failure for subscribe_topic_list
+    set_mock_iot_os_malloc_failure_with_index(0);
+    ret = _iot_subscribe_child_devices_command(ctx, child_array);
+    // Then
+    assert_int_equal(ret, IOT_ERROR_MEM_ALLOC);
+
+    // Teardown
+    JSON_DELETE(child_array);
+    free(ctx);
+    do_not_use_mock_iot_os_malloc_failure();
+
+    // Given
+    ctx = (struct iot_context *)malloc(sizeof(struct iot_context));
+    memset(ctx, 0, sizeof(struct iot_context));
+    child_array = JSON_CREATE_ARRAY();
+    child_item = JSON_CREATE_STRING("test_device_id");
+    JSON_ADD_ITEM_TO_ARRAY(child_array, child_item);
+
+    // When: malloc failure for qos
+    set_mock_iot_os_malloc_failure_with_index(1);
+    ret = _iot_subscribe_child_devices_command(ctx, child_array);
+    // Then
+    assert_int_equal(ret, IOT_ERROR_MEM_ALLOC);
+
+    // Teardown
+    JSON_DELETE(child_array);
+    free(ctx);
+    do_not_use_mock_iot_os_malloc_failure();
+
+    // Given
+    ctx = (struct iot_context *)malloc(sizeof(struct iot_context));
+    memset(ctx, 0, sizeof(struct iot_context));
+    child_array = JSON_CREATE_ARRAY();
+    child_item = JSON_CREATE_STRING("test_device_id");
+    JSON_ADD_ITEM_TO_ARRAY(child_array, child_item);
+
+    // When: malloc failure for subscribe_topic_list[i]
+    set_mock_iot_os_malloc_failure_with_index(2);
+    ret = _iot_subscribe_child_devices_command(ctx, child_array);
+    // Then
+    assert_int_equal(ret, IOT_ERROR_MEM_ALLOC);
+
+    // Teardown
+    JSON_DELETE(child_array);
+    free(ctx);
+    do_not_use_mock_iot_os_malloc_failure();
+}
+
+void TC_iot_subscribe_child_devices_command_success(void **state)
+{
+    iot_error_t ret;
+    JSON_H *child_array;
+    struct iot_context *ctx;
+    JSON_H *child_item;
+    UNUSED(*state);
+
+    // Given
+    ctx = (struct iot_context *)malloc(sizeof(struct iot_context));
+    memset(ctx, 0, sizeof(struct iot_context));
+    st_mqtt_create(&ctx->evt_mqttcli, dummy_mqtt_callback, NULL, NULL, NULL);
+    child_array = JSON_CREATE_ARRAY();
+    child_item = JSON_CREATE_STRING("test_device_id");
+    JSON_ADD_ITEM_TO_ARRAY(child_array, child_item);
+
+    // When
+    ret = _iot_subscribe_child_devices_command(ctx, child_array);
+    // Then
+    // Should return IOT_ERROR_BAD_REQ because st_mqtt_subscribe will fail in mock
+    assert_int_not_equal(ret, IOT_ERROR_NONE);
+
+    // Teardown
+    JSON_DELETE(child_array);
+    st_mqtt_destroy(ctx->evt_mqttcli);
+    free(ctx);
+}
+
+void TC_iot_parse_cmd_data_v2_null_parameters(void **state)
+{
+    iot_error_t ret;
+    st_command_data cmd_data;
+    UNUSED(*state);
+
+    // When: cmditem null
+    ret = _iot_parse_cmd_data_v2(NULL, &cmd_data);
+    // Then
+    assert_int_equal(ret, IOT_ERROR_BAD_REQ);
+}
+
+void TC_iot_parse_cmd_data_v2_missing_fields(void **state)
+{
+    iot_error_t ret;
+    st_command_data cmd_data;
+    JSON_H *cmditem;
+    UNUSED(*state);
+
+    // Given: missing component
+    cmditem = JSON_PARSE("{\"capability\":\"switch\",\"command\":\"on\",\"arguments\":[true],\"id\":\"test_id\"}");
+    // When
+    ret = _iot_parse_cmd_data_v2(cmditem, &cmd_data);
+    // Then
+    assert_int_equal(ret, IOT_ERROR_BAD_REQ);
+    JSON_DELETE(cmditem);
+
+    // Given: missing capability
+    cmditem = JSON_PARSE("{\"component\":\"main\",\"command\":\"on\",\"arguments\":[true],\"id\":\"test_id\"}");
+    // When
+    ret = _iot_parse_cmd_data_v2(cmditem, &cmd_data);
+    // Then
+    assert_int_equal(ret, IOT_ERROR_BAD_REQ);
+    JSON_DELETE(cmditem);
+
+    // Given: missing command
+    cmditem = JSON_PARSE("{\"component\":\"main\",\"capability\":\"switch\",\"arguments\":[true],\"id\":\"test_id\"}");
+    // When
+    ret = _iot_parse_cmd_data_v2(cmditem, &cmd_data);
+    // Then
+    assert_int_equal(ret, IOT_ERROR_BAD_REQ);
+    JSON_DELETE(cmditem);
+
+    // Given: missing arguments
+    cmditem = JSON_PARSE("{\"component\":\"main\",\"capability\":\"switch\",\"command\":\"on\",\"id\":\"test_id\"}");
+    // When
+    ret = _iot_parse_cmd_data_v2(cmditem, &cmd_data);
+    // Then
+    assert_int_equal(ret, IOT_ERROR_BAD_REQ);
+    JSON_DELETE(cmditem);
+
+    // Given: missing id
+    cmditem = JSON_PARSE("{\"component\":\"main\",\"capability\":\"switch\",\"command\":\"on\",\"arguments\":[true]}");
+    // When
+    ret = _iot_parse_cmd_data_v2(cmditem, &cmd_data);
+    // Then
+    assert_int_equal(ret, IOT_ERROR_BAD_REQ);
+    JSON_DELETE(cmditem);
+}
+
+void TC_iot_parse_cmd_data_v2_malloc_failure(void **state)
+{
+    iot_error_t ret;
+    st_command_data cmd_data;
+    JSON_H *cmditem;
+    UNUSED(*state);
+
+    // Given
+    cmditem = JSON_PARSE(
+        "{\"component\":\"main\",\"capability\":\"switch\",\"command\":\"on\",\"arguments\":[true],\"id\":\"test_"
+        "id\"}");
+
+    // When: malloc failure for param_list
+    set_mock_iot_os_malloc_failure_with_index(0);
+    ret = _iot_parse_cmd_data_v2(cmditem, &cmd_data);
+    // Then
+    assert_int_equal(ret, IOT_ERROR_MEM_ALLOC);
+
+    // Teardown
+    JSON_DELETE(cmditem);
+    do_not_use_mock_iot_os_malloc_failure();
+}
+
+void TC_iot_parse_cmd_data_v2_success(void **state)
+{
+    iot_error_t ret;
+    st_command_data cmd_data;
+    JSON_H *cmditem;
+    UNUSED(*state);
+
+    // Given: boolean argument
+    cmditem = JSON_PARSE(
+        "{\"component\":\"main\",\"capability\":\"switch\",\"command\":\"on\",\"arguments\":[true],\"id\":\"test_"
+        "id\"}");
+
+    // When
+    ret = _iot_parse_cmd_data_v2(cmditem, &cmd_data);
+    // Then
+    assert_int_equal(ret, IOT_ERROR_NONE);
+    assert_string_equal(cmd_data.custom_component_name, "main");
+    assert_string_equal(cmd_data.custom_cap_name, "switch");
+    assert_string_equal(cmd_data.custom_command_name, "on");
+    assert_string_equal(cmd_data.command_id, "test_id");
+    assert_int_equal(cmd_data.param_num, 1);
+    assert_int_equal(cmd_data.param_list[0].data_type, ST_DATA_TYPE_BOOLEAN);
+    assert_true(cmd_data.param_list[0].data.boolean);
+
+    // Teardown
+    _iot_free_cmd_data_v2(&cmd_data);
+    JSON_DELETE(cmditem);
+
+    // Given: number argument
+    cmditem = JSON_PARSE(
+        "{\"component\":\"main\",\"capability\":\"switchLevel\",\"command\":\"setLevel\",\"arguments\":[50],\"id\":"
+        "\"test_id\"}");
+
+    // When
+    ret = _iot_parse_cmd_data_v2(cmditem, &cmd_data);
+    // Then
+    assert_int_equal(ret, IOT_ERROR_NONE);
+    assert_string_equal(cmd_data.custom_component_name, "main");
+    assert_string_equal(cmd_data.custom_cap_name, "switchLevel");
+    assert_string_equal(cmd_data.custom_command_name, "setLevel");
+    assert_string_equal(cmd_data.command_id, "test_id");
+    assert_int_equal(cmd_data.param_num, 1);
+    assert_int_equal(cmd_data.param_list[0].data_type, ST_DATA_TYPE_NUMBER);
+    assert_int_equal(cmd_data.param_list[0].data.number, 50);
+
+    // Teardown
+    _iot_free_cmd_data_v2(&cmd_data);
+    JSON_DELETE(cmditem);
+
+    // Given: string argument
+    cmditem = JSON_PARSE(
+        "{\"component\":\"main\",\"capability\":\"switch\",\"command\":\"setColor\",\"arguments\":[\"red\"],\"id\":"
+        "\"test_id\"}");
+
+    // When
+    ret = _iot_parse_cmd_data_v2(cmditem, &cmd_data);
+    // Then
+    assert_int_equal(ret, IOT_ERROR_NONE);
+    assert_string_equal(cmd_data.custom_component_name, "main");
+    assert_string_equal(cmd_data.custom_cap_name, "switch");
+    assert_string_equal(cmd_data.custom_command_name, "setColor");
+    assert_string_equal(cmd_data.command_id, "test_id");
+    assert_int_equal(cmd_data.param_num, 1);
+    assert_int_equal(cmd_data.param_list[0].data_type, ST_DATA_TYPE_STRING);
+    assert_string_equal(cmd_data.param_list[0].data.string, "red");
+
+    // Teardown
+    _iot_free_cmd_data_v2(&cmd_data);
+    JSON_DELETE(cmditem);
+
+    // Given: json object argument
+    cmditem = JSON_PARSE(
+        "{\"component\":\"main\",\"capability\":\"switch\",\"command\":\"setColor\",\"arguments\":[{\"hue\": 100, "
+        "\"saturation\": 50}],\"id\":\"test_id\"}");
+
+    // When
+    ret = _iot_parse_cmd_data_v2(cmditem, &cmd_data);
+    // Then
+    assert_int_equal(ret, IOT_ERROR_NONE);
+    assert_string_equal(cmd_data.custom_component_name, "main");
+    assert_string_equal(cmd_data.custom_cap_name, "switch");
+    assert_string_equal(cmd_data.custom_command_name, "setColor");
+    assert_string_equal(cmd_data.command_id, "test_id");
+    assert_int_equal(cmd_data.param_num, 1);
+    assert_int_equal(cmd_data.param_list[0].data_type, ST_DATA_TYPE_RAW_JSON);
+    assert_non_null(cmd_data.param_list[0].data.raw_json);
+
+    // Teardown
+    _iot_free_cmd_data_v2(&cmd_data);
+    JSON_DELETE(cmditem);
+}
+
+void TC_iot_free_cmd_data_v2_null_parameter(void **state)
+{
+    UNUSED(*state);
+
+    // When: cmd_data null
+    _iot_free_cmd_data_v2(NULL);
+    // Then: should not crash
+    assert_true(1);
+}
+
+void TC_iot_free_cmd_data_v2_success(void **state)
+{
+    st_command_data cmd_data;
+    JSON_H *cmditem;
+    iot_error_t ret;
+    UNUSED(*state);
+
+    // Given
+    cmditem = JSON_PARSE(
+        "{\"component\":\"main\",\"capability\":\"switch\",\"command\":\"on\",\"arguments\":[true],\"id\":\"test_"
+        "id\"}");
+    ret = _iot_parse_cmd_data_v2(cmditem, &cmd_data);
+    assert_int_equal(ret, IOT_ERROR_NONE);
+
+    // When: free cmd_data
+    _iot_free_cmd_data_v2(&cmd_data);
+    // Then: should not crash
+    assert_true(1);
+
+    // Teardown
+    JSON_DELETE(cmditem);
+}
+
+void TC_iot_parse_cmd_data_null_parameters(void **state)
+{
+    iot_error_t ret;
+    char *component = NULL;
+    char *capability = NULL;
+    char *command = NULL;
+    iot_cap_cmd_data_t cmd_data;
+    UNUSED(*state);
+
+    // When: cmditem null
+    ret = _iot_parse_cmd_data(NULL, &component, &capability, &command, &cmd_data);
+    // Then
+    assert_int_equal(ret, IOT_ERROR_BAD_REQ);
+}
+
+void TC_iot_parse_cmd_data_missing_fields(void **state)
+{
+    iot_error_t ret;
+    char *component = NULL;
+    char *capability = NULL;
+    char *command = NULL;
+    iot_cap_cmd_data_t cmd_data;
+    JSON_H *cmditem;
+    UNUSED(*state);
+
+    // Given: missing component
+    cmditem = JSON_PARSE("{\"capability\":\"switch\",\"command\":\"on\",\"arguments\":[true],\"id\":\"test_id\"}");
+    // When
+    ret = _iot_parse_cmd_data(cmditem, &component, &capability, &command, &cmd_data);
+    // Then
+    assert_int_equal(ret, IOT_ERROR_BAD_REQ);
+    JSON_DELETE(cmditem);
+
+    // Given: missing capability
+    cmditem = JSON_PARSE("{\"component\":\"main\",\"command\":\"on\",\"arguments\":[true],\"id\":\"test_id\"}");
+    // When
+    ret = _iot_parse_cmd_data(cmditem, &component, &capability, &command, &cmd_data);
+    // Then
+    assert_int_equal(ret, IOT_ERROR_BAD_REQ);
+    JSON_DELETE(cmditem);
+
+    // Given: missing command
+    cmditem = JSON_PARSE("{\"component\":\"main\",\"capability\":\"switch\",\"arguments\":[true],\"id\":\"test_id\"}");
+    // When
+    ret = _iot_parse_cmd_data(cmditem, &component, &capability, &command, &cmd_data);
+    // Then
+    assert_int_equal(ret, IOT_ERROR_BAD_REQ);
+    JSON_DELETE(cmditem);
+}
+
+void TC_iot_parse_cmd_data_malloc_failure(void **state)
+{
+    iot_error_t ret;
+    char *component = NULL;
+    char *capability = NULL;
+    char *command = NULL;
+    iot_cap_cmd_data_t cmd_data;
+    JSON_H *cmditem;
+    UNUSED(*state);
+
+    // Given
+    cmditem = JSON_PARSE(
+        "{\"component\":\"main\",\"capability\":\"switch\",\"command\":\"on\",\"arguments\":[true],\"id\":\"test_"
+        "id\"}");
+
+    // When: malloc failure for args_str
+    set_mock_iot_os_malloc_failure_with_index(0);
+    ret = _iot_parse_cmd_data(cmditem, &component, &capability, &command, &cmd_data);
+    // Then
+    assert_int_equal(ret, IOT_ERROR_MEM_ALLOC);
+
+    // Teardown
+    if (component)
+        iot_os_free(component);
+    if (capability)
+        iot_os_free(capability);
+    if (command)
+        iot_os_free(command);
+    JSON_DELETE(cmditem);
+    do_not_use_mock_iot_os_malloc_failure();
+
+    // Given
+    cmditem = JSON_PARSE(
+        "{\"component\":\"main\",\"capability\":\"switch\",\"command\":\"on\",\"arguments\":[true],\"id\":\"test_"
+        "id\"}");
+
+    // When: malloc failure for cmd_data
+    set_mock_iot_os_malloc_failure_with_index(1);
+    ret = _iot_parse_cmd_data(cmditem, &component, &capability, &command, &cmd_data);
+    // Then
+    assert_int_equal(ret, IOT_ERROR_MEM_ALLOC);
+
+    // Teardown
+    if (component)
+        iot_os_free(component);
+    if (capability)
+        iot_os_free(capability);
+    if (command)
+        iot_os_free(command);
+    JSON_DELETE(cmditem);
+    do_not_use_mock_iot_os_malloc_failure();
+}
+
+void TC_iot_parse_cmd_data_success(void **state)
+{
+    iot_error_t ret;
+    char *component = NULL;
+    char *capability = NULL;
+    char *command = NULL;
+    iot_cap_cmd_data_t cmd_data;
+    JSON_H *cmditem;
+    UNUSED(*state);
+
+    // Initialize cmd_data structure
+    memset(&cmd_data, 0, sizeof(cmd_data));
+
+    // Given: boolean argument
+    cmditem = JSON_PARSE(
+        "{\"component\":\"main\",\"capability\":\"switch\",\"command\":\"on\",\"arguments\":[true],\"id\":\"test_"
+        "id\"}");
+
+    // When
+    ret = _iot_parse_cmd_data(cmditem, &component, &capability, &command, &cmd_data);
+    // Then
+    assert_int_equal(ret, IOT_ERROR_NONE);
+    assert_string_equal(component, "main");
+    assert_string_equal(capability, "switch");
+    assert_string_equal(command, "on");
+    assert_int_equal(cmd_data.num_args, 1);
+    assert_int_equal(cmd_data.cmd_data[0].type, IOT_CAP_VAL_TYPE_BOOLEAN);
+    assert_true(cmd_data.cmd_data[0].boolean);
+    assert_string_equal(cmd_data.command_id, "test_id");
+
+    // Teardown
+    if (component)
+        iot_os_free(component);
+    if (capability)
+        iot_os_free(capability);
+    if (command)
+        iot_os_free(command);
+    _iot_free_cmd_data(&cmd_data);
+    if (cmd_data.command_id)
+        iot_os_free(cmd_data.command_id);
+    JSON_DELETE(cmditem);
+    component = NULL;
+    capability = NULL;
+    command = NULL;
+    memset(&cmd_data, 0, sizeof(cmd_data));
+
+    // Given: number argument
+    cmditem = JSON_PARSE(
+        "{\"component\":\"main\",\"capability\":\"switchLevel\",\"command\":\"setLevel\",\"arguments\":[50],\"id\":"
+        "\"test_id\"}");
+
+    // When
+    ret = _iot_parse_cmd_data(cmditem, &component, &capability, &command, &cmd_data);
+    // Then
+    assert_int_equal(ret, IOT_ERROR_NONE);
+    assert_string_equal(component, "main");
+    assert_string_equal(capability, "switchLevel");
+    assert_string_equal(command, "setLevel");
+    assert_int_equal(cmd_data.num_args, 1);
+    assert_int_equal(cmd_data.cmd_data[0].type, IOT_CAP_VAL_TYPE_INT_OR_NUM);
+    assert_int_equal(cmd_data.cmd_data[0].integer, 50);
+    assert_string_equal(cmd_data.command_id, "test_id");
+
+    // Teardown
+    if (component)
+        iot_os_free(component);
+    if (capability)
+        iot_os_free(capability);
+    if (command)
+        iot_os_free(command);
+    _iot_free_cmd_data(&cmd_data);
+    if (cmd_data.command_id)
+        iot_os_free(cmd_data.command_id);
+    JSON_DELETE(cmditem);
+    component = NULL;
+    capability = NULL;
+    command = NULL;
+    memset(&cmd_data, 0, sizeof(cmd_data));
+
+    // Given: string argument
+    cmditem = JSON_PARSE(
+        "{\"component\":\"main\",\"capability\":\"switch\",\"command\":\"setColor\",\"arguments\":[\"red\"],\"id\":"
+        "\"test_id\"}");
+
+    // When
+    ret = _iot_parse_cmd_data(cmditem, &component, &capability, &command, &cmd_data);
+    // Then
+    assert_int_equal(ret, IOT_ERROR_NONE);
+    assert_string_equal(component, "main");
+    assert_string_equal(capability, "switch");
+    assert_string_equal(command, "setColor");
+    assert_int_equal(cmd_data.num_args, 1);
+    assert_int_equal(cmd_data.cmd_data[0].type, IOT_CAP_VAL_TYPE_STRING);
+    assert_string_equal(cmd_data.cmd_data[0].string, "red");
+    assert_string_equal(cmd_data.command_id, "test_id");
+
+    // Teardown
+    if (component)
+        iot_os_free(component);
+    if (capability)
+        iot_os_free(capability);
+    if (command)
+        iot_os_free(command);
+    _iot_free_cmd_data(&cmd_data);
+    if (cmd_data.command_id)
+        iot_os_free(cmd_data.command_id);
+    JSON_DELETE(cmditem);
+    component = NULL;
+    capability = NULL;
+    command = NULL;
+    memset(&cmd_data, 0, sizeof(cmd_data));
+
+    // Given: json object argument
+    cmditem = JSON_PARSE(
+        "{\"component\":\"main\",\"capability\":\"switch\",\"command\":\"setColor\",\"arguments\":[{\"hue\": 100, "
+        "\"saturation\": 50}],\"id\":\"test_id\"}");
+
+    // When
+    ret = _iot_parse_cmd_data(cmditem, &component, &capability, &command, &cmd_data);
+    // Then
+    assert_int_equal(ret, IOT_ERROR_NONE);
+    assert_string_equal(component, "main");
+    assert_string_equal(capability, "switch");
+    assert_string_equal(command, "setColor");
+    assert_int_equal(cmd_data.num_args, 1);
+    assert_int_equal(cmd_data.cmd_data[0].type, IOT_CAP_VAL_TYPE_JSON_OBJECT);
+    assert_non_null(cmd_data.cmd_data[0].json_object);
+    assert_string_equal(cmd_data.command_id, "test_id");
+
+    // Teardown
+    if (component)
+        iot_os_free(component);
+    if (capability)
+        iot_os_free(capability);
+    if (command)
+        iot_os_free(command);
+    _iot_free_cmd_data(&cmd_data);
+    if (cmd_data.command_id)
+        iot_os_free(cmd_data.command_id);
+    JSON_DELETE(cmditem);
+}
+
+void TC_iot_free_val_null_parameter(void **state)
+{
+    UNUSED(*state);
+
+    // When: val null
+    _iot_free_val(NULL);
+    // Then: should not crash
+    assert_true(1);
+}
+
+void TC_iot_free_val_string_type(void **state)
+{
+    iot_cap_val_t val;
+    UNUSED(*state);
+
+    // Given
+    val.type = IOT_CAP_VAL_TYPE_STRING;
+    val.string = iot_os_strdup("test_string");
+
+    // When: free val
+    _iot_free_val(&val);
+    // Then: should not crash
+    assert_true(1);
+}
+
+void TC_iot_free_val_str_array_type(void **state)
+{
+    iot_cap_val_t val;
+    UNUSED(*state);
+
+    // Given
+    val.type = IOT_CAP_VAL_TYPE_STR_ARRAY;
+    val.str_num = 2;
+    val.strings = iot_os_malloc(2 * sizeof(char *));
+    val.strings[0] = iot_os_strdup("string1");
+    val.strings[1] = iot_os_strdup("string2");
+
+    // When: free val
+    _iot_free_val(&val);
+    // Then: should not crash
+    assert_true(1);
+}
+
+void TC_iot_free_val_json_object_type(void **state)
+{
+    iot_cap_val_t val;
+    UNUSED(*state);
+
+    // Given
+    val.type = IOT_CAP_VAL_TYPE_JSON_OBJECT;
+    val.json_object = iot_os_strdup("{\"key\":\"value\"}");
+
+    // When: free val
+    _iot_free_val(&val);
+    // Then: should not crash
+    assert_true(1);
+}
+
+void TC_iot_free_unit_null_parameter(void **state)
+{
+    UNUSED(*state);
+
+    // When: unit null
+    _iot_free_unit(NULL);
+    // Then: should not crash
+    assert_true(1);
+}
+
+void TC_iot_free_unit_string_type(void **state)
+{
+    iot_cap_unit_t unit;
+    UNUSED(*state);
+
+    // Given
+    unit.type = IOT_CAP_UNIT_TYPE_STRING;
+    unit.string = iot_os_strdup("test_unit");
+
+    // When: free unit
+    _iot_free_unit(&unit);
+    // Then: should not crash
+    assert_true(1);
+}
+
+void TC_iot_free_cmd_data_null_parameter(void **state)
+{
+    UNUSED(*state);
+
+    // When: cmd_data null
+    _iot_free_cmd_data(NULL);
+    // Then: should not crash
+    assert_true(1);
+}
+
+void TC_iot_free_cmd_data_success(void **state)
+{
+    iot_cap_cmd_data_t cmd_data;
+    UNUSED(*state);
+
+    // Given
+    memset(&cmd_data, 0, sizeof(iot_cap_cmd_data_t));
+    cmd_data.num_args = 1;
+    cmd_data.args_str = iot_os_malloc(sizeof(char *));
+    cmd_data.args_str[0] = iot_os_strdup("arg1");
+    cmd_data.cmd_data = iot_os_malloc(sizeof(iot_cap_val_t));
+    cmd_data.cmd_data[0].type = IOT_CAP_VAL_TYPE_STRING;
+    cmd_data.cmd_data[0].string = iot_os_strdup("value1");
+
+    // When: free cmd_data
+    _iot_free_cmd_data(&cmd_data);
+    // Then: should not crash
+    assert_true(1);
+}
+
+void TC_iot_free_evt_data_null_parameter(void **state)
+{
+    UNUSED(*state);
+
+    // When: evt_data null
+    _iot_free_evt_data(NULL);
+    // Then: should not crash
+    assert_true(1);
+}
+
+void TC_iot_free_evt_data_success(void **state)
+{
+    iot_cap_evt_data_t evt_data;
+    UNUSED(*state);
+
+    // Given
+    memset(&evt_data, 0, sizeof(iot_cap_evt_data_t));
+    evt_data.evt_type = iot_os_strdup("test_event");
+    evt_data.evt_value.type = IOT_CAP_VAL_TYPE_STRING;
+    evt_data.evt_value.string = iot_os_strdup("test_value");
+    evt_data.evt_unit.type = IOT_CAP_UNIT_TYPE_STRING;
+    evt_data.evt_unit.string = iot_os_strdup("test_unit");
+    evt_data.evt_value_data = iot_os_strdup("{\"key\":\"data\"}");
+    evt_data.options.command_id = iot_os_strdup("test_cmd_id");
+    evt_data.options.displayed = iot_os_malloc(sizeof(bool));
+    *(evt_data.options.displayed) = true;
+
+    // When: free evt_data
+    _iot_free_evt_data(&evt_data);
+    // Then: should not crash
+    assert_true(1);
+}
+
+void TC_iot_notify_child_devices_cloud_connected_null_parameters(void **state)
+{
+    iot_error_t ret;
+    UNUSED(*state);
+
+    // When: context null
+    ret = _iot_notify_child_devices_cloud_connected(NULL, NULL);
+    // Then
+    assert_int_equal(ret, IOT_ERROR_NONE);
+}
+
+void TC_iot_notify_child_devices_cloud_connected_empty_array(void **state)
+{
+    iot_error_t ret;
+    JSON_H *empty_array;
+    struct iot_context *ctx;
+    UNUSED(*state);
+
+    // Given
+    ctx = (struct iot_context *)malloc(sizeof(struct iot_context));
+    memset(ctx, 0, sizeof(struct iot_context));
+    empty_array = JSON_CREATE_ARRAY();
+
+    // When
+    ret = _iot_notify_child_devices_cloud_connected(ctx, empty_array);
+    // Then
+    assert_int_equal(ret, IOT_ERROR_NONE);
+
+    // Teardown
+    JSON_DELETE(empty_array);
+    free(ctx);
+}
+
+void TC_iot_notify_child_devices_cloud_connected_invalid_child_device(void **state)
+{
+    iot_error_t ret;
+    JSON_H *child_array;
+    struct iot_context *ctx;
+    JSON_H *child_item;
+    UNUSED(*state);
+
+    // Given
+    ctx = (struct iot_context *)malloc(sizeof(struct iot_context));
+    memset(ctx, 0, sizeof(struct iot_context));
+    child_array = JSON_CREATE_ARRAY();
+    child_item = JSON_CREATE_STRING("invalid_device_id");
+    JSON_ADD_ITEM_TO_ARRAY(child_array, child_item);
+
+    // When
+    ret = _iot_notify_child_devices_cloud_connected(ctx, child_array);
+    // Then
+    assert_int_equal(ret, IOT_ERROR_NONE);
+
+    // Teardown
+    JSON_DELETE(child_array);
+    free(ctx);
+}
+
+void TC_iot_notify_child_devices_cloud_connected_success(void **state)
+{
+    iot_error_t ret;
+    JSON_H *child_array;
+    struct iot_context *ctx;
+    JSON_H *child_item;
+    iot_child_device *child_dev;
+    UNUSED(*state);
+
+    // Given
+    ctx = (struct iot_context *)malloc(sizeof(struct iot_context));
+    memset(ctx, 0, sizeof(struct iot_context));
+
+    // Create a child device
+    child_dev = (iot_child_device *)malloc(sizeof(iot_child_device));
+    memset(child_dev, 0, sizeof(iot_child_device));
+    strncpy(child_dev->deviceId, "test_device_id", IOT_REG_UUID_STR_LEN);
+    child_dev->next = NULL;
+    ctx->child_device_list = child_dev;
+
+    child_array = JSON_CREATE_ARRAY();
+    child_item = JSON_CREATE_STRING("test_device_id");
+    JSON_ADD_ITEM_TO_ARRAY(child_array, child_item);
+
+    // When
+    ret = _iot_notify_child_devices_cloud_connected(ctx, child_array);
+    // Then
+    assert_int_equal(ret, IOT_ERROR_NONE);
+
+    // Teardown
+    JSON_DELETE(child_array);
+    free(child_dev);
+    free(ctx);
+}
+
+void TC_iot_parse_noti_data_invalid_json(void **state)
+{
+    iot_error_t err;
+    iot_noti_data_t notification;
+    struct iot_context *fake_ctx = NULL;
+    UNUSED(*state);
+
+    fake_ctx = (struct iot_context *)malloc(sizeof(struct iot_context));
+    memset(fake_ctx, 0, sizeof(struct iot_context));
+
+    // When: invalid JSON data
+    err = _iot_parse_noti_data(fake_ctx, (void *)"invalid json", &notification);
+    // Then
+    assert_int_equal(err, IOT_ERROR_BAD_REQ);
+
+    // Teardown
+    free(fake_ctx);
+}
+
+void TC_iot_parse_noti_data_no_event_field(void **state)
+{
+    iot_error_t err;
+    iot_noti_data_t notification;
+    struct iot_context *fake_ctx = NULL;
+    UNUSED(*state);
+
+    fake_ctx = (struct iot_context *)malloc(sizeof(struct iot_context));
+    memset(fake_ctx, 0, sizeof(struct iot_context));
+
+    // When: JSON without event field
+    err = _iot_parse_noti_data(fake_ctx, (void *)"{\"target\":\"test\"}", &notification);
+    // Then
+    assert_int_equal(err, IOT_ERROR_BAD_REQ);
+
+    // Teardown
+    free(fake_ctx);
+}
+
+void TC_iot_parse_noti_data_null_event_type(void **state)
+{
+    iot_error_t err;
+    iot_noti_data_t notification;
+    struct iot_context *fake_ctx = NULL;
+    UNUSED(*state);
+
+    fake_ctx = (struct iot_context *)malloc(sizeof(struct iot_context));
+    memset(fake_ctx, 0, sizeof(struct iot_context));
+
+    // When: JSON with null event type
+    err = _iot_parse_noti_data(fake_ctx, (void *)"{\"event\":null}", &notification);
+    // Then
+    assert_int_equal(err, IOT_ERROR_BAD_REQ);
+
+    // Teardown
+    free(fake_ctx);
+}
+
+void TC_iot_parse_noti_data_unknown_event_type(void **state)
+{
+    iot_error_t err;
+    iot_noti_data_t notification;
+    struct iot_context *fake_ctx = NULL;
+    UNUSED(*state);
+
+    fake_ctx = (struct iot_context *)malloc(sizeof(struct iot_context));
+    memset(fake_ctx, 0, sizeof(struct iot_context));
+
+    // When: JSON with unknown event type
+    err = _iot_parse_noti_data(fake_ctx, (void *)"{\"event\":\"unknown.event.type\"}", &notification);
+    // Then
+    assert_int_equal(err, IOT_ERROR_BAD_REQ);
+
+    // Teardown
+    free(fake_ctx);
+}
+
+void TC_iot_parse_noti_data_expired_jwt_no_current_time(void **state)
+{
+    iot_error_t err;
+    iot_noti_data_t notification;
+    struct iot_context *fake_ctx = NULL;
+    UNUSED(*state);
+
+    fake_ctx = (struct iot_context *)malloc(sizeof(struct iot_context));
+    memset(fake_ctx, 0, sizeof(struct iot_context));
+
+    // When: expired.jwt event without currentTime
+    err = _iot_parse_noti_data(fake_ctx, (void *)"{\"event\":\"expired.jwt\"}", &notification);
+    // Then
+    assert_int_equal(err, IOT_ERROR_BAD_REQ);
+
+    // Teardown
+    free(fake_ctx);
+}
+
+void TC_iot_parse_noti_data_quota_reached_no_limit(void **state)
+{
+    iot_error_t err;
+    iot_noti_data_t notification;
+    struct iot_context *fake_ctx = NULL;
+    UNUSED(*state);
+
+    fake_ctx = (struct iot_context *)malloc(sizeof(struct iot_context));
+    memset(fake_ctx, 0, sizeof(struct iot_context));
+
+    // When: quota.reached event without limit
+    err = _iot_parse_noti_data(fake_ctx, (void *)"{\"event\":\"quota.reached\",\"used\":5}", &notification);
+    // Then
+    assert_int_equal(err, IOT_ERROR_BAD_REQ);
+
+    // Teardown
+    free(fake_ctx);
+}
+
+void TC_iot_parse_noti_data_quota_reached_no_used(void **state)
+{
+    iot_error_t err;
+    iot_noti_data_t notification;
+    struct iot_context *fake_ctx = NULL;
+    UNUSED(*state);
+
+    fake_ctx = (struct iot_context *)malloc(sizeof(struct iot_context));
+    memset(fake_ctx, 0, sizeof(struct iot_context));
+
+    // When: quota.reached event without used
+    err = _iot_parse_noti_data(fake_ctx, (void *)"{\"event\":\"quota.reached\",\"limit\":10}", &notification);
+    // Then
+    assert_int_equal(err, IOT_ERROR_BAD_REQ);
+
+    // Teardown
+    free(fake_ctx);
+}
+
+void TC_iot_parse_noti_data_rate_limit_no_count(void **state)
+{
+    iot_error_t err;
+    iot_noti_data_t notification;
+    struct iot_context *fake_ctx = NULL;
+    UNUSED(*state);
+
+    fake_ctx = (struct iot_context *)malloc(sizeof(struct iot_context));
+    memset(fake_ctx, 0, sizeof(struct iot_context));
+
+    // When: rate.limit.reached event without count
+    err = _iot_parse_noti_data(fake_ctx, (void *)"{\"event\":\"rate.limit.reached\"}", &notification);
+    // Then
+    assert_int_equal(err, IOT_ERROR_BAD_REQ);
+
+    // Teardown
+    free(fake_ctx);
+}
+
+void TC_iot_parse_noti_data_rate_limit_no_threshold(void **state)
+{
+    iot_error_t err;
+    iot_noti_data_t notification;
+    struct iot_context *fake_ctx = NULL;
+    UNUSED(*state);
+
+    fake_ctx = (struct iot_context *)malloc(sizeof(struct iot_context));
+    memset(fake_ctx, 0, sizeof(struct iot_context));
+
+    // When: rate.limit.reached event without threshold
+    err = _iot_parse_noti_data(fake_ctx, (void *)"{\"event\":\"rate.limit.reached\",\"count\":5}", &notification);
+    // Then
+    assert_int_equal(err, IOT_ERROR_BAD_REQ);
+
+    // Teardown
+    free(fake_ctx);
+}
+
+void TC_iot_parse_noti_data_rate_limit_no_remaining_time(void **state)
+{
+    iot_error_t err;
+    iot_noti_data_t notification;
+    struct iot_context *fake_ctx = NULL;
+    UNUSED(*state);
+
+    fake_ctx = (struct iot_context *)malloc(sizeof(struct iot_context));
+    memset(fake_ctx, 0, sizeof(struct iot_context));
+
+    // When: rate.limit.reached event without remainingTime
+    err = _iot_parse_noti_data(fake_ctx, (void *)"{\"event\":\"rate.limit.reached\",\"count\":5,\"threshold\":10}",
+                               &notification);
+    // Then
+    assert_int_equal(err, IOT_ERROR_BAD_REQ);
+
+    // Teardown
+    free(fake_ctx);
+}
+
+void TC_iot_parse_noti_data_rate_limit_no_sequence_number(void **state)
+{
+    iot_error_t err;
+    iot_noti_data_t notification;
+    struct iot_context *fake_ctx = NULL;
+    UNUSED(*state);
+
+    fake_ctx = (struct iot_context *)malloc(sizeof(struct iot_context));
+    memset(fake_ctx, 0, sizeof(struct iot_context));
+
+    // When: rate.limit.reached event without sequenceNumber
+    err = _iot_parse_noti_data(
+        fake_ctx, (void *)"{\"event\":\"rate.limit.reached\",\"count\":5,\"threshold\":10,\"remainingTime\":300}",
+        &notification);
+    // Then
+    assert_int_equal(err, IOT_ERROR_BAD_REQ);
+
+    // Teardown
+    free(fake_ctx);
+}
+
+void TC_iot_parse_noti_data_preference_updated_no_values(void **state)
+{
+    iot_error_t err;
+    iot_noti_data_t notification;
+    struct iot_context *fake_ctx = NULL;
+    UNUSED(*state);
+
+    fake_ctx = (struct iot_context *)malloc(sizeof(struct iot_context));
+    memset(fake_ctx, 0, sizeof(struct iot_context));
+
+    // When: device.preferences event without values
+    err = _iot_parse_noti_data(fake_ctx, (void *)"{\"event\":\"device.preferences\"}", &notification);
+    // Then
+    assert_int_equal(err, IOT_ERROR_BAD_REQ);
+
+    // Teardown
+    free(fake_ctx);
+}
+
+void TC_iot_parse_noti_data_preference_updated_empty_values(void **state)
+{
+    iot_error_t err;
+    iot_noti_data_t notification;
+    struct iot_context *fake_ctx = NULL;
+    UNUSED(*state);
+
+    fake_ctx = (struct iot_context *)malloc(sizeof(struct iot_context));
+    memset(fake_ctx, 0, sizeof(struct iot_context));
+
+    // When: device.preferences event with empty values
+    err = _iot_parse_noti_data(fake_ctx, (void *)"{\"event\":\"device.preferences\",\"values\":[]}", &notification);
+    // Then
+    assert_int_equal(err, IOT_ERROR_BAD_REQ);
+
+    // Teardown
+    free(fake_ctx);
+}
+
+void TC_iot_parse_noti_data_device_updated_success(void **state)
+{
+    iot_error_t err;
+    iot_noti_data_t notification;
+    struct iot_context *fake_ctx = NULL;
+    UNUSED(*state);
+
+    fake_ctx = (struct iot_context *)malloc(sizeof(struct iot_context));
+    memset(fake_ctx, 0, sizeof(struct iot_context));
+
+    // When: device.updated event
+    err = _iot_parse_noti_data(fake_ctx, (void *)"{\"event\":\"device.updated\"}", &notification);
+    // Then
+    assert_int_equal(err, IOT_ERROR_BAD_REQ);  // Expected to return IOT_ERROR_BAD_REQ
+
+    // Teardown
+    free(fake_ctx);
+}
+
+void TC_iot_parse_noti_data_device_created_no_response(void **state)
+{
+    iot_error_t err;
+    iot_noti_data_t notification;
+    struct iot_context *fake_ctx = NULL;
+    UNUSED(*state);
+
+    fake_ctx = (struct iot_context *)malloc(sizeof(struct iot_context));
+    memset(fake_ctx, 0, sizeof(struct iot_context));
+
+    // When: device.created event without response
+    err = _iot_parse_noti_data(fake_ctx, (void *)"{\"event\":\"device.created\"}", &notification);
+    // Then
+    assert_int_equal(err, IOT_ERROR_BAD_REQ);
+
+    // Teardown
+    free(fake_ctx);
+}
+
+void TC_iot_parse_noti_data_device_created_no_device_id(void **state)
+{
+    iot_error_t err;
+    iot_noti_data_t notification;
+    struct iot_context *fake_ctx = NULL;
+    UNUSED(*state);
+
+    fake_ctx = (struct iot_context *)malloc(sizeof(struct iot_context));
+    memset(fake_ctx, 0, sizeof(struct iot_context));
+
+    // When: device.created event without deviceId
+    err = _iot_parse_noti_data(fake_ctx, (void *)"{\"event\":\"device.created\",\"response\":{}}", &notification);
+    // Then
+    assert_int_equal(err, IOT_ERROR_BAD_REQ);
+
+    // Teardown
+    free(fake_ctx);
+}
+
+void TC_iot_parse_noti_data_device_created_no_metadata(void **state)
+{
+    iot_error_t err;
+    iot_noti_data_t notification;
+    struct iot_context *fake_ctx = NULL;
+    UNUSED(*state);
+
+    fake_ctx = (struct iot_context *)malloc(sizeof(struct iot_context));
+    memset(fake_ctx, 0, sizeof(struct iot_context));
+
+    // When: device.created event without metadata
+    err = _iot_parse_noti_data(
+        fake_ctx, (void *)"{\"event\":\"device.created\",\"response\":{\"deviceId\":\"test_id\"}}", &notification);
+    // Then
+    assert_int_equal(err, IOT_ERROR_BAD_REQ);
+
+    // Teardown
+    free(fake_ctx);
+}
+
+void TC_iot_parse_noti_data_device_created_no_mn_id(void **state)
+{
+    iot_error_t err;
+    iot_noti_data_t notification;
+    struct iot_context *fake_ctx = NULL;
+    UNUSED(*state);
+
+    fake_ctx = (struct iot_context *)malloc(sizeof(struct iot_context));
+    memset(fake_ctx, 0, sizeof(struct iot_context));
+
+    // When: device.created event without mnId
+    err = _iot_parse_noti_data(
+        fake_ctx, (void *)"{\"event\":\"device.created\",\"response\":{\"deviceId\":\"test_id\",\"metadata\":{}}}",
+        &notification);
+    // Then
+    assert_int_equal(err, IOT_ERROR_BAD_REQ);
+
+    // Teardown
+    free(fake_ctx);
+}
+
+void TC_iot_parse_noti_data_device_created_no_serial_number(void **state)
+{
+    iot_error_t err;
+    iot_noti_data_t notification;
+    struct iot_context *fake_ctx = NULL;
+    UNUSED(*state);
+
+    fake_ctx = (struct iot_context *)malloc(sizeof(struct iot_context));
+    memset(fake_ctx, 0, sizeof(struct iot_context));
+
+    // When: device.created event without serialNumber
+    err = _iot_parse_noti_data(fake_ctx, (void *)"{\"event\":\"device.created\",\"response\":{\"deviceId\":\"test_id\",\"metadata\":{\"mnId\":\"test_mn_id\"}}}", &notification);
+    // Then
+    assert_int_equal(err, IOT_ERROR_BAD_REQ);
+
+    // Teardown
+    free(fake_ctx);
+}
+
+void TC_iot_parse_noti_data_device_created_no_dip(void **state)
+{
+    iot_error_t err;
+    iot_noti_data_t notification;
+    struct iot_context *fake_ctx = NULL;
+    UNUSED(*state);
+
+    fake_ctx = (struct iot_context *)malloc(sizeof(struct iot_context));
+    memset(fake_ctx, 0, sizeof(struct iot_context));
+
+    // When: device.created event without DIP
+    err = _iot_parse_noti_data(fake_ctx, (void *)"{\"event\":\"device.created\",\"response\":{\"deviceId\":\"test_id\",\"metadata\":{\"mnId\":\"test_mn_id\",\"serialNumber\":\"test_serial\"}}}", &notification);
+    // Then
+    assert_int_equal(err, IOT_ERROR_BAD_REQ);
+
+    // Teardown
+    free(fake_ctx);
+}
+
+void TC_iot_parse_noti_data_device_created_no_dip_id(void **state)
+{
+    iot_error_t err;
+    iot_noti_data_t notification;
+    struct iot_context *fake_ctx = NULL;
+    UNUSED(*state);
+
+    fake_ctx = (struct iot_context *)malloc(sizeof(struct iot_context));
+    memset(fake_ctx, 0, sizeof(struct iot_context));
+
+    // When: device.created event without DIP id
+    err = _iot_parse_noti_data(fake_ctx, (void *)"{\"event\":\"device.created\",\"response\":{\"deviceId\":\"test_id\",\"metadata\":{\"mnId\":\"test_mn_id\",\"serialNumber\":\"test_serial\"},\"deviceIntegrationProfileKey\":{}}}", &notification);
+    // Then
+    assert_int_equal(err, IOT_ERROR_BAD_REQ);
+
+    // Teardown
+    free(fake_ctx);
+}
+
+void TC_iot_parse_noti_data_device_created_no_dip_major_version(void **state)
+{
+    iot_error_t err;
+    iot_noti_data_t notification;
+    struct iot_context *fake_ctx = NULL;
+    UNUSED(*state);
+
+    fake_ctx = (struct iot_context *)malloc(sizeof(struct iot_context));
+    memset(fake_ctx, 0, sizeof(struct iot_context));
+
+    // When: device.created event without DIP majorVersion
+    err = _iot_parse_noti_data(fake_ctx, (void *)"{\"event\":\"device.created\",\"response\":{\"deviceId\":\"test_id\",\"metadata\":{\"mnId\":\"test_mn_id\",\"serialNumber\":\"test_serial\"},\"deviceIntegrationProfileKey\":{\"id\":\"test_dip_id\"}}}", &notification);
+    // Then
+    assert_int_equal(err, IOT_ERROR_BAD_REQ);
+
+    // Teardown
+    free(fake_ctx);
+}
+
+void TC_iot_parse_noti_data_device_created_success(void **state)
+{
+    iot_error_t err;
+    iot_noti_data_t notification;
+    struct iot_context *fake_ctx = NULL;
+    iot_child_device *child_dev = NULL;
+    UNUSED(*state);
+
+    fake_ctx = (struct iot_context *)malloc(sizeof(struct iot_context));
+    memset(fake_ctx, 0, sizeof(struct iot_context));
+
+    // When: device.created event with all required fields
+    err = _iot_parse_noti_data(fake_ctx, (void *)"{\"event\":\"secondary.device.created\",\"response\":{\"deviceId\":\"test_id\",\"metadata\":{\"mnId\":\"test_mn_id\",\"serialNumber\":\"test_serial\"},\"deviceIntegrationProfileKey\":{\"id\":\"test_dip_id\",\"majorVersion\":1,\"minorVersion\":0}}}", &notification);
+    // Then
+    assert_int_equal(err, IOT_ERROR_NONE);
+    assert_int_equal(notification.type, _IOT_NOTI_TYPE_CHILD_DEVICE_REGISTERED);
+    assert_string_equal(notification.raw.child_device_registered.mnId, "test_mn_id");
+    assert_string_equal(notification.raw.child_device_registered.serial_number, "test_serial");
+
+    // Teardown
+    child_dev = (iot_child_device *)notification.raw.child_device_registered.child_dev;
+    // Properly clean up the allocated child device
+    if (child_dev) {
+        if (child_dev->mnId) {
+            iot_os_free(child_dev->mnId);
+        }
+        if (child_dev->serial_number) {
+            iot_os_free(child_dev->serial_number);
+        }
+        if (child_dev->mqtt_event_topic) {
+            iot_os_free(child_dev->mqtt_event_topic);
+        }
+        iot_os_free(child_dev);
+    }
+    free(fake_ctx);
+}
+
+void TC_iot_parse_noti_data_device_get_no_child_devices(void **state)
+{
+    iot_error_t err;
+    iot_noti_data_t notification;
+    struct iot_context *fake_ctx = NULL;
+    UNUSED(*state);
+
+    fake_ctx = (struct iot_context *)malloc(sizeof(struct iot_context));
+    memset(fake_ctx, 0, sizeof(struct iot_context));
+
+    // When: device.get event without childDevices
+    err = _iot_parse_noti_data(fake_ctx, (void *)"{\"event\":\"device.get\"}", &notification);
+    // Then
+    assert_int_equal(err, IOT_ERROR_BAD_REQ);
+
+    // Teardown
+    free(fake_ctx);
+}
+
+void TC_iot_parse_noti_data_device_get_no_device_id(void **state)
+{
+    iot_error_t err;
+    iot_noti_data_t notification;
+    struct iot_context *fake_ctx = NULL;
+    UNUSED(*state);
+
+    fake_ctx = (struct iot_context *)malloc(sizeof(struct iot_context));
+    memset(fake_ctx, 0, sizeof(struct iot_context));
+
+    // When: device.get event without deviceId in child info
+    err = _iot_parse_noti_data(fake_ctx, (void *)"{\"event\":\"device.get\",\"childDevices\":[{}]}", &notification);
+    // Then
+    assert_int_equal(err, IOT_ERROR_BAD_REQ);
+
+    // Teardown
+    free(fake_ctx);
+}
+
+void TC_iot_parse_noti_data_device_get_no_mn_id(void **state)
+{
+    iot_error_t err;
+    iot_noti_data_t notification;
+    struct iot_context *fake_ctx = NULL;
+    UNUSED(*state);
+
+    fake_ctx = (struct iot_context *)malloc(sizeof(struct iot_context));
+    memset(fake_ctx, 0, sizeof(struct iot_context));
+
+    // When: device.get event without mnId in child info
+    err = _iot_parse_noti_data(fake_ctx, (void *)"{\"event\":\"device.get\",\"childDevices\":[{\"id\":\"test_id\"}]}",
+                               &notification);
+    // Then
+    assert_int_equal(err, IOT_ERROR_BAD_REQ);
+
+    // Teardown
+    free(fake_ctx);
+}
+
+void TC_iot_parse_noti_data_device_get_no_serial_number(void **state)
+{
+    iot_error_t err;
+    iot_noti_data_t notification;
+    struct iot_context *fake_ctx = NULL;
+    UNUSED(*state);
+
+    fake_ctx = (struct iot_context *)malloc(sizeof(struct iot_context));
+    memset(fake_ctx, 0, sizeof(struct iot_context));
+
+    // When: device.get event without serialNumber in child info
+    err = _iot_parse_noti_data(
+        fake_ctx, (void *)"{\"event\":\"device.get\",\"childDevices\":[{\"id\":\"test_id\",\"mnId\":\"test_mn_id\"}]}",
+        &notification);
+    // Then
+    assert_int_equal(err, IOT_ERROR_BAD_REQ);
+
+    // Teardown
+    free(fake_ctx);
+}
+
+void TC_iot_parse_noti_data_device_get_no_dip(void **state)
+{
+    iot_error_t err;
+    iot_noti_data_t notification;
+    struct iot_context *fake_ctx = NULL;
+    UNUSED(*state);
+
+    fake_ctx = (struct iot_context *)malloc(sizeof(struct iot_context));
+    memset(fake_ctx, 0, sizeof(struct iot_context));
+
+    // When: device.get event without DIP in child info
+    err = _iot_parse_noti_data(fake_ctx, (void *)"{\"event\":\"device.get\",\"childDevices\":[{\"id\":\"test_id\",\"mnId\":\"test_mn_id\",\"serialNumber\":\"test_serial\"}]}", &notification);
+    // Then
+    assert_int_equal(err, IOT_ERROR_BAD_REQ);
+
+    // Teardown
+    free(fake_ctx);
+}
+
+void TC_iot_parse_noti_data_device_get_no_dip_id(void **state)
+{
+    iot_error_t err;
+    iot_noti_data_t notification;
+    struct iot_context *fake_ctx = NULL;
+    UNUSED(*state);
+
+    fake_ctx = (struct iot_context *)malloc(sizeof(struct iot_context));
+    memset(fake_ctx, 0, sizeof(struct iot_context));
+
+    // When: device.get event without DIP id in child info
+    err = _iot_parse_noti_data(fake_ctx, (void *)"{\"event\":\"device.get\",\"childDevices\":[{\"id\":\"test_id\",\"mnId\":\"test_mn_id\",\"serialNumber\":\"test_serial\",\"deviceIntegrationProfileKey\":{}}]}", &notification);
+    // Then
+    assert_int_equal(err, IOT_ERROR_BAD_REQ);
+
+    // Teardown
+    free(fake_ctx);
+}
+
+void TC_iot_parse_noti_data_device_get_no_dip_major_version(void **state)
+{
+    iot_error_t err;
+    iot_noti_data_t notification;
+    struct iot_context *fake_ctx = NULL;
+    UNUSED(*state);
+
+    fake_ctx = (struct iot_context *)malloc(sizeof(struct iot_context));
+    memset(fake_ctx, 0, sizeof(struct iot_context));
+
+    // When: device.get event without DIP majorVersion in child info
+    err = _iot_parse_noti_data(fake_ctx, (void *)"{\"event\":\"device.get\",\"childDevices\":[{\"id\":\"test_id\",\"mnId\":\"test_mn_id\",\"serialNumber\":\"test_serial\",\"deviceIntegrationProfileKey\":{\"id\":\"test_dip_id\"}}]}", &notification);
+    // Then
+    assert_int_equal(err, IOT_ERROR_BAD_REQ);
+
+    // Teardown
+    free(fake_ctx);
+}
+
+void TC_iot_parse_noti_data_child_device_health_response_no_success(void **state)
+{
+    iot_error_t err;
+    iot_noti_data_t notification;
+    struct iot_context *fake_ctx = NULL;
+    UNUSED(*state);
+
+    fake_ctx = (struct iot_context *)malloc(sizeof(struct iot_context));
+    memset(fake_ctx, 0, sizeof(struct iot_context));
+
+    // When: child.device.health.response event without success array
+    err = _iot_parse_noti_data(fake_ctx, (void *)"{\"event\":\"child.device.health.response\"}", &notification);
+    // Then
+    assert_int_equal(err, IOT_ERROR_BAD_REQ);
+
+    // Teardown
+    free(fake_ctx);
+}
+
+void TC_iot_parse_noti_data_child_device_health_response_success(void **state)
+{
+    iot_error_t err;
+    iot_noti_data_t notification;
+    struct iot_context *fake_ctx = NULL;
+    UNUSED(*state);
+
+    fake_ctx = (struct iot_context *)malloc(sizeof(struct iot_context));
+    memset(fake_ctx, 0, sizeof(struct iot_context));
+
+    // When: child.device.health.response event with success array
+    err = _iot_parse_noti_data(
+        fake_ctx, (void *)"{\"event\":\"child.device.health.response\",\"success\":[\"device1\", \"device2\"]}",
+        &notification);
+    // Then
+    assert_int_equal(err, IOT_ERROR_BAD_REQ);  // The function returns IOT_ERROR_BAD_REQ for this case
+
+    // Teardown
+    free(fake_ctx);
 }

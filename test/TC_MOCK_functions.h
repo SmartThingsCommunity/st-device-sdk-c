@@ -25,6 +25,10 @@ void set_mock_iot_os_malloc_failure_with_index(unsigned int index);
 void set_mock_iot_os_malloc_failure();
 void do_not_use_mock_iot_os_malloc_failure();
 void set_mock_detect_memory_leak(bool detect);
+void set_mock_port_net_write_failure(int failure);
+void set_mock_port_net_write_skip_buf_check(int skip);
+void set_mock_port_net_write_skip_len_check(int skip);
+void reset_mock_port_net_write_skip_flags(void);
 
 void port_net_mock_reset_read_stream(unsigned char *read_stream, size_t size);
 void port_net_mock_reset_socket_status(int status);

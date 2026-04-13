@@ -2,6 +2,44 @@
 
 This document explains how you can port the SmartThings Device SDK(STDK for short) for C to a new chipset platform.
 
+## Specification
+
+- **WiFi**
+  - It depends on whether the chipset is supported, but the SDK supports the specifications listed below.
+  - Supported Frequency band
+    - 2.4G
+    - 5G
+  - Supported Authentication
+    - OPEN
+    - WEP
+    - WPA
+    - WPA2
+    - WPA/WPA2
+    - WPA2_Enterprise
+    - WPA3
+      
+- **Bluetooth**
+  - Bluetooth 5.0 or higher
+  - BLE(Bluetooth Low Energy)
+    - BLE Advertising Period
+      - Out of Box (Pre-Onboarding) : 20ms
+      - Onboarded : 100ms
+  - Gatt(Generic Attribute Profile)
+
+- **Security**
+  - SecureBoot
+  - Hardware Security Module
+    - Encrypted Non Volatile Memory Region
+    - TrustZone
+    - External HW Security module (eSE)
+  - mbedTLS
+    - Version 3.6.X (Recommand)
+      
+- **OS**
+  - RTOS
+  - Linux
+  - Posix
+  
 ## Build system
 
 By default, the STDK uses the build system of the chipset vendor, so you must install the toolchain provided by the vendor of the chipset that you want to develop.

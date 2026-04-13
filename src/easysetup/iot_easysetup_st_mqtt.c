@@ -539,8 +539,10 @@ retry:
     cbor_encode_text_stringz(&root_map, "mnId");
     cbor_encode_text_stringz(&root_map, devconf->mnid);
 
-    cbor_encode_text_stringz(&root_map, "vid");
-    cbor_encode_text_stringz(&root_map, devconf->vid);
+    if (devconf->vid) {
+        cbor_encode_text_stringz(&root_map, "vid");
+        cbor_encode_text_stringz(&root_map, devconf->vid);
+    }
 
     cbor_encode_text_stringz(&root_map, "deviceTypeId");
     cbor_encode_text_stringz(&root_map, devconf->device_type);
@@ -698,7 +700,9 @@ void *_iot_es_mqtt_registration_json(struct iot_context *ctx, char *dip_id, size
 
     JSON_ADD_ITEM_TO_OBJECT(root, "mnId", JSON_CREATE_STRING(devconf->mnid));
 
-    JSON_ADD_ITEM_TO_OBJECT(root, "vid", JSON_CREATE_STRING(devconf->vid));
+    if (devconf->vid) {
+        JSON_ADD_ITEM_TO_OBJECT(root, "vid", JSON_CREATE_STRING(devconf->vid));
+    }
 
     JSON_ADD_ITEM_TO_OBJECT(root, "deviceTypeId", JSON_CREATE_STRING(devconf->device_type));
 
@@ -1080,7 +1084,9 @@ iot_error_t iot_update_dip(struct iot_context *ctx, st_mqtt_client mqtt_cli)
         return IOT_ERROR_INVALID_ARGS;
     }
 
-    JSON_ADD_STRING_TO_OBJECT(json_root, "vid", ctx->devconf.vid);
+    if (ctx->devconf.vid) {
+        JSON_ADD_STRING_TO_OBJECT(json_root, "vid", ctx->devconf.vid);
+    }
     JSON_ADD_ITEM_TO_OBJECT(dip_key, "id", JSON_CREATE_STRING(dip_id));
     JSON_ADD_NUMBER_TO_OBJECT(dip_key, "majorVersion", ctx->devconf.dip->dip_major_version);
     JSON_ADD_NUMBER_TO_OBJECT(dip_key, "minorVersion", ctx->devconf.dip->dip_minor_version);
