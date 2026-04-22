@@ -52,6 +52,7 @@ if(ENABLE_STDK_TEST)
                    TC_FUNC_iot_mqtt_subscribe_client.c
                    TC_FUNC_iot_mqtt_serialize_publish.c
                    TC_FUNC_iot_mqtt_unsubscribe_client.c
+                   TC_FUNC_iot_mqtt_deserialize_publish.c
                    TC_FUNC_iot_security_common.c
                    TC_FUNC_iot_security_crypto.c
                    TC_FUNC_iot_security_ecdh.c

@@ -1028,6 +1028,23 @@ int TEST_FUNC_iot_mqtt_serialize_publish(void)
     return cmocka_run_group_tests_name("iot_mqtt_serialize_publish.c", tests, NULL, NULL);
 }
 
+int TEST_FUNC_iot_mqtt_deserialize_publish(void)
+{
+    const struct CMUnitTest tests[] = {
+        cmocka_unit_test(TC_MQTTDeserialize_publish_qos0_success),
+        cmocka_unit_test(TC_MQTTDeserialize_publish_qos1_has_packetid),
+        cmocka_unit_test(TC_MQTTDeserialize_publish_dup_and_retain),
+        cmocka_unit_test(TC_MQTTDeserialize_publish_empty_payload),
+        cmocka_unit_test(TC_MQTTDeserialize_publish_wrong_type),
+        cmocka_unit_test(TC_MQTTDeserialize_publish_truncated_length_field),
+        cmocka_unit_test(TC_MQTTDeserialize_ack_success),
+        cmocka_unit_test(TC_MQTTDeserialize_ack_pubrec),
+        cmocka_unit_test(TC_MQTTDeserialize_ack_remlen_too_short),
+        cmocka_unit_test(TC_MQTTDeserialize_ack_with_dup_bit),
+    };
+    return cmocka_run_group_tests_name("iot_mqtt_deserialize_publish.c", tests, NULL, NULL);
+}
+
 int TEST_FUNC_iot_mqtt_unsubscribe_client(void)
 {
     const struct CMUnitTest tests[] = {
@@ -1269,6 +1286,7 @@ int main(void)
     err += TEST_FUNC_iot_mqtt_subscribe_client();
     err += TEST_FUNC_iot_mqtt_serialize_publish();
     err += TEST_FUNC_iot_mqtt_unsubscribe_client();
+    err += TEST_FUNC_iot_mqtt_deserialize_publish();
     err += TEST_FUNC_iot_security_common();
     err += TEST_FUNC_iot_security_crypto();
     err += TEST_FUNC_iot_security_ecdh();
