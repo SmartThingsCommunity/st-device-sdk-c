@@ -504,6 +504,29 @@ void TC_MQTTSerialize_pubrel_buffer_too_short(void **state);
 void TC_MQTTSerialize_pubcomp_success(void **state);
 void TC_MQTTSerialize_pubcomp_buffer_too_short(void **state);
 
+// TCs for iot_mqtt_format.c
+void TC_MQTTPacket_getName_connect(void **state);
+void TC_MQTTPacket_getName_publish(void **state);
+void TC_MQTTPacket_getName_disconnect(void **state);
+void TC_MQTTStringFormat_connack_success(void **state);
+void TC_MQTTStringFormat_connack_truncated(void **state);
+void TC_MQTTStringFormat_ack_success(void **state);
+void TC_MQTTStringFormat_ack_with_dup(void **state);
+void TC_MQTTStringFormat_ack_no_dup_bit(void **state);
+void TC_MQTTStringFormat_publish_short_payload(void **state);
+void TC_MQTTStringFormat_publish_long_topic(void **state);
+void TC_MQTTStringFormat_publish_long_payload(void **state);
+void TC_MQTTStringFormat_connect_basic(void **state);
+void TC_MQTTStringFormat_connect_with_will(void **state);
+void TC_MQTTStringFormat_connect_with_credentials(void **state);
+void TC_MQTTStringFormat_connect_no_credentials(void **state);
+void TC_MQTTStringFormat_subscribe_success(void **state);
+void TC_MQTTStringFormat_suback_success(void **state);
+void TC_MQTTStringFormat_unsubscribe_success(void **state);
+void TC_MQTTStringFormat_subscribe_zero_buffer(void **state);
+void TC_MQTTStringFormat_suback_zero_buffer(void **state);
+void TC_MQTTStringFormat_unsubscribe_zero_buffer(void **state);
+
 // TCs for iot_mqtt_deserialize_publish.c
 void TC_MQTTDeserialize_publish_qos0_success(void **state);
 void TC_MQTTDeserialize_publish_qos1_has_packetid(void **state);
