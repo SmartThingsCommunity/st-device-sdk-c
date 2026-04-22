@@ -504,6 +504,17 @@ void TC_MQTTSerialize_pubrel_buffer_too_short(void **state);
 void TC_MQTTSerialize_pubcomp_success(void **state);
 void TC_MQTTSerialize_pubcomp_buffer_too_short(void **state);
 
+// TCs for iot_mqtt_unsubscribe_server.c
+void TC_MQTTDeserialize_unsubscribe_success(void **state);
+void TC_MQTTDeserialize_unsubscribe_multi_topic(void **state);
+void TC_MQTTDeserialize_unsubscribe_wrong_type(void **state);
+void TC_MQTTDeserialize_unsubscribe_truncated_topic(void **state);
+void TC_MQTTDeserialize_unsubscribe_empty_topic_list(void **state);
+void TC_MQTTSerialize_unsuback_success(void **state);
+void TC_MQTTSerialize_unsuback_buffer_too_short(void **state);
+void TC_MQTTSerialize_unsuback_zero_buffer(void **state);
+void TC_MQTTSerialize_unsuback_various_packetids(void **state);
+
 // TCs for iot_mqtt_subscribe_server.c
 void TC_MQTTDeserialize_subscribe_success(void **state);
 void TC_MQTTDeserialize_subscribe_multi_topic(void **state);
