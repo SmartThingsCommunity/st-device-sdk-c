@@ -480,6 +480,21 @@ void TC_MQTTPacket_readnb_header_getfn_failure(void **state);
 void TC_MQTTPacket_readnb_call_again_on_header(void **state);
 void TC_MQTTPacket_readnb_buffer_too_small(void **state);
 
+// TCs for iot_mqtt_subscribe_client.c
+void TC_MQTTSerialize_subscribeLength_zero(void **state);
+void TC_MQTTSerialize_subscribeLength_single_topic(void **state);
+void TC_MQTTSerialize_subscribe_size_single_topic(void **state);
+void TC_MQTTSerialize_subscribe_success(void **state);
+void TC_MQTTSerialize_subscribe_multi_topic(void **state);
+void TC_MQTTSerialize_subscribe_buffer_too_short(void **state);
+void TC_MQTTSerialize_subscribe_zero_buffer_length(void **state);
+void TC_MQTTSerialize_subscribe_dup_flag(void **state);
+void TC_MQTTDeserialize_suback_success(void **state);
+void TC_MQTTDeserialize_suback_wrong_type(void **state);
+void TC_MQTTDeserialize_suback_truncated(void **state);
+void TC_MQTTDeserialize_suback_too_many_qos(void **state);
+void TC_MQTTDeserialize_suback_zero_count(void **state);
+
 // TCs for iot_mqtt_client.c
 void TC_st_mqtt_create_success(void **state);
 void TC_st_mqtt_create_failure(void **state);

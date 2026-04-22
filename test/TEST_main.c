@@ -999,6 +999,26 @@ int TEST_FUNC_iot_easysetup_httpd(void)
     return cmocka_run_group_tests_name("iot_easysetup_tcp_httpd.c", tests, NULL, NULL);
 }
 
+int TEST_FUNC_iot_mqtt_subscribe_client(void)
+{
+    const struct CMUnitTest tests[] = {
+        cmocka_unit_test(TC_MQTTSerialize_subscribeLength_zero),
+        cmocka_unit_test(TC_MQTTSerialize_subscribeLength_single_topic),
+        cmocka_unit_test(TC_MQTTSerialize_subscribe_size_single_topic),
+        cmocka_unit_test(TC_MQTTSerialize_subscribe_success),
+        cmocka_unit_test(TC_MQTTSerialize_subscribe_multi_topic),
+        cmocka_unit_test(TC_MQTTSerialize_subscribe_buffer_too_short),
+        cmocka_unit_test(TC_MQTTSerialize_subscribe_zero_buffer_length),
+        cmocka_unit_test(TC_MQTTSerialize_subscribe_dup_flag),
+        cmocka_unit_test(TC_MQTTDeserialize_suback_success),
+        cmocka_unit_test(TC_MQTTDeserialize_suback_wrong_type),
+        cmocka_unit_test(TC_MQTTDeserialize_suback_truncated),
+        cmocka_unit_test(TC_MQTTDeserialize_suback_too_many_qos),
+        cmocka_unit_test(TC_MQTTDeserialize_suback_zero_count),
+    };
+    return cmocka_run_group_tests_name("iot_mqtt_subscribe_client.c", tests, NULL, NULL);
+}
+
 int TEST_FUNC_iot_mqtt_packet(void)
 {
     const struct CMUnitTest tests[] = {
@@ -1198,6 +1218,7 @@ int main(void)
     err += TEST_FUNC_iot_main();
     err += TEST_FUNC_iot_mqtt_client();
     err += TEST_FUNC_iot_mqtt_packet();
+    err += TEST_FUNC_iot_mqtt_subscribe_client();
     err += TEST_FUNC_iot_security_common();
     err += TEST_FUNC_iot_security_crypto();
     err += TEST_FUNC_iot_security_ecdh();
