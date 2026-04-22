@@ -55,6 +55,7 @@ if(ENABLE_STDK_TEST)
                    TC_FUNC_iot_mqtt_deserialize_publish.c
                    TC_FUNC_iot_mqtt_format.c
                    TC_FUNC_iot_mqtt_connect_server.c
+                   TC_FUNC_iot_mqtt_subscribe_server.c
                    TC_FUNC_iot_security_common.c
                    TC_FUNC_iot_security_crypto.c
                    TC_FUNC_iot_security_ecdh.c
