@@ -667,6 +667,15 @@ void TC_iot_security_manager_get_certificate_null_parameters(void **state);
 void TC_iot_security_manager_get_certificate_invalid_parameters(void **state);
 void TC_iot_security_manager_get_certificate_alloc_failure(void **state);
 void TC_iot_security_manager_get_certificate_success(void **state);
+void TC_iot_security_manager_get_certificate_nv_target(void **state);
+void TC_iot_security_manager_generate_key_null_context(void **state);
+void TC_iot_security_manager_generate_key_invalid_key_id(void **state);
+void TC_iot_security_manager_generate_key_unknown_key_id(void **state);
+void TC_iot_security_manager_generate_key_success(void **state);
+void TC_iot_security_manager_remove_key_null_context(void **state);
+void TC_iot_security_manager_remove_key_invalid_key_id(void **state);
+void TC_iot_security_manager_remove_key_unknown_key_id(void **state);
+void TC_iot_security_manager_remove_key_without_generate(void **state);
 
 // TCs for iot_security_storage.c
 int TC_iot_security_storage_init_setup(void **state);

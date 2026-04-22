@@ -819,6 +819,22 @@ int TEST_FUNC_iot_security_manager(void)
                                         TC_iot_security_manager_setup, TC_iot_security_manager_teardown),
         cmocka_unit_test_setup_teardown(TC_iot_security_manager_get_certificate_success, TC_iot_security_manager_setup,
                                         TC_iot_security_manager_teardown),
+        cmocka_unit_test_setup_teardown(TC_iot_security_manager_get_certificate_nv_target,
+                                        TC_iot_security_manager_setup, TC_iot_security_manager_teardown),
+        cmocka_unit_test(TC_iot_security_manager_generate_key_null_context),
+        cmocka_unit_test_setup_teardown(TC_iot_security_manager_generate_key_invalid_key_id,
+                                        TC_iot_security_manager_setup, TC_iot_security_manager_teardown),
+        cmocka_unit_test_setup_teardown(TC_iot_security_manager_generate_key_unknown_key_id,
+                                        TC_iot_security_manager_setup, TC_iot_security_manager_teardown),
+        cmocka_unit_test_setup_teardown(TC_iot_security_manager_generate_key_success,
+                                        TC_iot_security_manager_setup, TC_iot_security_manager_teardown),
+        cmocka_unit_test(TC_iot_security_manager_remove_key_null_context),
+        cmocka_unit_test_setup_teardown(TC_iot_security_manager_remove_key_invalid_key_id,
+                                        TC_iot_security_manager_setup, TC_iot_security_manager_teardown),
+        cmocka_unit_test_setup_teardown(TC_iot_security_manager_remove_key_unknown_key_id,
+                                        TC_iot_security_manager_setup, TC_iot_security_manager_teardown),
+        cmocka_unit_test_setup_teardown(TC_iot_security_manager_remove_key_without_generate,
+                                        TC_iot_security_manager_setup, TC_iot_security_manager_teardown),
     };
     return cmocka_run_group_tests_name("iot_security_certificate.c", tests, NULL, NULL);
 }
