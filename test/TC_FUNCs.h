@@ -611,6 +611,39 @@ void TC_iot_dump_create_dump_state_failure(void **state);
 void TC_iot_dump_create_dump_state_success(void **state);
 void TC_iot_dump_log(void **state);
 
+// TCs for iot_log_file.c
+void TC_iot_log_file_init_success(void **state);
+void TC_iot_log_file_init_invalid_type(void **state);
+void TC_iot_log_file_init_ctx_alloc_failure(void **state);
+void TC_iot_log_file_init_double_init(void **state);
+void TC_iot_log_file_exit_success(void **state);
+void TC_iot_log_file_exit_without_init(void **state);
+void TC_iot_log_file_store_success(void **state);
+void TC_iot_log_file_store_without_init(void **state);
+void TC_iot_log_file_store_zero_size(void **state);
+void TC_iot_log_file_store_oversize(void **state);
+void TC_iot_log_file_store_disabled_buffer(void **state);
+void TC_iot_log_file_sync_without_events(void **state);
+void TC_iot_log_file_open_success(void **state);
+void TC_iot_log_file_open_without_init(void **state);
+void TC_iot_log_file_open_invalid_type(void **state);
+void TC_iot_log_file_open_alloc_failure(void **state);
+void TC_iot_log_file_open_after_overridden(void **state);
+void TC_iot_log_file_close_success(void **state);
+void TC_iot_log_file_close_null_handle(void **state);
+void TC_iot_log_file_seek_success(void **state);
+void TC_iot_log_file_seek_empty_log(void **state);
+void TC_iot_log_file_seek_negative_offset(void **state);
+void TC_iot_log_file_seek_invalid_type(void **state);
+void TC_iot_log_file_read_success(void **state);
+void TC_iot_log_file_read_null_handle(void **state);
+void TC_iot_log_file_read_null_buffer(void **state);
+void TC_iot_log_file_read_no_read_size_out(void **state);
+void TC_iot_log_file_read_wrap_around(void **state);
+void TC_iot_log_file_read_invalid_type(void **state);
+void TC_iot_log_file_remove_success(void **state);
+void TC_iot_log_file_remove_invalid_type(void **state);
+
 // TCs for iot_easysetup_st_mqtt.c
 void TC_STATIC_iot_es_mqtt_registration_SUCCESS(void **state);
 void TC_STATIC_iot_parse_sequence_num_SUCCESS(void **state);

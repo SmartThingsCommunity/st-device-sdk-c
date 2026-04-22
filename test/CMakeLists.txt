@@ -59,6 +59,7 @@ if(ENABLE_STDK_TEST)
                    ${EASYSETUP_EXTRA_SRCS}
                    TC_FUNC_iot_wt.c
                    TC_FUNC_iot_dump_log.c
+                   TC_FUNC_iot_log_file.c
                    TC_FUNC_iot_easysetup_st_mqtt.c
                    TC_UTIL_easysetup_common.c
 				   )

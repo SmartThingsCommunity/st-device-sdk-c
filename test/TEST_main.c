@@ -970,6 +970,44 @@ int TEST_FUNC_iot_dump_log(void)
     return cmocka_run_group_tests_name("iot_dump_log.c", tests, NULL, NULL);
 }
 
+int TEST_FUNC_iot_log_file(void)
+{
+    const struct CMUnitTest tests[] = {
+        cmocka_unit_test(TC_iot_log_file_init_success),
+        cmocka_unit_test(TC_iot_log_file_init_invalid_type),
+        cmocka_unit_test(TC_iot_log_file_init_ctx_alloc_failure),
+        cmocka_unit_test(TC_iot_log_file_init_double_init),
+        cmocka_unit_test(TC_iot_log_file_exit_success),
+        cmocka_unit_test(TC_iot_log_file_exit_without_init),
+        cmocka_unit_test(TC_iot_log_file_store_success),
+        cmocka_unit_test(TC_iot_log_file_store_without_init),
+        cmocka_unit_test(TC_iot_log_file_store_zero_size),
+        cmocka_unit_test(TC_iot_log_file_store_oversize),
+        cmocka_unit_test(TC_iot_log_file_store_disabled_buffer),
+        cmocka_unit_test(TC_iot_log_file_sync_without_events),
+        cmocka_unit_test(TC_iot_log_file_open_success),
+        cmocka_unit_test(TC_iot_log_file_open_without_init),
+        cmocka_unit_test(TC_iot_log_file_open_invalid_type),
+        cmocka_unit_test(TC_iot_log_file_open_alloc_failure),
+        cmocka_unit_test(TC_iot_log_file_open_after_overridden),
+        cmocka_unit_test(TC_iot_log_file_close_success),
+        cmocka_unit_test(TC_iot_log_file_close_null_handle),
+        cmocka_unit_test(TC_iot_log_file_seek_success),
+        cmocka_unit_test(TC_iot_log_file_seek_empty_log),
+        cmocka_unit_test(TC_iot_log_file_seek_negative_offset),
+        cmocka_unit_test(TC_iot_log_file_seek_invalid_type),
+        cmocka_unit_test(TC_iot_log_file_read_success),
+        cmocka_unit_test(TC_iot_log_file_read_null_handle),
+        cmocka_unit_test(TC_iot_log_file_read_null_buffer),
+        cmocka_unit_test(TC_iot_log_file_read_no_read_size_out),
+        cmocka_unit_test(TC_iot_log_file_read_wrap_around),
+        cmocka_unit_test(TC_iot_log_file_read_invalid_type),
+        cmocka_unit_test(TC_iot_log_file_remove_success),
+        cmocka_unit_test(TC_iot_log_file_remove_invalid_type),
+    };
+    return cmocka_run_group_tests_name("iot_log_file.c", tests, NULL, NULL);
+}
+
 int TEST_FUNC_iot_easysetup_st_mqtt(void)
 {
     const struct CMUnitTest tests[] = {
@@ -1073,6 +1111,7 @@ int main(void)
     err += TEST_FUNC_iot_security_software_be_bsp();
     err += TEST_FUNC_iot_wt();
     err += TEST_FUNC_iot_dump_log();
+    err += TEST_FUNC_iot_log_file();
     err += TEST_FUNC_iot_easysetup_st_mqtt();
 #if defined(CONFIG_STDK_IOT_CORE_EASYSETUP_HTTP)
     err += TEST_FUNC_iot_easysetup_httpd();
