@@ -597,6 +597,19 @@ void TC_iot_wt_create_null_wt_params(void **state);
 void TC_iot_wt_create_null_token_buf(void **state);
 void TC_iot_wt_create_with_null_sn(void **state);
 void TC_iot_wt_create_with_empty_sn(void **state);
+void TC_iot_wt_create_consecutive_calls_success(void **state);
+void TC_iot_wt_create_with_empty_dipid_success(void **state);
+void TC_iot_wt_create_with_longest_sn(void **state);
+void TC_iot_wt_create_malloc_failure_index_0(void **state);
+void TC_iot_wt_create_malloc_failure_index_2(void **state);
+void TC_iot_wt_create_malloc_failure_index_3(void **state);
+void TC_iot_wt_create_malloc_failure_index_4(void **state);
+void TC_iot_wt_create_malloc_failure_index_5(void **state);
+void TC_iot_wt_create_malloc_failure_index_6(void **state);
+void TC_iot_wt_create_malloc_failure_index_7(void **state);
+void TC_iot_wt_create_malloc_failure_index_8(void **state);
+void TC_iot_wt_create_malloc_failure_index_9(void **state);
+void TC_iot_wt_create_with_dipid_malloc_failure(void **state);
 
 // TCs for iot_easysetup_httpd
 int TC_iot_easysetup_httpd_setup(void **state);
