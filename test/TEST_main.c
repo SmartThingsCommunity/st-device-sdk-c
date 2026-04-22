@@ -999,6 +999,63 @@ int TEST_FUNC_iot_easysetup_httpd(void)
     return cmocka_run_group_tests_name("iot_easysetup_tcp_httpd.c", tests, NULL, NULL);
 }
 
+int TEST_FUNC_iot_mqtt_packet(void)
+{
+    const struct CMUnitTest tests[] = {
+        cmocka_unit_test(TC_MQTTPacket_encode_single_byte_length),
+        cmocka_unit_test(TC_MQTTPacket_encode_zero_length),
+        cmocka_unit_test(TC_MQTTPacket_encode_two_byte_length),
+        cmocka_unit_test(TC_MQTTPacket_encode_three_byte_length),
+        cmocka_unit_test(TC_MQTTPacket_encode_four_byte_length),
+        cmocka_unit_test(TC_MQTTPacket_decodeBuf_single_byte_success),
+        cmocka_unit_test(TC_MQTTPacket_decodeBuf_multi_byte_success),
+        cmocka_unit_test(TC_MQTTPacket_decode_getfn_failure),
+        cmocka_unit_test(TC_MQTTPacket_decode_too_many_bytes),
+        cmocka_unit_test(TC_MQTTPacket_len_small),
+        cmocka_unit_test(TC_MQTTPacket_len_boundary_127),
+        cmocka_unit_test(TC_MQTTPacket_len_two_byte_range),
+        cmocka_unit_test(TC_MQTTPacket_len_three_byte_range),
+        cmocka_unit_test(TC_MQTTPacket_len_four_byte_range),
+        cmocka_unit_test(TC_mqtt_packet_readInt_success),
+        cmocka_unit_test(TC_mqtt_packet_readChar_success),
+        cmocka_unit_test(TC_mqtt_packet_writeChar_success),
+        cmocka_unit_test(TC_mqtt_packet_writeInt_success),
+        cmocka_unit_test(TC_mqtt_packet_writeCString_success),
+        cmocka_unit_test(TC_MQTTstrlen_cstring),
+        cmocka_unit_test(TC_MQTTstrlen_lenstring),
+        cmocka_unit_test(TC_MQTTstrlen_empty),
+        cmocka_unit_test(TC_MQTTPacket_equals_cstring_equal),
+        cmocka_unit_test(TC_MQTTPacket_equals_cstring_not_equal),
+        cmocka_unit_test(TC_MQTTPacket_equals_lenstring_equal),
+        cmocka_unit_test(TC_MQTTPacket_equals_length_mismatch),
+        cmocka_unit_test(TC_writeMQTTString_lenstring),
+        cmocka_unit_test(TC_writeMQTTString_cstring),
+        cmocka_unit_test(TC_writeMQTTString_empty),
+        cmocka_unit_test(TC_readMQTTLenString_success),
+        cmocka_unit_test(TC_readMQTTLenString_too_short_for_length),
+        cmocka_unit_test(TC_readMQTTLenString_data_exceeds_end),
+        cmocka_unit_test(TC_getLenStringLen_success),
+        cmocka_unit_test(TC_getLenStringLen_zero),
+        cmocka_unit_test(TC_MQTTPacket_msgTypesToString_connect),
+        cmocka_unit_test(TC_MQTTPacket_msgTypesToString_publish),
+        cmocka_unit_test(TC_MQTTPacket_msgTypesToString_all_known),
+        cmocka_unit_test(TC_MQTTPacket_msgTypesToString_invalid),
+        cmocka_unit_test(TC_MQTTPacket_getPacketId_puback),
+        cmocka_unit_test(TC_MQTTPacket_getPacketId_publish_qos0),
+        cmocka_unit_test(TC_MQTTPacket_getPacketId_publish_qos1),
+        cmocka_unit_test(TC_MQTTPacket_getPacketId_unknown_type),
+        cmocka_unit_test(TC_MQTTPacket_read_success),
+        cmocka_unit_test(TC_MQTTPacket_read_header_getfn_failure),
+        cmocka_unit_test(TC_MQTTPacket_read_buffer_too_small),
+        cmocka_unit_test(TC_MQTTPacket_read_body_short),
+        cmocka_unit_test(TC_MQTTPacket_readnb_success),
+        cmocka_unit_test(TC_MQTTPacket_readnb_header_getfn_failure),
+        cmocka_unit_test(TC_MQTTPacket_readnb_call_again_on_header),
+        cmocka_unit_test(TC_MQTTPacket_readnb_buffer_too_small),
+    };
+    return cmocka_run_group_tests_name("iot_mqtt_packet.c", tests, NULL, NULL);
+}
+
 int TEST_FUNC_iot_dump_log(void)
 {
     const struct CMUnitTest tests[] = {
@@ -1140,6 +1197,7 @@ int main(void)
     err += TEST_FUNC_iot_uuid();
     err += TEST_FUNC_iot_main();
     err += TEST_FUNC_iot_mqtt_client();
+    err += TEST_FUNC_iot_mqtt_packet();
     err += TEST_FUNC_iot_security_common();
     err += TEST_FUNC_iot_security_crypto();
     err += TEST_FUNC_iot_security_ecdh();

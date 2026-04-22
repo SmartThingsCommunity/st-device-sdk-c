@@ -48,6 +48,7 @@ if(ENABLE_STDK_TEST)
                    TC_FUNC_iot_nv_data.c
                    TC_FUNC_iot_main.c
                    TC_FUNC_iot_mqtt_client.c
+                   TC_FUNC_iot_mqtt_packet.c
                    TC_FUNC_iot_security_common.c
                    TC_FUNC_iot_security_crypto.c
                    TC_FUNC_iot_security_ecdh.c
