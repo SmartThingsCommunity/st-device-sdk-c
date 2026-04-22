@@ -504,6 +504,26 @@ void TC_MQTTSerialize_pubrel_buffer_too_short(void **state);
 void TC_MQTTSerialize_pubcomp_success(void **state);
 void TC_MQTTSerialize_pubcomp_buffer_too_short(void **state);
 
+// TCs for iot_mqtt_connect_server.c
+void TC_MQTTPacket_checkVersion_v3_success(void **state);
+void TC_MQTTPacket_checkVersion_v4_success(void **state);
+void TC_MQTTPacket_checkVersion_v3_wrong_name(void **state);
+void TC_MQTTPacket_checkVersion_v4_wrong_name(void **state);
+void TC_MQTTPacket_checkVersion_unsupported_version(void **state);
+void TC_MQTTPacket_checkVersion_zero_length(void **state);
+void TC_MQTTSerialize_connack_success(void **state);
+void TC_MQTTSerialize_connack_session_present(void **state);
+void TC_MQTTSerialize_connack_with_rc(void **state);
+void TC_MQTTSerialize_connack_buffer_too_short(void **state);
+void TC_MQTTSerialize_connack_zero_buffer(void **state);
+void TC_MQTTDeserialize_connect_success(void **state);
+void TC_MQTTDeserialize_connect_with_will(void **state);
+void TC_MQTTDeserialize_connect_with_username_password(void **state);
+void TC_MQTTDeserialize_connect_wrong_type(void **state);
+void TC_MQTTDeserialize_connect_truncated(void **state);
+void TC_MQTTDeserialize_connect_unknown_protocol_version(void **state);
+void TC_MQTTDeserialize_connect_password_without_username(void **state);
+
 // TCs for iot_mqtt_format.c
 void TC_MQTTPacket_getName_connect(void **state);
 void TC_MQTTPacket_getName_publish(void **state);

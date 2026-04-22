@@ -1044,6 +1044,31 @@ int TEST_FUNC_iot_mqtt_serialize_publish(void)
     return cmocka_run_group_tests_name("iot_mqtt_serialize_publish.c", tests, NULL, NULL);
 }
 
+int TEST_FUNC_iot_mqtt_connect_server(void)
+{
+    const struct CMUnitTest tests[] = {
+        cmocka_unit_test(TC_MQTTPacket_checkVersion_v3_success),
+        cmocka_unit_test(TC_MQTTPacket_checkVersion_v4_success),
+        cmocka_unit_test(TC_MQTTPacket_checkVersion_v3_wrong_name),
+        cmocka_unit_test(TC_MQTTPacket_checkVersion_v4_wrong_name),
+        cmocka_unit_test(TC_MQTTPacket_checkVersion_unsupported_version),
+        cmocka_unit_test(TC_MQTTPacket_checkVersion_zero_length),
+        cmocka_unit_test(TC_MQTTSerialize_connack_success),
+        cmocka_unit_test(TC_MQTTSerialize_connack_session_present),
+        cmocka_unit_test(TC_MQTTSerialize_connack_with_rc),
+        cmocka_unit_test(TC_MQTTSerialize_connack_buffer_too_short),
+        cmocka_unit_test(TC_MQTTSerialize_connack_zero_buffer),
+        cmocka_unit_test(TC_MQTTDeserialize_connect_success),
+        cmocka_unit_test(TC_MQTTDeserialize_connect_with_will),
+        cmocka_unit_test(TC_MQTTDeserialize_connect_with_username_password),
+        cmocka_unit_test(TC_MQTTDeserialize_connect_wrong_type),
+        cmocka_unit_test(TC_MQTTDeserialize_connect_truncated),
+        cmocka_unit_test(TC_MQTTDeserialize_connect_unknown_protocol_version),
+        cmocka_unit_test(TC_MQTTDeserialize_connect_password_without_username),
+    };
+    return cmocka_run_group_tests_name("iot_mqtt_connect_server.c", tests, NULL, NULL);
+}
+
 int TEST_FUNC_iot_mqtt_format(void)
 {
     const struct CMUnitTest tests[] = {
@@ -1332,6 +1357,7 @@ int main(void)
     err += TEST_FUNC_iot_mqtt_unsubscribe_client();
     err += TEST_FUNC_iot_mqtt_deserialize_publish();
     err += TEST_FUNC_iot_mqtt_format();
+    err += TEST_FUNC_iot_mqtt_connect_server();
     err += TEST_FUNC_iot_security_common();
     err += TEST_FUNC_iot_security_crypto();
     err += TEST_FUNC_iot_security_ecdh();
