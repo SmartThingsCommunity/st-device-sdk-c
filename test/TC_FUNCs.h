@@ -480,6 +480,30 @@ void TC_MQTTPacket_readnb_header_getfn_failure(void **state);
 void TC_MQTTPacket_readnb_call_again_on_header(void **state);
 void TC_MQTTPacket_readnb_buffer_too_small(void **state);
 
+// TCs for iot_mqtt_serialize_publish.c
+void TC_MQTTSerialize_publishLength_qos0(void **state);
+void TC_MQTTSerialize_publishLength_qos1(void **state);
+void TC_MQTTSerialize_publish_size_qos0(void **state);
+void TC_MQTTSerialize_publish_qos0_success(void **state);
+void TC_MQTTSerialize_publish_qos1_success(void **state);
+void TC_MQTTSerialize_publish_retained_flag(void **state);
+void TC_MQTTSerialize_publish_buffer_too_short(void **state);
+void TC_MQTTSerialize_publish_zero_buffer(void **state);
+void TC_MQTTSerialize_publish_dup_flag(void **state);
+void TC_MQTTSerialize_publish_header_qos0(void **state);
+void TC_MQTTSerialize_publish_header_qos1_has_packetid(void **state);
+void TC_MQTTSerialize_ack_success(void **state);
+void TC_MQTTSerialize_ack_buffer_too_short(void **state);
+void TC_MQTTSerialize_ack_zero_buffer(void **state);
+void TC_MQTTSerialize_ack_pubrel_forces_qos1(void **state);
+void TC_MQTTSerialize_ack_with_dup(void **state);
+void TC_MQTTSerialize_puback_success(void **state);
+void TC_MQTTSerialize_puback_buffer_too_short(void **state);
+void TC_MQTTSerialize_pubrel_success(void **state);
+void TC_MQTTSerialize_pubrel_buffer_too_short(void **state);
+void TC_MQTTSerialize_pubcomp_success(void **state);
+void TC_MQTTSerialize_pubcomp_buffer_too_short(void **state);
+
 // TCs for iot_mqtt_subscribe_client.c
 void TC_MQTTSerialize_subscribeLength_zero(void **state);
 void TC_MQTTSerialize_subscribeLength_single_topic(void **state);

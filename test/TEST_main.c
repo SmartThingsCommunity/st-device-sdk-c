@@ -999,6 +999,35 @@ int TEST_FUNC_iot_easysetup_httpd(void)
     return cmocka_run_group_tests_name("iot_easysetup_tcp_httpd.c", tests, NULL, NULL);
 }
 
+int TEST_FUNC_iot_mqtt_serialize_publish(void)
+{
+    const struct CMUnitTest tests[] = {
+        cmocka_unit_test(TC_MQTTSerialize_publishLength_qos0),
+        cmocka_unit_test(TC_MQTTSerialize_publishLength_qos1),
+        cmocka_unit_test(TC_MQTTSerialize_publish_size_qos0),
+        cmocka_unit_test(TC_MQTTSerialize_publish_qos0_success),
+        cmocka_unit_test(TC_MQTTSerialize_publish_qos1_success),
+        cmocka_unit_test(TC_MQTTSerialize_publish_retained_flag),
+        cmocka_unit_test(TC_MQTTSerialize_publish_buffer_too_short),
+        cmocka_unit_test(TC_MQTTSerialize_publish_zero_buffer),
+        cmocka_unit_test(TC_MQTTSerialize_publish_dup_flag),
+        cmocka_unit_test(TC_MQTTSerialize_publish_header_qos0),
+        cmocka_unit_test(TC_MQTTSerialize_publish_header_qos1_has_packetid),
+        cmocka_unit_test(TC_MQTTSerialize_ack_success),
+        cmocka_unit_test(TC_MQTTSerialize_ack_buffer_too_short),
+        cmocka_unit_test(TC_MQTTSerialize_ack_zero_buffer),
+        cmocka_unit_test(TC_MQTTSerialize_ack_pubrel_forces_qos1),
+        cmocka_unit_test(TC_MQTTSerialize_ack_with_dup),
+        cmocka_unit_test(TC_MQTTSerialize_puback_success),
+        cmocka_unit_test(TC_MQTTSerialize_puback_buffer_too_short),
+        cmocka_unit_test(TC_MQTTSerialize_pubrel_success),
+        cmocka_unit_test(TC_MQTTSerialize_pubrel_buffer_too_short),
+        cmocka_unit_test(TC_MQTTSerialize_pubcomp_success),
+        cmocka_unit_test(TC_MQTTSerialize_pubcomp_buffer_too_short),
+    };
+    return cmocka_run_group_tests_name("iot_mqtt_serialize_publish.c", tests, NULL, NULL);
+}
+
 int TEST_FUNC_iot_mqtt_subscribe_client(void)
 {
     const struct CMUnitTest tests[] = {
@@ -1219,6 +1248,7 @@ int main(void)
     err += TEST_FUNC_iot_mqtt_client();
     err += TEST_FUNC_iot_mqtt_packet();
     err += TEST_FUNC_iot_mqtt_subscribe_client();
+    err += TEST_FUNC_iot_mqtt_serialize_publish();
     err += TEST_FUNC_iot_security_common();
     err += TEST_FUNC_iot_security_crypto();
     err += TEST_FUNC_iot_security_ecdh();
