@@ -19,6 +19,7 @@
 #include <iot_uuid.h>
 #include <string.h>
 
+#include "TC_MOCK_functions.h"
 #include "cmocka_custom.h"
 
 #define UNUSED(x) (void **)(x)
@@ -684,6 +685,127 @@ void TC_iot_util_queue_receive_negative_cases(void **state)
 
     // Cleanup
     iot_util_queue_delete(queue);
+}
+
+void TC_iot_util_queue_send_receive_success(void **state)
+{
+    iot_error_t err;
+    iot_util_queue_t *queue;
+    int test_data = 0x1234;
+    int received = 0;
+    UNUSED(state);
+
+    // Given
+    queue = iot_util_queue_create(sizeof(int));
+    assert_non_null(queue);
+
+    // When: send then receive
+    err = iot_util_queue_send(queue, &test_data);
+    assert_int_equal(err, IOT_ERROR_NONE);
+    err = iot_util_queue_receive(queue, &received);
+    // Then
+    assert_int_equal(err, IOT_ERROR_NONE);
+    assert_int_equal(received, test_data);
+
+    iot_util_queue_delete(queue);
+}
+
+void TC_iot_util_queue_send_multiple_items(void **state)
+{
+    iot_error_t err;
+    iot_util_queue_t *queue;
+    int values[] = {1, 2, 3, 4, 5};
+    int received;
+    int i;
+    UNUSED(state);
+
+    queue = iot_util_queue_create(sizeof(int));
+    assert_non_null(queue);
+
+    // When: enqueue several items
+    for (i = 0; i < 5; i++) {
+        err = iot_util_queue_send(queue, &values[i]);
+        assert_int_equal(err, IOT_ERROR_NONE);
+    }
+    // Then: dequeue in order
+    for (i = 0; i < 5; i++) {
+        err = iot_util_queue_receive(queue, &received);
+        assert_int_equal(err, IOT_ERROR_NONE);
+        assert_int_equal(received, values[i]);
+    }
+
+    iot_util_queue_delete(queue);
+}
+
+void TC_iot_util_queue_create_malloc_failure(void **state)
+{
+    iot_util_queue_t *queue;
+    UNUSED(state);
+
+    // When: first malloc fails
+    do_not_use_mock_iot_os_malloc_failure();
+    set_mock_iot_os_malloc_failure_with_index(0);
+    queue = iot_util_queue_create(sizeof(int));
+    do_not_use_mock_iot_os_malloc_failure();
+    // Then
+    assert_null(queue);
+}
+
+void TC_iot_util_queue_send_malloc_failure_data_struct(void **state)
+{
+    iot_error_t err;
+    iot_util_queue_t *queue;
+    int test_data = 99;
+    UNUSED(state);
+
+    queue = iot_util_queue_create(sizeof(int));
+    assert_non_null(queue);
+
+    // When: malloc of the queue-node struct fails
+    do_not_use_mock_iot_os_malloc_failure();
+    set_mock_iot_os_malloc_failure_with_index(0);
+    err = iot_util_queue_send(queue, &test_data);
+    do_not_use_mock_iot_os_malloc_failure();
+    // Then
+    assert_int_equal(err, IOT_ERROR_MEM_ALLOC);
+
+    iot_util_queue_delete(queue);
+}
+
+void TC_iot_util_queue_send_malloc_failure_data_copy(void **state)
+{
+    iot_error_t err;
+    iot_util_queue_t *queue;
+    int test_data = 99;
+    UNUSED(state);
+
+    queue = iot_util_queue_create(sizeof(int));
+    assert_non_null(queue);
+
+    // When: the second malloc (data copy) fails
+    do_not_use_mock_iot_os_malloc_failure();
+    set_mock_iot_os_malloc_failure_with_index(1);
+    err = iot_util_queue_send(queue, &test_data);
+    do_not_use_mock_iot_os_malloc_failure();
+    // Then
+    assert_int_equal(err, IOT_ERROR_MEM_ALLOC);
+
+    iot_util_queue_delete(queue);
+}
+
+/*
+ * Additional coverage for print helpers with NULL inputs.
+ */
+void TC_iot_util_print_ssid_secure_null_ssid(void **state)
+{
+    UNUSED(state);
+    iot_util_print_ssid_secure(__FUNCTION__, __LINE__, "prefix", NULL);
+}
+
+void TC_iot_util_print_mac_secure_null_mac(void **state)
+{
+    UNUSED(state);
+    iot_util_print_mac_secure(__FUNCTION__, __LINE__, "prefix", NULL);
 }
 
 void TC_iot_util_generator_backoff(void **state)
