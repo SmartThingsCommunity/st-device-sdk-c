@@ -527,6 +527,28 @@ void TC_MQTTSerialize_suback_buffer_too_short(void **state);
 void TC_MQTTSerialize_suback_buffer_just_short(void **state);
 void TC_MQTTSerialize_suback_zero_buffer(void **state);
 
+// TCs for iot_mqtt_connect_client.c
+void TC_MQTTSerialize_connectLength_v4_only(void **state);
+void TC_MQTTSerialize_connectLength_v3(void **state);
+void TC_MQTTSerialize_connectLength_with_will(void **state);
+void TC_MQTTSerialize_connectLength_with_credentials(void **state);
+void TC_MQTTSerialize_connectLength_unknown_version(void **state);
+void TC_MQTTSerialize_connect_v4_success(void **state);
+void TC_MQTTSerialize_connect_v3_success(void **state);
+void TC_MQTTSerialize_connect_will_flags(void **state);
+void TC_MQTTSerialize_connect_buffer_too_short(void **state);
+void TC_MQTTSerialize_connect_zero_buffer(void **state);
+void TC_MQTTDeserialize_connack_success(void **state);
+void TC_MQTTDeserialize_connack_wrong_type(void **state);
+void TC_MQTTDeserialize_connack_short_remlen(void **state);
+void TC_MQTTSerialize_zero_success(void **state);
+void TC_MQTTSerialize_zero_buffer_too_short(void **state);
+void TC_MQTTSerialize_zero_zero_buffer(void **state);
+void TC_MQTTSerialize_disconnect_success(void **state);
+void TC_MQTTSerialize_disconnect_buffer_too_short(void **state);
+void TC_MQTTSerialize_pingreq_success(void **state);
+void TC_MQTTSerialize_pingreq_buffer_too_short(void **state);
+
 // TCs for iot_mqtt_connect_server.c
 void TC_MQTTPacket_checkVersion_v3_success(void **state);
 void TC_MQTTPacket_checkVersion_v4_success(void **state);

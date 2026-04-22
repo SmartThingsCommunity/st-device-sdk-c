@@ -1077,6 +1077,33 @@ int TEST_FUNC_iot_mqtt_subscribe_server(void)
     return cmocka_run_group_tests_name("iot_mqtt_subscribe_server.c", tests, NULL, NULL);
 }
 
+int TEST_FUNC_iot_mqtt_connect_client(void)
+{
+    const struct CMUnitTest tests[] = {
+        cmocka_unit_test(TC_MQTTSerialize_connectLength_v4_only),
+        cmocka_unit_test(TC_MQTTSerialize_connectLength_v3),
+        cmocka_unit_test(TC_MQTTSerialize_connectLength_with_will),
+        cmocka_unit_test(TC_MQTTSerialize_connectLength_with_credentials),
+        cmocka_unit_test(TC_MQTTSerialize_connectLength_unknown_version),
+        cmocka_unit_test(TC_MQTTSerialize_connect_v4_success),
+        cmocka_unit_test(TC_MQTTSerialize_connect_v3_success),
+        cmocka_unit_test(TC_MQTTSerialize_connect_will_flags),
+        cmocka_unit_test(TC_MQTTSerialize_connect_buffer_too_short),
+        cmocka_unit_test(TC_MQTTSerialize_connect_zero_buffer),
+        cmocka_unit_test(TC_MQTTDeserialize_connack_success),
+        cmocka_unit_test(TC_MQTTDeserialize_connack_wrong_type),
+        cmocka_unit_test(TC_MQTTDeserialize_connack_short_remlen),
+        cmocka_unit_test(TC_MQTTSerialize_zero_success),
+        cmocka_unit_test(TC_MQTTSerialize_zero_buffer_too_short),
+        cmocka_unit_test(TC_MQTTSerialize_zero_zero_buffer),
+        cmocka_unit_test(TC_MQTTSerialize_disconnect_success),
+        cmocka_unit_test(TC_MQTTSerialize_disconnect_buffer_too_short),
+        cmocka_unit_test(TC_MQTTSerialize_pingreq_success),
+        cmocka_unit_test(TC_MQTTSerialize_pingreq_buffer_too_short),
+    };
+    return cmocka_run_group_tests_name("iot_mqtt_connect_client.c", tests, NULL, NULL);
+}
+
 int TEST_FUNC_iot_mqtt_connect_server(void)
 {
     const struct CMUnitTest tests[] = {
@@ -1393,6 +1420,7 @@ int main(void)
     err += TEST_FUNC_iot_mqtt_connect_server();
     err += TEST_FUNC_iot_mqtt_subscribe_server();
     err += TEST_FUNC_iot_mqtt_unsubscribe_server();
+    err += TEST_FUNC_iot_mqtt_connect_client();
     err += TEST_FUNC_iot_security_common();
     err += TEST_FUNC_iot_security_crypto();
     err += TEST_FUNC_iot_security_ecdh();
