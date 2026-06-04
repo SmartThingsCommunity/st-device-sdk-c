@@ -236,18 +236,6 @@ typedef enum iot_info_type {
     IOT_INFO_TYPE_IOT_DEVICEID,      /**< @brief to get deviceId */
 } iot_info_type_t;
 
-typedef enum iot_server_type {
-    IOT_SERVER_PROD_AP_NORTH_EAST2,
-    IOT_SERVER_PROD_US_EAST1,
-    IOT_SERVER_PROD_EU_WEST1,
-    IOT_SERVER_PROD_CHINA,
-    IOT_SERVER_ACC_US_EAST2,
-    IOT_SERVER_STG_US_EAST1,
-    IOT_SERVER_STG_CHINA,
-    IOT_SERVER_DEV_US_EAST1,
-    IOT_SERVER_UNKNOWN,
-} iot_server_type_t;
-
 typedef enum {
     SERVER_ENV_UNKNOWN,
     SERVER_ENV_PRD,
@@ -302,8 +290,8 @@ typedef enum {
  */
 typedef struct {
     /* Registration Info */
-    char *device_id;            /**< @brief Optional, If device_id is presented, it skip onboarding process. */
-    st_server_type server_type; /**< @brief Server info for device to connect. Only valid when device_is is presented */
+    char *device_id;  /**< @brief Optional, If device_id is presented, it skip onboarding process. */
+    char *server_url; /**< @brief Server url for device to connect. Only valid when device_id is presented */
 
     /* Device Identity */
     st_identity_method id_method; /**< @brief Method for this device to provide its identity. */

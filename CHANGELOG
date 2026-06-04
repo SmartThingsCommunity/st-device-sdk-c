@@ -1,5 +1,19 @@
 # HISTORY
 
+## 2.4.0 : Change for version 2.4.0
+
+New improvements or features:
+- Add STDK emulator and developer support tools
+
+Enhancements or amendments:
+- Add offline diagnostics feature as default enable in examples
+- Add and update Capabilities helper headers
+- Update raspberry example with new bluez version(5.82)
+- Remove duplicate timer port APIs
+
+Bug fixed:
+- Fix network socket read infinite loop case(mbedtls_ssl_read return 0 case)
+
 ## 2.3.2 : Change for version 2.3.2
 
 Enhancements or amendments:

@@ -669,16 +669,20 @@ void TC_STATIC_iot_mqtt_registration_client_callback_error_event(void **state)
 
 #endif /* STDK_IOT_CORE_SERIALIZE_CBOR */
 
-extern gg_connection_request_status _check_connection_response(char *response_payload, size_t response_payload_len);
+extern gg_connection_request_status _check_connection_response(struct iot_context *ctx, char *response_payload,
+                                                               size_t response_payload_len);
 
 void TC_STATIC_check_connection_response_NULL_payload(void **state)
 {
     // Given: NULL payload
     char *response_payload = NULL;
     size_t response_payload_len = 0;
+    struct iot_context ctx = {
+        0,
+    };
 
     // When
-    gg_connection_request_status result = _check_connection_response(response_payload, response_payload_len);
+    gg_connection_request_status result = _check_connection_response(&ctx, response_payload, response_payload_len);
 
     // Then
     assert_int_equal(result, GG_CONNECTION_REQUEST_STATUS_FAIL);
@@ -689,9 +693,12 @@ void TC_STATIC_check_connection_response_empty_payload(void **state)
     // Given: Empty payload
     char *response_payload = "";
     size_t response_payload_len = 0;
+    struct iot_context ctx = {
+        0,
+    };
 
     // When
-    gg_connection_request_status result = _check_connection_response(response_payload, response_payload_len);
+    gg_connection_request_status result = _check_connection_response(&ctx, response_payload, response_payload_len);
 
     // Then
     assert_int_equal(result, GG_CONNECTION_REQUEST_STATUS_FAIL);
@@ -702,9 +709,12 @@ void TC_STATIC_check_connection_response_invalid_json(void **state)
     // Given: Invalid JSON payload
     char *response_payload = "{ invalid json }";
     size_t response_payload_len = strlen(response_payload);
+    struct iot_context ctx = {
+        0,
+    };
 
     // When
-    gg_connection_request_status result = _check_connection_response(response_payload, response_payload_len);
+    gg_connection_request_status result = _check_connection_response(&ctx, response_payload, response_payload_len);
 
     // Then
     assert_int_equal(result, GG_CONNECTION_REQUEST_STATUS_FAIL);
@@ -715,9 +725,12 @@ void TC_STATIC_check_connection_response_no_event(void **state)
     // Given: JSON without event field
     char *response_payload = "{\"someOtherKey\":\"value\"}";
     size_t response_payload_len = strlen(response_payload);
+    struct iot_context ctx = {
+        0,
+    };
 
     // When
-    gg_connection_request_status result = _check_connection_response(response_payload, response_payload_len);
+    gg_connection_request_status result = _check_connection_response(&ctx, response_payload, response_payload_len);
 
     // Then
     assert_int_equal(result, GG_CONNECTION_REQUEST_STATUS_WAITING);
@@ -728,9 +741,12 @@ void TC_STATIC_check_connection_response_expired_jwt_no_current_time(void **stat
     // Given: Expired JWT without currentTime
     char *response_payload = "{\"event\":\"expired.jwt\"}";
     size_t response_payload_len = strlen(response_payload);
+    struct iot_context ctx = {
+        0,
+    };
 
     // When
-    gg_connection_request_status result = _check_connection_response(response_payload, response_payload_len);
+    gg_connection_request_status result = _check_connection_response(&ctx, response_payload, response_payload_len);
 
     // Then
     assert_int_equal(result, GG_CONNECTION_REQUEST_STATUS_FAIL);
@@ -741,12 +757,58 @@ void TC_STATIC_check_connection_response_unknown_event(void **state)
     // Given: Unknown event type
     char *response_payload = "{\"event\":\"unknown.event\"}";
     size_t response_payload_len = strlen(response_payload);
+    struct iot_context ctx = {
+        0,
+    };
 
     // When
-    gg_connection_request_status result = _check_connection_response(response_payload, response_payload_len);
+    gg_connection_request_status result = _check_connection_response(&ctx, response_payload, response_payload_len);
 
     // Then
     assert_int_equal(result, GG_CONNECTION_REQUEST_STATUS_WAITING);
+}
+
+void TC_STATIC_check_connection_response_connection_sucess(void **state)
+{
+    // Given: Unknown event type
+    char *response_connect_success_payload = "{\"event\":\"connect.success\"}";
+    char *response_connect_success_ACC_payload = "{\"event\":\"connect.success\", \"env\":\"ACC\"}";
+    char *response_connect_success_STG_payload = "{\"event\":\"connect.success\", \"env\":\"STG\"}";
+    char *response_connect_success_DEV_payload = "{\"event\":\"connect.success\", \"env\":\"DEV\"}";
+    struct iot_context ctx = {
+        0,
+    };
+
+    // When
+    gg_connection_request_status result =
+        _check_connection_response(&ctx, response_connect_success_payload, strlen(response_connect_success_payload));
+    // Then
+    assert_int_equal(result, GG_CONNECTION_REQUEST_STATUS_SUCCESS);
+    assert_int_equal(ctx.server_env, SERVER_ENV_PRD);
+
+    // When
+    memset(&ctx, 0, sizeof(struct iot_context));
+    result = _check_connection_response(&ctx, response_connect_success_ACC_payload,
+                                        strlen(response_connect_success_ACC_payload));
+    // Then
+    assert_int_equal(result, GG_CONNECTION_REQUEST_STATUS_SUCCESS);
+    assert_int_equal(ctx.server_env, SERVER_ENV_ACC);
+
+    // When
+    memset(&ctx, 0, sizeof(struct iot_context));
+    result = _check_connection_response(&ctx, response_connect_success_STG_payload,
+                                        strlen(response_connect_success_STG_payload));
+    // Then
+    assert_int_equal(result, GG_CONNECTION_REQUEST_STATUS_SUCCESS);
+    assert_int_equal(ctx.server_env, SERVER_ENV_STG);
+
+    // When
+    memset(&ctx, 0, sizeof(struct iot_context));
+    result = _check_connection_response(&ctx, response_connect_success_DEV_payload,
+                                        strlen(response_connect_success_DEV_payload));
+    // Then
+    assert_int_equal(result, GG_CONNECTION_REQUEST_STATUS_SUCCESS);
+    assert_int_equal(ctx.server_env, SERVER_ENV_DEV);
 }
 
 extern iot_error_t _iot_es_mqtt_connect(struct iot_context *ctx, st_mqtt_client target_cli, char *username,
@@ -913,34 +975,6 @@ void TC_STATIC_iot_es_disconnect_no_mqtt_context(void **state)
 
     // Teardown
     free(context);
-}
-
-extern iot_error_t _iot_es_set_broker_url_port(st_server_type server_type, st_mqtt_broker_info_t *broker_info);
-
-void TC_STATIC_iot_es_set_broker_url_port_invalid_server_type(void **state)
-{
-    // Given: Invalid server type
-    st_server_type server_type = SERVER_TYPE_UNKNOWN;
-    st_mqtt_broker_info_t broker_info;
-
-    // When
-    iot_error_t result = _iot_es_set_broker_url_port(server_type, &broker_info);
-
-    // Then
-    assert_int_equal(result, IOT_ERROR_INVALID_ARGS);
-}
-
-void TC_STATIC_iot_es_set_broker_url_port_unsupported_server_type(void **state)
-{
-    // Given: Unsupported server type
-    st_server_type server_type = (st_server_type)(SERVER_TYPE_EU_WEST1 + 1);  // Unsupported server type
-    st_mqtt_broker_info_t broker_info;
-
-    // When
-    iot_error_t result = _iot_es_set_broker_url_port(server_type, &broker_info);
-
-    // Then
-    assert_int_equal(result, IOT_ERROR_INVALID_ARGS);
 }
 
 extern iot_error_t iot_update_dip(struct iot_context *ctx, st_mqtt_client mqtt_cli);

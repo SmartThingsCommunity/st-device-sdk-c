@@ -29,6 +29,34 @@ enum { CAP_ENUM_COLORTEMPERATURE_COLORTEMPERATURE_UNIT_K, CAP_ENUM_COLORTEMPERAT
 
 const static struct iot_caps_colorTemperature {
     const char *id;
+    const struct colorTemperature_attr_colorTemperatureRange {
+        const char *name;
+        const unsigned char property;
+        const unsigned char valueType;
+        const char *units[CAP_ENUM_COLORTEMPERATURE_COLORTEMPERATURE_UNIT_MAX];
+        const char *unit_K;
+        const struct colorTemperatureRange_value_minimum {
+            const char *name;
+            const unsigned char property;
+            const unsigned char valueType;
+            const int min;
+            const int max;
+        } value_minimum;
+        const struct colorTemperatureRange_value_maximum {
+            const char *name;
+            const unsigned char property;
+            const unsigned char valueType;
+            const int min;
+            const int max;
+        } value_maximum;
+        const struct colorTemperatureRange_value_step {
+            const char *name;
+            const unsigned char property;
+            const unsigned char valueType;
+            const int min;
+            const int max;
+        } value_step;
+    } attr_colorTemperatureRange;
     const struct colorTemperature_attr_colorTemperature {
         const char *name;
         const unsigned char property;
@@ -43,6 +71,38 @@ const static struct iot_caps_colorTemperature {
     } cmd_setColorTemperature;
 } caps_helper_colorTemperature = {
     .id = "colorTemperature",
+    .attr_colorTemperatureRange =
+        {
+            .name = "colorTemperatureRange",
+            .property = ATTR_SET_VALUE_REQUIRED,
+            .valueType = VALUE_TYPE_OBJECT,
+            .units = {"K"},
+            .unit_K = "K",
+            .value_minimum =
+                {
+                    .name = "minimum",
+                    .property = ATTR_SET_VALUE_MIN | ATTR_SET_VALUE_MAX | ATTR_SET_VALUE_REQUIRED,
+                    .valueType = VALUE_TYPE_INTEGER,
+                    .min = 1,
+                    .max = 30000,
+                },
+            .value_maximum =
+                {
+                    .name = "maximum",
+                    .property = ATTR_SET_VALUE_MIN | ATTR_SET_VALUE_MAX | ATTR_SET_VALUE_REQUIRED,
+                    .valueType = VALUE_TYPE_INTEGER,
+                    .min = 1,
+                    .max = 30000,
+                },
+            .value_step =
+                {
+                    .name = "step",
+                    .property = ATTR_SET_VALUE_MIN | ATTR_SET_VALUE_MAX,
+                    .valueType = VALUE_TYPE_INTEGER,
+                    .min = 1,
+                    .max = 30000,
+                },
+        },
     .attr_colorTemperature =
         {
             .name = "colorTemperature",

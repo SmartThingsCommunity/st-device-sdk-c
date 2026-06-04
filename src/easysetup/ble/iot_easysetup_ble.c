@@ -56,18 +56,25 @@ STATIC_FUNCTION
 iot_error_t _iot_easysetup_con_timer_init(struct iot_context *ctx)
 {
     iot_error_t err = IOT_ERROR_NONE;
+    int ret;
 
     if (ctx->cloud_con_timer) {
-        iot_os_timer_destroy(&ctx->cloud_con_timer);
+        iot_os_timer_delete(ctx->cloud_con_timer);
         ctx->cloud_con_timer = NULL;
     }
 
-    err = iot_os_timer_init(&ctx->cloud_con_timer);
-    if (err != IOT_ERROR_NONE) {
-        IOT_ERROR("failed to malloc for cloud_con_timer");
+    ctx->cloud_con_timer = iot_os_timer_create(NULL, CLOUD_CON_TIMER_MS, ctx);
+    if (!ctx->cloud_con_timer) {
+        err = IOT_ERROR_BAD_REQ;
+        IOT_ERROR("Failed to create cloud con timer");
     } else {
-        iot_os_timer_count_ms(ctx->cloud_con_timer, CLOUD_CON_TIMER_MS);
-        IOT_INFO("cloud connection start");
+        ret = iot_os_timer_start(ctx->cloud_con_timer);
+        if (ret) {
+            err = IOT_ERROR_BAD_REQ;
+            IOT_ERROR("Failed to start timer");
+        } else {
+            IOT_INFO("cloud connection start");
+        }
     }
 
     return err;
@@ -108,7 +115,7 @@ void _iot_easysetup_ble_conn_cb(iot_ble_conn_evt_t evt)
     iot_error_t err = IOT_ERROR_NONE;
 
     if (context->cloud_con_timer) {
-        iot_os_timer_destroy(&context->cloud_con_timer);
+        iot_os_timer_delete(context->cloud_con_timer);
         context->cloud_con_timer = NULL;
     }
 
@@ -160,7 +167,7 @@ void _iot_easysetup_ble_conn_cb(iot_ble_conn_evt_t evt)
             context->d2d_event_request = false;
 
             if (context->cloud_con_timer) {
-                iot_os_timer_destroy(&context->cloud_con_timer);
+                iot_os_timer_delete(context->cloud_con_timer);
                 context->cloud_con_timer = NULL;
             }
 

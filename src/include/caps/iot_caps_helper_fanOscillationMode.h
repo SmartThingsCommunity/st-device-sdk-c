@@ -25,7 +25,7 @@
 extern "C" {
 #endif
 
-#define CAP_ENUM_FANOSCILLATIONMODE_SUPPORTEDFANOSCILLATIONMODES_VALUE_MAX 16
+#define CAP_ENUM_FANOSCILLATIONMODE_SUPPORTEDFANOSCILLATIONMODES_VALUE_MAX 18
 enum {
     CAP_ENUM_FANOSCILLATIONMODE_FANOSCILLATIONMODE_VALUE_OFF,
     CAP_ENUM_FANOSCILLATIONMODE_FANOSCILLATIONMODE_VALUE_INDIVIDUAL,
@@ -43,6 +43,8 @@ enum {
     CAP_ENUM_FANOSCILLATIONMODE_FANOSCILLATIONMODE_VALUE_MID,
     CAP_ENUM_FANOSCILLATIONMODE_FANOSCILLATIONMODE_VALUE_SPOT,
     CAP_ENUM_FANOSCILLATIONMODE_FANOSCILLATIONMODE_VALUE_SWING,
+    CAP_ENUM_FANOSCILLATIONMODE_FANOSCILLATIONMODE_VALUE_LEFTZONE,
+    CAP_ENUM_FANOSCILLATIONMODE_FANOSCILLATIONMODE_VALUE_RIGHTZONE,
     CAP_ENUM_FANOSCILLATIONMODE_FANOSCILLATIONMODE_VALUE_MAX
 };
 
@@ -69,7 +71,33 @@ const static struct iot_caps_fanOscillationMode {
         const char *value_mid;
         const char *value_spot;
         const char *value_swing;
+        const char *value_leftZone;
+        const char *value_rightZone;
     } attr_supportedFanOscillationModes;
+    const struct fanOscillationMode_attr_availableFanOscillationModes {
+        const char *name;
+        const unsigned char property;
+        const unsigned char valueType;
+        const char *values[CAP_ENUM_FANOSCILLATIONMODE_SUPPORTEDFANOSCILLATIONMODES_VALUE_MAX];
+        const char *value_off;
+        const char *value_individual;
+        const char *value_fixed;
+        const char *value_vertical;
+        const char *value_horizontal;
+        const char *value_all;
+        const char *value_indirect;
+        const char *value_direct;
+        const char *value_fixedCenter;
+        const char *value_fixedLeft;
+        const char *value_fixedRight;
+        const char *value_far;
+        const char *value_wide;
+        const char *value_mid;
+        const char *value_spot;
+        const char *value_swing;
+        const char *value_leftZone;
+        const char *value_rightZone;
+    } attr_availableFanOscillationModes;
     const struct fanOscillationMode_attr_fanOscillationMode {
         const char *name;
         const unsigned char property;
@@ -91,6 +119,8 @@ const static struct iot_caps_fanOscillationMode {
         const char *value_mid;
         const char *value_spot;
         const char *value_swing;
+        const char *value_leftZone;
+        const char *value_rightZone;
     } attr_fanOscillationMode;
     const struct fanOscillationMode_cmd_setFanOscillationMode {
         const char *name;
@@ -102,9 +132,10 @@ const static struct iot_caps_fanOscillationMode {
             .name = "supportedFanOscillationModes",
             .property = ATTR_SET_VALUE_REQUIRED | ATTR_SET_VALUE_ARRAY,
             .valueType = VALUE_TYPE_STRING,
-            .values = {"'off'", "individual", "fixed", "vertical", "horizontal", "all", "indirect", "direct",
-                       "fixedCenter", "fixedLeft", "fixedRight", "far", "wide", "mid", "spot", "swing"},
-            .value_off = "'off'",
+            .values = {"off", "individual", "fixed", "vertical", "horizontal", "all", "indirect", "direct",
+                       "fixedCenter", "fixedLeft", "fixedRight", "far", "wide", "mid", "spot", "swing", "leftZone",
+                       "rightZone"},
+            .value_off = "off",
             .value_individual = "individual",
             .value_fixed = "fixed",
             .value_vertical = "vertical",
@@ -120,15 +151,45 @@ const static struct iot_caps_fanOscillationMode {
             .value_mid = "mid",
             .value_spot = "spot",
             .value_swing = "swing",
+            .value_leftZone = "leftZone",
+            .value_rightZone = "rightZone",
+        },
+    .attr_availableFanOscillationModes =
+        {
+            .name = "availableFanOscillationModes",
+            .property = ATTR_SET_VALUE_ARRAY,
+            .valueType = VALUE_TYPE_STRING,
+            .values = {"off", "individual", "fixed", "vertical", "horizontal", "all", "indirect", "direct",
+                       "fixedCenter", "fixedLeft", "fixedRight", "far", "wide", "mid", "spot", "swing", "leftZone",
+                       "rightZone"},
+            .value_off = "off",
+            .value_individual = "individual",
+            .value_fixed = "fixed",
+            .value_vertical = "vertical",
+            .value_horizontal = "horizontal",
+            .value_all = "all",
+            .value_indirect = "indirect",
+            .value_direct = "direct",
+            .value_fixedCenter = "fixedCenter",
+            .value_fixedLeft = "fixedLeft",
+            .value_fixedRight = "fixedRight",
+            .value_far = "far",
+            .value_wide = "wide",
+            .value_mid = "mid",
+            .value_spot = "spot",
+            .value_swing = "swing",
+            .value_leftZone = "leftZone",
+            .value_rightZone = "rightZone",
         },
     .attr_fanOscillationMode =
         {
             .name = "fanOscillationMode",
             .property = 0,
             .valueType = VALUE_TYPE_STRING,
-            .values = {"'off'", "individual", "fixed", "vertical", "horizontal", "all", "indirect", "direct",
-                       "fixedCenter", "fixedLeft", "fixedRight", "far", "wide", "mid", "spot", "swing"},
-            .value_off = "'off'",
+            .values = {"off", "individual", "fixed", "vertical", "horizontal", "all", "indirect", "direct",
+                       "fixedCenter", "fixedLeft", "fixedRight", "far", "wide", "mid", "spot", "swing", "leftZone",
+                       "rightZone"},
+            .value_off = "off",
             .value_individual = "individual",
             .value_fixed = "fixed",
             .value_vertical = "vertical",
@@ -144,6 +205,8 @@ const static struct iot_caps_fanOscillationMode {
             .value_mid = "mid",
             .value_spot = "spot",
             .value_swing = "swing",
+            .value_leftZone = "leftZone",
+            .value_rightZone = "rightZone",
         },
     .cmd_setFanOscillationMode = {.name = "setFanOscillationMode"},  // arguments: fanOscillationMode(string)
 };

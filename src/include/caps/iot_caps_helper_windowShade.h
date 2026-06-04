@@ -31,6 +31,7 @@ enum {
     CAP_ENUM_WINDOWSHADE_WINDOWSHADE_VALUE_OPEN,
     CAP_ENUM_WINDOWSHADE_WINDOWSHADE_VALUE_OPENING,
     CAP_ENUM_WINDOWSHADE_WINDOWSHADE_VALUE_PARTIALLY_OPEN,
+    CAP_ENUM_WINDOWSHADE_WINDOWSHADE_VALUE_PAUSED,
     CAP_ENUM_WINDOWSHADE_WINDOWSHADE_VALUE_UNKNOWN,
     CAP_ENUM_WINDOWSHADE_WINDOWSHADE_VALUE_MAX
 };
@@ -48,6 +49,7 @@ const static struct iot_caps_windowShade {
         const char *value_open;
         const char *value_opening;
         const char *value_partially_open;
+        const char *value_paused;
         const char *value_unknown;
     } attr_windowShade;
     const struct windowShade_attr_supportedWindowShadeCommands {
@@ -75,12 +77,13 @@ const static struct iot_caps_windowShade {
             .name = "windowShade",
             .property = ATTR_SET_VALUE_REQUIRED,
             .valueType = VALUE_TYPE_STRING,
-            .values = {"closed", "closing", "open", "opening", "partially open", "unknown"},
+            .values = {"closed", "closing", "open", "opening", "partially open", "paused", "unknown"},
             .value_closed = "closed",
             .value_closing = "closing",
             .value_open = "open",
             .value_opening = "opening",
             .value_partially_open = "partially open",
+            .value_paused = "paused",
             .value_unknown = "unknown",
         },
     .attr_supportedWindowShadeCommands =

@@ -331,3 +331,46 @@ if (attr != NULL) {
 There is a count limit for a device to update Attributes per minute. It is currently set to 50, and when a device reaches that count, the server bans the device connection for the next minute. This policy was introduced to prevent excessive network traffic by any device. Therefore, the device app should manage its own Attribute update count to avoid disconnection.
 
 There are some best practices to reduce the Attribute update count. First, the device app should try to send multiple Attributes at once if possible. With `st_cap_send_attr` [multiple sending function](#sending-capability-attribute-data), you can save on update counts. Second, the device app should update the Attribute only when there is a change. In many cases, the device app updates Attributes periodically or performs initial updates several times, even when there is no changed value for the Attribute. Those cases are mainly the cause of rate limit rejection.
+
+### Request Violation
+
+After sending attributes to server, there are cases that server notify error due to malformed format etc. Here are major error cases that you might encounter during development. Please check the cases and correct the issues according to it.
+
+- Value Out of Range
+
+  If some Attribute value is out of range, you can receive below error message after sending event. You should check Attribute value range from Capability definition.
+  ```sh
+  ...
+  {"error":{"requestId":"234b324e-a007-43aa-a801-a3b488767f27","error":{"code":"ConstraintViolationError","message":"The request is malformed.","details":[{"code":"UnprocessableEntityError","target":"deviceEvents[6].value","message":"deviceEvents[6].value: must have a maximum value of 100"},{"code":"DeviceEventContext","target":"deviceEvents[6]","message":"capability=filterState, attribute=filterLifeRemaining, componentId=main"}]}},"target":"710d6043-b9ce-4434-beba-09bf6fd0bc90","event":"error","source":"mqtt-broker","category":"user"}
+  ...
+  ```
+
+- Invalid Capability/Component Value
+
+  If some Capability is not in the device profile and you try to update the Capability Attribute, you can receive below error message after sending event. You should check the Component, Capability and Attribute are valid in the device profile.
+
+  ```sh
+  ...
+  {"error":{"requestId":"1808759f-80d1-44e0-9578-c8f569d408b9","error":{"code":"ConstraintViolationError","message":"The request is malformed.","details":[{"code":"NotValidValue","target":"deviceEvents[1].capability","message":"custom.dishwasherDelayStartTime is not a valid value."},{"code":"DeviceEventContext","target":"deviceEvents[1]","message":"capability=custom.dishwasherDelayStartTime, attribute=dishwasherDelayStartTime, componentId=main"}]}},"target":"778ddc6a-3e9e-4d56-b35f-25ce8bdbc406","event":"error","source":"mqtt-broker","category":"user"}
+  ...
+  ```
+
+- Date/Time Format Mismatch
+
+  If the time format does not match the ISO 8601 pattern, you can receive below error message after sending event. You should correct time format with `YYYY-MM-DDTHH:mm:ss`
+
+  ```sh
+  ...
+  {"error":{"requestId":"c99a482f-1659-45e2-927f-8f3d449bfa1b","error":{"code":"ConstraintViolationError","message":"The request is malformed.","details":[{"code":"UnprocessableEntityError","target":"deviceEvents[0].value[0].triggeredTime","message":"deviceEvents[0].value[0].triggeredTime: does not match the regex pattern ^(?:[1-9]d{3}-?(?:(?:0[1-9]|1[0-2])-?(?:0[1-9]|1d|2[0-8])|(?:0[13-9]|1[0-2])-?(?:29|30)|(?:0[13578]|1[02])-?31)|(?:[1-9]d(?:0[48]|[2468][048]|[13579][26])|(?:[2468][048]|[13579][26])00)-?02-?29)T(?:[01]d|2[0-3]):?[0-5]d:?[0-5]d(?:.d{3})?(?:Z|[+-][01]d(?::?[0-5]d)?)$"},{"code":"DeviceEventContext","target":"deviceEvents[0]","message":"capability=samsungce.errorAndAlarmState, attribute=events, componentId=main"}]}},"target":"1d0eab61-18bc-46ed-88e9-06da0e1da505","event":"error","source":"mqtt-broker","category":"user"}
+  ...
+  ```
+
+- Enumeration Value Mismatch
+
+  If the Attribute value is not in enumeration list, you can receive below error message after sending event. You can check value enumeration from Capability definition.
+
+  ```sh
+  ...
+  {"error":{"requestId":"b9b45de2-1e4f-4246-aca6-67534d7c620a","error":{"code":"ConstraintViolationError","message":"The request is malformed.","details":[{"code":"UnprocessableEntityError","target":"deviceEvents[0].value[0]","message":"deviceEvents[0].value[0]: does not have a value in the enumeration ["illumination"]"},{"code":"DeviceEventContext","target":"deviceEvents[0]","message":"capability=nightVision, attribute=supportedAttributes, componentId=main"}]}},"target":"983a0cd6-fa90-4983-a2db-25c502a549dc","event":"error","source":"mqtt-broker","category":"user"}
+  ...
+  ```

@@ -360,7 +360,6 @@ struct iot_context {
     struct iot_device_prov_data prov_data; /**< @brief allocated device provisioning data */
     struct iot_devconf_prov_data devconf;  /**< @brief allocated device configuration data */
     struct iot_device_info device_info;    /**< @brief allocated device information data */
-    st_server_type server_type;            /**< @brief Server info for device to connect. */
 
     iot_security_context_t *easysetup_security_context; /**< @brief security context ref. for easy-setup process */
 
@@ -408,13 +407,15 @@ struct iot_context {
 
     unsigned int connection_retry_count;             /**< @brief MQTT server connection retry count */
     iot_os_timer_handle next_connection_retry_timer; /**< @brief timer for next connection retry count */
-    iot_os_timer cloud_con_timer;                    /**< @brief timer for cloud connection check */
+    iot_os_timer_handle cloud_con_timer;             /**< @brief timer for cloud connection check */
     bool ble_connected;                              /**< @brief indicator if ble connected */
     bool dip_need_update;                            /** @brief Is DIP updated(by softwoare update etc.) */
 
     iot_os_timer_handle
         offline_diagnostics_wifiupdate_timeout; /**< @brief timeout for offline diagnostic wifi update command */
     iot_child_device *child_device_list;        /**< @brief child device list */
+
+    server_env_type server_env; /**< server environment type */
 };
 
 typedef void *device_work_param;
@@ -427,5 +428,7 @@ typedef struct _device_work_data {
 } device_work_data_t;
 
 iot_error_t iot_put_device_work(struct iot_context *ctx, device_work_handler handler, device_work_param param);
+
+void iot_state_timeout_cb(iot_os_timer_handle handle, void *user_data);
 
 #endif /* _IOT_MAIN_H_ */

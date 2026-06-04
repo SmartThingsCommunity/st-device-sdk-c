@@ -34,7 +34,6 @@ extern iot_error_t _delete_dev_card_by_usr(struct iot_context *ctx);
 extern iot_error_t _create_easysetup_resources(struct iot_context *ctx, iot_pin_t *pin_num);
 extern void _command_work_handler(struct iot_context *ctx, device_work_param param);
 extern void _next_connection_retry_timeout(iot_os_timer_handle handle, void *user_data);
-extern void _iot_state_timeout_cb(iot_os_timer_handle handle, void *user_data);
 extern void _get_device_preference(struct iot_context *ctx);
 extern iot_error_t _create_easysetup_resources(struct iot_context *ctx, iot_pin_t *pin_num);
 
@@ -706,256 +705,6 @@ void TC_st_info_get_provisioned_success(void **state)
     iot_os_mutex_destroy(&context.st_conn_lock);
 }
 
-void TC_st_info_get_server_env_prod_ap_northeast2_success(void **state)
-{
-    int err;
-    struct iot_context context = {0};
-    iot_info_data_t info_data = {0};
-    UNUSED(state);
-
-    // Given :
-    context.work_queue = (void *)1;
-    context.usr_events = (void *)1;
-    context.iot_events = (void *)1;
-
-    iot_os_mutex_init(&context.st_conn_lock);
-
-    context.prov_data.cloud.broker_url = "mqtt-regional-apnortheast2.api.smartthings.com";
-
-    // When: valid IOT_INFO_TYPE_IOT_SERVER_ENV request
-    err = st_info_get((IOT_CTX *)&context, IOT_INFO_TYPE_IOT_SERVER_ENV, &info_data);
-    // Then
-    assert_int_equal(err, IOT_ERROR_NONE);
-    assert_int_equal(info_data.server_env, SERVER_ENV_PRD);
-
-    // Teardown
-    iot_os_mutex_destroy(&context.st_conn_lock);
-}
-
-void TC_st_info_get_server_env_prod_us_east1_success(void **state)
-{
-    int err;
-    struct iot_context context = {0};
-    iot_info_data_t info_data = {0};
-    UNUSED(state);
-
-    // Given :
-    context.work_queue = (void *)1;
-    context.usr_events = (void *)1;
-    context.iot_events = (void *)1;
-
-    // Initialize mutex
-    iot_os_mutex_init(&context.st_conn_lock);
-
-    // Set a broker_url that matches one of the recognized server URLs
-    context.prov_data.cloud.broker_url = "mqtt-regional-useast1.api.smartthings.com";
-
-    // When: valid IOT_INFO_TYPE_IOT_SERVER_ENV request
-    err = st_info_get((IOT_CTX *)&context, IOT_INFO_TYPE_IOT_SERVER_ENV, &info_data);
-    // Then
-    assert_int_equal(err, IOT_ERROR_NONE);
-    assert_int_equal(info_data.server_env, SERVER_ENV_PRD);
-
-    // Teardown
-    iot_os_mutex_destroy(&context.st_conn_lock);
-}
-
-void TC_st_info_get_server_env_prod_eu_west1_success(void **state)
-{
-    int err;
-    struct iot_context context = {0};
-    iot_info_data_t info_data = {0};
-    UNUSED(state);
-
-    // Given :
-    context.work_queue = (void *)1;
-    context.usr_events = (void *)1;
-    context.iot_events = (void *)1;
-
-    // Initialize mutex
-    iot_os_mutex_init(&context.st_conn_lock);
-
-    // Set a broker_url that matches one of the recognized server URLs
-    context.prov_data.cloud.broker_url = "mqtt-regional-euwest1.api.smartthings.com";
-
-    // When: valid IOT_INFO_TYPE_IOT_SERVER_ENV request
-    err = st_info_get((IOT_CTX *)&context, IOT_INFO_TYPE_IOT_SERVER_ENV, &info_data);
-    // Then
-    assert_int_equal(err, IOT_ERROR_NONE);
-    assert_int_equal(info_data.server_env, SERVER_ENV_PRD);
-
-    // Teardown
-    iot_os_mutex_destroy(&context.st_conn_lock);
-}
-
-void TC_st_info_get_server_env_prod_china_success(void **state)
-{
-    int err;
-    struct iot_context context = {0};
-    iot_info_data_t info_data = {0};
-    UNUSED(state);
-
-    // Given :
-    context.work_queue = (void *)1;
-    context.usr_events = (void *)1;
-    context.iot_events = (void *)1;
-
-    // Initialize mutex
-    iot_os_mutex_init(&context.st_conn_lock);
-
-    // Set a broker_url that matches one of the recognized server URLs
-    context.prov_data.cloud.broker_url = "mqtt-regional-cnnorth1.samsungiotcloud.cn";
-
-    // When: valid IOT_INFO_TYPE_IOT_SERVER_ENV request
-    err = st_info_get((IOT_CTX *)&context, IOT_INFO_TYPE_IOT_SERVER_ENV, &info_data);
-    // Then
-    assert_int_equal(err, IOT_ERROR_NONE);
-    assert_int_equal(info_data.server_env, SERVER_ENV_PRD);
-
-    // Teardown
-    iot_os_mutex_destroy(&context.st_conn_lock);
-}
-
-void TC_st_info_get_server_env_acc_us_east2_success(void **state)
-{
-    int err;
-    struct iot_context context = {0};
-    iot_info_data_t info_data = {0};
-    UNUSED(state);
-
-    // Given :
-    context.work_queue = (void *)1;
-    context.usr_events = (void *)1;
-    context.iot_events = (void *)1;
-
-    // Initialize mutex
-    iot_os_mutex_init(&context.st_conn_lock);
-
-    // Set a broker_url that matches one of the recognized server URLs
-    context.prov_data.cloud.broker_url = "mqtt-acceptance-useast2.stacceptance.com";
-
-    // When: valid IOT_INFO_TYPE_IOT_SERVER_ENV request
-    err = st_info_get((IOT_CTX *)&context, IOT_INFO_TYPE_IOT_SERVER_ENV, &info_data);
-    // Then
-    assert_int_equal(err, IOT_ERROR_NONE);
-    assert_int_equal(info_data.server_env, SERVER_ENV_ACC);
-
-    // Teardown
-    iot_os_mutex_destroy(&context.st_conn_lock);
-}
-
-void TC_st_info_get_server_env_stg_us_east1_success(void **state)
-{
-    int err;
-    struct iot_context context = {0};
-    iot_info_data_t info_data = {0};
-    UNUSED(state);
-
-    // Given :
-    context.work_queue = (void *)1;
-    context.usr_events = (void *)1;
-    context.iot_events = (void *)1;
-
-    // Initialize mutex
-    iot_os_mutex_init(&context.st_conn_lock);
-
-    // Set a broker_url that matches one of the recognized server URLs
-    context.prov_data.cloud.broker_url = "mqtt-staging-useast1.smartthingsgdev.com";
-
-    // When: valid IOT_INFO_TYPE_IOT_SERVER_ENV request
-    err = st_info_get((IOT_CTX *)&context, IOT_INFO_TYPE_IOT_SERVER_ENV, &info_data);
-    // Then
-    assert_int_equal(err, IOT_ERROR_NONE);
-    assert_int_equal(info_data.server_env, SERVER_ENV_STG);
-
-    // Teardown
-    iot_os_mutex_destroy(&context.st_conn_lock);
-}
-
-void TC_st_info_get_server_env_stg_china_success(void **state)
-{
-    int err;
-    struct iot_context context = {0};
-    iot_info_data_t info_data = {0};
-    UNUSED(state);
-
-    // Given :
-    context.work_queue = (void *)1;
-    context.usr_events = (void *)1;
-    context.iot_events = (void *)1;
-
-    // Initialize mutex
-    iot_os_mutex_init(&context.st_conn_lock);
-
-    // Set a broker_url that matches one of the recognized server URLs
-    context.prov_data.cloud.broker_url = "mqtt-staging-cnnorth1.samsungiots.cn";
-
-    // When: valid IOT_INFO_TYPE_IOT_SERVER_ENV request
-    err = st_info_get((IOT_CTX *)&context, IOT_INFO_TYPE_IOT_SERVER_ENV, &info_data);
-    // Then
-    assert_int_equal(err, IOT_ERROR_NONE);
-    assert_int_equal(info_data.server_env, SERVER_ENV_STG);
-
-    // Teardown
-    iot_os_mutex_destroy(&context.st_conn_lock);
-}
-
-void TC_st_info_get_server_env_dev_us_east1_success(void **state)
-{
-    int err;
-    struct iot_context context = {0};
-    iot_info_data_t info_data = {0};
-    UNUSED(state);
-
-    // Given :
-    context.work_queue = (void *)1;
-    context.usr_events = (void *)1;
-    context.iot_events = (void *)1;
-
-    // Initialize mutex
-    iot_os_mutex_init(&context.st_conn_lock);
-
-    // Set a broker_url that matches one of the recognized server URLs
-    context.prov_data.cloud.broker_url = "mqtt-dev-useast1.smartthingsgdev.com";
-
-    // When: valid IOT_INFO_TYPE_IOT_SERVER_ENV request
-    err = st_info_get((IOT_CTX *)&context, IOT_INFO_TYPE_IOT_SERVER_ENV, &info_data);
-    // Then
-    assert_int_equal(err, IOT_ERROR_NONE);
-    assert_int_equal(info_data.server_env, SERVER_ENV_DEV);
-
-    // Teardown
-    iot_os_mutex_destroy(&context.st_conn_lock);
-}
-
-void TC_st_info_get_server_env_unknown_server_success(void **state)
-{
-    int err;
-    struct iot_context context = {0};
-    iot_info_data_t info_data = {0};
-    UNUSED(state);
-
-    // Given :
-    context.work_queue = (void *)1;
-    context.usr_events = (void *)1;
-    context.iot_events = (void *)1;
-
-    // Initialize mutex
-    iot_os_mutex_init(&context.st_conn_lock);
-
-    // Set a broker_url that doesn't match any known server URLs
-    context.prov_data.cloud.broker_url = "mqtt-unknown-server.example.com";
-
-    // When: valid IOT_INFO_TYPE_IOT_SERVER_ENV request with unknown server
-    err = st_info_get((IOT_CTX *)&context, IOT_INFO_TYPE_IOT_SERVER_ENV, &info_data);
-    // Then
-    assert_int_equal(err, IOT_ERROR_NONE);
-    assert_int_equal(info_data.server_env, SERVER_ENV_UNKNOWN);
-
-    // Teardown
-    iot_os_mutex_destroy(&context.st_conn_lock);
-}
-
 void TC_st_conn_start_null_context(void **state)
 {
     int err;
@@ -1362,7 +1111,7 @@ void TC_do_iot_main_command_cloud_registering_negative(void **state)
     iot_os_eventgroup_delete(context->iot_events);
     iot_os_mutex_destroy(&context->st_conn_lock);
     iot_os_timer_stop(context->cloud_con_timer);
-    iot_os_timer_destroy(&context->cloud_con_timer);
+    iot_os_timer_delete(context->cloud_con_timer);
     free(context);
     iot_nv_deinit();
 }
@@ -1854,71 +1603,6 @@ void TC_check_prov_status_failure(void **state)
     do_not_use_mock_iot_os_malloc_failure();
 }
 
-void TC_check_prov_status_dip_need_update_negative(void **state)
-{
-    iot_error_t err;
-    struct iot_context *context;
-    struct iot_device_prov_data dummy_prov_data = {0};
-    char *set_device_id = "1cd8e3f2-0c88-4298-90e3-cd9b35a82140";
-    UNUSED(state);
-
-    err = iot_nv_init((unsigned char *)sample_device_info, strlen(sample_device_info));
-    assert_int_equal(err, IOT_ERROR_NONE);
-
-    // Given:
-    context = (struct iot_context *)calloc(1, sizeof(struct iot_context));
-    assert_non_null(context);
-    context->work_queue = iot_util_queue_create(sizeof(struct iot_command));
-    assert_non_null(context->work_queue);
-    context->work_queue_signal = iot_os_eventgroup_create();
-    assert_non_null(context->work_queue_signal);
-    iot_os_mutex_init(&context->st_conn_lock);
-
-    strncpy(dummy_prov_data.wifi.ssid, "TestSSID", IOT_WIFI_PROV_SSID_STR_LEN);
-    strncpy(dummy_prov_data.wifi.password, "TestPassword", IOT_WIFI_PROV_PASSWORD_STR_LEN);
-    strncpy(dummy_prov_data.wifi.mac_str, "00:11:22:33:44:55", IOT_WIFI_PROV_MAC_STR_LEN);
-    dummy_prov_data.wifi.security_type = IOT_WIFI_AUTH_WPA2_PSK;
-
-    dummy_prov_data.cloud.broker_url = iot_os_strdup("test.mqtt.server.com");
-    dummy_prov_data.cloud.broker_port = 8883;
-    dummy_prov_data.cloud.label = iot_os_strdup("TestDevice");
-
-    err = iot_nv_set_prov_data(&dummy_prov_data);
-    assert_int_equal(err, IOT_ERROR_NONE);
-    err = iot_nv_set_device_id(set_device_id);
-    assert_int_equal(err, IOT_ERROR_NONE);
-    context->devconf.dip = (struct iot_dip_data *)malloc(sizeof(struct iot_dip_data));
-    iot_util_convert_str_uuid(REG_TEST_DIP_ID, &context->devconf.dip->dip_id);
-    context->devconf.dip->dip_major_version = 0;
-    context->devconf.dip->dip_minor_version = 1;
-
-    // When: misc info data is not present
-    err = _check_prov_status(context, false);
-    // Then:
-    assert_int_equal(err, IOT_ERROR_NONE);
-    assert_false(!context->dip_need_update);
-
-    // When: cmd_only is true
-    err = _check_prov_status(context, true);
-    // Then:
-    assert_int_equal(err, IOT_ERROR_NONE);
-
-    // Teardown
-    if (dummy_prov_data.cloud.broker_url) {
-        iot_os_free(dummy_prov_data.cloud.broker_url);
-    }
-    if (dummy_prov_data.cloud.label) {
-        iot_os_free(dummy_prov_data.cloud.label);
-    }
-    iot_util_queue_delete(context->work_queue);
-    iot_os_eventgroup_delete(context->work_queue_signal);
-    iot_os_mutex_destroy(&context->st_conn_lock);
-    iot_api_prov_data_mem_free(&context->prov_data);
-    free(context);
-    iot_nv_deinit();
-    iot_nv_erase(IOT_NVD_DEVICE_ID);
-}
-
 static struct iot_dip_data dip_example = {
     .dip_id.id = {0xbb, 0x00, 0x0d, 0xdd, 0x92, 0xa0, 0x42, 0xa3, 0x86, 0xf0, 0xb5, 0x31, 0xf2, 0x78, 0xaf, 0x06},
     .dip_major_version = 0,
@@ -2171,6 +1855,7 @@ void TC_st_device_init_success(void **state)
 
     // Given: valid config with MANUAL_ED25519 identity method
     config.device_id = test_device_id;
+    config.server_url = "ssl://mqtt-useast1.api.smartthings.com:8883";
     config.id_method = ST_IDENTITY_METHOD_MANUAL_ED25519;
     config.mnId = test_mnid;
     config.identity.ed25519.prikey = TEST_DEVICE_SECRET_B64_KEY;
@@ -3124,23 +2809,23 @@ void TC_iot_state_timeout_cb_P(void **state)
     context.curr_state = IOT_STATE_INITIALIZED;
 
     // When: timeout callback for initialized state
-    _iot_state_timeout_cb(NULL, &context);
+    iot_state_timeout_cb(NULL, &context);
 
     // When: timeout callback for prov sleep state
     context.curr_state = IOT_STATE_PROV_SLEEP;
-    _iot_state_timeout_cb(NULL, &context);
+    iot_state_timeout_cb(NULL, &context);
 
     // When: timeout callback for prov confirm state
     context.curr_state = IOT_STATE_PROV_CONFIRM;
-    _iot_state_timeout_cb(NULL, &context);
+    iot_state_timeout_cb(NULL, &context);
 
     // When: timeout callback for cloud disconnected state
     context.curr_state = IOT_STATE_CLOUD_DISCONNECTED;
-    _iot_state_timeout_cb(NULL, &context);
+    iot_state_timeout_cb(NULL, &context);
 
     // When: timeout callback for cloud connected state
     context.curr_state = IOT_STATE_CLOUD_CONNECTED;
-    _iot_state_timeout_cb(NULL, &context);
+    iot_state_timeout_cb(NULL, &context);
 }
 void TC_iot_state_timeout_cb_prov_enter_P(void **state)
 {
@@ -3156,7 +2841,7 @@ void TC_iot_state_timeout_cb_prov_enter_P(void **state)
     iot_os_mutex_init(&context.st_conn_lock);
 
     // When: timeout callback for PROV_ENTER state
-    _iot_state_timeout_cb(NULL, &context);
+    iot_state_timeout_cb(NULL, &context);
 
     // Teardown
     iot_util_queue_delete(context.work_queue);
@@ -3177,7 +2862,7 @@ void TC_iot_state_timeout_cb_prov_done_P(void **state)
     iot_os_mutex_init(&context.st_conn_lock);
 
     // When: timeout callback for PROV_DONE state
-    _iot_state_timeout_cb(NULL, &context);
+    iot_state_timeout_cb(NULL, &context);
 
     // Teardown
     iot_util_queue_delete(context.work_queue);

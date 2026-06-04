@@ -440,12 +440,6 @@ int TEST_FUNC_iot_util(void)
         cmocka_unit_test(TC_iot_util_queue_send_negative_cases),
         cmocka_unit_test(TC_iot_util_queue_receive_negative_cases),
         cmocka_unit_test(TC_iot_util_generator_backoff),
-        cmocka_unit_test(TC_iot_util_get_server_type_success),
-        cmocka_unit_test(TC_iot_util_get_server_type_null_url),
-        cmocka_unit_test(TC_iot_util_get_server_type_empty_url),
-        cmocka_unit_test(TC_iot_util_get_server_type_unknown_domain),
-        cmocka_unit_test(TC_iot_util_get_server_type_partial_url),
-        cmocka_unit_test(TC_iot_util_get_server_type_wrong_domain),
         cmocka_unit_test(TC_iot_util_print_ssid_secure_positive),
         cmocka_unit_test(TC_iot_util_print_mac_secure_positive),
     };
@@ -576,15 +570,6 @@ int TEST_FUNC_iot_main()
         cmocka_unit_test(TC_st_info_get_invalid_context_missing_fields),
         cmocka_unit_test(TC_st_info_get_status_and_stat_success),
         cmocka_unit_test(TC_st_info_get_provisioned_success),
-        cmocka_unit_test(TC_st_info_get_server_env_prod_ap_northeast2_success),
-        cmocka_unit_test(TC_st_info_get_server_env_prod_us_east1_success),
-        cmocka_unit_test(TC_st_info_get_server_env_prod_eu_west1_success),
-        cmocka_unit_test(TC_st_info_get_server_env_prod_china_success),
-        cmocka_unit_test(TC_st_info_get_server_env_acc_us_east2_success),
-        cmocka_unit_test(TC_st_info_get_server_env_stg_us_east1_success),
-        cmocka_unit_test(TC_st_info_get_server_env_stg_china_success),
-        cmocka_unit_test(TC_st_info_get_server_env_dev_us_east1_success),
-        cmocka_unit_test(TC_st_info_get_server_env_unknown_server_success),
         cmocka_unit_test(TC_st_change_health_period_null_context),
         cmocka_unit_test(TC_st_change_health_period_invalid_context),
         cmocka_unit_test(TC_st_change_health_period_success),
@@ -621,7 +606,6 @@ int TEST_FUNC_iot_main()
         cmocka_unit_test(TC_do_iot_main_command_invalid_command_type_negative),
         cmocka_unit_test(TC_do_iot_main_command_invalid_state_negative),
         cmocka_unit_test(TC_check_prov_status_failure),
-        cmocka_unit_test(TC_check_prov_status_dip_need_update_negative),
         cmocka_unit_test(TC_check_prov_status_success),
         cmocka_unit_test(TC_check_prov_status_device_id_present_success),
         cmocka_unit_test(TC_check_prov_status_invalid_prov_data),
@@ -998,6 +982,7 @@ int TEST_FUNC_iot_easysetup_st_mqtt(void)
         cmocka_unit_test(TC_STATIC_check_connection_response_no_event),
         cmocka_unit_test(TC_STATIC_check_connection_response_expired_jwt_no_current_time),
         cmocka_unit_test(TC_STATIC_check_connection_response_unknown_event),
+        cmocka_unit_test(TC_STATIC_check_connection_response_connection_sucess),
         cmocka_unit_test(TC_STATIC_iot_es_mqtt_connect_NULL_context),
         cmocka_unit_test(TC_STATIC_iot_es_mqtt_connect_NULL_username),
         cmocka_unit_test(TC_STATIC_iot_es_mqtt_connect_NULL_sign_data),
@@ -1007,8 +992,6 @@ int TEST_FUNC_iot_easysetup_st_mqtt(void)
         cmocka_unit_test(TC_STATIC_iot_es_disconnect_NULL_context),
         cmocka_unit_test(TC_STATIC_iot_es_disconnect_invalid_conn_type),
         cmocka_unit_test(TC_STATIC_iot_es_disconnect_no_mqtt_context),
-        cmocka_unit_test(TC_STATIC_iot_es_set_broker_url_port_invalid_server_type),
-        cmocka_unit_test(TC_STATIC_iot_es_set_broker_url_port_unsupported_server_type),
         cmocka_unit_test(TC_STATIC_iot_update_dip_NULL_context),
         cmocka_unit_test(TC_STATIC_iot_update_dip_NULL_mqtt_client),
         cmocka_unit_test(TC_STATIC_iot_update_dip_no_dip_data),
@@ -1017,6 +1000,50 @@ int TEST_FUNC_iot_easysetup_st_mqtt(void)
         cmocka_unit_test(TC_STATIC_iot_es_mqtt_registration_no_serial_numbers),
     };
     return cmocka_run_group_tests_name("iot_easysetup_st_mqtt.c", tests, NULL, NULL);
+}
+
+int TEST_FUNC_iot_easysetup_ble_task(void)
+{
+    const struct CMUnitTest tests[] = {
+        cmocka_unit_test_setup_teardown(TC_es_msg_dispatch_null_parameters, TC_iot_easysetup_ble_task_setup,
+                                        TC_iot_easysetup_ble_task_teardown),
+        cmocka_unit_test_setup_teardown(TC_es_msg_dispatch_single_buffer, TC_iot_easysetup_ble_task_setup,
+                                        TC_iot_easysetup_ble_task_teardown),
+        cmocka_unit_test_setup_teardown(TC_es_msg_dispatch_multiple_buffers_warning, TC_iot_easysetup_ble_task_setup,
+                                        TC_iot_easysetup_ble_task_teardown),
+        cmocka_unit_test_setup_teardown(TC_es_msg_dispatch_empty_buffer, TC_iot_easysetup_ble_task_setup,
+                                        TC_iot_easysetup_ble_task_teardown),
+        cmocka_unit_test_setup_teardown(TC_es_msg_dispatch_zero_length_buffer, TC_iot_easysetup_ble_task_setup,
+                                        TC_iot_easysetup_ble_task_teardown),
+        cmocka_unit_test_setup_teardown(TC_es_msg_dispatch_large_data, TC_iot_easysetup_ble_task_setup,
+                                        TC_iot_easysetup_ble_task_teardown),
+        cmocka_unit_test_setup_teardown(TC_es_msg_dispatch_exactly_max_buffer, TC_iot_easysetup_ble_task_setup,
+                                        TC_iot_easysetup_ble_task_teardown),
+        cmocka_unit_test_setup_teardown(TC_es_ble_init_null_context, TC_iot_easysetup_ble_task_setup,
+                                        TC_iot_easysetup_ble_task_teardown),
+        cmocka_unit_test_setup_teardown(TC_es_ble_init_valid_context_success, TC_iot_easysetup_ble_task_setup,
+                                        TC_iot_easysetup_ble_task_teardown),
+        cmocka_unit_test_setup_teardown(TC_es_ble_init_advertisement_failure, TC_iot_easysetup_ble_task_setup,
+                                        TC_iot_easysetup_ble_task_teardown),
+        cmocka_unit_test_setup_teardown(TC_es_ble_deinit_valid, TC_iot_easysetup_ble_task_setup,
+                                        TC_iot_easysetup_ble_task_teardown),
+        cmocka_unit_test_setup_teardown(TC_es_ble_deinit_multiple_calls, TC_iot_easysetup_ble_task_setup,
+                                        TC_iot_easysetup_ble_task_teardown),
+        cmocka_unit_test_setup_teardown(TC_es_ble_msg_handler_success, TC_iot_easysetup_ble_task_setup,
+                                        TC_iot_easysetup_ble_task_teardown),
+    };
+    return cmocka_run_group_tests_name("iot_easysetup_ble_task.c", tests, NULL, NULL);
+}
+
+int TEST_FUNC_iot_easysetup_ble(void)
+{
+    const struct CMUnitTest tests[] = {
+        cmocka_unit_test_setup_teardown(TC_iot_easysetup_con_timer_init_success, TC_iot_easysetup_ble_setup,
+                                        TC_iot_easysetup_ble_teardown),
+        cmocka_unit_test_setup_teardown(TC_iot_easysetup_con_timer_init_with_existing_timer, TC_iot_easysetup_ble_setup,
+                                        TC_iot_easysetup_ble_teardown),
+    };
+    return cmocka_run_group_tests_name("iot_easysetup_ble.c", tests, NULL, NULL);
 }
 
 #if defined(CONFIG_STDK_IOT_CORE_EASYSETUP_HTTP)
@@ -1074,6 +1101,10 @@ int main(void)
     err += TEST_FUNC_iot_wt();
     err += TEST_FUNC_iot_dump_log();
     err += TEST_FUNC_iot_easysetup_st_mqtt();
+#if defined(CONFIG_STDK_IOT_CORE_EASYSETUP_BLE)
+    err += TEST_FUNC_iot_easysetup_ble_task();
+    err += TEST_FUNC_iot_easysetup_ble();
+#endif
 #if defined(CONFIG_STDK_IOT_CORE_EASYSETUP_HTTP)
     err += TEST_FUNC_iot_easysetup_httpd();
     err += TEST_FUNC_iot_easysetup_d2d();

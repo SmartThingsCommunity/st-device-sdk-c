@@ -24,7 +24,6 @@
 typedef void *iot_os_thread;
 typedef void iot_os_eventgroup;
 typedef void iot_os_sem;
-typedef void *iot_os_timer;
 typedef void *iot_os_timer_handle;
 
 /**
@@ -243,66 +242,6 @@ void iot_os_mutex_destroy(iot_os_mutex *mutex);
  *
  */
 void iot_os_delay(unsigned int delay_ms);
-
-/**
- * @brief	init timer
- *
- * This function will init timer struct
- *
- * @param[in] timer	pointer of timer to init
- *
- * @return
- *	IOT_ERROR_NONE : success
- *	otherwise : fail
- */
-int iot_os_timer_init(iot_os_timer *timer);
-
-/**
- * @brief	check timer expired
- *
- * This function will check if timer is expired
- *
- * @param[in] timer	timer handle
- *
- * @return
- *	1 : timer is expired
- *	0 : timer is not expired
- */
-char iot_os_timer_isexpired(iot_os_timer timer);
-
-/**
- * @brief	set timer count
- *
- * This function will set timer count in ms unit.
- *
- * @param[in] timer	timer handle
- * @param[in] count	count to set in ms unit
- *
- */
-void iot_os_timer_count_ms(iot_os_timer timer, unsigned int timeout_ms);
-
-/**
- * @brief	return remaining time in ms unit
- *
- * This function will return remaining time in ms unit
- *
- * @param[in] timer	timer handle
- *
- * @return
- * 	0 : timer is expired
- *	non-zero : remaining time
- */
-unsigned int iot_os_timer_left_ms(iot_os_timer timer);
-
-/**
- * @brief	destroy timer
- *
- * This function will destroy timer struct
- *
- * @param[in] timer	pointer of timer to destroy
- *
- */
-void iot_os_timer_destroy(iot_os_timer *timer);
 
 /**
  * @brief	create timer

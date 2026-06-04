@@ -69,40 +69,6 @@ iot_error_t _check_prov_data_validation(struct iot_device_prov_data *prov_data)
     return IOT_ERROR_NONE;
 }
 
-static bool _unlikely_with_stored_dip(struct iot_dip_data *chk_dip)
-{
-    iot_error_t err = IOT_ERROR_NONE;
-    struct iot_dip_data old_dip;
-    int idx;
-
-    if (chk_dip == NULL) {
-        return true;
-    }
-
-    err = iot_misc_info_load(IOT_MISC_INFO_DIP, (void *)&old_dip);
-    if (err != IOT_ERROR_NONE) {
-        IOT_ERROR("failed to load stored DIP!! (%d)", err);
-        IOT_DUMP_MAIN(ERROR, BASE, err);
-        return true;
-    }
-
-    for (idx = 0; idx < IOT_UUID_BYTES; idx++) {
-        if (chk_dip->dip_id.id[idx] != old_dip.dip_id.id[idx]) {
-            return true;
-        }
-    }
-
-    if (chk_dip->dip_major_version != old_dip.dip_major_version) {
-        return true;
-    }
-
-    if (chk_dip->dip_minor_version != old_dip.dip_minor_version) {
-        return true;
-    }
-
-    return false;
-}
-
 STATIC_FUNCTION
 iot_error_t _check_prov_status(struct iot_context *ctx, bool cmd_only)
 {
@@ -161,10 +127,8 @@ iot_error_t _check_prov_status(struct iot_context *ctx, bool cmd_only)
                     IOT_INFO("Current deviceID: %s (%d)\n", ctx->iot_reg_data.deviceId, str_len);
                 }
 
-                iot_update_dip_from_server_type(ctx, iot_util_get_server_type(ctx->prov_data.cloud.broker_url));
-
                 if (ctx->devconf.dip) {
-                    ctx->dip_need_update = _unlikely_with_stored_dip(ctx->devconf.dip);
+                    ctx->dip_need_update = iot_check_dip_update_needed(ctx->devconf.dip);
                 }
                 ctx->iot_reg_data.updated = true;
                 next_state = IOT_STATE_CLOUD_DISCONNECTED;
@@ -324,8 +288,7 @@ static void _get_device_info_in_server(struct iot_context *ctx)
     st_mqtt_publish_async(ctx->evt_mqttcli, &msg);
 }
 
-STATIC_FUNCTION
-void _iot_state_timeout_cb(iot_os_timer_handle handle, void *user_data)
+void iot_state_timeout_cb(iot_os_timer_handle handle, void *user_data)
 {
     struct iot_context *ctx = (struct iot_context *)user_data;
     IOT_INFO("Timeout");
@@ -486,7 +449,7 @@ iot_error_t _do_state_updating(struct iot_context *ctx, iot_state_t new_state, i
         IOT_INFO("Current timeout : %u for %d", timeout_ms, ctx->curr_state);
         if (ctx->state_timer)
             iot_os_timer_delete(ctx->state_timer);
-        ctx->state_timer = iot_os_timer_create(_iot_state_timeout_cb, timeout_ms, ctx);
+        ctx->state_timer = iot_os_timer_create(iot_state_timeout_cb, timeout_ms, ctx);
         if (!ctx->state_timer)
             IOT_ERROR("Failed to create state timer");
         else
@@ -555,7 +518,7 @@ bool _con_timeout_check(struct iot_context *ctx)
     bool expired = false;
 
     if (ctx->cloud_con_timer) {
-        if (iot_os_timer_isexpired(ctx->cloud_con_timer)) {
+        if (!iot_os_timer_is_active(ctx->cloud_con_timer)) {
             IOT_INFO("cloud connection timer is expired");
             expired = true;
         }
@@ -994,6 +957,12 @@ IOT_CTX *st_device_init(st_device_config_t *config)
     JSON_H *root = NULL;
     JSON_H *device_info_json = NULL;
     iot_error_t iot_err;
+    struct iot_cloud_prov_data cloud_prov = {
+        0,
+    };
+    url_parse_t url = {
+        0,
+    };
 
     if (config->device_id == NULL) {
         IOT_ERROR("Currently st_device_init supports only if device id exist");
@@ -1011,7 +980,18 @@ IOT_CTX *st_device_init(st_device_config_t *config)
     /* Initialize registration info */
     memcpy(ctx->iot_reg_data.deviceId, config->device_id, IOT_REG_UUID_STR_LEN);
     ctx->iot_reg_data.deviceId[IOT_REG_UUID_STR_LEN] = '\0';
-    ctx->server_type = config->server_type;
+    iot_err = iot_util_url_parse(config->server_url, &url);
+    if (iot_err) {
+        IOT_ERROR("failed to parse broker url");
+        goto error_main_bsp_init;
+    }
+    cloud_prov.broker_url = url.domain;
+    cloud_prov.broker_port = url.port;
+    iot_err = iot_nv_set_cloud_prov_data(&cloud_prov);
+    if (iot_err) {
+        IOT_ERROR("failed to set the cloud prov data");
+        goto error_main_bsp_init;
+    }
 
     if (config->id_method != ST_IDENTITY_METHOD_MANUAL_ED25519) {
         IOT_ERROR("Currently st_device_init supports only if identity method is MANUAL_ED25519");
@@ -1583,33 +1563,7 @@ int st_info_get(IOT_CTX *iot_ctx, iot_info_type_t info_type, iot_info_data_t *in
             info_data->provisioned = iot_nv_prov_data_exist();
             break;
         case IOT_INFO_TYPE_IOT_SERVER_ENV:
-            if (ctx->prov_data.cloud.broker_url) {
-                iot_server_type_t server_type = iot_util_get_server_type(ctx->prov_data.cloud.broker_url);
-                switch (server_type) {
-                    case IOT_SERVER_PROD_AP_NORTH_EAST2:
-                    case IOT_SERVER_PROD_US_EAST1:
-                    case IOT_SERVER_PROD_EU_WEST1:
-                    case IOT_SERVER_PROD_CHINA:
-                        info_data->server_env = SERVER_ENV_PRD;
-                        break;
-                    case IOT_SERVER_ACC_US_EAST2:
-                        info_data->server_env = SERVER_ENV_ACC;
-                        break;
-                    case IOT_SERVER_STG_US_EAST1:
-                    case IOT_SERVER_STG_CHINA:
-                        info_data->server_env = SERVER_ENV_STG;
-                        break;
-                    case IOT_SERVER_DEV_US_EAST1:
-                        info_data->server_env = SERVER_ENV_DEV;
-                        break;
-                    default:
-                        info_data->server_env = SERVER_ENV_UNKNOWN;
-                        break;
-                }
-            } else {
-                IOT_WARN("There is no server yet");
-                iot_err = IOT_ERROR_BAD_REQ;
-            }
+            info_data->server_env = ctx->server_env;
             break;
         case IOT_INFO_TYPE_IOT_DEVICEID:
             if (ctx->iot_reg_data.deviceId[0]) {

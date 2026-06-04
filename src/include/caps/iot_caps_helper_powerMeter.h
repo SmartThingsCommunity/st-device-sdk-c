@@ -35,18 +35,16 @@ const static struct iot_caps_powerMeter {
         const unsigned char valueType;
         const char *units[CAP_ENUM_POWERMETER_POWER_UNIT_MAX];
         const char *unit_W;
-        const double min;
     } attr_power;
 } caps_helper_powerMeter = {
     .id = "powerMeter",
     .attr_power =
         {
             .name = "power",
-            .property = ATTR_SET_VALUE_MIN | ATTR_SET_VALUE_REQUIRED,
+            .property = ATTR_SET_VALUE_REQUIRED,
             .valueType = VALUE_TYPE_NUMBER,
             .units = {"W"},
             .unit_W = "W",
-            .min = 0,
         },
 };
 

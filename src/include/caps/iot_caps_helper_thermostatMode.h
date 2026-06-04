@@ -26,6 +26,7 @@ extern "C" {
 #endif
 
 enum {
+    CAP_ENUM_THERMOSTATMODE_THERMOSTATMODE_VALUE_ANTIFREEZING,
     CAP_ENUM_THERMOSTATMODE_THERMOSTATMODE_VALUE_ASLEEP,
     CAP_ENUM_THERMOSTATMODE_THERMOSTATMODE_VALUE_AUTO,
     CAP_ENUM_THERMOSTATMODE_THERMOSTATMODE_VALUE_AUTOWITHECO,
@@ -38,6 +39,8 @@ enum {
     CAP_ENUM_THERMOSTATMODE_THERMOSTATMODE_VALUE_AUXILIARYEMERGENCYHEAT,
     CAP_ENUM_THERMOSTATMODE_THERMOSTATMODE_VALUE_AWAY,
     CAP_ENUM_THERMOSTATMODE_THERMOSTATMODE_VALUE_COOL,
+    CAP_ENUM_THERMOSTATMODE_THERMOSTATMODE_VALUE_COOLINGFLOORANDCOLDAIR,
+    CAP_ENUM_THERMOSTATMODE_THERMOSTATMODE_VALUE_COMFORT,
     CAP_ENUM_THERMOSTATMODE_THERMOSTATMODE_VALUE_CUSTOM,
     CAP_ENUM_THERMOSTATMODE_THERMOSTATMODE_VALUE_DAYOFF,
     CAP_ENUM_THERMOSTATMODE_THERMOSTATMODE_VALUE_DRYAIR,
@@ -53,20 +56,33 @@ enum {
     CAP_ENUM_THERMOSTATMODE_THERMOSTATMODE_VALUE_HEAT,
     CAP_ENUM_THERMOSTATMODE_THERMOSTATMODE_VALUE_HEATINGOFF,
     CAP_ENUM_THERMOSTATMODE_THERMOSTATMODE_VALUE_HOME,
+    CAP_ENUM_THERMOSTATMODE_THERMOSTATMODE_VALUE_HOTWATERONLY,
     CAP_ENUM_THERMOSTATMODE_THERMOSTATMODE_VALUE_IN,
     CAP_ENUM_THERMOSTATMODE_THERMOSTATMODE_VALUE_MANUAL,
     CAP_ENUM_THERMOSTATMODE_THERMOSTATMODE_VALUE_MOISTAIR,
     CAP_ENUM_THERMOSTATMODE_THERMOSTATMODE_VALUE_OFF,
+    CAP_ENUM_THERMOSTATMODE_THERMOSTATMODE_VALUE_ON,
     CAP_ENUM_THERMOSTATMODE_THERMOSTATMODE_VALUE_OUT,
+    CAP_ENUM_THERMOSTATMODE_THERMOSTATMODE_VALUE_RADIATINGFLOOR,
+    CAP_ENUM_THERMOSTATMODE_THERMOSTATMODE_VALUE_RADIATINGFLOORANDHOTAIR,
     CAP_ENUM_THERMOSTATMODE_THERMOSTATMODE_VALUE_RESUME,
     CAP_ENUM_THERMOSTATMODE_THERMOSTATMODE_VALUE_RUSH_HOUR,
     CAP_ENUM_THERMOSTATMODE_THERMOSTATMODE_VALUE_RUSHHOUR,
     CAP_ENUM_THERMOSTATMODE_THERMOSTATMODE_VALUE_SCHEDULE,
     CAP_ENUM_THERMOSTATMODE_THERMOSTATMODE_VALUE_SOUTHERNAWAY,
+    CAP_ENUM_THERMOSTATMODE_THERMOSTATMODE_VALUE_PRECOOLING,
+    CAP_ENUM_THERMOSTATMODE_THERMOSTATMODE_VALUE_LUKEWARM,
+    CAP_ENUM_THERMOSTATMODE_THERMOSTATMODE_VALUE_WARM,
+    CAP_ENUM_THERMOSTATMODE_THERMOSTATMODE_VALUE_HOT,
+    CAP_ENUM_THERMOSTATMODE_THERMOSTATMODE_VALUE_VERYHOT,
+    CAP_ENUM_THERMOSTATMODE_THERMOSTATMODE_VALUE_ONDOL,
+    CAP_ENUM_THERMOSTATMODE_THERMOSTATMODE_VALUE_BATH,
+    CAP_ENUM_THERMOSTATMODE_THERMOSTATMODE_VALUE_ITERATIVERESERVATION,
+    CAP_ENUM_THERMOSTATMODE_THERMOSTATMODE_VALUE_24HOURRESERVATION,
     CAP_ENUM_THERMOSTATMODE_THERMOSTATMODE_VALUE_MAX
 };
 
-#define CAP_ENUM_THERMOSTATMODE_SUPPORTEDTHERMOSTATMODES_VALUE_MAX 37
+#define CAP_ENUM_THERMOSTATMODE_SUPPORTEDTHERMOSTATMODES_VALUE_MAX 53
 const static struct iot_caps_thermostatMode {
     const char *id;
     const struct thermostatMode_attr_thermostatMode {
@@ -74,6 +90,8 @@ const static struct iot_caps_thermostatMode {
         const unsigned char property;
         const unsigned char valueType;
         const char *values[CAP_ENUM_THERMOSTATMODE_THERMOSTATMODE_VALUE_MAX];
+        const char *value_24hourReservation;
+        const char *value_antifreezing;
         const char *value_asleep;
         const char *value_auto;
         const char *value_autowitheco;
@@ -85,7 +103,10 @@ const static struct iot_caps_thermostatMode {
         const char *value_auxheatonly;
         const char *value_auxiliaryemergencyheat;
         const char *value_away;
+        const char *value_bath;
         const char *value_cool;
+        const char *value_coolingfloorandcoldair;
+        const char *value_comfort;
         const char *value_custom;
         const char *value_dayoff;
         const char *value_dryair;
@@ -101,22 +122,35 @@ const static struct iot_caps_thermostatMode {
         const char *value_heat;
         const char *value_heatingoff;
         const char *value_home;
+        const char *value_hot;
+        const char *value_hotwateronly;
         const char *value_in;
+        const char *value_iterativeReservation;
+        const char *value_lukewarm;
         const char *value_manual;
         const char *value_moistair;
         const char *value_off;
+        const char *value_on;
+        const char *value_ondol;
         const char *value_out;
+        const char *value_precooling;
+        const char *value_radiatingfloor;
+        const char *value_radiatingfloorandhotair;
         const char *value_resume;
         const char *value_rush_hour;
         const char *value_rushhour;
         const char *value_schedule;
         const char *value_southernaway;
+        const char *value_veryhot;
+        const char *value_warm;
     } attr_thermostatMode;
     const struct thermostatMode_attr_supportedThermostatModes {
         const char *name;
         const unsigned char property;
         const unsigned char valueType;
         const char *values[CAP_ENUM_THERMOSTATMODE_SUPPORTEDTHERMOSTATMODES_VALUE_MAX];
+        const char *value_24hourReservation;
+        const char *value_antifreezing;
         const char *value_asleep;
         const char *value_auto;
         const char *value_autowitheco;
@@ -128,7 +162,10 @@ const static struct iot_caps_thermostatMode {
         const char *value_auxheatonly;
         const char *value_auxiliaryemergencyheat;
         const char *value_away;
+        const char *value_bath;
         const char *value_cool;
+        const char *value_coolingfloorandcoldair;
+        const char *value_comfort;
         const char *value_custom;
         const char *value_dayoff;
         const char *value_dryair;
@@ -144,16 +181,27 @@ const static struct iot_caps_thermostatMode {
         const char *value_heat;
         const char *value_heatingoff;
         const char *value_home;
+        const char *value_hot;
+        const char *value_hotwateronly;
         const char *value_in;
+        const char *value_iterativeReservation;
+        const char *value_lukewarm;
         const char *value_manual;
         const char *value_moistair;
         const char *value_off;
+        const char *value_on;
+        const char *value_ondol;
         const char *value_out;
+        const char *value_precooling;
+        const char *value_radiatingfloor;
+        const char *value_radiatingfloorandhotair;
         const char *value_resume;
         const char *value_rush_hour;
         const char *value_rushhour;
         const char *value_schedule;
         const char *value_southernaway;
+        const char *value_veryhot;
+        const char *value_warm;
     } attr_supportedThermostatModes;
     const struct thermostatMode_cmd_heat {
         const char *name;
@@ -180,7 +228,8 @@ const static struct iot_caps_thermostatMode {
             .name = "thermostatMode",
             .property = ATTR_SET_VALUE_REQUIRED,
             .valueType = VALUE_TYPE_STRING,
-            .values = {"asleep",
+            .values = {"antifreezing",
+                       "asleep",
                        "auto",
                        "autowitheco",
                        "autowithreset",
@@ -192,6 +241,8 @@ const static struct iot_caps_thermostatMode {
                        "auxiliaryemergencyheat",
                        "away",
                        "cool",
+                       "coolingfloorandcoldair",
+                       "comfort",
                        "custom",
                        "dayoff",
                        "dryair",
@@ -207,16 +258,31 @@ const static struct iot_caps_thermostatMode {
                        "heat",
                        "heatingoff",
                        "home",
+                       "hotwateronly",
                        "in",
                        "manual",
                        "moistair",
                        "off",
+                       "on",
                        "out",
+                       "radiatingfloor",
+                       "radiatingfloorandhotair",
                        "resume",
                        "rush hour",
                        "rushhour",
                        "schedule",
-                       "southernaway"},
+                       "southernaway",
+                       "precooling",
+                       "lukewarm",
+                       "warm",
+                       "hot",
+                       "veryhot",
+                       "ondol",
+                       "bath",
+                       "iterativeReservation",
+                       "24hourReservation"},
+            .value_antifreezing = "antifreezing",
+            .value_24hourReservation = "24hourReservation",
             .value_asleep = "asleep",
             .value_auto = "auto",
             .value_autowitheco = "autowitheco",
@@ -228,7 +294,10 @@ const static struct iot_caps_thermostatMode {
             .value_auxheatonly = "auxheatonly",
             .value_auxiliaryemergencyheat = "auxiliaryemergencyheat",
             .value_away = "away",
+            .value_bath = "bath",
             .value_cool = "cool",
+            .value_coolingfloorandcoldair = "coolingfloorandcoldair",
+            .value_comfort = "comfort",
             .value_custom = "custom",
             .value_dayoff = "dayoff",
             .value_dryair = "dryair",
@@ -244,23 +313,35 @@ const static struct iot_caps_thermostatMode {
             .value_heat = "heat",
             .value_heatingoff = "heatingoff",
             .value_home = "home",
+            .value_hot = "hot",
+            .value_hotwateronly = "hotwateronly",
             .value_in = "in",
+            .value_iterativeReservation = "iterativeReservation",
+            .value_lukewarm = "lukewarm",
             .value_manual = "manual",
             .value_moistair = "moistair",
             .value_off = "off",
+            .value_on = "on",
+            .value_ondol = "ondol",
             .value_out = "out",
+            .value_precooling = "precooling",
+            .value_radiatingfloor = "radiatingfloor",
+            .value_radiatingfloorandhotair = "radiatingfloorandhotair",
             .value_resume = "resume",
             .value_rush_hour = "rush hour",
             .value_rushhour = "rushhour",
             .value_schedule = "schedule",
             .value_southernaway = "southernaway",
+            .value_veryhot = "veryhot",
+            .value_warm = "warm",
         },
     .attr_supportedThermostatModes =
         {
             .name = "supportedThermostatModes",
             .property = ATTR_SET_VALUE_ARRAY,
             .valueType = VALUE_TYPE_STRING,
-            .values = {"asleep",
+            .values = {"antifreezing",
+                       "asleep",
                        "auto",
                        "autowitheco",
                        "autowithreset",
@@ -272,6 +353,8 @@ const static struct iot_caps_thermostatMode {
                        "auxiliaryemergencyheat",
                        "away",
                        "cool",
+                       "coolingfloorandcoldair",
+                       "comfort",
                        "custom",
                        "dayoff",
                        "dryair",
@@ -287,16 +370,31 @@ const static struct iot_caps_thermostatMode {
                        "heat",
                        "heatingoff",
                        "home",
+                       "hotwateronly",
                        "in",
                        "manual",
                        "moistair",
                        "off",
+                       "on",
                        "out",
+                       "radiatingfloor",
+                       "radiatingfloorandhotair",
                        "resume",
                        "rush hour",
                        "rushhour",
                        "schedule",
-                       "southernaway"},
+                       "southernaway",
+                       "precooling",
+                       "lukewarm",
+                       "warm",
+                       "hot",
+                       "veryhot",
+                       "ondol",
+                       "bath",
+                       "iterativeReservation",
+                       "24hourReservation"},
+            .value_antifreezing = "antifreezing",
+            .value_24hourReservation = "24hourReservation",
             .value_asleep = "asleep",
             .value_auto = "auto",
             .value_autowitheco = "autowitheco",
@@ -308,7 +406,10 @@ const static struct iot_caps_thermostatMode {
             .value_auxheatonly = "auxheatonly",
             .value_auxiliaryemergencyheat = "auxiliaryemergencyheat",
             .value_away = "away",
+            .value_bath = "bath",
             .value_cool = "cool",
+            .value_coolingfloorandcoldair = "coolingfloorandcoldair",
+            .value_comfort = "comfort",
             .value_custom = "custom",
             .value_dayoff = "dayoff",
             .value_dryair = "dryair",
@@ -324,16 +425,27 @@ const static struct iot_caps_thermostatMode {
             .value_heat = "heat",
             .value_heatingoff = "heatingoff",
             .value_home = "home",
+            .value_hot = "hot",
+            .value_hotwateronly = "hotwateronly",
             .value_in = "in",
+            .value_iterativeReservation = "iterativeReservation",
+            .value_lukewarm = "lukewarm",
             .value_manual = "manual",
             .value_moistair = "moistair",
             .value_off = "off",
+            .value_on = "on",
+            .value_ondol = "ondol",
             .value_out = "out",
+            .value_precooling = "precooling",
+            .value_radiatingfloor = "radiatingfloor",
+            .value_radiatingfloorandhotair = "radiatingfloorandhotair",
             .value_resume = "resume",
             .value_rush_hour = "rush hour",
             .value_rushhour = "rushhour",
             .value_schedule = "schedule",
             .value_southernaway = "southernaway",
+            .value_veryhot = "veryhot",
+            .value_warm = "warm",
         },
     .cmd_heat = {.name = "heat"},
     .cmd_emergencyHeat = {.name = "emergencyHeat"},

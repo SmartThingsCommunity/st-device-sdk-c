@@ -26,6 +26,7 @@ extern "C" {
 #endif
 
 enum {
+    CAP_ENUM_CARBONDIOXIDEHEALTHCONCERN_CARBONDIOXIDEHEALTHCONCERN_VALUE_UNKNOWN,
     CAP_ENUM_CARBONDIOXIDEHEALTHCONCERN_CARBONDIOXIDEHEALTHCONCERN_VALUE_GOOD,
     CAP_ENUM_CARBONDIOXIDEHEALTHCONCERN_CARBONDIOXIDEHEALTHCONCERN_VALUE_MODERATE,
     CAP_ENUM_CARBONDIOXIDEHEALTHCONCERN_CARBONDIOXIDEHEALTHCONCERN_VALUE_SLIGHTLYUNHEALTHY,
@@ -34,7 +35,6 @@ enum {
     CAP_ENUM_CARBONDIOXIDEHEALTHCONCERN_CARBONDIOXIDEHEALTHCONCERN_VALUE_HAZARDOUS,
     CAP_ENUM_CARBONDIOXIDEHEALTHCONCERN_CARBONDIOXIDEHEALTHCONCERN_VALUE_MAX
 };
-
 const static struct iot_caps_carbonDioxideHealthConcern {
     const char *id;
     const struct carbonDioxideHealthConcern_attr_carbonDioxideHealthConcern {
@@ -42,6 +42,7 @@ const static struct iot_caps_carbonDioxideHealthConcern {
         const unsigned char property;
         const unsigned char valueType;
         const char *values[CAP_ENUM_CARBONDIOXIDEHEALTHCONCERN_CARBONDIOXIDEHEALTHCONCERN_VALUE_MAX];
+        const char *value_unknown;
         const char *value_good;
         const char *value_moderate;
         const char *value_slightlyUnhealthy;
@@ -49,6 +50,19 @@ const static struct iot_caps_carbonDioxideHealthConcern {
         const char *value_veryUnhealthy;
         const char *value_hazardous;
     } attr_carbonDioxideHealthConcern;
+    const struct carbonDioxideHealthConcern_attr_supportedCarbonDioxideValues {
+        const char *name;
+        const unsigned char property;
+        const unsigned char valueType;
+        const char *values[CAP_ENUM_CARBONDIOXIDEHEALTHCONCERN_CARBONDIOXIDEHEALTHCONCERN_VALUE_MAX];
+        const char *value_unknown;
+        const char *value_good;
+        const char *value_moderate;
+        const char *value_slightlyUnhealthy;
+        const char *value_unhealthy;
+        const char *value_veryUnhealthy;
+        const char *value_hazardous;
+    } attr_supportedCarbonDioxideValues;
 } caps_helper_carbonDioxideHealthConcern = {
     .id = "carbonDioxideHealthConcern",
     .attr_carbonDioxideHealthConcern =
@@ -56,7 +70,22 @@ const static struct iot_caps_carbonDioxideHealthConcern {
             .name = "carbonDioxideHealthConcern",
             .property = ATTR_SET_VALUE_REQUIRED,
             .valueType = VALUE_TYPE_STRING,
-            .values = {"good", "moderate", "slightlyUnhealthy", "unhealthy", "veryUnhealthy", "hazardous"},
+            .values = {"unknown", "good", "moderate", "slightlyUnhealthy", "unhealthy", "veryUnhealthy", "hazardous"},
+            .value_unknown = "unknown",
+            .value_good = "good",
+            .value_moderate = "moderate",
+            .value_slightlyUnhealthy = "slightlyUnhealthy",
+            .value_unhealthy = "unhealthy",
+            .value_veryUnhealthy = "veryUnhealthy",
+            .value_hazardous = "hazardous",
+        },
+    .attr_supportedCarbonDioxideValues =
+        {
+            .name = "supportedCarbonDioxideValues",
+            .property = ATTR_SET_VALUE_ARRAY,
+            .valueType = VALUE_TYPE_STRING,
+            .values = {"unknown", "good", "moderate", "slightlyUnhealthy", "unhealthy", "veryUnhealthy", "hazardous"},
+            .value_unknown = "unknown",
             .value_good = "good",
             .value_moderate = "moderate",
             .value_slightlyUnhealthy = "slightlyUnhealthy",

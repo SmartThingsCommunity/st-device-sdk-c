@@ -419,7 +419,7 @@ iot_error_t _es_deviceinfo_handler(struct iot_context *ctx, char **out_payload)
     };
     unsigned char *pubkey = NULL;
     unsigned char *combo_sn = NULL;
-    unsigned int pubkey_len = 0;
+    size_t pubkey_len = 0;
 
     if (!ctx) {
         IOT_ERROR("invalid iot_context!!");
@@ -1934,8 +1934,6 @@ iot_error_t _es_cloud_prov_parse(struct iot_context *ctx, char *in_payload)
 
     cloud_prov->broker_url = url.domain;
     cloud_prov->broker_port = url.port;
-
-    iot_update_dip_from_server_type(ctx, iot_util_get_server_type(cloud_prov->broker_url));
 
     err = iot_nv_set_cloud_prov_data(cloud_prov);
     if (err) {

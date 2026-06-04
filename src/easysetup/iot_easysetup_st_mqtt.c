@@ -37,7 +37,8 @@
 #include <cbor.h>
 #endif
 
-gg_connection_request_status _check_connection_response(char *response_payload, size_t response_payload_len)
+gg_connection_request_status _check_connection_response(struct iot_context *ctx, char *response_payload,
+                                                        size_t response_payload_len)
 {
     JSON_H *response_json = NULL;
     JSON_H *event_json = NULL;
@@ -91,7 +92,24 @@ gg_connection_request_status _check_connection_response(char *response_payload, 
 
             response_ret = GG_CONNECTION_REQUEST_STATUS_FAIL;
         } else if (!strncmp(event_json->valuestring, "connect.success", 15)) {
+            JSON_H *env_json = NULL;
             response_ret = GG_CONNECTION_REQUEST_STATUS_SUCCESS;
+            if (ctx->server_env == SERVER_ENV_UNKNOWN) {
+                env_json = JSON_GET_OBJECT_ITEM(response_json, "env");
+                if (env_json == NULL) {
+                    iot_update_server_env(ctx, SERVER_ENV_PRD);
+                } else {
+                    if (!strncmp(env_json->valuestring, "ACC", 3)) {
+                        iot_update_server_env(ctx, SERVER_ENV_ACC);
+                    } else if (!strncmp(env_json->valuestring, "STG", 3)) {
+                        iot_update_server_env(ctx, SERVER_ENV_STG);
+                    } else if (!strncmp(env_json->valuestring, "DEV", 3)) {
+                        iot_update_server_env(ctx, SERVER_ENV_DEV);
+                    } else {
+                        iot_update_server_env(ctx, SERVER_ENV_PRD);
+                    }
+                }
+            }
         } else {
             IOT_ERROR("No connection response payload %s", event_json->valuestring);
             response_ret = GG_CONNECTION_REQUEST_STATUS_WAITING;
@@ -303,7 +321,7 @@ void _iot_mqtt_registration_client_callback(st_mqtt_event event, void *event_dat
         case ST_MQTT_EVENT_MSG_DELIVERED: {
             st_mqtt_msg *md = event_data;
             if (ctx->sign_up_connection_request_status != GG_CONNECTION_REQUEST_STATUS_SUCCESS) {
-                ctx->sign_up_connection_request_status = _check_connection_response(md->payload, md->payloadlen);
+                ctx->sign_up_connection_request_status = _check_connection_response(ctx, md->payload, md->payloadlen);
                 return;
             }
 
@@ -401,7 +419,7 @@ void _iot_mqtt_signin_client_callback(st_mqtt_event event, void *event_data, voi
         case ST_MQTT_EVENT_MSG_DELIVERED: {
             st_mqtt_msg *md = event_data;
             if (ctx->sign_in_connection_request_status != GG_CONNECTION_REQUEST_STATUS_SUCCESS) {
-                ctx->sign_in_connection_request_status = _check_connection_response(md->payload, md->payloadlen);
+                ctx->sign_in_connection_request_status = _check_connection_response(ctx, md->payload, md->payloadlen);
                 return;
             }
 
@@ -877,45 +895,6 @@ void _iot_es_mqtt_disconnect(struct iot_context *ctx, st_mqtt_client target_cli)
     }
 }
 
-static const char server_url_prod_apnortheast2[] = "mqtt-regional-apnortheast2.api.smartthings.com";
-static const char server_url_prod_useast1[] = "mqtt-regional-useast1.api.smartthings.com";
-static const char server_url_prod_euwest1[] = "mqtt-regional-euwest1.api.smartthings.com";
-static const char server_url_prod_china[] = "mqtt-regional-cnnorth1.samsungiotcloud.cn";
-static const char server_url_acc_useast2[] = "mqtt-acceptance-useast2.stacceptance.com";
-static const char server_url_stg_useast1[] = "mqtt-staging-useast1.smartthingsgdev.com";
-static const char server_url_stg_china[] = "mqtt-staging-cnnorth1.samsungiots.cn";
-static const char server_url_dev_useast1[] = "mqtt-dev-useast1.smartthingsgdev.com";
-iot_error_t _iot_es_set_broker_url_port(st_server_type server_type, st_mqtt_broker_info_t *broker_info)
-{
-    iot_error_t ret = IOT_ERROR_NONE;
-
-    switch (server_type) {
-        case SERVER_TYPE_AP_NORTH_EAST2:
-            broker_info->url = (char *)server_url_prod_apnortheast2;
-            broker_info->port = 8883;
-            break;
-        case SERVER_TYPE_US_EAST1:
-            broker_info->url = (char *)server_url_prod_useast1;
-            broker_info->port = 8883;
-            break;
-        case SERVER_TYPE_EU_WEST1:
-            broker_info->url = (char *)server_url_prod_euwest1;
-            broker_info->port = 8883;
-            break;
-        default:
-            /* We'll support other server type in future */
-            (void)server_url_prod_china;
-            (void)server_url_acc_useast2;
-            (void)server_url_stg_useast1;
-            (void)server_url_stg_china;
-            (void)server_url_dev_useast1;
-            IOT_ERROR("not supporting server type %d", server_type);
-            ret = IOT_ERROR_INVALID_ARGS;
-    }
-
-    return ret;
-}
-
 iot_error_t _iot_es_mqtt_connect(struct iot_context *ctx, st_mqtt_client target_cli, char *username, char *sign_data)
 {
     st_mqtt_connect_data conn_data = st_mqtt_connect_data_initializer;
@@ -959,12 +938,6 @@ iot_error_t _iot_es_mqtt_connect(struct iot_context *ctx, st_mqtt_client target_
     if (ctx->prov_data.cloud.broker_url) {
         broker_info.url = ctx->prov_data.cloud.broker_url;
         broker_info.port = ctx->prov_data.cloud.broker_port;
-    } else if (ctx->server_type != SERVER_TYPE_UNKNOWN) {
-        iot_ret = _iot_es_set_broker_url_port(ctx->server_type, &broker_info);
-        if (iot_ret != IOT_ERROR_NONE) {
-            IOT_ERROR("Failed to get url and port from server type");
-            goto done_mqtt_connect;
-        }
     } else {
         IOT_ERROR("cloud_prov_data url does not exist!");
         iot_ret = IOT_ERROR_INVALID_ARGS;

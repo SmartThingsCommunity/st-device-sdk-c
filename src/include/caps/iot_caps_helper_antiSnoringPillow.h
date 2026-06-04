@@ -33,6 +33,8 @@ enum {
     CAP_ENUM_ANTISNORINGPILLOW_STATE_VALUE_MAX,
 };
 
+enum { CAP_ENUM_ANTISNORINGPILLOW_TIME_UNIT_MINS, CAP_ENUM_ANTISNORINGPILLOW_TIME_UNIT_MAX };
+
 const static struct iot_caps_antiSnoringPillow {
     const char *id;
     const struct antiSnoringPillow_attr_state {
@@ -49,11 +51,18 @@ const static struct iot_caps_antiSnoringPillow {
         const char *name;
         const unsigned char property;
         const unsigned char valueType;
+        const char *units[CAP_ENUM_ANTISNORINGPILLOW_TIME_UNIT_MAX];
+        const char *unit_mins;
+        const int min;
     } attr_snoringTime;
     const struct antiSnoringPillow_attr_snoringTimeDelta {
         const char *name;
         const unsigned char property;
         const unsigned char valueType;
+        const char *units[CAP_ENUM_ANTISNORINGPILLOW_TIME_UNIT_MAX];
+        const char *unit_mins;
+        const int min;
+        const int max;
     } attr_snoringTimeDelta;
     const struct antiSnoringPillow_attr_supportSnoringTimeGraph {
         const char *name;
@@ -64,11 +73,18 @@ const static struct iot_caps_antiSnoringPillow {
         const char *name;
         const unsigned char property;
         const unsigned char valueType;
+        const char *units[CAP_ENUM_ANTISNORINGPILLOW_TIME_UNIT_MAX];
+        const char *unit_mins;
+        const int min;
     } attr_pillowOperationTime;
     const struct antiSnoringPillow_attr_pillowOperationTimeDelta {
         const char *name;
         const unsigned char property;
         const unsigned char valueType;
+        const char *units[CAP_ENUM_ANTISNORINGPILLOW_TIME_UNIT_MAX];
+        const char *unit_mins;
+        const int min;
+        const int max;
     } attr_pillowOperationTimeDelta;
     const struct antiSnoringPillow_attr_supportPillowOperationTimeGraph {
         const char *name;
@@ -97,14 +113,21 @@ const static struct iot_caps_antiSnoringPillow {
     .attr_snoringTime =
         {
             .name = "snoringTime",
-            .property = ATTR_SET_VALUE_REQUIRED,
+            .property = ATTR_SET_VALUE_MIN | ATTR_SET_VALUE_REQUIRED,
             .valueType = VALUE_TYPE_INTEGER,
+            .units = {"mins"},
+            .unit_mins = "mins",
+            .min = 0,
         },
     .attr_snoringTimeDelta =
         {
             .name = "snoringTimeDelta",
-            .property = ATTR_SET_VALUE_REQUIRED,
+            .property = ATTR_SET_VALUE_MIN | ATTR_SET_VALUE_MAX | ATTR_SET_VALUE_REQUIRED,
             .valueType = VALUE_TYPE_INTEGER,
+            .units = {"mins"},
+            .unit_mins = "mins",
+            .min = 0,
+            .max = 60,
         },
     .attr_supportSnoringTimeGraph =
         {
@@ -115,14 +138,21 @@ const static struct iot_caps_antiSnoringPillow {
     .attr_pillowOperationTime =
         {
             .name = "pillowOperationTime",
-            .property = ATTR_SET_VALUE_REQUIRED,
+            .property = ATTR_SET_VALUE_MIN | ATTR_SET_VALUE_REQUIRED,
             .valueType = VALUE_TYPE_INTEGER,
+            .units = {"mins"},
+            .unit_mins = "mins",
+            .min = 0,
         },
     .attr_pillowOperationTimeDelta =
         {
             .name = "pillowOperationTimeDelta",
-            .property = ATTR_SET_VALUE_REQUIRED,
+            .property = ATTR_SET_VALUE_MIN | ATTR_SET_VALUE_MAX | ATTR_SET_VALUE_REQUIRED,
             .valueType = VALUE_TYPE_INTEGER,
+            .units = {"mins"},
+            .unit_mins = "mins",
+            .min = 0,
+            .max = 60,
         },
     .attr_supportPillowOperationTimeGraph =
         {

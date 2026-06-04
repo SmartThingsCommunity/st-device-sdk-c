@@ -46,6 +46,9 @@ enum {
     CAP_ENUM_DRYEROPERATINGSTATE_DRYERJOBSTATE_VALUE_AIDRYING,
     CAP_ENUM_DRYEROPERATINGSTATE_DRYERJOBSTATE_VALUE_SANITIZING,
     CAP_ENUM_DRYEROPERATINGSTATE_DRYERJOBSTATE_VALUE_INTERNALCARE,
+    CAP_ENUM_DRYEROPERATINGSTATE_DRYERJOBSTATE_VALUE_FREEZEPROTECTION,
+    CAP_ENUM_DRYEROPERATINGSTATE_DRYERJOBSTATE_VALUE_CONTINUOUSDEHUMIDIFYING,
+    CAP_ENUM_DRYEROPERATINGSTATE_DRYERJOBSTATE_VALUE_THAWINGFROZENINSIDE,
     CAP_ENUM_DRYEROPERATINGSTATE_DRYERJOBSTATE_VALUE_MAX
 };
 
@@ -91,6 +94,9 @@ const static struct iot_caps_dryerOperatingState {
         const char *value_aIDrying;
         const char *value_sanitizing;
         const char *value_internalCare;
+        const char *value_freezeProtection;
+        const char *value_continuousDehumidifying;
+        const char *value_thawingFrozenInside;
     } attr_dryerJobState;
     const struct dryerOperatingState_cmd_setMachineState {
         const char *name;
@@ -129,7 +135,8 @@ const static struct iot_caps_dryerOperatingState {
             .property = ATTR_SET_VALUE_REQUIRED,
             .valueType = VALUE_TYPE_STRING,
             .values = {"cooling", "delayWash", "drying", "finished", "none", "refreshing", "weightSensing",
-                       "wrinklePrevent", "dehumidifying", "aIDrying", "sanitizing", "internalCare"},
+                       "wrinklePrevent", "dehumidifying", "aIDrying", "sanitizing", "internalCare", "freezeProtection",
+                       "continuousDehumidifying", "thawingFrozenInside"},
             .value_cooling = "cooling",
             .value_delayWash = "delayWash",
             .value_drying = "drying",
@@ -142,6 +149,9 @@ const static struct iot_caps_dryerOperatingState {
             .value_aIDrying = "aIDrying",
             .value_sanitizing = "sanitizing",
             .value_internalCare = "internalCare",
+            .value_freezeProtection = "freezeProtection",
+            .value_continuousDehumidifying = "continuousDehumidifying",
+            .value_thawingFrozenInside = "thawingFrozenInside",
         },
     .cmd_setMachineState = {.name = "setMachineState"},  // arguments: state(string)
 };

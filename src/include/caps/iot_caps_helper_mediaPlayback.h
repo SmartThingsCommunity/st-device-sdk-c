@@ -32,6 +32,7 @@ enum {
     CAP_ENUM_MEDIAPLAYBACK_PLAYBACKSTATUS_VALUE_STOPPED,
     CAP_ENUM_MEDIAPLAYBACK_PLAYBACKSTATUS_VALUE_FAST_FORWARDING,
     CAP_ENUM_MEDIAPLAYBACK_PLAYBACKSTATUS_VALUE_REWINDING,
+    CAP_ENUM_MEDIAPLAYBACK_PLAYBACKSTATUS_VALUE_BUFFERING,
     CAP_ENUM_MEDIAPLAYBACK_PLAYBACKSTATUS_VALUE_MAX
 };
 
@@ -58,6 +59,7 @@ const static struct iot_caps_mediaPlayback {
         const char *value_stopped;
         const char *value_fast_forwarding;
         const char *value_rewinding;
+        const char *value_buffering;
     } attr_playbackStatus;
     const struct mediaPlayback_cmd_setPlaybackStatus {
         const char *name;
@@ -96,12 +98,13 @@ const static struct iot_caps_mediaPlayback {
             .name = "playbackStatus",
             .property = 0,
             .valueType = VALUE_TYPE_STRING,
-            .values = {"paused", "playing", "stopped", "fast forwarding", "rewinding"},
+            .values = {"paused", "playing", "stopped", "fast forwarding", "rewinding", "buffering"},
             .value_paused = "paused",
             .value_playing = "playing",
             .value_stopped = "stopped",
             .value_fast_forwarding = "fast forwarding",
             .value_rewinding = "rewinding",
+            .value_buffering = "buffering",
         },
     .cmd_setPlaybackStatus = {.name = "setPlaybackStatus"},  // arguments: status(string)
     .cmd_play = {.name = "play"},

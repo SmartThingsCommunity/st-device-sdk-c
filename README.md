@@ -29,6 +29,7 @@ This core device library provides the following features :
 - Easy and efficient APIs
   - Connection APIs : You can do onboarding & MQTT connection by just calling only a few these APIs.
   - Capability APIs : More than hundred different capabilities can be implemented as only a few APIs.
+- [Offline diagnostics](./doc/Offline_Diagnostics.md) : It helps users self-diagnose when an IoT device is detected as offline, identifies the cause, and provides recovery suggestions.
 
 ## Recommended Features
 
@@ -61,11 +62,15 @@ We are managing two git branch categories. One is `develop` branch. The other is
 - `develop` branch : Latest devleoping features. Recommand for new feature test or POC.
 - `release/v{version}` branchs : Tested and stable branchs. Recommand for Commercial product.
 
-## Quick PoC development on Linux distribution
+## Developer Support Tools
 
-You can build and test the SDK on your Linux distribution environment without real target board. In this way, you can easily make PoC demo for your product and check your IoT device feasibility on SmartThings platform. Also in real product developing, building and testing on Linux environment can accelerate product development speed.
+You can get the useful tools in [this link](./tools). It will help you to make sure for SmartThings Device SDK.
 
-We provide `example/posix` example to demonstrate how to build and test the SDK on Linux distribution. But before running the example, you should acquire [Getting Started](./doc/getting_started.md) to be familiar with the SDK development process and register your test device profile on [Developer Workspace](https://developer.smartthings.com/workspace/). And this example skips onboarding(registering) process, so before test, you should register your device on the cloud manually with [manual onboarding tool](./tools/manual_onboarding/README.md) provided in `tools/manual_onboarding` folder.
+- [Key Generation](./tools/keygen/README.md) : It will generate a key pair to be used for device authentication.
+- [QR Generation](./tools/qrgen/README.md) : It will help you create QR codes to attach to SmartThings-compliant devices.
+- [STDK Dev Support](./tools/STDK_dev_support/README.md) : It is designed to perform the onboarding process identically to the standard app and provide various information to the app side, so it is expected to be of great help in analyzing issues during porting.
+- [STDK Emulator](./tools/STDK_emulator/README.md) : You can obtain a reference device simply by installing the app. This is expected to help in the comparative analysis of issues that arise during porting.
+- [Manual Onboarding](./tools/manual_onboarding/README.md) : You can build and test the SDK on your Linux distribution environment without real target board. In this way, you can easily make PoC demo for your product and check your IoT device feasibility on SmartThings platform. Also in real product developing, building and testing on Linux environment can accelerate product development speed.
 
 ## Learn more
 

@@ -18,6 +18,7 @@ if(ENABLE_STDK_TEST)
                         ${st_device_sdk_c_SOURCE_DIR}/src/deps/libsodium/libsodium/src/libsodium/include
                         ${st_device_sdk_c_SOURCE_DIR}/src/deps/libsodium/libsodium/src/libsodium/include/sodium
                         ${st_device_sdk_c_SOURCE_DIR}/src/deps/libsodium/port/include
+                        ${st_device_sdk_c_SOURCE_DIR}/src/easysetup/ble
             )
 
     foreach(mock ${MOCKED_FUNCTIONS})
@@ -34,6 +35,12 @@ if(ENABLE_STDK_TEST)
             TC_FUNC_iot_easysetup_httpd.c
             TC_FUNC_iot_easysetup_http_parser.c
             TC_FUNC_iot_easysetup_http.c)
+    endif()
+
+    if(CONFIG_STDK_IOT_CORE_EASYSETUP_BLE)
+        set(EASYSETUP_EXTRA_SRCS
+            TC_FUNC_iot_easysetup_ble_task.c
+            TC_FUNC_iot_easysetup_ble.c)
     endif()
 
     add_executable(stdk_test

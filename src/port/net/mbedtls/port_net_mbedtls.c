@@ -369,25 +369,28 @@ int port_net_read(PORT_NET_CONTEXT ctx, void *buf, size_t len)
     int recvLen = 0, ret = 0;
     port_net_mbedtls_context_t *_ctx = (port_net_mbedtls_context_t *)ctx;
 
-    if (_ctx == NULL) {
+    if (_ctx == NULL || buf == NULL) {
         return -1;
+    }
+
+    if (len == 0) {
+        return 0;
     }
 
     IOT_DEBUG("%d@%p", len, buf);
     if (_ctx->is_tls_connection) {
         ret = mbedtls_ssl_read(&_ctx->ssl, buf, len);
-
-        if (ret > 0) {
-            recvLen += ret;
-        } else {
-            if ((ret != MBEDTLS_ERR_SSL_WANT_READ) && (ret != MBEDTLS_ERR_SSL_WANT_WRITE) &&
-                (ret != MBEDTLS_ERR_SSL_TIMEOUT)) {
-                IOT_ERROR("mbedtls_ssl_read = -0x%04X", -ret);
-                return ret;
-            }
-        }
     } else {
-        recvLen = mbedtls_net_recv(&_ctx->sock_fd, buf, len);
+        ret = mbedtls_net_recv(&_ctx->sock_fd, buf, len);
+    }
+
+    if (ret > 0) {
+        recvLen += ret;
+    } else {
+        if (ret != MBEDTLS_ERR_SSL_WANT_READ && ret != MBEDTLS_ERR_SSL_WANT_WRITE) {
+            IOT_ERROR("read(tls:%d) fail = -0x%04X", _ctx->is_tls_connection, -ret);
+            return -1;
+        }
     }
 
     return recvLen;
@@ -450,24 +453,28 @@ int port_net_write(PORT_NET_CONTEXT ctx, void *buf, size_t len)
     int sentLen = 0, ret = 0;
     port_net_mbedtls_context_t *_ctx = (port_net_mbedtls_context_t *)ctx;
 
-    if (_ctx == NULL) {
+    if (_ctx == NULL || buf == NULL) {
         return -1;
+    }
+
+    if (len == 0) {
+        return 0;
     }
 
     IOT_DEBUG("%d@%p", len, buf);
     if (_ctx->is_tls_connection) {
         ret = mbedtls_ssl_write(&_ctx->ssl, buf, len);
-
-        if (ret > 0) {
-            sentLen += ret;
-        } else {
-            if ((ret != MBEDTLS_ERR_SSL_WANT_READ) && (ret != MBEDTLS_ERR_SSL_WANT_WRITE)) {
-                IOT_ERROR("mbedtls_ssl_write = -0x%04X\n", -ret);
-                return ret;
-            }
-        }
     } else {
-        sentLen = mbedtls_net_send(&_ctx->sock_fd, buf, len);
+        ret = mbedtls_net_send(&_ctx->sock_fd, buf, len);
+    }
+
+    if (ret >= 0) {
+        sentLen += ret;
+    } else {
+        if (ret != MBEDTLS_ERR_SSL_WANT_READ && ret != MBEDTLS_ERR_SSL_WANT_WRITE) {
+            IOT_ERROR("write(tls:%d) fail = -0x%04X", _ctx->is_tls_connection, -ret);
+            return -1;
+        }
     }
 
     return sentLen;

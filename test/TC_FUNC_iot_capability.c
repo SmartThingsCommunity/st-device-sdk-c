@@ -780,8 +780,7 @@ void TC_iot_noti_sub_cb_rate_limit_reached_SUCCESS(void **state)
     internal_context->curr_state = IOT_STATE_CLOUD_CONNECTED;
     internal_context->work_queue = iot_util_queue_create(sizeof(device_work_data_t));
     internal_context->work_queue_signal = iot_os_eventgroup_create();
-    err = iot_os_timer_init(&internal_context->rate_limit_timeout);
-    assert_int_equal(err, IOT_ERROR_NONE);
+    internal_context->rate_limit_timeout = iot_os_timer_create(NULL, 60000, NULL);
     // When
     iot_noti_sub_cb(internal_context, payload);
     // Then
@@ -798,7 +797,7 @@ void TC_iot_noti_sub_cb_rate_limit_reached_SUCCESS(void **state)
     if (noti_cmd->param)
         iot_os_free(noti_cmd->param);
     iot_os_free(noti_cmd);
-    iot_os_timer_destroy(&internal_context->rate_limit_timeout);
+    iot_os_timer_delete(internal_context->rate_limit_timeout);
     iot_os_eventgroup_delete(internal_context->work_queue_signal);
     iot_util_queue_delete(internal_context->work_queue);
     free(context);

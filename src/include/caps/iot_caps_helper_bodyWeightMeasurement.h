@@ -42,20 +42,18 @@ const static struct iot_caps_bodyWeightMeasurement {
         const char *unit_kg;
         const char *unit_lbs;
         const char *unit_catty;
-        const double min;
     } attr_bodyWeightMeasurement;
 } caps_helper_bodyWeightMeasurement = {
     .id = "bodyWeightMeasurement",
     .attr_bodyWeightMeasurement =
         {
             .name = "bodyWeightMeasurement",
-            .property = ATTR_SET_VALUE_MIN | ATTR_SET_VALUE_REQUIRED | ATTR_SET_UNIT_REQUIRED,
+            .property = ATTR_SET_VALUE_REQUIRED | ATTR_SET_UNIT_REQUIRED,
             .valueType = VALUE_TYPE_NUMBER,
             .units = {"kg", "lbs", "斤"},
             .unit_kg = "kg",
             .unit_lbs = "lbs",
             .unit_catty = "斤",
-            .min = 0,
         },
 };
 

@@ -25,7 +25,7 @@
 extern "C" {
 #endif
 
-#define CAP_ENUM_BUTTON_SUPPORTEDBUTTONVALUES_VALUE_MAX 22
+#define CAP_ENUM_BUTTON_SUPPORTEDBUTTONVALUES_VALUE_MAX 26
 enum {
     CAP_ENUM_BUTTON_BUTTON_VALUE_PUSHED,
     CAP_ENUM_BUTTON_BUTTON_VALUE_HELD,
@@ -49,6 +49,10 @@ enum {
     CAP_ENUM_BUTTON_BUTTON_VALUE_UP_5X,
     CAP_ENUM_BUTTON_BUTTON_VALUE_UP_6X,
     CAP_ENUM_BUTTON_BUTTON_VALUE_UP_HOLD,
+    CAP_ENUM_BUTTON_BUTTON_VALUE_SWIPE_UP,
+    CAP_ENUM_BUTTON_BUTTON_VALUE_SWIPE_DOWN,
+    CAP_ENUM_BUTTON_BUTTON_VALUE_SWIPE_LEFT,
+    CAP_ENUM_BUTTON_BUTTON_VALUE_SWIPE_RIGHT,
     CAP_ENUM_BUTTON_BUTTON_VALUE_MAX
 };
 
@@ -81,6 +85,10 @@ const static struct iot_caps_button {
         const char *value_up_5x;
         const char *value_up_6x;
         const char *value_up_hold;
+        const char *value_swipe_up;
+        const char *value_swipe_down;
+        const char *value_swipe_left;
+        const char *value_swipe_right;
     } attr_supportedButtonValues;
     const struct button_attr_button {
         const char *name;
@@ -109,6 +117,10 @@ const static struct iot_caps_button {
         const char *value_up_5x;
         const char *value_up_6x;
         const char *value_up_hold;
+        const char *value_swipe_up;
+        const char *value_swipe_down;
+        const char *value_swipe_left;
+        const char *value_swipe_right;
     } attr_button;
     const struct button_attr_numberOfButtons {
         const char *name;
@@ -123,9 +135,10 @@ const static struct iot_caps_button {
             .name = "supportedButtonValues",
             .property = ATTR_SET_VALUE_ARRAY,
             .valueType = VALUE_TYPE_STRING,
-            .values = {"pushed", "held",    "double",  "pushed_2x", "pushed_3x", "pushed_4x", "pushed_5x", "pushed_6x",
-                       "down",   "down_2x", "down_3x", "down_4x",   "down_5x",   "down_6x",   "down_hold", "up",
-                       "up_2x",  "up_3x",   "up_4x",   "up_5x",     "up_6x",     "up_hold"},
+            .values = {"pushed",    "held",     "double",     "pushed_2x",  "pushed_3x",  "pushed_4x", "pushed_5x",
+                       "pushed_6x", "down",     "down_2x",    "down_3x",    "down_4x",    "down_5x",   "down_6x",
+                       "down_hold", "up",       "up_2x",      "up_3x",      "up_4x",      "up_5x",     "up_6x",
+                       "up_hold",   "swipe_up", "swipe_down", "swipe_left", "swipe_right"},
             .value_pushed = "pushed",
             .value_held = "held",
             .value_double = "double",
@@ -148,15 +161,20 @@ const static struct iot_caps_button {
             .value_up_5x = "up_5x",
             .value_up_6x = "up_6x",
             .value_up_hold = "up_hold",
+            .value_swipe_up = "swipe_up",
+            .value_swipe_down = "swipe_down",
+            .value_swipe_left = "swipe_left",
+            .value_swipe_right = "swipe_right",
         },
     .attr_button =
         {
             .name = "button",
             .property = ATTR_SET_VALUE_REQUIRED,
             .valueType = VALUE_TYPE_STRING,
-            .values = {"pushed", "held",    "double",  "pushed_2x", "pushed_3x", "pushed_4x", "pushed_5x", "pushed_6x",
-                       "down",   "down_2x", "down_3x", "down_4x",   "down_5x",   "down_6x",   "down_hold", "up",
-                       "up_2x",  "up_3x",   "up_4x",   "up_5x",     "up_6x",     "up_hold"},
+            .values = {"pushed",    "held",     "double",     "pushed_2x",  "pushed_3x",  "pushed_4x", "pushed_5x",
+                       "pushed_6x", "down",     "down_2x",    "down_3x",    "down_4x",    "down_5x",   "down_6x",
+                       "down_hold", "up",       "up_2x",      "up_3x",      "up_4x",      "up_5x",     "up_6x",
+                       "up_hold",   "swipe_up", "swipe_down", "swipe_left", "swipe_right"},
             .value_pushed = "pushed",
             .value_held = "held",
             .value_double = "double",
@@ -179,6 +197,10 @@ const static struct iot_caps_button {
             .value_up_5x = "up_5x",
             .value_up_6x = "up_6x",
             .value_up_hold = "up_hold",
+            .value_swipe_up = "swipe_up",
+            .value_swipe_down = "swipe_down",
+            .value_swipe_left = "swipe_left",
+            .value_swipe_right = "swipe_right",
         },
     .attr_numberOfButtons =
         {

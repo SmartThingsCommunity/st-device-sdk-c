@@ -261,6 +261,7 @@ iot_error_t iot_state_update(struct iot_context *ctx, iot_state_t new_state, int
 iot_error_t iot_state_timeout_change(struct iot_context *ctx, iot_state_t target_state, unsigned int new_timeout_ms)
 {
     iot_error_t err = IOT_ERROR_NONE;
+    int ret;
 
     if (target_state <= IOT_STATE_INITIALIZED)
         return IOT_ERROR_INVALID_ARGS;
@@ -273,7 +274,24 @@ iot_error_t iot_state_timeout_change(struct iot_context *ctx, iot_state_t target
         return IOT_ERROR_INVALID_ARGS;
     }
 
-    iot_os_timer_count_ms(ctx->state_timer, new_timeout_ms);
+    if (ctx->state_timer) {
+        iot_os_timer_delete(ctx->state_timer);
+        ctx->state_timer = NULL;
+    }
+
+    ctx->state_timer = iot_os_timer_create(iot_state_timeout_cb, new_timeout_ms, ctx);
+    if (!ctx->state_timer) {
+        err = IOT_ERROR_BAD_REQ;
+        IOT_ERROR("Failed to create state timer");
+    } else {
+        ret = iot_os_timer_start(ctx->state_timer);
+        if (ret) {
+            err = IOT_ERROR_BAD_REQ;
+            IOT_ERROR("Failed to start timer");
+        } else {
+            IOT_INFO("cloud connection start");
+        }
+    }
 
     return err;
 }
@@ -1688,55 +1706,86 @@ iot_error_t iot_cleanup(struct iot_context *ctx, bool reboot)
     return IOT_ERROR_NONE;
 }
 
-void iot_update_dip_from_server_type(struct iot_context *ctx, iot_server_type_t server_type)
+void iot_update_server_env(struct iot_context *ctx, server_env_type server_env)
 {
-    switch (server_type) {
-        case IOT_SERVER_PROD_AP_NORTH_EAST2:
-        case IOT_SERVER_PROD_US_EAST1:
-        case IOT_SERVER_PROD_EU_WEST1:
+    if (ctx->server_env == server_env) {
+        IOT_INFO("Same environment %d", server_env);
+        return;
+    }
+    ctx->server_env = server_env;
+    switch (server_env) {
+        case SERVER_ENV_PRD:
             if (ctx->devconf.prod_dip) {
-                IOT_INFO("Using prod dip for %d server type", server_type);
+                IOT_INFO("Using prod dip");
                 memcpy(ctx->devconf.dip->dip_id.id, ctx->devconf.prod_dip->dip_id.id, IOT_UUID_BYTES);
                 ctx->devconf.dip->dip_major_version = ctx->devconf.prod_dip->dip_major_version;
                 ctx->devconf.dip->dip_minor_version = ctx->devconf.prod_dip->dip_minor_version;
-            } else {
-                IOT_INFO("Using default dip for %d server type", server_type);
             }
             break;
-        case IOT_SERVER_ACC_US_EAST2:
+        case SERVER_ENV_ACC:
             if (ctx->devconf.acc_dip) {
-                IOT_INFO("Using acc dip for %d server type", server_type);
+                IOT_INFO("Using acc dip");
                 memcpy(ctx->devconf.dip->dip_id.id, ctx->devconf.acc_dip->dip_id.id, IOT_UUID_BYTES);
                 ctx->devconf.dip->dip_major_version = ctx->devconf.acc_dip->dip_major_version;
                 ctx->devconf.dip->dip_minor_version = ctx->devconf.acc_dip->dip_minor_version;
-            } else {
-                IOT_INFO("Using default dip for %d server type", server_type);
             }
             break;
-        case IOT_SERVER_STG_US_EAST1:
+        case SERVER_ENV_STG:
             if (ctx->devconf.stg_dip) {
-                IOT_INFO("Using stg dip for %d server type", server_type);
+                IOT_INFO("Using stg dip");
                 memcpy(ctx->devconf.dip->dip_id.id, ctx->devconf.stg_dip->dip_id.id, IOT_UUID_BYTES);
                 ctx->devconf.dip->dip_major_version = ctx->devconf.stg_dip->dip_major_version;
                 ctx->devconf.dip->dip_minor_version = ctx->devconf.stg_dip->dip_minor_version;
-            } else {
-                IOT_INFO("Using default dip for %d server type", server_type);
             }
             break;
-        case IOT_SERVER_DEV_US_EAST1:
+        case SERVER_ENV_DEV:
             if (ctx->devconf.dev_dip) {
-                IOT_INFO("Using dev dip for %d server type", server_type);
+                IOT_INFO("Using dev dip");
                 memcpy(ctx->devconf.dip->dip_id.id, ctx->devconf.dev_dip->dip_id.id, IOT_UUID_BYTES);
                 ctx->devconf.dip->dip_major_version = ctx->devconf.dev_dip->dip_major_version;
                 ctx->devconf.dip->dip_minor_version = ctx->devconf.dev_dip->dip_minor_version;
-            } else {
-                IOT_INFO("Using default dip for %d server type", server_type);
             }
             break;
         default:
-            IOT_INFO("Using default dip for %d server type", server_type);
+            IOT_INFO("Unknown server environment %d", server_env);
             break;
     }
+    if (ctx->iot_reg_data.deviceId[0]) {
+        ctx->dip_need_update = iot_check_dip_update_needed(ctx->devconf.dip);
+    }
+}
+
+bool iot_check_dip_update_needed(struct iot_dip_data *new_dip)
+{
+    iot_error_t err = IOT_ERROR_NONE;
+    struct iot_dip_data old_dip;
+    int idx;
+
+    if (new_dip == NULL) {
+        return true;
+    }
+
+    err = iot_misc_info_load(IOT_MISC_INFO_DIP, (void *)&old_dip);
+    if (err != IOT_ERROR_NONE) {
+        IOT_ERROR("failed to load stored DIP!! (%d)", err);
+        return true;
+    }
+
+    for (idx = 0; idx < IOT_UUID_BYTES; idx++) {
+        if (new_dip->dip_id.id[idx] != old_dip.dip_id.id[idx]) {
+            return true;
+        }
+    }
+
+    if (new_dip->dip_major_version != old_dip.dip_major_version) {
+        return true;
+    }
+
+    if (new_dip->dip_minor_version != old_dip.dip_minor_version) {
+        return true;
+    }
+
+    return false;
 }
 
 #if defined(CONFIG_STDK_IOT_CORE_EASYSETUP_WIFI_UPDATE)
