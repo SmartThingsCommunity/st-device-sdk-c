@@ -1138,7 +1138,8 @@ skip_time_set:
     JSON_ADD_ITEM_TO_OBJECT(data, "otmSupportFeatures", array);
     JSON_ADD_NUMBER_TO_OBJECT(root, "errorcode", 0);
 
-    ownership_validation_type = ctx->devconf.ownership_validation_type;
+    ownership_validation_type =
+        ctx->devconf.ownership_validation_type | (ctx->add_justworks ? IOT_OVF_TYPE_JUSTWORKS : 0);
 
     output_ptr = JSON_PRINT(root);
     *out_payload = output_ptr;

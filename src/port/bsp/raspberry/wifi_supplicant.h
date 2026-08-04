@@ -53,12 +53,5 @@ int supplicant_leave_network(void);
 int supplicant_start_softap(char *ssid_name, char *pswd);
 int supplicant_stop_softap(void);
 
-int supplicant_start_dhcp_client(void);
-void supplicant_stop_dhcp_client(void);
-int supplicant_start_dhcp_server(void);
-void supplicant_stop_dhcp_server(void);
-
 int supplicant_get_freq_support(void);
-
-int supplicant_activate_ntpd(void);
 #endif

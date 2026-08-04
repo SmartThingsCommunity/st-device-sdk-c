@@ -19,6 +19,8 @@
 #ifndef _IOT_MAIN_H_
 #define _IOT_MAIN_H_
 
+#include <time.h>
+
 #include "iot_bsp_wifi.h"
 #include "iot_error.h"
 #include "iot_mqtt.h"
@@ -46,6 +48,12 @@
 #define IOT_MAIN_TASK_DEFAULT_CYCLE 100 /* in ms */
 #define IOT_MQTT_CONNECT_CRITICAL_REJECT_MAX 3
 #define IOT_RATE_LIMIT_BREAK_TIME 60000
+#define IOT_PUBLISH_RATE_LIMIT_WINDOW_SEC (60 + 2) /* publish count rate limit time windows(60) + margine(2) */
+#if defined(CONFIG_STDK_IOT_CORE_PUBLISH_RATE_LIMIT_COUNT)
+#define IOT_PUBLISH_RATE_LIMIT_COUNT CONFIG_STDK_IOT_CORE_PUBLISH_RATE_LIMIT_COUNT
+#else
+#define IOT_PUBLISH_RATE_LIMIT_COUNT (50)
+#endif
 #define IOT_PREVERR_LEN 5
 
 #define IOT_DEVICE_NAME_MAX_LENGTH 20
@@ -69,14 +77,13 @@ enum _iot_noti_type {
 
     _IOT_NOTI_TYPE_DEV_DELETED = IOT_NOTI_TYPE_DEV_DELETED,
     _IOT_NOTI_TYPE_RATE_LIMIT = IOT_NOTI_TYPE_RATE_LIMIT,
+    _IOT_NOTI_TYPE_RATE_LIMIT_RELEASED = IOT_NOTI_TYPE_RATE_LIMIT_RELEASED,
     _IOT_NOTI_TYPE_QUOTA_REACHED = IOT_NOTI_TYPE_QUOTA_REACHED,
     _IOT_NOTI_TYPE_SEND_FAILED = IOT_NOTI_TYPE_SEND_FAILED,
+    _IOT_NOTI_TYPE_SEND_SUCCESS = IOT_NOTI_TYPE_SEND_SUCCESS,
     _IOT_NOTI_TYPE_PREFERENCE_UPDATED = IOT_NOTI_TYPE_PREFERENCE_UPDATED,
     _IOT_NOTI_TYPE_CHILD_DEVICE_SYNCED = IOT_NOTI_TYPE_CHILD_DEVICE_SYNCED,
     _IOT_NOTI_TYPE_CHILD_DEVICE_REGISTERED = IOT_NOTI_TYPE_CHILD_DEVICE_REGISTERED,
-
-    /* Internal only notifications */
-    _IOT_NOTI_TYPE_JWT_EXPIRED,
 };
 
 enum iot_command_type {
@@ -273,7 +280,6 @@ struct iot_registered_data {
     struct iot_uuid *locationId;             /**< @brief location Id, allocated from server */
     char deviceId[IOT_REG_UUID_STR_LEN + 1]; /**< @brief device Id, allocated from server */
     bool updated;                            /**< @brief reflect getting device id */
-    bool new_reged;                          /**< @brief reflect that it is new registration process or not */
 };
 
 /**
@@ -391,6 +397,11 @@ struct iot_context {
 
     bool rate_limit;                        /**< @brief whether rate limit occurs */
     iot_os_timer_handle rate_limit_timeout; /**< @brief timeout for rate limit penalty */
+
+#if defined(CONFIG_STDK_IOT_CORE_PUBLISH_RATE_LIMIT)
+    time_t publish_timestamps[IOT_PUBLISH_RATE_LIMIT_COUNT]; /**< @brief circular queue of publish timestamps */
+    int publish_timestamp_offset;                            /**< @brief current offset in circular queue */
+#endif
 
     unsigned int mqtt_connection_success_count; /**< @brief MQTT connection success count */
     unsigned int mqtt_connection_try_count;     /**< @brief MQTT connection try count */

@@ -39,7 +39,6 @@ if(CMAKE_C_COMPILER_ID STREQUAL "GNU" AND CMAKE_BUILD_TYPE MATCHES UnitTest)
         set(CMAKE_C_FLAGS "${CMAKE_C_FLAGS} -D${stdk_extra_cflags}")
         set(${stdk_extra_cflags} "y")
     endforeach()
-
     set(MOCKED_FUNCTIONS
         iot_os_malloc
         iot_os_realloc
@@ -51,6 +50,11 @@ if(CMAKE_C_COMPILER_ID STREQUAL "GNU" AND CMAKE_BUILD_TYPE MATCHES UnitTest)
         iot_bsp_wifi_set_mode
         iot_bsp_system_set_time_in_sec
         iot_bsp_system_reboot
+        iot_bsp_fs_open
+        iot_bsp_fs_read
+        iot_bsp_fs_write
+        iot_bsp_fs_close
+        iot_bsp_fs_remove
         port_net_read
         port_net_write
         port_net_connect
@@ -58,6 +62,13 @@ if(CMAKE_C_COMPILER_ID STREQUAL "GNU" AND CMAKE_BUILD_TYPE MATCHES UnitTest)
         port_net_write_poll
         port_net_close
         port_net_free
+        es_msg_dispatch
+        iot_send_indication
+        iot_bsp_ble_get_mtu
+        iot_bsp_ble_deinit
+        iot_security_manager_get_certificate
+        iot_easysetup_get_response
+        iot_easysetup_start_ble_advertisement
         )
 else()
     foreach(stdk_extra_cflags ${STDK_EXTRA_CFLAGS})

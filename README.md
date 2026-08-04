@@ -25,11 +25,12 @@ Using BLE is expected to not only support new SmartThings features, but also imp
 
 This core device library provides the following features :
 
+- [SmartThings Onboarding](./doc/BLE_Onboarding_ED25519.md) : Enables seamless device registration within SmartThings
 - Customized MQTT in order to reduce memory consumption and enhance stability
 - Easy and efficient APIs
   - Connection APIs : You can do onboarding & MQTT connection by just calling only a few these APIs.
   - Capability APIs : More than hundred different capabilities can be implemented as only a few APIs.
-- [Offline diagnostics](./doc/Offline_Diagnostics.md) : It helps users self-diagnose when an IoT device is detected as offline, identifies the cause, and provides recovery suggestions.
+- [Offline diagnostics](./doc/Offline_Diagnostics.md) : A feature designed to assist users in self-diagnosing issues when an IoT device is detected as offline, providing root cause analysis along with actionable recovery recommendations
 
 ## Recommended Features
 
@@ -78,11 +79,12 @@ For more information, please review the following documents:
 
 - [Getting Started](./doc/getting_started.md) : It covers the overall workflow and detailed steps for starters to work with SDK.
 - [API References](./doc/APIs.md) : It provide all API reference that SDK offers.
-- [Commercialization Guide](./doc/Commercialization_Guide.md) : It provides guide for ones who consider commercializing their IoT products with SDK.
-- [Capabilities Reference](https://developer.smartthings.com/docs/devices/capabilities/capabilities-reference) : This page serves as a reference for the supported capabilities.
 - [Developer Workspace](https://developer.smartthings.com/workspace/) : It provides functions related to device information registration and device integration in the SmartThings cloud.
+- [Device Registration](./doc/BLE_Onboarding_ED25519.md) : This page is a guide explaining the device registration process.
+- [Capabilities Reference](https://developer.smartthings.com/docs/devices/capabilities/capabilities-reference) : This page serves as a reference for the supported capabilities.
 - [Capability Attribute Update](./doc/Capability_Attribute_Update.md) : This development page guides how to use Capability Attribute update APIs.
-- [Device Registration](./doc/onboarding_seq_flow.md) : This page is a guide explaining the device registration process.
+- [Cloud Interaction](./doc/cloud_interface_seq.md) : This page is an explanatory guide to cloud connection and the event transmission.
+- [Commercialization Guide](./doc/Commercialization_Guide.md) : It provides guide for ones who consider commercializing their IoT products with SDK.
 
 ## Commercialization
 

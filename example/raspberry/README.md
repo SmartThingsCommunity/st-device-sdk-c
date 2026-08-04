@@ -28,6 +28,18 @@ Prevent pairing popups and to stop reverse service discovery
     + ReverseServiceDiscovery = false
     ```
 
+## DHCP Client Configuration
+
+Configure DHCP client daemon to automatically obtain an IP address when the WiFi interface connects to a network.
+
+Using `dhcpcd`:
+
+```sh
+$ sudo apt install dhcpcd5
+$ sudo systemctl enable dhcpcd
+$ sudo systemctl start dhcpcd
+```
+
 ## How to build and run example
 
 1. Move to `st-device-sdk-c` example directory, run cmake and build example.

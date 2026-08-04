@@ -23,7 +23,7 @@ First, you can create a Capability Attribute with `st_cap_create_attr()`. Then, 
 Assuming there is a power switch device with Switch Capability. When a user flips the power switch from off to on, the device wants to update its status to "on" in the cloud. Here is device app example code.
 
 ```c
-int output_seq_num;
+int output_request_id;
 IOT_EVENT *attr = NULL;
 iot_cap_val_t value;
 
@@ -31,7 +31,7 @@ value.type = IOT_CAP_VAL_TYPE_STRING;
 value.string = "on";
 attr = st_cap_create_attr(switch_cap_handle, "switch", &value, NULL, NULL); // switch_cap_handle is defined ahead
 if (attr != NULL) {
-    output_seq_num = st_cap_send_attr(&attr, 1);
+    output_request_id = st_cap_send_attr(&attr, 1);
     st_cap_free_attr(attr);
 }
 ```
@@ -129,7 +129,7 @@ As you see, it can send several Attributes data at one time. If you have a bunch
 * Sending several Capability Attribute data at one time
 
   ```c
-  int output_seq_num;
+  int output_request_id;
   IOT_EVENT *events[2] = {NULL, };
   iot_cap_val_t value1, value2;
 
@@ -141,7 +141,7 @@ As you see, it can send several Attributes data at one time. If you have a bunch
   value2.number = 37.5;
   events[1] = st_cap_create_attr(temperature_meas_cap_handle, "temperature", &value2, "C", NULL); // temperature_meas_cap_handle is defined ahead
 
-  output_seq_num = st_cap_send_attr(events, 2);
+  output_request_id = st_cap_send_attr(events, 2);
 
   st_cap_free_attr(events[0]);
   st_cap_free_attr(events[1]);
@@ -157,20 +157,20 @@ Updating Attribute might be frequently used in your device app. Therefore, to sa
   ```c
   /* 
    * ST_CAP_CREATE_ATTR_STRING(cap_handle, attribute, value_string, unit, data, output_attr)
-   * ST_CAP_SEND_ATTR_STRING(cap_handle, attribute, value_string, unit, data, output_seq_num)
+   * ST_CAP_SEND_ATTR_STRING(cap_handle, attribute, value_string, unit, data, output_request_id)
    *
    * Updating string type Attribute with macros example.
   **/
-  int output_seq_num;
+  int output_request_id;
   IOT_EVENT *attr = NULL;
   ST_CAP_CREATE_ATTR_STRING(switch_cap_handle, "switch", "on", NULL, NULL, attr); // switch_cap_handle is defined ahead
   if (attr != NULL) {
-      output_seq_num = st_cap_send_attr(&attr, 1);
+      output_request_id = st_cap_send_attr(&attr, 1);
       st_cap_free_attr(attr);
   }
   // or
-  int output_seq_num;
-  ST_CAP_SEND_ATTR_STRING(switch_cap_handle, "switch", "on", NULL, NULL, output_seq_num); // switch_cap_handle is defined ahead
+  int output_request_id;
+  ST_CAP_SEND_ATTR_STRING(switch_cap_handle, "switch", "on", NULL, NULL, output_request_id); // switch_cap_handle is defined ahead
   ```
 
 * Creating or Updating number type Attribute macros
@@ -179,20 +179,20 @@ Updating Attribute might be frequently used in your device app. Therefore, to sa
   ```c
   /* 
    * ST_CAP_CREATE_ATTR_NUMBER(cap_handle, attribute, value_number, unit, data, output_attr)
-   * ST_CAP_SEND_ATTR_NUMBER(cap_handle, attribute, value_number, unit, data, output_seq_num)
+   * ST_CAP_SEND_ATTR_NUMBER(cap_handle, attribute, value_number, unit, data, output_request_id)
    *
    * Updating number type Attribute with macros example.
   **/
-  int output_seq_num;
+  int output_request_id;
   IOT_EVENT *attr = NULL;
   ST_CAP_CREATE_ATTR_NUMBER(temperature_meas_cap_handle, "temperature", 37.5, "C", NULL, attr); // temperature_meas_cap_handle is defined ahead
   if (attr != NULL) {
-      output_seq_num = st_cap_send_attr(&attr, 1);
+      output_request_id = st_cap_send_attr(&attr, 1);
       st_cap_free_attr(attr);
   }
   // or
-  int output_seq_num;
-  ST_CAP_SEND_ATTR_NUMBER(temperature_meas_cap_handle, "temperature", 37.5, "C", NULL, output_seq_num); // temperature_meas_cap_handle is defined ahead
+  int output_request_id;
+  ST_CAP_SEND_ATTR_NUMBER(temperature_meas_cap_handle, "temperature", 37.5, "C", NULL, output_request_id); // temperature_meas_cap_handle is defined ahead
   ```
 
 * Creating or Updating string array type Attribute macros
@@ -201,22 +201,22 @@ Updating Attribute might be frequently used in your device app. Therefore, to sa
   ```c
   /* 
    * ST_CAP_CREATE_ATTR_STRINGS_ARRAY(cap_handle, attribute, value_string_array, array_num, unit, data, output_attr)
-   * ST_CAP_SEND_ATTR_STRINGS_ARRAY(cap_handle, attribute, value_string_array, array_num, unit, data, output_seq_num)
+   * ST_CAP_SEND_ATTR_STRINGS_ARRAY(cap_handle, attribute, value_string_array, array_num, unit, data, output_request_id)
    *
    * Updating string array type Attribute with macros example.
   **/
-  int output_seq_num;
+  int output_request_id;
   IOT_EVENT *attr = NULL;
   char *supported_sound_detection_type[2] = ["noSound", "snoring"];
   ST_CAP_CREATE_ATTR_STRINGS_ARRAY(sound_detection_cap_handle, "supportedSoundTypes", supported_sound_detection_type, 2, NULL, NULL, attr); // sound_detection_cap_handle is defined ahead
   if (attr != NULL) {
-      output_seq_num = st_cap_send_attr(&attr, 1);
+      output_request_id = st_cap_send_attr(&attr, 1);
       st_cap_free_attr(attr);
   }
   // or
-  int output_seq_num;
+  int output_request_id;
   char *supported_sound_detection_type[2] = ["noSound", "snoring"];
-  ST_CAP_SEND_ATTR_STRINGS_ARRAY(sound_detection_cap_handle, "supportedSoundTypes", supported_sound_detection_type, 2, NULL, NULL, output_seq_num); // sound_detection_cap_handle is defined ahead
+  ST_CAP_SEND_ATTR_STRINGS_ARRAY(sound_detection_cap_handle, "supportedSoundTypes", supported_sound_detection_type, 2, NULL, NULL, output_request_id); // sound_detection_cap_handle is defined ahead
   ```
 
 * Creating or Updating object type Attribute macros
@@ -225,20 +225,20 @@ Updating Attribute might be frequently used in your device app. Therefore, to sa
   ```c
   /* 
    * ST_CAP_CREATE_ATTR_OBJECT(cap_handle, attribute, value_object, unit, data, output_attr)
-   * ST_CAP_SEND_ATTR_OBJECT(cap_handle, attribute, value_object, unit, data, output_seq_num)
+   * ST_CAP_SEND_ATTR_OBJECT(cap_handle, attribute, value_object, unit, data, output_request_id)
    *
    * Updating object type Attribute with macros example.
   **/
-  int output_seq_num;
+  int output_request_id;
   IOT_EVENT *attr = NULL;
   ST_CAP_CREATE_ATTR_OBJECT(switch_level_cap_handle, "levelRange", "{\"minimum\" : 0, \"maximum\" : 100, \"step\" : 2}", NULL, NULL, attr); // switch_level_cap_handle is defined ahead
   if (attr != NULL) {
-      output_seq_num = st_cap_send_attr(&attr, 1);
+      output_request_id = st_cap_send_attr(&attr, 1);
       st_cap_free_attr(attr);
   }
   // or
-  int output_seq_num;
-  ST_CAP_SEND_ATTR_OBJECT(switch_level_cap_handle, "levelRange", "{\"minimum\" : 0, \"maximum\" : 100, \"step\" : 2}", NULL, NULL, output_seq_num); // switch_level_cap_handle is defined ahead
+  int output_request_id;
+  ST_CAP_SEND_ATTR_OBJECT(switch_level_cap_handle, "levelRange", "{\"minimum\" : 0, \"maximum\" : 100, \"step\" : 2}", NULL, NULL, output_request_id); // switch_level_cap_handle is defined ahead
   ```
 
 * Creating or Updating boolean type Attribute macros
@@ -247,20 +247,20 @@ Updating Attribute might be frequently used in your device app. Therefore, to sa
   ```c
   /* 
    * ST_CAP_CREATE_ATTR_BOOLEAN(cap_handle, attribute, value_boolean, unit, data, output_attr)
-   * ST_CAP_SEND_ATTR_BOOLEAN(cap_handle, attribute, value_boolean, unit, data, output_seq_num)
+   * ST_CAP_SEND_ATTR_BOOLEAN(cap_handle, attribute, value_boolean, unit, data, output_request_id)
    *
    * Updating boolean type Attribute with macros example.
   **/
-  int output_seq_num;
+  int output_request_id;
   IOT_EVENT *attr = NULL;
   ST_CAP_CREATE_ATTR_BOOLEAN(firmware_update_cap_handle, "updateAvailable", true, NULL, NULL, attr); // firmware_update_cap_handle is defined ahead
   if (attr != NULL) {
-      output_seq_num = st_cap_send_attr(&attr, 1);
+      output_request_id = st_cap_send_attr(&attr, 1);
       st_cap_free_attr(attr);
   }
   // or
-  int output_seq_num;
-  ST_CAP_SEND_ATTR_BOOLEAN(firmware_update_cap_handle, "updateAvailable", true, NULL, NULL, output_seq_num); // firmware_update_cap_handle is defined ahead
+  int output_request_id;
+  ST_CAP_SEND_ATTR_BOOLEAN(firmware_update_cap_handle, "updateAvailable", true, NULL, NULL, output_request_id); // firmware_update_cap_handle is defined ahead
   ```
 
 ***
@@ -282,7 +282,7 @@ Example
 // Do not leave switch Attribute update on History
 iot_cap_attr_option_t attr_option = { NULL, };
 bool displayed = false;
-int output_seq_num;
+int output_request_id;
 IOT_EVENT *attr = NULL;
 iot_cap_val_t value;
 
@@ -291,7 +291,7 @@ value.string = "on";
 attr_option.displayed = &displayed;
 attr = st_cap_create_attr_with_option(switch_cap_handle, "switch", &value, NULL, NULL, &attr_option); // switch_cap_handle is defined ahead
 if (attr != NULL) {
-    output_seq_num = st_cap_send_attr(&attr, 1);
+    output_request_id = st_cap_send_attr(&attr, 1);
     st_cap_free_attr(attr);
 }
 ```
@@ -308,7 +308,7 @@ Example
 ```c
 // Forcibly update push Attribute even though value is not changed
 iot_cap_attr_option_t attr_option = { NULL, };
-int output_seq_num;
+int output_request_id;
 IOT_EVENT *attr = NULL;
 iot_cap_val_t value;
 
@@ -317,7 +317,7 @@ value.string = "pushed";
 attr_option.state_change = true;
 attr = st_cap_create_attr_with_option(button_cap_handle, "button", &value, NULL, NULL, &attr_option); // button_cap_handle is defined ahead
 if (attr != NULL) {
-    output_seq_num = st_cap_send_attr(&attr, 1);
+    output_request_id = st_cap_send_attr(&attr, 1);
     st_cap_free_attr(attr);
 }
 ```
@@ -331,6 +331,42 @@ if (attr != NULL) {
 There is a count limit for a device to update Attributes per minute. It is currently set to 50, and when a device reaches that count, the server bans the device connection for the next minute. This policy was introduced to prevent excessive network traffic by any device. Therefore, the device app should manage its own Attribute update count to avoid disconnection.
 
 There are some best practices to reduce the Attribute update count. First, the device app should try to send multiple Attributes at once if possible. With `st_cap_send_attr` [multiple sending function](#sending-capability-attribute-data), you can save on update counts. Second, the device app should update the Attribute only when there is a change. In many cases, the device app updates Attributes periodically or performs initial updates several times, even when there is no changed value for the Attribute. Those cases are mainly the cause of rate limit rejection.
+
+#### Client-side Publish Rate Limit
+
+The SDK provides an optional client-side publish rate limit feature that pre-checks the event count before sending to the server. When enabled, `st_cap_send_attr()` will reject publish requests that would exceed the rate limit. This prevents unnecessary network traffic and avoids server-side disconnection penalties.
+
+**Kconfig options:**
+
+| Option | Description | Default |
+|--------|-------------|---------|
+| `CONFIG_STDK_IOT_CORE_PUBLISH_RATE_LIMIT` | Enable client-side publish rate limit | n |
+| `CONFIG_STDK_IOT_CORE_PUBLISH_RATE_LIMIT_COUNT` | Maximum number of attribute events per minute | 50 |
+
+#### Attribute Value De-duplication
+
+As mentioned above, one of the best practices is to update an Attribute only when its value actually changes. The SDK provides an optional feature that does this automatically. When enabled, the SDK caches the last value successfully delivered to the cloud for each Attribute. If `st_cap_send_attr()` is called with a value identical to the cached one, that Attribute is dropped instead of being published again, which reduces both network traffic and rate-limit pressure.
+
+The behavior is as follows:
+
+- The value of an Attribute is cached only after the publish carrying it is acknowledged by the server (`IOT_NOTI_TYPE_SEND_SUCCESS`). A value that fails to be sent is not cached, so it will be retried on the next call.
+- When several Attributes are passed in one call, only those carrying a new value are published; unchanged ones are filtered out.
+- If **every** Attribute in the call is a duplicate, nothing is published and `st_cap_send_attr()` returns `0`. This is **not** an error (errors are negative, a successful send returns a positive request id).
+- An Attribute created with the `state_change` option forced (see [Force state change](#force-state-change)) is always published regardless of its cached value.
+
+Therefore, when this feature is enabled, the device app should interpret the return value of `st_cap_send_attr()` as follows:
+
+| Return value | Meaning |
+|--------------|---------|
+| `> 0` | Published successfully (request id) |
+| `0` | All Attributes were duplicates, nothing published (not an error) |
+| `< 0` | Failed to publish |
+
+**Kconfig options:**
+
+| Option | Description | Default |
+|--------|-------------|---------|
+| `CONFIG_STDK_IOT_CORE_SUPPORT_ATTR_CACHE` | Support attribute value cache for de-duplication | n |
 
 ### Request Violation
 

@@ -93,12 +93,17 @@ typedef enum {
 
 typedef enum {
     ST_MQTT_EVENT_MSG_DELIVERED = 1,
-    ST_MQTT_EVENT_PUBLISH_FAILED = 2,
-    ST_MQTT_EVENT_PUBLISH_TIMEOUT = 3,
-    ST_MQTT_EVENT_DISCONNECTED = 4,
+    ST_MQTT_EVENT_DISCONNECTED = 2,
 } st_mqtt_event;
 
+typedef enum {
+    ST_MQTT_PUBLISH_RESULT_SUCCESS = 0,
+    ST_MQTT_PUBLISH_RESULT_FAILED = -1,
+    ST_MQTT_PUBLISH_RESULT_TIMEOUT = -2,
+} st_mqtt_publish_result;
+
 typedef void (*st_mqtt_event_callback)(st_mqtt_event event, void *event_data, void *usr_data);
+typedef void (*st_mqtt_publish_callback)(int chunk_id, st_mqtt_publish_result result, void *usr_data);
 
 enum {
     st_mqtt_qos0, /* MQTT QoS0 */
@@ -144,7 +149,7 @@ DLLExport int st_mqtt_connect(st_mqtt_client client, st_mqtt_broker_info_t *brok
 /** MQTT Publish - send an MQTT publish packet and wait for all acks to complete for all QoSs
  *  @param client - the client object to use
  *  @param msg - the publish packet message to send
- *  @return success code
+ *  @return chunk id on success, error code on failure
  */
 DLLExport int st_mqtt_publish(st_mqtt_client client, st_mqtt_msg *msg);
 
@@ -152,10 +157,12 @@ DLLExport int st_mqtt_publish(st_mqtt_client client, st_mqtt_msg *msg);
  * 			  if it fails, notify via callback function.
  *  @param client - the client object to use
  *  @param msg - the publish packet message to send
- *  @return 0 - success
- *  		others - error codes
+ *  @param publish_cb - callback function to be called when publish completes
+ *  @param usr_data - user data to pass to callback function
+ *  @return chunk id on success, error code on failure
  */
-DLLExport int st_mqtt_publish_async(st_mqtt_client client, st_mqtt_msg *msg);
+DLLExport int st_mqtt_publish_async(st_mqtt_client client, st_mqtt_msg *msg, st_mqtt_publish_callback publish_cb,
+                                    void *usr_data);
 
 /** MQTT Change ping period - change MQTT PING request period time.
  *  @param client - the client object to use

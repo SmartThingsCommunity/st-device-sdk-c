@@ -25,9 +25,11 @@
 #include <string.h>
 
 #include "TC_MOCK_functions.h"
+#include "TC_MOCK_iot_bsp_ble.h"
 #include "TC_UTIL_easysetup_common.h"
 #include "cmocka_custom.h"
 #include "easysetup_ble.h"
+#include "iot_bsp_ble.h"
 #include "iot_debug.h"
 #include "iot_error.h"
 #include "iot_internal.h"
@@ -45,6 +47,9 @@ extern struct iot_context *context;
 int TC_iot_easysetup_ble_task_setup(void **state)
 {
     iot_error_t err;
+
+    // Reset mock state before each test
+    tc_mock_ble_reset();
 
     // Use the common setup
     TC_iot_easysetup_common_setup(state);
@@ -83,45 +88,56 @@ void TC_es_msg_dispatch_null_parameters(void **state)
     uint8_t cmd_num = 5;
     UNUSED(state);
 
-    // Test that the function handles NULL buffer gracefully
+    // Given: use real es_msg_dispatch
+    tc_mock_ble_set_es_msg_dispatch_use_wrap(0);
+
     // When: dispatch with NULL buffer
     es_msg_dispatch(NULL, buf_count, cmd_num);
 
     // Then: function should handle gracefully (no crash)
-    assert_true(true);  // If we reach here, the function didn't crash
+    assert_true(true);
 }
 
 void TC_es_msg_dispatch_single_buffer(void **state)
 {
+    struct iot_context *ctx = (struct iot_context *)*state;
+    struct iot_context *original_context = context;
     iot_security_buffer_t buf[1];
     uint8_t buf_count = 1;
     uint8_t cmd_num = 5;
     char test_data[] = "test_data_for_ble";
     size_t data_len = strlen(test_data);
-    UNUSED(state);
 
-    // Given: valid buffer with data
+    // Given: use real es_msg_dispatch, valid buffer with data, context set
+    tc_mock_ble_set_es_msg_dispatch_use_wrap(0);
+    context = ctx;
     buf[0].p = (uint8_t *)test_data;
     buf[0].len = data_len;
 
     // When: dispatch with single buffer
     es_msg_dispatch(buf, buf_count, cmd_num);
 
+    // Restore original context
+    context = original_context;
+
     // Then: function should handle gracefully (no crash)
-    assert_true(true);  // If we reach here, the function didn't crash
+    assert_true(true);
 }
 
 void TC_es_msg_dispatch_multiple_buffers_warning(void **state)
 {
+    struct iot_context *ctx = (struct iot_context *)*state;
+    struct iot_context *original_context = context;
     iot_security_buffer_t buf[2];
     uint8_t buf_count = 2;
     uint8_t cmd_num = 3;
     char test_data1[] = "first_buffer_data";
     char test_data2[] = "second_buffer_data";
     size_t data1_len = strlen(test_data1);
-    UNUSED(state);
 
-    // Given: multiple buffers
+    // Given: use real es_msg_dispatch, multiple buffers, context set
+    tc_mock_ble_set_es_msg_dispatch_use_wrap(0);
+    context = ctx;
     buf[0].p = (uint8_t *)test_data1;
     buf[0].len = data1_len;
     buf[1].p = (uint8_t *)test_data2;
@@ -130,8 +146,11 @@ void TC_es_msg_dispatch_multiple_buffers_warning(void **state)
     // When: dispatch with multiple buffers (should log warning)
     es_msg_dispatch(buf, buf_count, cmd_num);
 
+    // Restore original context
+    context = original_context;
+
     // Then: function should handle gracefully (no crash)
-    assert_true(true);  // If we reach here, the function didn't crash
+    assert_true(true);
 }
 
 void TC_es_msg_dispatch_empty_buffer(void **state)
@@ -267,18 +286,39 @@ void TC_es_ble_init_advertisement_failure(void **state)
     struct iot_context *ctx = (struct iot_context *)*state;
     struct iot_context *original_context = context;
 
-    // Given: valid context
+    // Given: valid context, advertisement will fail
     context = ctx;
     ctx->es_ble_ready = false;
+    tc_mock_ble_set_start_adv_rc(IOT_ERROR_BAD_REQ);
 
-    // When: init called (advertisement might fail in real scenario)
+    // When: init called and advertisement fails
     es_ble_init();
 
     // Restore original context
     context = original_context;
 
     // Then: function should handle gracefully even if advertisement fails
-    assert_true(true);  // If we reach here, the function didn't crash
+    assert_true(true);
+}
+
+void TC_es_ble_init_advertisement_success(void **state)
+{
+    struct iot_context *ctx = (struct iot_context *)*state;
+    struct iot_context *original_context = context;
+
+    // Given: valid context, advertisement will succeed
+    context = ctx;
+    ctx->es_ble_ready = false;
+    tc_mock_ble_set_start_adv_rc(0);
+
+    // When: init called
+    es_ble_init();
+
+    // Restore original context
+    context = original_context;
+
+    // Then: advertisement was attempted
+    assert_int_equal(tc_mock_ble_get_start_adv_call_count(), 1);
 }
 
 void TC_es_ble_deinit_valid(void **state)
@@ -288,8 +328,8 @@ void TC_es_ble_deinit_valid(void **state)
     // When: deinit called
     es_ble_deinit();
 
-    // Then: function should complete without error
-    assert_true(true);  // If we reach here, the function didn't crash
+    // Then: iot_bsp_ble_deinit was called
+    assert_int_equal(tc_mock_ble_get_bsp_ble_deinit_call_count(), 1);
 }
 
 void TC_es_ble_deinit_multiple_calls(void **state)
@@ -301,8 +341,8 @@ void TC_es_ble_deinit_multiple_calls(void **state)
     es_ble_deinit();
     es_ble_deinit();
 
-    // Then: function should handle gracefully
-    assert_true(true);  // If we reach here, the function didn't crash
+    // Then: iot_bsp_ble_deinit was called 3 times
+    assert_int_equal(tc_mock_ble_get_bsp_ble_deinit_call_count(), 3);
 }
 
 void TC_es_ble_msg_handler_success(void **state)
@@ -318,6 +358,9 @@ void TC_es_ble_msg_handler_success(void **state)
 
     context = ctx;
 
+    // Given: use real es_msg_dispatch
+    tc_mock_ble_set_es_msg_dispatch_use_wrap(0);
+
     // Initialize work queue
     if (!ctx->work_queue) {
         ctx->work_queue = iot_util_queue_create(sizeof(device_work_data_t));
@@ -332,11 +375,10 @@ void TC_es_ble_msg_handler_success(void **state)
     buf[0].p = (uint8_t *)test_data;
     buf[0].len = data_len;
 
-    // Call es_msg_dispatch which will queue the work for _es_ble_msg_handler
+    // When: es_msg_dispatch queues work for _es_ble_msg_handler
     es_msg_dispatch(buf, buf_count, cmd_num);
 
-    // Manually process the work queue to execute the handler
-    // to simulate what the main work queue task would do
+    // Then: manually process the work queue to execute the handler
     if (iot_util_queue_receive(ctx->work_queue, &work) == IOT_ERROR_NONE) {
         work.handler(ctx, work.param);
         if (work.param) {

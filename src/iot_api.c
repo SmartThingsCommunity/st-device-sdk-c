@@ -38,6 +38,189 @@
 #define ONBOARDINGID_E5_MAX_LEN 14
 #define IOT_STATE_TIMEOUT_MAX_MS (900000) /* 15 min */
 
+#if defined(CONFIG_STDK_IOT_CORE_PUBLISH_RATE_LIMIT)
+bool iot_check_publish_rate_limit(struct iot_context *ctx)
+{
+    time_t now;
+    int oldest_offset;
+    time_t oldest_timestamp;
+    iot_error_t err;
+
+    if (!ctx) {
+        return false;
+    }
+
+    err = iot_bsp_system_get_time_in_sec(&now);
+    if (err != IOT_ERROR_NONE) {
+        IOT_WARN("Failed to get current time for rate limit check");
+        return true;
+    }
+
+    oldest_offset = (ctx->publish_timestamp_offset + 1) % IOT_PUBLISH_RATE_LIMIT_COUNT;
+    oldest_timestamp = ctx->publish_timestamps[oldest_offset];
+
+    if (oldest_timestamp != 0) {
+        if (now - oldest_timestamp < IOT_PUBLISH_RATE_LIMIT_WINDOW_SEC && now >= oldest_timestamp) {
+            IOT_WARN("Publish rate limit: should wait %ld seconds",
+                     (long)(IOT_PUBLISH_RATE_LIMIT_WINDOW_SEC - (now - oldest_timestamp)));
+            iot_notify_rate_limit(ctx, (IOT_PUBLISH_RATE_LIMIT_WINDOW_SEC - (now - oldest_timestamp)) * 1000);
+            return false;
+        }
+    }
+
+    return true;
+}
+
+void iot_record_publish_timestamp(struct iot_context *ctx)
+{
+    time_t now;
+    iot_error_t err;
+
+    if (!ctx) {
+        return;
+    }
+
+    err = iot_bsp_system_get_time_in_sec(&now);
+    if (err != IOT_ERROR_NONE) {
+        IOT_WARN("Failed to get current time for rate limit recording");
+        return;
+    }
+
+    ctx->publish_timestamp_offset = (ctx->publish_timestamp_offset + 1) % IOT_PUBLISH_RATE_LIMIT_COUNT;
+    ctx->publish_timestamps[ctx->publish_timestamp_offset] = now;
+}
+
+void iot_clear_publish_timestamp(struct iot_context *ctx)
+{
+    if (!ctx) {
+        return;
+    }
+
+    ctx->publish_timestamp_offset = 0;
+    memset(ctx->publish_timestamps, 0, IOT_PUBLISH_RATE_LIMIT_COUNT * sizeof(time_t));
+}
+#else
+bool iot_check_publish_rate_limit(struct iot_context *ctx)
+{
+    return true;
+}
+void iot_record_publish_timestamp(struct iot_context *ctx)
+{
+}
+void iot_clear_publish_timestamp(struct iot_context *ctx)
+{
+}
+#endif
+
+/**
+ * @brief      Internal wrapper for st_mqtt_publish_async with rate limit handling
+ * @details    This function provides a common interface for MQTT publish operations
+ *             with built-in rate limit checking and timestamp recording.
+ * @param[in]  ctx          iot-core context
+ * @param[in]  client       MQTT client handle
+ * @param[in]  msg          MQTT message to publish
+ * @retval     int          0 on success, negative error code on failure
+ */
+int iot_mqtt_publish_async(struct iot_context *ctx, st_mqtt_client client, st_mqtt_msg *msg,
+                           st_mqtt_publish_callback publish_cb, void *usr_data)
+{
+    int ret;
+
+    /* Rate limit check */
+    if (ctx->rate_limit || !iot_check_publish_rate_limit(ctx)) {
+        IOT_WARN("Exceed rate limit. Can't send MQTT message for a while");
+        return IOT_ERROR_MQTT_RATE_LIMIT;
+    }
+
+    /* MQTT publish */
+    ret = st_mqtt_publish_async(client, msg, publish_cb, usr_data);
+    if (ret < 0) {
+        IOT_WARN("MQTT pub error(%d)", ret);
+        return ret;
+    }
+
+    /* Record timestamp on success */
+    iot_record_publish_timestamp(ctx);
+
+    return ret;
+}
+
+/**
+ * @brief      Internal wrapper for st_mqtt_publish with rate limit handling
+ * @details    This function provides a common interface for synchronous MQTT publish operations
+ *             with built-in rate limit checking and timestamp recording.
+ * @param[in]  ctx          iot-core context
+ * @param[in]  client       MQTT client handle
+ * @param[in]  msg          MQTT message to publish
+ * @retval     int          0 on success, negative error code on failure
+ */
+int iot_mqtt_publish(struct iot_context *ctx, st_mqtt_client client, st_mqtt_msg *msg)
+{
+    int ret;
+
+    /* Rate limit check */
+    if (ctx->rate_limit || !iot_check_publish_rate_limit(ctx)) {
+        IOT_WARN("Exceed rate limit. Can't send MQTT message for a while");
+        return IOT_ERROR_MQTT_RATE_LIMIT;
+    }
+
+    /* MQTT publish (synchronous) */
+    ret = st_mqtt_publish(client, msg);
+    if (ret < 0) {
+        IOT_WARN("MQTT pub error(%d)", ret);
+        return ret;
+    }
+
+    /* Record timestamp on success */
+    iot_record_publish_timestamp(ctx);
+
+    return ret;
+}
+
+static void _iot_noti_rate_limit_cb(iot_os_timer_handle handle, void *user_data)
+{
+    struct iot_context *ctx = (struct iot_context *)user_data;
+    iot_noti_data_t noti_data = {
+        0,
+    };
+
+    ctx->rate_limit = false;
+    noti_data.type = _IOT_NOTI_TYPE_RATE_LIMIT_RELEASED;
+    iot_command_send(ctx, IOT_COMMAND_NOTIFICATION_RECEIVED, &noti_data, sizeof(noti_data));
+}
+
+void iot_notify_rate_limit(struct iot_context *ctx, int remaining_time_ms)
+{
+    iot_noti_data_t noti_data = {
+        0,
+    };
+
+    if (ctx->rate_limit) {
+        IOT_DEBUG("Still in rate limit penalty");
+        return;
+    }
+
+    if (ctx->rate_limit_timeout) {
+        iot_os_timer_delete(ctx->rate_limit_timeout);
+    }
+    ctx->rate_limit_timeout = iot_os_timer_create(_iot_noti_rate_limit_cb, remaining_time_ms, ctx);
+    if (!ctx->rate_limit_timeout) {
+        IOT_ERROR("Failed to create rate limit timeout");
+        return;
+    } else {
+        if (!iot_os_timer_start(ctx->rate_limit_timeout)) {
+            ctx->rate_limit = true;
+        } else {
+            IOT_ERROR("Failed to start rate limit timeout");
+            return;
+        }
+    }
+
+    noti_data.type = _IOT_NOTI_TYPE_RATE_LIMIT;
+    noti_data.raw.rate_limit.remainingTime = remaining_time_ms;
+    iot_command_send(ctx, IOT_COMMAND_NOTIFICATION_RECEIVED, &noti_data, sizeof(noti_data));
+}
+
 iot_error_t iot_wifi_get_status(struct iot_context *ctx)
 {
     iot_error_t con_result = IOT_ERROR_NONE;
@@ -1176,8 +1359,12 @@ static iot_error_t _get_preverr_from_json(JSON_H *json, char *prev_err)
         return IOT_ERROR_BAD_REQ;
     }
 
-    memcpy(prev_err, item->valuestring, strlen(item->valuestring));
-    prev_err[strlen(item->valuestring)] = '\0';
+    size_t len = strlen(item->valuestring);
+    if (len > IOT_ST_ECODE_STR_LEN)
+        len = IOT_ST_ECODE_STR_LEN;
+    memcpy(prev_err, item->valuestring, len);
+    prev_err[len] = '\0';
+
     return IOT_ERROR_NONE;
 }
 
@@ -1949,8 +2136,8 @@ iot_error_t iot_update_wifi_info(struct iot_context *ctx)
 
     IOT_INFO("publish event, topic : %s, payload :\n%s", ctx->mqtt_event_topic, (char *)msg.payload);
 
-    ret = st_mqtt_publish_async(ctx->evt_mqttcli, &msg);
-    if (ret) {
+    ret = iot_mqtt_publish_async(ctx, ctx->evt_mqttcli, &msg, NULL, NULL);
+    if (ret < 0) {
         IOT_WARN("MQTT pub error(%d)", ret);
         free(msg.payload);
         return IOT_ERROR_MQTT_PUBLISH_FAIL;
@@ -2024,8 +2211,8 @@ iot_error_t iot_update_child_devices_health(struct iot_context *ctx, iot_child_d
 
     IOT_INFO("publish, topic : %s, payload :\n%s", ctx->mqtt_health_topic, (char *)msg.payload);
 
-    ret = st_mqtt_publish_async(ctx->evt_mqttcli, &msg);
-    if (ret) {
+    ret = iot_mqtt_publish_async(ctx, ctx->evt_mqttcli, &msg, NULL, NULL);
+    if (ret < 0) {
         IOT_WARN("MQTT pub error(%d)", ret);
         free(msg.payload);
         return IOT_ERROR_MQTT_PUBLISH_FAIL;

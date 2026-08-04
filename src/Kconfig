@@ -308,4 +308,33 @@ endchoice
 
 endmenu # Network
 
+config STDK_IOT_CORE_PUBLISH_RATE_LIMIT
+    bool "Enable client-side publish rate limit"
+    default n
+    depends on STDK_IOT_CORE
+    help
+       If this option is enabled, STDK will check the publish rate limit
+       on the client side before sending attribute events to the server.
+       Events exceeding the rate limit will be rejected with IOT_ERROR_MQTT_RATE_LIMIT.
+
+config STDK_IOT_CORE_PUBLISH_RATE_LIMIT_COUNT
+    int "Maximum number of attribute events per minute"
+    default 50
+    depends on STDK_IOT_CORE_PUBLISH_RATE_LIMIT
+    help
+       Configuration for the maximum number of attribute events that can be
+       published within a 1-minute window. Default is 50.
+
+config STDK_IOT_CORE_SUPPORT_ATTR_CACHE
+    bool "Support attribute value cache for de-duplication"
+    default n
+    depends on STDK_IOT_CORE
+    help
+       If this option is enabled, st_cap_send_attr caches the last value
+       successfully delivered for each attribute and skips publishing an
+       attribute whose value is unchanged, to avoid unnecessary traffic.
+       When every attribute in a call is a duplicate, nothing is published
+       and 0 is returned. An attribute with the stateChange option forced is
+       always published regardless of its cached value.
+
 endmenu # SmartThings IoT Core

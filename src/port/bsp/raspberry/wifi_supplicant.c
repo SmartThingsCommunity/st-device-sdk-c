@@ -43,20 +43,6 @@
 #define WIRELESS_CTRL_INTF_PATH "/sys/class/net"
 #define PID_DIRECTORY "/var/run"
 
-#define DNSMASQ_LEASES_FILE "/var/lib/misc/dnsmasq.leases"
-
-#define DHCLIENT_LEASES_FILE "/var/lib/dhcp/dhclient.leases"
-#define DHCLIENT_CONF_LEN 1024
-#define DHCLIENT_CONF_FILE "/etc/dhclient.conf"
-#define DHCLIENT_CONF                                                                   \
-    "option rfc3442-classless-static-routes code 121 = array of unsigned integer 8; \n" \
-    "send host-name \"%s\";\n"                                                          \
-    "request subnet-mask, broadcast-address, time-offset, routers,"                     \
-    "domain-name, domain-name-servers, domain-search, host-name,"                       \
-    "dhcp6.name-servers, dhcp6.domain-search,"                                          \
-    "netbios-name-servers, netbios-scope, interface-mtu,"                               \
-    "rfc3442-classless-static-routes, ntp-servers;\n"
-
 #define WIFI_KEY_MGMT_NONE "none"
 #define WIFI_KEY_MGMT_WEP "wep"
 #define WIFI_KEY_MGMT_PSK "psk"
@@ -598,9 +584,6 @@ void supplicant_initialise_wifi(void)
 
     sleep(1);
 
-    supplicant_stop_dhcp_client();
-    supplicant_stop_dhcp_server();
-
     supplicant_leave_network();
     supplicant_stop_station();
     supplicant_stop_softap();
@@ -690,7 +673,6 @@ int supplicant_start_station(void)
         }
     }
 
-    supplicant_stop_dhcp_server();
     if (supplicant_stop_softap() == -1)
         return -1;
 
@@ -775,7 +757,6 @@ int supplicant_start_softap(char *ssid_name, char *pswd)
         }
     }
 
-    supplicant_stop_dhcp_client();
     if (supplicant_leave_network() == -1)
         return -1;
 
@@ -826,118 +807,6 @@ int supplicant_stop_softap(void)
     return 0;
 }
 
-int supplicant_start_dhcp_client(void)
-{
-    FILE *fp = NULL;
-    char buf[DHCLIENT_CONF_LEN] = "";
-    char hostname[150];
-    char *ctrl_ifname;
-    int ret;
-
-    if (supplicant_get_wireless_interface(&ctrl_ifname)) {
-        IOT_ERROR("unable to fetch the wireless interface");
-        return -1;
-    }
-
-    char *const args[] = {"/sbin/dhclient", "-cf", "/etc/dhclient.conf", ctrl_ifname, "-v", NULL};
-    char *const envs[] = {NULL};
-
-    if (supplicant_fetch_pid("dhclient") != -1)
-        supplicant_stop_dhcp_client();
-
-    if (remove(DHCLIENT_LEASES_FILE) < 0)
-        IOT_INFO("failed to remove %s", DHCLIENT_LEASES_FILE);
-
-    fp = fopen(DHCLIENT_CONF_FILE, "w");
-    if (!fp) {
-        IOT_ERROR("could not create the file\n");
-        return -EINVAL;
-    }
-
-    gethostname(hostname, 150);
-    snprintf(buf, DHCLIENT_CONF_LEN, DHCLIENT_CONF, hostname);
-    fputs(buf, fp);
-    fclose(fp);
-
-    /* run Dhclient daemon */
-    ret = supplicant_execute_command(args[0], &args[0], envs);
-    if (ret < 0) {
-        IOT_ERROR("failed to start Dhclient %d", ret);
-        return -1;
-    }
-    return 0;
-}
-
-void supplicant_stop_dhcp_client(void)
-{
-    int dhclient_pid;
-
-    dhclient_pid = supplicant_fetch_pid("dhclient");
-    if (dhclient_pid == -1) {
-        IOT_INFO("dhclient is already stopped");
-        return;
-    }
-
-    kill(dhclient_pid, SIGTERM);
-    waitpid(dhclient_pid, NULL, 0);
-    if (remove(DHCLIENT_CONF_FILE) < 0)
-        IOT_INFO("Failed to remove %s", DHCLIENT_CONF_FILE);
-}
-
-int supplicant_start_dhcp_server(void)
-{
-    char *ctrl_ifname;
-    char *const args_dns[] = {"/usr/sbin/dnsmasq", "-p0", "-F192.168.4.3,192.168.4.10", "-O3,192.168.4.1", NULL};
-    char *const envs[] = {NULL};
-    int ret;
-
-    if (supplicant_get_wireless_interface(&ctrl_ifname)) {
-        IOT_ERROR("unable to fetch the wireless interface");
-        return -1;
-    }
-
-    /* Assigning IP address to the DHCP server host */
-    char *const args_ip_flush[] = {"/sbin/ip", "addr", "flush", "dev", ctrl_ifname, NULL};
-    char *const args_ip[] = {"/sbin/ip", "addr", "add", "192.168.4.1/24", "dev", ctrl_ifname, NULL};
-
-    if (supplicant_execute_command(args_ip_flush[0], &args_ip_flush[0], envs) < 0) {
-        IOT_ERROR("unable to flush already assigned IP address");
-        return -1;
-    }
-
-    if (supplicant_execute_command(args_ip[0], &args_ip[0], envs) < 0) {
-        IOT_ERROR("unable to assign IP address to the host");
-        return -1;
-    }
-
-    if (supplicant_fetch_pid("dnsmasq") != -1)
-        supplicant_stop_dhcp_server();
-
-    if (remove(DNSMASQ_LEASES_FILE) < 0)
-        IOT_ERROR("failed to remove %s", DNSMASQ_LEASES_FILE);
-
-    ret = supplicant_execute_command(args_dns[0], &args_dns[0], envs);
-    if (ret < 0) {
-        IOT_ERROR("failed to start DHCP server %d", ret);
-        return -1;
-    }
-    return 0;
-}
-
-void supplicant_stop_dhcp_server(void)
-{
-    int dnsmasq_pid;
-
-    dnsmasq_pid = supplicant_fetch_pid("dnsmasq");
-    if (dnsmasq_pid == -1) {
-        IOT_INFO("dnsmasq is already stopped");
-        return;
-    }
-
-    kill(dnsmasq_pid, SIGTERM);
-    waitpid(dnsmasq_pid, NULL, 0);
-}
-
 /* Parse `iw phy` command output and check whether
  * board supports only 2.4GHz or both 2.4GHz and 5GHz.
  */
@@ -957,26 +826,5 @@ int supplicant_get_freq_support(void)
         }
     }
     pclose(fp);
-    return 0;
-}
-
-int supplicant_activate_ntpd(void)
-{
-    char *const args_ntp_set[] = {"/usr/bin/timedatectl", "set-ntp", "no", NULL};
-    char *const args_ntp_restart[] = {"/bin/systemctl", "restart", "ntp", NULL};
-    char *const envs[] = {NULL};
-    int ret;
-
-    ret = supplicant_execute_command(args_ntp_set[0], &args_ntp_set[0], envs);
-    if (ret < 0) {
-        IOT_ERROR("unable to set ntp");
-        return -1;
-    }
-
-    ret = supplicant_execute_command(args_ntp_restart[0], &args_ntp_restart[0], envs);
-    if (ret < 0) {
-        IOT_ERROR("unable to restart ntp service");
-        return -1;
-    }
     return 0;
 }

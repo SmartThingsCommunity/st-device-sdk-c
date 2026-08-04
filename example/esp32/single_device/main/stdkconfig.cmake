@@ -39,4 +39,10 @@ SET(STDK_EXTRA_CFLAGS
 
     CONFIG_STDK_IOT_CORE_NET_MBEDTLS
     # CONFIG_STDK_IOT_CORE_NET_OPENSSL is not set
+
+    # Client-side publish rate limit
+    CONFIG_STDK_IOT_CORE_PUBLISH_RATE_LIMIT
+
+    # Attribute value cache for de-duplication
+    CONFIG_STDK_IOT_CORE_SUPPORT_ATTR_CACHE
 )

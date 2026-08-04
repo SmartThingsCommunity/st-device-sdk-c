@@ -397,6 +397,7 @@ char *_generate_post_keyinfo_payload(int year, time_t *time_to_set)
 {
     char *post_message;
     JSON_H *root = NULL;
+    JSON_H *data = NULL;
     iot_error_t err;
     size_t out_length;
     unsigned char *curve25519_server_pk_b64;
@@ -456,11 +457,16 @@ char *_generate_post_keyinfo_payload(int year, time_t *time_to_set)
 
     root = JSON_CREATE_OBJECT();
     assert_non_null(root);
-    JSON_ADD_ITEM_TO_OBJECT(root, "spub", JSON_CREATE_STRING((const char *)curve25519_server_pk_b64));
-    JSON_ADD_ITEM_TO_OBJECT(root, "rand", JSON_CREATE_STRING(TEST_SRAND));
-    JSON_ADD_ITEM_TO_OBJECT(root, "datetime", JSON_CREATE_STRING((const char *)b64url_datetime));
-    JSON_ADD_ITEM_TO_OBJECT(root, "regionaldatetime", JSON_CREATE_STRING((const char *)b64url_regionaldatetime));
-    JSON_ADD_ITEM_TO_OBJECT(root, "timezoneid", JSON_CREATE_STRING((const char *)b64url_timezoneid));
+
+    // Create data object to wrap all the fields as expected by _es_keyinfo_handler
+    data = JSON_CREATE_OBJECT();
+    JSON_ADD_ITEM_TO_OBJECT(root, "data", data);
+
+    JSON_ADD_ITEM_TO_OBJECT(data, "spub", JSON_CREATE_STRING((const char *)curve25519_server_pk_b64));
+    JSON_ADD_ITEM_TO_OBJECT(data, "rand", JSON_CREATE_STRING(TEST_SRAND));
+    JSON_ADD_ITEM_TO_OBJECT(data, "datetime", JSON_CREATE_STRING((const char *)b64url_datetime));
+    JSON_ADD_ITEM_TO_OBJECT(data, "regionaldatetime", JSON_CREATE_STRING((const char *)b64url_regionaldatetime));
+    JSON_ADD_ITEM_TO_OBJECT(data, "timezoneid", JSON_CREATE_STRING((const char *)b64url_timezoneid));
     post_message = JSON_PRINT(root);
     JSON_DELETE(root);
     free(curve25519_server_pk_b64);

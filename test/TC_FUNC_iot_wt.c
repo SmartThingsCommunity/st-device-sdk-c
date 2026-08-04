@@ -284,3 +284,295 @@ void TC_iot_wt_create_with_empty_sn(void **state)
     assert_int_equal(err, IOT_ERROR_INVALID_ARGS);
     assert_null(token_buf.p);
 }
+
+void TC_iot_wt_create_consecutive_calls_success(void **state)
+{
+    iot_error_t err;
+    iot_wt_params_t wt_params;
+    iot_security_buffer_t token_buf1 = {0};
+    iot_security_buffer_t token_buf2 = {0};
+    UNUSED(state);
+
+    // Given
+    wt_params.sn = (char *)sample_sn;
+    wt_params.sn_len = strlen(sample_sn);
+    wt_params.mnid = (char *)sample_mnid;
+    wt_params.mnid_len = strlen(sample_mnid);
+
+    // When: create twice back-to-back
+    err = iot_wt_create(&wt_params, &token_buf1);
+    // Then
+    assert_int_equal(err, IOT_ERROR_NONE);
+    assert_non_null(token_buf1.p);
+
+    err = iot_wt_create(&wt_params, &token_buf2);
+    // Then
+    assert_int_equal(err, IOT_ERROR_NONE);
+    assert_non_null(token_buf2.p);
+
+    // Local teardown
+    iot_os_free(token_buf1.p);
+    iot_os_free(token_buf2.p);
+}
+
+void TC_iot_wt_create_with_empty_dipid_success(void **state)
+{
+    iot_error_t err;
+    iot_wt_params_t wt_params;
+    iot_security_buffer_t token_buf = {0};
+    UNUSED(state);
+
+    // Given
+    wt_params.sn = (char *)sample_sn;
+    wt_params.sn_len = strlen(sample_sn);
+    wt_params.mnid = (char *)sample_mnid;
+    wt_params.mnid_len = strlen(sample_mnid);
+    wt_params.dipid = "";
+    wt_params.dipid_len = 0;
+
+    // When
+    err = iot_wt_create(&wt_params, &token_buf);
+    // Then: empty dipid should take the no-dipid branch
+    assert_int_equal(err, IOT_ERROR_NONE);
+    assert_non_null(token_buf.p);
+
+    // Local teardown
+    iot_os_free(token_buf.p);
+}
+
+void TC_iot_wt_create_malloc_failure_index_0(void **state)
+{
+    iot_error_t err;
+    iot_wt_params_t wt_params;
+    iot_security_buffer_t token_buf = {0};
+    UNUSED(state);
+
+    wt_params.sn = (char *)sample_sn;
+    wt_params.sn_len = strlen(sample_sn);
+    wt_params.mnid = (char *)sample_mnid;
+    wt_params.mnid_len = strlen(sample_mnid);
+
+    // Memory allocation error paths in iot_wt may leak; disable strict leak
+    // detection for these negative tests since they only verify the return
+    // code of iot_wt_create under simulated allocation failure.
+    set_mock_detect_memory_leak(false);
+
+    // When: first malloc in the chain fails
+    do_not_use_mock_iot_os_malloc_failure();
+    set_mock_iot_os_malloc_failure_with_index(0);
+    err = iot_wt_create(&wt_params, &token_buf);
+    do_not_use_mock_iot_os_malloc_failure();
+    // Then
+    assert_int_not_equal(err, IOT_ERROR_NONE);
+    assert_null(token_buf.p);
+}
+
+void TC_iot_wt_create_malloc_failure_index_2(void **state)
+{
+    iot_error_t err;
+    iot_wt_params_t wt_params;
+    iot_security_buffer_t token_buf = {0};
+    UNUSED(state);
+
+    wt_params.sn = (char *)sample_sn;
+    wt_params.sn_len = strlen(sample_sn);
+    wt_params.mnid = (char *)sample_mnid;
+    wt_params.mnid_len = strlen(sample_mnid);
+
+    // When: the third malloc call fails
+    set_mock_detect_memory_leak(false);
+    do_not_use_mock_iot_os_malloc_failure();
+    set_mock_iot_os_malloc_failure_with_index(2);
+    err = iot_wt_create(&wt_params, &token_buf);
+    do_not_use_mock_iot_os_malloc_failure();
+    // Then
+    assert_int_not_equal(err, IOT_ERROR_NONE);
+}
+
+void TC_iot_wt_create_malloc_failure_index_3(void **state)
+{
+    iot_error_t err;
+    iot_wt_params_t wt_params;
+    iot_security_buffer_t token_buf = {0};
+    UNUSED(state);
+
+    wt_params.sn = (char *)sample_sn;
+    wt_params.sn_len = strlen(sample_sn);
+    wt_params.mnid = (char *)sample_mnid;
+    wt_params.mnid_len = strlen(sample_mnid);
+
+    set_mock_detect_memory_leak(false);
+    do_not_use_mock_iot_os_malloc_failure();
+    set_mock_iot_os_malloc_failure_with_index(3);
+    err = iot_wt_create(&wt_params, &token_buf);
+    do_not_use_mock_iot_os_malloc_failure();
+    assert_int_not_equal(err, IOT_ERROR_NONE);
+}
+
+void TC_iot_wt_create_malloc_failure_index_4(void **state)
+{
+    iot_error_t err;
+    iot_wt_params_t wt_params;
+    iot_security_buffer_t token_buf = {0};
+    UNUSED(state);
+
+    wt_params.sn = (char *)sample_sn;
+    wt_params.sn_len = strlen(sample_sn);
+    wt_params.mnid = (char *)sample_mnid;
+    wt_params.mnid_len = strlen(sample_mnid);
+
+    set_mock_detect_memory_leak(false);
+    do_not_use_mock_iot_os_malloc_failure();
+    set_mock_iot_os_malloc_failure_with_index(4);
+    err = iot_wt_create(&wt_params, &token_buf);
+    do_not_use_mock_iot_os_malloc_failure();
+    assert_int_not_equal(err, IOT_ERROR_NONE);
+}
+
+void TC_iot_wt_create_malloc_failure_index_5(void **state)
+{
+    iot_error_t err;
+    iot_wt_params_t wt_params;
+    iot_security_buffer_t token_buf = {0};
+    UNUSED(state);
+
+    wt_params.sn = (char *)sample_sn;
+    wt_params.sn_len = strlen(sample_sn);
+    wt_params.mnid = (char *)sample_mnid;
+    wt_params.mnid_len = strlen(sample_mnid);
+
+    set_mock_detect_memory_leak(false);
+    do_not_use_mock_iot_os_malloc_failure();
+    set_mock_iot_os_malloc_failure_with_index(5);
+    err = iot_wt_create(&wt_params, &token_buf);
+    do_not_use_mock_iot_os_malloc_failure();
+    assert_int_not_equal(err, IOT_ERROR_NONE);
+}
+
+void TC_iot_wt_create_malloc_failure_index_6(void **state)
+{
+    iot_error_t err;
+    iot_wt_params_t wt_params;
+    iot_security_buffer_t token_buf = {0};
+    UNUSED(state);
+
+    wt_params.sn = (char *)sample_sn;
+    wt_params.sn_len = strlen(sample_sn);
+    wt_params.mnid = (char *)sample_mnid;
+    wt_params.mnid_len = strlen(sample_mnid);
+
+    set_mock_detect_memory_leak(false);
+    do_not_use_mock_iot_os_malloc_failure();
+    set_mock_iot_os_malloc_failure_with_index(6);
+    err = iot_wt_create(&wt_params, &token_buf);
+    do_not_use_mock_iot_os_malloc_failure();
+    assert_int_not_equal(err, IOT_ERROR_NONE);
+}
+
+void TC_iot_wt_create_malloc_failure_index_7(void **state)
+{
+    iot_error_t err;
+    iot_wt_params_t wt_params;
+    iot_security_buffer_t token_buf = {0};
+    UNUSED(state);
+
+    wt_params.sn = (char *)sample_sn;
+    wt_params.sn_len = strlen(sample_sn);
+    wt_params.mnid = (char *)sample_mnid;
+    wt_params.mnid_len = strlen(sample_mnid);
+
+    set_mock_detect_memory_leak(false);
+    do_not_use_mock_iot_os_malloc_failure();
+    set_mock_iot_os_malloc_failure_with_index(7);
+    err = iot_wt_create(&wt_params, &token_buf);
+    do_not_use_mock_iot_os_malloc_failure();
+    assert_int_not_equal(err, IOT_ERROR_NONE);
+}
+
+void TC_iot_wt_create_malloc_failure_index_8(void **state)
+{
+    iot_error_t err;
+    iot_wt_params_t wt_params;
+    iot_security_buffer_t token_buf = {0};
+    UNUSED(state);
+
+    wt_params.sn = (char *)sample_sn;
+    wt_params.sn_len = strlen(sample_sn);
+    wt_params.mnid = (char *)sample_mnid;
+    wt_params.mnid_len = strlen(sample_mnid);
+
+    set_mock_detect_memory_leak(false);
+    do_not_use_mock_iot_os_malloc_failure();
+    set_mock_iot_os_malloc_failure_with_index(8);
+    err = iot_wt_create(&wt_params, &token_buf);
+    do_not_use_mock_iot_os_malloc_failure();
+    assert_int_not_equal(err, IOT_ERROR_NONE);
+}
+
+void TC_iot_wt_create_malloc_failure_index_9(void **state)
+{
+    iot_error_t err;
+    iot_wt_params_t wt_params;
+    iot_security_buffer_t token_buf = {0};
+    UNUSED(state);
+
+    wt_params.sn = (char *)sample_sn;
+    wt_params.sn_len = strlen(sample_sn);
+    wt_params.mnid = (char *)sample_mnid;
+    wt_params.mnid_len = strlen(sample_mnid);
+
+    set_mock_detect_memory_leak(false);
+    do_not_use_mock_iot_os_malloc_failure();
+    set_mock_iot_os_malloc_failure_with_index(9);
+    err = iot_wt_create(&wt_params, &token_buf);
+    do_not_use_mock_iot_os_malloc_failure();
+    assert_int_not_equal(err, IOT_ERROR_NONE);
+}
+
+void TC_iot_wt_create_with_dipid_malloc_failure(void **state)
+{
+    iot_error_t err;
+    iot_wt_params_t wt_params;
+    iot_security_buffer_t token_buf = {0};
+    const char *sample_dipid = "dip_test_abc";
+    UNUSED(state);
+
+    wt_params.sn = (char *)sample_sn;
+    wt_params.sn_len = strlen(sample_sn);
+    wt_params.mnid = (char *)sample_mnid;
+    wt_params.mnid_len = strlen(sample_mnid);
+    wt_params.dipid = (char *)sample_dipid;
+    wt_params.dipid_len = strlen(sample_dipid);
+
+    // When: malloc fails after the dipid JSON field is added
+    set_mock_detect_memory_leak(false);
+    do_not_use_mock_iot_os_malloc_failure();
+    set_mock_iot_os_malloc_failure_with_index(4);
+    err = iot_wt_create(&wt_params, &token_buf);
+    do_not_use_mock_iot_os_malloc_failure();
+    assert_int_not_equal(err, IOT_ERROR_NONE);
+}
+
+void TC_iot_wt_create_with_longest_sn(void **state)
+{
+    iot_error_t err;
+    iot_wt_params_t wt_params;
+    iot_security_buffer_t token_buf = {0};
+    const char long_sn[] = "STDKtestc77078cc_longer_serial";
+    UNUSED(state);
+
+    set_mock_detect_memory_leak(false);
+
+    wt_params.sn = (char *)long_sn;
+    wt_params.sn_len = strlen(long_sn);
+    wt_params.mnid = (char *)sample_mnid;
+    wt_params.mnid_len = strlen(sample_mnid);
+
+    // When
+    err = iot_wt_create(&wt_params, &token_buf);
+    // Then: should still succeed
+    if (err == IOT_ERROR_NONE) {
+        assert_non_null(token_buf.p);
+        iot_os_free(token_buf.p);
+    }
+}

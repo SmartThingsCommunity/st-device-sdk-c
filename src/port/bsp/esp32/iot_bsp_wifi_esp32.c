@@ -568,15 +568,30 @@ uint16_t iot_bsp_wifi_get_scan_result(iot_wifi_scan_result_t *scan_result)
                     iot_wifi_auth_mode_t conv_auth_mode;
 
                     switch (ap_list[i].authmode) {
-                        case WIFI_AUTH_WAPI_PSK:
-                            conv_auth_mode = IOT_WIFI_AUTH_UNKNOWN;
+                        case WIFI_AUTH_OPEN:
+                            conv_auth_mode = IOT_WIFI_AUTH_OPEN;
+                            break;
+                        case WIFI_AUTH_WEP:
+                            conv_auth_mode = IOT_WIFI_AUTH_WEP;
+                            break;
+                        case WIFI_AUTH_WPA_PSK:
+                            conv_auth_mode = IOT_WIFI_AUTH_WPA_PSK;
+                            break;
+                        case WIFI_AUTH_WPA2_PSK:
+                            conv_auth_mode = IOT_WIFI_AUTH_WPA2_PSK;
+                            break;
+                        case WIFI_AUTH_WPA_WPA2_PSK:
+                            conv_auth_mode = IOT_WIFI_AUTH_WPA_WPA2_PSK;
+                            break;
+                        case WIFI_AUTH_WPA2_ENTERPRISE:
+                            conv_auth_mode = IOT_WIFI_AUTH_WPA2_ENTERPRISE;
                             break;
                         case WIFI_AUTH_WPA2_WPA3_PSK:
                         case WIFI_AUTH_WPA3_PSK:
                             conv_auth_mode = IOT_WIFI_AUTH_WPA3_PERSONAL;
                             break;
                         default:
-                            conv_auth_mode = ap_list[i].authmode;
+                            conv_auth_mode = IOT_WIFI_AUTH_UNKNOWN;
                             break;
                     }
                     memcpy(scan_result[i].ssid, ap_list[i].ssid, strlen((char *)ap_list[i].ssid));

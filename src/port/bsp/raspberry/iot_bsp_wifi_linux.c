@@ -34,7 +34,6 @@
 #include <sys/ioctl.h>
 #include <sys/socket.h>
 #include <sys/types.h>
-#include <time.h>
 #include <unistd.h>
 
 #include "iot_bsp_wifi.h"
@@ -42,11 +41,6 @@
 #include "iot_os_util.h"
 #include "iot_util.h"
 #include "wifi_supplicant.h"
-
-/* Few linux machines set default time to 1 APR 2020 */
-#define NTP_REFERENCE_TIME_YEAR (2020 - 1900)
-#define NTP_REFERENCE_TIME_MONTH 3
-#define NTP_REFERENCE_TIME_MDAY 1
 
 static int _create_socket(void)
 {
@@ -59,42 +53,6 @@ static int _create_socket(void)
     }
 
     return sockfd;
-}
-
-static int _is_time_updated(void)
-{
-    time_t now = 0;
-    struct tm timeinfo = {0};
-
-    time(&now);
-    localtime_r(&now, &timeinfo);
-
-    if (timeinfo.tm_year < NTP_REFERENCE_TIME_YEAR ||
-        (timeinfo.tm_year == NTP_REFERENCE_TIME_YEAR && timeinfo.tm_mon == NTP_REFERENCE_TIME_MONTH &&
-         timeinfo.tm_mday == NTP_REFERENCE_TIME_MDAY)) {
-        return 0;
-    }
-
-    return 1;
-}
-
-static void _update_time(void)
-{
-    time_t now = 0;
-    int retry = 0;
-    const int retry_count = 10;
-
-    supplicant_activate_ntpd();
-
-    while (_is_time_updated() == 0 && ++retry < retry_count) {
-        IOT_INFO("Waiting for system time to be set... (%d/%d)", retry, retry_count);
-        IOT_DELAY(2000);
-    }
-
-    if (retry < 10) {
-        time(&now);
-        IOT_INFO("[WIFI] system time updated by %ld", now);
-    }
 }
 
 iot_error_t iot_bsp_wifi_init(void)
@@ -136,13 +94,6 @@ iot_error_t iot_bsp_wifi_set_mode(iot_wifi_conf *conf)
             ret = supplicant_join_network(ssid, pass);
             if (ret < 0)
                 return IOT_ERROR_CONN_OPERATE_FAIL;
-            ret = supplicant_start_dhcp_client();
-            if (ret < 0)
-                return IOT_ERROR_CONN_OPERATE_FAIL;
-            if (_is_time_updated() == 0) {
-                IOT_INFO("Time is not set yet. Connecting to WiFi and getting time over NTP.");
-                _update_time();
-            }
 
             break;
 
@@ -153,9 +104,6 @@ iot_error_t iot_bsp_wifi_set_mode(iot_wifi_conf *conf)
             pass[IOT_WIFI_MAX_PASS_LEN] = 0;
 
             ret = supplicant_start_softap(ssid, pass);
-            if (ret < 0)
-                return IOT_ERROR_CONN_OPERATE_FAIL;
-            ret = supplicant_start_dhcp_server();
             if (ret < 0)
                 return IOT_ERROR_CONN_OPERATE_FAIL;
             IOT_DEBUG("wifi_init_softap finished. SSID:%s password:%s", ssid, pass);

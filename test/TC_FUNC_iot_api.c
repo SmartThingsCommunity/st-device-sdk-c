@@ -1556,3 +1556,407 @@ void TC_iot_cleanup_success(void **state)
     // Teardown
     iot_os_eventgroup_delete(context->iot_events);
 }
+
+void TC_iot_get_random_id_str_null_str(void **state)
+{
+    iot_error_t err;
+    UNUSED(state);
+
+    // When: str is null
+    err = iot_get_random_id_str(NULL, IOT_REG_UUID_STR_LEN + 1);
+    // Then: returns invalid args
+    assert_int_equal(err, IOT_ERROR_INVALID_ARGS);
+}
+
+void TC_iot_get_random_id_str_success(void **state)
+{
+    iot_error_t err;
+    char buf[IOT_REG_UUID_STR_LEN + 1] = {0};
+    unsigned char sample_mac[IOT_WIFI_MAX_BSSID_LEN] = {0x11, 0x22, 0x33, 0x44, 0x55, 0x66};
+    UNUSED(state);
+
+    // Given: leak detection is incompatible with iot_get_random_uuid_from_mac
+    set_mock_detect_memory_leak(false);
+    will_return(__wrap_iot_bsp_wifi_get_mac, cast_ptr_to_largest_integral_type(sample_mac));
+    will_return(__wrap_iot_bsp_wifi_get_mac, IOT_ERROR_NONE);
+    // When
+    err = iot_get_random_id_str(buf, sizeof(buf));
+    // Then: returns success and produces a uuid string
+    assert_int_equal(err, IOT_ERROR_NONE);
+    assert_int_equal(strlen(buf), IOT_REG_UUID_STR_LEN);
+}
+
+void TC_iot_get_random_id_str_mac_failure(void **state)
+{
+    iot_error_t err;
+    char buf[IOT_REG_UUID_STR_LEN + 1] = {0};
+    UNUSED(state);
+
+    // Given
+    set_mock_detect_memory_leak(false);
+    will_return(__wrap_iot_bsp_wifi_get_mac, NULL);
+    will_return(__wrap_iot_bsp_wifi_get_mac, IOT_ERROR_READ_FAIL);
+    // When
+    err = iot_get_random_id_str(buf, sizeof(buf));
+    // Then: bubbles up the bsp error
+    assert_int_equal(err, IOT_ERROR_READ_FAIL);
+}
+
+void TC_iot_get_random_id_str_short_buffer(void **state)
+{
+    iot_error_t err;
+    char buf[4] = {0};
+    unsigned char sample_mac[IOT_WIFI_MAX_BSSID_LEN] = {0x11, 0x22, 0x33, 0x44, 0x55, 0x66};
+    UNUSED(state);
+
+    // Given
+    set_mock_detect_memory_leak(false);
+    will_return(__wrap_iot_bsp_wifi_get_mac, cast_ptr_to_largest_integral_type(sample_mac));
+    will_return(__wrap_iot_bsp_wifi_get_mac, IOT_ERROR_NONE);
+    // When: max_sz is too small for a uuid string
+    err = iot_get_random_id_str(buf, sizeof(buf));
+    // Then: convert step fails
+    assert_int_not_equal(err, IOT_ERROR_NONE);
+}
+
+void TC_iot_ble_ctrl_request_null_ctx(void **state)
+{
+    iot_error_t err;
+    UNUSED(state);
+
+    // When
+    err = iot_ble_ctrl_request(NULL);
+    // Then
+    assert_int_equal(err, IOT_ERROR_BAD_REQ);
+}
+
+void TC_iot_easysetup_request_queue_send_failure(void **state)
+{
+    iot_error_t err;
+    struct iot_context *context;
+    UNUSED(state);
+
+    // Given: ctx without work_queue so iot_put_device_work fails
+    context = (struct iot_context *)calloc(1, sizeof(struct iot_context));
+    assert_non_null(context);
+
+    // When
+    err = iot_easysetup_request(context, IOT_EASYSETUP_STEP_DEVICEINFO, NULL);
+    // Then: returns the queue_send error and frees the request
+    assert_int_not_equal(err, IOT_ERROR_NONE);
+
+    // Teardown
+    free(context);
+}
+
+void TC_iot_easysetup_request_malloc_failure(void **state)
+{
+    iot_error_t err;
+    struct iot_context *context;
+    UNUSED(state);
+
+    // Given
+    context = (struct iot_context *)calloc(1, sizeof(struct iot_context));
+    assert_non_null(context);
+    set_mock_detect_memory_leak(false);
+    do_not_use_mock_iot_os_malloc_failure();
+    set_mock_iot_os_malloc_failure_with_index(0);
+    // When
+    err = iot_easysetup_request(context, IOT_EASYSETUP_STEP_DEVICEINFO, NULL);
+    // Then
+    assert_int_equal(err, IOT_ERROR_MEM_ALLOC);
+
+    // Teardown
+    do_not_use_mock_iot_os_malloc_failure();
+    free(context);
+}
+
+static int _tc_status_cb_invocations;
+static int _tc_status_cb_last_status;
+static void _tc_status_cb_for_state_update(int status, void *usr_data)
+{
+    _tc_status_cb_invocations++;
+    _tc_status_cb_last_status = status;
+}
+
+void TC_iot_state_update_button_invokes_status_cb(void **state)
+{
+    struct iot_context *context;
+    UNUSED(state);
+
+    // Given: PROV_CONFIRM with NEED_INTERACT and BUTTON otm should fire status_cb
+    context = (struct iot_context *)calloc(1, sizeof(struct iot_context));
+    assert_non_null(context);
+    context->curr_otm_feature = OVF_BIT_BUTTON;
+    context->status_cb = (void *)_tc_status_cb_for_state_update;
+    _tc_status_cb_invocations = 0;
+    _tc_status_cb_last_status = -1;
+
+    // When: iot_command_send fails because work_queue is NULL, but status_cb runs first
+    (void)iot_state_update(context, IOT_STATE_PROV_CONFIRM, IOT_STATE_OPT_NEED_INTERACT);
+    // Then: status_cb was invoked with onboarding-need-confirm
+    assert_int_equal(_tc_status_cb_invocations, 1);
+    assert_int_equal(context->device_status, ST_DEVICE_STATUS_ONBOARDING_NEED_CONFIRM);
+
+    // Teardown
+    free(context);
+}
+
+void TC_iot_set_st_ecode_from_conn_error_default(void **state)
+{
+    iot_error_t err;
+    struct iot_context *context;
+    UNUSED(state);
+
+    // Given
+    context = (struct iot_context *)calloc(1, sizeof(struct iot_context));
+    assert_non_null(context);
+
+    // When: conn_error doesn't map to any case
+    err = iot_set_st_ecode_from_conn_error(context, IOT_ERROR_NONE);
+    // Then: returns INVALID_ARGS via the default branch
+    assert_int_equal(err, IOT_ERROR_INVALID_ARGS);
+
+    // Teardown
+    free(context);
+}
+
+void TC_iot_update_dip_from_server_type_all_branches(void **state)
+{
+    struct iot_context *context;
+    struct iot_dip_data dip = {0};
+    struct iot_dip_data prod_dip = {{{0xaa, 0x11}}, 1, 2};
+    struct iot_dip_data acc_dip = {{{0xbb, 0x22}}, 3, 4};
+    struct iot_dip_data stg_dip = {{{0xcc, 0x33}}, 5, 6};
+    struct iot_dip_data dev_dip = {{{0xdd, 0x44}}, 7, 8};
+    UNUSED(state);
+
+    // Given
+    context = (struct iot_context *)calloc(1, sizeof(struct iot_context));
+    assert_non_null(context);
+    context->devconf.dip = &dip;
+
+    // When/Then: PROD env uses prod_dip when populated
+    context->devconf.prod_dip = &prod_dip;
+    iot_update_server_env(context, SERVER_ENV_PRD);
+    assert_int_equal(context->devconf.dip->dip_major_version, 1);
+
+    // When: prod_dip is NULL, switch to a different env first then back to PRD
+    context->devconf.prod_dip = NULL;
+    context->server_env = SERVER_ENV_UNKNOWN;
+    iot_update_server_env(context, SERVER_ENV_PRD);
+
+    // When/Then: ACC env with and without acc_dip
+    context->devconf.acc_dip = &acc_dip;
+    iot_update_server_env(context, SERVER_ENV_ACC);
+    assert_int_equal(context->devconf.dip->dip_major_version, 3);
+    context->devconf.acc_dip = NULL;
+    context->server_env = SERVER_ENV_UNKNOWN;
+    iot_update_server_env(context, SERVER_ENV_ACC);
+
+    // When/Then: STG env with and without stg_dip
+    context->devconf.stg_dip = &stg_dip;
+    iot_update_server_env(context, SERVER_ENV_STG);
+    assert_int_equal(context->devconf.dip->dip_major_version, 5);
+    context->devconf.stg_dip = NULL;
+    context->server_env = SERVER_ENV_UNKNOWN;
+    iot_update_server_env(context, SERVER_ENV_STG);
+
+    // When/Then: DEV env with and without dev_dip
+    context->devconf.dev_dip = &dev_dip;
+    iot_update_server_env(context, SERVER_ENV_DEV);
+    assert_int_equal(context->devconf.dip->dip_major_version, 7);
+    context->devconf.dev_dip = NULL;
+    context->server_env = SERVER_ENV_UNKNOWN;
+    iot_update_server_env(context, SERVER_ENV_DEV);
+
+    // When: unknown server env takes the default branch
+    context->server_env = SERVER_ENV_PRD;
+    iot_update_server_env(context, SERVER_ENV_UNKNOWN);
+
+    // Teardown
+    free(context);
+}
+
+void TC_iot_update_wifi_info_not_connected(void **state)
+{
+    iot_error_t err;
+    struct iot_context *context;
+    UNUSED(state);
+
+    // Given: not in CLOUD_CONNECTED
+    context = (struct iot_context *)calloc(1, sizeof(struct iot_context));
+    assert_non_null(context);
+    context->curr_state = IOT_STATE_PROV_DONE;
+
+    // When
+    err = iot_update_wifi_info(context);
+    // Then
+    assert_int_equal(err, IOT_ERROR_BAD_REQ);
+
+    // Teardown
+    free(context);
+}
+
+void TC_iot_update_wifi_info_rate_limited(void **state)
+{
+    iot_error_t err;
+    struct iot_context *context;
+    UNUSED(state);
+
+    // Given: connected but rate-limited (use a non-null sentinel for evt_mqttcli)
+    context = (struct iot_context *)calloc(1, sizeof(struct iot_context));
+    assert_non_null(context);
+    context->curr_state = IOT_STATE_CLOUD_CONNECTED;
+    context->evt_mqttcli = (void *)0x1;
+    context->rate_limit = true;
+
+    // When
+    err = iot_update_wifi_info(context);
+    // Then
+    assert_int_equal(err, IOT_ERROR_BAD_REQ);
+
+    // Teardown
+    free(context);
+}
+
+void TC_iot_update_child_devices_health_not_connected(void **state)
+{
+    iot_error_t err;
+    struct iot_context *context;
+    UNUSED(state);
+
+    // Given
+    context = (struct iot_context *)calloc(1, sizeof(struct iot_context));
+    assert_non_null(context);
+    context->curr_state = IOT_STATE_PROV_DONE;
+
+    // When
+    err = iot_update_child_devices_health(context, NULL);
+    // Then
+    assert_int_equal(err, IOT_ERROR_BAD_REQ);
+
+    // Teardown
+    free(context);
+}
+
+void TC_iot_update_child_devices_health_rate_limited(void **state)
+{
+    iot_error_t err;
+    struct iot_context *context;
+    UNUSED(state);
+
+    // Given
+    context = (struct iot_context *)calloc(1, sizeof(struct iot_context));
+    assert_non_null(context);
+    context->curr_state = IOT_STATE_CLOUD_CONNECTED;
+    context->evt_mqttcli = (void *)0x1;
+    context->rate_limit = true;
+
+    // When
+    err = iot_update_child_devices_health(context, NULL);
+    // Then
+    assert_int_equal(err, IOT_ERROR_BAD_REQ);
+
+    // Teardown
+    free(context);
+}
+
+void TC_iot_wifi_ctrl_request_null_ctx(void **state)
+{
+    iot_error_t err;
+    UNUSED(state);
+
+    // When
+    err = iot_wifi_ctrl_request(NULL, IOT_WIFI_MODE_STATION);
+    // Then
+    assert_int_equal(err, IOT_ERROR_BAD_REQ);
+}
+
+void TC_iot_wifi_ctrl_request_off_set_mode_failure(void **state)
+{
+    iot_error_t err;
+    struct iot_context *context;
+    UNUSED(state);
+
+    // Given
+    context = (struct iot_context *)calloc(1, sizeof(struct iot_context));
+    assert_non_null(context);
+    expect_value(__wrap_iot_bsp_wifi_set_mode, conf->mode, IOT_WIFI_MODE_OFF);
+    will_return(__wrap_iot_bsp_wifi_set_mode, IOT_ERROR_BAD_REQ);
+
+    // When
+    err = iot_wifi_ctrl_request(context, IOT_WIFI_MODE_OFF);
+    // Then: bubbles up bsp error
+    assert_int_equal(err, IOT_ERROR_BAD_REQ);
+
+    // Teardown
+    free(context);
+}
+
+void TC_iot_wifi_ctrl_request_scan_set_mode_failure(void **state)
+{
+    iot_error_t err;
+    struct iot_context *context;
+    UNUSED(state);
+
+    // Given
+    context = (struct iot_context *)calloc(1, sizeof(struct iot_context));
+    assert_non_null(context);
+    expect_value(__wrap_iot_bsp_wifi_set_mode, conf->mode, IOT_WIFI_MODE_SCAN);
+    will_return(__wrap_iot_bsp_wifi_set_mode, IOT_ERROR_BAD_REQ);
+
+    // When
+    err = iot_wifi_ctrl_request(context, IOT_WIFI_MODE_SCAN);
+    // Then
+    assert_int_equal(err, IOT_ERROR_BAD_REQ);
+    assert_null(context->scan_result);
+
+    // Teardown
+    free(context);
+}
+
+void TC_iot_wifi_ctrl_request_station_set_mode_failure(void **state)
+{
+    iot_error_t err;
+    struct iot_context *context;
+    UNUSED(state);
+
+    // Given
+    context = (struct iot_context *)calloc(1, sizeof(struct iot_context));
+    assert_non_null(context);
+    expect_value(__wrap_iot_bsp_wifi_set_mode, conf->mode, IOT_WIFI_MODE_STATION);
+    will_return(__wrap_iot_bsp_wifi_set_mode, IOT_ERROR_BAD_REQ);
+
+    // When: set_mode fails for STATION; iot_set_st_ecode_from_conn_error is invoked
+    err = iot_wifi_ctrl_request(context, IOT_WIFI_MODE_STATION);
+    // Then
+    assert_int_equal(err, IOT_ERROR_BAD_REQ);
+    assert_false(context->is_wifi_station);
+
+    // Teardown
+    free(context);
+}
+
+void TC_iot_wifi_ctrl_request_off_with_es_http_ready(void **state)
+{
+    iot_error_t err;
+    struct iot_context *context = (struct iot_context *)*state;
+
+    // Given: es_http_ready triggers easysetup deinit, which needs iot_events
+    context->es_http_ready = true;
+    context->iot_events = iot_os_eventgroup_create();
+    assert_non_null(context->iot_events);
+    expect_value(__wrap_iot_bsp_wifi_set_mode, conf->mode, IOT_WIFI_MODE_OFF);
+    will_return(__wrap_iot_bsp_wifi_set_mode, IOT_ERROR_NONE);
+
+    // When
+    err = iot_wifi_ctrl_request(context, IOT_WIFI_MODE_OFF);
+    // Then: easysetup deinit was invoked and clears the ready flag
+    assert_int_equal(err, IOT_ERROR_NONE);
+    assert_false(context->es_http_ready);
+
+    // Teardown
+    iot_os_eventgroup_delete(context->iot_events);
+    context->iot_events = NULL;
+}

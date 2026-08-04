@@ -151,7 +151,6 @@ void _iot_easysetup_ble_conn_cb(iot_ble_conn_evt_t evt)
                 device_work_data_t work;
                 while (iot_util_queue_receive(context->work_queue, &work) == IOT_ERROR_NONE) {
                 }
-                iot_device_cleanup(context);
                 context->curr_state = IOT_STATE_INITIALIZED;
                 iot_state_update(context, IOT_STATE_PROV_ENTER, 0);
             } else {

@@ -140,10 +140,19 @@ static int generate_manufacturer_data(struct iot_context *ctx, uint8_t **mn_data
             ONBOARDING_MN_DATA_OCF_INFO_ONBOARDING_SUPPORTED | ONBOARDING_MN_DATA_OCF_INFO_ONBOARDING_READY;
     }
     data[offset++] = ONBOARDING_MN_DATA_FEATURE;
-    memcpy(data + offset, ctx->devconf.mnid, strlen(ctx->devconf.mnid));
-    offset += strlen(ctx->devconf.mnid);
-    memcpy(data + offset, ctx->devconf.setupid, strlen(ctx->devconf.setupid));
-    offset += strlen(ctx->devconf.setupid);
+
+    size_t mnid_len = strlen(ctx->devconf.mnid);
+    size_t setupid_len = strlen(ctx->devconf.setupid);
+
+    if (mnid_len + setupid_len > 7) {
+        IOT_ERROR("mnid(%u)+setupid(%u) too long for adv packet", (unsigned)mnid_len, (unsigned)setupid_len);
+        iot_os_free(data);
+        return 0;
+    }
+    memcpy(data + offset, ctx->devconf.mnid, mnid_len);
+    offset += mnid_len;
+    memcpy(data + offset, ctx->devconf.setupid, setupid_len);
+    offset += setupid_len;
 
     data[offset++] = ONBOARDING_MN_DATA_SETUP_AVAILABLE_NETWORK;
     data[offset++] = ONBOARDING_MN_DATA_ADDRESS_TRANSFER;

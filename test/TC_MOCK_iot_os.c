@@ -26,6 +26,7 @@ static unsigned int _mock_malloc_failure_index;
 static bool _mock_iot_os_malloc_failure_at[MAX_MOCKED_IOT_OS_MALLOC_IN_TC];
 static bool _mock_iot_os_malloc_start;
 static bool _mock_detect_memory_leak;
+static bool _mock_iot_os_realloc_failure;
 
 void set_mock_iot_os_malloc_failure_with_index(unsigned int index)
 {
@@ -82,8 +83,16 @@ void __wrap_iot_os_free(void *ptr)
         return free(ptr);
 }
 
+void set_mock_iot_os_realloc_failure(bool fail)
+{
+    _mock_iot_os_realloc_failure = fail;
+}
+
 void *__wrap_iot_os_realloc(void *ptr, size_t size)
 {
+    if (_mock_iot_os_realloc_failure) {
+        return NULL;
+    }
     if (_mock_detect_memory_leak)
         return test_realloc(ptr, size);
     else

@@ -1,5 +1,22 @@
 # HISTORY
 
+## 2.4.1 : Change for version 2.4.1
+
+New improvements or features:
+- Add Capability Local Cache feature
+- Add Rate Limit Checker feature
+- Add AI Skills md
+
+Enhancements or amendments:
+- Set network socket connect timeout
+- Set strong cipher suites for TLS connection
+- Remove device cleanup during Onboarding process
+
+Bug fixed:
+- Fix SDK data overflow and vulnerability
+- Fix work queue link bug in MQTT client
+- Remove JWT EXPIRED notification to avoid enum conflict
+
 ## 2.4.0 : Change for version 2.4.0
 
 New improvements or features:

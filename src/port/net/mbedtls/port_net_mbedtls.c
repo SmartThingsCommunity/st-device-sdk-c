@@ -17,6 +17,8 @@
  ****************************************************************************/
 
 #include <errno.h>
+#include <fcntl.h>
+#include <netdb.h>
 #include <sys/socket.h>
 
 #include "iot_debug.h"
@@ -44,6 +46,17 @@
 #include "mbedtls/x509.h"
 
 #define IOT_MBEDTLS_READ_TIMEOUT_MS 10000
+
+/* Allowed cipher suites for cloud client TLS connections.
+ * mbedtls stores only the pointer (does not copy), so this must have static lifetime.
+ * The list must be terminated with a 0 entry. */
+static const int s_allowed_ciphersuites[] = {MBEDTLS_TLS_ECDHE_ECDSA_WITH_AES_128_GCM_SHA256,
+                                             MBEDTLS_TLS_ECDHE_RSA_WITH_AES_128_GCM_SHA256,
+                                             MBEDTLS_TLS_ECDHE_ECDSA_WITH_AES_256_GCM_SHA384,
+                                             MBEDTLS_TLS_ECDHE_RSA_WITH_AES_256_GCM_SHA384,
+                                             MBEDTLS_TLS_ECDHE_ECDSA_WITH_CHACHA20_POLY1305_SHA256,
+                                             MBEDTLS_TLS_ECDHE_RSA_WITH_CHACHA20_POLY1305_SHA256,
+                                             0};
 
 typedef struct {
     bool is_tls_connection;
@@ -91,6 +104,129 @@ static void _iot_net_mbedtls_debug(void *ctx, int level, const char *file, int l
 }
 #endif
 
+#define IOT_NET_CONNECT_TIMEOUT_SEC 10
+
+/* Helper function for connect with timeout */
+static int _connect_with_timeout(int sockfd, const struct sockaddr *addr, socklen_t addrlen, int timeout_sec)
+{
+    int ret;
+    int flags;
+    fd_set writefds, exceptfds;
+    struct timeval tv;
+    int so_error;
+    socklen_t len;
+
+    /* Get socket flags */
+    flags = fcntl(sockfd, F_GETFL, 0);
+    if (flags < 0) {
+        printf("fcntl F_GETFL failed, errno: %d\n", errno);
+        return -1;
+    }
+
+    /* Set non-blocking mode */
+    if (fcntl(sockfd, F_SETFL, flags | O_NONBLOCK) < 0) {
+        printf("fcntl F_SETFL O_NONBLOCK failed, errno: %d\n", errno);
+        return -1;
+    }
+
+    /* Attempt connection */
+    ret = connect(sockfd, addr, addrlen);
+
+    if (ret < 0) {
+        if (errno == EINPROGRESS || errno == EWOULDBLOCK) {
+            /* Connection in progress, wait for completion with timeout */
+            FD_ZERO(&writefds);
+            FD_SET(sockfd, &writefds);
+            FD_ZERO(&exceptfds);
+            FD_SET(sockfd, &exceptfds);
+
+            tv.tv_sec = timeout_sec;
+            tv.tv_usec = 0;
+
+            ret = select(sockfd + 1, NULL, &writefds, &exceptfds, &tv);
+
+            if (ret > 0) {
+                /* Check if connection succeeded or failed */
+                len = sizeof(so_error);
+                if (getsockopt(sockfd, SOL_SOCKET, SO_ERROR, &so_error, &len) < 0) {
+                    printf("getsockopt SO_ERROR failed, errno: %d\n", errno);
+                    fcntl(sockfd, F_SETFL, flags); /* Restore flags */
+                    return -1;
+                }
+
+                if (so_error == 0) {
+                    /* Connection succeeded */
+                    printf("Connection established successfully\n");
+                    ret = 0;
+                } else {
+                    /* Connection failed */
+                    printf("Connection failed, so_error: %d (%s)\n", so_error, strerror(so_error));
+                    errno = so_error;
+                    ret = -1;
+                }
+            } else if (ret == 0) {
+                /* Timeout */
+                printf("Connect timeout after %d seconds\n", timeout_sec);
+                errno = ETIMEDOUT;
+                ret = -1;
+            } else {
+                /* select error */
+                printf("select failed, errno: %d\n", errno);
+                ret = -1;
+            }
+        } else {
+            /* Immediate connection error */
+            printf("Connect failed immediately, errno: %d (%s)\n", errno, strerror(errno));
+            ret = -1;
+        }
+    }
+
+    /* Set back to blocking mode */
+    fcntl(sockfd, F_SETFL, flags);
+
+    return ret;
+}
+
+/*
+ * Initiate a TCP connection with host:port and the given protocol
+ */
+static int _port_net_connect(mbedtls_net_context *ctx, const char *host, const char *port, int proto)
+{
+    int ret;
+    struct addrinfo hints, *addr_list, *cur;
+
+    /* Do name resolution with both IPv6 and IPv4 */
+    memset(&hints, 0, sizeof(hints));
+    hints.ai_family = AF_UNSPEC;
+    hints.ai_socktype = proto == MBEDTLS_NET_PROTO_UDP ? SOCK_DGRAM : SOCK_STREAM;
+    hints.ai_protocol = proto == MBEDTLS_NET_PROTO_UDP ? IPPROTO_UDP : IPPROTO_TCP;
+
+    if (getaddrinfo(host, port, &hints, &addr_list) != 0)
+        return (MBEDTLS_ERR_NET_UNKNOWN_HOST);
+
+    /* Try the sockaddrs until a connection succeeds */
+    ret = MBEDTLS_ERR_NET_UNKNOWN_HOST;
+    for (cur = addr_list; cur != NULL; cur = cur->ai_next) {
+        ctx->fd = (int)socket(cur->ai_family, cur->ai_socktype, cur->ai_protocol);
+        if (ctx->fd < 0) {
+            ret = MBEDTLS_ERR_NET_SOCKET_FAILED;
+            continue;
+        }
+
+        if (_connect_with_timeout(ctx->fd, cur->ai_addr, cur->ai_addrlen, IOT_NET_CONNECT_TIMEOUT_SEC) == 0) {
+            ret = 0;
+            break;
+        }
+
+        close(ctx->fd);
+        ret = MBEDTLS_ERR_NET_CONNECT_FAILED;
+    }
+
+    freeaddrinfo(addr_list);
+
+    return (ret);
+}
+
 PORT_NET_CONTEXT port_net_connect(char *address, char *port, port_net_tls_config *config)
 {
     port_net_mbedtls_context_t *new_net_context = NULL;
@@ -128,14 +264,15 @@ PORT_NET_CONTEXT port_net_connect(char *address, char *port, port_net_tls_config
         }
 
         IOT_DEBUG("Connecting to %s:%s", address, port);
-        ret = mbedtls_net_connect(&new_net_context->sock_fd, address, port, MBEDTLS_NET_PROTO_TCP);
+        ret = _port_net_connect(&new_net_context->sock_fd, address, port, MBEDTLS_NET_PROTO_TCP);
         if (ret) {
-            IOT_ERROR("mbedtls_net_connect = -0x%04X", -ret);
+            IOT_ERROR("_port_net_connect = -0x%04X", -ret);
             goto exit;
         }
 
         mbedtls_ssl_config_defaults(&new_net_context->conf, MBEDTLS_SSL_IS_CLIENT, MBEDTLS_SSL_TRANSPORT_STREAM,
                                     MBEDTLS_SSL_PRESET_DEFAULT);
+        mbedtls_ssl_conf_ciphersuites(&new_net_context->conf, s_allowed_ciphersuites);
         mbedtls_ssl_conf_authmode(&new_net_context->conf, MBEDTLS_SSL_VERIFY_REQUIRED);
         mbedtls_ssl_conf_ca_chain(&new_net_context->conf, &new_net_context->cacert, NULL);
         mbedtls_ssl_conf_rng(&new_net_context->conf, mbedtls_ctr_drbg_random, &new_net_context->ctr_drbg);

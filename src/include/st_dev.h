@@ -154,8 +154,10 @@ typedef enum iot_noti_type {
     IOT_NOTI_TYPE_DEV_CLOUD_CONNECTED,     /**< @brief For device cloud connected event */
     IOT_NOTI_TYPE_DEV_CLOUD_DISCONNECTED,  /**< @brief For device clous disconnected event */
     IOT_NOTI_TYPE_RATE_LIMIT,              /**< @brief For rate limit event. */
+    IOT_NOTI_TYPE_RATE_LIMIT_RELEASED,     /**< @brief For rate limit release event. */
     IOT_NOTI_TYPE_QUOTA_REACHED,           /**< @brief For data quota reached event. */
     IOT_NOTI_TYPE_SEND_FAILED,             /**< @brief For send failed event. */
+    IOT_NOTI_TYPE_SEND_SUCCESS,            /**< @brief For send success event. */
     IOT_NOTI_TYPE_COMMANDS,                /**< @brief For commands */
     IOT_NOTI_TYPE_PREFERENCE_UPDATED,      /**< @brief For preference update */
     IOT_NOTI_TYPE_CHILD_DEVICE_SYNCED,     /**< @brief For child device server information synced */
@@ -168,10 +170,7 @@ typedef enum iot_noti_type {
 typedef union {
     /* rate limit case */
     struct _rate_limit {
-        int count;          /**< @brief Current rate limit count. */
-        int threshold;      /**< @brief Current rate limit threshold. */
-        int remainingTime;  /**< @brief How much time remains for rate limit releasing. */
-        int sequenceNumber; /**< @brief Sequence number of event that triggered rate limit */
+        int remainingTime; /**< @brief How much time remains for rate limit releasing. */
     } rate_limit;
     /* quota reached case */
     struct _quota {
@@ -180,8 +179,13 @@ typedef union {
     } quota;
     /* send fail case */
     struct _send_fail {
-        int failed_sequence_num; /**< @brief Send failed events sequence number. */
+        int failed_request_id; /**< @brief request id of the failed send (the value returned by st_cap_send_attr). */
     } send_fail;
+    /* send success case */
+    struct _send_success {
+        int success_request_id; /**< @brief request id of the succeeded send (the value returned by st_cap_send_attr).
+                                 */
+    } send_success;
     /* commands */
     struct _commands {
         st_command_data *commands_data; /**< @brief commands data list */
@@ -342,18 +346,18 @@ typedef struct {
         output_attr = st_cap_create_attr(cap_handle, attribute, &value, unit, data);            \
     }
 
-#define ST_CAP_SEND_ATTR_NUMBER(cap_handle, attribute, value_number, unit, data, output_seq_num) \
-    {                                                                                            \
-        IOT_EVENT *attr = NULL;                                                                  \
-        iot_cap_val_t value;                                                                     \
-                                                                                                 \
-        value.type = IOT_CAP_VAL_TYPE_NUMBER;                                                    \
-        value.number = value_number;                                                             \
-        attr = st_cap_create_attr(cap_handle, attribute, &value, unit, data);                    \
-        if (attr != NULL) {                                                                      \
-            output_seq_num = st_cap_send_attr(&attr, 1);                                         \
-            st_cap_free_attr(attr);                                                              \
-        }                                                                                        \
+#define ST_CAP_SEND_ATTR_NUMBER(cap_handle, attribute, value_number, unit, data, output_request_id) \
+    {                                                                                               \
+        IOT_EVENT *attr = NULL;                                                                     \
+        iot_cap_val_t value;                                                                        \
+                                                                                                    \
+        value.type = IOT_CAP_VAL_TYPE_NUMBER;                                                       \
+        value.number = value_number;                                                                \
+        attr = st_cap_create_attr(cap_handle, attribute, &value, unit, data);                       \
+        if (attr != NULL) {                                                                         \
+            output_request_id = st_cap_send_attr(&attr, 1);                                         \
+            st_cap_free_attr(attr);                                                                 \
+        }                                                                                           \
     }
 
 #define ST_CAP_CREATE_ATTR_STRING(cap_handle, attribute, value_string, unit, data, output_attr) \
@@ -365,18 +369,18 @@ typedef struct {
         output_attr = st_cap_create_attr(cap_handle, attribute, &value, unit, data);            \
     }
 
-#define ST_CAP_SEND_ATTR_STRING(cap_handle, attribute, value_string, unit, data, output_seq_num) \
-    {                                                                                            \
-        IOT_EVENT *attr = NULL;                                                                  \
-        iot_cap_val_t value;                                                                     \
-                                                                                                 \
-        value.type = IOT_CAP_VAL_TYPE_STRING;                                                    \
-        value.string = value_string;                                                             \
-        attr = st_cap_create_attr(cap_handle, attribute, &value, unit, data);                    \
-        if (attr != NULL) {                                                                      \
-            output_seq_num = st_cap_send_attr(&attr, 1);                                         \
-            st_cap_free_attr(attr);                                                              \
-        }                                                                                        \
+#define ST_CAP_SEND_ATTR_STRING(cap_handle, attribute, value_string, unit, data, output_request_id) \
+    {                                                                                               \
+        IOT_EVENT *attr = NULL;                                                                     \
+        iot_cap_val_t value;                                                                        \
+                                                                                                    \
+        value.type = IOT_CAP_VAL_TYPE_STRING;                                                       \
+        value.string = value_string;                                                                \
+        attr = st_cap_create_attr(cap_handle, attribute, &value, unit, data);                       \
+        if (attr != NULL) {                                                                         \
+            output_request_id = st_cap_send_attr(&attr, 1);                                         \
+            st_cap_free_attr(attr);                                                                 \
+        }                                                                                           \
     }
 
 #define ST_CAP_CREATE_ATTR_STRINGS_ARRAY(cap_handle, attribute, value_string_array, array_num, unit, data, \
@@ -391,7 +395,7 @@ typedef struct {
     }
 
 #define ST_CAP_SEND_ATTR_STRINGS_ARRAY(cap_handle, attribute, value_string_array, array_num, unit, data, \
-                                       output_seq_num)                                                   \
+                                       output_request_id)                                                \
     {                                                                                                    \
         IOT_EVENT *attr = NULL;                                                                          \
         iot_cap_val_t value;                                                                             \
@@ -401,7 +405,7 @@ typedef struct {
         value.strings = value_string_array;                                                              \
         attr = st_cap_create_attr(cap_handle, attribute, &value, unit, data);                            \
         if (attr != NULL) {                                                                              \
-            output_seq_num = st_cap_send_attr(&attr, 1);                                                 \
+            output_request_id = st_cap_send_attr(&attr, 1);                                              \
             st_cap_free_attr(attr);                                                                      \
         }                                                                                                \
     }
@@ -415,18 +419,18 @@ typedef struct {
         output_attr = st_cap_create_attr(cap_handle, attribute, &value, unit, data);            \
     }
 
-#define ST_CAP_SEND_ATTR_OBJECT(cap_handle, attribute, value_object, unit, data, output_seq_num) \
-    {                                                                                            \
-        IOT_EVENT *attr = NULL;                                                                  \
-        iot_cap_val_t value;                                                                     \
-                                                                                                 \
-        value.type = IOT_CAP_VAL_TYPE_JSON_OBJECT;                                               \
-        value.json_object = value_object;                                                        \
-        attr = st_cap_create_attr(cap_handle, attribute, &value, unit, data);                    \
-        if (attr != NULL) {                                                                      \
-            output_seq_num = st_cap_send_attr(&attr, 1);                                         \
-            st_cap_free_attr(attr);                                                              \
-        }                                                                                        \
+#define ST_CAP_SEND_ATTR_OBJECT(cap_handle, attribute, value_object, unit, data, output_request_id) \
+    {                                                                                               \
+        IOT_EVENT *attr = NULL;                                                                     \
+        iot_cap_val_t value;                                                                        \
+                                                                                                    \
+        value.type = IOT_CAP_VAL_TYPE_JSON_OBJECT;                                                  \
+        value.json_object = value_object;                                                           \
+        attr = st_cap_create_attr(cap_handle, attribute, &value, unit, data);                       \
+        if (attr != NULL) {                                                                         \
+            output_request_id = st_cap_send_attr(&attr, 1);                                         \
+            st_cap_free_attr(attr);                                                                 \
+        }                                                                                           \
     }
 
 #define ST_CAP_CREATE_ATTR_BOOLEAN(cap_handle, attribute, value_boolean, unit, data, output_attr) \
@@ -438,18 +442,18 @@ typedef struct {
         output_attr = st_cap_create_attr(cap_handle, attribute, &value, unit, data);              \
     }
 
-#define ST_CAP_SEND_ATTR_BOOLEAN(cap_handle, attribute, value_boolean, unit, data, output_seq_num) \
-    {                                                                                              \
-        IOT_EVENT *attr = NULL;                                                                    \
-        iot_cap_val_t value;                                                                       \
-                                                                                                   \
-        value.type = IOT_CAP_VAL_TYPE_BOOLEAN;                                                     \
-        value.boolean = value_boolean;                                                             \
-        attr = st_cap_create_attr(cap_handle, attribute, &value, unit, data);                      \
-        if (attr != NULL) {                                                                        \
-            output_seq_num = st_cap_send_attr(&attr, 1);                                           \
-            st_cap_free_attr(attr);                                                                \
-        }                                                                                          \
+#define ST_CAP_SEND_ATTR_BOOLEAN(cap_handle, attribute, value_boolean, unit, data, output_request_id) \
+    {                                                                                                 \
+        IOT_EVENT *attr = NULL;                                                                       \
+        iot_cap_val_t value;                                                                          \
+                                                                                                      \
+        value.type = IOT_CAP_VAL_TYPE_BOOLEAN;                                                        \
+        value.boolean = value_boolean;                                                                \
+        attr = st_cap_create_attr(cap_handle, attribute, &value, unit, data);                         \
+        if (attr != NULL) {                                                                           \
+            output_request_id = st_cap_send_attr(&attr, 1);                                           \
+            st_cap_free_attr(attr);                                                                   \
+        }                                                                                             \
     }
 
 /**
@@ -537,15 +541,29 @@ void st_cap_free_attr(IOT_EVENT *event);
  *
  * @details This function creates a deviceEvent with the list of IOT_EVENT data,
  * and requests to publish it.
- * When there is no error, this function returns sequence number,
- * which is unique value to identify the deviceEvent message.
+ * When there is no error, this function returns a request id, which is a unique
+ * value identifying this publish request. The same value is reported back through
+ * the IOT_NOTI_TYPE_SEND_SUCCESS / IOT_NOTI_TYPE_SEND_FAILED notification (in the
+ * success_request_id / failed_request_id field), so the caller can match a send
+ * request with its asynchronous result. Note that the request id is generated by
+ * the MQTT layer and is not a monotonically increasing sequence number.
  * NOTE:IOT_EVENT must be created from st_cap_create_attr
+ *
+ * When CONFIG_STDK_IOT_CORE_SUPPORT_ATTR_CACHE is enabled, an attribute whose
+ * value is identical to the one most recently published successfully is dropped
+ * instead of being sent again, to avoid unnecessary traffic. When several
+ * IOT_EVENT are passed, only those carrying a new value are published. If every
+ * attribute is a duplicate, nothing is published and 0 is returned (this is not
+ * an error). An attribute created with the `stateChange` option forced is always
+ * published regardless of its last value. When the option is disabled, every
+ * attribute is always published.
  *
  * @param[in] event The IOT_EVENT data list to create the deviceEvent.
  * @param[in] evt_num The number of IOT_EVENT data in the event.
  *
- * @return return `sequence number`(which is positive integer) if successful,
- * negative integer for error case.
+ * @return return `request id`(which is positive integer) if successful,
+ * 0 if all attributes are duplicates of the last sent value (nothing published,
+ * only when the attribute cache is enabled), or negative integer for error cases.
  */
 int st_cap_send_attr(IOT_EVENT *event[], uint8_t evt_num);
 

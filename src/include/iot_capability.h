@@ -86,6 +86,49 @@ typedef struct iot_cap_evt_data_t {
     iot_cap_attr_option_t options;
 } iot_cap_evt_data_t;
 
+#if defined(CONFIG_STDK_IOT_CORE_SUPPORT_ATTR_CACHE)
+#define IOT_CAP_ATTR_INVALID_CHUNK_ID (-1)
+
+/**
+ * @brief Sync state of a cached attribute value.
+ */
+typedef enum iot_cap_attr_state {
+    IOT_CAP_ATTR_STATE_SYNCED = 0, /**< @brief value has been successfully delivered to the cloud */
+    IOT_CAP_ATTR_STATE_UPDATING,   /**< @brief value is currently being published (in flight) */
+} iot_cap_attr_state_t;
+
+/**
+ * @brief linked list node tracking the latest value of an attribute and its sync state.
+ *
+ * One node per attribute name. st_cap_send_attr compares against nodes in the
+ * SYNCED state to skip publishing a value already delivered to the cloud, and
+ * flips a node to SYNCED once the publish carrying it is acknowledged.
+ */
+typedef struct iot_cap_last_val {
+    /**
+     * @brief NULL-terminated attribute name, used as the lookup key.
+     */
+    char *attr_type;
+    /**
+     * @brief deep copy of the latest value handed to st_cap_send_attr.
+     */
+    iot_cap_val_t value;
+    /**
+     * @brief sync state of @ref value (SYNCED or UPDATING).
+     */
+    iot_cap_attr_state_t state;
+    /**
+     * @brief chunk id of the in-flight publish while UPDATING, used to match the
+     *        publish acknowledgement; IOT_CAP_ATTR_INVALID_CHUNK_ID otherwise.
+     */
+    int chunk_id;
+    /**
+     * @brief a pointer to the next node.
+     */
+    struct iot_cap_last_val *next;
+} iot_cap_last_val_t;
+#endif /* CONFIG_STDK_IOT_CORE_SUPPORT_ATTR_CACHE */
+
 /**
  * @brief Contains user command callback function data.
  */
@@ -131,6 +174,10 @@ struct iot_cap_handle {
     const char *component;
 
     struct iot_cap_cmd_set_list *cmd_list; /**< @brief List of command data. */
+
+#if defined(CONFIG_STDK_IOT_CORE_SUPPORT_ATTR_CACHE)
+    struct iot_cap_last_val *last_val_list; /**< @brief List of last successfully sent value per attribute. */
+#endif
 
     st_cap_init_cb init_cb; /**< @brief User callback function for init device state. */
     void *init_usr_data;    /**< @brief User data for init_cb. */

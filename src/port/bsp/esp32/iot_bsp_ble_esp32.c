@@ -241,22 +241,16 @@ int iot_bsp_ble_start_adv(uint16_t mn_code, uint8_t *mn_data, size_t mn_data_len
 
 int iot_send_indication(uint8_t *buf, uint32_t len)
 {
-    struct timeval start_tv =
-                       {
-                           0,
-                       },
-                   elasped_tv = {
-                       0,
-                   };
-
-    gettimeofday(&start_tv, NULL);
+    const TickType_t wait_timeout_ticks = pdMS_TO_TICKS(5000);
+    const TickType_t wait_slice_ticks = pdMS_TO_TICKS(10);
+    const TickType_t start_tick = xTaskGetTickCount();
 
     while (indication_need_confirmed && gatt_connected) {
-        gettimeofday(&elasped_tv, NULL);
-        if (elasped_tv.tv_sec - start_tv.tv_sec >= 5) {
+        if ((xTaskGetTickCount() - start_tick) >= wait_timeout_ticks) {
             ESP_LOGI(GATTS_TAG, "Wait confirm timeout 5s");
             return 1;
         }
+        vTaskDelay(wait_slice_ticks);
     }
 
     if (!gatt_connected) {

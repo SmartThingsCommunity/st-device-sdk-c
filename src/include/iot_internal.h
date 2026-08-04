@@ -435,6 +435,62 @@ void iot_update_server_env(struct iot_context *ctx, server_env_type server_env);
  */
 bool iot_check_dip_update_needed(struct iot_dip_data *new_dip);
 
+/**
+ * @brief      Check publish rate limit
+ * @details    This function checks if the publish rate limit is exceeded.
+ *             It uses a circular buffer of timestamps to track recent publishes.
+ * @param[in]  ctx   iot-core context
+ * @return     true if publish is allowed, false if rate limit exceeded
+ */
+bool iot_check_publish_rate_limit(struct iot_context *ctx);
+
+/**
+ * @brief      Record publish timestamp
+ * @details    This function records the current timestamp in the circular buffer
+ *             for rate limit tracking.
+ * @param[in]  ctx   iot-core context
+ */
+void iot_record_publish_timestamp(struct iot_context *ctx);
+
+/**
+ * @brief      Clear publish timestamps
+ * @details    This function clears all timestamps in the circular buffer.
+ *             Called when rate limit penalty is applied.
+ * @param[in]  ctx   iot-core context
+ */
+void iot_clear_publish_timestamp(struct iot_context *ctx);
+
+/**
+ * @brief      Internal wrapper for st_mqtt_publish_async with rate limit handling
+ * @details    This function provides a common interface for MQTT publish operations
+ *             with built-in rate limit checking and timestamp recording.
+ * @param[in]  ctx          iot-core context
+ * @param[in]  client       MQTT client handle
+ * @param[in]  msg          MQTT message to publish
+ * @retval     int          0 on success, negative error code on failure
+ */
+int iot_mqtt_publish_async(struct iot_context *ctx, st_mqtt_client client, st_mqtt_msg *msg,
+                           st_mqtt_publish_callback publish_cb, void *usr_data);
+
+/**
+ * @brief      Notify rate limit to app
+ *
+ * @param[in]  ctx          iot-core context
+ * @param[in]  remaining_time_ms       remaining time in ms until rate limit released
+ */
+void iot_notify_rate_limit(struct iot_context *ctx, int remaining_time_ms);
+
+/**
+ * @brief      Internal wrapper for st_mqtt_publish with rate limit handling
+ * @details    This function provides a common interface for synchronous MQTT publish operations
+ *             with built-in rate limit checking and timestamp recording.
+ * @param[in]  ctx          iot-core context
+ * @param[in]  client       MQTT client handle
+ * @param[in]  msg          MQTT message to publish
+ * @retval     int          0 on success, negative error code on failure
+ */
+int iot_mqtt_publish(struct iot_context *ctx, st_mqtt_client client, st_mqtt_msg *msg);
+
 #if defined(CONFIG_STDK_IOT_CORE_EASYSETUP_WIFI_UPDATE)
 /**
  * @brief	Update wifi info

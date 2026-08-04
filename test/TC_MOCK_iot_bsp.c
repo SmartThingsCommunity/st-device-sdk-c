@@ -15,15 +15,106 @@
  * language governing permissions and limitations under the License.
  *
  ****************************************************************************/
+#include <iot_bsp_fs.h>
 #include <iot_bsp_random.h>
 #include <iot_bsp_system.h>
 #include <iot_bsp_wifi.h>
 #include <iot_error.h>
 #include <iot_nv_data.h>
+#include <stdbool.h>
 #include <string.h>
 #include <time.h>
 
 #include "cmocka_custom.h"
+
+extern iot_error_t __real_iot_bsp_fs_open(const char *filename, iot_bsp_fs_open_mode_t mode,
+                                          iot_bsp_fs_handle_t *handle);
+extern iot_error_t __real_iot_bsp_fs_read(iot_bsp_fs_handle_t handle, char *buffer, size_t *length);
+extern iot_error_t __real_iot_bsp_fs_write(iot_bsp_fs_handle_t handle, const char *data, size_t length);
+extern iot_error_t __real_iot_bsp_fs_close(iot_bsp_fs_handle_t handle);
+extern iot_error_t __real_iot_bsp_fs_remove(const char *filename);
+
+static iot_error_t _mock_fs_open_force_err = IOT_ERROR_NONE;
+static iot_error_t _mock_fs_read_force_err = IOT_ERROR_NONE;
+static iot_error_t _mock_fs_write_force_err = IOT_ERROR_NONE;
+static iot_error_t _mock_fs_close_force_err = IOT_ERROR_NONE;
+static iot_error_t _mock_fs_remove_force_err = IOT_ERROR_NONE;
+
+void set_mock_iot_bsp_fs_open_failure(iot_error_t err)
+{
+    _mock_fs_open_force_err = err;
+}
+
+void set_mock_iot_bsp_fs_read_failure(iot_error_t err)
+{
+    _mock_fs_read_force_err = err;
+}
+
+void set_mock_iot_bsp_fs_write_failure(iot_error_t err)
+{
+    _mock_fs_write_force_err = err;
+}
+
+void set_mock_iot_bsp_fs_close_failure(iot_error_t err)
+{
+    _mock_fs_close_force_err = err;
+}
+
+void set_mock_iot_bsp_fs_remove_failure(iot_error_t err)
+{
+    _mock_fs_remove_force_err = err;
+}
+
+iot_error_t __wrap_iot_bsp_fs_open(const char *filename, iot_bsp_fs_open_mode_t mode, iot_bsp_fs_handle_t *handle)
+{
+    if (_mock_fs_open_force_err != IOT_ERROR_NONE) {
+        iot_error_t err = _mock_fs_open_force_err;
+        _mock_fs_open_force_err = IOT_ERROR_NONE;
+        return err;
+    }
+    return __real_iot_bsp_fs_open(filename, mode, handle);
+}
+
+iot_error_t __wrap_iot_bsp_fs_read(iot_bsp_fs_handle_t handle, char *buffer, size_t *length)
+{
+    if (_mock_fs_read_force_err != IOT_ERROR_NONE) {
+        iot_error_t err = _mock_fs_read_force_err;
+        _mock_fs_read_force_err = IOT_ERROR_NONE;
+        return err;
+    }
+    return __real_iot_bsp_fs_read(handle, buffer, length);
+}
+
+iot_error_t __wrap_iot_bsp_fs_write(iot_bsp_fs_handle_t handle, const char *data, size_t length)
+{
+    if (_mock_fs_write_force_err != IOT_ERROR_NONE) {
+        iot_error_t err = _mock_fs_write_force_err;
+        _mock_fs_write_force_err = IOT_ERROR_NONE;
+        return err;
+    }
+    return __real_iot_bsp_fs_write(handle, data, length);
+}
+
+iot_error_t __wrap_iot_bsp_fs_close(iot_bsp_fs_handle_t handle)
+{
+    if (_mock_fs_close_force_err != IOT_ERROR_NONE) {
+        iot_error_t err = _mock_fs_close_force_err;
+        _mock_fs_close_force_err = IOT_ERROR_NONE;
+        (void)__real_iot_bsp_fs_close(handle);
+        return err;
+    }
+    return __real_iot_bsp_fs_close(handle);
+}
+
+iot_error_t __wrap_iot_bsp_fs_remove(const char *filename)
+{
+    if (_mock_fs_remove_force_err != IOT_ERROR_NONE) {
+        iot_error_t err = _mock_fs_remove_force_err;
+        _mock_fs_remove_force_err = IOT_ERROR_NONE;
+        return err;
+    }
+    return __real_iot_bsp_fs_remove(filename);
+}
 
 iot_error_t __wrap_iot_bsp_wifi_get_mac(struct iot_mac *wifi_mac)
 {

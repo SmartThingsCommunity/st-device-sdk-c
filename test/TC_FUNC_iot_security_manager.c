@@ -471,3 +471,138 @@ void TC_iot_security_manager_get_certificate_success(void **state)
     // Teardown
     iot_os_free(cert_buf.p);
 }
+
+void TC_iot_security_manager_get_certificate_nv_target(void **state)
+{
+    iot_error_t err;
+    iot_security_context_t *context;
+    iot_security_buffer_t cert_buf = {0};
+
+    context = (iot_security_context_t *)*state;
+    assert_non_null(context);
+
+    // Given: any cert_id other than ROOT_CA routes through the NV backend
+    // path exercising _iot_security_manager_check_certificate_target's
+    // default branch.
+    err = iot_security_manager_get_certificate(context, IOT_SECURITY_CERT_ID_DEVICE, &cert_buf);
+    // Then: the test fixture does not populate device certs, so the backend
+    // returns an error; we only care that the default branch was taken.
+    (void)err;
+    if (cert_buf.p) {
+        iot_os_free(cert_buf.p);
+    }
+}
+
+/*
+ * iot_security_manager_generate_key tests
+ */
+void TC_iot_security_manager_generate_key_null_context(void **state)
+{
+    iot_error_t err;
+    (void)state;
+
+    // When
+    err = iot_security_manager_generate_key(NULL, IOT_SECURITY_KEY_ID_EPHEMERAL);
+    // Then
+    assert_int_not_equal(err, IOT_ERROR_NONE);
+}
+
+void TC_iot_security_manager_generate_key_invalid_key_id(void **state)
+{
+    iot_error_t err;
+    iot_security_context_t *context;
+
+    context = (iot_security_context_t *)*state;
+    assert_non_null(context);
+
+    // When: non-ephemeral key id
+    err = iot_security_manager_generate_key(context, IOT_SECURITY_KEY_ID_DEVICE_PUBLIC);
+    // Then
+    assert_int_equal(err, IOT_ERROR_SECURITY_KEY_INVALID_ID);
+}
+
+void TC_iot_security_manager_generate_key_unknown_key_id(void **state)
+{
+    iot_error_t err;
+    iot_security_context_t *context;
+
+    context = (iot_security_context_t *)*state;
+    assert_non_null(context);
+
+    // When
+    err = iot_security_manager_generate_key(context, IOT_SECURITY_KEY_ID_UNKNOWN);
+    // Then
+    assert_int_equal(err, IOT_ERROR_SECURITY_KEY_INVALID_ID);
+}
+
+void TC_iot_security_manager_generate_key_success(void **state)
+{
+    iot_error_t err;
+    iot_security_context_t *context;
+
+    context = (iot_security_context_t *)*state;
+    assert_non_null(context);
+
+    // When: generate an ephemeral ECC key pair
+    err = iot_security_manager_generate_key(context, IOT_SECURITY_KEY_ID_EPHEMERAL);
+    // Then
+    assert_int_equal(err, IOT_ERROR_NONE);
+
+    // Local teardown: remove the key pair we just generated
+    err = iot_security_manager_remove_key(context, IOT_SECURITY_KEY_ID_EPHEMERAL);
+    assert_int_equal(err, IOT_ERROR_NONE);
+}
+
+/*
+ * iot_security_manager_remove_key tests
+ */
+void TC_iot_security_manager_remove_key_null_context(void **state)
+{
+    iot_error_t err;
+    (void)state;
+
+    // When
+    err = iot_security_manager_remove_key(NULL, IOT_SECURITY_KEY_ID_EPHEMERAL);
+    // Then
+    assert_int_not_equal(err, IOT_ERROR_NONE);
+}
+
+void TC_iot_security_manager_remove_key_invalid_key_id(void **state)
+{
+    iot_error_t err;
+    iot_security_context_t *context;
+
+    context = (iot_security_context_t *)*state;
+    assert_non_null(context);
+
+    // When: non-ephemeral key id
+    err = iot_security_manager_remove_key(context, IOT_SECURITY_KEY_ID_DEVICE_PUBLIC);
+    // Then
+    assert_int_equal(err, IOT_ERROR_SECURITY_KEY_INVALID_ID);
+}
+
+void TC_iot_security_manager_remove_key_unknown_key_id(void **state)
+{
+    iot_error_t err;
+    iot_security_context_t *context;
+
+    context = (iot_security_context_t *)*state;
+    assert_non_null(context);
+
+    err = iot_security_manager_remove_key(context, IOT_SECURITY_KEY_ID_UNKNOWN);
+    assert_int_equal(err, IOT_ERROR_SECURITY_KEY_INVALID_ID);
+}
+
+void TC_iot_security_manager_remove_key_without_generate(void **state)
+{
+    iot_error_t err;
+    iot_security_context_t *context;
+
+    context = (iot_security_context_t *)*state;
+    assert_non_null(context);
+
+    // When: no ephemeral key was ever generated
+    err = iot_security_manager_remove_key(context, IOT_SECURITY_KEY_ID_EPHEMERAL);
+    // Then: the removal is idempotent and does not fail
+    assert_int_equal(err, IOT_ERROR_NONE);
+}

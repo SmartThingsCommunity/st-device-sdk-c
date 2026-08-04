@@ -34,7 +34,7 @@ static unsigned int _iot_log_file_buf_free_size(void)
     if (log_ctx != NULL) {
         free_size = IOT_LOG_FILE_RAM_BUF_SIZE - log_ctx->log_buf.cnt;
     } else {
-        IOT_LOG_FILE_ERROR("log_ctx is NULL! %s %d\n", __FUNCTION__, __LINE__);
+        IOT_ERROR("log_ctx is NULL! %s %d\n", __FUNCTION__, __LINE__);
         return 0;
     }
 
@@ -49,7 +49,7 @@ static void _iot_log_file_store_char(char character)
     if (log_ctx != NULL) {
         cnt = log_ctx->log_buf.cnt;
     } else {
-        IOT_LOG_FILE_ERROR("log_ctx is NULL! %s %d\n", __FUNCTION__, __LINE__);
+        IOT_ERROR("log_ctx is NULL! %s %d\n", __FUNCTION__, __LINE__);
         return;
     }
 
@@ -72,7 +72,7 @@ static void _iot_log_file_enable(unsigned int enable)
     if (log_ctx != NULL) {
         log_ctx->log_buf.enable = enable;
     } else {
-        IOT_LOG_FILE_ERROR("log_ctx is NULL! %s %d\n", __FUNCTION__, __LINE__);
+        IOT_ERROR("log_ctx is NULL! %s %d\n", __FUNCTION__, __LINE__);
         return;
     }
 }
@@ -103,12 +103,12 @@ int iot_log_file_store(const char *log_data, size_t log_size)
 #endif
 
     if (log_ctx == NULL) {
-        // IOT_LOG_FILE_ERROR("iot log is not initialized\n");
+        // IOT_ERROR("iot log is not initialized\n");
         return -1;
     }
 
     if (log_ctx->log_buf.enable == IOT_LOG_FILE_FALSE) {
-        // IOT_LOG_FILE_ERROR("iot log buf is disabled\n");
+        // IOT_ERROR("iot log buf is disabled\n");
         return -1;
     }
 
@@ -161,7 +161,8 @@ static void _iot_log_file_print_hexdump(void *addr, unsigned int size)
 #ifdef CONFIG_STDK_IOT_CORE_LOG_FILE_FLASH_WITH_RAM
 static void _iot_log_file_init_header(struct iot_log_file_header_tag *log_file_header)
 {
-    strcpy(log_file_header->magic_code, "LOG");
+    memcpy(log_file_header->magic_code, "LOG", sizeof(log_file_header->magic_code));
+    log_file_header->magic_code[sizeof(log_file_header->magic_code) - 1] = '\0';
     log_file_header->file_size = IOT_LOG_FILE_FLASH_SIZE;
     log_file_header->written_size = 0;
     log_file_header->sector.num =
@@ -185,7 +186,7 @@ static iot_log_file_header_state_t _iot_log_file_load_header(struct iot_log_file
 
     iot_err = iot_log_read_flash(IOT_LOG_FILE_FLASH_ADDR, log_file_header, IOT_LOG_FILE_FLASH_HEADER_SIZE);
     if (iot_err != IOT_ERROR_NONE) {
-        IOT_LOG_FILE_ERROR("%s %d err=%d", __FUNCTION__, __LINE__, iot_err);
+        IOT_ERROR("%s %d err=%d", __FUNCTION__, __LINE__, iot_err);
         return LOAD_FAIL;
     }
 
@@ -216,7 +217,7 @@ static void _iot_log_file_clear_buf()
         log_ctx->log_buf.overridden = IOT_LOG_FILE_FALSE;
 
     } else {
-        IOT_LOG_FILE_ERROR("log_ctx is NULL! %s %d\n", __FUNCTION__, __LINE__);
+        IOT_ERROR("log_ctx is NULL! %s %d\n", __FUNCTION__, __LINE__);
         return;
     }
 
@@ -258,7 +259,7 @@ static iot_error_t _iot_log_file_write_sector(unsigned int sector_num, unsigned 
 
     iot_sector_buf = iot_os_malloc(IOT_LOG_FILE_FLASH_SECTOR_SIZE);
     if (iot_sector_buf == NULL) {
-        IOT_LOG_FILE_ERROR("%s %d malloc fail!\n", __FUNCTION__, __LINE__);
+        IOT_ERROR("%s %d malloc fail!\n", __FUNCTION__, __LINE__);
         iot_err = IOT_ERROR_MEM_ALLOC;
         goto end;
     }
@@ -268,20 +269,20 @@ static iot_error_t _iot_log_file_write_sector(unsigned int sector_num, unsigned 
 
     iot_err = iot_log_read_flash(sector_addr, iot_sector_buf, IOT_LOG_FILE_FLASH_SECTOR_SIZE);
     if (iot_err != IOT_ERROR_NONE) {
-        IOT_LOG_FILE_ERROR("%s %d err=%d", __FUNCTION__, __LINE__, iot_err);
+        IOT_ERROR("%s %d err=%d", __FUNCTION__, __LINE__, iot_err);
         goto end;
     }
 
     iot_err = iot_log_erase_sector(sector_num);
     if (iot_err != IOT_ERROR_NONE) {
-        IOT_LOG_FILE_ERROR("%s %d err=%d", __FUNCTION__, __LINE__, iot_err);
+        IOT_ERROR("%s %d err=%d", __FUNCTION__, __LINE__, iot_err);
         goto end;
     }
 
     memcpy(iot_sector_buf + offset, data_addr, size);
     iot_err = iot_log_write_flash(sector_addr, iot_sector_buf, IOT_LOG_FILE_FLASH_SECTOR_SIZE);
     if (iot_err != IOT_ERROR_NONE) {
-        IOT_LOG_FILE_ERROR("%s %d err=%d", __FUNCTION__, __LINE__, iot_err);
+        IOT_ERROR("%s %d err=%d", __FUNCTION__, __LINE__, iot_err);
         goto end;
     }
 
@@ -300,7 +301,7 @@ static iot_error_t _iot_log_file_write_header(void *buf, struct iot_log_file_hea
 
     iot_err = iot_log_read_flash(IOT_LOG_FILE_FLASH_ADDR, buf, IOT_LOG_FILE_FLASH_SECTOR_SIZE);
     if (iot_err != IOT_ERROR_NONE) {
-        IOT_LOG_FILE_ERROR("%s %d err=%d", __FUNCTION__, __LINE__, iot_err);
+        IOT_ERROR("%s %d err=%d", __FUNCTION__, __LINE__, iot_err);
         goto end;
     }
 
@@ -310,13 +311,13 @@ static iot_error_t _iot_log_file_write_header(void *buf, struct iot_log_file_hea
 
     iot_err = iot_log_erase_sector(IOT_LOG_FILE_FLASH_FIRST_SECTOR);
     if (iot_err != IOT_ERROR_NONE) {
-        IOT_LOG_FILE_ERROR("%s %d err=%d", __FUNCTION__, __LINE__, iot_err);
+        IOT_ERROR("%s %d err=%d", __FUNCTION__, __LINE__, iot_err);
         goto end;
     }
 
     iot_err = iot_log_write_flash(IOT_LOG_FILE_FLASH_ADDR, buf, IOT_LOG_FILE_FLASH_SECTOR_SIZE);
     if (iot_err != IOT_ERROR_NONE) {
-        IOT_LOG_FILE_ERROR("%s %d err=%d", __FUNCTION__, __LINE__, iot_err);
+        IOT_ERROR("%s %d err=%d", __FUNCTION__, __LINE__, iot_err);
         goto end;
     }
 
@@ -338,7 +339,7 @@ static iot_error_t _iot_log_file_write_data(unsigned int sector_start_num, char 
     if (file_write_size <= IOT_LOG_FILE_FLASH_SECTOR_SIZE) {
         iot_err = _iot_log_file_write_sector(sector_start_num, 0, file_buf, IOT_LOG_FILE_FLASH_SECTOR_SIZE);
         if (iot_err != IOT_ERROR_NONE) {
-            IOT_LOG_FILE_ERROR("%s %d err=%d", __FUNCTION__, __LINE__, iot_err);
+            IOT_ERROR("%s %d err=%d", __FUNCTION__, __LINE__, iot_err);
             goto end;
         }
     } else {
@@ -346,7 +347,7 @@ static iot_error_t _iot_log_file_write_data(unsigned int sector_start_num, char 
         remain_write_size = file_write_size;
         iot_err = _iot_log_file_write_sector(sector_start_num, 0, file_buf, IOT_LOG_FILE_FLASH_SECTOR_SIZE);
         if (iot_err != IOT_ERROR_NONE) {
-            IOT_LOG_FILE_ERROR("%s %d err=%d", __FUNCTION__, __LINE__, iot_err);
+            IOT_ERROR("%s %d err=%d", __FUNCTION__, __LINE__, iot_err);
             goto end;
         }
 
@@ -362,7 +363,7 @@ static iot_error_t _iot_log_file_write_data(unsigned int sector_start_num, char 
             iot_err = _iot_log_file_write_sector(sector_next, 0, file_buf + IOT_LOG_FILE_FLASH_SECTOR_SIZE,
                                                  remain_write_size);
             if (iot_err != IOT_ERROR_NONE) {
-                IOT_LOG_FILE_ERROR("%s %d err=%d", __FUNCTION__, __LINE__, iot_err);
+                IOT_ERROR("%s %d err=%d", __FUNCTION__, __LINE__, iot_err);
                 goto end;
             }
         } else {
@@ -370,7 +371,7 @@ static iot_error_t _iot_log_file_write_data(unsigned int sector_start_num, char 
             iot_err = _iot_log_file_write_sector(sector_next, sizeof(struct iot_log_file_header_tag),
                                                  file_buf + IOT_LOG_FILE_FLASH_SECTOR_SIZE, remain_write_size);
             if (iot_err != IOT_ERROR_NONE) {
-                IOT_LOG_FILE_ERROR("%s %d err=%d", __FUNCTION__, __LINE__, iot_err);
+                IOT_ERROR("%s %d err=%d", __FUNCTION__, __LINE__, iot_err);
                 goto end;
             }
         }
@@ -393,7 +394,7 @@ static iot_error_t _iot_log_file_load_old_data(void *buf, unsigned int *file_wri
         sector_addr = log_file_header.sector.num * IOT_LOG_FILE_FLASH_SECTOR_SIZE;
         iot_err = iot_log_read_flash(sector_addr, buf, IOT_LOG_FILE_FLASH_SECTOR_SIZE); /* read log from flash */
         if (iot_err != IOT_ERROR_NONE) {
-            IOT_LOG_FILE_ERROR("%s %d err=%d", __FUNCTION__, __LINE__, iot_err);
+            IOT_ERROR("%s %d err=%d", __FUNCTION__, __LINE__, iot_err);
             goto end;
         }
         *file_write_size += log_file_header.sector.offset;
@@ -457,7 +458,7 @@ static iot_error_t _iot_log_file_update_header(void *buf, struct iot_log_file_he
 
     iot_err = _iot_log_file_write_header(buf, *log_file_header);
     if (iot_err != IOT_ERROR_NONE) {
-        IOT_LOG_FILE_ERROR("%s %d err=%d", __FUNCTION__, __LINE__, iot_err);
+        IOT_ERROR("%s %d err=%d", __FUNCTION__, __LINE__, iot_err);
         goto end;
     }
 
@@ -479,14 +480,14 @@ static iot_error_t _iot_log_file_manager(struct iot_log_file_ctx *ctx)
     /* STEP 1: Load log header */
     log_header_state = _iot_log_file_load_header(&(ctx->file_header));
     if (log_header_state == LOAD_FAIL) {
-        IOT_LOG_FILE_ERROR("%s %d err=%d", __FUNCTION__, __LINE__, log_header_state);
+        IOT_ERROR("%s %d err=%d", __FUNCTION__, __LINE__, log_header_state);
         return LOAD_FAIL;
     }
 
     /* STEP 2: load load data */
     iot_err = _iot_log_file_load_old_data(ctx->file_buf, &file_write_size, ctx->file_header, log_header_state);
     if (iot_err != IOT_ERROR_NONE) {
-        IOT_LOG_FILE_ERROR("%s %d err=%d", __FUNCTION__, __LINE__, iot_err);
+        IOT_ERROR("%s %d err=%d", __FUNCTION__, __LINE__, iot_err);
         goto end;
     }
 
@@ -497,14 +498,14 @@ static iot_error_t _iot_log_file_manager(struct iot_log_file_ctx *ctx)
     /* STEP 4:  write log data to flash */
     iot_err = _iot_log_file_write_data(ctx->file_header.sector.num, ctx->file_buf, file_write_size);
     if (iot_err != IOT_ERROR_NONE) {
-        IOT_LOG_FILE_ERROR("%s %d err=%d", __FUNCTION__, __LINE__, iot_err);
+        IOT_ERROR("%s %d err=%d", __FUNCTION__, __LINE__, iot_err);
         goto end;
     }
 
     /* STEP 5:  update header */
     iot_err = _iot_log_file_update_header(ctx->file_buf, &(ctx->file_header), log_buf_size);
     if (iot_err != IOT_ERROR_NONE) {
-        IOT_LOG_FILE_ERROR("%s %d err=%d", __FUNCTION__, __LINE__, iot_err);
+        IOT_ERROR("%s %d err=%d", __FUNCTION__, __LINE__, iot_err);
         goto end;
     }
 
@@ -530,7 +531,7 @@ static void _iot_log_file_task(void *arg)
             if (_iot_log_file_is_opening() == IOT_LOG_FILE_FALSE) {
                 iot_err = _iot_log_file_manager(log_ctx);
                 if (iot_err != IOT_ERROR_NONE) {
-                    IOT_LOG_FILE_ERROR("_iot_log_file_manager err=%d", iot_err);
+                    IOT_ERROR("_iot_log_file_manager err=%d", iot_err);
                     return;
                 }
             }
@@ -561,7 +562,7 @@ iot_log_file_handle_t *iot_log_file_open(size_t *filesize, iot_log_file_type_t f
     IOT_LOG_FILE_DEBUG("[%s]\n", __FUNCTION__);
 
     if (log_ctx == NULL) {
-        IOT_LOG_FILE_ERROR("log_ctx is not initialized\n");
+        IOT_ERROR("log_ctx is not initialized\n");
         return NULL;
     }
 
@@ -623,7 +624,7 @@ iot_log_file_handle_t *iot_log_file_open(size_t *filesize, iot_log_file_type_t f
         }
 #endif
         default:
-            IOT_LOG_FILE_ERROR("Unsupported file_type(%d)! %s %d\n", file_handle->file_type, __FUNCTION__, __LINE__);
+            IOT_ERROR("Unsupported file_type(%d)! %s %d\n", file_handle->file_type, __FUNCTION__, __LINE__);
             goto error_log_file_open;
     }
 
@@ -655,7 +656,7 @@ iot_error_t _iot_log_read_bytes(iot_log_file_handle_t *file_handle, void *buffer
             break;
 #endif
         default:
-            IOT_LOG_FILE_ERROR("Unsupported file_type(%d)! %s %d\n", file_handle->file_type, __FUNCTION__, __LINE__);
+            IOT_ERROR("Unsupported file_type(%d)! %s %d\n", file_handle->file_type, __FUNCTION__, __LINE__);
             iot_err = IOT_ERROR_BAD_REQ;
             break;
     }
@@ -682,7 +683,7 @@ iot_error_t iot_log_file_seek(iot_log_file_handle_t *file_handle, int seek_offse
             file_handle->cur_addr = file_handle->start_addr + new_offset;
             break;
         default:
-            IOT_LOG_FILE_ERROR("Unsupported file_type(%d)! %s %d\n", file_handle->file_type, __FUNCTION__, __LINE__);
+            IOT_ERROR("Unsupported file_type(%d)! %s %d\n", file_handle->file_type, __FUNCTION__, __LINE__);
             iot_err = IOT_ERROR_BAD_REQ;
             break;
     }
@@ -697,7 +698,7 @@ iot_error_t iot_log_file_read(iot_log_file_handle_t *file_handle, void *buffer, 
     iot_error_t iot_err = IOT_ERROR_NONE;
 
     if (file_handle == NULL || buffer == NULL) {
-        IOT_LOG_FILE_ERROR("Invalid Args! %s %d\n", __FUNCTION__, __LINE__);
+        IOT_ERROR("Invalid Args! %s %d\n", __FUNCTION__, __LINE__);
         return IOT_ERROR_INVALID_ARGS;
     }
 
@@ -764,7 +765,7 @@ end:
 iot_error_t iot_log_file_close(iot_log_file_handle_t *file_handle)
 {
     if (file_handle == NULL) {
-        IOT_LOG_FILE_ERROR("file_handle is NULL! %s %d\n", __FUNCTION__, __LINE__);
+        IOT_ERROR("file_handle is NULL! %s %d\n", __FUNCTION__, __LINE__);
         return IOT_ERROR_INVALID_ARGS;
     }
 
@@ -797,7 +798,7 @@ iot_error_t iot_log_file_remove(iot_log_file_type_t type)
             unsigned int sector_num = IOT_LOG_FILE_FLASH_SIZE / IOT_LOG_FILE_FLASH_SECTOR_SIZE;
 
             if (_iot_log_file_is_opening() == IOT_LOG_FILE_TRUE) {
-                IOT_LOG_FILE_ERROR("Can't remove, someone opened! %s %d\n", __FUNCTION__, __LINE__);
+                IOT_ERROR("Can't remove, someone opened! %s %d\n", __FUNCTION__, __LINE__);
                 iot_err = IOT_ERROR_BAD_REQ;
                 break;
             }
@@ -807,7 +808,7 @@ iot_error_t iot_log_file_remove(iot_log_file_type_t type)
             for (i = 0; i < sector_num; i++) {
                 iot_err = iot_log_erase_sector(erase_addr / IOT_LOG_FILE_FLASH_SECTOR_SIZE);
                 if (iot_err != IOT_ERROR_NONE) {
-                    IOT_LOG_FILE_ERROR("%s %d err=%d", __FUNCTION__, __LINE__, iot_err);
+                    IOT_ERROR("%s %d err=%d", __FUNCTION__, __LINE__, iot_err);
                     break;
                 }
                 erase_addr += IOT_LOG_FILE_FLASH_SECTOR_SIZE;
@@ -816,7 +817,7 @@ iot_error_t iot_log_file_remove(iot_log_file_type_t type)
         }
 #endif
         default:
-            IOT_LOG_FILE_ERROR("Unsupported file_type(%d)! %s %d\n", type, __FUNCTION__, __LINE__);
+            IOT_ERROR("Unsupported file_type(%d)! %s %d\n", type, __FUNCTION__, __LINE__);
             iot_err = IOT_ERROR_BAD_REQ;
             break;
     }
@@ -838,7 +839,7 @@ iot_error_t iot_log_file_init(iot_log_file_type_t type)
 
     log_ctx = iot_os_malloc(sizeof(struct iot_log_file_ctx));
     if (log_ctx == NULL) {
-        IOT_LOG_FILE_ERROR("malloc struct iot_log_file_ctx fail!\n");
+        IOT_ERROR("malloc struct iot_log_file_ctx fail!\n");
         ret = IOT_ERROR_MEM_ALLOC;
         goto end;
     }
@@ -850,14 +851,14 @@ iot_error_t iot_log_file_init(iot_log_file_type_t type)
         case FLASH_WITH_RAM:
             log_ctx->events = iot_os_eventgroup_create();
             if (log_ctx->events == NULL) {
-                IOT_LOG_FILE_ERROR("failed to create eventgroup\n");
+                IOT_ERROR("failed to create eventgroup\n");
                 ret = IOT_ERROR_MEM_ALLOC;
                 goto error_task_init;
             }
 
             if (iot_os_thread_create(_iot_log_file_task, IOT_LOG_FILE_TASK_NAME, IOT_LOG_FILE_TASK_STACK_SIZE, NULL,
                                      IOT_LOG_FILE_TASK_PRIORITY, NULL) != IOT_OS_TRUE) {
-                IOT_LOG_FILE_ERROR("failed to create iot_task\n");
+                IOT_ERROR("failed to create iot_task\n");
                 ret = IOT_ERROR_MEM_ALLOC;
                 goto error_task_init;
             }
@@ -877,7 +878,7 @@ iot_error_t iot_log_file_init(iot_log_file_type_t type)
             break;
 #endif
         default:
-            IOT_LOG_FILE_ERROR("Unsupported type!\n");
+            IOT_ERROR("Unsupported type!\n");
             ret = IOT_ERROR_INVALID_ARGS;
             goto end;
     }

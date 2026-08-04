@@ -575,14 +575,14 @@ static void _iot_mqtt_process_received_ack(MQTTClient *client, iot_mqtt_packet_c
             }
         }
 
+        tmp->chunk_state = PACKET_CHUNK_ACKNOWLEDGED;
         if (tmp->have_owner) {
-            tmp->chunk_state = PACKET_CHUNK_ACKNOWLEDGED;
             if (tmp->expiry_time) {
                 iot_os_timer_delete(tmp->expiry_time);
                 tmp->expiry_time = NULL;
             }
         } else {
-            _iot_mqtt_chunk_destroy(tmp);
+            _iot_mqtt_queue_push(&client->user_event_callback_queue, tmp);
         }
     } else {
         IOT_ERROR("There is no ack packet matched");
@@ -910,22 +910,28 @@ static void _iot_mqtt_deliver_publish(MQTTClient *client, iot_mqtt_packet_chunk_
 
 static void _iot_mqtt_notify_publish_failed(MQTTClient *client, iot_mqtt_packet_chunk_t *chunk)
 {
-    st_mqtt_msg msg;
-    MQTTString topic_name;
-    int qos;
-    unsigned char dup;
-    unsigned short id;
+    unsigned int chunk_id = chunk->chunk_id;
+    st_mqtt_publish_result result;
 
-    MQTTDeserialize_publish(&dup, &qos, &msg.retained, &id, &topic_name, (unsigned char **)&msg.payload,
-                            (int *)&msg.payloadlen, chunk->chunk_data, chunk->chunk_size);
-
-    msg.qos = qos;
-    msg.topic = topic_name.lenstring.data;
-    msg.topiclen = topic_name.lenstring.len;
     if (chunk->chunk_state == PACKET_CHUNK_WRITE_FAIL) {
-        client->user_callback_fp(ST_MQTT_EVENT_PUBLISH_FAILED, &msg, client->user_callback_user_data);
+        result = ST_MQTT_PUBLISH_RESULT_FAILED;
     } else if (chunk->chunk_state == PACKET_CHUNK_TIMEOUT) {
-        client->user_callback_fp(ST_MQTT_EVENT_PUBLISH_TIMEOUT, &msg, client->user_callback_user_data);
+        result = ST_MQTT_PUBLISH_RESULT_TIMEOUT;
+    } else {
+        return;
+    }
+
+    if (chunk->publish_cb) {
+        chunk->publish_cb(chunk_id, result, chunk->publish_cb_user_data);
+    }
+}
+
+static void _iot_mqtt_notify_publish_success(MQTTClient *client, iot_mqtt_packet_chunk_t *chunk)
+{
+    unsigned int chunk_id = chunk->chunk_id;
+
+    if (chunk->publish_cb) {
+        chunk->publish_cb(chunk_id, ST_MQTT_PUBLISH_RESULT_SUCCESS, chunk->publish_cb_user_data);
     }
 }
 
@@ -946,6 +952,11 @@ static void _iot_mqtt_process_user_callback(MQTTClient *client)
             case PACKET_CHUNK_WRITE_FAIL:
                 if (w_chunk->packet_type == PUBLISH) {
                     _iot_mqtt_notify_publish_failed(client, w_chunk);
+                }
+                break;
+            case PACKET_CHUNK_ACKNOWLEDGED:
+                if (w_chunk->packet_type == PUBLISH) {
+                    _iot_mqtt_notify_publish_success(client, w_chunk);
                 }
                 break;
             case PACKET_CHUNK_READ_COMPLETED:
@@ -1181,6 +1192,7 @@ static void _iot_mqtt_delete_pending_task(MQTTClient *client)
                 queue_data_iter = queue->head;
             } else if (queue_data_iter == queue->tail) {
                 queue->tail = queue_data_prev;
+                queue_data_prev->next = NULL;
                 iot_os_free(queue_data_iter->data);
                 iot_os_free(queue_data_iter);
                 queue_data_iter = NULL;
@@ -1329,6 +1341,13 @@ int st_mqtt_connect(st_mqtt_client client, st_mqtt_broker_info_t *broker, st_mqt
     options.password.cstring = connect_data->password;
     options.keepAliveInterval = connect_data->alive_interval;
     options.cleansession = connect_data->cleansession;
+
+    c->client_id_hash = 5381;
+    if (connect_data->clientid) {
+        for (const char *p = connect_data->clientid; *p; p++) {
+            c->client_id_hash = ((c->client_id_hash << 5) + c->client_id_hash) ^ (*p);
+        }
+    }
 
     chunk_size = MQTTSerialize_connect_size(&options);
     connect_packet = _iot_mqtt_chunk_create(chunk_size);
@@ -1493,7 +1512,8 @@ exit:
     return rc;
 }
 
-static iot_mqtt_packet_chunk_t *_iot_mqtt_push_publish_packet(MQTTClient *c, st_mqtt_msg *msg, unsigned char is_sync)
+static iot_mqtt_packet_chunk_t *_iot_mqtt_push_publish_packet(MQTTClient *c, st_mqtt_msg *msg, unsigned char is_sync,
+                                                              st_mqtt_publish_callback publish_cb, void *usr_data)
 {
     MQTTString topic = MQTTString_initializer;
     topic.cstring = (char *)msg->topic;
@@ -1517,6 +1537,9 @@ static iot_mqtt_packet_chunk_t *_iot_mqtt_push_publish_packet(MQTTClient *c, st_
     if (msg->qos == st_mqtt_qos1 || msg->qos == st_mqtt_qos2) {
         c->next_packetid = (c->next_packetid >= MAX_PACKET_ID) ? 1 : c->next_packetid + 1;
         pub_packet->packet_id = c->next_packetid;
+
+        unsigned int temp_chunk_id = (c->client_id_hash ^ c->next_packetid);
+        pub_packet->chunk_id = (int)(temp_chunk_id & 0x7FFFFFFF);
     }
 
     MQTTSerialize_publish(pub_packet->chunk_data, chunk_size, 0, msg->qos, msg->retained, pub_packet->packet_id, topic,
@@ -1525,6 +1548,8 @@ static iot_mqtt_packet_chunk_t *_iot_mqtt_push_publish_packet(MQTTClient *c, st_
     pub_packet->have_owner = is_sync;
     pub_packet->qos = msg->qos;
     pub_packet->chunk_state = PACKET_CHUNK_WRITE_PENDING;
+    pub_packet->publish_cb = publish_cb;
+    pub_packet->publish_cb_user_data = usr_data;
     _iot_mqtt_queue_push(&c->write_pending_queue, pub_packet);
 
 exit:
@@ -1568,16 +1593,22 @@ int st_mqtt_publish(st_mqtt_client client, st_mqtt_msg *msg)
     MQTTClient *c = client;
     int rc = 0;
     iot_mqtt_packet_chunk_t *pub_packet = NULL;
+    unsigned int chunk_id = 0;
 
-    pub_packet = _iot_mqtt_push_publish_packet(c, msg, 1);
+    pub_packet = _iot_mqtt_push_publish_packet(c, msg, 1, NULL, NULL);
     if (!pub_packet) {
         rc = E_ST_MQTT_FAILURE;
         goto exit;
     }
+    chunk_id = pub_packet->chunk_id;
     rc = _iot_mqtt_wait_for(c, pub_packet);
 
     if (c->work_queue) {
         _iot_mqtt_signal_pending_work(c);
+    }
+
+    if (rc == IOT_ERROR_NONE) {
+        rc = chunk_id;
     }
 
 exit:
@@ -1585,13 +1616,17 @@ exit:
     return rc;
 }
 
-int st_mqtt_publish_async(st_mqtt_client client, st_mqtt_msg *msg)
+int st_mqtt_publish_async(st_mqtt_client client, st_mqtt_msg *msg, st_mqtt_publish_callback publish_cb, void *usr_data)
 {
     MQTTClient *c = client;
     int rc = 0;
+    iot_mqtt_packet_chunk_t *pub_packet = NULL;
 
-    if ((_iot_mqtt_push_publish_packet(c, msg, 0) == NULL)) {
+    pub_packet = _iot_mqtt_push_publish_packet(c, msg, 0, publish_cb, usr_data);
+    if (pub_packet == NULL) {
         rc = E_ST_MQTT_FAILURE;
+    } else {
+        rc = pub_packet->chunk_id;
     }
 
     if (c->work_queue) {
