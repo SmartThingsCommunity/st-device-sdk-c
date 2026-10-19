@@ -32,7 +32,20 @@ struct wpa_ssid {
         WPAS_MODE_AP = 2,
     } mode;
     char *key_mgmt;
+    int hidden;
+    /* PMF (802.11w) mode: 0 = disabled, 1 = optional, 2 = required.
+     * Only applied when key_mgmt includes SAE. */
+    int ieee80211w;
 };
+
+/* IEEE 802.11 reason codes reported via the wpa_supplicant DisconnectReason
+ * property. A negative property value means a locally generated disconnect. */
+#define WLAN_REASON_PREV_AUTH_NOT_VALID 2
+#define WLAN_REASON_DEAUTH_LEAVING 3
+#define WLAN_REASON_DISASSOC_AP_BUSY 5
+#define WLAN_REASON_4WAY_HANDSHAKE_TIMEOUT 15
+#define WLAN_REASON_GROUP_KEY_UPDATE_TIMEOUT 16
+#define WLAN_REASON_IEEE_802_1X_AUTH_FAILED 23
 
 int supplicant_get_wireless_interface(char **ctrl_ifname);
 static int supplicant_remove_network(char *iface);
@@ -47,11 +60,15 @@ uint16_t supplicant_get_scanned_ap_list(iot_wifi_scan_result_t *ap_list);
 
 int supplicant_start_station(void);
 int supplicant_stop_station(void);
-int supplicant_join_network(char *ssid_key, char *password);
+int supplicant_join_network(char *ssid_key, char *password, iot_wifi_auth_mode_t authmode, int hidden);
 int supplicant_leave_network(void);
 
 int supplicant_start_softap(char *ssid_name, char *pswd);
 int supplicant_stop_softap(void);
 
 int supplicant_get_freq_support(void);
+
+int supplicant_get_current_ap(iot_wifi_scan_result_t *ap_record);
+int supplicant_is_station_active(void);
+
 #endif

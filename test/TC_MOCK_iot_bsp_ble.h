@@ -34,6 +34,7 @@ uint8_t tc_mock_ble_get_es_msg_dispatch_last_buf_count(void);
 void tc_mock_ble_set_es_msg_dispatch_use_wrap(int use);
 void tc_mock_ble_set_get_certificate_rc(int rc);
 void tc_mock_ble_set_get_certificate_use_wrap(int use);
+void tc_mock_ble_set_get_certificate_payload(const char *payload);
 void tc_mock_ble_set_get_response_step(int step);
 void tc_mock_ble_set_get_response_use_wrap(int use);
 void tc_mock_ble_set_get_response_err(int err);

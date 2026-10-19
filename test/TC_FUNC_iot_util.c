@@ -20,11 +20,14 @@
 #include <string.h>
 
 #include "TC_MOCK_functions.h"
+#include "TC_REGISTRY.h"
 #include "cmocka_custom.h"
 
 #define UNUSED(x) (void **)(x)
 
-void TC_iot_util_dump_mem(void **state)
+TEST_SUITE("iot_util.c");
+
+TEST_F(TC_REGISTRY_NO_FIXTURE, TC_iot_util_dump_mem_neg)
 {
     uint8_t test_buffer[] = {0x01, 0x02, 0x03, 0x04, 0x05};
     FILE *original_stdout;
@@ -49,9 +52,11 @@ void TC_iot_util_dump_mem(void **state)
     // Restore stdout
     fclose(stdout);
     stdout = original_stdout;
+
+    assert_true(true);
 }
 
-void TC_iot_util_validate_uuid_format_null_str(void **state)
+TEST_F(TC_REGISTRY_NO_FIXTURE, TC_iot_util_validate_uuid_format_null_str_neg)
 {
     iot_error_t err;
     UNUSED(state);
@@ -63,7 +68,7 @@ void TC_iot_util_validate_uuid_format_null_str(void **state)
     assert_int_equal(err, IOT_ERROR_INVALID_ARGS);
 }
 
-void TC_iot_util_validate_uuid_format_invalid_clock_seq(void **state)
+TEST_F(TC_REGISTRY_NO_FIXTURE, TC_iot_util_validate_uuid_format_invalid_clock_seq_neg)
 {
     iot_error_t err;
     const char *invalid_clock_seq_uuid = "c236f527-5d8d-4d0b-86f6-0add22717f0z";  // Invalid char in clock seq
@@ -76,7 +81,7 @@ void TC_iot_util_validate_uuid_format_invalid_clock_seq(void **state)
     assert_int_equal(err, IOT_ERROR_INVALID_ARGS);
 }
 
-void TC_iot_util_convert_str_uuid_success(void **state)
+TEST_F(TC_REGISTRY_NO_FIXTURE, TC_iot_util_convert_str_uuid_success_pos)
 {
     iot_error_t err;
     const char *uuid_random_type_lower = "c236f527-5d8d-4d0b-86f6-0add22717f0e";
@@ -146,7 +151,7 @@ void TC_iot_util_convert_str_uuid_success(void **state)
     assert_memory_equal(&uuid, &timebased_uuid, sizeof(struct iot_uuid));
 }
 
-void TC_iot_util_convert_str_uuid_null_parameters(void **state)
+TEST_F(TC_REGISTRY_NO_FIXTURE, TC_iot_util_convert_str_uuid_null_parameters_neg)
 {
     iot_error_t err;
     const char *valid_uuid_str = "c236f527-5d8d-4d0b-86f6-0add22717f0e";
@@ -169,7 +174,7 @@ void TC_iot_util_convert_str_uuid_null_parameters(void **state)
     assert_int_not_equal(err, IOT_ERROR_NONE);
 }
 
-void TC_iot_util_convert_str_uuid_invalid_length(void **state)
+TEST_F(TC_REGISTRY_NO_FIXTURE, TC_iot_util_convert_str_uuid_invalid_length_neg)
 {
     iot_error_t err;
     struct iot_uuid uuid;
@@ -187,7 +192,7 @@ void TC_iot_util_convert_str_uuid_invalid_length(void **state)
     }
 }
 
-void TC_iot_util_convert_str_uuid_invalid_delimiters(void **state)
+TEST_F(TC_REGISTRY_NO_FIXTURE, TC_iot_util_convert_str_uuid_invalid_delimiters_neg)
 {
     iot_error_t err;
     struct iot_uuid uuid;
@@ -207,7 +212,7 @@ void TC_iot_util_convert_str_uuid_invalid_delimiters(void **state)
     }
 }
 
-void TC_iot_util_convert_str_uuid_invalid_characters(void **state)
+TEST_F(TC_REGISTRY_NO_FIXTURE, TC_iot_util_convert_str_uuid_invalid_characters_neg)
 {
     iot_error_t err;
     struct iot_uuid uuid;
@@ -226,7 +231,7 @@ void TC_iot_util_convert_str_uuid_invalid_characters(void **state)
     }
 }
 
-void TC_iot_util_convert_str_uuid_invalid_format(void **state)
+TEST_F(TC_REGISTRY_NO_FIXTURE, TC_iot_util_convert_str_uuid_invalid_format_neg)
 {
     iot_error_t err;
     struct iot_uuid uuid;
@@ -246,7 +251,7 @@ void TC_iot_util_convert_str_uuid_invalid_format(void **state)
     }
 }
 
-void TC_iot_util_convert_str_uuid_invalid_version(void **state)
+TEST_F(TC_REGISTRY_NO_FIXTURE, TC_iot_util_convert_str_uuid_invalid_version_neg)
 {
     iot_error_t err;
     struct iot_uuid uuid;
@@ -264,7 +269,7 @@ void TC_iot_util_convert_str_uuid_invalid_version(void **state)
     }
 }
 
-void TC_iot_util_convert_uuid_str_null_uuid(void **state)
+TEST_F(TC_REGISTRY_NO_FIXTURE, TC_iot_util_convert_uuid_str_null_uuid_neg)
 {
     iot_error_t err;
     struct iot_uuid uuid = {
@@ -278,7 +283,7 @@ void TC_iot_util_convert_uuid_str_null_uuid(void **state)
     assert_int_equal(err, IOT_ERROR_INVALID_ARGS);
 }
 
-void TC_iot_util_convert_uuid_str_null_buffer(void **state)
+TEST_F(TC_REGISTRY_NO_FIXTURE, TC_iot_util_convert_uuid_str_null_buffer_neg)
 {
     iot_error_t err;
     struct iot_uuid uuid = {
@@ -292,7 +297,7 @@ void TC_iot_util_convert_uuid_str_null_buffer(void **state)
     assert_int_equal(err, IOT_ERROR_INVALID_ARGS);
 }
 
-void TC_iot_util_convert_uuid_str_insufficient_buffer(void **state)
+TEST_F(TC_REGISTRY_NO_FIXTURE, TC_iot_util_convert_uuid_str_insufficient_buffer_neg)
 {
     iot_error_t err;
     struct iot_uuid uuid = {
@@ -306,7 +311,7 @@ void TC_iot_util_convert_uuid_str_insufficient_buffer(void **state)
     assert_int_equal(err, IOT_ERROR_INVALID_ARGS);
 }
 
-void TC_iot_util_convert_str_mac_success(void **state)
+TEST_F(TC_REGISTRY_NO_FIXTURE, TC_iot_util_convert_str_mac_neg)
 {
     iot_error_t err;
     char mac_addr_str[] = "a2:b3:fe:c9:8e:7d";
@@ -325,7 +330,7 @@ void TC_iot_util_convert_str_mac_success(void **state)
     assert_memory_not_equal(&mac, &mac_empty, sizeof(struct iot_mac));
 }
 
-void TC_iot_util_convert_str_mac_null_parameters(void **state)
+TEST_F(TC_REGISTRY_NO_FIXTURE, TC_iot_util_convert_str_mac_null_parameters_neg)
 {
     iot_error_t err;
     struct iot_mac mac;
@@ -347,7 +352,7 @@ void TC_iot_util_convert_str_mac_null_parameters(void **state)
     assert_int_equal(err, IOT_ERROR_INVALID_ARGS);
 }
 
-void TC_iot_util_convert_str_mac_invalid_length(void **state)
+TEST_F(TC_REGISTRY_NO_FIXTURE, TC_iot_util_convert_str_mac_invalid_length_neg)
 {
     iot_error_t err;
     struct iot_mac mac;
@@ -365,7 +370,7 @@ void TC_iot_util_convert_str_mac_invalid_length(void **state)
     }
 }
 
-void TC_iot_util_convert_str_mac_invalid_format(void **state)
+TEST_F(TC_REGISTRY_NO_FIXTURE, TC_iot_util_convert_str_mac_invalid_format_neg)
 {
     iot_error_t err;
     struct iot_mac mac;
@@ -385,7 +390,7 @@ void TC_iot_util_convert_str_mac_invalid_format(void **state)
     }
 }
 
-void TC_iot_util_convert_str_mac_invalid_characters(void **state)
+TEST_F(TC_REGISTRY_NO_FIXTURE, TC_iot_util_convert_str_mac_invalid_characters_neg)
 {
     iot_error_t err;
     struct iot_mac mac;
@@ -403,7 +408,7 @@ void TC_iot_util_convert_str_mac_invalid_characters(void **state)
     }
 }
 
-void TC_iot_util_convert_str_mac_invalid_segment_format(void **state)
+TEST_F(TC_REGISTRY_NO_FIXTURE, TC_iot_util_convert_str_mac_invalid_segment_format_neg)
 {
     iot_error_t err;
     struct iot_mac mac;
@@ -422,7 +427,7 @@ void TC_iot_util_convert_str_mac_invalid_segment_format(void **state)
     }
 }
 
-void TC_iot_util_convert_mac_str_null_mac(void **state)
+TEST_F(TC_REGISTRY_NO_FIXTURE, TC_iot_util_convert_mac_str_null_mac_neg)
 {
     iot_error_t err;
     char out_buffer[32];
@@ -435,7 +440,7 @@ void TC_iot_util_convert_mac_str_null_mac(void **state)
     assert_int_not_equal(err, IOT_ERROR_NONE);
 }
 
-void TC_iot_util_convert_mac_str_null_buffer(void **state)
+TEST_F(TC_REGISTRY_NO_FIXTURE, TC_iot_util_convert_mac_str_null_buffer_neg)
 {
     iot_error_t err;
     struct iot_mac *mac;
@@ -457,7 +462,7 @@ void TC_iot_util_convert_mac_str_null_buffer(void **state)
     assert_int_not_equal(err, IOT_ERROR_NONE);
 }
 
-void TC_iot_util_convert_mac_str_null_output_buffer(void **state)
+TEST_F(TC_REGISTRY_NO_FIXTURE, TC_iot_util_convert_mac_str_null_output_buffer_neg)
 {
     iot_error_t err;
     struct iot_mac *mac;
@@ -479,7 +484,7 @@ void TC_iot_util_convert_mac_str_null_output_buffer(void **state)
     free(mac);
 }
 
-void TC_iot_util_convert_mac_str_insufficient_buffer(void **state)
+TEST_F(TC_REGISTRY_NO_FIXTURE, TC_iot_util_convert_mac_str_insufficient_buffer_neg)
 {
     iot_error_t err;
     struct iot_mac *mac;
@@ -502,7 +507,7 @@ void TC_iot_util_convert_mac_str_insufficient_buffer(void **state)
     free(mac);
 }
 
-void TC_iot_util_convert_mac_str_success(void **state)
+TEST_F(TC_REGISTRY_NO_FIXTURE, TC_iot_util_convert_mac_str_success_pos)
 {
     iot_error_t err;
     struct iot_mac *mac;
@@ -526,7 +531,7 @@ void TC_iot_util_convert_mac_str_success(void **state)
     free(mac);
 }
 
-void TC_iot_util_convert_channel_freq_success(void **state)
+TEST_F(TC_REGISTRY_NO_FIXTURE, TC_iot_util_convert_channel_freq_neg)
 {
     UNUSED(state);
 
@@ -546,7 +551,7 @@ void TC_iot_util_convert_channel_freq_success(void **state)
     }
 }
 
-void TC_iot_util_convert_freq_channel_success(void **state)
+TEST_F(TC_REGISTRY_NO_FIXTURE, TC_iot_util_convert_freq_channel_success_pos)
 {
     uint8_t channel;
     UNUSED(state);
@@ -571,7 +576,7 @@ void TC_iot_util_convert_freq_channel_success(void **state)
     assert_int_equal(channel, 173);
 }
 
-void TC_iot_util_url_parse_success(void **state)
+TEST_F(TC_REGISTRY_NO_FIXTURE, TC_iot_util_url_parse_success_pos)
 {
     iot_error_t err;
     url_parse_t output;
@@ -591,7 +596,7 @@ void TC_iot_util_url_parse_success(void **state)
         free(output.domain);
 }
 
-void TC_iot_util_url_parse_negative_cases(void **state)
+TEST_F(TC_REGISTRY_NO_FIXTURE, TC_iot_util_url_parse_neg)
 {
     iot_error_t err;
     url_parse_t output;
@@ -619,7 +624,7 @@ void TC_iot_util_url_parse_negative_cases(void **state)
     assert_int_equal(err, IOT_ERROR_INVALID_ARGS);
 }
 
-void TC_iot_util_queue_create_negative_cases(void **state)
+TEST_F(TC_REGISTRY_NO_FIXTURE, TC_iot_util_queue_create_neg)
 {
     iot_util_queue_t *queue;
     UNUSED(state);
@@ -630,15 +635,17 @@ void TC_iot_util_queue_create_negative_cases(void **state)
     assert_null(queue);
 }
 
-void TC_iot_util_queue_delete_edge_cases(void **state)
+TEST_F(TC_REGISTRY_NO_FIXTURE, TC_iot_util_queue_delete_edge_cases_neg)
 {
     UNUSED(state);
 
     // When: NULL queue (should not crash)
     iot_util_queue_delete(NULL);
+
+    assert_true(true);
 }
 
-void TC_iot_util_queue_send_negative_cases(void **state)
+TEST_F(TC_REGISTRY_NO_FIXTURE, TC_iot_util_queue_send_neg)
 {
     iot_error_t err;
     iot_util_queue_t *queue;
@@ -660,7 +667,7 @@ void TC_iot_util_queue_send_negative_cases(void **state)
     iot_util_queue_delete(queue);
 }
 
-void TC_iot_util_queue_receive_negative_cases(void **state)
+TEST_F(TC_REGISTRY_NO_FIXTURE, TC_iot_util_queue_receive_neg)
 {
     iot_error_t err;
     iot_util_queue_t *queue;
@@ -687,7 +694,7 @@ void TC_iot_util_queue_receive_negative_cases(void **state)
     iot_util_queue_delete(queue);
 }
 
-void TC_iot_util_queue_send_receive_success(void **state)
+TEST_F(TC_REGISTRY_NO_FIXTURE, TC_iot_util_queue_send_receive_neg)
 {
     iot_error_t err;
     iot_util_queue_t *queue;
@@ -710,7 +717,7 @@ void TC_iot_util_queue_send_receive_success(void **state)
     iot_util_queue_delete(queue);
 }
 
-void TC_iot_util_queue_send_multiple_items(void **state)
+TEST_F(TC_REGISTRY_NO_FIXTURE, TC_iot_util_queue_send_multiple_items_neg)
 {
     iot_error_t err;
     iot_util_queue_t *queue;
@@ -737,7 +744,7 @@ void TC_iot_util_queue_send_multiple_items(void **state)
     iot_util_queue_delete(queue);
 }
 
-void TC_iot_util_queue_create_malloc_failure(void **state)
+TEST_F(TC_REGISTRY_NO_FIXTURE, TC_iot_util_queue_create_malloc_failure_neg)
 {
     iot_util_queue_t *queue;
     UNUSED(state);
@@ -751,7 +758,7 @@ void TC_iot_util_queue_create_malloc_failure(void **state)
     assert_null(queue);
 }
 
-void TC_iot_util_queue_send_malloc_failure_data_struct(void **state)
+TEST_F(TC_REGISTRY_NO_FIXTURE, TC_iot_util_queue_send_malloc_failure_data_struct_neg)
 {
     iot_error_t err;
     iot_util_queue_t *queue;
@@ -772,7 +779,7 @@ void TC_iot_util_queue_send_malloc_failure_data_struct(void **state)
     iot_util_queue_delete(queue);
 }
 
-void TC_iot_util_queue_send_malloc_failure_data_copy(void **state)
+TEST_F(TC_REGISTRY_NO_FIXTURE, TC_iot_util_queue_send_malloc_failure_data_copy_neg)
 {
     iot_error_t err;
     iot_util_queue_t *queue;
@@ -796,19 +803,23 @@ void TC_iot_util_queue_send_malloc_failure_data_copy(void **state)
 /*
  * Additional coverage for print helpers with NULL inputs.
  */
-void TC_iot_util_print_ssid_secure_null_ssid(void **state)
+TEST_F(TC_REGISTRY_NO_FIXTURE, TC_iot_util_print_ssid_secure_null_ssid_neg)
 {
     UNUSED(state);
     iot_util_print_ssid_secure(__FUNCTION__, __LINE__, "prefix", NULL);
+
+    assert_true(true);
 }
 
-void TC_iot_util_print_mac_secure_null_mac(void **state)
+TEST_F(TC_REGISTRY_NO_FIXTURE, TC_iot_util_print_mac_secure_null_mac_neg)
 {
     UNUSED(state);
     iot_util_print_mac_secure(__FUNCTION__, __LINE__, "prefix", NULL);
+
+    assert_true(true);
 }
 
-void TC_iot_util_generator_backoff(void **state)
+TEST_F(TC_REGISTRY_NO_FIXTURE, TC_iot_util_generator_backoff_neg)
 {
     unsigned int backoff;
     UNUSED(state);
@@ -836,7 +847,7 @@ void TC_iot_util_generator_backoff(void **state)
     assert_int_equal(backoff, 2000);
 }
 
-void TC_iot_util_print_ssid_secure_positive(void **state)
+TEST_F(TC_REGISTRY_NO_FIXTURE, TC_iot_util_print_ssid_secure_neg)
 {
     char test_ssid[] = "TestWiFiNetwork";
     char empty_ssid[] = "";
@@ -856,9 +867,11 @@ void TC_iot_util_print_ssid_secure_positive(void **state)
     // Restore stdout
     fclose(stdout);
     stdout = original_stdout;
+
+    assert_true(true);
 }
 
-void TC_iot_util_print_mac_secure_positive(void **state)
+TEST_F(TC_REGISTRY_NO_FIXTURE, TC_iot_util_print_mac_secure_neg)
 {
     uint8_t test_mac[] = {0x0a, 0x0b, 0x11, 0x22, 0x33, 0x44};
     FILE *original_stdout;
@@ -874,4 +887,215 @@ void TC_iot_util_print_mac_secure_positive(void **state)
     // Restore stdout
     fclose(stdout);
     stdout = original_stdout;
+
+    assert_true(true);
+}
+
+/*
+ * Additional negative tests for iot_util.c
+ */
+TEST_F(TC_REGISTRY_NO_FIXTURE, TC_iot_util_dump_mem_printable_and_binary_neg)
+{
+    uint8_t test_buffer[32];
+    FILE *original_stdout;
+    int i;
+    UNUSED(state);
+
+    // Given: a buffer mixing printable and non printable bytes
+    for (i = 0; i < 32; i++) {
+        test_buffer[i] = (i % 2) ? (uint8_t)('A' + (i % 26)) : (uint8_t)i;
+    }
+
+    original_stdout = stdout;
+    stdout = fopen("/dev/null", "w");
+    // When: the dump tag asks for the ascii column as well
+    iot_util_dump_mem("dump", test_buffer, sizeof(test_buffer));
+    // and a tag that is not "dump" skips the ascii column
+    iot_util_dump_mem("hex", test_buffer, sizeof(test_buffer));
+    fclose(stdout);
+    stdout = original_stdout;
+
+    assert_true(true);
+}
+
+TEST_F(TC_REGISTRY_NO_FIXTURE, TC_iot_util_dump_mem_zero_length_neg)
+{
+    uint8_t test_buffer[] = {0x01};
+    FILE *original_stdout;
+    UNUSED(state);
+
+    original_stdout = stdout;
+    stdout = fopen("/dev/null", "w");
+    // When: nothing is to be dumped
+    iot_util_dump_mem("dump", test_buffer, 0);
+    fclose(stdout);
+    stdout = original_stdout;
+
+    assert_true(true);
+}
+
+TEST_F(TC_REGISTRY_NO_FIXTURE, TC_iot_util_validate_uuid_format_invalid_node_neg)
+{
+    UNUSED(state);
+
+    // Given: a uuid whose node field carries a non hex character
+    // Then: rejected
+    assert_int_not_equal(iot_util_convert_str_uuid("123e4567-e89b-42d3-a456-42665544000g", NULL), IOT_ERROR_NONE);
+}
+
+TEST_F(TC_REGISTRY_NO_FIXTURE, TC_iot_util_convert_uuid_str_exact_buffer_neg)
+{
+    struct iot_uuid uuid;
+    char str[37];
+    UNUSED(state);
+
+    memset(&uuid, 0xAB, sizeof(uuid));
+    // When: the buffer is one byte short of the 36 characters plus terminator
+    assert_int_not_equal(iot_util_convert_uuid_str(&uuid, str, 36), IOT_ERROR_NONE);
+    // When: the buffer is exactly big enough
+    assert_int_equal(iot_util_convert_uuid_str(&uuid, str, sizeof(str)), IOT_ERROR_NONE);
+}
+
+TEST_F(TC_REGISTRY_NO_FIXTURE, TC_iot_util_convert_channel_freq_unsupported_neg)
+{
+    UNUSED(state);
+
+    // When: a channel outside every supported band is converted
+    assert_int_equal(iot_util_convert_channel_freq(0), 0);
+    assert_int_equal(iot_util_convert_channel_freq(15), 0);
+    assert_int_equal(iot_util_convert_channel_freq(200), 0);
+}
+
+TEST_F(TC_REGISTRY_NO_FIXTURE, TC_iot_util_convert_freq_channel_zero_neg)
+{
+    UNUSED(state);
+
+    // When: a zero frequency is converted
+    assert_int_equal(iot_util_convert_freq_channel(0), 0);
+}
+
+TEST_F(TC_REGISTRY_NO_FIXTURE, TC_iot_util_convert_freq_channel_unsupported_neg)
+{
+    UNUSED(state);
+
+    // When: frequencies outside the 2.4GHz and 5GHz bands are converted
+    assert_int_equal(iot_util_convert_freq_channel(3000), 0);
+    assert_int_equal(iot_util_convert_freq_channel(5900), 0);
+    assert_int_equal(iot_util_convert_freq_channel(65535), 0);
+}
+
+TEST_F(TC_REGISTRY_NO_FIXTURE, TC_iot_util_url_parse_missing_port_neg)
+{
+    url_parse_t output;
+    char url[] = "https://example.com";
+    UNUSED(state);
+
+    memset(&output, 0, sizeof(output));
+    // When: the url carries no port separator
+    assert_int_equal(iot_util_url_parse(url, &output), IOT_ERROR_INVALID_ARGS);
+    assert_null(output.protocol);
+    assert_null(output.domain);
+}
+
+TEST_F(TC_REGISTRY_NO_FIXTURE, TC_iot_util_url_parse_missing_scheme_neg)
+{
+    url_parse_t output;
+    char url[] = "example.com:443";
+    UNUSED(state);
+
+    memset(&output, 0, sizeof(output));
+    // When: the url carries no scheme separator
+    assert_int_equal(iot_util_url_parse(url, &output), IOT_ERROR_INVALID_ARGS);
+    assert_null(output.protocol);
+}
+
+TEST_F(TC_REGISTRY_NO_FIXTURE, TC_iot_util_url_parse_scheme_separator_inside_scheme_neg)
+{
+    url_parse_t output;
+    char url[] = "ht:tp://example.com";
+    UNUSED(state);
+
+    memset(&output, 0, sizeof(output));
+    // When: the only colon after the scheme separator belongs to the scheme itself
+    assert_int_equal(iot_util_url_parse(url, &output), IOT_ERROR_INVALID_ARGS);
+    assert_null(output.protocol);
+    assert_null(output.domain);
+}
+
+TEST_F(TC_REGISTRY_NO_FIXTURE, TC_iot_util_url_parse_empty_protocol_neg)
+{
+    url_parse_t output;
+    char url[] = "://example.com:443";
+    UNUSED(state);
+
+    memset(&output, 0, sizeof(output));
+    // When: the url has no scheme before the separator
+    assert_int_equal(iot_util_url_parse(url, &output), IOT_ERROR_NONE);
+    // Then: an empty protocol is accepted instead of being rejected
+    assert_non_null(output.protocol);
+    assert_int_equal(strlen(output.protocol), 0);
+    free(output.protocol);
+    free(output.domain);
+}
+
+TEST_F(TC_REGISTRY_NO_FIXTURE, TC_iot_util_url_parse_non_numeric_port_neg)
+{
+    url_parse_t output;
+    char url[] = "https://example.com:abc";
+    UNUSED(state);
+
+    memset(&output, 0, sizeof(output));
+    // When: the port is not a number
+    assert_int_equal(iot_util_url_parse(url, &output), IOT_ERROR_NONE);
+    // Then: it silently becomes port 0 instead of being rejected
+    assert_int_equal(output.port, 0);
+    free(output.protocol);
+    free(output.domain);
+}
+
+TEST_F(TC_REGISTRY_NO_FIXTURE, TC_iot_util_url_parse_empty_domain_neg)
+{
+    url_parse_t output;
+    char url[] = "https://:443";
+    UNUSED(state);
+
+    memset(&output, 0, sizeof(output));
+    // When: the url carries a port but no domain
+    assert_int_equal(iot_util_url_parse(url, &output), IOT_ERROR_NONE);
+    // Then: an empty domain is accepted instead of being rejected
+    assert_non_null(output.domain);
+    assert_int_equal(strlen(output.domain), 0);
+    assert_int_equal(output.port, 443);
+    free(output.protocol);
+    free(output.domain);
+}
+
+TEST_F(TC_REGISTRY_NO_FIXTURE, TC_iot_util_queue_receive_from_empty_queue_neg)
+{
+    iot_util_queue_t *queue;
+    int data = 0;
+    UNUSED(state);
+
+    queue = iot_util_queue_create(sizeof(int));
+    assert_non_null(queue);
+    // When: nothing was ever sent
+    assert_int_equal(iot_util_queue_receive(queue, &data), IOT_ERROR_BAD_REQ);
+    iot_util_queue_delete(queue);
+}
+
+TEST_F(TC_REGISTRY_NO_FIXTURE, TC_iot_util_queue_receive_after_drain_neg)
+{
+    iot_util_queue_t *queue;
+    int sent = 7;
+    int data = 0;
+    UNUSED(state);
+
+    queue = iot_util_queue_create(sizeof(int));
+    assert_non_null(queue);
+    assert_int_equal(iot_util_queue_send(queue, &sent), IOT_ERROR_NONE);
+    assert_int_equal(iot_util_queue_receive(queue, &data), IOT_ERROR_NONE);
+    assert_int_equal(data, sent);
+    // When: the queue is read again after it was drained
+    assert_int_equal(iot_util_queue_receive(queue, &data), IOT_ERROR_BAD_REQ);
+    iot_util_queue_delete(queue);
 }

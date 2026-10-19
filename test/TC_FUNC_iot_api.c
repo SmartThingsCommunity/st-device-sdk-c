@@ -23,9 +23,22 @@
 #include <iot_os_util.h>
 
 #include "TC_MOCK_functions.h"
+#include "TC_REGISTRY.h"
+#include "TC_UTIL_easysetup_common.h"
 #include "cmocka_custom.h"
 
 #define UNUSED(x) (void **)(x)
+
+TEST_SUITE("iot_api.c");
+
+static int TC_iot_api_memleak_detect_setup(void **state);
+static int TC_iot_api_memleak_detect_teardown(void **state);
+static int TC_iot_misc_info_dip_setup(void **state);
+static int TC_iot_misc_info_dip_teardown(void **state);
+
+TEST_FIXTURE(iot_api_memleak, TC_iot_api_memleak_detect_setup, TC_iot_api_memleak_detect_teardown);
+TEST_FIXTURE(iot_misc_info_dip, TC_iot_misc_info_dip_setup, TC_iot_misc_info_dip_teardown);
+TEST_FIXTURE(iot_easysetup_common, TC_iot_easysetup_common_setup, TC_iot_easysetup_common_teardown);
 
 static char device_info_sample[] = {
     "{\n"
@@ -41,21 +54,21 @@ static char device_info_sample[] = {
     "\t}\n"
     "}"};
 
-int TC_iot_api_memleak_detect_setup(void **state)
+static int TC_iot_api_memleak_detect_setup(void **state)
 {
     UNUSED(state);
     set_mock_detect_memory_leak(true);
     return 0;
 }
 
-int TC_iot_api_memleak_detect_teardown(void **state)
+static int TC_iot_api_memleak_detect_teardown(void **state)
 {
     UNUSED(state);
     set_mock_detect_memory_leak(false);
     return 0;
 }
 
-void TC_iot_api_device_info_load_null_parameters(void **state)
+TEST_F(iot_api_memleak, TC_iot_api_device_info_load_null_parameters_neg)
 {
     iot_error_t err;
     struct iot_device_info info;
@@ -77,7 +90,7 @@ void TC_iot_api_device_info_load_null_parameters(void **state)
     assert_int_not_equal(err, IOT_ERROR_NONE);
 }
 
-void TC_iot_api_device_info_load_success(void **state)
+TEST_F(iot_api_memleak, TC_iot_api_device_info_load_success_pos)
 {
     iot_error_t err;
     struct iot_device_info info;
@@ -93,7 +106,7 @@ void TC_iot_api_device_info_load_success(void **state)
     iot_api_device_info_mem_free(&info);
 }
 
-void TC_iot_api_device_info_load_internal_failure(void **state)
+TEST_F(iot_api_memleak, TC_iot_api_device_info_load_internal_failure_neg)
 {
     iot_error_t err;
     struct iot_device_info info;
@@ -123,7 +136,7 @@ static char device_info_sample_without_firmware_version[] = {
     "\t}\n"
     "}"};
 
-void TC_iot_api_device_info_load_without_firmware_version(void **state)
+TEST_F(iot_api_memleak, TC_iot_api_device_info_load_without_firmware_version_neg)
 {
     iot_error_t err;
     struct iot_device_info info;
@@ -164,7 +177,7 @@ static char onboarding_profile_template[] = {
     "  }\n"
     "}"};
 
-void TC_iot_api_onboarding_config_load_null_parameters(void **state)
+TEST_F(iot_api_memleak, TC_iot_api_onboarding_config_load_null_parameters_neg)
 {
     iot_error_t err;
     struct iot_devconf_prov_data devconf;
@@ -186,7 +199,7 @@ void TC_iot_api_onboarding_config_load_null_parameters(void **state)
     assert_int_not_equal(err, IOT_ERROR_NONE);
 }
 
-void TC_iot_api_onboarding_config_load_template_parameters(void **state)
+TEST_F(iot_api_memleak, TC_iot_api_onboarding_config_load_template_parameters_neg)
 {
     iot_error_t err;
     struct iot_devconf_prov_data devconf;
@@ -230,7 +243,7 @@ static char onboarding_profile_example[] = {
     "  }\n"
     "}"};
 
-void TC_iot_api_onboarding_config_load_success(void **state)
+TEST_F(iot_api_memleak, TC_iot_api_onboarding_config_load_success_pos)
 {
     iot_error_t err;
     struct iot_devconf_prov_data devconf;
@@ -260,7 +273,7 @@ void TC_iot_api_onboarding_config_load_success(void **state)
     iot_api_onboarding_config_mem_free(&devconf);
 }
 
-void TC_iot_api_onboarding_config_load_internal_failure(void **state)
+TEST_F(iot_api_memleak, TC_iot_api_onboarding_config_load_internal_failure_neg)
 {
     iot_error_t err;
     struct iot_devconf_prov_data devconf;
@@ -305,7 +318,7 @@ static char onboarding_profile_without_mnid[] = {
     "  }\n"
     "}"};
 
-void TC_iot_api_onboarding_config_without_mnid(void **state)
+TEST_F(iot_api_memleak, TC_iot_api_onboarding_config_without_mnid_neg)
 {
     iot_error_t err;
     struct iot_devconf_prov_data devconf;
@@ -323,6 +336,7 @@ void TC_iot_api_onboarding_config_without_mnid(void **state)
     iot_api_onboarding_config_mem_free(&devconf);
 }
 
+#if defined(CONFIG_STDK_IOT_CORE_EASYSETUP_HTTP)
 static char onboarding_profile_invalid_ssid_version[] = {
     "{\n"
     "  \"onboardingConfig\": {\n"
@@ -348,7 +362,7 @@ static char onboarding_profile_invalid_ssid_version[] = {
     "  }\n"
     "}"};
 
-void TC_iot_api_onboarding_config_invalid_ssid_version(void **state)
+TEST_F(iot_api_memleak, TC_iot_api_onboarding_config_invalid_ssid_version_neg)
 {
     iot_error_t err;
     struct iot_devconf_prov_data devconf;
@@ -391,7 +405,7 @@ static char onboarding_profile_invalid_onboarding_id_length_version_4[] = {
     "  }\n"
     "}"};
 
-void TC_iot_api_onboarding_config_invalid_onboarding_id_length_version_4(void **state)
+TEST_F(iot_api_memleak, TC_iot_api_onboarding_config_invalid_onboarding_id_length_version_4_neg)
 {
     iot_error_t err;
     struct iot_devconf_prov_data devconf;
@@ -434,7 +448,7 @@ static char onboarding_profile_valid_onboarding_id_length_version_5[] = {
     "  }\n"
     "}"};
 
-void TC_iot_api_onboarding_config_valid_onboarding_id_length_version_5(void **state)
+TEST_F(iot_api_memleak, TC_iot_api_onboarding_config_valid_onboarding_id_length_version_5_pos)
 {
     iot_error_t err;
     struct iot_devconf_prov_data devconf;
@@ -451,6 +465,7 @@ void TC_iot_api_onboarding_config_valid_onboarding_id_length_version_5(void **st
     // Local teardown
     iot_api_onboarding_config_mem_free(&devconf);
 }
+#endif  // CONFIG_STDK_IOT_CORE_EASYSETUP_HTTP
 
 static char onboarding_profile_without_dip_id[] = {
     "{\n"
@@ -474,7 +489,7 @@ static char onboarding_profile_without_dip_id[] = {
     "  }\n"
     "}"};
 
-void TC_iot_api_onboarding_config_without_dip_id(void **state)
+TEST_F(iot_api_memleak, TC_iot_api_onboarding_config_without_dip_id_neg)
 {
     iot_error_t err;
     struct iot_devconf_prov_data devconf;
@@ -512,7 +527,7 @@ static char onboarding_profile_without_vid[] = {
     "  }\n"
     "}"};
 
-void TC_iot_api_onboarding_config_without_vid(void **state)
+TEST_F(iot_api_memleak, TC_iot_api_onboarding_config_without_vid_neg)
 {
     iot_error_t err;
     struct iot_devconf_prov_data devconf;
@@ -529,7 +544,7 @@ void TC_iot_api_onboarding_config_without_vid(void **state)
     iot_api_onboarding_config_mem_free(&devconf);
 }
 
-void TC_iot_get_time_in_sec_null_parameters(void **state)
+TEST_F(iot_api_memleak, TC_iot_get_time_in_sec_null_parameters_neg)
 {
     iot_error_t err;
     UNUSED(state);
@@ -540,7 +555,7 @@ void TC_iot_get_time_in_sec_null_parameters(void **state)
     assert_int_not_equal(err, IOT_ERROR_NONE);
 }
 
-void TC_iot_get_time_in_sec_success(void **state)
+TEST_F(iot_api_memleak, TC_iot_get_time_in_sec_success_pos)
 {
     iot_error_t err;
     char time_buffer[32];
@@ -556,7 +571,7 @@ void TC_iot_get_time_in_sec_success(void **state)
     assert_int_not_equal(atol(time_buffer), 0);
 }
 
-void TC_iot_get_time_in_ms_null_parmaeters(void **state)
+TEST_F(iot_api_memleak, TC_iot_get_time_in_ms_null_parmaeters_neg)
 {
     iot_error_t err;
     UNUSED(state);
@@ -567,7 +582,7 @@ void TC_iot_get_time_in_ms_null_parmaeters(void **state)
     assert_int_not_equal(err, IOT_ERROR_NONE);
 }
 
-void TC_iot_get_time_in_ms_success(void **state)
+TEST_F(iot_api_memleak, TC_iot_get_time_in_ms_success_pos)
 {
     iot_error_t err;
     char time_buffer[32];
@@ -583,7 +598,7 @@ void TC_iot_get_time_in_ms_success(void **state)
     assert_int_not_equal(atol(time_buffer), 0);
 }
 
-void TC_iot_get_time_in_sec_by_long_null_parameters(void **state)
+TEST_F(iot_api_memleak, TC_iot_get_time_in_sec_by_long_null_parameters_neg)
 {
     iot_error_t err;
     UNUSED(state);
@@ -594,7 +609,7 @@ void TC_iot_get_time_in_sec_by_long_null_parameters(void **state)
     assert_int_not_equal(err, IOT_ERROR_NONE);
 }
 
-void TC_iot_get_time_in_sec_by_long_success(void **state)
+TEST_F(iot_api_memleak, TC_iot_get_time_in_sec_by_long_success_pos)
 {
     iot_error_t err;
     long seconds = 0;
@@ -607,7 +622,7 @@ void TC_iot_get_time_in_sec_by_long_success(void **state)
     assert_true(seconds > 0);
 }
 
-void TC_iot_easysetup_request_success(void **state)
+TEST_F(iot_api_memleak, TC_iot_easysetup_request_success_pos)
 {
     iot_error_t err;
     struct iot_context *context;
@@ -675,7 +690,7 @@ static char sample_device_info[] = {
     "\t}\n"
     "}"};
 
-int TC_iot_misc_info_dip_setup(void **state)
+static int TC_iot_misc_info_dip_setup(void **state)
 {
     iot_error_t err;
     UNUSED(state);
@@ -692,7 +707,7 @@ int TC_iot_misc_info_dip_setup(void **state)
     return 0;
 }
 
-int TC_iot_misc_info_dip_teardown(void **state)
+static int TC_iot_misc_info_dip_teardown(void **state)
 {
     iot_error_t err;
     UNUSED(state);
@@ -702,7 +717,7 @@ int TC_iot_misc_info_dip_teardown(void **state)
     return 0;
 }
 
-void TC_iot_misc_info_load_invalid_parameters(void **state)
+TEST_F(iot_misc_info_dip, TC_iot_misc_info_load_invalid_parameters_neg)
 {
     iot_error_t err;
     struct iot_dip_data load_dip;
@@ -719,7 +734,7 @@ void TC_iot_misc_info_load_invalid_parameters(void **state)
     assert_int_not_equal(err, IOT_ERROR_NONE);
 }
 
-void TC_iot_misc_info_load_failure(void **state)
+TEST_F(iot_misc_info_dip, TC_iot_misc_info_load_failure_neg)
 {
     iot_error_t err;
     struct iot_dip_data load_dip;
@@ -792,7 +807,7 @@ void TC_iot_misc_info_load_failure(void **state)
     assert_int_equal(err, IOT_ERROR_NONE);
 }
 
-void TC_iot_misc_info_load_success(void **state)
+TEST_F(iot_misc_info_dip, TC_iot_misc_info_load_success_pos)
 {
     iot_error_t err;
     struct iot_dip_data load_dip;
@@ -840,7 +855,48 @@ void TC_iot_misc_info_load_success(void **state)
     assert_int_equal(err, IOT_ERROR_NONE);
 }
 
-void TC_iot_misc_info_store_invalid_parameters(void **state)
+TEST_F(iot_misc_info_dip, TC_iot_check_dip_update_needed_pos)
+{
+    iot_error_t err;
+    struct iot_dip_data new_dip;
+    UNUSED(state);
+
+    // When: new dip is NULL
+    // Then: update needed
+    assert_true(iot_check_dip_update_needed(NULL));
+
+    // When: same dip id, major and minor version as stored one
+    memcpy(&new_dip, &dip_example, sizeof(struct iot_dip_data));
+    // Then: no update needed
+    assert_false(iot_check_dip_update_needed(&new_dip));
+
+    // When: only minor version differs (server ignores minor version sent from device)
+    memcpy(&new_dip, &dip_example, sizeof(struct iot_dip_data));
+    new_dip.dip_minor_version = dip_example.dip_minor_version + 1;
+    // Then: no update needed
+    assert_false(iot_check_dip_update_needed(&new_dip));
+
+    // When: major version differs
+    memcpy(&new_dip, &dip_example, sizeof(struct iot_dip_data));
+    new_dip.dip_major_version = dip_example.dip_major_version + 1;
+    // Then: update needed
+    assert_true(iot_check_dip_update_needed(&new_dip));
+
+    // When: dip id differs
+    memcpy(&new_dip, &dip_example, sizeof(struct iot_dip_data));
+    new_dip.dip_id.id[0] ^= 0xff;
+    // Then: update needed
+    assert_true(iot_check_dip_update_needed(&new_dip));
+
+    // When: no stored dip in NV
+    err = iot_nv_erase(IOT_NVD_MISC_INFO);
+    assert_int_equal(err, IOT_ERROR_NONE);
+    memcpy(&new_dip, &dip_example, sizeof(struct iot_dip_data));
+    // Then: update needed
+    assert_true(iot_check_dip_update_needed(&new_dip));
+}
+
+TEST_F(iot_api_memleak, TC_iot_misc_info_store_invalid_parameters_neg)
 {
     iot_error_t err;
     UNUSED(state);
@@ -856,7 +912,7 @@ void TC_iot_misc_info_store_invalid_parameters(void **state)
     assert_int_not_equal(err, IOT_ERROR_NONE);
 }
 
-void TC_iot_misc_info_store_success(void **state)
+TEST_F(iot_misc_info_dip, TC_iot_misc_info_store_success_pos)
 {
     iot_error_t err;
     char *new_dip_str;
@@ -917,7 +973,7 @@ void TC_iot_misc_info_store_success(void **state)
     assert_int_equal(err, IOT_ERROR_NONE);
 }
 
-void TC_iot_wifi_ctrl_request_failure(void **state)
+TEST_F(iot_api_memleak, TC_iot_wifi_ctrl_request_failure_neg)
 {
     iot_error_t err;
     struct iot_context *context;
@@ -937,7 +993,7 @@ void TC_iot_wifi_ctrl_request_failure(void **state)
     free(context);
 }
 
-void TC_iot_wifi_ctrl_request_IOT_WIFI_MODE_OFF(void **state)
+TEST_F(iot_api_memleak, TC_iot_wifi_ctrl_request_IOT_WIFI_MODE_OFF_neg)
 {
     iot_error_t err;
     struct iot_context *context;
@@ -961,7 +1017,7 @@ void TC_iot_wifi_ctrl_request_IOT_WIFI_MODE_OFF(void **state)
     free(context);
 }
 
-void TC_iot_wifi_ctrl_request_IOT_WIFI_MODE_SCAN(void **state)
+TEST_F(iot_api_memleak, TC_iot_wifi_ctrl_request_IOT_WIFI_MODE_SCAN_neg)
 {
     iot_error_t err;
     struct iot_context *context;
@@ -995,7 +1051,7 @@ struct iot_wifi_prov_data wifi_prov = {
     .security_type = IOT_WIFI_AUTH_WPA_WPA2_PSK,
 };
 
-void TC_iot_wifi_ctrl_request_IOT_WIFI_MODE_STATION(void **state)
+TEST_F(iot_api_memleak, TC_iot_wifi_ctrl_request_IOT_WIFI_MODE_STATION_neg)
 {
     iot_error_t err;
     struct iot_context *context;
@@ -1021,6 +1077,7 @@ void TC_iot_wifi_ctrl_request_IOT_WIFI_MODE_STATION(void **state)
     free(context);
 }
 
+#if defined(CONFIG_STDK_IOT_CORE_EASYSETUP_HTTP)
 static char sample_onboarding_config[] = {
     "{\n"
     "  \"onboardingConfig\": {\n"
@@ -1036,7 +1093,7 @@ static char sample_onboarding_config[] = {
     "  }\n"
     "}"};
 
-void TC_iot_wifi_ctrl_request_IOT_WIFI_MODE_SOFTAP(void **state)
+TEST_F(iot_easysetup_common, TC_iot_wifi_ctrl_request_IOT_WIFI_MODE_SOFTAP_neg)
 {
     iot_error_t err;
 
@@ -1051,29 +1108,9 @@ void TC_iot_wifi_ctrl_request_IOT_WIFI_MODE_SOFTAP(void **state)
     // Then: returns success
     assert_int_equal(err, IOT_ERROR_NONE);
 }
+#endif  // CONFIG_STDK_IOT_CORE_EASYSETUP_HTTP
 
-void TC_iot_wifi_get_status_success(void **state)
-{
-    iot_error_t err = IOT_ERROR_NONE;
-    struct iot_context *context;
-    UNUSED(state);
-
-    // Given
-    context = (struct iot_context *)malloc(sizeof(struct iot_context));
-    assert_non_null(context);
-    memset(context, '\0', sizeof(struct iot_context));
-
-    // When
-    err = iot_wifi_get_status(context);
-
-    // Then: returns success
-    assert_int_equal(err, IOT_ERROR_NONE);
-
-    // Teardown
-    free(context);
-}
-
-void TC_iot_state_timeout_change_failure(void **state)
+TEST_F(iot_api_memleak, TC_iot_state_timeout_change_failure_neg)
 {
     iot_error_t err = IOT_ERROR_NONE;
     struct iot_context *context;
@@ -1104,7 +1141,7 @@ void TC_iot_state_timeout_change_failure(void **state)
     free(context);
 }
 
-void TC_iot_state_timeout_change_success(void **state)
+TEST_F(iot_api_memleak, TC_iot_state_timeout_change_success_neg)
 {
     iot_error_t err = IOT_ERROR_NONE;
     struct iot_context *context;
@@ -1130,7 +1167,7 @@ void TC_iot_state_timeout_change_success(void **state)
     free(context);
 }
 
-void TC_iot_set_st_ecode_invalid_parameters(void **state)
+TEST_F(TC_REGISTRY_NO_FIXTURE, TC_iot_set_st_ecode_invalid_parameters_neg)
 {
     iot_error_t err = IOT_ERROR_NONE;
     struct iot_context *context;
@@ -1155,7 +1192,7 @@ void TC_iot_set_st_ecode_invalid_parameters(void **state)
     free(context);
 }
 
-void TC_iot_set_st_ecode_success(void **state)
+TEST_F(iot_misc_info_dip, TC_iot_set_st_ecode_success_pos)
 {
     iot_error_t err = IOT_ERROR_NONE;
     struct iot_context *context;
@@ -1357,7 +1394,7 @@ void TC_iot_set_st_ecode_success(void **state)
     free(context);
 }
 
-void TC_iot_set_st_ecode_from_conn_error_success(void **state)
+TEST_F(iot_misc_info_dip, TC_iot_set_st_ecode_from_conn_error_success_neg)
 {
     iot_error_t err = IOT_ERROR_NONE;
     struct iot_context *context;
@@ -1490,7 +1527,7 @@ void TC_iot_set_st_ecode_from_conn_error_success(void **state)
     free(context);
 }
 
-void TC_iot_get_st_ecode_null_parameter(void **state)
+TEST_F(iot_api_memleak, TC_iot_get_st_ecode_null_parameter_neg)
 {
     iot_error_t err = IOT_ERROR_NONE;
     struct iot_context *context;
@@ -1515,7 +1552,7 @@ void TC_iot_get_st_ecode_null_parameter(void **state)
     free(context);
 }
 
-void TC_iot_get_st_ecode_success(void **state)
+TEST_F(iot_api_memleak, TC_iot_get_st_ecode_success_pos)
 {
     iot_error_t err = IOT_ERROR_NONE;
     struct iot_context *context;
@@ -1538,7 +1575,7 @@ void TC_iot_get_st_ecode_success(void **state)
     free(context);
 }
 
-void TC_iot_cleanup_success(void **state)
+TEST_F(iot_easysetup_common, TC_iot_cleanup_success_pos)
 {
     iot_error_t err = IOT_ERROR_NONE;
 
@@ -1557,7 +1594,7 @@ void TC_iot_cleanup_success(void **state)
     iot_os_eventgroup_delete(context->iot_events);
 }
 
-void TC_iot_get_random_id_str_null_str(void **state)
+TEST_F(iot_api_memleak, TC_iot_get_random_id_str_null_str_neg)
 {
     iot_error_t err;
     UNUSED(state);
@@ -1568,7 +1605,7 @@ void TC_iot_get_random_id_str_null_str(void **state)
     assert_int_equal(err, IOT_ERROR_INVALID_ARGS);
 }
 
-void TC_iot_get_random_id_str_success(void **state)
+TEST_F(iot_api_memleak, TC_iot_get_random_id_str_success_pos)
 {
     iot_error_t err;
     char buf[IOT_REG_UUID_STR_LEN + 1] = {0};
@@ -1586,7 +1623,7 @@ void TC_iot_get_random_id_str_success(void **state)
     assert_int_equal(strlen(buf), IOT_REG_UUID_STR_LEN);
 }
 
-void TC_iot_get_random_id_str_mac_failure(void **state)
+TEST_F(iot_api_memleak, TC_iot_get_random_id_str_mac_failure_neg)
 {
     iot_error_t err;
     char buf[IOT_REG_UUID_STR_LEN + 1] = {0};
@@ -1602,7 +1639,7 @@ void TC_iot_get_random_id_str_mac_failure(void **state)
     assert_int_equal(err, IOT_ERROR_READ_FAIL);
 }
 
-void TC_iot_get_random_id_str_short_buffer(void **state)
+TEST_F(iot_api_memleak, TC_iot_get_random_id_str_short_buffer_neg)
 {
     iot_error_t err;
     char buf[4] = {0};
@@ -1619,7 +1656,7 @@ void TC_iot_get_random_id_str_short_buffer(void **state)
     assert_int_not_equal(err, IOT_ERROR_NONE);
 }
 
-void TC_iot_ble_ctrl_request_null_ctx(void **state)
+TEST_F(iot_api_memleak, TC_iot_ble_ctrl_request_null_ctx_neg)
 {
     iot_error_t err;
     UNUSED(state);
@@ -1630,7 +1667,7 @@ void TC_iot_ble_ctrl_request_null_ctx(void **state)
     assert_int_equal(err, IOT_ERROR_BAD_REQ);
 }
 
-void TC_iot_easysetup_request_queue_send_failure(void **state)
+TEST_F(iot_api_memleak, TC_iot_easysetup_request_queue_send_failure_neg)
 {
     iot_error_t err;
     struct iot_context *context;
@@ -1649,7 +1686,7 @@ void TC_iot_easysetup_request_queue_send_failure(void **state)
     free(context);
 }
 
-void TC_iot_easysetup_request_malloc_failure(void **state)
+TEST_F(iot_api_memleak, TC_iot_easysetup_request_malloc_failure_neg)
 {
     iot_error_t err;
     struct iot_context *context;
@@ -1679,7 +1716,7 @@ static void _tc_status_cb_for_state_update(int status, void *usr_data)
     _tc_status_cb_last_status = status;
 }
 
-void TC_iot_state_update_button_invokes_status_cb(void **state)
+TEST_F(iot_api_memleak, TC_iot_state_update_button_invokes_status_cb_neg)
 {
     struct iot_context *context;
     UNUSED(state);
@@ -1702,7 +1739,7 @@ void TC_iot_state_update_button_invokes_status_cb(void **state)
     free(context);
 }
 
-void TC_iot_set_st_ecode_from_conn_error_default(void **state)
+TEST_F(iot_api_memleak, TC_iot_set_st_ecode_from_conn_error_default_neg)
 {
     iot_error_t err;
     struct iot_context *context;
@@ -1721,7 +1758,7 @@ void TC_iot_set_st_ecode_from_conn_error_default(void **state)
     free(context);
 }
 
-void TC_iot_update_dip_from_server_type_all_branches(void **state)
+TEST_F(iot_api_memleak, TC_iot_update_dip_from_server_type_all_branches_neg)
 {
     struct iot_context *context;
     struct iot_dip_data dip = {0};
@@ -1778,7 +1815,7 @@ void TC_iot_update_dip_from_server_type_all_branches(void **state)
     free(context);
 }
 
-void TC_iot_update_wifi_info_not_connected(void **state)
+TEST_F(iot_api_memleak, TC_iot_update_wifi_info_not_connected_neg)
 {
     iot_error_t err;
     struct iot_context *context;
@@ -1798,7 +1835,7 @@ void TC_iot_update_wifi_info_not_connected(void **state)
     free(context);
 }
 
-void TC_iot_update_wifi_info_rate_limited(void **state)
+TEST_F(iot_api_memleak, TC_iot_update_wifi_info_rate_limited_neg)
 {
     iot_error_t err;
     struct iot_context *context;
@@ -1820,7 +1857,7 @@ void TC_iot_update_wifi_info_rate_limited(void **state)
     free(context);
 }
 
-void TC_iot_update_child_devices_health_not_connected(void **state)
+TEST_F(iot_api_memleak, TC_iot_update_child_devices_health_not_connected_neg)
 {
     iot_error_t err;
     struct iot_context *context;
@@ -1840,7 +1877,7 @@ void TC_iot_update_child_devices_health_not_connected(void **state)
     free(context);
 }
 
-void TC_iot_update_child_devices_health_rate_limited(void **state)
+TEST_F(iot_api_memleak, TC_iot_update_child_devices_health_rate_limited_neg)
 {
     iot_error_t err;
     struct iot_context *context;
@@ -1862,7 +1899,7 @@ void TC_iot_update_child_devices_health_rate_limited(void **state)
     free(context);
 }
 
-void TC_iot_wifi_ctrl_request_null_ctx(void **state)
+TEST_F(iot_api_memleak, TC_iot_wifi_ctrl_request_null_ctx_neg)
 {
     iot_error_t err;
     UNUSED(state);
@@ -1873,7 +1910,7 @@ void TC_iot_wifi_ctrl_request_null_ctx(void **state)
     assert_int_equal(err, IOT_ERROR_BAD_REQ);
 }
 
-void TC_iot_wifi_ctrl_request_off_set_mode_failure(void **state)
+TEST_F(iot_api_memleak, TC_iot_wifi_ctrl_request_off_set_mode_failure_neg)
 {
     iot_error_t err;
     struct iot_context *context;
@@ -1894,7 +1931,7 @@ void TC_iot_wifi_ctrl_request_off_set_mode_failure(void **state)
     free(context);
 }
 
-void TC_iot_wifi_ctrl_request_scan_set_mode_failure(void **state)
+TEST_F(iot_api_memleak, TC_iot_wifi_ctrl_request_scan_set_mode_failure_neg)
 {
     iot_error_t err;
     struct iot_context *context;
@@ -1916,7 +1953,7 @@ void TC_iot_wifi_ctrl_request_scan_set_mode_failure(void **state)
     free(context);
 }
 
-void TC_iot_wifi_ctrl_request_station_set_mode_failure(void **state)
+TEST_F(iot_api_memleak, TC_iot_wifi_ctrl_request_station_set_mode_failure_neg)
 {
     iot_error_t err;
     struct iot_context *context;
@@ -1932,13 +1969,13 @@ void TC_iot_wifi_ctrl_request_station_set_mode_failure(void **state)
     err = iot_wifi_ctrl_request(context, IOT_WIFI_MODE_STATION);
     // Then
     assert_int_equal(err, IOT_ERROR_BAD_REQ);
-    assert_false(context->is_wifi_station);
+    assert_true(context->need_wifi_reset);
 
     // Teardown
     free(context);
 }
 
-void TC_iot_wifi_ctrl_request_off_with_es_http_ready(void **state)
+TEST_F(iot_easysetup_common, TC_iot_wifi_ctrl_request_off_with_es_http_ready_neg)
 {
     iot_error_t err;
     struct iot_context *context = (struct iot_context *)*state;

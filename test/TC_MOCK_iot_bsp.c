@@ -170,13 +170,26 @@ uint16_t __wrap_iot_bsp_wifi_get_scan_result(iot_wifi_scan_result_t *scan_result
     return mock_scan_num;
 }
 
+static iot_error_t _mock_system_set_time_force_err = IOT_ERROR_NONE;
+
+void set_mock_iot_bsp_system_set_time_failure(iot_error_t err)
+{
+    _mock_system_set_time_force_err = err;
+}
+
 iot_error_t __wrap_iot_bsp_system_set_time_in_sec(time_t time_in_sec)
 {
     check_expected(time_in_sec);
+    if (_mock_system_set_time_force_err != IOT_ERROR_NONE) {
+        iot_error_t err = _mock_system_set_time_force_err;
+        _mock_system_set_time_force_err = IOT_ERROR_NONE;
+        return err;
+    }
     return IOT_ERROR_NONE;
 }
 
 iot_error_t __wrap_iot_bsp_wifi_set_mode(iot_wifi_conf *conf)
+
 {
     check_expected(conf->mode);
     return (int)mock();

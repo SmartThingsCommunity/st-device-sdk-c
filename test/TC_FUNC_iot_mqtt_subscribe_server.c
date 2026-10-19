@@ -18,6 +18,7 @@
 #include <iot_mqtt_packet.h>
 #include <string.h>
 
+#include "TC_REGISTRY.h"
 #include "cmocka_custom.h"
 
 /* Not declared in the public header but defined in iot_mqtt_subscribe_server.c */
@@ -30,6 +31,8 @@ extern int MQTTSerialize_suback(unsigned char *buf, int buflen, unsigned short p
 /*
  * Build a SUBSCRIBE wire packet into `buf` and return its length.
  */
+TEST_SUITE("iot_mqtt_subscribe_server.c");
+
 static int _build_subscribe(unsigned char *buf, int cap, unsigned short packetid, int topic_count, const char **topics,
                             int *qos)
 {
@@ -48,7 +51,7 @@ static int _build_subscribe(unsigned char *buf, int cap, unsigned short packetid
 /*
  * Tests for MQTTDeserialize_subscribe
  */
-void TC_MQTTDeserialize_subscribe_success(void **state)
+TEST_F(TC_REGISTRY_NO_FIXTURE, TC_MQTTDeserialize_subscribe_success_pos)
 {
     unsigned char wire[64];
     MQTTString topics_out[4];
@@ -74,7 +77,7 @@ void TC_MQTTDeserialize_subscribe_success(void **state)
     assert_memory_equal(topics_out[0].lenstring.data, "t", 1);
 }
 
-void TC_MQTTDeserialize_subscribe_multi_topic(void **state)
+TEST_F(TC_REGISTRY_NO_FIXTURE, TC_MQTTDeserialize_subscribe_multi_topic_neg)
 {
     unsigned char wire[128];
     MQTTString topics_out[4];
@@ -96,7 +99,7 @@ void TC_MQTTDeserialize_subscribe_multi_topic(void **state)
     assert_int_equal(count, 3);
 }
 
-void TC_MQTTDeserialize_subscribe_wrong_type(void **state)
+TEST_F(TC_REGISTRY_NO_FIXTURE, TC_MQTTDeserialize_subscribe_wrong_type_neg)
 {
     unsigned char wire[] = {(unsigned char)(PUBACK << 4), 0x02, 0x00, 0x00};
     MQTTString topics_out[1];
@@ -111,7 +114,7 @@ void TC_MQTTDeserialize_subscribe_wrong_type(void **state)
     assert_int_equal(rc, -1);
 }
 
-void TC_MQTTDeserialize_subscribe_missing_qos(void **state)
+TEST_F(TC_REGISTRY_NO_FIXTURE, TC_MQTTDeserialize_subscribe_missing_qos_neg)
 {
     /* header = SUBSCRIBE qos=1 (0x82), remlen claims 4, packetid + topic-len-field
      * but no QoS byte after the zero-length topic. */
@@ -132,7 +135,7 @@ void TC_MQTTDeserialize_subscribe_missing_qos(void **state)
     assert_int_equal(count, 0);
 }
 
-void TC_MQTTDeserialize_subscribe_truncated_topic(void **state)
+TEST_F(TC_REGISTRY_NO_FIXTURE, TC_MQTTDeserialize_subscribe_truncated_topic_neg)
 {
     /* packetid + len-field claiming 5 bytes followed by nothing */
     unsigned char wire[] = {0x82, 0x04, 0x00, 0x01, 0x00, 0x05};
@@ -154,7 +157,7 @@ void TC_MQTTDeserialize_subscribe_truncated_topic(void **state)
 /*
  * Tests for MQTTSerialize_suback
  */
-void TC_MQTTSerialize_suback_success(void **state)
+TEST_F(TC_REGISTRY_NO_FIXTURE, TC_MQTTSerialize_suback_success_pos)
 {
     unsigned char buf[16] = {0};
     int qos[] = {1};
@@ -166,7 +169,7 @@ void TC_MQTTSerialize_suback_success(void **state)
     assert_int_equal((buf[0] & 0xF0) >> 4, SUBACK);
 }
 
-void TC_MQTTSerialize_suback_multi_qos(void **state)
+TEST_F(TC_REGISTRY_NO_FIXTURE, TC_MQTTSerialize_suback_multi_qos_neg)
 {
     unsigned char buf[32] = {0};
     int qos[] = {0, 1, 2};
@@ -177,7 +180,7 @@ void TC_MQTTSerialize_suback_multi_qos(void **state)
     assert_true(rc > 0);
 }
 
-void TC_MQTTSerialize_suback_buffer_too_short(void **state)
+TEST_F(TC_REGISTRY_NO_FIXTURE, TC_MQTTSerialize_suback_buffer_too_short_neg)
 {
     unsigned char buf[1] = {0};
     int qos[] = {0};
@@ -188,7 +191,7 @@ void TC_MQTTSerialize_suback_buffer_too_short(void **state)
     assert_int_equal(rc, MQTTPACKET_BUFFER_TOO_SHORT);
 }
 
-void TC_MQTTSerialize_suback_buffer_just_short(void **state)
+TEST_F(TC_REGISTRY_NO_FIXTURE, TC_MQTTSerialize_suback_buffer_just_short_neg)
 {
     unsigned char buf[2] = {0};
     int qos[] = {0};
@@ -200,7 +203,7 @@ void TC_MQTTSerialize_suback_buffer_just_short(void **state)
     assert_int_equal(rc, MQTTPACKET_BUFFER_TOO_SHORT);
 }
 
-void TC_MQTTSerialize_suback_zero_buffer(void **state)
+TEST_F(TC_REGISTRY_NO_FIXTURE, TC_MQTTSerialize_suback_zero_buffer_neg)
 {
     unsigned char buf[8] = {0};
     int qos[] = {0};
@@ -209,4 +212,50 @@ void TC_MQTTSerialize_suback_zero_buffer(void **state)
 
     rc = MQTTSerialize_suback(buf, 0, 0x0001, 1, qos);
     assert_int_equal(rc, MQTTPACKET_BUFFER_TOO_SHORT);
+}
+
+TEST_F(TC_REGISTRY_NO_FIXTURE, TC_MQTTSerialize_suback_negative_buflen_neg)
+{
+    unsigned char buf[16] = {0};
+    int qos[] = {0};
+    int rc;
+    UNUSED(state);
+
+    // When: a negative buffer length is passed
+    rc = MQTTSerialize_suback(buf, -1, 0x0001, 1, qos);
+    // Then
+    assert_int_equal(rc, MQTTPACKET_BUFFER_TOO_SHORT);
+}
+
+TEST_F(TC_REGISTRY_NO_FIXTURE, TC_MQTTSerialize_suback_count_exceeds_buflen_neg)
+{
+    unsigned char buf[4] = {0};
+    int qos[] = {0, 1, 2};
+    int rc;
+    UNUSED(state);
+
+    // When: 2 + count is larger than the buffer
+    rc = MQTTSerialize_suback(buf, sizeof(buf), 0x0001, 3, qos);
+    // Then
+    assert_int_equal(rc, MQTTPACKET_BUFFER_TOO_SHORT);
+}
+
+TEST_F(TC_REGISTRY_NO_FIXTURE, TC_MQTTDeserialize_subscribe_reserved_type_neg)
+{
+    unsigned char wire[] = {0x00, 0x02, 0x00, 0x01};
+    MQTTString topics_out[1];
+    int qos_out[1] = {0};
+    unsigned char dup = 0xFF;
+    unsigned short packetid = 0xFFFF;
+    int count = 0xFF;
+    int rc;
+    UNUSED(state);
+
+    memset(topics_out, 0, sizeof(topics_out));
+    // When: the reserved packet type 0 is deserialized as SUBSCRIBE
+    rc = MQTTDeserialize_subscribe(&dup, &packetid, 1, &count, topics_out, qos_out, wire, sizeof(wire));
+    // Then: rejected before any output is written
+    assert_int_equal(rc, -1);
+    assert_int_equal(count, 0xFF);
+    assert_int_equal(packetid, 0xFFFF);
 }

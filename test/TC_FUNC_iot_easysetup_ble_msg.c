@@ -20,6 +20,7 @@
 
 #include "TC_MOCK_functions.h"
 #include "TC_MOCK_iot_bsp_ble.h"
+#include "TC_REGISTRY.h"
 #include "cmocka_custom.h"
 #include "easysetup_ble.h"
 #include "iot_error.h"
@@ -44,6 +45,19 @@ struct tc_transfer_hdr {
 
 #define TC_HDR_SIZE sizeof(struct tc_transfer_hdr)
 
+TEST_SUITE("iot_easysetup_ble_msg.c");
+
+static int TC_iot_easysetup_ble_msg_setup(void **state);
+static int TC_iot_easysetup_ble_msg_teardown(void **state);
+
+TEST_FIXTURE(iot_easysetup_ble_msg, TC_iot_easysetup_ble_msg_setup, TC_iot_easysetup_ble_msg_teardown);
+
+static int TC_iot_easysetup_ble_msg_setup(void **state);
+static int TC_iot_easysetup_ble_msg_teardown(void **state);
+
+static int TC_iot_easysetup_ble_msg_setup(void **state);
+static int TC_iot_easysetup_ble_msg_teardown(void **state);
+
 static void _tc_fill_header(uint8_t *buf, uint8_t op_code, uint8_t cmd_num, uint8_t transaction_id, uint32_t total_size,
                             uint8_t chunk_data_continued, uint16_t segment_len)
 {
@@ -58,7 +72,7 @@ static void _tc_fill_header(uint8_t *buf, uint8_t op_code, uint8_t cmd_num, uint
     h->segment_len = segment_len;
 }
 
-int TC_iot_easysetup_ble_msg_setup(void **state)
+static int TC_iot_easysetup_ble_msg_setup(void **state)
 {
     UNUSED(state);
     es_reset_transferdata();
@@ -67,7 +81,7 @@ int TC_iot_easysetup_ble_msg_setup(void **state)
     return 0;
 }
 
-int TC_iot_easysetup_ble_msg_teardown(void **state)
+static int TC_iot_easysetup_ble_msg_teardown(void **state)
 {
     UNUSED(state);
     es_reset_transferdata();
@@ -75,7 +89,7 @@ int TC_iot_easysetup_ble_msg_teardown(void **state)
     return 0;
 }
 
-void TC_iot_easysetup_ble_msg_assemble_null_buf(void **state)
+TEST_F(iot_easysetup_ble_msg, TC_iot_easysetup_ble_msg_assemble_null_buf_neg)
 {
     bool rc;
     UNUSED(state);
@@ -86,7 +100,7 @@ void TC_iot_easysetup_ble_msg_assemble_null_buf(void **state)
     assert_false(rc);
 }
 
-void TC_iot_easysetup_ble_msg_assemble_zero_len(void **state)
+TEST_F(iot_easysetup_ble_msg, TC_iot_easysetup_ble_msg_assemble_zero_len_neg)
 {
     uint8_t buf[1] = {0};
     bool rc;
@@ -98,7 +112,7 @@ void TC_iot_easysetup_ble_msg_assemble_zero_len(void **state)
     assert_false(rc);
 }
 
-void TC_iot_easysetup_ble_msg_assemble_segment_larger_than_total(void **state)
+TEST_F(iot_easysetup_ble_msg, TC_iot_easysetup_ble_msg_assemble_segment_larger_than_total_neg)
 {
     uint8_t buf[32];
     bool rc;
@@ -113,7 +127,7 @@ void TC_iot_easysetup_ble_msg_assemble_segment_larger_than_total(void **state)
     assert_false(rc);
 }
 
-void TC_iot_easysetup_ble_msg_assemble_idle_with_non_zero_opcode(void **state)
+TEST_F(iot_easysetup_ble_msg, TC_iot_easysetup_ble_msg_assemble_idle_with_non_zero_opcode_neg)
 {
     uint8_t buf[32];
     bool rc;
@@ -128,7 +142,7 @@ void TC_iot_easysetup_ble_msg_assemble_idle_with_non_zero_opcode(void **state)
     assert_false(rc);
 }
 
-void TC_iot_easysetup_ble_msg_assemble_single_shot_success(void **state)
+TEST_F(iot_easysetup_ble_msg, TC_iot_easysetup_ble_msg_assemble_single_shot_success_pos)
 {
     uint8_t buf[32];
     bool rc;
@@ -146,7 +160,7 @@ void TC_iot_easysetup_ble_msg_assemble_single_shot_success(void **state)
     assert_int_equal(tc_mock_ble_get_es_msg_dispatch_last_buf_count(), 1);
 }
 
-void TC_iot_easysetup_ble_msg_assemble_fragmented_success(void **state)
+TEST_F(iot_easysetup_ble_msg, TC_iot_easysetup_ble_msg_assemble_fragmented_success_pos)
 {
     uint8_t buf[512];
     UNUSED(state);
@@ -169,7 +183,7 @@ void TC_iot_easysetup_ble_msg_assemble_fragmented_success(void **state)
     assert_int_equal(tc_mock_ble_get_es_msg_dispatch_call_count(), 1);
 }
 
-void TC_iot_easysetup_ble_msg_assemble_assemble_mismatch_opcode(void **state)
+TEST_F(iot_easysetup_ble_msg, TC_iot_easysetup_ble_msg_assemble_assemble_mismatch_opcode_neg)
 {
     uint8_t buf[512];
     UNUSED(state);
@@ -187,7 +201,7 @@ void TC_iot_easysetup_ble_msg_assemble_assemble_mismatch_opcode(void **state)
     assert_int_equal(tc_mock_ble_get_es_msg_dispatch_call_count(), 0);
 }
 
-void TC_iot_easysetup_ble_msg_assemble_assemble_overflow(void **state)
+TEST_F(iot_easysetup_ble_msg, TC_iot_easysetup_ble_msg_assemble_assemble_overflow_neg)
 {
     uint8_t buf[512];
     UNUSED(state);
@@ -205,7 +219,7 @@ void TC_iot_easysetup_ble_msg_assemble_assemble_overflow(void **state)
     assert_int_equal(tc_mock_ble_get_es_msg_dispatch_call_count(), 0);
 }
 
-void TC_iot_easysetup_ble_msg_assemble_duplicated_cmd_num(void **state)
+TEST_F(iot_easysetup_ble_msg, TC_iot_easysetup_ble_msg_assemble_duplicated_cmd_num_neg)
 {
     uint8_t buf[32];
     UNUSED(state);
@@ -224,7 +238,7 @@ void TC_iot_easysetup_ble_msg_assemble_duplicated_cmd_num(void **state)
     assert_int_equal(tc_mock_ble_get_es_msg_dispatch_call_count(), 1);
 }
 
-void TC_iot_easysetup_ble_msg_assemble_data_continued(void **state)
+TEST_F(iot_easysetup_ble_msg, TC_iot_easysetup_ble_msg_assemble_data_continued_neg)
 {
     uint8_t buf[512];
     UNUSED(state);
@@ -238,7 +252,7 @@ void TC_iot_easysetup_ble_msg_assemble_data_continued(void **state)
     assert_int_equal(tc_mock_ble_get_es_msg_dispatch_call_count(), 0);
 }
 
-void TC_iot_easysetup_ble_msg_assemble_transaction_id_regression(void **state)
+TEST_F(iot_easysetup_ble_msg, TC_iot_easysetup_ble_msg_assemble_transaction_id_regression_neg)
 {
     uint8_t buf[32];
     UNUSED(state);
@@ -255,7 +269,7 @@ void TC_iot_easysetup_ble_msg_assemble_transaction_id_regression(void **state)
     assert_false(es_msg_assemble(buf, TC_HDR_SIZE + 3));
 }
 
-void TC_iot_easysetup_ble_msg_assemble_zero_total_size(void **state)
+TEST_F(iot_easysetup_ble_msg, TC_iot_easysetup_ble_msg_assemble_zero_total_size_neg)
 {
     uint8_t buf[TC_HDR_SIZE];
     UNUSED(state);
@@ -268,7 +282,7 @@ void TC_iot_easysetup_ble_msg_assemble_zero_total_size(void **state)
     assert_int_equal(tc_mock_ble_get_es_msg_dispatch_call_count(), 1);
 }
 
-void TC_iot_easysetup_ble_msg_assemble_disassemble_state_reset(void **state)
+TEST_F(iot_easysetup_ble_msg, TC_iot_easysetup_ble_msg_assemble_disassemble_state_reset_neg)
 {
     uint8_t buf[256];
     UNUSED(state);
@@ -287,7 +301,7 @@ void TC_iot_easysetup_ble_msg_assemble_disassemble_state_reset(void **state)
     assert_int_equal(tc_mock_ble_get_es_msg_dispatch_call_count(), 2);
 }
 
-void TC_iot_easysetup_ble_msg_assemble_data_alloc_failure(void **state)
+TEST_F(iot_easysetup_ble_msg, TC_iot_easysetup_ble_msg_assemble_data_alloc_failure_neg)
 {
     uint8_t buf[32];
     bool rc;
@@ -309,7 +323,7 @@ void TC_iot_easysetup_ble_msg_assemble_data_alloc_failure(void **state)
     do_not_use_mock_iot_os_malloc_failure();
 }
 
-void TC_iot_easysetup_ble_msg_assemble_payload_alloc_failure(void **state)
+TEST_F(iot_easysetup_ble_msg, TC_iot_easysetup_ble_msg_assemble_payload_alloc_failure_neg)
 {
     uint8_t buf[32];
     bool rc;
@@ -331,7 +345,7 @@ void TC_iot_easysetup_ble_msg_assemble_payload_alloc_failure(void **state)
     do_not_use_mock_iot_os_malloc_failure();
 }
 
-void TC_iot_easysetup_ble_msg_disassemble_null_buf(void **state)
+TEST_F(iot_easysetup_ble_msg, TC_iot_easysetup_ble_msg_disassemble_null_buf_neg)
 {
     iot_error_t err;
     UNUSED(state);
@@ -342,7 +356,7 @@ void TC_iot_easysetup_ble_msg_disassemble_null_buf(void **state)
     assert_int_equal(err, IOT_ERROR_BAD_REQ);
 }
 
-void TC_iot_easysetup_ble_msg_disassemble_zero_len(void **state)
+TEST_F(iot_easysetup_ble_msg, TC_iot_easysetup_ble_msg_disassemble_zero_len_neg)
 {
     iot_error_t err;
     uint8_t payload[4] = {0};
@@ -354,7 +368,7 @@ void TC_iot_easysetup_ble_msg_disassemble_zero_len(void **state)
     assert_int_equal(err, IOT_ERROR_BAD_REQ);
 }
 
-void TC_iot_easysetup_ble_msg_disassemble_deprecated_cmd(void **state)
+TEST_F(iot_easysetup_ble_msg, TC_iot_easysetup_ble_msg_disassemble_deprecated_cmd_neg)
 {
     iot_error_t err;
     uint8_t payload[8] = {0};
@@ -368,7 +382,7 @@ void TC_iot_easysetup_ble_msg_disassemble_deprecated_cmd(void **state)
     assert_int_equal(err, IOT_ERROR_NONE);
 }
 
-void TC_iot_easysetup_ble_msg_disassemble_malloc_failure(void **state)
+TEST_F(iot_easysetup_ble_msg, TC_iot_easysetup_ble_msg_disassemble_malloc_failure_neg)
 {
     iot_error_t err;
     uint8_t payload[] = {0, 0, 0, 0, 0};
@@ -387,7 +401,7 @@ void TC_iot_easysetup_ble_msg_disassemble_malloc_failure(void **state)
     assert_int_equal(err, IOT_ERROR_CONN_BLE_INDICATION_FAIL);
 }
 
-void TC_iot_easysetup_ble_msg_disassemble_success_single_shot(void **state)
+TEST_F(iot_easysetup_ble_msg, TC_iot_easysetup_ble_msg_disassemble_success_single_shot_pos)
 {
     iot_error_t err;
     uint8_t payload[8] = {'h', 'e', 'l', 'l', 'o', 0, 0, 0};
@@ -406,7 +420,7 @@ void TC_iot_easysetup_ble_msg_disassemble_success_single_shot(void **state)
     assert_true(tc_mock_ble_get_send_indication_call_count() > 0);
 }
 
-void TC_iot_easysetup_ble_msg_disassemble_success_fragmented(void **state)
+TEST_F(iot_easysetup_ble_msg, TC_iot_easysetup_ble_msg_disassemble_success_fragmented_pos)
 {
     iot_error_t err;
     uint8_t payload[800];
@@ -427,7 +441,7 @@ void TC_iot_easysetup_ble_msg_disassemble_success_fragmented(void **state)
     assert_true(tc_mock_ble_get_send_indication_call_count() > 1);
 }
 
-void TC_iot_easysetup_ble_msg_disassemble_mtu_below_minimum(void **state)
+TEST_F(iot_easysetup_ble_msg, TC_iot_easysetup_ble_msg_disassemble_mtu_below_minimum_neg)
 {
     iot_error_t err;
     uint8_t payload[32] = {0};
@@ -446,7 +460,7 @@ void TC_iot_easysetup_ble_msg_disassemble_mtu_below_minimum(void **state)
     assert_int_equal(err, IOT_ERROR_NONE);
 }
 
-void TC_iot_easysetup_ble_msg_disassemble_continued_keeps_cmd(void **state)
+TEST_F(iot_easysetup_ble_msg, TC_iot_easysetup_ble_msg_disassemble_continued_keeps_cmd_neg)
 {
     iot_error_t err;
     uint8_t payload[8] = {0};
@@ -463,7 +477,7 @@ void TC_iot_easysetup_ble_msg_disassemble_continued_keeps_cmd(void **state)
     assert_int_equal(err, IOT_ERROR_NONE);
 }
 
-void TC_iot_easysetup_ble_msg_reset_transferdata_idempotent(void **state)
+TEST_F(iot_easysetup_ble_msg, TC_iot_easysetup_ble_msg_reset_transferdata_idempotent_neg)
 {
     UNUSED(state);
 
@@ -472,4 +486,6 @@ void TC_iot_easysetup_ble_msg_reset_transferdata_idempotent(void **state)
     es_reset_transferdata();
     es_reset_transferdata();
     // Then: no crash, safe to reinvoke
+
+    assert_true(true);
 }

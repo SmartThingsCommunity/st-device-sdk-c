@@ -48,6 +48,7 @@ static int mock_bsp_ble_deinit_call_count = 0;
 
 /* Mock state for iot_security_manager_get_certificate */
 static int mock_get_certificate_rc = 0;
+static const char *mock_get_certificate_payload = NULL;
 static int mock_get_certificate_use_wrap = 0;
 
 /* Mock state for iot_easysetup_get_response */
@@ -172,6 +173,13 @@ void tc_mock_ble_set_get_certificate_use_wrap(int use)
     mock_get_certificate_use_wrap = use;
 }
 
+/* NULL restores the default binary blob; otherwise a NUL-terminated PEM text
+ * is returned so callers that treat the certificate as a C string work. */
+void tc_mock_ble_set_get_certificate_payload(const char *payload)
+{
+    mock_get_certificate_payload = payload;
+}
+
 iot_error_t __real_iot_security_manager_get_certificate(iot_security_context_t *context, int cert_id,
                                                         iot_security_buffer_t *cert_buf);
 
@@ -183,6 +191,16 @@ iot_error_t __wrap_iot_security_manager_get_certificate(iot_security_context_t *
     }
     if (mock_get_certificate_rc != 0) {
         return (iot_error_t)mock_get_certificate_rc;
+    }
+
+    if (mock_get_certificate_payload) {
+        cert_buf->len = strlen(mock_get_certificate_payload) + 1;
+        cert_buf->p = (unsigned char *)malloc(cert_buf->len);
+        if (!cert_buf->p) {
+            return IOT_ERROR_MEM_ALLOC;
+        }
+        memcpy(cert_buf->p, mock_get_certificate_payload, cert_buf->len);
+        return IOT_ERROR_NONE;
     }
 
     /* Produce a small fake certificate blob. */

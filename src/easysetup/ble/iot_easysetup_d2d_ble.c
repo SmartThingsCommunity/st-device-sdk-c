@@ -113,6 +113,43 @@ char *_es_json_parse_string(JSON_H *json, const char *name)
 }
 
 STATIC_FUNCTION
+time_t portable_timegm(const struct tm *tm)
+{
+    // Days per month (non-leap year)
+    static const int days_before_month[] = {0, 31, 59, 90, 120, 151, 181, 212, 243, 273, 304, 334};
+
+    long year = tm->tm_year + 1900;
+    long month = tm->tm_mon;
+
+    // Total days from years since 1970
+    long days = (year - 1970) * 365;
+
+    // Add leap days for intervening years
+    days += (year - 1969) / 4;
+    days -= (year - 1901) / 100;
+    days += (year - 1601) / 400;
+
+    // Add days of the current year up to the current month
+    days += days_before_month[month];
+
+    // Handle leap day for the current year if we are past February
+    if (month > 1) {
+        int is_leap = (year % 4 == 0 && year % 100 != 0) || (year % 400 == 0);
+        if (is_leap) {
+            days++;
+        }
+    }
+
+    // Add days of the current month
+    days += tm->tm_mday - 1;
+
+    // Convert everything to seconds
+    time_t seconds = (time_t)days * 86400 + tm->tm_hour * 3600 + tm->tm_min * 60 + tm->tm_sec;
+
+    return seconds;
+}
+
+STATIC_FUNCTION
 iot_error_t _es_time_set(unsigned char *time)
 {
     iot_error_t err = IOT_ERROR_NONE;
@@ -122,6 +159,14 @@ iot_error_t _es_time_set(unsigned char *time)
     if (sscanf((char *)time, "%4d-%2d-%2dT%2d.%2d.%2d", &tm.tm_year, &tm.tm_mon, &tm.tm_mday, &tm.tm_hour, &tm.tm_min,
                &tm.tm_sec) != 6) {
         IOT_ERROR("Invalid UTC time!!");
+        IOT_ES_DUMP(IOT_DEBUG_LEVEL_ERROR, IOT_DUMP_EASYSETUP_INVALID_TIME, 0);
+        err = IOT_ERROR_EASYSETUP_INVALID_TIME;
+        return err;
+    }
+
+    if (tm.tm_year < 1970 || tm.tm_mon < 1 || tm.tm_mon > 12 || tm.tm_mday < 1 || tm.tm_mday > 31 || tm.tm_hour < 0 ||
+        tm.tm_hour > 23 || tm.tm_min < 0 || tm.tm_min > 59 || tm.tm_sec < 0 || tm.tm_sec > 59) {
+        IOT_ERROR("Out of range UTC time!!");
         IOT_ES_DUMP(IOT_DEBUG_LEVEL_ERROR, IOT_DUMP_EASYSETUP_INVALID_TIME, 0);
         err = IOT_ERROR_EASYSETUP_INVALID_TIME;
         return err;
@@ -146,7 +191,7 @@ iot_error_t _es_time_set(unsigned char *time)
     tm.tm_year -= 1900;
     tm.tm_mon -= 1;
 
-    now = mktime(&tm);
+    now = portable_timegm(&tm);
     err = iot_bsp_system_set_time_in_sec(now);
     if (err) {
         IOT_ERROR("Time set error!!");
@@ -566,11 +611,11 @@ iot_error_t _es_deviceinfo_handler(struct iot_context *ctx, char **out_payload)
     IOT_DEBUG("payload: %s", *out_payload);
 exit:
     if (pubkey)
-        free(pubkey);
+        iot_os_free(pubkey);
     if (dev_sn)
-        free(dev_sn);
+        iot_os_free(dev_sn);
     if (combo_sn)
-        free(combo_sn);
+        iot_os_free(combo_sn);
     if (hash_buf.p) {
         iot_os_free(hash_buf.p);
     }
@@ -578,12 +623,148 @@ exit:
         iot_os_free(iv_buf.p);
     }
     if (encode_buf)
-        free(encode_buf);
+        iot_os_free(encode_buf);
     if (root)
         JSON_DELETE(root);
     return err;
 }
 #endif
+
+STATIC_FUNCTION
+iot_error_t _es_b64_decode_field(JSON_H *recv, const char *field_name, unsigned char **out_buf, size_t *out_len)
+{
+    JSON_H *recv_data;
+    unsigned char *str;
+    size_t input_len, output_len, result_len;
+    unsigned char *decode_buf;
+    iot_error_t err;
+
+    recv_data = JSON_GET_OBJECT_ITEM(recv, field_name);
+    if (recv_data == NULL) {
+        IOT_INFO("no %s info", field_name);
+        IOT_ES_DUMP(IOT_DEBUG_LEVEL_ERROR, IOT_DUMP_EASYSETUP_INVALID_REQUEST, 0);
+        return IOT_ERROR_EASYSETUP_INVALID_REQUEST;
+    }
+    str = (unsigned char *)JSON_GET_STRING_VALUE(recv_data);
+    if (str == NULL) {
+        IOT_ERROR("field is not a string");
+        IOT_ES_DUMP(IOT_DEBUG_LEVEL_ERROR, IOT_DUMP_EASYSETUP_INVALID_REQUEST, 0);
+        return IOT_ERROR_EASYSETUP_INVALID_REQUEST;
+    }
+
+    input_len = (unsigned int)strlen((char *)str);
+    output_len = IOT_SECURITY_B64_DECODE_LEN(input_len);
+    decode_buf = iot_os_malloc(output_len);
+    if (decode_buf == NULL) {
+        IOT_ERROR("failed to malloc for decode_buf");
+        IOT_ES_DUMP(IOT_DEBUG_LEVEL_ERROR, IOT_DUMP_EASYSETUP_MEM_ALLOC_ERROR, 0);
+        return IOT_ERROR_EASYSETUP_MEM_ALLOC_ERROR;
+    }
+    memset(decode_buf, 0, output_len);
+
+    err = iot_security_base64_decode_urlsafe(str, input_len, decode_buf, output_len, &result_len);
+    if (err) {
+        IOT_ERROR("base64 decode error!! : %d", err);
+        IOT_ES_DUMP(IOT_DEBUG_LEVEL_ERROR, IOT_DUMP_EASYSETUP_BASE64_DECODE_ERROR, err);
+        iot_os_free(decode_buf);
+        return IOT_ERROR_EASYSETUP_BASE64_DECODE_ERROR;
+    }
+
+    *out_buf = decode_buf;
+    if (out_len)
+        *out_len = result_len;
+    return IOT_ERROR_NONE;
+}
+
+STATIC_FUNCTION
+iot_error_t _es_keyinfo_build_response(struct iot_context *ctx, char **out_payload)
+{
+    JSON_H *root = NULL;
+    JSON_H *data = NULL;
+    JSON_H *array = NULL;
+    char *output_ptr;
+    unsigned int i;
+
+    root = JSON_CREATE_OBJECT();
+    if (!root) {
+        IOT_ERROR("json create failed");
+        IOT_ES_DUMP(IOT_DEBUG_LEVEL_ERROR, IOT_DUMP_EASYSETUP_MEM_ALLOC_ERROR, 0);
+        return IOT_ERROR_EASYSETUP_MEM_ALLOC_ERROR;
+    }
+
+    data = JSON_CREATE_OBJECT();
+    JSON_ADD_ITEM_TO_OBJECT(root, "data", data);
+
+    array = JSON_CREATE_ARRAY();
+    if (!array) {
+        IOT_ERROR("json create failed");
+        IOT_ES_DUMP(IOT_DEBUG_LEVEL_ERROR, IOT_DUMP_EASYSETUP_MEM_ALLOC_ERROR, 0);
+        JSON_DELETE(root);
+        return IOT_ERROR_EASYSETUP_MEM_ALLOC_ERROR;
+    }
+
+    if (ctx->wifi_update_enabled) {
+        JSON_ADD_ITEM_TO_ARRAY(array, JSON_CREATE_NUMBER(OVF_BIT_HASHED_SERIAL_NUMBER));
+    } else {
+        for (i = OVF_BIT_JUSTWORKS; i <= OVF_BIT_MAX_FEATURE; i++) {
+            if ((i == OVF_BIT_JUSTWORKS) && ctx->add_justworks) {
+                JSON_ADD_ITEM_TO_ARRAY(array, JSON_CREATE_NUMBER(i));
+            } else if (ctx->devconf.ownership_validation_type & (unsigned)(1 << i)) {
+                JSON_ADD_ITEM_TO_ARRAY(array, JSON_CREATE_NUMBER(i));
+            }
+        }
+    }
+
+    JSON_ADD_ITEM_TO_OBJECT(data, "otmSupportFeatures", array);
+    JSON_ADD_NUMBER_TO_OBJECT(root, "errorcode", 0);
+
+    ownership_validation_type =
+        ctx->devconf.ownership_validation_type | (ctx->add_justworks ? IOT_OVF_TYPE_JUSTWORKS : 0);
+
+    output_ptr = JSON_PRINT(root);
+    JSON_DELETE(root);
+    *out_payload = output_ptr;
+    return IOT_ERROR_NONE;
+}
+
+STATIC_FUNCTION
+iot_error_t _es_keyinfo_parse_time_fields(JSON_H *recv)
+{
+    iot_error_t err;
+    unsigned char *decode_buf = NULL;
+
+    err = _es_b64_decode_field(recv, "datetime", &decode_buf, NULL);
+    if (err) {
+        /* datetime is optional, skip */
+        return IOT_ERROR_NONE;
+    }
+
+    IOT_DEBUG("datetime = %s", decode_buf);
+    err = _es_time_set(decode_buf);
+    if (err) {
+        iot_os_free(decode_buf);
+        return err;
+    }
+    iot_os_free(decode_buf);
+    decode_buf = NULL;
+
+    err = _es_b64_decode_field(recv, "regionaldatetime", &decode_buf, NULL);
+    if (err) {
+        return err;
+    }
+    IOT_DEBUG("regionaldatetime = %s", decode_buf);
+    iot_os_free(decode_buf); /* TODO: how to use this value */
+    decode_buf = NULL;
+
+    err = _es_b64_decode_field(recv, "timezoneid", &decode_buf, NULL);
+    if (err) {
+        return err;
+    }
+    IOT_DEBUG("timezoneid = %s", decode_buf); /* TODO: where to store */
+    iot_os_free(decode_buf);
+
+    return IOT_ERROR_NONE;
+}
 
 #if defined(CONFIG_STDK_IOT_CORE_EASYSETUP_X509)
 STATIC_FUNCTION
@@ -593,10 +774,9 @@ iot_error_t _es_keyinfo_handler(struct iot_context *ctx, char *in_payload, char 
     JSON_H *recv = NULL;
     JSON_H *recv_data = NULL;
     JSON_H *root = NULL;
-    JSON_H *data = NULL;
-    JSON_H *array = NULL;
     iot_error_t err = IOT_ERROR_NONE;
     iot_security_cipher_params_t cipher_set_params = {0};
+
     iot_security_ecdh_params_t ecdh_params = {0};
     iot_security_buffer_t secret_buf = {0};
     iot_security_buffer_t peer_pubkey_buf = {0};
@@ -609,11 +789,7 @@ iot_error_t _es_keyinfo_handler(struct iot_context *ctx, char *in_payload, char 
     size_t secret_len = 0;
     unsigned char *decode_buf = NULL;
     unsigned char *p_cpubkey_str = NULL;
-    unsigned char *p_datetime_str = NULL;
-    unsigned char *p_regionaldatetime_str = NULL;
-    unsigned char *p_timezoneid_str = NULL;
     unsigned char secret[IOT_SECURITY_SECRET_LEN] = {0};
-    unsigned int i;
 
     root = JSON_PARSE(in_payload);
     if (!root) {
@@ -725,145 +901,25 @@ iot_error_t _es_keyinfo_handler(struct iot_context *ctx, char *in_payload, char 
         goto exit_ecdh_deinit;
     }
 
-    if ((recv_data = JSON_GET_OBJECT_ITEM(recv, "datetime")) == NULL) {
-        IOT_INFO("no datetime info");
-        IOT_ES_DUMP(IOT_DEBUG_LEVEL_ERROR, IOT_DUMP_EASYSETUP_INVALID_REQUEST, 0);
-        goto skip_time_set;
-    }
-    p_datetime_str = (unsigned char *)JSON_GET_STRING_VALUE(recv_data);
-
-    input_len = (unsigned int)strlen((char *)p_datetime_str);
-    output_len = IOT_SECURITY_B64_DECODE_LEN(input_len);
-    if ((decode_buf = iot_os_malloc(output_len)) == NULL) {
-        IOT_ERROR("failed to malloc for decode_buf");
-        IOT_ES_DUMP(IOT_DEBUG_LEVEL_ERROR, IOT_DUMP_EASYSETUP_MEM_ALLOC_ERROR, 0);
-        err = IOT_ERROR_EASYSETUP_MEM_ALLOC_ERROR;
-        goto exit_secret;
-    }
-    memset(decode_buf, 0, output_len);
-
-    err = iot_security_base64_decode_urlsafe((unsigned char *)p_datetime_str, input_len, decode_buf, output_len,
-                                             &result_len);
-    if (err) {
-        IOT_ERROR("base64 decode error!! : %d", err);
-        IOT_ES_DUMP(IOT_DEBUG_LEVEL_ERROR, IOT_DUMP_EASYSETUP_BASE64_DECODE_ERROR, err);
-        err = IOT_ERROR_EASYSETUP_BASE64_DECODE_ERROR;
-        goto exit_secret;
-    }
-
-    IOT_DEBUG("datetime = %s", decode_buf);
-
-    err = _es_time_set(decode_buf);
+    err = _es_keyinfo_parse_time_fields(recv);
     if (err) {
         goto exit_secret;
     }
-    iot_os_free(decode_buf);
-    decode_buf = NULL;
-
-    if ((recv_data = JSON_GET_OBJECT_ITEM(recv, "regionaldatetime")) == NULL) {
-        IOT_INFO("no regionaldatetime info");
-        IOT_ES_DUMP(IOT_DEBUG_LEVEL_ERROR, IOT_DUMP_EASYSETUP_INVALID_REQUEST, 0);
-        err = IOT_ERROR_EASYSETUP_INVALID_REQUEST;
-        goto exit_secret;
-    }
-    p_regionaldatetime_str = (unsigned char *)JSON_GET_STRING_VALUE(recv_data);
-
-    input_len = (unsigned int)strlen((char *)p_regionaldatetime_str);
-    output_len = IOT_SECURITY_B64_DECODE_LEN(input_len);
-    if ((decode_buf = iot_os_malloc(output_len)) == NULL) {
-        IOT_ERROR("failed to malloc for decode_buf");
-        IOT_ES_DUMP(IOT_DEBUG_LEVEL_ERROR, IOT_DUMP_EASYSETUP_MEM_ALLOC_ERROR, 0);
-        err = IOT_ERROR_EASYSETUP_MEM_ALLOC_ERROR;
-        goto exit_secret;
-    }
-    memset(decode_buf, 0, output_len);
-
-    err = iot_security_base64_decode_urlsafe((unsigned char *)p_regionaldatetime_str, input_len, decode_buf, output_len,
-                                             &result_len);
-    if (err) {
-        IOT_ERROR("base64 decode error!! : %d", err);
-        IOT_ES_DUMP(IOT_DEBUG_LEVEL_ERROR, IOT_DUMP_EASYSETUP_BASE64_DECODE_ERROR, err);
-        err = IOT_ERROR_EASYSETUP_BASE64_DECODE_ERROR;
-        goto exit_secret;
-    }
-    IOT_DEBUG("regionaldatetime = %s", decode_buf);
-    iot_os_free(decode_buf);  // TODO: how to use this value
-    decode_buf = NULL;
-
-    if ((recv_data = JSON_GET_OBJECT_ITEM(recv, "timezoneid")) == NULL) {
-        IOT_INFO("no timezoneid info");
-        IOT_ES_DUMP(IOT_DEBUG_LEVEL_ERROR, IOT_DUMP_EASYSETUP_INVALID_REQUEST, 0);
-        err = IOT_ERROR_EASYSETUP_INVALID_REQUEST;
-        goto exit_secret;
-    }
-    p_timezoneid_str = (unsigned char *)JSON_GET_STRING_VALUE(recv_data);
-
-    input_len = (unsigned int)strlen((char *)p_timezoneid_str);
-    output_len = IOT_SECURITY_B64_DECODE_LEN(input_len);
-    if ((decode_buf = iot_os_malloc(output_len)) == NULL) {
-        IOT_ERROR("failed to malloc for decode_buf");
-        IOT_ES_DUMP(IOT_DEBUG_LEVEL_ERROR, IOT_DUMP_EASYSETUP_MEM_ALLOC_ERROR, 0);
-        err = IOT_ERROR_EASYSETUP_MEM_ALLOC_ERROR;
-        goto exit_secret;
-    }
-
-    memset(decode_buf, 0, output_len);
-
-    err = iot_security_base64_decode_urlsafe((unsigned char *)p_timezoneid_str, input_len, decode_buf, output_len,
-                                             &result_len);
-    if (err) {
-        IOT_ERROR("base64 decode error!! : %d", err);
-        IOT_ES_DUMP(IOT_DEBUG_LEVEL_ERROR, IOT_DUMP_EASYSETUP_BASE64_DECODE_ERROR, err);
-        err = IOT_ERROR_EASYSETUP_BASE64_DECODE_ERROR;
-        goto exit_secret;
-    }
-
-    IOT_DEBUG("timezoneid = %s", decode_buf);  // TODO: where to store
-
-skip_time_set:
 
     JSON_DELETE(root);
+    root = NULL;
 
-    root = JSON_CREATE_OBJECT();
-    if (!root) {
-        IOT_ERROR("json create failed");
-        IOT_ES_DUMP(IOT_DEBUG_LEVEL_ERROR, IOT_DUMP_EASYSETUP_MEM_ALLOC_ERROR, 0);
-        err = IOT_ERROR_EASYSETUP_MEM_ALLOC_ERROR;
+    err = _es_keyinfo_build_response(ctx, &output_ptr);
+    if (err) {
         goto exit_secret;
     }
-
-    data = JSON_CREATE_OBJECT();
-
-    JSON_ADD_ITEM_TO_OBJECT(root, "data", data);
-
-    array = JSON_CREATE_ARRAY();
-    if (!array) {
-        IOT_ERROR("json create failed");
-        IOT_ES_DUMP(IOT_DEBUG_LEVEL_ERROR, IOT_DUMP_EASYSETUP_MEM_ALLOC_ERROR, 0);
-        err = IOT_ERROR_EASYSETUP_MEM_ALLOC_ERROR;
-        goto exit_secret;
-    }
-
-    for (i = OVF_BIT_JUSTWORKS; i < OVF_BIT_MAX_FEATURE; i++) {
-        if ((i == OVF_BIT_JUSTWORKS) && ctx->add_justworks) {
-            JSON_ADD_ITEM_TO_ARRAY(array, JSON_CREATE_NUMBER(i));
-        } else if (ctx->devconf.ownership_validation_type & (unsigned)(1 << i)) {
-            JSON_ADD_ITEM_TO_ARRAY(array, JSON_CREATE_NUMBER(i));
-        }
-    }
-    JSON_ADD_ITEM_TO_OBJECT(data, "otmSupportFeatures", array);
-    JSON_ADD_NUMBER_TO_OBJECT(root, "errorcode", 0);
-
-    ownership_validation_type = ctx->devconf.ownership_validation_type;
-
-    output_ptr = JSON_PRINT(root);
     *out_payload = output_ptr;
 exit_secret:
     if (decode_buf) {
-        free(decode_buf);
+        iot_os_free(decode_buf);
     }
     if (err && secret_buf.p) {
-        free(secret_buf.p);
+        iot_os_free(secret_buf.p);
     }
 exit_ecdh_deinit:
     iot_security_ecdh_deinit(ctx->easysetup_security_context);
@@ -881,8 +937,6 @@ iot_error_t _es_keyinfo_handler(struct iot_context *ctx, char *in_payload, char 
     JSON_H *recv = NULL;
     JSON_H *recv_data = NULL;
     JSON_H *root = NULL;
-    JSON_H *data = NULL;
-    JSON_H *array = NULL;
     iot_error_t err = IOT_ERROR_NONE;
     iot_security_ecdh_params_t ecdh_params = {0};
     iot_security_buffer_t secret_buf = {0};
@@ -892,16 +946,10 @@ iot_error_t _es_keyinfo_handler(struct iot_context *ctx, char *in_payload, char 
     unsigned char key_spub_sign[IOT_SECURITY_ED25519_LEN];
     unsigned char key_rand[IOT_SECURITY_SHA256_LEN];
     unsigned char *p_rand_str = NULL;
-    size_t input_len = 0;
-    size_t output_len = 0;
-    size_t result_len = 0;
     size_t spub_len = 0;
     size_t rand_asc_len = 0;
     unsigned char *decode_buf = NULL;
     unsigned char *p_spub_str = NULL;
-    unsigned char *p_datetime_str = NULL;
-    unsigned char *p_regionaldatetime_str = NULL;
-    unsigned char *p_timezoneid_str = NULL;
     unsigned int i;
     unsigned int j;
 
@@ -1004,151 +1052,25 @@ iot_error_t _es_keyinfo_handler(struct iot_context *ctx, char *in_payload, char 
         IOT_ES_DUMP(IOT_DEBUG_LEVEL_INFO, IOT_DUMP_EASYSETUP_MASTER_SECRET_GENERATION_SUCCESS, 0);
     }
 
-    if ((recv_data = JSON_GET_OBJECT_ITEM(recv, "datetime")) == NULL) {
-        IOT_INFO("no datetime info");
-        IOT_ES_DUMP(IOT_DEBUG_LEVEL_ERROR, IOT_DUMP_EASYSETUP_INVALID_REQUEST, 0);
-        goto skip_time_set;
-    }
-    p_datetime_str = (unsigned char *)JSON_GET_STRING_VALUE(recv_data);
-
-    input_len = (unsigned int)strlen((char *)p_datetime_str);
-    output_len = IOT_SECURITY_B64_DECODE_LEN(input_len);
-    if ((decode_buf = iot_os_malloc(output_len)) == NULL) {
-        IOT_ERROR("failed to malloc for decode_buf");
-        IOT_ES_DUMP(IOT_DEBUG_LEVEL_ERROR, IOT_DUMP_EASYSETUP_MEM_ALLOC_ERROR, 0);
-        err = IOT_ERROR_EASYSETUP_MEM_ALLOC_ERROR;
-        goto exit_secret;
-    }
-    memset(decode_buf, 0, output_len);
-
-    err = iot_security_base64_decode_urlsafe((unsigned char *)p_datetime_str, input_len, decode_buf, output_len,
-                                             &result_len);
-    if (err) {
-        IOT_ERROR("base64 decode error!! : %d", err);
-        IOT_ES_DUMP(IOT_DEBUG_LEVEL_ERROR, IOT_DUMP_EASYSETUP_BASE64_DECODE_ERROR, err);
-        err = IOT_ERROR_EASYSETUP_BASE64_DECODE_ERROR;
-        goto exit_secret;
-    }
-
-    IOT_DEBUG("datetime = %s", decode_buf);
-
-    err = _es_time_set(decode_buf);
+    err = _es_keyinfo_parse_time_fields(recv);
     if (err) {
         goto exit_secret;
     }
-    iot_os_free(decode_buf);
-    decode_buf = NULL;
-
-    if ((recv_data = JSON_GET_OBJECT_ITEM(recv, "regionaldatetime")) == NULL) {
-        IOT_INFO("no regionaldatetime info");
-        IOT_ES_DUMP(IOT_DEBUG_LEVEL_ERROR, IOT_DUMP_EASYSETUP_INVALID_REQUEST, 0);
-        err = IOT_ERROR_EASYSETUP_INVALID_REQUEST;
-        goto exit_secret;
-    }
-    p_regionaldatetime_str = (unsigned char *)JSON_GET_STRING_VALUE(recv_data);
-
-    input_len = (unsigned int)strlen((char *)p_regionaldatetime_str);
-    output_len = IOT_SECURITY_B64_DECODE_LEN(input_len);
-    if ((decode_buf = iot_os_malloc(output_len)) == NULL) {
-        IOT_ERROR("failed to malloc for decode_buf");
-        IOT_ES_DUMP(IOT_DEBUG_LEVEL_ERROR, IOT_DUMP_EASYSETUP_MEM_ALLOC_ERROR, 0);
-        err = IOT_ERROR_EASYSETUP_MEM_ALLOC_ERROR;
-        goto exit_secret;
-    }
-    memset(decode_buf, 0, output_len);
-
-    err = iot_security_base64_decode_urlsafe((unsigned char *)p_regionaldatetime_str, input_len, decode_buf, output_len,
-                                             &result_len);
-    if (err) {
-        IOT_ERROR("base64 decode error!! : %d", err);
-        IOT_ES_DUMP(IOT_DEBUG_LEVEL_ERROR, IOT_DUMP_EASYSETUP_BASE64_DECODE_ERROR, err);
-        err = IOT_ERROR_EASYSETUP_BASE64_DECODE_ERROR;
-        goto exit_secret;
-    }
-    IOT_DEBUG("regionaldatetime = %s", decode_buf);
-    iot_os_free(decode_buf);  // TODO: how to use this value
-    decode_buf = NULL;
-
-    if ((recv_data = JSON_GET_OBJECT_ITEM(recv, "timezoneid")) == NULL) {
-        IOT_INFO("no timezoneid info");
-        IOT_ES_DUMP(IOT_DEBUG_LEVEL_ERROR, IOT_DUMP_EASYSETUP_INVALID_REQUEST, 0);
-        err = IOT_ERROR_EASYSETUP_INVALID_REQUEST;
-        goto exit_secret;
-    }
-    p_timezoneid_str = (unsigned char *)JSON_GET_STRING_VALUE(recv_data);
-
-    input_len = (unsigned int)strlen((char *)p_timezoneid_str);
-    output_len = IOT_SECURITY_B64_DECODE_LEN(input_len);
-    if ((decode_buf = iot_os_malloc(output_len)) == NULL) {
-        IOT_ERROR("failed to malloc for decode_buf");
-        IOT_ES_DUMP(IOT_DEBUG_LEVEL_ERROR, IOT_DUMP_EASYSETUP_MEM_ALLOC_ERROR, 0);
-        err = IOT_ERROR_EASYSETUP_MEM_ALLOC_ERROR;
-        goto exit_secret;
-    }
-
-    memset(decode_buf, 0, output_len);
-
-    err = iot_security_base64_decode_urlsafe((unsigned char *)p_timezoneid_str, input_len, decode_buf, output_len,
-                                             &result_len);
-    if (err) {
-        IOT_ERROR("base64 decode error!! : %d", err);
-        IOT_ES_DUMP(IOT_DEBUG_LEVEL_ERROR, IOT_DUMP_EASYSETUP_BASE64_DECODE_ERROR, err);
-        err = IOT_ERROR_EASYSETUP_BASE64_DECODE_ERROR;
-        goto exit_secret;
-    }
-
-    IOT_DEBUG("timezoneid = %s", decode_buf);  // TODO: where to store
-
-skip_time_set:
 
     JSON_DELETE(root);
+    root = NULL;
 
-    root = JSON_CREATE_OBJECT();
-    if (!root) {
-        IOT_ERROR("json create failed");
-        IOT_ES_DUMP(IOT_DEBUG_LEVEL_ERROR, IOT_DUMP_EASYSETUP_MEM_ALLOC_ERROR, 0);
-        err = IOT_ERROR_EASYSETUP_MEM_ALLOC_ERROR;
+    err = _es_keyinfo_build_response(ctx, &output_ptr);
+    if (err) {
         goto exit_secret;
     }
-
-    data = JSON_CREATE_OBJECT();
-
-    JSON_ADD_ITEM_TO_OBJECT(root, "data", data);
-
-    array = JSON_CREATE_ARRAY();
-    if (!array) {
-        IOT_ERROR("json create failed");
-        IOT_ES_DUMP(IOT_DEBUG_LEVEL_ERROR, IOT_DUMP_EASYSETUP_MEM_ALLOC_ERROR, 0);
-        err = IOT_ERROR_EASYSETUP_MEM_ALLOC_ERROR;
-        goto exit_secret;
-    }
-
-    if (ctx->wifi_update_enabled) {
-        JSON_ADD_ITEM_TO_ARRAY(array, JSON_CREATE_NUMBER(OVF_BIT_HASHED_SERIAL_NUMBER));
-    } else {
-        for (i = OVF_BIT_JUSTWORKS; i <= OVF_BIT_MAX_FEATURE; i++) {
-            if ((i == OVF_BIT_JUSTWORKS) && ctx->add_justworks) {
-                JSON_ADD_ITEM_TO_ARRAY(array, JSON_CREATE_NUMBER(i));
-            } else if (ctx->devconf.ownership_validation_type & (unsigned)(1 << i)) {
-                JSON_ADD_ITEM_TO_ARRAY(array, JSON_CREATE_NUMBER(i));
-            }
-        }
-    }
-
-    JSON_ADD_ITEM_TO_OBJECT(data, "otmSupportFeatures", array);
-    JSON_ADD_NUMBER_TO_OBJECT(root, "errorcode", 0);
-
-    ownership_validation_type =
-        ctx->devconf.ownership_validation_type | (ctx->add_justworks ? IOT_OVF_TYPE_JUSTWORKS : 0);
-
-    output_ptr = JSON_PRINT(root);
     *out_payload = output_ptr;
 exit_secret:
     if (decode_buf) {
-        free(decode_buf);
+        iot_os_free(decode_buf);
     }
     if (err && secret_buf.p) {
-        free(secret_buf.p);
+        iot_os_free(secret_buf.p);
     }
 exit_ecdh_deinit:
     iot_security_ecdh_deinit(ctx->easysetup_security_context);
@@ -1158,6 +1080,7 @@ exit:
     }
     return err;
 }
+
 #endif
 
 STATIC_FUNCTION
@@ -1346,7 +1269,7 @@ iot_error_t _es_confirm_check_manager(struct iot_context *ctx, enum ownership_va
 
 out:
     if (dev_sn)
-        free(dev_sn);
+        iot_os_free(dev_sn);
     return err;
 }
 
@@ -1543,6 +1466,31 @@ out:
     return err;
 }
 
+static void _es_add_hexssid_to_scan_obj(JSON_H *array_obj, iot_wifi_scan_result_t *scan_result)
+{
+    unsigned char hexssid_buf[IOT_SECURITY_B64_ENCODE_LEN(IOT_WIFI_MAX_SSID_LEN)] = {
+        0,
+    };
+    size_t ssid_len;
+    size_t written = 0;
+    iot_error_t err;
+
+    if (!scan_result->hexssid_needed)
+        return;
+
+    ssid_len = scan_result->ssid_len ? scan_result->ssid_len : strlen((char *)scan_result->ssid);
+    if (ssid_len == 0 || ssid_len > IOT_WIFI_MAX_SSID_LEN)
+        return;
+
+    err = iot_security_base64_encode_urlsafe(scan_result->ssid, ssid_len, hexssid_buf, sizeof(hexssid_buf), &written);
+    if (err != IOT_ERROR_NONE) {
+        IOT_ERROR("hexSsid encode failed (%d)", err);
+        return;
+    }
+
+    JSON_ADD_ITEM_TO_OBJECT(array_obj, "hexSsid", JSON_CREATE_STRING((char *)hexssid_buf));
+}
+
 STATIC_FUNCTION
 iot_error_t _es_wifiscaninfo_handler(struct iot_context *ctx, char *in_payload, char **out_payload)
 {
@@ -1649,6 +1597,7 @@ iot_error_t _es_wifiscaninfo_handler(struct iot_context *ctx, char *in_payload, 
                 JSON_ADD_ITEM_TO_OBJECT(array_obj, "bssid", JSON_CREATE_STRING(wifi_bssid));
 
                 JSON_ADD_ITEM_TO_OBJECT(array_obj, "ssid", JSON_CREATE_STRING((char *)ctx->scan_result[i].ssid));
+                _es_add_hexssid_to_scan_obj(array_obj, &ctx->scan_result[i]);
                 JSON_ADD_NUMBER_TO_OBJECT(array_obj, "rssi", (double)ctx->scan_result[i].rssi);
                 JSON_ADD_NUMBER_TO_OBJECT(array_obj, "frequency", (double)ctx->scan_result[i].freq);
                 JSON_ADD_NUMBER_TO_OBJECT(array_obj, "authType", ctx->scan_result[i].authmode);
@@ -1684,6 +1633,7 @@ iot_error_t _es_wifiscaninfo_handler(struct iot_context *ctx, char *in_payload, 
             }
             JSON_ADD_ITEM_TO_OBJECT(array_obj, "bssid", JSON_CREATE_STRING(wifi_bssid));
             JSON_ADD_ITEM_TO_OBJECT(array_obj, "ssid", JSON_CREATE_STRING((char *)ctx->scan_result[i].ssid));
+            _es_add_hexssid_to_scan_obj(array_obj, &ctx->scan_result[i]);
             JSON_ADD_NUMBER_TO_OBJECT(array_obj, "rssi", (double)ctx->scan_result[i].rssi);
             JSON_ADD_NUMBER_TO_OBJECT(array_obj, "frequency", (double)ctx->scan_result[i].freq);
             JSON_ADD_NUMBER_TO_OBJECT(array_obj, "authType", ctx->scan_result[i].authmode);
@@ -1783,6 +1733,8 @@ iot_error_t _es_wifi_prov_parse(struct iot_context *ctx, char *in_payload)
     JSON_H *data = NULL;
     JSON_H *wifi_credential = NULL;
     iot_error_t err = IOT_ERROR_NONE;
+    size_t input_len = 0;
+    size_t result_len = 0;
 
     root = JSON_PARSE(in_payload);
     if (!root) {
@@ -1823,6 +1775,36 @@ iot_error_t _es_wifi_prov_parse(struct iot_context *ctx, char *in_payload)
     }
     strncpy(wifi_prov->ssid, JSON_GET_STRING_VALUE(item), sizeof(wifi_prov->ssid) - 1);
 
+    if ((item = JSON_GET_OBJECT_ITEM(wifi_credential, "hexSsid")) == NULL) {
+        IOT_INFO("no hexSsid");
+    } else {
+        unsigned char decode_buf[IOT_SECURITY_B64_DECODE_LEN(IOT_SECURITY_B64_ENCODE_LEN(IOT_WIFI_PROV_SSID_STR_LEN))] =
+            {
+                0,
+            };
+        char *hexssid = JSON_GET_STRING_VALUE(item);
+
+        input_len = strlen(hexssid);
+        if (input_len == 0 || input_len >= IOT_SECURITY_B64_ENCODE_LEN(IOT_WIFI_PROV_SSID_STR_LEN)) {
+            IOT_ERROR("invalid hexSsid length (%d)", (int)input_len);
+            IOT_ES_DUMP(IOT_DEBUG_LEVEL_ERROR, IOT_DUMP_EASYSETUP_INVALID_REQUEST, 0);
+            err = IOT_ERROR_EASYSETUP_INVALID_REQUEST;
+            goto wifi_parse_out;
+        }
+
+        err = iot_security_base64_decode_urlsafe((unsigned char *)hexssid, input_len, decode_buf, sizeof(decode_buf),
+                                                 &result_len);
+        if (err != IOT_ERROR_NONE || result_len > IOT_WIFI_PROV_SSID_STR_LEN) {
+            IOT_ERROR("hexSsid decode failed (%d, %d)", err, (int)result_len);
+            IOT_ES_DUMP(IOT_DEBUG_LEVEL_ERROR, IOT_DUMP_EASYSETUP_INVALID_REQUEST, 0);
+            err = IOT_ERROR_EASYSETUP_INVALID_REQUEST;
+            goto wifi_parse_out;
+        }
+
+        memset(wifi_prov->ssid, 0, sizeof(wifi_prov->ssid));
+        memcpy(wifi_prov->ssid, decode_buf, result_len);
+    }
+
     // password is optional.
     if ((item = JSON_GET_OBJECT_ITEM(wifi_credential, "password")) == NULL)
         IOT_INFO("No wifi password");
@@ -1845,6 +1827,11 @@ iot_error_t _es_wifi_prov_parse(struct iot_context *ctx, char *in_payload)
 
     wifi_prov->security_type =
         _decide_wifi_auth_mode(JSON_GET_OBJECT_ITEM(wifi_credential, "authType"), wifi_prov, ctx);
+
+    if ((item = JSON_GET_OBJECT_ITEM(wifi_credential, "hiddenSSID")) != NULL) {
+        wifi_prov->hidden = item->valueint;
+        IOT_INFO("hiddenSSID is reported [%d]", wifi_prov->hidden);
+    }
 
     ctx->prov_data.wifi = *wifi_prov;
 
@@ -2092,7 +2079,8 @@ iot_error_t _es_setupcomplete_handler(struct iot_context *ctx, char *in_payload,
     }
 
     ctx->d2d_event_request = true;
-    ctx->is_wifi_station = false;
+    ctx->need_wifi_reset = true;
+    ctx->connection_retry_count = 0;
 
     if (ctx->wifi_update_enabled) {
         if (ctx->next_connection_retry_timer) {
@@ -2131,7 +2119,7 @@ out:
     return err;
 }
 
-static iot_error_t _es_log_systeminfo_handler(struct iot_context *ctx, char **out_payload)
+STATIC_FUNCTION iot_error_t _es_log_systeminfo_handler(struct iot_context *ctx, char **out_payload)
 {
     char *output_ptr = NULL;
     JSON_H *root = NULL;
@@ -2157,7 +2145,7 @@ out:
     return err;
 }
 
-static iot_error_t _es_log_get_dump_handler(struct iot_context *ctx, char **out_payload)
+STATIC_FUNCTION iot_error_t _es_log_get_dump_handler(struct iot_context *ctx, char **out_payload)
 {
     char *log_dump = NULL;
     char *output_ptr = NULL;
@@ -2232,13 +2220,14 @@ out:
 }
 
 #if defined(CONFIG_STDK_IOT_CORE_EASYSETUP_OFFLINE_DIAGNOSTICS)
-static iot_error_t _es_offline_diagnostics_connection_info_handler(struct iot_context *ctx, char **out_payload)
+STATIC_FUNCTION iot_error_t _es_offline_diagnostics_connection_info_handler(struct iot_context *ctx, char **out_payload)
 {
     char *output_ptr = NULL;
     JSON_H *root = NULL;
     JSON_H *data = NULL;
     JSON_H *con_info = NULL;
     iot_error_t err = IOT_ERROR_NONE;
+    iot_wifi_info wifi_info = {0};
 
     root = JSON_CREATE_OBJECT();
     if (!root) {
@@ -2268,20 +2257,17 @@ static iot_error_t _es_offline_diagnostics_connection_info_handler(struct iot_co
 
     JSON_ADD_STRING_TO_OBJECT(con_info, "mnmo", iot_bsp_get_bsp_name());
     JSON_ADD_STRING_TO_OBJECT(con_info, "network_type", "wireless");
-    if (iot_bsp_wifi_get_status() == IOT_ERROR_NONE) {
-        iot_error_t ret = IOT_ERROR_NONE;
+    iot_bsp_wifi_get_status(&wifi_info);
+    if (wifi_info.wifi_status == IOT_WIFI_STATUS_CONNECTED) {
         char wifi_bssid[WIFIINFO_BUFFER_SIZE] = {
             0,
         };
-        struct iot_mac mac;
+        struct iot_mac mac = wifi_info.bssid;
 
         JSON_ADD_STRING_TO_OBJECT(con_info, "network_status", "connected");
-        ret = iot_bsp_wifi_get_mac(&mac);
-        if (ret == IOT_ERROR_NONE) {
-            snprintf(wifi_bssid, sizeof(wifi_bssid), "%02X:%02X:%02X:%02X:%02X:%02X", mac.addr[0], mac.addr[1],
-                     mac.addr[2], mac.addr[3], mac.addr[4], mac.addr[5]);
-            JSON_ADD_STRING_TO_OBJECT(con_info, "ap_mac", wifi_bssid);
-        }
+        snprintf(wifi_bssid, sizeof(wifi_bssid), "%02X:%02X:%02X:%02X:%02X:%02X", mac.addr[0], mac.addr[1], mac.addr[2],
+                 mac.addr[3], mac.addr[4], mac.addr[5]);
+        JSON_ADD_STRING_TO_OBJECT(con_info, "ap_mac", wifi_bssid);
         JSON_ADD_NUMBER_TO_OBJECT(con_info, "ap_freq", (double)iot_bsp_wifi_get_freq());
     } else {
         JSON_ADD_STRING_TO_OBJECT(con_info, "network_status", "disconnected");
@@ -2326,29 +2312,36 @@ void offline_diagnostics_wifi_update_command_handler(struct iot_context *ctx, de
         }
     } else {
         err = iot_nv_get_wifi_prov_data(&ctx->prov_data.wifi);
-        ctx->is_wifi_station = false;
+        ctx->need_wifi_reset = true;
+        ctx->connection_retry_count = 0;
         if (err) {
             IOT_ERROR("Get wifi prov fail");
             goto out;
         }
         switch (ctx->es_network_status) {
+            case IOT_ERROR_NONE:
+                err = ctx->es_network_status;
+                break;
+            case IOT_ERROR_MQTT_REJECT_CONNECT:
+                err = IOT_ERROR_EASYSETUP_REGISTER_FAILED_REGISTRATION;
+                break;
             case IOT_ERROR_CONN_STA_AUTH_FAIL:
                 err = IOT_ERROR_EASYSETUP_UNAVAILABLE_PASSWORD;
                 break;
-            case IOT_ERROR_CONN_STA_CONN_FAIL:
-                err = IOT_ERROR_EASYSETUP_NOT_CONNECTED_WIRELESS_NETWORK;
-                break;
-            case IOT_ERROR_CONN_STA_AP_NOT_FOUND:
-                err = IOT_ERROR_EASYSETUP_WIFI_NOT_DISCOVERED;
-                break;
-            case IOT_ERROR_CONN_SOFTAP_DHCP_FAIL:
+            case IOT_ERROR_CONN_STA_DHCP_FAIL:
                 err = IOT_ERROR_EASYSETUP_WIFI_DHCP_FAIL;
                 break;
+            case IOT_ERROR_CONN_DNS_QUERY_FAIL:
             case IOT_ERROR_CONN_STA_NO_INTERNET:
+            case IOT_ERROR_NET_TCP_CONNECTION_FAIL:
+            case IOT_ERROR_NET_TLS_HANDSHAKE_FAIL:
+            case IOT_ERROR_MQTT_CONNECT_FAIL:
+            case IOT_ERROR_MQTT_CONNECT_TIMEOUT:
+            case IOT_ERROR_MQTT_RATE_LIMIT:
                 err = IOT_ERROR_EASYSETUP_NOT_CONNECTED_WIRELESS_NETWORK;
                 break;
             default:
-                err = ctx->es_network_status;
+                err = IOT_ERROR_EASYSETUP_WIFI_NOT_DISCOVERED;
                 break;
         }
     }
@@ -2372,7 +2365,7 @@ out:
         JSON_DELETE(root);
 }
 
-static void _offline_diagnostics_wifi_update_timeout(iot_os_timer_handle handle, void *user_data)
+STATIC_FUNCTION void _offline_diagnostics_wifi_update_timeout(iot_os_timer_handle handle, void *user_data)
 {
     struct iot_context *ctx = (struct iot_context *)user_data;
     iot_error_t err = IOT_ERROR_NONE;
@@ -2432,7 +2425,8 @@ static iot_error_t _es_offline_diagnostics_recovery_handler(struct iot_context *
         }
 
         ctx->d2d_event_request = true;
-        ctx->is_wifi_station = false;
+        ctx->need_wifi_reset = true;
+        ctx->connection_retry_count = 0;
         if (ctx->next_connection_retry_timer) {
             iot_os_timer_delete(ctx->next_connection_retry_timer);
             ctx->next_connection_retry_timer = iot_os_timer_create(_next_connection_retry_timeout, 2000, ctx);
@@ -2494,7 +2488,7 @@ out:
     return err;
 }
 #else
-static iot_error_t _es_offline_diagnostics_connection_info_handler(struct iot_context *ctx, char **out_payload)
+STATIC_FUNCTION iot_error_t _es_offline_diagnostics_connection_info_handler(struct iot_context *ctx, char **out_payload)
 {
     return IOT_ERROR_EASYSETUP_NOT_SUPPORTED;
 }

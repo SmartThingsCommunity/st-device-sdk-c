@@ -22,7 +22,10 @@
 #include <string.h>
 
 #include "TC_MOCK_functions.h"
+#include "TC_REGISTRY.h"
 #include "cmocka_custom.h"
+
+TEST_SUITE("iot_security_helper.c");
 
 static const size_t b64_encode_len_input[] = {2,  3,  4,  5,  6,  7,  8,  9,  10, 11, 12, 13, 14, 15, 16,
                                               17, 18, 19, 20, 21, 22, 23, 24, 25, 26, 27, 28, 29, 30, 31};
@@ -36,7 +39,7 @@ static const size_t b64_decode_len_input[] = {2,  3,  4,  5,  6,  7,  8,  9,  10
 static const size_t b64_decode_len_required[] = {3,  3,  3,  6,  6,  6,  6,  9,  9,  9,  9,  12, 12, 12, 12,
                                                  15, 15, 15, 15, 18, 18, 18, 18, 21, 21, 21, 21, 24, 24, 24};
 
-void TC_iot_security_base64_buffer_size(void **state)
+TEST_F(TC_REGISTRY_NO_FIXTURE, TC_iot_security_base64_buffer_size_neg)
 {
     const size_t *input;
     const size_t *expected;
@@ -73,7 +76,7 @@ static const unsigned char *sample_b64url = "YWJ-YzEyMyE_JComKCknLT1AfmFiYw==";
 
 typedef iot_error_t (*iot_security_base64_func)(const unsigned char *, size_t, unsigned char *, size_t, size_t *);
 
-void TC_iot_security_base64_invalid_parameter(void **state)
+TEST_F(TC_REGISTRY_NO_FIXTURE, TC_iot_security_base64_invalid_parameter_neg)
 {
     iot_error_t err;
     unsigned char *src;
@@ -151,7 +154,7 @@ void TC_iot_security_base64_invalid_parameter(void **state)
     assert_int_equal(err, IOT_ERROR_SECURITY_BASE64_URL_DECODE);
 }
 
-void TC_iot_security_base64_encode_success(void **state)
+TEST_F(TC_REGISTRY_NO_FIXTURE, TC_iot_security_base64_encode_success_pos)
 {
     iot_error_t err;
     unsigned char *src;
@@ -178,7 +181,7 @@ void TC_iot_security_base64_encode_success(void **state)
     free(dst);
 }
 
-void TC_iot_security_base64_decode_failure(void **state)
+TEST_F(TC_REGISTRY_NO_FIXTURE, TC_iot_security_base64_decode_failure_neg)
 {
     iot_error_t err;
     unsigned char *src;
@@ -198,7 +201,7 @@ void TC_iot_security_base64_decode_failure(void **state)
     assert_int_not_equal(err, IOT_ERROR_NONE);
 }
 
-void TC_iot_security_base64_decode_success(void **state)
+TEST_F(TC_REGISTRY_NO_FIXTURE, TC_iot_security_base64_decode_success_pos)
 {
     iot_error_t err;
     unsigned char *src;
@@ -225,7 +228,7 @@ void TC_iot_security_base64_decode_success(void **state)
     free(dst);
 }
 
-void TC_iot_security_base64_encode_urlsafe_success(void **state)
+TEST_F(TC_REGISTRY_NO_FIXTURE, TC_iot_security_base64_encode_urlsafe_success_pos)
 {
     iot_error_t err;
     unsigned char *src;
@@ -252,7 +255,7 @@ void TC_iot_security_base64_encode_urlsafe_success(void **state)
     free(dst);
 }
 
-void TC_iot_security_base64_decode_urlsafe_alloc_failure(void **state)
+TEST_F(TC_REGISTRY_NO_FIXTURE, TC_iot_security_base64_decode_urlsafe_alloc_failure_neg)
 {
     iot_error_t err;
     unsigned char *src;
@@ -283,7 +286,7 @@ void TC_iot_security_base64_decode_urlsafe_alloc_failure(void **state)
     do_not_use_mock_iot_os_malloc_failure();
 }
 
-void TC_iot_security_base64_decode_urlsafe_failure(void **state)
+TEST_F(TC_REGISTRY_NO_FIXTURE, TC_iot_security_base64_decode_urlsafe_failure_neg)
 {
     iot_error_t err;
     unsigned char *src;
@@ -303,7 +306,7 @@ void TC_iot_security_base64_decode_urlsafe_failure(void **state)
     assert_int_not_equal(err, IOT_ERROR_NONE);
 }
 
-void TC_iot_security_base64_decode_urlsafe_success(void **state)
+TEST_F(TC_REGISTRY_NO_FIXTURE, TC_iot_security_base64_decode_urlsafe_success_pos)
 {
     iot_error_t err;
     unsigned char *src;
@@ -342,7 +345,7 @@ const static unsigned char sample_hash[] = {
     0x21, 0x27, 0x83, 0x89, 0xfb, 0x8d, 0x05, 0x75, 0xe2, 0x17, 0xce, 0xfc, 0x62, 0x3b, 0x35, 0xd9,
 };
 
-void TC_iot_security_sha256_failure(void **state)
+TEST_F(TC_REGISTRY_NO_FIXTURE, TC_iot_security_sha256_failure_neg)
 {
     iot_error_t err;
     const unsigned char *input;
@@ -384,7 +387,7 @@ void TC_iot_security_sha256_failure(void **state)
     assert_int_not_equal(err, IOT_ERROR_NONE);
 }
 
-void TC_iot_security_sha256_success(void **state)
+TEST_F(TC_REGISTRY_NO_FIXTURE, TC_iot_security_sha256_success_pos)
 {
     iot_error_t err;
     const unsigned char *input;
@@ -398,4 +401,273 @@ void TC_iot_security_sha256_success(void **state)
     err = iot_security_sha256(input, input_len, hash, hash_len);
     assert_int_equal(err, IOT_ERROR_NONE);
     assert_memory_equal(hash, sample_hash, sizeof(sample_hash));
+}
+
+/* _base64_encode is not exposed through the public header but is not static. */
+extern int _base64_encode(unsigned char *dst, size_t dlen, size_t *olen, const unsigned char *src, size_t slen);
+
+TEST_F(TC_REGISTRY_NO_FIXTURE, TC_iot_security_base64_decode_trailing_spaces_neg)
+{
+    iot_error_t err;
+    unsigned char dst[16] = {0};
+    size_t out_len = 0;
+
+    // Given: base64 text padded with trailing spaces
+    const unsigned char *src = (const unsigned char *)"YWJj   ";
+    // When
+    err = iot_security_base64_decode(src, strlen((const char *)src), dst, sizeof(dst), &out_len);
+    // Then: trailing spaces must not corrupt the decoded output
+    assert_int_equal(err, IOT_ERROR_NONE);
+    assert_int_equal(out_len, 3);
+    assert_memory_equal(dst, "abc", 3);
+}
+
+TEST_F(TC_REGISTRY_NO_FIXTURE, TC_iot_security_base64_decode_embedded_crlf_neg)
+{
+    iot_error_t err;
+    unsigned char dst[16] = {0};
+    size_t out_len = 0;
+
+    // Given: base64 text broken over two CRLF separated lines
+    const unsigned char *src = (const unsigned char *)"YWJj\r\nYWJj";
+    // When
+    err = iot_security_base64_decode(src, strlen((const char *)src), dst, sizeof(dst), &out_len);
+    // Then: the line break must not appear in the decoded output
+    assert_int_equal(err, IOT_ERROR_NONE);
+    assert_int_equal(out_len, 6);
+    assert_memory_equal(dst, "abcabc", 6);
+}
+
+TEST_F(TC_REGISTRY_NO_FIXTURE, TC_iot_security_base64_decode_embedded_lf_neg)
+{
+    iot_error_t err;
+    unsigned char dst[16] = {0};
+    size_t out_len = 0;
+
+    // Given: base64 text broken over two LF separated lines
+    const unsigned char *src = (const unsigned char *)"YWJj\nYWJj";
+    // When
+    err = iot_security_base64_decode(src, strlen((const char *)src), dst, sizeof(dst), &out_len);
+    // Then
+    assert_int_equal(err, IOT_ERROR_NONE);
+    assert_int_equal(out_len, 6);
+    assert_memory_equal(dst, "abcabc", 6);
+}
+
+TEST_F(TC_REGISTRY_NO_FIXTURE, TC_iot_security_base64_decode_space_inside_line_neg)
+{
+    iot_error_t err;
+    unsigned char dst[16] = {0};
+    size_t out_len = 0;
+
+    // Given: a space in the middle of a line
+    const unsigned char *src = (const unsigned char *)"YWJ j";
+    // When
+    err = iot_security_base64_decode(src, strlen((const char *)src), dst, sizeof(dst), &out_len);
+    // Then
+    assert_int_equal(err, IOT_ERROR_SECURITY_BASE64_DECODE);
+}
+
+TEST_F(TC_REGISTRY_NO_FIXTURE, TC_iot_security_base64_decode_too_many_padding_neg)
+{
+    iot_error_t err;
+    unsigned char dst[16] = {0};
+    size_t out_len = 0;
+
+    // Given: more than two padding characters
+    const unsigned char *src = (const unsigned char *)"YWJj====";
+    // When
+    err = iot_security_base64_decode(src, strlen((const char *)src), dst, sizeof(dst), &out_len);
+    // Then
+    assert_int_equal(err, IOT_ERROR_SECURITY_BASE64_DECODE);
+}
+
+TEST_F(TC_REGISTRY_NO_FIXTURE, TC_iot_security_base64_decode_data_after_padding_neg)
+{
+    iot_error_t err;
+    unsigned char dst[16] = {0};
+    size_t out_len = 0;
+
+    // Given: a base64 character following the padding
+    const unsigned char *src = (const unsigned char *)"YW=j";
+    // When
+    err = iot_security_base64_decode(src, strlen((const char *)src), dst, sizeof(dst), &out_len);
+    // Then
+    assert_int_equal(err, IOT_ERROR_SECURITY_BASE64_DECODE);
+}
+
+TEST_F(TC_REGISTRY_NO_FIXTURE, TC_iot_security_base64_decode_only_newlines_neg)
+{
+    iot_error_t err;
+    unsigned char dst[16];
+    size_t out_len = 0xdead;
+
+    // Given: input that carries no base64 payload at all
+    const unsigned char *src = (const unsigned char *)"\n\n\n\n";
+    memset(dst, 0xA5, sizeof(dst));
+    // When
+    err = iot_security_base64_decode(src, strlen((const char *)src), dst, sizeof(dst), &out_len);
+    // Then: nothing is decoded and the output length is reported as zero
+    assert_int_equal(err, IOT_ERROR_NONE);
+    assert_int_equal(out_len, 0);
+    assert_int_equal(dst[0], 0xA5);
+}
+
+TEST_F(TC_REGISTRY_NO_FIXTURE, TC_iot_security_base64_decode_non_base64_char_neg)
+{
+    iot_error_t err;
+    unsigned char dst[16] = {0};
+    size_t out_len = 0;
+
+    // Given: a character that is not in the base64 alphabet
+    const unsigned char *src = (const unsigned char *)"YWJ#";
+    // When
+    err = iot_security_base64_decode(src, strlen((const char *)src), dst, sizeof(dst), &out_len);
+    // Then
+    assert_int_equal(err, IOT_ERROR_SECURITY_BASE64_DECODE);
+}
+
+TEST_F(TC_REGISTRY_NO_FIXTURE, TC_iot_security_base64_decode_high_bit_char_neg)
+{
+    iot_error_t err;
+    unsigned char src[] = {'Y', 'W', 'J', 0xFF};
+    unsigned char dst[16] = {0};
+    size_t out_len = 0;
+
+    // Given: a byte outside the ascii range
+    // When
+    err = iot_security_base64_decode(src, sizeof(src), dst, sizeof(dst), &out_len);
+    // Then
+    assert_int_equal(err, IOT_ERROR_SECURITY_BASE64_DECODE);
+}
+
+TEST_F(TC_REGISTRY_NO_FIXTURE, TC_iot_security_base64_decode_urlsafe_rejects_standard_alphabet_neg)
+{
+    iot_error_t err;
+    unsigned char dst[64] = {0};
+    size_t out_len = 0;
+
+    // Given: url safe text handed to the standard decoder
+    // When
+    err = iot_security_base64_decode(sample_b64url, strlen((const char *)sample_b64url), dst, sizeof(dst), &out_len);
+    // Then: '-' and '_' are not part of the standard alphabet
+    assert_int_equal(err, IOT_ERROR_SECURITY_BASE64_DECODE);
+}
+
+TEST_F(TC_REGISTRY_NO_FIXTURE, TC_iot_security_base64_encode_zero_source_len_neg)
+{
+    unsigned char dst[16];
+    size_t out_len = 0xdead;
+    int ret;
+
+    memset(dst, 0xA5, sizeof(dst));
+    // When: the low level encoder is asked to encode nothing
+    ret = _base64_encode(dst, sizeof(dst), &out_len, (const unsigned char *)"abc", 0);
+    // Then: it reports an empty result without touching the destination
+    assert_int_equal(ret, 0);
+    assert_int_equal(out_len, 0);
+    assert_int_equal(dst[0], 0xA5);
+}
+
+TEST_F(TC_REGISTRY_NO_FIXTURE, TC_iot_security_base64_encode_source_len_overflow_neg)
+{
+    unsigned char dst[16];
+    size_t out_len = 0;
+    int ret;
+
+    memset(dst, 0xA5, sizeof(dst));
+    // When: the encoded length would overflow size_t
+    ret = _base64_encode(dst, sizeof(dst), &out_len, (const unsigned char *)"abc", (size_t)-1);
+    // Then: rejected without touching the destination
+    assert_int_equal(ret, -1);
+    assert_int_equal(out_len, (size_t)-1);
+    assert_int_equal(dst[0], 0xA5);
+}
+
+TEST_F(TC_REGISTRY_NO_FIXTURE, TC_iot_security_base64_encode_null_destination_neg)
+{
+    size_t out_len = 0;
+    int ret;
+
+    // When: no destination is provided
+    ret = _base64_encode(NULL, 1024, &out_len, (const unsigned char *)"abc", 3);
+    // Then: the required length is reported back with a failure
+    assert_int_equal(ret, -1);
+    assert_int_equal(out_len, 5);
+}
+
+TEST_F(TC_REGISTRY_NO_FIXTURE, TC_iot_security_base64_encode_urlsafe_has_no_standard_chars_neg)
+{
+    iot_error_t err;
+    unsigned char dst[64] = {0};
+    size_t out_len = 0;
+    size_t i;
+
+    // When
+    err = iot_security_base64_encode_urlsafe(sample, strlen((const char *)sample), dst, sizeof(dst), &out_len);
+    // Then: no standard-only alphabet character may leak into url safe output
+    assert_int_equal(err, IOT_ERROR_NONE);
+    assert_true(out_len > 0);
+    for (i = 0; i < out_len; i++) {
+        assert_true(dst[i] != '+');
+        assert_true(dst[i] != '/');
+    }
+}
+
+TEST_F(TC_REGISTRY_NO_FIXTURE, TC_iot_security_sha512_null_input_neg)
+{
+    unsigned char hash[IOT_SECURITY_SHA512_LEN] = {0};
+
+    // When
+    iot_error_t err = iot_security_sha512(NULL, sizeof(sample_input), hash, sizeof(hash));
+    // Then
+    assert_int_equal(err, IOT_ERROR_SECURITY_INVALID_ARGS);
+}
+
+TEST_F(TC_REGISTRY_NO_FIXTURE, TC_iot_security_sha512_zero_input_len_neg)
+{
+    unsigned char hash[IOT_SECURITY_SHA512_LEN] = {0};
+
+    // When
+    iot_error_t err = iot_security_sha512(sample_input, 0, hash, sizeof(hash));
+    // Then
+    assert_int_equal(err, IOT_ERROR_SECURITY_INVALID_ARGS);
+}
+
+TEST_F(TC_REGISTRY_NO_FIXTURE, TC_iot_security_sha512_null_output_neg)
+{
+    // When
+    iot_error_t err = iot_security_sha512(sample_input, sizeof(sample_input), NULL, IOT_SECURITY_SHA512_LEN);
+    // Then
+    assert_int_equal(err, IOT_ERROR_SECURITY_INVALID_ARGS);
+}
+
+TEST_F(TC_REGISTRY_NO_FIXTURE, TC_iot_security_sha512_short_output_neg)
+{
+    unsigned char hash[IOT_SECURITY_SHA512_LEN] = {0};
+
+    // When: the output buffer cannot hold a full sha512 digest
+    iot_error_t err = iot_security_sha512(sample_input, sizeof(sample_input), hash, IOT_SECURITY_SHA512_LEN - 1);
+    // Then
+    assert_int_equal(err, IOT_ERROR_SECURITY_INVALID_ARGS);
+    // and the buffer must be left untouched
+    for (size_t i = 0; i < sizeof(hash); i++) {
+        assert_int_equal(hash[i], 0);
+    }
+}
+
+TEST_F(TC_REGISTRY_NO_FIXTURE, TC_iot_security_sha256_single_bit_change_neg)
+{
+    iot_error_t err;
+    unsigned char input[sizeof(sample_input)];
+    unsigned char hash[IOT_SECURITY_SHA256_LEN] = {0};
+
+    // Given: the sample input with a single bit flipped
+    memcpy(input, sample_input, sizeof(input));
+    input[0] ^= 0x01;
+    // When
+    err = iot_security_sha256(input, sizeof(input), hash, sizeof(hash));
+    // Then: the digest must not match the digest of the original input
+    assert_int_equal(err, IOT_ERROR_NONE);
+    assert_memory_not_equal(hash, sample_hash, sizeof(sample_hash));
 }

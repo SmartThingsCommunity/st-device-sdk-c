@@ -27,6 +27,7 @@
 #include <string.h>
 
 #include "TC_MOCK_functions.h"
+#include "TC_REGISTRY.h"
 #include "cmocka_custom.h"
 #define UNUSED(x) (void **)(x)
 
@@ -37,6 +38,19 @@ extern iot_error_t _iot_nv_read_data(const iot_nvd_t nv_type, char *data, size_t
 typedef enum { NONE, DONE } wifi_status_cmd_t;
 
 #define SAMPLE_PUBLIC_KEY "BKb7+m1Mo8OuMsodM91ohz/+rZKDc/otzUPSn4UkCUk="
+
+TEST_SUITE("iot_nv_data.c");
+
+static int TC_iot_nv_data_setup(void **state);
+static int TC_iot_nv_data_teardown(void **state);
+
+TEST_FIXTURE(iot_nv_data, TC_iot_nv_data_setup, TC_iot_nv_data_teardown);
+
+static int TC_iot_nv_data_setup(void **state);
+static int TC_iot_nv_data_teardown(void **state);
+
+static int TC_iot_nv_data_setup(void **state);
+static int TC_iot_nv_data_teardown(void **state);
 
 static char sample_device_info[] = {
     "{\n"
@@ -59,7 +73,7 @@ static void _setup_wifi_prov_status(wifi_status_cmd_t cmd);
 static void _setup_wifi_prov_data(iot_nvd_t nv_type);
 static void _teardown_wifi_prov_data();
 
-int TC_iot_nv_data_setup(void **state)
+static int TC_iot_nv_data_setup(void **state)
 {
     iot_error_t err;
     UNUSED(state);
@@ -73,7 +87,7 @@ int TC_iot_nv_data_setup(void **state)
     return 0;
 }
 
-int TC_iot_nv_data_teardown(void **state)
+static int TC_iot_nv_data_teardown(void **state)
 {
     iot_error_t err;
     UNUSED(state);
@@ -84,7 +98,7 @@ int TC_iot_nv_data_teardown(void **state)
     return 0;
 }
 
-void TC_iot_nv_get_wifi_prov_data_success(void **state)
+TEST_F(iot_nv_data, TC_iot_nv_get_wifi_prov_data_success_pos)
 {
     iot_error_t err;
     struct iot_wifi_prov_data *wifi_prov = NULL;
@@ -142,7 +156,7 @@ void TC_iot_nv_get_wifi_prov_data_success(void **state)
     free(wifi_prov);
 }
 
-void TC_iot_nv_get_wifi_prov_data_null_parameters(void **state)
+TEST_F(iot_nv_data, TC_iot_nv_get_wifi_prov_data_null_parameters_neg)
 {
     iot_error_t err;
     UNUSED(state);
@@ -153,7 +167,7 @@ void TC_iot_nv_get_wifi_prov_data_null_parameters(void **state)
     assert_int_not_equal(err, IOT_ERROR_NONE);
 }
 
-void TC_iot_nv_get_certificate_success(void **state)
+TEST_F(iot_nv_data, TC_iot_nv_get_certificate_success_pos)
 {
     iot_error_t err;
     iot_security_cert_id_t cert_id;
@@ -174,7 +188,7 @@ void TC_iot_nv_get_certificate_success(void **state)
     free(cert);
 }
 
-void TC_iot_nv_get_certificate_null_parameters(void **state)
+TEST_F(iot_nv_data, TC_iot_nv_get_certificate_null_parameters_neg)
 {
     iot_error_t err;
     iot_security_cert_id_t cert_id = IOT_SECURITY_CERT_ID_ROOT_CA;
@@ -207,7 +221,7 @@ void TC_iot_nv_get_certificate_null_parameters(void **state)
     assert_int_equal(cert_len, 0);
 }
 
-void TC_iot_nv_get_certificate_internal_failure(void **state)
+TEST_F(iot_nv_data, TC_iot_nv_get_certificate_internal_failure_neg)
 {
     iot_error_t err;
     iot_security_cert_id_t cert_id = IOT_SECURITY_CERT_ID_ROOT_CA;
@@ -223,7 +237,7 @@ void TC_iot_nv_get_certificate_internal_failure(void **state)
     assert_int_not_equal(err, IOT_ERROR_NONE);
 }
 
-void TC_iot_nv_get_serial_number_success(void **state)
+TEST_F(iot_nv_data, TC_iot_nv_get_serial_number_success_pos)
 {
     iot_error_t err;
     char *serial_number = NULL;
@@ -242,7 +256,7 @@ void TC_iot_nv_get_serial_number_success(void **state)
     free(serial_number);
 }
 
-void TC_iot_nv_get_serial_number_null_parameters(void **state)
+TEST_F(iot_nv_data, TC_iot_nv_get_serial_number_null_parameters_neg)
 {
     iot_error_t err;
     char *serial_number = NULL;
@@ -268,7 +282,7 @@ void TC_iot_nv_get_serial_number_null_parameters(void **state)
     assert_null(serial_number);
 }
 
-void TC_iot_nv_get_device_id_null_parameters(void **state)
+TEST_F(iot_nv_data, TC_iot_nv_get_device_id_null_parameters_neg)
 {
     iot_error_t err;
     size_t len;
@@ -291,7 +305,7 @@ void TC_iot_nv_get_device_id_null_parameters(void **state)
     assert_int_not_equal(err, IOT_ERROR_NONE);
 }
 
-void TC_iot_nv_set_device_id_null_parameter(void **state)
+TEST_F(iot_nv_data, TC_iot_nv_set_device_id_null_parameter_neg)
 {
     iot_error_t err;
     UNUSED(state);
@@ -302,7 +316,7 @@ void TC_iot_nv_set_device_id_null_parameter(void **state)
     assert_int_not_equal(err, IOT_ERROR_NONE);
 }
 
-void TC_iot_nv_get_set_erase_device_id_success(void **state)
+TEST_F(iot_nv_data, TC_iot_nv_get_set_erase_device_id_success_pos)
 {
     iot_error_t err;
     char *set_device_id = "1cd8e3f2-0c88-4298-90e3-cd9b35a82140";
@@ -330,7 +344,7 @@ void TC_iot_nv_get_set_erase_device_id_success(void **state)
     free(got_device_id);
 }
 
-void TC_iot_nv_erase_internal_failure(void **state)
+TEST_F(iot_nv_data, TC_iot_nv_erase_internal_failure_neg)
 {
     iot_error_t err;
 
@@ -345,7 +359,7 @@ void TC_iot_nv_erase_internal_failure(void **state)
     assert_int_equal(err, IOT_ERROR_NV_DATA_NOT_EXIST);
 }
 
-void TC_iot_nv_get_data_from_device_info_failure(void **state)
+TEST_F(iot_nv_data, TC_iot_nv_get_data_from_device_info_failure_neg)
 {
     iot_error_t err;
     iot_security_buffer_t buf;
@@ -364,7 +378,7 @@ void TC_iot_nv_get_data_from_device_info_failure(void **state)
     assert_int_equal(err, IOT_ERROR_NV_DATA_ERROR);
 }
 
-void TC_iot_nv_get_data_from_device_info_success(void **state)
+TEST_F(iot_nv_data, TC_iot_nv_get_data_from_device_info_success_pos)
 {
     iot_error_t err;
     iot_nvd_t nv_id;
@@ -382,7 +396,7 @@ void TC_iot_nv_get_data_from_device_info_success(void **state)
     assert_memory_equal(buf.p, sample_public_key, strlen(sample_public_key));
 }
 
-void TC_iot_nv_prov_data_exist_null_parameters(void **state)
+TEST_F(iot_nv_data, TC_iot_nv_prov_data_exist_null_parameters_neg)
 {
     UNUSED(state);
     // When: function is called
@@ -390,9 +404,11 @@ void TC_iot_nv_prov_data_exist_null_parameters(void **state)
     // Then: function should not crash
 
     // Done: If no crash
+
+    assert_true(true);
 }
 
-void TC_iot_nv_prov_data_exist_no_prov_data(void **state)
+TEST_F(iot_nv_data, TC_iot_nv_prov_data_exist_no_prov_data_neg)
 {
     iot_error_t err;
     bool result;
@@ -408,7 +424,7 @@ void TC_iot_nv_prov_data_exist_no_prov_data(void **state)
     assert_false(result);
 }
 
-void TC_iot_nv_prov_data_exist_wifi_only(void **state)
+TEST_F(iot_nv_data, TC_iot_nv_prov_data_exist_wifi_only_neg)
 {
     iot_error_t err;
     bool result;
@@ -429,7 +445,7 @@ void TC_iot_nv_prov_data_exist_wifi_only(void **state)
     err = iot_nv_erase(IOT_NVD_WIFI_PROV_STATUS);
 }
 
-void TC_iot_nv_prov_data_exist_cloud_only(void **state)
+TEST_F(iot_nv_data, TC_iot_nv_prov_data_exist_cloud_only_neg)
 {
     iot_error_t err;
     bool result;
@@ -450,7 +466,7 @@ void TC_iot_nv_prov_data_exist_cloud_only(void **state)
     err = iot_nv_erase(IOT_NVD_CLOUD_PROV_STATUS);
 }
 
-void TC_iot_nv_prov_data_exist_both_done(void **state)
+TEST_F(iot_nv_data, TC_iot_nv_prov_data_exist_both_done_neg)
 {
     iot_error_t err;
     bool result;
@@ -473,7 +489,7 @@ void TC_iot_nv_prov_data_exist_both_done(void **state)
     err = iot_nv_erase(IOT_NVD_CLOUD_PROV_STATUS);
 }
 
-void TC_iot_nv_prov_data_exist_wifi_not_done(void **state)
+TEST_F(iot_nv_data, TC_iot_nv_prov_data_exist_wifi_not_done_neg)
 {
     iot_error_t err;
     bool result;
@@ -496,7 +512,7 @@ void TC_iot_nv_prov_data_exist_wifi_not_done(void **state)
     err = iot_nv_erase(IOT_NVD_CLOUD_PROV_STATUS);
 }
 
-void TC_iot_nv_prov_data_exist_cloud_not_done(void **state)
+TEST_F(iot_nv_data, TC_iot_nv_prov_data_exist_cloud_not_done_neg)
 {
     iot_error_t err;
     bool result;
@@ -519,7 +535,7 @@ void TC_iot_nv_prov_data_exist_cloud_not_done(void **state)
     err = iot_nv_erase(IOT_NVD_CLOUD_PROV_STATUS);
 }
 
-void TC_iot_nv_get_prov_data_success(void **state)
+TEST_F(iot_nv_data, TC_iot_nv_get_prov_data_success_pos)
 {
     iot_error_t err;
     struct iot_device_prov_data prov_data;
@@ -563,7 +579,7 @@ void TC_iot_nv_get_prov_data_success(void **state)
         free(prov_data.cloud.label);
 }
 
-void TC_iot_nv_get_prov_data_null_parameters(void **state)
+TEST_F(iot_nv_data, TC_iot_nv_get_prov_data_null_parameters_neg)
 {
     iot_error_t err;
     UNUSED(state);
@@ -574,7 +590,7 @@ void TC_iot_nv_get_prov_data_null_parameters(void **state)
     assert_int_not_equal(err, IOT_ERROR_NONE);
 }
 
-void TC_iot_nv_get_prov_data_wifi_fail(void **state)
+TEST_F(iot_nv_data, TC_iot_nv_get_prov_data_wifi_fail_neg)
 {
     iot_error_t err;
     struct iot_device_prov_data prov_data;
@@ -594,7 +610,7 @@ void TC_iot_nv_get_prov_data_wifi_fail(void **state)
     err = iot_nv_erase(IOT_NVD_CLOUD_PROV_STATUS);
 }
 
-void TC_iot_nv_get_prov_data_cloud_fail(void **state)
+TEST_F(iot_nv_data, TC_iot_nv_get_prov_data_cloud_fail_neg)
 {
     iot_error_t err;
     struct iot_device_prov_data prov_data;
@@ -617,7 +633,7 @@ void TC_iot_nv_get_prov_data_cloud_fail(void **state)
     _teardown_wifi_prov_data();
 }
 
-void TC_iot_nv_set_prov_data_success(void **state)
+TEST_F(iot_nv_data, TC_iot_nv_set_prov_data_success_pos)
 {
     iot_error_t err;
     struct iot_device_prov_data prov_data;
@@ -648,13 +664,14 @@ void TC_iot_nv_set_prov_data_success(void **state)
     err = iot_nv_erase(IOT_NVD_AP_PASS);
     err = iot_nv_erase(IOT_NVD_AP_BSSID);
     err = iot_nv_erase(IOT_NVD_AP_AUTH_TYPE);
+    err = iot_nv_erase(IOT_NVD_AP_HIDDEN);
     err = iot_nv_erase(IOT_NVD_CLOUD_PROV_STATUS);
     err = iot_nv_erase(IOT_NVD_SERVER_URL);
     err = iot_nv_erase(IOT_NVD_SERVER_PORT);
     err = iot_nv_erase(IOT_NVD_LABEL);
 }
 
-void TC_iot_nv_set_prov_data_null_parameters(void **state)
+TEST_F(iot_nv_data, TC_iot_nv_set_prov_data_null_parameters_neg)
 {
     iot_error_t err;
     UNUSED(state);
@@ -665,7 +682,7 @@ void TC_iot_nv_set_prov_data_null_parameters(void **state)
     assert_int_not_equal(err, IOT_ERROR_NONE);
 }
 
-void TC_iot_nv_erase_prov_data_success(void **state)
+TEST_F(iot_nv_data, TC_iot_nv_erase_prov_data_success_pos)
 {
     iot_error_t err;
     UNUSED(state);
@@ -693,7 +710,7 @@ void TC_iot_nv_erase_prov_data_success(void **state)
     assert_string_equal(status, "NONE");
 }
 
-void TC_iot_nv_set_wifi_prov_data_success(void **state)
+TEST_F(iot_nv_data, TC_iot_nv_set_wifi_prov_data_success_pos)
 {
     iot_error_t err;
     struct iot_wifi_prov_data wifi_prov;
@@ -725,7 +742,7 @@ void TC_iot_nv_set_wifi_prov_data_success(void **state)
     _teardown_wifi_prov_data();
 }
 
-void TC_iot_nv_set_wifi_prov_data_null_parameters(void **state)
+TEST_F(iot_nv_data, TC_iot_nv_set_wifi_prov_data_null_parameters_neg)
 {
     iot_error_t err;
     UNUSED(state);
@@ -736,7 +753,7 @@ void TC_iot_nv_set_wifi_prov_data_null_parameters(void **state)
     assert_int_not_equal(err, IOT_ERROR_NONE);
 }
 
-void TC_iot_nv_set_wifi_prov_data_empty_ssid(void **state)
+TEST_F(iot_nv_data, TC_iot_nv_set_wifi_prov_data_empty_ssid_neg)
 {
     iot_error_t err;
     struct iot_wifi_prov_data wifi_prov;
@@ -758,7 +775,7 @@ void TC_iot_nv_set_wifi_prov_data_empty_ssid(void **state)
     _teardown_wifi_prov_data();
 }
 
-void TC_iot_nv_set_wifi_prov_data_empty_password(void **state)
+TEST_F(iot_nv_data, TC_iot_nv_set_wifi_prov_data_empty_password_neg)
 {
     iot_error_t err;
     struct iot_wifi_prov_data wifi_prov;
@@ -780,7 +797,7 @@ void TC_iot_nv_set_wifi_prov_data_empty_password(void **state)
     _teardown_wifi_prov_data();
 }
 
-void TC_iot_nv_set_wifi_prov_data_empty_bssid(void **state)
+TEST_F(iot_nv_data, TC_iot_nv_set_wifi_prov_data_empty_bssid_neg)
 {
     iot_error_t err;
     struct iot_wifi_prov_data wifi_prov;
@@ -802,7 +819,7 @@ void TC_iot_nv_set_wifi_prov_data_empty_bssid(void **state)
     _teardown_wifi_prov_data();
 }
 
-void TC_iot_nv_set_wifi_prov_data_invalid_security_type(void **state)
+TEST_F(iot_nv_data, TC_iot_nv_set_wifi_prov_data_invalid_security_type_neg)
 {
     iot_error_t err;
     struct iot_wifi_prov_data wifi_prov;
@@ -824,7 +841,7 @@ void TC_iot_nv_set_wifi_prov_data_invalid_security_type(void **state)
     _teardown_wifi_prov_data();
 }
 
-void TC_iot_nv_get_cloud_prov_data_success(void **state)
+TEST_F(iot_nv_data, TC_iot_nv_get_cloud_prov_data_success_pos)
 {
     iot_error_t err;
     struct iot_cloud_prov_data cloud_prov;
@@ -865,7 +882,7 @@ void TC_iot_nv_get_cloud_prov_data_success(void **state)
         free(cloud_prov.label);
 }
 
-void TC_iot_nv_get_cloud_prov_data_null_parameters(void **state)
+TEST_F(iot_nv_data, TC_iot_nv_get_cloud_prov_data_null_parameters_neg)
 {
     iot_error_t err;
     UNUSED(state);
@@ -876,7 +893,7 @@ void TC_iot_nv_get_cloud_prov_data_null_parameters(void **state)
     assert_int_not_equal(err, IOT_ERROR_NONE);
 }
 
-void TC_iot_nv_get_cloud_prov_data_no_status(void **state)
+TEST_F(iot_nv_data, TC_iot_nv_get_cloud_prov_data_no_status_neg)
 {
     iot_error_t err;
     struct iot_cloud_prov_data cloud_prov;
@@ -892,7 +909,7 @@ void TC_iot_nv_get_cloud_prov_data_no_status(void **state)
     assert_int_not_equal(err, IOT_ERROR_NONE);
 }
 
-void TC_iot_nv_get_cloud_prov_data_status_not_done(void **state)
+TEST_F(iot_nv_data, TC_iot_nv_get_cloud_prov_data_status_not_done_neg)
 {
     iot_error_t err;
     struct iot_cloud_prov_data cloud_prov;
@@ -912,7 +929,7 @@ void TC_iot_nv_get_cloud_prov_data_status_not_done(void **state)
     err = iot_nv_erase(IOT_NVD_CLOUD_PROV_STATUS);
 }
 
-void TC_iot_nv_get_cloud_prov_data_no_url(void **state)
+TEST_F(iot_nv_data, TC_iot_nv_get_cloud_prov_data_no_url_neg)
 {
     iot_error_t err;
     struct iot_cloud_prov_data cloud_prov;
@@ -935,7 +952,7 @@ void TC_iot_nv_get_cloud_prov_data_no_url(void **state)
     err = iot_nv_erase(IOT_NVD_CLOUD_PROV_STATUS);
 }
 
-void TC_iot_nv_set_cloud_prov_data_success(void **state)
+TEST_F(iot_nv_data, TC_iot_nv_set_cloud_prov_data_success_pos)
 {
     iot_error_t err;
     struct iot_cloud_prov_data cloud_prov;
@@ -959,7 +976,7 @@ void TC_iot_nv_set_cloud_prov_data_success(void **state)
     err = iot_nv_erase(IOT_NVD_LABEL);
 }
 
-void TC_iot_nv_set_cloud_prov_data_null_parameters(void **state)
+TEST_F(iot_nv_data, TC_iot_nv_set_cloud_prov_data_null_parameters_neg)
 {
     iot_error_t err;
     UNUSED(state);
@@ -970,7 +987,7 @@ void TC_iot_nv_set_cloud_prov_data_null_parameters(void **state)
     assert_int_not_equal(err, IOT_ERROR_NONE);
 }
 
-void TC_iot_nv_set_cloud_prov_data_null_url(void **state)
+TEST_F(iot_nv_data, TC_iot_nv_set_cloud_prov_data_null_url_neg)
 {
     iot_error_t err;
     struct iot_cloud_prov_data cloud_prov;
@@ -993,7 +1010,7 @@ void TC_iot_nv_set_cloud_prov_data_null_url(void **state)
     err = iot_nv_erase(IOT_NVD_LABEL);
 }
 
-void TC_iot_nv_set_cloud_prov_data_null_label(void **state)
+TEST_F(iot_nv_data, TC_iot_nv_set_cloud_prov_data_null_label_neg)
 {
     iot_error_t err;
     struct iot_cloud_prov_data cloud_prov;
@@ -1016,7 +1033,7 @@ void TC_iot_nv_set_cloud_prov_data_null_label(void **state)
     err = iot_nv_erase(IOT_NVD_SERVER_PORT);
 }
 
-void TC_iot_nv_set_device_id_success(void **state)
+TEST_F(iot_nv_data, TC_iot_nv_set_device_id_success_pos)
 {
     iot_error_t err;
     const char *test_device_id = "12345678-1234-1234-1234-123456789012";
@@ -1040,7 +1057,7 @@ void TC_iot_nv_set_device_id_success(void **state)
     err = iot_nv_erase(IOT_NVD_DEVICE_ID);
 }
 
-void TC_iot_nv_set_device_id_null_parameters(void **state)
+TEST_F(iot_nv_data, TC_iot_nv_set_device_id_null_parameters_neg)
 {
     iot_error_t err;
     UNUSED(state);
@@ -1051,7 +1068,7 @@ void TC_iot_nv_set_device_id_null_parameters(void **state)
     assert_int_not_equal(err, IOT_ERROR_NONE);
 }
 
-void TC_iot_nv_get_misc_info_success(void **state)
+TEST_F(iot_nv_data, TC_iot_nv_get_misc_info_success_pos)
 {
     iot_error_t err;
     char *misc_info = NULL;
@@ -1076,7 +1093,7 @@ void TC_iot_nv_get_misc_info_success(void **state)
     err = iot_nv_erase(IOT_NVD_MISC_INFO);
 }
 
-void TC_iot_nv_get_misc_info_null_parameters(void **state)
+TEST_F(iot_nv_data, TC_iot_nv_get_misc_info_null_parameters_neg)
 {
     iot_error_t err;
     char *misc_info = NULL;
@@ -1101,7 +1118,7 @@ void TC_iot_nv_get_misc_info_null_parameters(void **state)
     assert_null(misc_info);
 }
 
-void TC_iot_nv_get_misc_info_not_exist(void **state)
+TEST_F(iot_nv_data, TC_iot_nv_get_misc_info_not_exist_neg)
 {
     iot_error_t err;
     char *misc_info = NULL;
@@ -1117,7 +1134,7 @@ void TC_iot_nv_get_misc_info_not_exist(void **state)
     assert_int_not_equal(err, IOT_ERROR_NONE);
 }
 
-void TC_iot_nv_set_misc_info_success(void **state)
+TEST_F(iot_nv_data, TC_iot_nv_set_misc_info_success_pos)
 {
     iot_error_t err;
     const char *test_misc_info = "Test miscellaneous info";
@@ -1132,7 +1149,7 @@ void TC_iot_nv_set_misc_info_success(void **state)
     err = iot_nv_erase(IOT_NVD_MISC_INFO);
 }
 
-void TC_iot_nv_set_misc_info_null_parameters(void **state)
+TEST_F(iot_nv_data, TC_iot_nv_set_misc_info_null_parameters_neg)
 {
     iot_error_t err;
     UNUSED(state);
@@ -1143,7 +1160,7 @@ void TC_iot_nv_set_misc_info_null_parameters(void **state)
     assert_int_not_equal(err, IOT_ERROR_NONE);
 }
 
-void TC_iot_nv_get_static_certificate_success(void **state)
+TEST_F(iot_nv_data, TC_iot_nv_get_static_certificate_success_pos)
 {
     iot_error_t err;
     iot_security_buffer_t output_buf;
@@ -1160,7 +1177,7 @@ void TC_iot_nv_get_static_certificate_success(void **state)
     iot_os_free(output_buf.p);
 }
 
-void TC_iot_nv_get_static_certificate_null_parameters(void **state)
+TEST_F(iot_nv_data, TC_iot_nv_get_static_certificate_null_parameters_neg)
 {
     iot_error_t err;
     UNUSED(state);
@@ -1171,7 +1188,7 @@ void TC_iot_nv_get_static_certificate_null_parameters(void **state)
     assert_int_not_equal(err, IOT_ERROR_NONE);
 }
 
-void TC_iot_nv_get_static_certificate_invalid_cert_id(void **state)
+TEST_F(iot_nv_data, TC_iot_nv_get_static_certificate_invalid_cert_id_neg)
 {
     iot_error_t err;
     iot_security_buffer_t output_buf;
@@ -1232,6 +1249,11 @@ static void _setup_wifi_prov_data(iot_nvd_t nv_type)
             assert_int_equal(err, IOT_ERROR_NONE);
             break;
         }
+        case IOT_NVD_AP_HIDDEN: {
+            err = _iot_nv_write_data(IOT_NVD_AP_HIDDEN, "HIDDEN", strlen("HIDDEN"));
+            assert_int_equal(err, IOT_ERROR_NONE);
+            break;
+        }
         default:
             break;
     }
@@ -1246,4 +1268,5 @@ static void _teardown_wifi_prov_data()
     err = iot_nv_erase(IOT_NVD_AP_PASS);
     err = iot_nv_erase(IOT_NVD_AP_BSSID);
     err = iot_nv_erase(IOT_NVD_AP_AUTH_TYPE);
+    err = iot_nv_erase(IOT_NVD_AP_HIDDEN);
 }

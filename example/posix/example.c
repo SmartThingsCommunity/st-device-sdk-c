@@ -148,13 +148,13 @@ void main(void)
     /* Below is config example.
      * You should replace with your device information.
     st_device_config_t dev_config = {
-        // You should replace your deviceId and server type.
-        // You can get deviceId and server type after registering your device with the manual registering tool.
+        // You should replace your deviceId and server url.
+        // You can get deviceId and server url after registering your device with the manual registering tool.
         .device_id = "12345678-1234-1234-1234-123456789012",
-        .server_type = SERVER_TYPE_AP_NORTH_EAST2,
+        .server_url = "ssl://mqtt-regional-apnortheast2.api.smartthings.com:8883",
 
         // You should replace your device identity info.
-        // You can get your device identity info from device_info.json created after using keygen tool.
+        // You can get your device identity info from device_info.json.
         .id_method = ST_IDENTITY_METHOD_MANUAL_ED25519,
         .identity = {
             .ed25519 = {
@@ -164,9 +164,12 @@ void main(void)
             },
         },
 
-        // You should replace your mnId.
-        // You can check your mnid from onboarding_config.json or Developer Workspace.
+        // You should replace your onboarding config info.
+        // You can get the info from onboarding_config.json.
         .mnId = "ABCD",
+        .dip_id = "12345678-1234-1234-1234-123456789012",
+        .dip_major_version = 0,
+        .dip_minor_version = 1,
     };
     */
 

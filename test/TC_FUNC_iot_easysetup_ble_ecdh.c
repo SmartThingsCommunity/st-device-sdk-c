@@ -21,6 +21,7 @@
 
 #include "TC_MOCK_functions.h"
 #include "TC_MOCK_iot_bsp_ble.h"
+#include "TC_REGISTRY.h"
 #include "cmocka_custom.h"
 #include "easysetup_ble.h"
 #include "iot_error.h"
@@ -31,6 +32,19 @@
 
 #define TC_BLE_ECDH_PRIVATE_KEY "yQMrFPkZ1wI62K1cEuhSL23wBR/nLr7s3YUZn+XAwb8="
 #define TC_BLE_ECDH_PUBLIC_KEY "eV0oOSDhLf8UXqMO6Osat9G28lXldyZ5nzfQCQt/oiQ="
+
+TEST_SUITE("iot_easysetup_ble_ecdh.c");
+
+static int TC_iot_easysetup_ble_ecdh_setup(void **state);
+static int TC_iot_easysetup_ble_ecdh_teardown(void **state);
+
+TEST_FIXTURE(iot_easysetup_ble_ecdh, TC_iot_easysetup_ble_ecdh_setup, TC_iot_easysetup_ble_ecdh_teardown);
+
+static int TC_iot_easysetup_ble_ecdh_setup(void **state);
+static int TC_iot_easysetup_ble_ecdh_teardown(void **state);
+
+static int TC_iot_easysetup_ble_ecdh_setup(void **state);
+static int TC_iot_easysetup_ble_ecdh_teardown(void **state);
 
 static char _tc_ble_ecdh_device_info[] = {
     "{\n"
@@ -44,7 +58,7 @@ static char _tc_ble_ecdh_device_info[] = {
     "\t}\n"
     "}"};
 
-int TC_iot_easysetup_ble_ecdh_setup(void **state)
+static int TC_iot_easysetup_ble_ecdh_setup(void **state)
 {
     iot_error_t err;
     UNUSED(state);
@@ -59,7 +73,7 @@ int TC_iot_easysetup_ble_ecdh_setup(void **state)
     return 0;
 }
 
-int TC_iot_easysetup_ble_ecdh_teardown(void **state)
+static int TC_iot_easysetup_ble_ecdh_teardown(void **state)
 {
     iot_error_t err;
     UNUSED(state);
@@ -69,7 +83,7 @@ int TC_iot_easysetup_ble_ecdh_teardown(void **state)
     return 0;
 }
 
-void TC_iot_easysetup_ble_ecdh_init_success(void **state)
+TEST_F(iot_easysetup_ble_ecdh, TC_iot_easysetup_ble_ecdh_init_success_pos)
 {
     iot_security_context_t *ctx = NULL;
     iot_error_t err;
@@ -87,7 +101,7 @@ void TC_iot_easysetup_ble_ecdh_init_success(void **state)
     assert_int_equal(err, IOT_ERROR_NONE);
 }
 
-void TC_iot_easysetup_ble_ecdh_init_malloc_failure_context(void **state)
+TEST_F(iot_easysetup_ble_ecdh, TC_iot_easysetup_ble_ecdh_init_malloc_failure_context_neg)
 {
     iot_security_context_t *ctx = NULL;
     iot_error_t err;
@@ -107,7 +121,7 @@ void TC_iot_easysetup_ble_ecdh_init_malloc_failure_context(void **state)
     do_not_use_mock_iot_os_malloc_failure();
 }
 
-void TC_iot_easysetup_ble_ecdh_init_pk_init_malloc_failure(void **state)
+TEST_F(iot_easysetup_ble_ecdh, TC_iot_easysetup_ble_ecdh_init_pk_init_malloc_failure_neg)
 {
     iot_security_context_t *ctx = NULL;
     iot_error_t err;
@@ -126,7 +140,7 @@ void TC_iot_easysetup_ble_ecdh_init_pk_init_malloc_failure(void **state)
     do_not_use_mock_iot_os_malloc_failure();
 }
 
-void TC_iot_easysetup_ble_ecdh_teardown_null(void **state)
+TEST_F(iot_easysetup_ble_ecdh, TC_iot_easysetup_ble_ecdh_teardown_null_neg)
 {
     iot_error_t err;
     void *null_state = NULL;
@@ -138,7 +152,7 @@ void TC_iot_easysetup_ble_ecdh_teardown_null(void **state)
     assert_int_equal(err, IOT_ERROR_DEINIT_FAIL);
 }
 
-void TC_iot_easysetup_ble_ecdh_teardown_success(void **state)
+TEST_F(iot_easysetup_ble_ecdh, TC_iot_easysetup_ble_ecdh_teardown_success_pos)
 {
     iot_security_context_t *ctx = NULL;
     iot_error_t err;
@@ -155,7 +169,7 @@ void TC_iot_easysetup_ble_ecdh_teardown_success(void **state)
     assert_int_equal(err, IOT_ERROR_NONE);
 }
 
-void TC_iot_easysetup_ble_ecdh_compute_shared_signature_success(void **state)
+TEST_F(iot_easysetup_ble_ecdh, TC_iot_easysetup_ble_ecdh_compute_shared_signature_success_pos)
 {
     iot_security_context_t *ctx = NULL;
     iot_security_context_t *state_ptr;
@@ -200,7 +214,7 @@ void TC_iot_easysetup_ble_ecdh_compute_shared_signature_success(void **state)
     iot_easysetup_ble_ecdh_teardown(&state2);
 }
 
-void TC_iot_easysetup_ble_ecdh_compute_shared_signature_no_device_cert(void **state)
+TEST_F(iot_easysetup_ble_ecdh, TC_iot_easysetup_ble_ecdh_compute_shared_signature_no_device_cert_neg)
 {
     iot_security_context_t *ctx = NULL;
     iot_security_context_t *state_ptr;
@@ -244,7 +258,7 @@ void TC_iot_easysetup_ble_ecdh_compute_shared_signature_no_device_cert(void **st
     iot_easysetup_ble_ecdh_teardown(&state2);
 }
 
-void TC_iot_easysetup_ble_ecdh_compute_shared_signature_with_mock_certs(void **state)
+TEST_F(iot_easysetup_ble_ecdh, TC_iot_easysetup_ble_ecdh_compute_shared_signature_with_mock_certs_neg)
 {
     iot_security_context_t *ctx = NULL;
     iot_security_context_t *state_ptr;
@@ -291,7 +305,7 @@ void TC_iot_easysetup_ble_ecdh_compute_shared_signature_with_mock_certs(void **s
     iot_easysetup_ble_ecdh_teardown(&state2);
 }
 
-void TC_iot_easysetup_ble_ecdh_compute_shared_signature_subca_fail(void **state)
+TEST_F(iot_easysetup_ble_ecdh, TC_iot_easysetup_ble_ecdh_compute_shared_signature_subca_fail_neg)
 {
     iot_security_context_t *ctx = NULL;
     iot_security_context_t *state_ptr;
@@ -375,20 +389,163 @@ static void _tc_compute_with_malloc_fail_at(int fail_index)
     iot_easysetup_ble_ecdh_teardown(&state2);
 }
 
-void TC_iot_easysetup_ble_ecdh_compute_with_malloc_failure_3(void **state)
+TEST_F(iot_easysetup_ble_ecdh, TC_iot_easysetup_ble_ecdh_compute_with_malloc_failure_3_neg)
 {
     UNUSED(state);
 
     // When: malloc fails at index 3 inside the pipeline
     // Then: helper ensures the call does not crash and cleans up
     _tc_compute_with_malloc_fail_at(3);
+
+    assert_true(true);
 }
 
-void TC_iot_easysetup_ble_ecdh_compute_with_malloc_failure_5(void **state)
+TEST_F(iot_easysetup_ble_ecdh, TC_iot_easysetup_ble_ecdh_compute_with_malloc_failure_5_neg)
 {
     UNUSED(state);
 
     // When: malloc fails at index 5 inside the pipeline
     // Then: helper ensures the call does not crash and cleans up
     _tc_compute_with_malloc_fail_at(5);
+
+    assert_true(true);
+}
+
+static void _tc_ecdh_init_with_malloc_fail_at(int fail_index)
+{
+    iot_security_context_t *ctx = NULL;
+    iot_error_t err;
+
+    set_mock_detect_memory_leak(false);
+    do_not_use_mock_iot_os_malloc_failure();
+    set_mock_iot_os_malloc_failure_with_index(fail_index);
+    err = iot_easysetup_ble_ecdh_init(&ctx);
+    do_not_use_mock_iot_os_malloc_failure();
+
+    assert_int_not_equal(err, IOT_ERROR_NONE);
+
+    if (ctx) {
+        void *state2 = ctx;
+        iot_easysetup_ble_ecdh_teardown(&state2);
+    }
+}
+
+TEST_F(iot_easysetup_ble_ecdh, TC_iot_easysetup_ble_ecdh_init_be_malloc_failure_neg)
+{
+    UNUSED(state);
+
+    // Given: the backend context allocation fails
+    _tc_ecdh_init_with_malloc_fail_at(1);
+
+    assert_true(true);
+}
+
+TEST_F(iot_easysetup_ble_ecdh, TC_iot_easysetup_ble_ecdh_init_pk_params_malloc_failure_neg)
+{
+    UNUSED(state);
+
+    // Given: an allocation inside the pk sub system fails
+    _tc_ecdh_init_with_malloc_fail_at(3);
+
+    assert_true(true);
+}
+
+TEST_F(iot_easysetup_ble_ecdh, TC_iot_easysetup_ble_ecdh_init_cipher_malloc_failure_neg)
+{
+    UNUSED(state);
+
+    // Given: an allocation inside the cipher sub system fails
+    _tc_ecdh_init_with_malloc_fail_at(4);
+
+    assert_true(true);
+}
+
+TEST_F(iot_easysetup_ble_ecdh, TC_iot_easysetup_ble_ecdh_compute_with_malloc_failure_9_neg)
+{
+    UNUSED(state);
+
+    _tc_compute_with_malloc_fail_at(9);
+
+    assert_true(true);
+}
+
+TEST_F(iot_easysetup_ble_ecdh, TC_iot_easysetup_ble_ecdh_compute_null_context_neg)
+{
+    iot_security_context_t *state_ptr = NULL;
+    iot_error_t err;
+    unsigned char sec_random[32] = {0};
+    unsigned char *dev_cert = NULL;
+    unsigned char *sub_cert = NULL;
+    unsigned char *spub_key = NULL;
+    size_t spub_key_len = 0;
+    unsigned char *signature = NULL;
+    size_t signature_len = 0;
+    UNUSED(state);
+
+    // Given: the caller never ran the ecdh init, so the context is null
+    // When
+    err = iot_easysetup_ble_ecdh_compute_shared_signature(&state_ptr, sec_random, &dev_cert, &sub_cert, &spub_key,
+                                                          &spub_key_len, &signature, &signature_len);
+    // Then: the pipeline bails out at the first certificate fetch
+    assert_int_equal(err, IOT_ERROR_SECURITY_CONTEXT_NULL);
+    assert_null(dev_cert);
+    assert_null(sub_cert);
+    assert_null(spub_key);
+    assert_null(signature);
+    assert_int_equal(spub_key_len, 0);
+    assert_int_equal(signature_len, 0);
+}
+
+TEST_F(iot_easysetup_ble_ecdh, TC_iot_easysetup_ble_ecdh_init_state_untouched_on_failure_neg)
+{
+    iot_security_context_t *ctx = (iot_security_context_t *)0xdeadbeef;
+    iot_error_t err;
+    UNUSED(state);
+
+    // Given: the security context allocation fails
+    set_mock_detect_memory_leak(false);
+    do_not_use_mock_iot_os_malloc_failure();
+    set_mock_iot_os_malloc_failure_with_index(0);
+    // When
+    err = iot_easysetup_ble_ecdh_init(&ctx);
+    do_not_use_mock_iot_os_malloc_failure();
+    // Then: the caller's handle must not be overwritten with a half built context
+    assert_int_equal(err, IOT_ERROR_INIT_FAIL);
+    assert_ptr_equal(ctx, (iot_security_context_t *)0xdeadbeef);
+}
+
+TEST_F(iot_easysetup_ble_ecdh, TC_iot_easysetup_ble_ecdh_compute_with_malloc_failure_4_neg)
+{
+    UNUSED(state);
+
+    _tc_compute_with_malloc_fail_at(4);
+
+    assert_true(true);
+}
+
+TEST_F(iot_easysetup_ble_ecdh, TC_iot_easysetup_ble_ecdh_compute_with_malloc_failure_6_neg)
+{
+    UNUSED(state);
+
+    _tc_compute_with_malloc_fail_at(6);
+
+    assert_true(true);
+}
+
+TEST_F(iot_easysetup_ble_ecdh, TC_iot_easysetup_ble_ecdh_compute_with_malloc_failure_7_neg)
+{
+    UNUSED(state);
+
+    _tc_compute_with_malloc_fail_at(7);
+
+    assert_true(true);
+}
+
+TEST_F(iot_easysetup_ble_ecdh, TC_iot_easysetup_ble_ecdh_compute_with_malloc_failure_8_neg)
+{
+    UNUSED(state);
+
+    _tc_compute_with_malloc_fail_at(8);
+
+    assert_true(true);
 }

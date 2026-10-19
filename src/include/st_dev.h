@@ -162,6 +162,7 @@ typedef enum iot_noti_type {
     IOT_NOTI_TYPE_PREFERENCE_UPDATED,      /**< @brief For preference update */
     IOT_NOTI_TYPE_CHILD_DEVICE_SYNCED,     /**< @brief For child device server information synced */
     IOT_NOTI_TYPE_CHILD_DEVICE_REGISTERED, /**< @brief For child device registration */
+    IOT_NOTI_TYPE_OWNER_TRANSFERRED        /**< @brief For device owner changed */
 } iot_noti_type_t;
 
 /**

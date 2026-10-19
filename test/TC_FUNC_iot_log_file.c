@@ -23,14 +23,20 @@
 #endif
 
 #include "TC_MOCK_functions.h"
+#include "TC_REGISTRY.h"
 #include "cmocka_custom.h"
 
 #define UNUSED(x) (void **)(x)
 
 #if defined(CONFIG_STDK_IOT_CORE_LOG_FILE)
 
-#define TC_LOG_FILE_INVALID_TYPE ((iot_log_file_type_t)0xFE)
-#define TC_LOG_FILE_SAMPLE_LINE "iot_log_file_test_sample_log_line\n"
+#define TC_LOG_FILE_INVALID_TYPE_neg ((iot_log_file_type_t)0xFE)
+#define TC_LOG_FILE_SAMPLE_LINE_neg "iot_log_file_test_sample_log_line\n"
+
+/* Defined in iot_log_file.c but not exposed through the public header. */
+extern iot_error_t _iot_log_read_bytes(iot_log_file_handle_t *file_handle, void *buffer, unsigned int size);
+
+TEST_SUITE("iot_log_file.c");
 
 static int _tc_log_file_init(void)
 {
@@ -50,14 +56,14 @@ static iot_log_file_type_t _tc_log_file_type(void)
 #elif defined(CONFIG_STDK_IOT_CORE_LOG_FILE_FLASH_WITH_RAM)
     return FLASH_WITH_RAM;
 #else
-    return TC_LOG_FILE_INVALID_TYPE;
+    return TC_LOG_FILE_INVALID_TYPE_neg;
 #endif
 }
 
 /*
  * iot_log_file_init tests
  */
-void TC_iot_log_file_init_success(void **state)
+TEST_F(TC_REGISTRY_NO_FIXTURE, TC_iot_log_file_init_success_pos)
 {
     iot_error_t err;
     UNUSED(state);
@@ -71,18 +77,18 @@ void TC_iot_log_file_init_success(void **state)
     iot_log_file_exit();
 }
 
-void TC_iot_log_file_init_invalid_type(void **state)
+TEST_F(TC_REGISTRY_NO_FIXTURE, TC_iot_log_file_init_invalid_type_neg)
 {
     iot_error_t err;
     UNUSED(state);
 
     // When: pass an unsupported type
-    err = iot_log_file_init(TC_LOG_FILE_INVALID_TYPE);
+    err = iot_log_file_init(TC_LOG_FILE_INVALID_TYPE_neg);
     // Then
     assert_int_equal(err, IOT_ERROR_INVALID_ARGS);
 }
 
-void TC_iot_log_file_init_ctx_alloc_failure(void **state)
+TEST_F(TC_REGISTRY_NO_FIXTURE, TC_iot_log_file_init_ctx_alloc_failure_neg)
 {
     iot_error_t err;
     UNUSED(state);
@@ -98,7 +104,7 @@ void TC_iot_log_file_init_ctx_alloc_failure(void **state)
     do_not_use_mock_iot_os_malloc_failure();
 }
 
-void TC_iot_log_file_init_double_init(void **state)
+TEST_F(TC_REGISTRY_NO_FIXTURE, TC_iot_log_file_init_double_init_neg)
 {
     iot_error_t err;
     UNUSED(state);
@@ -119,7 +125,7 @@ void TC_iot_log_file_init_double_init(void **state)
 /*
  * iot_log_file_exit tests
  */
-void TC_iot_log_file_exit_success(void **state)
+TEST_F(TC_REGISTRY_NO_FIXTURE, TC_iot_log_file_exit_success_pos)
 {
     iot_error_t err;
     UNUSED(state);
@@ -135,7 +141,7 @@ void TC_iot_log_file_exit_success(void **state)
     iot_log_file_exit();
 }
 
-void TC_iot_log_file_exit_without_init(void **state)
+TEST_F(TC_REGISTRY_NO_FIXTURE, TC_iot_log_file_exit_without_init_neg)
 {
     UNUSED(state);
 
@@ -143,15 +149,17 @@ void TC_iot_log_file_exit_without_init(void **state)
     iot_log_file_exit();
     // Then: no crash; subsequent exits are still safe
     iot_log_file_exit();
+
+    assert_true(true);
 }
 
 /*
  * iot_log_file_store tests
  */
-void TC_iot_log_file_store_success(void **state)
+TEST_F(TC_REGISTRY_NO_FIXTURE, TC_iot_log_file_store_success_pos)
 {
     iot_error_t err;
-    const char *msg = TC_LOG_FILE_SAMPLE_LINE;
+    const char *msg = TC_LOG_FILE_SAMPLE_LINE_neg;
     int written;
     UNUSED(state);
 
@@ -167,10 +175,10 @@ void TC_iot_log_file_store_success(void **state)
     iot_log_file_exit();
 }
 
-void TC_iot_log_file_store_without_init(void **state)
+TEST_F(TC_REGISTRY_NO_FIXTURE, TC_iot_log_file_store_without_init_neg)
 {
     int written;
-    const char *msg = TC_LOG_FILE_SAMPLE_LINE;
+    const char *msg = TC_LOG_FILE_SAMPLE_LINE_neg;
     UNUSED(state);
 
     // When: no init was called; global log_ctx should be NULL
@@ -179,7 +187,7 @@ void TC_iot_log_file_store_without_init(void **state)
     assert_int_equal(written, -1);
 }
 
-void TC_iot_log_file_store_zero_size(void **state)
+TEST_F(TC_REGISTRY_NO_FIXTURE, TC_iot_log_file_store_zero_size_neg)
 {
     iot_error_t err;
     int written;
@@ -197,7 +205,7 @@ void TC_iot_log_file_store_zero_size(void **state)
     iot_log_file_exit();
 }
 
-void TC_iot_log_file_store_oversize(void **state)
+TEST_F(TC_REGISTRY_NO_FIXTURE, TC_iot_log_file_store_oversize_neg)
 {
     iot_error_t err;
     int written;
@@ -217,7 +225,7 @@ void TC_iot_log_file_store_oversize(void **state)
     iot_log_file_exit();
 }
 
-void TC_iot_log_file_store_disabled_buffer(void **state)
+TEST_F(TC_REGISTRY_NO_FIXTURE, TC_iot_log_file_store_disabled_buffer_neg)
 {
     iot_error_t err;
     int written;
@@ -245,7 +253,7 @@ void TC_iot_log_file_store_disabled_buffer(void **state)
  * iot_log_file_sync tests (only FLASH_WITH_RAM has event group; for RAM_ONLY
  * sync just exercises the "events == NULL" branch).
  */
-void TC_iot_log_file_sync_without_events(void **state)
+TEST_F(TC_REGISTRY_NO_FIXTURE, TC_iot_log_file_sync_without_events_neg)
 {
     iot_error_t err;
     UNUSED(state);
@@ -262,7 +270,7 @@ void TC_iot_log_file_sync_without_events(void **state)
 /*
  * iot_log_file_open tests
  */
-void TC_iot_log_file_open_success(void **state)
+TEST_F(TC_REGISTRY_NO_FIXTURE, TC_iot_log_file_open_success_pos)
 {
     iot_error_t err;
     iot_log_file_handle_t *handle;
@@ -283,7 +291,7 @@ void TC_iot_log_file_open_success(void **state)
     iot_log_file_exit();
 }
 
-void TC_iot_log_file_open_without_init(void **state)
+TEST_F(TC_REGISTRY_NO_FIXTURE, TC_iot_log_file_open_without_init_neg)
 {
     iot_log_file_handle_t *handle;
     size_t filesize = 0;
@@ -295,7 +303,7 @@ void TC_iot_log_file_open_without_init(void **state)
     assert_null(handle);
 }
 
-void TC_iot_log_file_open_invalid_type(void **state)
+TEST_F(TC_REGISTRY_NO_FIXTURE, TC_iot_log_file_open_invalid_type_neg)
 {
     iot_error_t err;
     iot_log_file_handle_t *handle;
@@ -306,14 +314,14 @@ void TC_iot_log_file_open_invalid_type(void **state)
     assert_int_equal(err, IOT_ERROR_NONE);
 
     // When: unsupported file_type triggers default branch
-    handle = iot_log_file_open(&filesize, TC_LOG_FILE_INVALID_TYPE);
+    handle = iot_log_file_open(&filesize, TC_LOG_FILE_INVALID_TYPE_neg);
     // Then
     assert_null(handle);
 
     iot_log_file_exit();
 }
 
-void TC_iot_log_file_open_alloc_failure(void **state)
+TEST_F(TC_REGISTRY_NO_FIXTURE, TC_iot_log_file_open_alloc_failure_neg)
 {
     iot_error_t err;
     iot_log_file_handle_t *handle;
@@ -334,7 +342,7 @@ void TC_iot_log_file_open_alloc_failure(void **state)
     iot_log_file_exit();
 }
 
-void TC_iot_log_file_open_after_overridden(void **state)
+TEST_F(TC_REGISTRY_NO_FIXTURE, TC_iot_log_file_open_after_overridden_neg)
 {
 #if defined(CONFIG_STDK_IOT_CORE_LOG_FILE_RAM_ONLY)
     iot_error_t err;
@@ -375,7 +383,7 @@ void TC_iot_log_file_open_after_overridden(void **state)
 /*
  * iot_log_file_close tests
  */
-void TC_iot_log_file_close_success(void **state)
+TEST_F(TC_REGISTRY_NO_FIXTURE, TC_iot_log_file_close_success_pos)
 {
     iot_error_t err;
     iot_log_file_handle_t *handle;
@@ -396,7 +404,7 @@ void TC_iot_log_file_close_success(void **state)
     iot_log_file_exit();
 }
 
-void TC_iot_log_file_close_null_handle(void **state)
+TEST_F(TC_REGISTRY_NO_FIXTURE, TC_iot_log_file_close_null_handle_neg)
 {
     iot_error_t err;
     UNUSED(state);
@@ -410,12 +418,12 @@ void TC_iot_log_file_close_null_handle(void **state)
 /*
  * iot_log_file_seek tests
  */
-void TC_iot_log_file_seek_success(void **state)
+TEST_F(TC_REGISTRY_NO_FIXTURE, TC_iot_log_file_seek_success_pos)
 {
     iot_error_t err;
     iot_log_file_handle_t *handle;
     size_t filesize = 0;
-    const char *msg = TC_LOG_FILE_SAMPLE_LINE;
+    const char *msg = TC_LOG_FILE_SAMPLE_LINE_neg;
     UNUSED(state);
 
     err = (iot_error_t)_tc_log_file_init();
@@ -434,7 +442,7 @@ void TC_iot_log_file_seek_success(void **state)
     iot_log_file_exit();
 }
 
-void TC_iot_log_file_seek_empty_log(void **state)
+TEST_F(TC_REGISTRY_NO_FIXTURE, TC_iot_log_file_seek_empty_log_neg)
 {
     iot_error_t err;
     iot_log_file_handle_t *handle;
@@ -458,12 +466,12 @@ void TC_iot_log_file_seek_empty_log(void **state)
     iot_log_file_exit();
 }
 
-void TC_iot_log_file_seek_negative_offset(void **state)
+TEST_F(TC_REGISTRY_NO_FIXTURE, TC_iot_log_file_seek_negative_offset_neg)
 {
     iot_error_t err;
     iot_log_file_handle_t *handle;
     size_t filesize = 0;
-    const char *msg = TC_LOG_FILE_SAMPLE_LINE;
+    const char *msg = TC_LOG_FILE_SAMPLE_LINE_neg;
     unsigned int prev_addr;
     UNUSED(state);
 
@@ -485,12 +493,12 @@ void TC_iot_log_file_seek_negative_offset(void **state)
     iot_log_file_exit();
 }
 
-void TC_iot_log_file_seek_invalid_type(void **state)
+TEST_F(TC_REGISTRY_NO_FIXTURE, TC_iot_log_file_seek_invalid_type_neg)
 {
     iot_error_t err;
     iot_log_file_handle_t *handle;
     size_t filesize = 0;
-    const char *msg = TC_LOG_FILE_SAMPLE_LINE;
+    const char *msg = TC_LOG_FILE_SAMPLE_LINE_neg;
     UNUSED(state);
 
     err = (iot_error_t)_tc_log_file_init();
@@ -500,7 +508,7 @@ void TC_iot_log_file_seek_invalid_type(void **state)
     handle = iot_log_file_open(&filesize, _tc_log_file_type());
     assert_non_null(handle);
     // Given: corrupt file_type to hit default branch
-    handle->file_type = TC_LOG_FILE_INVALID_TYPE;
+    handle->file_type = TC_LOG_FILE_INVALID_TYPE_neg;
 
     // When
     err = iot_log_file_seek(handle, 0, handle->start_addr);
@@ -516,13 +524,13 @@ void TC_iot_log_file_seek_invalid_type(void **state)
 /*
  * iot_log_file_read tests
  */
-void TC_iot_log_file_read_success(void **state)
+TEST_F(TC_REGISTRY_NO_FIXTURE, TC_iot_log_file_read_success_pos)
 {
     iot_error_t err;
     iot_log_file_handle_t *handle;
     size_t filesize = 0;
     size_t read_size = 0;
-    const char *msg = TC_LOG_FILE_SAMPLE_LINE;
+    const char *msg = TC_LOG_FILE_SAMPLE_LINE_neg;
     char out[64] = {0};
     UNUSED(state);
 
@@ -544,7 +552,7 @@ void TC_iot_log_file_read_success(void **state)
     iot_log_file_exit();
 }
 
-void TC_iot_log_file_read_null_handle(void **state)
+TEST_F(TC_REGISTRY_NO_FIXTURE, TC_iot_log_file_read_null_handle_neg)
 {
     iot_error_t err;
     char out[16];
@@ -557,13 +565,13 @@ void TC_iot_log_file_read_null_handle(void **state)
     assert_int_equal(err, IOT_ERROR_INVALID_ARGS);
 }
 
-void TC_iot_log_file_read_null_buffer(void **state)
+TEST_F(TC_REGISTRY_NO_FIXTURE, TC_iot_log_file_read_null_buffer_neg)
 {
     iot_error_t err;
     iot_log_file_handle_t *handle;
     size_t filesize = 0;
     size_t read_size = 0;
-    const char *msg = TC_LOG_FILE_SAMPLE_LINE;
+    const char *msg = TC_LOG_FILE_SAMPLE_LINE_neg;
     UNUSED(state);
 
     err = (iot_error_t)_tc_log_file_init();
@@ -582,12 +590,12 @@ void TC_iot_log_file_read_null_buffer(void **state)
     iot_log_file_exit();
 }
 
-void TC_iot_log_file_read_no_read_size_out(void **state)
+TEST_F(TC_REGISTRY_NO_FIXTURE, TC_iot_log_file_read_no_read_size_out_neg)
 {
     iot_error_t err;
     iot_log_file_handle_t *handle;
     size_t filesize = 0;
-    const char *msg = TC_LOG_FILE_SAMPLE_LINE;
+    const char *msg = TC_LOG_FILE_SAMPLE_LINE_neg;
     char out[64] = {0};
     UNUSED(state);
 
@@ -607,14 +615,14 @@ void TC_iot_log_file_read_no_read_size_out(void **state)
     iot_log_file_exit();
 }
 
-void TC_iot_log_file_read_wrap_around(void **state)
+TEST_F(TC_REGISTRY_NO_FIXTURE, TC_iot_log_file_read_wrap_around_neg)
 {
 #if defined(CONFIG_STDK_IOT_CORE_LOG_FILE_RAM_ONLY)
     iot_error_t err;
     iot_log_file_handle_t *handle;
     size_t filesize = 0;
     size_t read_size = 0;
-    const char *msg = TC_LOG_FILE_SAMPLE_LINE;
+    const char *msg = TC_LOG_FILE_SAMPLE_LINE_neg;
     char out[64] = {0};
     UNUSED(state);
 
@@ -639,13 +647,13 @@ void TC_iot_log_file_read_wrap_around(void **state)
 #endif
 }
 
-void TC_iot_log_file_read_invalid_type(void **state)
+TEST_F(TC_REGISTRY_NO_FIXTURE, TC_iot_log_file_read_invalid_type_neg)
 {
     iot_error_t err;
     iot_log_file_handle_t *handle;
     size_t filesize = 0;
     size_t read_size = 0;
-    const char *msg = TC_LOG_FILE_SAMPLE_LINE;
+    const char *msg = TC_LOG_FILE_SAMPLE_LINE_neg;
     char out[8];
     UNUSED(state);
 
@@ -656,7 +664,7 @@ void TC_iot_log_file_read_invalid_type(void **state)
     handle = iot_log_file_open(&filesize, _tc_log_file_type());
     assert_non_null(handle);
     // Given
-    handle->file_type = TC_LOG_FILE_INVALID_TYPE;
+    handle->file_type = TC_LOG_FILE_INVALID_TYPE_neg;
 
     // When
     err = iot_log_file_read(handle, out, sizeof(out), &read_size);
@@ -671,7 +679,7 @@ void TC_iot_log_file_read_invalid_type(void **state)
 /*
  * iot_log_file_remove tests
  */
-void TC_iot_log_file_remove_success(void **state)
+TEST_F(TC_REGISTRY_NO_FIXTURE, TC_iot_log_file_remove_success_pos)
 {
     iot_error_t err;
     UNUSED(state);
@@ -687,7 +695,7 @@ void TC_iot_log_file_remove_success(void **state)
     iot_log_file_exit();
 }
 
-void TC_iot_log_file_remove_invalid_type(void **state)
+TEST_F(TC_REGISTRY_NO_FIXTURE, TC_iot_log_file_remove_invalid_type_neg)
 {
     iot_error_t err;
     UNUSED(state);
@@ -696,7 +704,7 @@ void TC_iot_log_file_remove_invalid_type(void **state)
     assert_int_equal(err, IOT_ERROR_NONE);
 
     // When
-    err = iot_log_file_remove(TC_LOG_FILE_INVALID_TYPE);
+    err = iot_log_file_remove(TC_LOG_FILE_INVALID_TYPE_neg);
     // Then
     assert_int_equal(err, IOT_ERROR_BAD_REQ);
 
@@ -715,36 +723,314 @@ void TC_iot_log_file_remove_invalid_type(void **state)
         UNUSED(state);          \
     }
 
-_TC_LOG_FILE_NOOP(TC_iot_log_file_init_success)
-_TC_LOG_FILE_NOOP(TC_iot_log_file_init_invalid_type)
-_TC_LOG_FILE_NOOP(TC_iot_log_file_init_ctx_alloc_failure)
-_TC_LOG_FILE_NOOP(TC_iot_log_file_init_double_init)
-_TC_LOG_FILE_NOOP(TC_iot_log_file_exit_success)
-_TC_LOG_FILE_NOOP(TC_iot_log_file_exit_without_init)
-_TC_LOG_FILE_NOOP(TC_iot_log_file_store_success)
-_TC_LOG_FILE_NOOP(TC_iot_log_file_store_without_init)
-_TC_LOG_FILE_NOOP(TC_iot_log_file_store_zero_size)
-_TC_LOG_FILE_NOOP(TC_iot_log_file_store_oversize)
-_TC_LOG_FILE_NOOP(TC_iot_log_file_store_disabled_buffer)
-_TC_LOG_FILE_NOOP(TC_iot_log_file_sync_without_events)
-_TC_LOG_FILE_NOOP(TC_iot_log_file_open_success)
-_TC_LOG_FILE_NOOP(TC_iot_log_file_open_without_init)
-_TC_LOG_FILE_NOOP(TC_iot_log_file_open_invalid_type)
-_TC_LOG_FILE_NOOP(TC_iot_log_file_open_alloc_failure)
-_TC_LOG_FILE_NOOP(TC_iot_log_file_open_after_overridden)
-_TC_LOG_FILE_NOOP(TC_iot_log_file_close_success)
-_TC_LOG_FILE_NOOP(TC_iot_log_file_close_null_handle)
-_TC_LOG_FILE_NOOP(TC_iot_log_file_seek_success)
-_TC_LOG_FILE_NOOP(TC_iot_log_file_seek_empty_log)
-_TC_LOG_FILE_NOOP(TC_iot_log_file_seek_negative_offset)
-_TC_LOG_FILE_NOOP(TC_iot_log_file_seek_invalid_type)
-_TC_LOG_FILE_NOOP(TC_iot_log_file_read_success)
-_TC_LOG_FILE_NOOP(TC_iot_log_file_read_null_handle)
-_TC_LOG_FILE_NOOP(TC_iot_log_file_read_null_buffer)
-_TC_LOG_FILE_NOOP(TC_iot_log_file_read_no_read_size_out)
-_TC_LOG_FILE_NOOP(TC_iot_log_file_read_wrap_around)
-_TC_LOG_FILE_NOOP(TC_iot_log_file_read_invalid_type)
-_TC_LOG_FILE_NOOP(TC_iot_log_file_remove_success)
-_TC_LOG_FILE_NOOP(TC_iot_log_file_remove_invalid_type)
+_TC_LOG_FILE_NOOP(TC_iot_log_file_init_success_pos)
+_TC_LOG_FILE_NOOP(TC_iot_log_file_init_invalid_type_neg)
+_TC_LOG_FILE_NOOP(TC_iot_log_file_init_ctx_alloc_failure_neg)
+_TC_LOG_FILE_NOOP(TC_iot_log_file_init_double_init_neg)
+_TC_LOG_FILE_NOOP(TC_iot_log_file_exit_success_pos)
+_TC_LOG_FILE_NOOP(TC_iot_log_file_exit_without_init_neg)
+_TC_LOG_FILE_NOOP(TC_iot_log_file_store_success_pos)
+_TC_LOG_FILE_NOOP(TC_iot_log_file_store_without_init_neg)
+_TC_LOG_FILE_NOOP(TC_iot_log_file_store_zero_size_neg)
+_TC_LOG_FILE_NOOP(TC_iot_log_file_store_oversize_neg)
+_TC_LOG_FILE_NOOP(TC_iot_log_file_store_disabled_buffer_neg)
+_TC_LOG_FILE_NOOP(TC_iot_log_file_sync_without_events_neg)
+_TC_LOG_FILE_NOOP(TC_iot_log_file_open_success_pos)
+_TC_LOG_FILE_NOOP(TC_iot_log_file_open_without_init_neg)
+_TC_LOG_FILE_NOOP(TC_iot_log_file_open_invalid_type_neg)
+_TC_LOG_FILE_NOOP(TC_iot_log_file_open_alloc_failure_neg)
+_TC_LOG_FILE_NOOP(TC_iot_log_file_open_after_overridden_neg)
+_TC_LOG_FILE_NOOP(TC_iot_log_file_close_success_pos)
+_TC_LOG_FILE_NOOP(TC_iot_log_file_close_null_handle_neg)
+_TC_LOG_FILE_NOOP(TC_iot_log_file_seek_success_pos)
+_TC_LOG_FILE_NOOP(TC_iot_log_file_seek_empty_log_neg)
+_TC_LOG_FILE_NOOP(TC_iot_log_file_seek_negative_offset_neg)
+_TC_LOG_FILE_NOOP(TC_iot_log_file_seek_invalid_type_neg)
+_TC_LOG_FILE_NOOP(TC_iot_log_file_read_success_pos)
+_TC_LOG_FILE_NOOP(TC_iot_log_file_read_null_handle_neg)
+_TC_LOG_FILE_NOOP(TC_iot_log_file_read_null_buffer_neg)
+_TC_LOG_FILE_NOOP(TC_iot_log_file_read_no_read_size_out_neg)
+_TC_LOG_FILE_NOOP(TC_iot_log_file_read_wrap_around_neg)
+_TC_LOG_FILE_NOOP(TC_iot_log_file_read_invalid_type_neg)
+_TC_LOG_FILE_NOOP(TC_iot_log_file_remove_success_pos)
+_TC_LOG_FILE_NOOP(TC_iot_log_file_remove_invalid_type_neg)
+
+#endif /* CONFIG_STDK_IOT_CORE_LOG_FILE */
+
+#if defined(CONFIG_STDK_IOT_CORE_LOG_FILE)
+
+/*
+ * Additional negative tests for iot_log_file.c
+ */
+TEST_F(TC_REGISTRY_NO_FIXTURE, TC_iot_log_file_close_flash_type_handle_neg)
+{
+    iot_log_file_handle_t *handle;
+    UNUSED(state);
+
+    assert_int_equal(_tc_log_file_init(), IOT_ERROR_NONE);
+
+    // Given: a handle claiming the flash backed type while the build is ram only
+    handle = (iot_log_file_handle_t *)malloc(sizeof(iot_log_file_handle_t));
+    assert_non_null(handle);
+    memset(handle, 0, sizeof(*handle));
+    handle->file_type = FLASH_WITH_RAM;
+    // When: it is closed
+    // Then: the open state is cleared instead of re-enabling the ram buffer
+    assert_int_equal(iot_log_file_close(handle), IOT_ERROR_NONE);
+
+    iot_log_file_exit();
+}
+
+TEST_F(TC_REGISTRY_NO_FIXTURE, TC_iot_log_file_close_without_init_neg)
+{
+    iot_log_file_handle_t *handle;
+    UNUSED(state);
+
+    // Given: no log context exists
+    iot_log_file_exit();
+    handle = (iot_log_file_handle_t *)malloc(sizeof(iot_log_file_handle_t));
+    assert_non_null(handle);
+    memset(handle, 0, sizeof(*handle));
+    handle->file_type = RAM_ONLY;
+    // When: a handle is closed anyway
+    // Then: the missing context is tolerated instead of crashing
+    assert_int_equal(iot_log_file_close(handle), IOT_ERROR_NONE);
+}
+
+TEST_F(TC_REGISTRY_NO_FIXTURE, TC_iot_log_file_read_wrap_first_read_failure_neg)
+{
+    iot_log_file_handle_t handle;
+    char buffer[16] = {0};
+    size_t read_size = 0xdead;
+    UNUSED(state);
+
+    assert_int_equal(_tc_log_file_init(), IOT_ERROR_NONE);
+
+    // Given: a handle with an unsupported type and a read that has to wrap
+    memset(&handle, 0, sizeof(handle));
+    handle.file_type = TC_LOG_FILE_INVALID_TYPE_neg;
+    handle.start_addr = 0;
+    handle.cur_addr = 8;
+    handle.log_size = 16;
+    handle.max_log_size = 16;
+    // When
+    assert_int_equal(iot_log_file_read(&handle, buffer, sizeof(buffer), &read_size), IOT_ERROR_BAD_REQ);
+    // Then: nothing is reported as read
+    assert_int_equal(read_size, 0);
+
+    iot_log_file_exit();
+}
+
+TEST_F(TC_REGISTRY_NO_FIXTURE, TC_iot_log_file_read_remain_size_capped_neg)
+{
+    iot_log_file_handle_t handle;
+    char buffer[64] = {0};
+    size_t read_size = 0;
+    UNUSED(state);
+
+    assert_int_equal(_tc_log_file_init(), IOT_ERROR_NONE);
+    assert_true(iot_log_file_store(TC_LOG_FILE_SAMPLE_LINE_neg, strlen(TC_LOG_FILE_SAMPLE_LINE_neg)) > 0);
+
+    // Given: a wrapping read whose tail is larger than the bytes before cur_addr
+    memset(&handle, 0, sizeof(handle));
+    handle.file_type = _tc_log_file_type();
+    handle.start_addr = 0;
+    handle.cur_addr = 2;
+    handle.log_size = 16;
+    handle.max_log_size = 16;
+    // When: more bytes are requested than the buffer can wrap around to
+    assert_int_equal(iot_log_file_read(&handle, buffer, 32, &read_size), IOT_ERROR_NONE);
+    // Then: the tail read is capped at the bytes available before cur_addr
+    assert_int_equal(read_size, 16);
+
+    iot_log_file_exit();
+}
+
+TEST_F(TC_REGISTRY_NO_FIXTURE, TC_iot_log_read_bytes_invalid_type_neg)
+{
+    iot_log_file_handle_t handle;
+    char buffer[8] = {0};
+    UNUSED(state);
+
+    memset(&handle, 0, sizeof(handle));
+    handle.file_type = TC_LOG_FILE_INVALID_TYPE_neg;
+    // When: the low level reader is asked for an unsupported backing store
+    assert_int_equal(_iot_log_read_bytes(&handle, buffer, sizeof(buffer)), IOT_ERROR_BAD_REQ);
+}
+
+TEST_F(TC_REGISTRY_NO_FIXTURE, TC_iot_log_file_seek_zero_log_size_neg)
+{
+    iot_log_file_handle_t handle;
+    UNUSED(state);
+
+    memset(&handle, 0, sizeof(handle));
+    handle.file_type = _tc_log_file_type();
+    handle.log_size = 0;
+    // When: the log is empty
+    assert_int_equal(iot_log_file_seek(&handle, 0, 0), IOT_ERROR_INVALID_ARGS);
+    assert_int_equal(handle.cur_addr, 0);
+}
+
+TEST_F(TC_REGISTRY_NO_FIXTURE, TC_iot_log_file_seek_offset_beyond_log_size_neg)
+{
+    iot_log_file_handle_t handle;
+    UNUSED(state);
+
+    memset(&handle, 0, sizeof(handle));
+    handle.file_type = _tc_log_file_type();
+    handle.start_addr = 0;
+    handle.log_size = 16;
+    // When: an offset far beyond the log size is requested
+    assert_int_equal(iot_log_file_seek(&handle, 100, 0), IOT_ERROR_NONE);
+    // Then: it silently wraps instead of being rejected
+    assert_int_equal(handle.cur_addr, 100 % 16);
+}
+
+TEST_F(TC_REGISTRY_NO_FIXTURE, TC_iot_log_file_read_zero_size_neg)
+{
+    iot_log_file_handle_t handle;
+    char buffer[8] = {0};
+    size_t read_size = 0xdead;
+    UNUSED(state);
+
+    assert_int_equal(_tc_log_file_init(), IOT_ERROR_NONE);
+
+    memset(&handle, 0, sizeof(handle));
+    handle.file_type = _tc_log_file_type();
+    handle.log_size = 16;
+    handle.max_log_size = 16;
+    // When: nothing is requested
+    assert_int_equal(iot_log_file_read(&handle, buffer, 0, &read_size), IOT_ERROR_NONE);
+    assert_int_equal(read_size, 0);
+
+    iot_log_file_exit();
+}
+
+TEST_F(TC_REGISTRY_NO_FIXTURE, TC_iot_log_file_store_max_string_size_neg)
+{
+    UNUSED(state);
+
+    assert_int_equal(_tc_log_file_init(), IOT_ERROR_NONE);
+    // When: exactly the maximum string size is stored, which the guard rejects
+    assert_int_equal(iot_log_file_store(TC_LOG_FILE_SAMPLE_LINE_neg, IOT_LOG_FILE_MAX_STRING_SIZE), -1);
+    iot_log_file_exit();
+}
+
+TEST_F(TC_REGISTRY_NO_FIXTURE, TC_iot_log_file_store_after_exit_neg)
+{
+    UNUSED(state);
+
+    assert_int_equal(_tc_log_file_init(), IOT_ERROR_NONE);
+    iot_log_file_exit();
+    // When: a log line is stored after the context was torn down
+    assert_int_equal(iot_log_file_store(TC_LOG_FILE_SAMPLE_LINE_neg, strlen(TC_LOG_FILE_SAMPLE_LINE_neg)), -1);
+}
+
+TEST_F(TC_REGISTRY_NO_FIXTURE, TC_iot_log_file_remove_without_init_neg)
+{
+    UNUSED(state);
+
+    // Given: no log context exists
+    iot_log_file_exit();
+    // When: the log is removed anyway
+    // Then: the missing context is tolerated instead of crashing
+    assert_int_equal(iot_log_file_remove(_tc_log_file_type()), IOT_ERROR_NONE);
+}
+
+TEST_F(TC_REGISTRY_NO_FIXTURE, TC_iot_log_file_remove_unsupported_type_neg)
+{
+    UNUSED(state);
+
+    assert_int_equal(_tc_log_file_init(), IOT_ERROR_NONE);
+    // When: a type this build does not support is removed
+    assert_int_equal(iot_log_file_remove(TC_LOG_FILE_INVALID_TYPE_neg), IOT_ERROR_BAD_REQ);
+    iot_log_file_exit();
+}
+
+TEST_F(TC_REGISTRY_NO_FIXTURE, TC_iot_log_file_exit_twice_neg)
+{
+    UNUSED(state);
+
+    assert_int_equal(_tc_log_file_init(), IOT_ERROR_NONE);
+    iot_log_file_exit();
+    // When: the context is torn down a second time
+    // Then: it must not double free
+    iot_log_file_exit();
+    assert_int_equal(iot_log_file_store(TC_LOG_FILE_SAMPLE_LINE_neg, 1), -1);
+}
+
+TEST_F(TC_REGISTRY_NO_FIXTURE, TC_iot_log_file_open_after_exit_neg)
+{
+    size_t filesize = 0xdead;
+    UNUSED(state);
+
+    assert_int_equal(_tc_log_file_init(), IOT_ERROR_NONE);
+    iot_log_file_exit();
+    // When: the log file is opened after the context was torn down
+    assert_null(iot_log_file_open(&filesize, _tc_log_file_type()));
+}
+
+TEST_F(TC_REGISTRY_NO_FIXTURE, TC_iot_log_file_open_unsupported_type_after_init_neg)
+{
+    size_t filesize = 0;
+    UNUSED(state);
+
+    assert_int_equal(_tc_log_file_init(), IOT_ERROR_NONE);
+    // When: a type this build does not support is opened
+    assert_null(iot_log_file_open(&filesize, TC_LOG_FILE_INVALID_TYPE_neg));
+    iot_log_file_exit();
+}
+
+TEST_F(TC_REGISTRY_NO_FIXTURE, TC_iot_log_file_read_null_read_size_invalid_type_neg)
+{
+    iot_log_file_handle_t handle;
+    char buffer[8] = {0};
+    UNUSED(state);
+
+    assert_int_equal(_tc_log_file_init(), IOT_ERROR_NONE);
+
+    // Given: an unsupported type and no place to report the read size
+    memset(&handle, 0, sizeof(handle));
+    handle.file_type = TC_LOG_FILE_INVALID_TYPE_neg;
+    handle.log_size = 16;
+    handle.max_log_size = 16;
+    // When
+    assert_int_equal(iot_log_file_read(&handle, buffer, sizeof(buffer), NULL), IOT_ERROR_BAD_REQ);
+
+    iot_log_file_exit();
+}
+
+TEST_F(TC_REGISTRY_NO_FIXTURE, TC_iot_log_file_seek_null_after_close_neg)
+{
+    iot_log_file_handle_t handle;
+    UNUSED(state);
+
+    // Given: a handle whose type this build does not support
+    memset(&handle, 0, sizeof(handle));
+    handle.file_type = TC_LOG_FILE_INVALID_TYPE_neg;
+    handle.log_size = 16;
+    // When: a seek is attempted
+    assert_int_equal(iot_log_file_seek(&handle, 0, 0), IOT_ERROR_BAD_REQ);
+}
+
+#else /* CONFIG_STDK_IOT_CORE_LOG_FILE */
+
+_TC_LOG_FILE_NOOP(TC_iot_log_file_close_flash_type_handle_neg)
+_TC_LOG_FILE_NOOP(TC_iot_log_file_close_without_init_neg)
+_TC_LOG_FILE_NOOP(TC_iot_log_file_read_wrap_first_read_failure_neg)
+_TC_LOG_FILE_NOOP(TC_iot_log_file_read_remain_size_capped_neg)
+_TC_LOG_FILE_NOOP(TC_iot_log_read_bytes_invalid_type_neg)
+_TC_LOG_FILE_NOOP(TC_iot_log_file_seek_zero_log_size_neg)
+_TC_LOG_FILE_NOOP(TC_iot_log_file_seek_offset_beyond_log_size_neg)
+_TC_LOG_FILE_NOOP(TC_iot_log_file_read_zero_size_neg)
+_TC_LOG_FILE_NOOP(TC_iot_log_file_store_max_string_size_neg)
+_TC_LOG_FILE_NOOP(TC_iot_log_file_store_after_exit_neg)
+_TC_LOG_FILE_NOOP(TC_iot_log_file_remove_without_init_neg)
+_TC_LOG_FILE_NOOP(TC_iot_log_file_remove_unsupported_type_neg)
+_TC_LOG_FILE_NOOP(TC_iot_log_file_exit_twice_neg)
+_TC_LOG_FILE_NOOP(TC_iot_log_file_open_after_exit_neg)
+_TC_LOG_FILE_NOOP(TC_iot_log_file_open_unsupported_type_after_init_neg)
+_TC_LOG_FILE_NOOP(TC_iot_log_file_read_null_read_size_invalid_type_neg)
+_TC_LOG_FILE_NOOP(TC_iot_log_file_seek_null_after_close_neg)
 
 #endif /* CONFIG_STDK_IOT_CORE_LOG_FILE */

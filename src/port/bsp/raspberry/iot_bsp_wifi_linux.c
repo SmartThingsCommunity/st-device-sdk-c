@@ -42,6 +42,10 @@
 #include "iot_util.h"
 #include "wifi_supplicant.h"
 
+bool g_scanning = false;
+iot_wifi_status g_wifi_status = IOT_WIFI_STATUS_UNKNOWN;
+iot_wifi_disconnected_reason g_last_disconnected_reason = IOT_WIFI_DISCONNECTED_REASON_UNKNOWN;
+
 static int _create_socket(void)
 {
     int sockfd = 0;
@@ -59,6 +63,63 @@ iot_error_t iot_bsp_wifi_init(void)
 {
     supplicant_initialise_wifi();
     return IOT_ERROR_NONE;
+}
+
+static void _fill_ip_status(iot_wifi_info *wifi_info)
+{
+    struct ifreq ifr;
+    int sockfd;
+    char *ctrl_ifname = NULL;
+
+    if (supplicant_get_wireless_interface(&ctrl_ifname)) {
+        IOT_ERROR("unable to fetch wireless interface name");
+        return; /* ip_status stays IOT_IP_STATUS_UNKNOWN */
+    }
+
+    sockfd = _create_socket();
+    if (sockfd < 0) {
+        free(ctrl_ifname);
+        return;
+    }
+
+    memset(&ifr, 0, sizeof(ifr));
+    strncpy(ifr.ifr_name, ctrl_ifname, IF_NAMESIZE - 1);
+    if (ioctl(sockfd, SIOCGIFADDR, &ifr) == 0) {
+        wifi_info->ip = ((struct sockaddr_in *)&ifr.ifr_addr)->sin_addr.s_addr;
+        wifi_info->ip_status = IOT_IP_STATUS_ASSIGNED;
+    } else if (errno == EADDRNOTAVAIL) {
+        /* interface is up without an IPv4 address (e.g. DHCP in progress) */
+        wifi_info->ip_status = IOT_IP_STATUS_NOT_ASSIGNED;
+    } else {
+        IOT_ERROR("ioctl(%d, %s): 0x%x", errno, strerror(errno), SIOCGIFADDR);
+    }
+
+    close(sockfd);
+    free(ctrl_ifname);
+}
+
+void iot_bsp_wifi_get_status(iot_wifi_info *wifi_info)
+{
+    memset(wifi_info, 0, sizeof(iot_wifi_info));
+
+    if (!supplicant_is_station_active()) {
+        wifi_info->wifi_status = IOT_WIFI_STATUS_IDLE;
+        return;
+    }
+
+    IOT_DEBUG("wifi status: %d", g_wifi_status);
+    wifi_info->wifi_status = g_wifi_status;
+    wifi_info->last_disconnected_reason = g_last_disconnected_reason;
+    if (wifi_info->wifi_status == IOT_WIFI_STATUS_CONNECTED) {
+        iot_wifi_scan_result_t ap = {0};
+
+        if (supplicant_get_current_ap(&ap) == 0) {
+            memcpy(wifi_info->ap_ssid, ap.ssid, ap.ssid_len);
+            memcpy(wifi_info->bssid.addr, ap.bssid, IOT_WIFI_MAX_BSSID_LEN);
+            wifi_info->rssi = ap.rssi;
+        }
+        _fill_ip_status(wifi_info);
+    }
 }
 
 iot_error_t iot_bsp_wifi_set_mode(iot_wifi_conf *conf)
@@ -80,6 +141,10 @@ iot_error_t iot_bsp_wifi_set_mode(iot_wifi_conf *conf)
                 if (ret < 0)
                     return IOT_ERROR_CONN_OPERATE_FAIL;
             }
+            if (!g_scanning) {
+                supplicant_start_scan();
+                g_scanning = true;
+            }
             break;
 
         case IOT_WIFI_MODE_STATION:
@@ -88,13 +153,18 @@ iot_error_t iot_bsp_wifi_set_mode(iot_wifi_conf *conf)
             strncpy(pass, conf->pass, IOT_WIFI_MAX_PASS_LEN);
             pass[IOT_WIFI_MAX_PASS_LEN] = 0;
 
-            ret = supplicant_start_station();
-            if (ret < 0)
-                return IOT_ERROR_CONN_OPERATE_FAIL;
-            ret = supplicant_join_network(ssid, pass);
-            if (ret < 0)
-                return IOT_ERROR_CONN_OPERATE_FAIL;
-
+            if (!supplicant_is_station_active()) {
+                ret = supplicant_start_station();
+                if (ret < 0) {
+                    IOT_ERROR("failed to start station mode (%d)", ret);
+                    return IOT_ERROR_CONN_STA_CONF_FAIL;
+                }
+            }
+            ret = supplicant_join_network(ssid, pass, conf->authmode, conf->hidden);
+            if (ret < 0) {
+                IOT_ERROR("failed to join network (%d)", ret);
+                return IOT_ERROR_CONN_STA_CONF_FAIL;
+            }
             break;
 
         case IOT_WIFI_MODE_SOFTAP:
@@ -117,29 +187,48 @@ iot_error_t iot_bsp_wifi_set_mode(iot_wifi_conf *conf)
     return IOT_ERROR_NONE;
 }
 
+#define SCAN_COMPLETE_POLL_INTERVAL_MS 500
+#define SCAN_COMPLETE_MAX_POLL 20 /* up to 10 seconds */
+
+static void _wait_scan_complete(void)
+{
+    int i;
+
+    /* the Scanning property flips to true shortly after the trigger */
+    IOT_DELAY(SCAN_COMPLETE_POLL_INTERVAL_MS);
+    for (i = 0; i < SCAN_COMPLETE_MAX_POLL; i++) {
+        if (!g_scanning)
+            return;
+        IOT_DELAY(SCAN_COMPLETE_POLL_INTERVAL_MS);
+    }
+    IOT_WARN("scan did not complete within timeout");
+}
+
 uint16_t iot_bsp_wifi_get_scan_result(iot_wifi_scan_result_t *scan_result)
 {
-    uint16_t ap_num;
+    uint16_t ap_num = 0;
     int i;
     iot_wifi_scan_result_t *ap_list;
     int ret;
 
-    ret = supplicant_start_scan();
-    if (ret != 0) {
-        IOT_ERROR("failed to scan for APs");
-        scan_result = NULL;
-        return 0;
-    }
+    _wait_scan_complete();
 
     ap_list = (iot_wifi_scan_result_t *)calloc(IOT_WIFI_MAX_SCAN_RESULT, sizeof(iot_wifi_scan_result_t));
+    if (!ap_list) {
+        IOT_ERROR("failed to malloc for ap_list");
+        return 0;
+    }
     ap_num = supplicant_get_scanned_ap_list(ap_list);
     if (ap_num == 0)
         IOT_INFO("No APs found!");
 
+    memset(scan_result, 0x0, (IOT_WIFI_MAX_SCAN_RESULT * sizeof(iot_wifi_scan_result_t)));
     for (i = 0; i < ap_num; i++) {
-        memcpy(scan_result[i].ssid, ap_list[i].ssid, strlen((char *)ap_list[i].ssid));
+        memcpy(scan_result[i].ssid, ap_list[i].ssid, ap_list[i].ssid_len);
         memcpy(scan_result[i].bssid, ap_list[i].bssid, IOT_WIFI_MAX_BSSID_LEN);
 
+        scan_result[i].ssid_len = ap_list[i].ssid_len;
+        scan_result[i].hexssid_needed = ap_list[i].hexssid_needed;
         scan_result[i].rssi = ap_list[i].rssi;
         scan_result[i].freq = ap_list[i].freq;
         scan_result[i].authmode = ap_list[i].authmode;
@@ -151,6 +240,7 @@ uint16_t iot_bsp_wifi_get_scan_result(iot_wifi_scan_result_t *scan_result)
     }
 
     free(ap_list);
+
     return ap_num;
 }
 
@@ -205,18 +295,6 @@ iot_wifi_auth_mode_bits_t iot_bsp_wifi_get_auth_mode(void)
 {
     iot_wifi_auth_mode_bits_t supported_mode_bits = IOT_WIFI_AUTH_MODE_BIT_ALL;
     supported_mode_bits ^= IOT_WIFI_AUTH_MODE_BIT(IOT_WIFI_AUTH_WPA2_ENTERPRISE);
-    supported_mode_bits ^= IOT_WIFI_AUTH_MODE_BIT(IOT_WIFI_AUTH_WPA3_PERSONAL);
 
     return supported_mode_bits;
-}
-
-iot_error_t iot_bsp_wifi_get_status(void)
-{
-    return IOT_ERROR_NONE;
-}
-
-bool iot_bsp_wifi_is_dhcp_success()
-{
-    /* TODO */
-    return true;
 }

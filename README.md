@@ -40,6 +40,17 @@ If you're considering a commercial product, SmartThings recommends these feature
 
 - [WiFi Update](./doc/WiFi_Update.md)
 
+## AI Agent Skills
+
+If you use an AI coding agent such as Claude Code, OpenAI Codex, or Gemini CLI, the [skills](./skills) directory gives it STDK-specific knowledge. Each skill is a `SKILL.md` file in the open [Agent Skills](https://agentskills.io) format, so the same files work across agents.
+
+- [stdk-docs-reference](./skills/stdk-docs-reference/SKILL.md) : Answers SDK questions (APIs, onboarding flow, device states, porting, key/QR generation) from the live documentation in this repository, with code examples and source links.
+- [stdk-error-lookup](./skills/stdk-error-lookup/SKILL.md) : Explains mobile app error codes (`81-001`, `04-100`, ...) and SDK internal codes (`NE01`, `CE01`, ...) with causes and a fix checklist.
+- [stdk-log-analysis](./skills/stdk-log-analysis/SKILL.md) : Reads an STDK device log, rebuilds the onboarding and connection timeline, and reports root causes and fixes by severity.
+- [stdk-github-search](./skills/stdk-github-search/SKILL.md) : Finds the right document, source file, or GitHub issue in the STDK repositories for a given question.
+
+To install, copy the skill folders into your agent's skills directory (for example `~/.claude/skills/`, `~/.codex/skills/`, or `~/.gemini/skills/`). See [skills/README.md](./skills/README.md) for per-agent instructions and a fallback for agents without native skill support.
+
 ## How to get started?
 
 This core device library includes platform-dependent parts that should be built in a specific toolchain or SDK. That is, if you do NOT use the pre-porting environment, you must first port them to the appropriate environment.

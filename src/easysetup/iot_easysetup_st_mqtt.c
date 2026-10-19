@@ -126,6 +126,122 @@ out:
     return response_ret;
 }
 
+static bool _mqtt_reg_handle_event(struct iot_context *ctx, JSON_H *json)
+{
+    JSON_H *event = JSON_GET_OBJECT_ITEM(json, "event");
+    JSON_H *cur_time;
+
+    if (event == NULL) {
+        return true; /* no event, continue processing */
+    }
+
+    if (!strncmp(event->valuestring, "expired.jwt", 11)) {
+        cur_time = JSON_GET_OBJECT_ITEM(json, "currentTime");
+        if (cur_time == NULL) {
+            IOT_ERROR("%s : there is no currentTime in json", __func__);
+            return false;
+        }
+        IOT_INFO("Set SNTP with current time %d", cur_time->valueint);
+        iot_bsp_system_set_time_in_sec((time_t)cur_time->valueint);
+
+        if (iot_command_send(ctx, IOT_COMMAND_CLOUD_REGISTERING, NULL, 0) != IOT_ERROR_NONE) {
+            IOT_ERROR("Cannot send cloud registering cmd!!");
+        }
+        return false;
+    } else if (!strncmp(event->valuestring, "error", 5)) {
+        IOT_ERROR("TODO : signaling restart onboarding %d", __LINE__);
+        return false;
+    } else {
+        IOT_ERROR("event type %s is not defined", event->valuestring);
+        return false;
+    }
+}
+
+static bool _mqtt_reg_parse_dip_key(struct iot_registered_data *reged_data, JSON_H *json)
+{
+    JSON_H *dip_key = JSON_GET_OBJECT_ITEM(json, "deviceIntegrationProfileKey");
+    JSON_H *dip_item;
+    struct iot_dip_data *reged_dip;
+    iot_error_t err;
+
+    if (dip_key == NULL) {
+        return true; /* dip_key is optional */
+    }
+
+    reged_dip = iot_os_malloc(sizeof(struct iot_dip_data));
+    if (!reged_dip) {
+        IOT_ERROR("Can't alloc iot_dip_data!!");
+        return false;
+    }
+    memset(reged_dip, 0, sizeof(struct iot_dip_data));
+
+    dip_item = JSON_GET_OBJECT_ITEM(dip_key, "id");
+    if (!dip_item) {
+        IOT_ERROR("Can't find id for dip_key!!");
+        iot_os_free(reged_dip);
+        return false;
+    }
+
+    err = iot_util_convert_str_uuid(JSON_GET_STRING_VALUE(dip_item), &reged_dip->dip_id);
+    if (err != IOT_ERROR_NONE) {
+        IOT_ERROR("Can't convert str to uuid(%d)", err);
+        iot_os_free(reged_dip);
+        return false;
+    }
+
+    dip_item = JSON_GET_OBJECT_ITEM(dip_key, "majorVersion");
+    if (!dip_item) {
+        IOT_ERROR("Can't find majorVersion for dip_key!!");
+        iot_os_free(reged_dip);
+        return false;
+    }
+    reged_dip->dip_major_version = dip_item->valueint;
+
+    /* minorVersion is optional, default 0 */
+    dip_item = JSON_GET_OBJECT_ITEM(dip_key, "minorVersion");
+    if (dip_item) {
+        reged_dip->dip_minor_version = dip_item->valueint;
+    }
+
+    if (reged_data->dip)
+        iot_os_free(reged_data->dip);
+
+    reged_data->dip = reged_dip;
+    return true;
+}
+
+static bool _mqtt_reg_parse_location_id(struct iot_registered_data *reged_data, JSON_H *json)
+{
+    JSON_H *item = JSON_GET_OBJECT_ITEM(json, "locationId");
+    struct iot_uuid *reged_location;
+    iot_error_t err;
+
+    if (item == NULL) {
+        IOT_WARN("Server does not send locationId!!");
+        return true;
+    }
+
+    reged_location = iot_os_malloc(sizeof(struct iot_uuid));
+    if (!reged_location) {
+        IOT_ERROR("Can't alloc iot_uuid for location!!");
+        return false;
+    }
+    memset(reged_location, 0, sizeof(struct iot_uuid));
+
+    err = iot_util_convert_str_uuid(JSON_GET_STRING_VALUE(item), reged_location);
+    if (err != IOT_ERROR_NONE) {
+        IOT_ERROR("Can't convert str to uuid(%d)", err);
+        iot_os_free(reged_location);
+        return false;
+    }
+
+    if (reged_data->locationId)
+        iot_os_free(reged_data->locationId);
+
+    reged_data->locationId = reged_location;
+    return true;
+}
+
 static void mqtt_reg_sub_cb(st_mqtt_msg *md, void *userData)
 {
     struct iot_context *ctx = (struct iot_context *)userData;
@@ -134,22 +250,16 @@ static void mqtt_reg_sub_cb(st_mqtt_msg *md, void *userData)
     char *registered_msg = NULL;
     JSON_H *json = NULL;
     JSON_H *item = NULL;
-    JSON_H *event = NULL;
-    JSON_H *cur_time = NULL;
-    JSON_H *dip_key = NULL;
-    JSON_H *dip_item = NULL;
     char *svr_did_str = NULL;
-    enum iot_command_type iot_cmd;
-    struct iot_dip_data *reged_dip = NULL;
-    struct iot_uuid *reged_location = NULL;
-    iot_error_t err;
 
     /*parsing mqtt_payload*/
 #if defined(STDK_IOT_CORE_SERIALIZE_CBOR)
     char *payload_json = NULL;
     size_t payload_json_len = 0;
+    iot_error_t err;
 
     err = iot_serialize_cbor2json((uint8_t *)mqtt_payload, (size_t)md->payloadlen, &payload_json, &payload_json_len);
+
     if (err) {
         IOT_ERROR("iot_serialize_cbor2json = %d", err);
         goto reg_sub_out;
@@ -177,97 +287,16 @@ static void mqtt_reg_sub_cb(st_mqtt_msg *md, void *userData)
     }
     IOT_INFO("Registered MSG : %s", registered_msg);
 
-    event = JSON_GET_OBJECT_ITEM(json, "event");
-    if (event != NULL) {
-        if (!strncmp(event->valuestring, "expired.jwt", 11)) {
-            cur_time = JSON_GET_OBJECT_ITEM(json, "currentTime");
-            if (cur_time == NULL) {
-                IOT_ERROR("%s : there is no currentTime in json, mqtt_payload : \n%s", __func__, mqtt_payload);
-                goto reg_sub_out;
-            }
-            IOT_INFO("Set SNTP with current time %d", cur_time->valueint);
-            iot_bsp_system_set_time_in_sec((time_t)cur_time->valueint);
-
-            iot_cmd = IOT_COMMAND_CLOUD_REGISTERING;
-            if (iot_command_send(ctx, iot_cmd, NULL, 0) != IOT_ERROR_NONE) {
-                IOT_ERROR("Cannot send cloud registering cmd!!");
-            }
-        } else if (!strncmp(event->valuestring, "error", 5)) {
-            /* TODO : signaling restart onboarding */
-            IOT_ERROR("TODO : signaling restart onboarding %d", __LINE__);
-            goto reg_sub_out;
-        } else {
-            IOT_ERROR("event type %s is not defined", event->valuestring);
-            goto reg_sub_out;
-        }
+    if (!_mqtt_reg_handle_event(ctx, json)) {
+        goto reg_sub_out;
     }
 
-    /* dip_key is optional values */
-    dip_key = JSON_GET_OBJECT_ITEM(json, "deviceIntegrationProfileKey");
-    if (dip_key != NULL) {
-        reged_dip = iot_os_malloc(sizeof(struct iot_dip_data));
-        if (!reged_dip) {
-            IOT_ERROR("Can't alloc iot_dip_data!!");
-            goto reg_sub_out;
-        }
-        memset(reged_dip, 0, sizeof(struct iot_dip_data));
-
-        dip_item = JSON_GET_OBJECT_ITEM(dip_key, "id");
-        if (!dip_item) {
-            IOT_ERROR("Can't find id for dip_key!!");
-            iot_os_free(reged_dip);
-            goto reg_sub_out;
-        }
-
-        err = iot_util_convert_str_uuid(JSON_GET_STRING_VALUE(dip_item), &reged_dip->dip_id);
-        if (err != IOT_ERROR_NONE) {
-            IOT_ERROR("Can't convert str to uuid(%d)", err);
-            iot_os_free(reged_dip);
-            goto reg_sub_out;
-        }
-
-        dip_item = JSON_GET_OBJECT_ITEM(dip_key, "majorVersion");
-        if (!dip_item) {
-            IOT_ERROR("Can't find majorVersion for dip_key!!");
-            iot_os_free(reged_dip);
-            goto reg_sub_out;
-        }
-        reged_dip->dip_major_version = dip_item->valueint;
-
-        /* minorVersion is optional, default 0 */
-        dip_item = JSON_GET_OBJECT_ITEM(dip_key, "minorVersion");
-        if (dip_item) {
-            reged_dip->dip_minor_version = dip_item->valueint;
-        }
-
-        if (reged_data->dip)
-            iot_os_free(reged_data->dip);
-
-        reged_data->dip = reged_dip;
+    if (!_mqtt_reg_parse_dip_key(reged_data, json)) {
+        goto reg_sub_out;
     }
 
-    item = JSON_GET_OBJECT_ITEM(json, "locationId");
-    if (item != NULL) {
-        reged_location = iot_os_malloc(sizeof(struct iot_uuid));
-        if (!reged_location) {
-            IOT_ERROR("Can't alloc iot_uuid for location!!");
-            goto reg_sub_out;
-        }
-        memset(reged_location, 0, sizeof(struct iot_uuid));
-
-        err = iot_util_convert_str_uuid(JSON_GET_STRING_VALUE(item), reged_location);
-        if (err != IOT_ERROR_NONE) {
-            IOT_ERROR("Can't convert str to uuid(%d)", err);
-            iot_os_free(reged_location);
-            goto reg_sub_out;
-        }
-
-        if (reged_data->locationId)
-            iot_os_free(reged_data->locationId);
-
-        reged_data->locationId = reged_location;
-    } else {
-        IOT_WARN("Server does not send locationId!!");
+    if (!_mqtt_reg_parse_location_id(reged_data, json)) {
+        goto reg_sub_out;
     }
 
     item = JSON_GET_OBJECT_ITEM(json, "deviceId");
@@ -284,8 +313,7 @@ static void mqtt_reg_sub_cb(st_mqtt_msg *md, void *userData)
 
         reged_data->updated = true;
 
-        iot_cmd = IOT_COMMAND_CLOUD_REGISTERED;
-        if (iot_command_send(ctx, iot_cmd, NULL, 0) != IOT_ERROR_NONE) {
+        if (iot_command_send(ctx, IOT_COMMAND_CLOUD_REGISTERED, NULL, 0) != IOT_ERROR_NONE) {
             IOT_ERROR("Cannot send cloud registered cmd!!");
         }
 
@@ -400,10 +428,8 @@ void _iot_mqtt_signin_client_callback(st_mqtt_event event, void *event_data, voi
         case ST_MQTT_EVENT_DISCONNECTED: {
             st_mqtt_evt_dis_reason reason = (*(st_mqtt_evt_dis_reason *)event_data);
             iot_error_t err;
-            if (reason == MQTT_DISCONNECTED_PING_FAIL) {
-                iot_set_st_ecode(ctx, IOT_ST_ECODE_CE32);
-            } else if (reason == MQTT_DISCONNECTED_PING_TIMEOUT) {
-                iot_set_st_ecode(ctx, IOT_ST_ECODE_CE33);
+            if (reason == MQTT_DISCONNECTED_PING_TIMEOUT) {
+                iot_set_st_ecode(ctx, IOT_ST_ECODE_CE84_3);
             }
             err = iot_state_update(ctx, IOT_STATE_CLOUD_DISCONNECTED, 0);
             if (err) {
@@ -694,6 +720,10 @@ void *_iot_es_mqtt_registration_json(struct iot_context *ctx, char *dip_id, size
     /* STDK release version */
     JSON_ADD_ITEM_TO_OBJECT(root, "stdkVersion", JSON_CREATE_STRING(STDK_VERSION_STRING));
 
+    /* transferCandidate  */
+    JSON_ADD_BOOL_TO_OBJECT(root, "transferCandidate", true);
+    JSON_ADD_BOOL_TO_OBJECT(root, "authCodeRequired", false);
+
     /* dip is optional values */
     if (dip_id) {
         dip_key = JSON_CREATE_OBJECT();
@@ -914,6 +944,18 @@ iot_error_t _iot_es_mqtt_connect(struct iot_context *ctx, st_mqtt_client target_
                 ctx->mqtt_connect_critical_reject_count = 0;
                 iot_ret = IOT_ERROR_MQTT_CONNECT_TIMEOUT;
                 break;
+            case E_ST_MQTT_DNS_RESOLVE_FAIL:
+                ctx->mqtt_connect_critical_reject_count = 0;
+                iot_ret = IOT_ERROR_NET_DNS_FAIL;
+                break;
+            case E_ST_MQTT_TCP_CONNECTION_FAIL:
+                ctx->mqtt_connect_critical_reject_count = 0;
+                iot_ret = IOT_ERROR_NET_TCP_CONNECTION_FAIL;
+                break;
+            case E_ST_MQTT_TLS_HANDSHAKE_FAIL:
+                ctx->mqtt_connect_critical_reject_count = 0;
+                iot_ret = IOT_ERROR_NET_TLS_HANDSHAKE_FAIL;
+                break;
 
             default:
                 /* On the others, we can't narrow down the causes. Some cases are related to
@@ -938,6 +980,7 @@ done_mqtt_connect:
 iot_error_t iot_update_dip(struct iot_context *ctx, st_mqtt_client mqtt_cli)
 {
     iot_error_t ret = IOT_ERROR_NONE;
+    int publish_ret;
     st_mqtt_msg msg = {0};
     JSON_H *json_root = NULL;
     JSON_H *dip_key = NULL;
@@ -999,9 +1042,10 @@ iot_error_t iot_update_dip(struct iot_context *ctx, st_mqtt_client mqtt_cli)
 
     IOT_INFO("Update dip, topic : %s, payload :\n%s", (char *)msg.topic, (char *)msg.payload);
 
-    ret = iot_mqtt_publish(ctx, mqtt_cli, &msg);
-    if (ret < 0) {
-        IOT_ERROR("Failt to publish updating dip %d", ret);
+    publish_ret = iot_mqtt_publish(ctx, mqtt_cli, &msg);
+    if (publish_ret < 0) {
+        IOT_ERROR("Failed to publish updating dip %d", publish_ret);
+        ret = IOT_ERROR_MQTT_PUBLISH_FAIL;
         goto exit;
     }
 
@@ -1014,15 +1058,249 @@ exit:
     return ret;
 }
 
+STATIC_FUNCTION
+iot_error_t _es_connect_communication(struct iot_context *ctx, iot_security_buffer_t *token_buf,
+                                      st_mqtt_client *mqtt_cli_out, iot_os_timer_handle *dip_update_timer_out)
+{
+    st_mqtt_client mqtt_cli = NULL;
+    iot_os_timer_handle connection_response_timer = NULL;
+    iot_os_timer_handle dip_update_timer = NULL;
+    char *topicfilter[2] = {NULL};
+    int qos[2] = {st_mqtt_qos1, st_mqtt_qos1};
+    iot_error_t iot_ret = IOT_ERROR_NONE;
+    int ret;
+
+    IOT_INFO("connect_type: log-in");
+    if (!ctx->iot_reg_data.updated) {
+        IOT_ERROR("failed to get user id");
+        return IOT_ERROR_BAD_REQ;
+    }
+
+    ret = st_mqtt_create(&mqtt_cli, _iot_mqtt_signin_client_callback, ctx, ctx->work_queue, ctx->work_queue_signal);
+    if (ret) {
+        IOT_ERROR("Cannot create mqtt client");
+        return IOT_ERROR_BAD_REQ;
+    }
+
+    ctx->mqtt_connection_try_count++;
+    ctx->sign_in_connection_request_status = GG_CONNECTION_REQUEST_STATUS_WAITING;
+    iot_ret = _iot_es_mqtt_connect(ctx, mqtt_cli, (char *)ctx->iot_reg_data.deviceId, (char *)token_buf->p);
+    if (iot_ret != IOT_ERROR_NONE) {
+        IOT_ERROR("failed to connect");
+        *mqtt_cli_out = mqtt_cli;
+        return iot_ret;
+    }
+
+    ctx->mqtt_connection_success_count++;
+    IOT_INFO("MQTT connect success success/try : %d/%d", ctx->mqtt_connection_success_count,
+             ctx->mqtt_connection_try_count);
+
+    connection_response_timer = iot_os_timer_create(NULL, GG_CONNECTION_RESPONSE_TIMEOUT_MS, NULL);
+    if (!connection_response_timer) {
+        iot_ret = IOT_ERROR_MQTT_CONNECT_FAIL;
+        IOT_ERROR("Failed to create connection response timer");
+        goto comm_out;
+    }
+    iot_os_timer_start(connection_response_timer);
+
+    topicfilter[0] = iot_os_malloc(IOT_TOPIC_SIZE);
+    if (topicfilter[0] == NULL) {
+        IOT_ERROR("failed to malloc topicfilter");
+        iot_ret = IOT_ERROR_MEM_ALLOC;
+        goto comm_out;
+    }
+    snprintf(topicfilter[0], IOT_TOPIC_SIZE, IOT_SUB_TOPIC_NOTIFICATION, ctx->iot_reg_data.deviceId);
+    IOT_DEBUG("noti subscribe topic : %s", topicfilter[0]);
+
+    topicfilter[1] = iot_os_malloc(IOT_TOPIC_SIZE);
+    if (topicfilter[1] == NULL) {
+        IOT_ERROR("failed to malloc topicfilter");
+        iot_ret = IOT_ERROR_MEM_ALLOC;
+        goto comm_out;
+    }
+    snprintf(topicfilter[1], IOT_TOPIC_SIZE, IOT_SUB_TOPIC_COMMAND, ctx->iot_reg_data.deviceId);
+    IOT_DEBUG("cmd subscribe topic : %s", topicfilter[1]);
+
+    ret = st_mqtt_subscribe(mqtt_cli, 2, topicfilter, qos);
+    if (ret) {
+        IOT_WARN("subscribe error(%d)", ret);
+        iot_ret = IOT_ERROR_BAD_REQ;
+        _iot_es_mqtt_disconnect(ctx, mqtt_cli);
+        goto comm_out;
+    }
+
+    while (iot_os_timer_is_active(connection_response_timer)) {
+        st_mqtt_yield(mqtt_cli, 0);
+        iot_os_delay(100);
+        if (ctx->sign_in_connection_request_status != GG_CONNECTION_REQUEST_STATUS_WAITING)
+            break;
+    }
+    iot_record_publish_timestamp(ctx);
+    iot_record_publish_timestamp(ctx);
+
+    if (ctx->sign_in_connection_request_status != GG_CONNECTION_REQUEST_STATUS_SUCCESS) {
+        IOT_WARN("GG connection fail");
+        iot_ret = IOT_ERROR_MQTT_CONNECT_FAIL;
+        _iot_es_mqtt_disconnect(ctx, mqtt_cli);
+        goto comm_out;
+    }
+
+    if (ctx->dip_need_update) {
+        dip_update_timer = iot_os_timer_create(NULL, DIP_UPDATE_TIMEOUT_MS, NULL);
+        if (!dip_update_timer) {
+            IOT_ERROR("Dip update timer init error");
+            iot_ret = IOT_ERROR_MQTT_CONNECT_FAIL;
+            _iot_es_mqtt_disconnect(ctx, mqtt_cli);
+            goto comm_out;
+        }
+        iot_ret = iot_update_dip(ctx, mqtt_cli);
+        if (iot_ret != IOT_ERROR_NONE) {
+            IOT_ERROR("Failed to update dip(%d)", iot_ret);
+            _iot_es_mqtt_disconnect(ctx, mqtt_cli);
+            goto comm_out;
+        }
+        iot_os_timer_start(dip_update_timer);
+        while (iot_os_timer_is_active(dip_update_timer)) {
+            st_mqtt_yield(mqtt_cli, 0);
+            iot_os_delay(100);
+            if (!ctx->dip_need_update)
+                break;
+        }
+        if (ctx->dip_need_update) {
+            IOT_ERROR("Failed to update dip(timeout)");
+            iot_ret = IOT_ERROR_BAD_REQ;
+            _iot_es_mqtt_disconnect(ctx, mqtt_cli);
+            goto comm_out;
+        }
+    }
+
+    ctx->mqtt_event_topic = malloc(IOT_TOPIC_SIZE);
+    if (!ctx->mqtt_event_topic) {
+        IOT_ERROR("failed to malloc for mqtt_event_topic");
+        iot_ret = IOT_ERROR_MEM_ALLOC;
+        _iot_es_mqtt_disconnect(ctx, mqtt_cli);
+        goto comm_out;
+    }
+    snprintf(ctx->mqtt_event_topic, IOT_TOPIC_SIZE, IOT_PUB_TOPIC_EVENT, ctx->iot_reg_data.deviceId);
+
+    ctx->mqtt_health_topic = malloc(IOT_TOPIC_SIZE);
+    if (!ctx->mqtt_health_topic) {
+        IOT_ERROR("failed to malloc for mqtt_health_topic");
+        iot_ret = IOT_ERROR_MEM_ALLOC;
+        _iot_es_mqtt_disconnect(ctx, mqtt_cli);
+        goto comm_out;
+    }
+    snprintf(ctx->mqtt_health_topic, IOT_TOPIC_SIZE, IOT_PUB_TOPIC_HEALTH);
+
+    ctx->evt_mqttcli = mqtt_cli;
+
+comm_out:
+    if (topicfilter[0] != NULL)
+        iot_os_free(topicfilter[0]);
+    if (topicfilter[1] != NULL)
+        iot_os_free(topicfilter[1]);
+    if (connection_response_timer)
+        iot_os_timer_delete(connection_response_timer);
+
+    *mqtt_cli_out = mqtt_cli;
+    *dip_update_timer_out = dip_update_timer;
+    return iot_ret;
+}
+
+STATIC_FUNCTION
+iot_error_t _es_connect_registration(struct iot_context *ctx, iot_security_buffer_t *token_buf, char *serial_number,
+                                     st_mqtt_client *mqtt_cli_out)
+{
+    st_mqtt_client mqtt_cli = NULL;
+    iot_os_timer_handle connection_response_timer = NULL;
+    char *topicfilter = NULL;
+    int qos = st_mqtt_qos1;
+    iot_error_t iot_ret = IOT_ERROR_NONE;
+    int ret;
+
+    IOT_INFO("connect_type: registration");
+
+    ret =
+        st_mqtt_create(&mqtt_cli, _iot_mqtt_registration_client_callback, ctx, ctx->work_queue, ctx->work_queue_signal);
+    if (ret) {
+        IOT_ERROR("Cannot create mqtt client");
+        return IOT_ERROR_BAD_REQ;
+    }
+
+    ctx->sign_up_connection_request_status = GG_CONNECTION_REQUEST_STATUS_WAITING;
+    iot_ret = _iot_es_mqtt_connect(ctx, mqtt_cli, serial_number, (char *)token_buf->p);
+    if (iot_ret != IOT_ERROR_NONE) {
+        IOT_ERROR("failed to connect");
+        *mqtt_cli_out = mqtt_cli;
+        return iot_ret;
+    }
+
+    IOT_INFO("MQTT connect success");
+
+    connection_response_timer = iot_os_timer_create(NULL, GG_CONNECTION_RESPONSE_TIMEOUT_MS, NULL);
+    if (!connection_response_timer) {
+        iot_ret = IOT_ERROR_MQTT_CONNECT_FAIL;
+        IOT_ERROR("Failed to create connection response timer");
+        goto reg_out;
+    }
+    iot_os_timer_start(connection_response_timer);
+
+    topicfilter = iot_os_malloc(IOT_TOPIC_SIZE);
+    if (topicfilter == NULL) {
+        IOT_ERROR("failed to malloc topicfilter");
+        iot_ret = IOT_ERROR_MEM_ALLOC;
+        goto reg_out;
+    }
+    snprintf(topicfilter, IOT_TOPIC_SIZE, IOT_SUB_TOPIC_REGISTRATION, serial_number);
+    IOT_DEBUG("noti subscribe topic : %s", topicfilter);
+    ret = st_mqtt_subscribe(mqtt_cli, 1, &topicfilter, &qos);
+    if (ret) {
+        IOT_ERROR("%s error MQTTsub(%d)", __func__, ret);
+        iot_ret = IOT_ERROR_BAD_REQ;
+        _iot_es_mqtt_disconnect(ctx, mqtt_cli);
+        goto reg_out;
+    }
+
+    while (iot_os_timer_is_active(connection_response_timer)) {
+        st_mqtt_yield(mqtt_cli, 0);
+        iot_os_delay(100);
+        if (ctx->sign_up_connection_request_status != GG_CONNECTION_REQUEST_STATUS_WAITING)
+            break;
+    }
+
+    if (ctx->sign_up_connection_request_status != GG_CONNECTION_REQUEST_STATUS_SUCCESS) {
+        IOT_WARN("GG connection fail");
+        iot_ret = IOT_ERROR_MQTT_CONNECT_FAIL;
+        _iot_es_mqtt_disconnect(ctx, mqtt_cli);
+        goto reg_out;
+    }
+
+    iot_ret = _iot_es_mqtt_registration(ctx, mqtt_cli);
+    if (iot_ret != IOT_ERROR_NONE) {
+        IOT_ERROR("failed to register");
+        _iot_es_mqtt_disconnect(ctx, mqtt_cli);
+        goto reg_out;
+    }
+
+    ctx->reg_mqttcli = mqtt_cli;
+
+reg_out:
+    if (topicfilter != NULL)
+        iot_os_free(topicfilter);
+    if (connection_response_timer)
+        iot_os_timer_delete(connection_response_timer);
+
+    *mqtt_cli_out = mqtt_cli;
+    return iot_ret;
+}
+
 iot_error_t iot_es_connect(struct iot_context *ctx, int conn_type)
 {
     iot_security_buffer_t token_buf = {0};
     iot_wt_params_t wt_params = {0};
     st_mqtt_client mqtt_cli = NULL;
     iot_error_t iot_ret;
-    iot_os_timer_handle connection_response_timer = NULL;
     iot_os_timer_handle dip_update_timer = NULL;
-    int ret;
 
     if (!ctx) {
         IOT_ERROR("invalid args");
@@ -1031,7 +1309,7 @@ iot_error_t iot_es_connect(struct iot_context *ctx, int conn_type)
 
     if (ctx->rate_limit) {
         IOT_WARN("Server rate limit break times.. please wai to connect");
-        return IOT_ERROR_MQTT_CONNECT_FAIL;
+        return IOT_ERROR_MQTT_RATE_LIMIT;
     }
 
     iot_ret = iot_nv_get_serial_number((char **)&wt_params.sn, &wt_params.sn_len);
@@ -1082,221 +1360,13 @@ iot_error_t iot_es_connect(struct iot_context *ctx, int conn_type)
     }
 
     if (conn_type == IOT_CONNECT_TYPE_COMMUNICATION) {
-        char *topicfilter[2] = {
-            NULL,
-        };
-        int qos[2] = {st_mqtt_qos1, st_mqtt_qos1};
-        IOT_INFO("connect_type: log-in");
-        /* Using for new MQTT PUB/SUB connection after registration */
-        if (!ctx->iot_reg_data.updated) {
-            IOT_ERROR("failed to get user id");
-            goto out;
-        }
-
-        ret = st_mqtt_create(&mqtt_cli, _iot_mqtt_signin_client_callback, ctx, ctx->work_queue, ctx->work_queue_signal);
-        if (ret) {
-            IOT_ERROR("Cannot create mqtt client");
-            goto out;
-        }
-
-        ctx->mqtt_connection_try_count++;
-        ctx->sign_in_connection_request_status = GG_CONNECTION_REQUEST_STATUS_WAITING;
-        iot_ret = _iot_es_mqtt_connect(ctx, mqtt_cli, (char *)ctx->iot_reg_data.deviceId, (char *)token_buf.p);
-        if (iot_ret != IOT_ERROR_NONE) {
-            IOT_ERROR("failed to connect");
-            goto out;
-        } else {
-            ctx->mqtt_connection_success_count++;
-            IOT_INFO("MQTT connect success success/try : %d/%d", ctx->mqtt_connection_success_count,
-                     ctx->mqtt_connection_try_count);
-        }
-
-        connection_response_timer = iot_os_timer_create(NULL, GG_CONNECTION_RESPONSE_TIMEOUT_MS, NULL);
-        if (!connection_response_timer) {
-            iot_ret = IOT_ERROR_MQTT_CONNECT_FAIL;
-            IOT_ERROR("Failed to create connection response timer");
-            goto out;
-        }
-        iot_os_timer_start(connection_response_timer);
-
-        topicfilter[0] = iot_os_malloc(IOT_TOPIC_SIZE);
-        if (topicfilter[0] == NULL) {
-            IOT_ERROR("failed to malloc topicfilter");
-            iot_ret = IOT_ERROR_MEM_ALLOC;
-            goto mqtt_communication_connection_out;
-        }
-        snprintf(topicfilter[0], IOT_TOPIC_SIZE, IOT_SUB_TOPIC_NOTIFICATION, ctx->iot_reg_data.deviceId);
-        IOT_DEBUG("noti subscribe topic : %s", topicfilter[0]);
-
-        topicfilter[1] = iot_os_malloc(IOT_TOPIC_SIZE);
-        if (topicfilter[1] == NULL) {
-            IOT_ERROR("failed to malloc topicfilter");
-            iot_ret = IOT_ERROR_MEM_ALLOC;
-            goto mqtt_communication_connection_out;
-        }
-        snprintf(topicfilter[1], IOT_TOPIC_SIZE, IOT_SUB_TOPIC_COMMAND, ctx->iot_reg_data.deviceId);
-        IOT_DEBUG("cmd subscribe topic : %s", topicfilter[1]);
-
-        ret = st_mqtt_subscribe(mqtt_cli, 2, topicfilter, qos);
-        if (ret) {
-            IOT_WARN("subscribe error(%d)", ret);
-            iot_ret = IOT_ERROR_BAD_REQ;
-            _iot_es_mqtt_disconnect(ctx, mqtt_cli);
-            goto mqtt_communication_connection_out;
-        }
-
-        while (iot_os_timer_is_active(connection_response_timer)) {
-            st_mqtt_yield(mqtt_cli, 0);
-            iot_os_delay(100);
-            if (ctx->sign_in_connection_request_status != GG_CONNECTION_REQUEST_STATUS_WAITING)
-                break;
-        }
-        /* Currently GG takes into account subscription topic's number in rate limit counter.
-         * So because now it subscribes 2 topics, we need to record publish twice here. */
-        iot_record_publish_timestamp(ctx);
-        iot_record_publish_timestamp(ctx);
-
-        if (ctx->sign_in_connection_request_status != GG_CONNECTION_REQUEST_STATUS_SUCCESS) {
-            IOT_WARN("GG connection fail");
-            iot_ret = IOT_ERROR_MQTT_CONNECT_FAIL;
-            _iot_es_mqtt_disconnect(ctx, mqtt_cli);
-            goto mqtt_communication_connection_out;
-        }
-
-        if (ctx->dip_need_update) {
-            dip_update_timer = iot_os_timer_create(NULL, DIP_UPDATE_TIMEOUT_MS, NULL);
-            if (!dip_update_timer) {
-                IOT_ERROR("Dip update timer init error");
-                _iot_es_mqtt_disconnect(ctx, mqtt_cli);
-                goto mqtt_communication_connection_out;
-            }
-            iot_ret = iot_update_dip(ctx, mqtt_cli);
-            if (iot_ret != IOT_ERROR_NONE) {
-                IOT_ERROR("Failed to update dip(%d)", iot_ret);
-                _iot_es_mqtt_disconnect(ctx, mqtt_cli);
-                goto mqtt_communication_connection_out;
-            }
-            iot_os_timer_start(dip_update_timer);
-            while (iot_os_timer_is_active(connection_response_timer)) {
-                st_mqtt_yield(mqtt_cli, 0);
-                iot_os_delay(100);
-                if (!ctx->dip_need_update)
-                    break;
-            }
-            if (ctx->dip_need_update) {
-                IOT_ERROR("Failed to update dip(timeout)");
-                iot_ret = IOT_ERROR_BAD_REQ;
-                _iot_es_mqtt_disconnect(ctx, mqtt_cli);
-                goto mqtt_communication_connection_out;
-            }
-        }
-
-        ctx->mqtt_event_topic = malloc(IOT_TOPIC_SIZE);
-        if (!ctx->mqtt_event_topic) {
-            IOT_ERROR("failed to malloc for mqtt_event_topic");
-            iot_ret = IOT_ERROR_MEM_ALLOC;
-            _iot_es_mqtt_disconnect(ctx, mqtt_cli);
-            goto mqtt_communication_connection_out;
-        }
-        snprintf(ctx->mqtt_event_topic, IOT_TOPIC_SIZE, IOT_PUB_TOPIC_EVENT, ctx->iot_reg_data.deviceId);
-
-        ctx->mqtt_health_topic = malloc(IOT_TOPIC_SIZE);
-        if (!ctx->mqtt_health_topic) {
-            IOT_ERROR("failed to malloc for mqtt_health_topic");
-            iot_ret = IOT_ERROR_MEM_ALLOC;
-            _iot_es_mqtt_disconnect(ctx, mqtt_cli);
-            goto mqtt_communication_connection_out;
-        }
-        snprintf(ctx->mqtt_health_topic, IOT_TOPIC_SIZE, IOT_PUB_TOPIC_HEALTH);
-
-        ctx->evt_mqttcli = mqtt_cli;
-    mqtt_communication_connection_out:
-        if (topicfilter[0] != NULL) {
-            iot_os_free(topicfilter[0]);
-        }
-
-        if (topicfilter[1] != NULL) {
-            iot_os_free(topicfilter[1]);
-        }
+        iot_ret = _es_connect_communication(ctx, &token_buf, &mqtt_cli, &dip_update_timer);
     } else {
         char *serial_number = (wt_params.cert_sn ? wt_params.cert_sn : wt_params.sn);
-        char *topicfilter = NULL;
-        int qos = st_mqtt_qos1;
-        IOT_INFO("connect_type: registration");
-
-        ret = st_mqtt_create(&mqtt_cli, _iot_mqtt_registration_client_callback, ctx, ctx->work_queue,
-                             ctx->work_queue_signal);
-        if (ret) {
-            IOT_ERROR("Cannot create mqtt client");
-            goto out;
-        }
-
-        ctx->sign_up_connection_request_status = GG_CONNECTION_REQUEST_STATUS_WAITING;
-        iot_ret = _iot_es_mqtt_connect(ctx, mqtt_cli, serial_number, (char *)token_buf.p);
-        if (iot_ret != IOT_ERROR_NONE) {
-            IOT_ERROR("failed to connect");
-            goto out;
-        } else {
-            IOT_INFO("MQTT connect success");
-        }
-
-        connection_response_timer = iot_os_timer_create(NULL, GG_CONNECTION_RESPONSE_TIMEOUT_MS, NULL);
-        if (!connection_response_timer) {
-            iot_ret = IOT_ERROR_MQTT_CONNECT_FAIL;
-            IOT_ERROR("Failed to create connection response timer");
-            goto out;
-        }
-        iot_os_timer_start(connection_response_timer);
-
-        /* register notification subscribe for registration */
-        topicfilter = iot_os_malloc(IOT_TOPIC_SIZE);
-        if (topicfilter == NULL) {
-            IOT_ERROR("failed to malloc topicfilter");
-            iot_ret = IOT_ERROR_MEM_ALLOC;
-            goto mqtt_communication_connection_out;
-        }
-        snprintf(topicfilter, IOT_TOPIC_SIZE, IOT_SUB_TOPIC_REGISTRATION, serial_number);
-        IOT_DEBUG("noti subscribe topic : %s", topicfilter);
-        ret = st_mqtt_subscribe(mqtt_cli, 1, &topicfilter, &qos);
-        if (ret) {
-            IOT_ERROR("%s error MQTTsub(%d)", __func__, ret);
-            iot_ret = IOT_ERROR_BAD_REQ;
-            _iot_es_mqtt_disconnect(ctx, mqtt_cli);
-            goto mqtt_registration_connection_out;
-        }
-
-        while (iot_os_timer_is_active(connection_response_timer)) {
-            st_mqtt_yield(mqtt_cli, 0);
-            iot_os_delay(100);
-            if (ctx->sign_up_connection_request_status != GG_CONNECTION_REQUEST_STATUS_WAITING)
-                break;
-        }
-
-        if (ctx->sign_up_connection_request_status != GG_CONNECTION_REQUEST_STATUS_SUCCESS) {
-            IOT_WARN("GG connection fail");
-            iot_ret = IOT_ERROR_MQTT_CONNECT_FAIL;
-            _iot_es_mqtt_disconnect(ctx, mqtt_cli);
-            goto mqtt_registration_connection_out;
-        }
-
-        iot_ret = _iot_es_mqtt_registration(ctx, mqtt_cli);
-        if (iot_ret != IOT_ERROR_NONE) {
-            IOT_ERROR("failed to register");
-            _iot_es_mqtt_disconnect(ctx, mqtt_cli);
-            goto mqtt_registration_connection_out;
-        }
-
-        ctx->reg_mqttcli = mqtt_cli;
-    mqtt_registration_connection_out:
-        if (topicfilter != NULL) {
-            iot_os_free(topicfilter);
-        }
+        iot_ret = _es_connect_registration(ctx, &token_buf, serial_number, &mqtt_cli);
     }
 
 out:
-    if (connection_response_timer)
-        iot_os_timer_delete(connection_response_timer);
-
     if (dip_update_timer)
         iot_os_timer_delete(dip_update_timer);
 

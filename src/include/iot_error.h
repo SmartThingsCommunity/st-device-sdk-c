@@ -74,6 +74,8 @@ typedef enum iot_error_t {
     IOT_ERROR_NET_CONNECT = -301,
     IOT_ERROR_NET_SNTP = -302,
     IOT_ERROR_NET_DNS_FAIL = -303,
+    IOT_ERROR_NET_TCP_CONNECTION_FAIL = -304,
+    IOT_ERROR_NET_TLS_HANDSHAKE_FAIL = -305,
 
     /* easy setup error */
     IOT_ERROR_EASYSETUP_CLIENT = -400,

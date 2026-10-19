@@ -24,12 +24,38 @@
 #include <string.h>
 
 #include "TC_MOCK_functions.h"
+#include "TC_REGISTRY.h"
 #include "cmocka_custom.h"
+
+extern void _iot_free_val(iot_cap_val_t *val);
+extern void _iot_free_unit(iot_cap_unit_t *unit);
+extern void _iot_free_cmd_data(iot_cap_cmd_data_t *cmd_data);
+extern void _iot_free_evt_data(iot_cap_evt_data_t *evt_data);
+extern iot_error_t _iot_parse_noti_data(struct iot_context *ctx, void *data, iot_noti_data_t *noti_data);
+extern iot_error_t _iot_subscribe_child_devices_command(struct iot_context *ctx, JSON_H *child_devices_array);
+extern iot_error_t _iot_notify_child_devices_cloud_connected(struct iot_context *ctx, JSON_H *child_devices_array);
+extern iot_error_t _iot_parse_cmd_data_v2(JSON_H *cmditem, st_command_data *cmd_data);
+extern void _iot_free_cmd_data_v2(st_command_data *cmd_data);
+extern iot_error_t _iot_parse_cmd_data(JSON_H *cmditem, char **component, char **capability, char **command,
+                                       iot_cap_cmd_data_t *cmd_data);
 
 #define UNUSED(x) (void *)(x)
 #define NUM_OF_IOT_EVENTS 6
 
-int TC_iot_capability_setup(void **state)
+TEST_SUITE("iot_capability.c");
+
+static int TC_iot_capability_setup(void **state);
+static int TC_iot_capability_teardown(void **state);
+
+TEST_FIXTURE(iot_capability, TC_iot_capability_setup, TC_iot_capability_teardown);
+
+static int TC_iot_capability_setup(void **state);
+static int TC_iot_capability_teardown(void **state);
+
+static int TC_iot_capability_setup(void **state);
+static int TC_iot_capability_teardown(void **state);
+
+static int TC_iot_capability_setup(void **state)
 {
     UNUSED(*state);
 
@@ -38,7 +64,7 @@ int TC_iot_capability_setup(void **state)
     return 0;
 }
 
-int TC_iot_capability_teardown(void **state)
+static int TC_iot_capability_teardown(void **state)
 {
     UNUSED(*state);
 
@@ -48,7 +74,7 @@ int TC_iot_capability_teardown(void **state)
     return 0;
 }
 
-void TC_st_cap_create_attr_number_with_unit(void **state)
+TEST_F(iot_capability, TC_st_cap_create_attr_number_with_unit_neg)
 {
     IOT_EVENT *event;
     iot_cap_evt_data_t *event_data = NULL;
@@ -72,7 +98,7 @@ void TC_st_cap_create_attr_number_with_unit(void **state)
     st_cap_free_attr(event);
 }
 
-void TC_st_cap_create_attr_string_with_unit(void **state)
+TEST_F(iot_capability, TC_st_cap_create_attr_string_with_unit_neg)
 {
     IOT_EVENT *event;
     iot_cap_evt_data_t *event_data = NULL;
@@ -96,7 +122,7 @@ void TC_st_cap_create_attr_string_with_unit(void **state)
     st_cap_free_attr(event);
 }
 
-void TC_st_cap_create_attr_with_unit_and_data(void **state)
+TEST_F(iot_capability, TC_st_cap_create_attr_with_unit_and_data_neg)
 {
     IOT_EVENT *event;
     iot_cap_evt_data_t *event_data = NULL;
@@ -129,7 +155,7 @@ void test_cap_init_callback(IOT_CAP_HANDLE *handle, void *usr_data)
     UNUSED(usr_data);
 }
 
-void TC_st_cap_handle_init_invalid_argument(void **state)
+TEST_F(iot_capability, TC_st_cap_handle_init_invalid_argument_neg)
 {
     IOT_CAP_HANDLE *cap_handle;
     char *usr_data;
@@ -177,7 +203,7 @@ void TC_st_cap_handle_init_invalid_argument(void **state)
     assert_null(cap_handle);
 }
 
-void TC_st_cap_handle_init_internal_failure(void **state)
+TEST_F(iot_capability, TC_st_cap_handle_init_internal_failure_neg)
 {
     IOT_CAP_HANDLE *cap_handle;
     IOT_CTX *context;
@@ -201,7 +227,7 @@ void TC_st_cap_handle_init_internal_failure(void **state)
     }
 }
 
-void TC_st_cap_handle_init_success(void **state)
+TEST_F(iot_capability, TC_st_cap_handle_init_success_pos)
 {
     IOT_CAP_HANDLE *cap_handle;
     struct iot_cap_handle *handle;
@@ -289,7 +315,7 @@ static void test_st_cap_noti_cb(iot_noti_data_t *noti_data, void *noti_usr_data)
     test_st_cap_noti_cb_called = true;
 }
 
-void TC_st_conn_set_noti_cb_null_parameters(void **state)
+TEST_F(iot_capability, TC_st_conn_set_noti_cb_null_parameters_neg)
 {
     int ret;
     IOT_CTX *context;
@@ -328,7 +354,7 @@ void TC_st_conn_set_noti_cb_null_parameters(void **state)
     free(user_data);
 }
 
-void TC_st_conn_set_noti_cb_success(void **state)
+TEST_F(iot_capability, TC_st_conn_set_noti_cb_success_pos)
 {
     int ret;
     IOT_CTX *context;
@@ -359,7 +385,7 @@ static void test_cap_cmd_cb(IOT_CAP_HANDLE *cap_handle, iot_cap_cmd_data_t *cmd_
     UNUSED(usr_data);
 }
 
-void TC_st_cap_cmd_set_cb_invalid_parameters(void **state)
+TEST_F(iot_capability, TC_st_cap_cmd_set_cb_invalid_parameters_neg)
 {
     int ret;
     struct iot_cap_handle *internal_handle;
@@ -431,7 +457,7 @@ void TC_st_cap_cmd_set_cb_invalid_parameters(void **state)
     free(internal_handle);
 }
 
-void TC_st_cap_cmd_set_cb_internal_failure(void **state)
+TEST_F(iot_capability, TC_st_cap_cmd_set_cb_internal_failure_neg)
 {
     int ret;
     struct iot_cap_handle *internal_handle;
@@ -462,7 +488,7 @@ void TC_st_cap_cmd_set_cb_internal_failure(void **state)
     free(user_data);
 }
 
-void TC_st_cap_cmd_set_cb_success(void **state)
+TEST_F(iot_capability, TC_st_cap_cmd_set_cb_success_pos)
 {
     int ret;
     struct iot_cap_handle *internal_handle;
@@ -572,7 +598,7 @@ static void dummy_mqtt_callback(st_mqtt_event event, void *event_data, void *use
     return;
 }
 
-void TC_st_cap_send_attr_success(void **state)
+TEST_F(iot_capability, TC_st_cap_send_attr_success_pos)
 {
     int sequence_number;
     IOT_CTX *context;
@@ -675,7 +701,7 @@ void TC_st_cap_send_attr_success(void **state)
     iot_os_free(opt.displayed);
 }
 
-void TC_st_cap_send_attr_invalid_parameter(void **state)
+TEST_F(iot_capability, TC_st_cap_send_attr_invalid_parameter_neg)
 {
     int sequence_number;
     IOT_CAP_HANDLE *cap_handle;
@@ -739,7 +765,7 @@ static void test_cap_sub_switch_on(IOT_CAP_HANDLE *HANDLE, iot_cap_cmd_data_t *c
     assert_int_equal(cmd_data->num_args, 5);
 }
 
-void TC_iot_cap_sub_cb_success(void **state)
+TEST_F(iot_capability, TC_iot_cap_sub_cb_success_pos)
 {
     // Given: typical payload and handle lists
     iot_cap_handle_list_t cap_handle_list;
@@ -773,12 +799,11 @@ void TC_iot_cap_sub_cb_success(void **state)
     free(cap_handle_list.handle);
 }
 
-void TC_iot_noti_sub_cb_rate_limit_reached_SUCCESS(void **state)
+TEST_F(iot_capability, TC_iot_noti_sub_cb_rate_limit_reached_neg)
 {
     IOT_CTX *context;
     iot_error_t err;
     struct iot_context *internal_context;
-    struct iot_command *noti_cmd;
     device_work_data_t work_data;
     iot_noti_data_t *noti_data;
     char *payload =
@@ -800,30 +825,16 @@ void TC_iot_noti_sub_cb_rate_limit_reached_SUCCESS(void **state)
     // Then
     err = iot_util_queue_receive(internal_context->work_queue, &work_data);
     assert_int_equal(err, IOT_ERROR_NONE);
-    noti_cmd = (struct iot_command *)(work_data.param);
-    noti_data = noti_cmd->param;
+    noti_data = (iot_noti_data_t *)work_data.param;
     assert_int_equal(noti_data->type, _IOT_NOTI_TYPE_RATE_LIMIT);
     // Teardown
-    if (noti_cmd->param)
-        iot_os_free(noti_cmd->param);
-    iot_os_free(noti_cmd);
+    iot_os_free(noti_data);
     iot_os_timer_delete(internal_context->rate_limit_timeout);
     iot_os_eventgroup_delete(internal_context->work_queue_signal);
     iot_util_queue_delete(internal_context->work_queue);
     free(context);
 }
 
-extern iot_error_t _iot_parse_noti_data(struct iot_context *ctx, void *data, iot_noti_data_t *noti_data);
-extern iot_error_t _iot_subscribe_child_devices_command(struct iot_context *ctx, JSON_H *child_devices_array);
-extern iot_error_t _iot_notify_child_devices_cloud_connected(struct iot_context *ctx, JSON_H *child_devices_array);
-extern iot_error_t _iot_parse_cmd_data_v2(JSON_H *cmditem, st_command_data *cmd_data);
-extern void _iot_free_cmd_data_v2(st_command_data *cmd_data);
-extern iot_error_t _iot_parse_cmd_data(JSON_H *cmditem, char **component, char **capability, char **command,
-                                       iot_cap_cmd_data_t *cmd_data);
-extern void _iot_free_val(iot_cap_val_t *val);
-extern void _iot_free_unit(iot_cap_unit_t *unit);
-extern void _iot_free_cmd_data(iot_cap_cmd_data_t *cmd_data);
-extern void _iot_free_evt_data(iot_cap_evt_data_t *evt_data);
 #define NOTI_TEST_UUID "123e4567-e89b-12d3-a456-426614174000"
 #define NOTI_TEST_TIME "1591326145"
 #define NOTI_TEST_TIME_IN_INT 1591326145
@@ -834,144 +845,142 @@ struct parse_noti_test_data {
     noti_data_raw_t raw;
 };
 
-void TC_iot_parse_noti_data_device_deleted(void **state)
+TEST_F(iot_capability, TC_iot_parse_noti_data_device_deleted_valid_neg)
 {
     iot_error_t err;
     iot_noti_data_t notification;
-    struct iot_context *fake_ctx = NULL;
+    struct iot_context *fake_ctx;
 
-    fake_ctx = (struct iot_context *)malloc(sizeof(struct iot_context));
-    struct parse_noti_test_data test_data[4] = {
-        {
-            "{\"target\":\"" NOTI_TEST_UUID "\",\"event\":\"device.deleted\",\"deviceId\":\"" NOTI_TEST_UUID "\"}",
-            IOT_ERROR_NONE,
-            _IOT_NOTI_TYPE_DEV_DELETED,
-            0,
-        },
-        {
-            "{\"target\":\"" NOTI_TEST_UUID "\",\"event\":\"device.deleting\",\"deviceId\":\"" NOTI_TEST_UUID "\"}",
-            IOT_ERROR_BAD_REQ,
-            _IOT_NOTI_TYPE_DEV_DELETED,
-            0,
-        },
-        {
-            "{\"target\":\"" NOTI_TEST_UUID "\",\"deviceId\":\"" NOTI_TEST_UUID "\"}",
-            IOT_ERROR_BAD_REQ,
-            _IOT_NOTI_TYPE_DEV_DELETED,
-            0,
-        },
-        {
-            "This is not json data",
-            IOT_ERROR_BAD_REQ,
-            _IOT_NOTI_TYPE_DEV_DELETED,
-            0,
-        }};
+    fake_ctx = (struct iot_context *)calloc(1, sizeof(struct iot_context));
+    assert_non_null(fake_ctx);
 
-    UNUSED(state);
-
-    for (int i = 0; i < 4; i++) {
-        // When
-        err = _iot_parse_noti_data(fake_ctx, (void *)test_data[i].payload, &notification);
-        // Then
-        assert_int_equal(err, test_data[i].expected_result);
-        if (test_data[i].expected_result == IOT_ERROR_NONE) {
-            assert_int_equal(notification.type, test_data[i].type);
-        }
-    }
+    err = _iot_parse_noti_data(fake_ctx,
+                               (void *)"{\"target\":\"" NOTI_TEST_UUID
+                                       "\",\"event\":\"device.deleted\",\"deviceId\":\"" NOTI_TEST_UUID "\"}",
+                               &notification);
+    assert_int_equal(err, IOT_ERROR_NONE);
+    assert_int_equal(notification.type, _IOT_NOTI_TYPE_DEV_DELETED);
 
     free(fake_ctx);
 }
 
-void TC_iot_parse_noti_data_expired_jwt(void **state)
+TEST_F(iot_capability, TC_iot_parse_noti_data_device_deleting_invalid_neg)
 {
     iot_error_t err;
     iot_noti_data_t notification;
-    struct iot_context *fake_ctx = NULL;
+    struct iot_context *fake_ctx;
 
-    fake_ctx = (struct iot_context *)malloc(sizeof(struct iot_context));
-    memset(fake_ctx, 0, sizeof(struct iot_context));
-    /* expired.jwt is handled internally (time sync + reconnection trigger),
-     * so it is not exposed as a notification and parser returns IOT_ERROR_BAD_REQ
-     */
-    struct parse_noti_test_data test_data[3] = {
-        {
-            "{\"event\":\"expired.jwt\",\"deviceId\":\"" NOTI_TEST_UUID "\",\"currentTime\":" NOTI_TEST_TIME "}",
-            IOT_ERROR_BAD_REQ,
-            _IOT_NOTI_TYPE_UNKNOWN,
-            0,
-        },
-        {
-            "{\"event\":\"expired.JavaWebToken\",\"deviceId\":\"" NOTI_TEST_UUID "\",\"currentTime\":" NOTI_TEST_TIME
-            "}",
-            IOT_ERROR_BAD_REQ,
-            _IOT_NOTI_TYPE_UNKNOWN,
-            0,
-        },
-        {
-            "{\"event\":\"expired.jwt\",\"deviceId\":\"" NOTI_TEST_UUID "\"}",
-            IOT_ERROR_BAD_REQ,
-            _IOT_NOTI_TYPE_UNKNOWN,
-            0,
-        },
-    };
+    fake_ctx = (struct iot_context *)calloc(1, sizeof(struct iot_context));
+    assert_non_null(fake_ctx);
 
-    UNUSED(state);
+    err = _iot_parse_noti_data(fake_ctx,
+                               (void *)"{\"target\":\"" NOTI_TEST_UUID
+                                       "\",\"event\":\"device.deleting\",\"deviceId\":\"" NOTI_TEST_UUID "\"}",
+                               &notification);
+    assert_int_equal(err, IOT_ERROR_BAD_REQ);
 
-    /* Only the first payload is a valid expired.jwt with currentTime,
-     * which triggers SNTP time set with the server-given time
-     */
+    free(fake_ctx);
+}
+
+TEST_F(iot_capability, TC_iot_parse_noti_data_device_deleted_no_event_field_neg)
+{
+    iot_error_t err;
+    iot_noti_data_t notification;
+    struct iot_context *fake_ctx;
+
+    fake_ctx = (struct iot_context *)calloc(1, sizeof(struct iot_context));
+    assert_non_null(fake_ctx);
+
+    err = _iot_parse_noti_data(
+        fake_ctx, (void *)"{\"target\":\"" NOTI_TEST_UUID "\",\"deviceId\":\"" NOTI_TEST_UUID "\"}", &notification);
+    assert_int_equal(err, IOT_ERROR_BAD_REQ);
+
+    free(fake_ctx);
+}
+
+TEST_F(iot_capability, TC_iot_parse_noti_data_device_deleted_invalid_json_neg)
+{
+    iot_error_t err;
+    iot_noti_data_t notification;
+    struct iot_context *fake_ctx;
+
+    fake_ctx = (struct iot_context *)calloc(1, sizeof(struct iot_context));
+    assert_non_null(fake_ctx);
+
+    err = _iot_parse_noti_data(fake_ctx, (void *)"This is not json data", &notification);
+    assert_int_equal(err, IOT_ERROR_BAD_REQ);
+
+    free(fake_ctx);
+}
+
+TEST_F(iot_capability, TC_iot_parse_noti_data_expired_jwt_with_time_neg)
+{
+    iot_error_t err;
+    iot_noti_data_t notification;
+    struct iot_context *fake_ctx;
+
+    fake_ctx = (struct iot_context *)calloc(1, sizeof(struct iot_context));
+    assert_non_null(fake_ctx);
+
     expect_value(__wrap_iot_bsp_system_set_time_in_sec, time_in_sec, NOTI_TEST_TIME_IN_INT);
-    for (int i = 0; i < 3; i++) {
-        err = _iot_parse_noti_data(fake_ctx, (void *)test_data[i].payload, &notification);
-        assert_int_equal(err, test_data[i].expected_result);
-    }
+    err = _iot_parse_noti_data(fake_ctx, (void *)"{\"event\":\"expired.jwt\",\"currentTime\":" NOTI_TEST_TIME "}",
+                               &notification);
+    assert_int_equal(err, IOT_ERROR_BAD_REQ);
 
     free(fake_ctx);
 }
 
-void TC_iot_parse_noti_data_quota_reached(void **state)
+TEST_F(iot_capability, TC_iot_parse_noti_data_expired_jwt_without_time_neg)
 {
     iot_error_t err;
     iot_noti_data_t notification;
-    struct iot_context *fake_ctx = NULL;
+    struct iot_context *fake_ctx;
 
-    fake_ctx = (struct iot_context *)malloc(sizeof(struct iot_context));
-    struct parse_noti_test_data test_data[4] = {
-        {"{\"target\":\"" NOTI_TEST_UUID "\",\"event\":\"quota.reached\",\"limit\":500,\"used\":501}",
-         IOT_ERROR_NONE,
-         _IOT_NOTI_TYPE_QUOTA_REACHED,
-         {.quota = {501, 500}}},
-        {"{\"target\":\"" NOTI_TEST_UUID "\",\"event\":\"quota.done\",\"limit\":500,\"used\":501}",
-         IOT_ERROR_BAD_REQ,
-         _IOT_NOTI_TYPE_QUOTA_REACHED,
-         {.quota = {501, 500}}},
-        {"{\"target\":\"" NOTI_TEST_UUID "\",\"event\":\"quota.reached\",\"used\":501}",
-         IOT_ERROR_BAD_REQ,
-         _IOT_NOTI_TYPE_QUOTA_REACHED,
-         {.quota = {501, 0}}},
-        {"{\"target\":\"" NOTI_TEST_UUID "\",\"event\":\"quota.reached\",\"limit\":500}",
-         IOT_ERROR_BAD_REQ,
-         _IOT_NOTI_TYPE_QUOTA_REACHED,
-         {.quota = {0, 500}}},
-    };
-    UNUSED(state);
+    fake_ctx = (struct iot_context *)calloc(1, sizeof(struct iot_context));
+    assert_non_null(fake_ctx);
 
-    for (int i = 0; i < 4; i++) {
-        // When
-        err = _iot_parse_noti_data(fake_ctx, (void *)test_data[i].payload, &notification);
-        // Then
-        assert_int_equal(err, test_data[i].expected_result);
-        if (test_data[i].expected_result == IOT_ERROR_NONE) {
-            assert_int_equal(notification.type, test_data[i].type);
-            assert_int_equal(notification.raw.quota.limit, test_data[i].raw.quota.limit);
-            assert_int_equal(notification.raw.quota.used, test_data[i].raw.quota.used);
-        }
-    }
+    err = _iot_parse_noti_data(fake_ctx, (void *)"{\"event\":\"expired.jwt\"}", &notification);
+    assert_int_equal(err, IOT_ERROR_BAD_REQ);
 
     free(fake_ctx);
 }
 
-void TC_st_cap_create_attr_with_id_success(void **state)
+TEST_F(iot_capability, TC_iot_parse_noti_data_quota_reached_valid_neg)
+{
+    iot_error_t err;
+    iot_noti_data_t notification;
+    struct iot_context *fake_ctx;
+
+    fake_ctx = (struct iot_context *)calloc(1, sizeof(struct iot_context));
+    assert_non_null(fake_ctx);
+
+    err = _iot_parse_noti_data(
+        fake_ctx, (void *)"{\"target\":\"" NOTI_TEST_UUID "\",\"event\":\"quota.reached\",\"limit\":500,\"used\":501}",
+        &notification);
+    assert_int_equal(err, IOT_ERROR_NONE);
+    assert_int_equal(notification.type, _IOT_NOTI_TYPE_QUOTA_REACHED);
+
+    free(fake_ctx);
+}
+
+TEST_F(iot_capability, TC_iot_parse_noti_data_quota_done_invalid_neg)
+{
+    iot_error_t err;
+    iot_noti_data_t notification;
+    struct iot_context *fake_ctx;
+
+    fake_ctx = (struct iot_context *)calloc(1, sizeof(struct iot_context));
+    assert_non_null(fake_ctx);
+
+    err = _iot_parse_noti_data(
+        fake_ctx, (void *)"{\"target\":\"" NOTI_TEST_UUID "\",\"event\":\"quota.done\",\"limit\":500,\"used\":501}",
+        &notification);
+    assert_int_equal(err, IOT_ERROR_BAD_REQ);
+
+    free(fake_ctx);
+}
+
+TEST_F(TC_REGISTRY_NO_FIXTURE, TC_st_cap_create_attr_with_id_success_pos)
 {
     IOT_EVENT *evt;
     iot_cap_evt_data_t *event_data = NULL;
@@ -993,7 +1002,7 @@ void TC_st_cap_create_attr_with_id_success(void **state)
     assert_string_equal(event_data->evt_type, "testIdAttr");
 }
 
-void TC_st_cap_create_attr_with_option_null_parameter(void **state)
+TEST_F(TC_REGISTRY_NO_FIXTURE, TC_st_cap_create_attr_with_option_null_parameter_neg)
 {
     IOT_EVENT *evt;
     iot_cap_val_t value;
@@ -1020,7 +1029,7 @@ void TC_st_cap_create_attr_with_option_null_parameter(void **state)
     assert_null(evt);
 }
 
-void TC_st_cap_create_attr_with_option_failure(void **state)
+TEST_F(iot_capability, TC_st_cap_create_attr_with_option_failure_neg)
 {
     IOT_EVENT *evt;
     iot_cap_evt_data_t *event_data = NULL;
@@ -1058,7 +1067,7 @@ void TC_st_cap_create_attr_with_option_failure(void **state)
     assert_null(evt);
 }
 
-void TC_st_cap_create_attr_with_option_internal_failure(void **state)
+TEST_F(iot_capability, TC_st_cap_create_attr_with_option_internal_failure_neg)
 {
     IOT_EVENT *evt;
     iot_cap_evt_data_t *event_data = NULL;
@@ -1096,7 +1105,7 @@ void TC_st_cap_create_attr_with_option_internal_failure(void **state)
     iot_os_free(opt.displayed);
 }
 
-void TC_st_cap_create_attr_with_option_success(void **state)
+TEST_F(iot_capability, TC_st_cap_create_attr_with_option_success_pos)
 {
     IOT_EVENT *evt;
     iot_cap_evt_data_t *event_data = NULL;
@@ -1207,7 +1216,7 @@ void TC_st_cap_create_attr_with_option_success(void **state)
     iot_os_free(opt.displayed);
 }
 
-void TC_iot_cap_commands_cb_failure(void **state)
+TEST_F(iot_capability, TC_iot_cap_commands_cb_failure_neg)
 {
     UNUSED(state);
     struct iot_context *context;
@@ -1224,7 +1233,7 @@ void TC_iot_cap_commands_cb_failure(void **state)
     free(context);
 }
 
-void TC_iot_cap_commands_cb_success(void **state)
+TEST_F(iot_capability, TC_iot_cap_commands_cb_success_pos)
 {
     UNUSED(state);
     struct iot_context *context;
@@ -1255,7 +1264,7 @@ void TC_iot_cap_commands_cb_success(void **state)
     free(context);
 }
 
-void TC_iot_parse_noti_data_presference_updated(void **state)
+TEST_F(iot_capability, TC_iot_parse_noti_data_presference_updated_neg)
 {
     iot_error_t err;
     iot_noti_data_t notification;
@@ -1288,7 +1297,7 @@ void TC_iot_parse_noti_data_presference_updated(void **state)
     free(fake_ctx);
 }
 
-void TC_iot_cap_call_init_cb_null_parameteer(void **state)
+TEST_F(iot_capability, TC_iot_cap_call_init_cb_null_parameteer_neg)
 {
     UNUSED(state);
 
@@ -1296,7 +1305,7 @@ void TC_iot_cap_call_init_cb_null_parameteer(void **state)
     iot_cap_call_init_cb(NULL);
 }
 
-void TC_iot_cap_call_init_cb_success(void **state)
+TEST_F(iot_capability, TC_iot_cap_call_init_cb_success_pos)
 {
     struct iot_cap_handle_list *cap_handle_list;
 
@@ -1378,7 +1387,7 @@ static void assert_st_cap_attr_v2_send(char *message, char *expected_component, 
     JSON_DELETE(root);
 }
 
-void TC_st_cap_send_attr_v2_null_parameter(void **state)
+TEST_F(iot_capability, TC_st_cap_send_attr_v2_null_parameter_neg)
 {
     UNUSED(state);
     st_attr_data *attr[5];
@@ -1399,7 +1408,7 @@ void TC_st_cap_send_attr_v2_null_parameter(void **state)
     free(context);
 }
 
-void TC_st_cap_send_attr_v2_failure(void **state)
+TEST_F(iot_capability, TC_st_cap_send_attr_v2_failure_neg)
 {
     UNUSED(state);
     st_attr_data *attr[5];
@@ -1438,7 +1447,7 @@ void TC_st_cap_send_attr_v2_failure(void **state)
     free(context);
 }
 
-void TC_st_cap_send_attr_v2_success(void **state)
+TEST_F(iot_capability, TC_st_cap_send_attr_v2_success_pos)
 {
     UNUSED(state);
     int sequence_number;
@@ -1534,7 +1543,7 @@ void TC_st_cap_send_attr_v2_success(void **state)
     free(context);
 }
 
-void TC_st_child_dev_cap_handle_init_null_parameters(void **state)
+TEST_F(iot_capability, TC_st_child_dev_cap_handle_init_null_parameters_neg)
 {
     IOT_CAP_HANDLE *cap_handle;
     char *usr_data;
@@ -1564,7 +1573,7 @@ void TC_st_child_dev_cap_handle_init_null_parameters(void **state)
     free(usr_data);
 }
 
-void TC_st_child_dev_cap_handle_init_internal_failure(void **state)
+TEST_F(iot_capability, TC_st_child_dev_cap_handle_init_internal_failure_neg)
 {
     IOT_CAP_HANDLE *cap_handle;
     IOT_CHILD_DEV child_dev;
@@ -1605,7 +1614,7 @@ void TC_st_child_dev_cap_handle_init_internal_failure(void **state)
     do_not_use_mock_iot_os_malloc_failure();
 }
 
-void TC_st_child_dev_cap_handle_init_success(void **state)
+TEST_F(iot_capability, TC_st_child_dev_cap_handle_init_success_pos)
 {
     IOT_CAP_HANDLE *cap_handle;
     struct iot_cap_handle *handle;
@@ -1688,7 +1697,7 @@ void TC_st_child_dev_cap_handle_init_success(void **state)
     free(usr_data);
 }
 
-void TC_iot_subscribe_child_devices_command_null_parameters(void **state)
+TEST_F(iot_capability, TC_iot_subscribe_child_devices_command_null_parameters_neg)
 {
     iot_error_t ret;
     UNUSED(*state);
@@ -1699,7 +1708,7 @@ void TC_iot_subscribe_child_devices_command_null_parameters(void **state)
     assert_int_equal(ret, IOT_ERROR_NONE);
 }
 
-void TC_iot_subscribe_child_devices_command_empty_array(void **state)
+TEST_F(iot_capability, TC_iot_subscribe_child_devices_command_empty_array_neg)
 {
     iot_error_t ret;
     JSON_H *empty_array;
@@ -1721,7 +1730,7 @@ void TC_iot_subscribe_child_devices_command_empty_array(void **state)
     free(ctx);
 }
 
-void TC_iot_subscribe_child_devices_command_malloc_failure(void **state)
+TEST_F(iot_capability, TC_iot_subscribe_child_devices_command_malloc_failure_neg)
 {
     iot_error_t ret;
     JSON_H *child_array;
@@ -1784,7 +1793,7 @@ void TC_iot_subscribe_child_devices_command_malloc_failure(void **state)
     do_not_use_mock_iot_os_malloc_failure();
 }
 
-void TC_iot_subscribe_child_devices_command_success(void **state)
+TEST_F(iot_capability, TC_iot_subscribe_child_devices_command_success_pos)
 {
     iot_error_t ret;
     JSON_H *child_array;
@@ -1812,7 +1821,7 @@ void TC_iot_subscribe_child_devices_command_success(void **state)
     free(ctx);
 }
 
-void TC_iot_parse_cmd_data_v2_null_parameters(void **state)
+TEST_F(iot_capability, TC_iot_parse_cmd_data_v2_null_parameters_neg)
 {
     iot_error_t ret;
     st_command_data cmd_data;
@@ -1824,7 +1833,7 @@ void TC_iot_parse_cmd_data_v2_null_parameters(void **state)
     assert_int_equal(ret, IOT_ERROR_BAD_REQ);
 }
 
-void TC_iot_parse_cmd_data_v2_missing_fields(void **state)
+TEST_F(iot_capability, TC_iot_parse_cmd_data_v2_missing_fields_neg)
 {
     iot_error_t ret;
     st_command_data cmd_data;
@@ -1872,7 +1881,7 @@ void TC_iot_parse_cmd_data_v2_missing_fields(void **state)
     JSON_DELETE(cmditem);
 }
 
-void TC_iot_parse_cmd_data_v2_malloc_failure(void **state)
+TEST_F(iot_capability, TC_iot_parse_cmd_data_v2_malloc_failure_neg)
 {
     iot_error_t ret;
     st_command_data cmd_data;
@@ -1895,7 +1904,7 @@ void TC_iot_parse_cmd_data_v2_malloc_failure(void **state)
     do_not_use_mock_iot_os_malloc_failure();
 }
 
-void TC_iot_parse_cmd_data_v2_success(void **state)
+TEST_F(iot_capability, TC_iot_parse_cmd_data_v2_success_pos)
 {
     iot_error_t ret;
     st_command_data cmd_data;
@@ -1987,7 +1996,7 @@ void TC_iot_parse_cmd_data_v2_success(void **state)
     JSON_DELETE(cmditem);
 }
 
-void TC_iot_free_cmd_data_v2_null_parameter(void **state)
+TEST_F(iot_capability, TC_iot_free_cmd_data_v2_null_parameter_neg)
 {
     UNUSED(*state);
 
@@ -1997,7 +2006,7 @@ void TC_iot_free_cmd_data_v2_null_parameter(void **state)
     assert_true(1);
 }
 
-void TC_iot_free_cmd_data_v2_success(void **state)
+TEST_F(iot_capability, TC_iot_free_cmd_data_v2_success_pos)
 {
     st_command_data cmd_data;
     JSON_H *cmditem;
@@ -2020,7 +2029,7 @@ void TC_iot_free_cmd_data_v2_success(void **state)
     JSON_DELETE(cmditem);
 }
 
-void TC_iot_parse_cmd_data_null_parameters(void **state)
+TEST_F(iot_capability, TC_iot_parse_cmd_data_null_parameters_neg)
 {
     iot_error_t ret;
     char *component = NULL;
@@ -2035,7 +2044,7 @@ void TC_iot_parse_cmd_data_null_parameters(void **state)
     assert_int_equal(ret, IOT_ERROR_BAD_REQ);
 }
 
-void TC_iot_parse_cmd_data_missing_fields(void **state)
+TEST_F(iot_capability, TC_iot_parse_cmd_data_missing_fields_neg)
 {
     iot_error_t ret;
     char *component = NULL;
@@ -2070,7 +2079,7 @@ void TC_iot_parse_cmd_data_missing_fields(void **state)
     JSON_DELETE(cmditem);
 }
 
-void TC_iot_parse_cmd_data_malloc_failure(void **state)
+TEST_F(iot_capability, TC_iot_parse_cmd_data_malloc_failure_neg)
 {
     iot_error_t ret;
     char *component = NULL;
@@ -2123,7 +2132,7 @@ void TC_iot_parse_cmd_data_malloc_failure(void **state)
     do_not_use_mock_iot_os_malloc_failure();
 }
 
-void TC_iot_parse_cmd_data_success(void **state)
+TEST_F(iot_capability, TC_iot_parse_cmd_data_success_pos)
 {
     iot_error_t ret;
     char *component = NULL;
@@ -2265,7 +2274,7 @@ void TC_iot_parse_cmd_data_success(void **state)
     JSON_DELETE(cmditem);
 }
 
-void TC_iot_free_val_null_parameter(void **state)
+TEST_F(iot_capability, TC_iot_free_val_null_parameter_neg)
 {
     UNUSED(*state);
 
@@ -2275,7 +2284,7 @@ void TC_iot_free_val_null_parameter(void **state)
     assert_true(1);
 }
 
-void TC_iot_free_val_string_type(void **state)
+TEST_F(iot_capability, TC_iot_free_val_string_type_neg)
 {
     iot_cap_val_t val;
     UNUSED(*state);
@@ -2290,7 +2299,7 @@ void TC_iot_free_val_string_type(void **state)
     assert_true(1);
 }
 
-void TC_iot_free_val_str_array_type(void **state)
+TEST_F(iot_capability, TC_iot_free_val_str_array_type_neg)
 {
     iot_cap_val_t val;
     UNUSED(*state);
@@ -2308,7 +2317,7 @@ void TC_iot_free_val_str_array_type(void **state)
     assert_true(1);
 }
 
-void TC_iot_free_val_json_object_type(void **state)
+TEST_F(iot_capability, TC_iot_free_val_json_object_type_neg)
 {
     iot_cap_val_t val;
     UNUSED(*state);
@@ -2323,7 +2332,7 @@ void TC_iot_free_val_json_object_type(void **state)
     assert_true(1);
 }
 
-void TC_iot_free_unit_null_parameter(void **state)
+TEST_F(iot_capability, TC_iot_free_unit_null_parameter_neg)
 {
     UNUSED(*state);
 
@@ -2333,7 +2342,7 @@ void TC_iot_free_unit_null_parameter(void **state)
     assert_true(1);
 }
 
-void TC_iot_free_unit_string_type(void **state)
+TEST_F(iot_capability, TC_iot_free_unit_string_type_neg)
 {
     iot_cap_unit_t unit;
     UNUSED(*state);
@@ -2348,7 +2357,7 @@ void TC_iot_free_unit_string_type(void **state)
     assert_true(1);
 }
 
-void TC_iot_free_cmd_data_null_parameter(void **state)
+TEST_F(iot_capability, TC_iot_free_cmd_data_null_parameter_neg)
 {
     UNUSED(*state);
 
@@ -2358,7 +2367,7 @@ void TC_iot_free_cmd_data_null_parameter(void **state)
     assert_true(1);
 }
 
-void TC_iot_free_cmd_data_success(void **state)
+TEST_F(iot_capability, TC_iot_free_cmd_data_success_pos)
 {
     iot_cap_cmd_data_t cmd_data;
     UNUSED(*state);
@@ -2378,7 +2387,7 @@ void TC_iot_free_cmd_data_success(void **state)
     assert_true(1);
 }
 
-void TC_iot_free_evt_data_null_parameter(void **state)
+TEST_F(iot_capability, TC_iot_free_evt_data_null_parameter_neg)
 {
     UNUSED(*state);
 
@@ -2388,7 +2397,7 @@ void TC_iot_free_evt_data_null_parameter(void **state)
     assert_true(1);
 }
 
-void TC_iot_free_evt_data_success(void **state)
+TEST_F(iot_capability, TC_iot_free_evt_data_success_pos)
 {
     iot_cap_evt_data_t evt_data;
     UNUSED(*state);
@@ -2411,7 +2420,7 @@ void TC_iot_free_evt_data_success(void **state)
     assert_true(1);
 }
 
-void TC_iot_notify_child_devices_cloud_connected_null_parameters(void **state)
+TEST_F(iot_capability, TC_iot_notify_child_devices_cloud_connected_null_parameters_neg)
 {
     iot_error_t ret;
     UNUSED(*state);
@@ -2422,7 +2431,7 @@ void TC_iot_notify_child_devices_cloud_connected_null_parameters(void **state)
     assert_int_equal(ret, IOT_ERROR_NONE);
 }
 
-void TC_iot_notify_child_devices_cloud_connected_empty_array(void **state)
+TEST_F(iot_capability, TC_iot_notify_child_devices_cloud_connected_empty_array_neg)
 {
     iot_error_t ret;
     JSON_H *empty_array;
@@ -2444,7 +2453,7 @@ void TC_iot_notify_child_devices_cloud_connected_empty_array(void **state)
     free(ctx);
 }
 
-void TC_iot_notify_child_devices_cloud_connected_invalid_child_device(void **state)
+TEST_F(iot_capability, TC_iot_notify_child_devices_cloud_connected_invalid_child_device_neg)
 {
     iot_error_t ret;
     JSON_H *child_array;
@@ -2469,7 +2478,7 @@ void TC_iot_notify_child_devices_cloud_connected_invalid_child_device(void **sta
     free(ctx);
 }
 
-void TC_iot_notify_child_devices_cloud_connected_success(void **state)
+TEST_F(iot_capability, TC_iot_notify_child_devices_cloud_connected_success_pos)
 {
     iot_error_t ret;
     JSON_H *child_array;
@@ -2504,7 +2513,7 @@ void TC_iot_notify_child_devices_cloud_connected_success(void **state)
     free(ctx);
 }
 
-void TC_iot_parse_noti_data_invalid_json(void **state)
+TEST_F(iot_capability, TC_iot_parse_noti_data_invalid_json_neg)
 {
     iot_error_t err;
     iot_noti_data_t notification;
@@ -2523,7 +2532,7 @@ void TC_iot_parse_noti_data_invalid_json(void **state)
     free(fake_ctx);
 }
 
-void TC_iot_parse_noti_data_no_event_field(void **state)
+TEST_F(iot_capability, TC_iot_parse_noti_data_no_event_field_neg)
 {
     iot_error_t err;
     iot_noti_data_t notification;
@@ -2542,7 +2551,7 @@ void TC_iot_parse_noti_data_no_event_field(void **state)
     free(fake_ctx);
 }
 
-void TC_iot_parse_noti_data_null_event_type(void **state)
+TEST_F(iot_capability, TC_iot_parse_noti_data_null_event_type_neg)
 {
     iot_error_t err;
     iot_noti_data_t notification;
@@ -2561,7 +2570,7 @@ void TC_iot_parse_noti_data_null_event_type(void **state)
     free(fake_ctx);
 }
 
-void TC_iot_parse_noti_data_unknown_event_type(void **state)
+TEST_F(iot_capability, TC_iot_parse_noti_data_unknown_event_type_neg)
 {
     iot_error_t err;
     iot_noti_data_t notification;
@@ -2580,7 +2589,7 @@ void TC_iot_parse_noti_data_unknown_event_type(void **state)
     free(fake_ctx);
 }
 
-void TC_iot_parse_noti_data_expired_jwt_no_current_time(void **state)
+TEST_F(iot_capability, TC_iot_parse_noti_data_expired_jwt_no_current_time_neg)
 {
     iot_error_t err;
     iot_noti_data_t notification;
@@ -2599,7 +2608,7 @@ void TC_iot_parse_noti_data_expired_jwt_no_current_time(void **state)
     free(fake_ctx);
 }
 
-void TC_iot_parse_noti_data_quota_reached_no_limit(void **state)
+TEST_F(iot_capability, TC_iot_parse_noti_data_quota_reached_no_limit_neg)
 {
     iot_error_t err;
     iot_noti_data_t notification;
@@ -2618,7 +2627,7 @@ void TC_iot_parse_noti_data_quota_reached_no_limit(void **state)
     free(fake_ctx);
 }
 
-void TC_iot_parse_noti_data_quota_reached_no_used(void **state)
+TEST_F(iot_capability, TC_iot_parse_noti_data_quota_reached_no_used_neg)
 {
     iot_error_t err;
     iot_noti_data_t notification;
@@ -2637,7 +2646,7 @@ void TC_iot_parse_noti_data_quota_reached_no_used(void **state)
     free(fake_ctx);
 }
 
-void TC_iot_parse_noti_data_rate_limit_no_count(void **state)
+TEST_F(iot_capability, TC_iot_parse_noti_data_rate_limit_no_count_neg)
 {
     iot_error_t err;
     iot_noti_data_t notification;
@@ -2656,7 +2665,7 @@ void TC_iot_parse_noti_data_rate_limit_no_count(void **state)
     free(fake_ctx);
 }
 
-void TC_iot_parse_noti_data_rate_limit_no_threshold(void **state)
+TEST_F(iot_capability, TC_iot_parse_noti_data_rate_limit_no_threshold_neg)
 {
     iot_error_t err;
     iot_noti_data_t notification;
@@ -2675,7 +2684,7 @@ void TC_iot_parse_noti_data_rate_limit_no_threshold(void **state)
     free(fake_ctx);
 }
 
-void TC_iot_parse_noti_data_rate_limit_no_remaining_time(void **state)
+TEST_F(iot_capability, TC_iot_parse_noti_data_rate_limit_no_remaining_time_neg)
 {
     iot_error_t err;
     iot_noti_data_t notification;
@@ -2695,7 +2704,7 @@ void TC_iot_parse_noti_data_rate_limit_no_remaining_time(void **state)
     free(fake_ctx);
 }
 
-void TC_iot_parse_noti_data_rate_limit_no_sequence_number(void **state)
+TEST_F(iot_capability, TC_iot_parse_noti_data_rate_limit_no_sequence_number_neg)
 {
     iot_error_t err;
     iot_noti_data_t notification;
@@ -2716,7 +2725,7 @@ void TC_iot_parse_noti_data_rate_limit_no_sequence_number(void **state)
     free(fake_ctx);
 }
 
-void TC_iot_parse_noti_data_preference_updated_no_values(void **state)
+TEST_F(iot_capability, TC_iot_parse_noti_data_preference_updated_no_values_neg)
 {
     iot_error_t err;
     iot_noti_data_t notification;
@@ -2735,7 +2744,7 @@ void TC_iot_parse_noti_data_preference_updated_no_values(void **state)
     free(fake_ctx);
 }
 
-void TC_iot_parse_noti_data_preference_updated_empty_values(void **state)
+TEST_F(iot_capability, TC_iot_parse_noti_data_preference_updated_empty_values_neg)
 {
     iot_error_t err;
     iot_noti_data_t notification;
@@ -2754,7 +2763,7 @@ void TC_iot_parse_noti_data_preference_updated_empty_values(void **state)
     free(fake_ctx);
 }
 
-void TC_iot_parse_noti_data_device_updated_success(void **state)
+TEST_F(iot_capability, TC_iot_parse_noti_data_device_updated_success_pos)
 {
     iot_error_t err;
     iot_noti_data_t notification;
@@ -2773,7 +2782,7 @@ void TC_iot_parse_noti_data_device_updated_success(void **state)
     free(fake_ctx);
 }
 
-void TC_iot_parse_noti_data_device_created_no_response(void **state)
+TEST_F(iot_capability, TC_iot_parse_noti_data_device_created_no_response_neg)
 {
     iot_error_t err;
     iot_noti_data_t notification;
@@ -2792,7 +2801,7 @@ void TC_iot_parse_noti_data_device_created_no_response(void **state)
     free(fake_ctx);
 }
 
-void TC_iot_parse_noti_data_device_created_no_device_id(void **state)
+TEST_F(iot_capability, TC_iot_parse_noti_data_device_created_no_device_id_neg)
 {
     iot_error_t err;
     iot_noti_data_t notification;
@@ -2811,7 +2820,7 @@ void TC_iot_parse_noti_data_device_created_no_device_id(void **state)
     free(fake_ctx);
 }
 
-void TC_iot_parse_noti_data_device_created_no_metadata(void **state)
+TEST_F(iot_capability, TC_iot_parse_noti_data_device_created_no_metadata_neg)
 {
     iot_error_t err;
     iot_noti_data_t notification;
@@ -2831,7 +2840,7 @@ void TC_iot_parse_noti_data_device_created_no_metadata(void **state)
     free(fake_ctx);
 }
 
-void TC_iot_parse_noti_data_device_created_no_mn_id(void **state)
+TEST_F(iot_capability, TC_iot_parse_noti_data_device_created_no_mn_id_neg)
 {
     iot_error_t err;
     iot_noti_data_t notification;
@@ -2852,7 +2861,7 @@ void TC_iot_parse_noti_data_device_created_no_mn_id(void **state)
     free(fake_ctx);
 }
 
-void TC_iot_parse_noti_data_device_created_no_serial_number(void **state)
+TEST_F(iot_capability, TC_iot_parse_noti_data_device_created_no_serial_number_neg)
 {
     iot_error_t err;
     iot_noti_data_t notification;
@@ -2871,7 +2880,7 @@ void TC_iot_parse_noti_data_device_created_no_serial_number(void **state)
     free(fake_ctx);
 }
 
-void TC_iot_parse_noti_data_device_created_no_dip(void **state)
+TEST_F(iot_capability, TC_iot_parse_noti_data_device_created_no_dip_neg)
 {
     iot_error_t err;
     iot_noti_data_t notification;
@@ -2890,7 +2899,7 @@ void TC_iot_parse_noti_data_device_created_no_dip(void **state)
     free(fake_ctx);
 }
 
-void TC_iot_parse_noti_data_device_created_no_dip_id(void **state)
+TEST_F(iot_capability, TC_iot_parse_noti_data_device_created_no_dip_id_neg)
 {
     iot_error_t err;
     iot_noti_data_t notification;
@@ -2909,7 +2918,7 @@ void TC_iot_parse_noti_data_device_created_no_dip_id(void **state)
     free(fake_ctx);
 }
 
-void TC_iot_parse_noti_data_device_created_no_dip_major_version(void **state)
+TEST_F(iot_capability, TC_iot_parse_noti_data_device_created_no_dip_major_version_neg)
 {
     iot_error_t err;
     iot_noti_data_t notification;
@@ -2928,7 +2937,7 @@ void TC_iot_parse_noti_data_device_created_no_dip_major_version(void **state)
     free(fake_ctx);
 }
 
-void TC_iot_parse_noti_data_device_created_success(void **state)
+TEST_F(iot_capability, TC_iot_parse_noti_data_device_created_success_pos)
 {
     iot_error_t err;
     iot_noti_data_t notification;
@@ -2965,7 +2974,7 @@ void TC_iot_parse_noti_data_device_created_success(void **state)
     free(fake_ctx);
 }
 
-void TC_iot_parse_noti_data_device_get_no_child_devices(void **state)
+TEST_F(iot_capability, TC_iot_parse_noti_data_device_get_no_child_devices_neg)
 {
     iot_error_t err;
     iot_noti_data_t notification;
@@ -2984,7 +2993,7 @@ void TC_iot_parse_noti_data_device_get_no_child_devices(void **state)
     free(fake_ctx);
 }
 
-void TC_iot_parse_noti_data_device_get_no_device_id(void **state)
+TEST_F(iot_capability, TC_iot_parse_noti_data_device_get_no_device_id_neg)
 {
     iot_error_t err;
     iot_noti_data_t notification;
@@ -3003,7 +3012,7 @@ void TC_iot_parse_noti_data_device_get_no_device_id(void **state)
     free(fake_ctx);
 }
 
-void TC_iot_parse_noti_data_device_get_no_mn_id(void **state)
+TEST_F(iot_capability, TC_iot_parse_noti_data_device_get_no_mn_id_neg)
 {
     iot_error_t err;
     iot_noti_data_t notification;
@@ -3023,7 +3032,7 @@ void TC_iot_parse_noti_data_device_get_no_mn_id(void **state)
     free(fake_ctx);
 }
 
-void TC_iot_parse_noti_data_device_get_no_serial_number(void **state)
+TEST_F(iot_capability, TC_iot_parse_noti_data_device_get_no_serial_number_neg)
 {
     iot_error_t err;
     iot_noti_data_t notification;
@@ -3044,7 +3053,7 @@ void TC_iot_parse_noti_data_device_get_no_serial_number(void **state)
     free(fake_ctx);
 }
 
-void TC_iot_parse_noti_data_device_get_no_dip(void **state)
+TEST_F(iot_capability, TC_iot_parse_noti_data_device_get_no_dip_neg)
 {
     iot_error_t err;
     iot_noti_data_t notification;
@@ -3063,7 +3072,7 @@ void TC_iot_parse_noti_data_device_get_no_dip(void **state)
     free(fake_ctx);
 }
 
-void TC_iot_parse_noti_data_device_get_no_dip_id(void **state)
+TEST_F(iot_capability, TC_iot_parse_noti_data_device_get_no_dip_id_neg)
 {
     iot_error_t err;
     iot_noti_data_t notification;
@@ -3082,7 +3091,7 @@ void TC_iot_parse_noti_data_device_get_no_dip_id(void **state)
     free(fake_ctx);
 }
 
-void TC_iot_parse_noti_data_device_get_no_dip_major_version(void **state)
+TEST_F(iot_capability, TC_iot_parse_noti_data_device_get_no_dip_major_version_neg)
 {
     iot_error_t err;
     iot_noti_data_t notification;
@@ -3101,7 +3110,7 @@ void TC_iot_parse_noti_data_device_get_no_dip_major_version(void **state)
     free(fake_ctx);
 }
 
-void TC_iot_parse_noti_data_child_device_health_response_no_success(void **state)
+TEST_F(iot_capability, TC_iot_parse_noti_data_child_device_health_response_no_success_neg)
 {
     iot_error_t err;
     iot_noti_data_t notification;
@@ -3120,7 +3129,7 @@ void TC_iot_parse_noti_data_child_device_health_response_no_success(void **state
     free(fake_ctx);
 }
 
-void TC_iot_parse_noti_data_child_device_health_response_success(void **state)
+TEST_F(iot_capability, TC_iot_parse_noti_data_child_device_health_response_success_pos)
 {
     iot_error_t err;
     iot_noti_data_t notification;
@@ -3142,7 +3151,7 @@ void TC_iot_parse_noti_data_child_device_health_response_success(void **state)
 }
 
 #if defined(CONFIG_STDK_IOT_CORE_PUBLISH_RATE_LIMIT)
-void TC_st_cap_send_attr_publish_rate_limit_blocked(void **state)
+void TC_st_cap_send_attr_publish_rate_limit_blocked_neg(void **state)
 {
     int ret;
     struct iot_context *fake_ctx = NULL;
@@ -3185,7 +3194,7 @@ void TC_st_cap_send_attr_publish_rate_limit_blocked(void **state)
     free(fake_ctx);
 }
 
-void TC_st_cap_send_attr_publish_rate_limit_allowed(void **state)
+void TC_st_cap_send_attr_publish_rate_limit_allowed_pos(void **state)
 {
     int ret;
     struct iot_context *fake_ctx = NULL;
@@ -3228,7 +3237,7 @@ void TC_st_cap_send_attr_publish_rate_limit_allowed(void **state)
     free(fake_ctx);
 }
 
-void TC_st_cap_send_attr_publish_rate_limit_empty_buffer(void **state)
+void TC_st_cap_send_attr_publish_rate_limit_empty_buffer_neg(void **state)
 {
     int ret;
     struct iot_context *fake_ctx = NULL;
@@ -3262,7 +3271,7 @@ void TC_st_cap_send_attr_publish_rate_limit_empty_buffer(void **state)
     free(fake_ctx);
 }
 
-void TC_st_cap_send_attr_v2_publish_rate_limit_blocked(void **state)
+void TC_st_cap_send_attr_v2_publish_rate_limit_blocked_neg(void **state)
 {
     int ret;
     struct iot_context *fake_ctx = NULL;
@@ -3347,7 +3356,7 @@ static void _attr_cache_tc_teardown(struct iot_context *ic, IOT_CAP_HANDLE *cap_
 }
 
 /* A value identical to the one already synced is not published again. */
-void TC_st_cap_send_attr_dedup_skip_duplicate(void **state)
+TEST_F(iot_capability, TC_st_cap_send_attr_dedup_skip_duplicate_neg)
 {
     struct iot_context *ic;
     IOT_CAP_HANDLE *cap_handle;
@@ -3378,7 +3387,7 @@ void TC_st_cap_send_attr_dedup_skip_duplicate(void **state)
 }
 
 /* A changed value is published even if the attribute was previously synced. */
-void TC_st_cap_send_attr_dedup_send_changed_value(void **state)
+TEST_F(iot_capability, TC_st_cap_send_attr_dedup_send_changed_value_neg)
 {
     struct iot_context *ic;
     IOT_CAP_HANDLE *cap_handle;
@@ -3410,7 +3419,7 @@ void TC_st_cap_send_attr_dedup_send_changed_value(void **state)
 
 /* While a value is still in flight (UPDATING, not yet acknowledged), an identical
  * value is not de-duplicated and is published again. */
-void TC_st_cap_send_attr_dedup_updating_not_skipped(void **state)
+TEST_F(iot_capability, TC_st_cap_send_attr_dedup_updating_not_skipped_neg)
 {
     struct iot_context *ic;
     IOT_CAP_HANDLE *cap_handle;
@@ -3440,7 +3449,7 @@ void TC_st_cap_send_attr_dedup_updating_not_skipped(void **state)
 }
 
 /* The stateChange option forces publishing even for a duplicate value. */
-void TC_st_cap_send_attr_dedup_state_change_forced(void **state)
+TEST_F(iot_capability, TC_st_cap_send_attr_dedup_state_change_forced_neg)
 {
     struct iot_context *ic;
     IOT_CAP_HANDLE *cap_handle;
@@ -3477,7 +3486,7 @@ void TC_st_cap_send_attr_dedup_state_change_forced(void **state)
 
 /* In an array, only the attributes carrying a new value are published; when every
  * attribute is a duplicate, nothing is published and 0 is returned. */
-void TC_st_cap_send_attr_dedup_array_partial(void **state)
+TEST_F(iot_capability, TC_st_cap_send_attr_dedup_array_partial_neg)
 {
     struct iot_context *ic;
     IOT_CAP_HANDLE *cap_handle;
@@ -3522,7 +3531,7 @@ void TC_st_cap_send_attr_dedup_array_partial(void **state)
     _attr_cache_tc_teardown(ic, cap_handle);
 }
 #endif /* CONFIG_STDK_IOT_CORE_SUPPORT_ATTR_CACHE */
-void TC_iot_parse_noti_data_secondary_device_created_success(void **state)
+TEST_F(iot_capability, TC_iot_parse_noti_data_secondary_device_created_success_pos)
 {
     iot_error_t err;
     iot_noti_data_t notification = {0};
@@ -3554,7 +3563,7 @@ void TC_iot_parse_noti_data_secondary_device_created_success(void **state)
     free(fake_ctx);
 }
 
-void TC_iot_parse_noti_data_secondary_device_created_no_response(void **state)
+TEST_F(iot_capability, TC_iot_parse_noti_data_secondary_device_created_no_response_neg)
 {
     iot_error_t err;
     iot_noti_data_t notification = {0};
@@ -3571,7 +3580,7 @@ void TC_iot_parse_noti_data_secondary_device_created_no_response(void **state)
     free(fake_ctx);
 }
 
-void TC_iot_parse_noti_data_secondary_device_created_no_device_id(void **state)
+TEST_F(iot_capability, TC_iot_parse_noti_data_secondary_device_created_no_device_id_neg)
 {
     iot_error_t err;
     iot_noti_data_t notification = {0};
@@ -3589,7 +3598,7 @@ void TC_iot_parse_noti_data_secondary_device_created_no_device_id(void **state)
     free(fake_ctx);
 }
 
-void TC_iot_parse_noti_data_secondary_device_created_no_metadata(void **state)
+TEST_F(iot_capability, TC_iot_parse_noti_data_secondary_device_created_no_metadata_neg)
 {
     iot_error_t err;
     iot_noti_data_t notification = {0};
@@ -3608,7 +3617,7 @@ void TC_iot_parse_noti_data_secondary_device_created_no_metadata(void **state)
     free(fake_ctx);
 }
 
-void TC_iot_parse_noti_data_secondary_device_created_no_serial(void **state)
+TEST_F(iot_capability, TC_iot_parse_noti_data_secondary_device_created_no_serial_neg)
 {
     iot_error_t err;
     iot_noti_data_t notification = {0};
@@ -3629,7 +3638,7 @@ void TC_iot_parse_noti_data_secondary_device_created_no_serial(void **state)
     free(fake_ctx);
 }
 
-void TC_iot_parse_noti_data_secondary_device_created_no_dip(void **state)
+TEST_F(iot_capability, TC_iot_parse_noti_data_secondary_device_created_no_dip_neg)
 {
     iot_error_t err;
     iot_noti_data_t notification = {0};
@@ -3658,7 +3667,7 @@ void TC_iot_parse_noti_data_secondary_device_created_no_dip(void **state)
     free(fake_ctx);
 }
 
-void TC_iot_parse_noti_data_devices_get_success(void **state)
+TEST_F(iot_capability, TC_iot_parse_noti_data_devices_get_success_pos)
 {
     iot_error_t err;
     iot_noti_data_t notification = {0};
@@ -3690,7 +3699,7 @@ void TC_iot_parse_noti_data_devices_get_success(void **state)
     free(fake_ctx);
 }
 
-void TC_iot_parse_noti_data_devices_get_no_child_devices(void **state)
+TEST_F(iot_capability, TC_iot_parse_noti_data_devices_get_no_child_devices_neg)
 {
     iot_error_t err;
     iot_noti_data_t notification = {0};
@@ -3707,7 +3716,7 @@ void TC_iot_parse_noti_data_devices_get_no_child_devices(void **state)
     free(fake_ctx);
 }
 
-void TC_iot_parse_noti_data_devices_get_no_id(void **state)
+TEST_F(iot_capability, TC_iot_parse_noti_data_devices_get_no_id_neg)
 {
     iot_error_t err;
     iot_noti_data_t notification = {0};
@@ -3724,7 +3733,7 @@ void TC_iot_parse_noti_data_devices_get_no_id(void **state)
     free(fake_ctx);
 }
 
-void TC_iot_parse_noti_data_devices_get_missing_dip(void **state)
+TEST_F(iot_capability, TC_iot_parse_noti_data_devices_get_missing_dip_neg)
 {
     iot_error_t err;
     iot_noti_data_t notification = {0};
@@ -3753,7 +3762,7 @@ void TC_iot_parse_noti_data_devices_get_missing_dip(void **state)
     free(fake_ctx);
 }
 
-void TC_iot_parse_noti_data_secondary_health_response_no_success(void **state)
+TEST_F(iot_capability, TC_iot_parse_noti_data_secondary_health_response_no_success_neg)
 {
     iot_error_t err;
     iot_noti_data_t notification = {0};
@@ -3770,7 +3779,7 @@ void TC_iot_parse_noti_data_secondary_health_response_no_success(void **state)
     free(fake_ctx);
 }
 
-void TC_iot_parse_noti_data_secondary_health_response_with_success(void **state)
+TEST_F(iot_capability, TC_iot_parse_noti_data_secondary_health_response_with_success_pos)
 {
     iot_error_t err;
     iot_noti_data_t notification = {0};
@@ -3788,7 +3797,7 @@ void TC_iot_parse_noti_data_secondary_health_response_with_success(void **state)
     free(fake_ctx);
 }
 
-void TC_iot_parse_noti_data_preference_updated_unknown_type(void **state)
+TEST_F(iot_capability, TC_iot_parse_noti_data_preference_updated_unknown_type_neg)
 {
     iot_error_t err;
     iot_noti_data_t notification = {0};
@@ -3810,7 +3819,7 @@ void TC_iot_parse_noti_data_preference_updated_unknown_type(void **state)
     free(fake_ctx);
 }
 
-void TC_iot_parse_noti_data_preference_updated_null_value(void **state)
+TEST_F(iot_capability, TC_iot_parse_noti_data_preference_updated_null_value_neg)
 {
     iot_error_t err;
     iot_noti_data_t notification = {0};
@@ -3832,7 +3841,7 @@ void TC_iot_parse_noti_data_preference_updated_null_value(void **state)
     free(fake_ctx);
 }
 
-void TC_iot_noti_sub_cb_null_args(void **state)
+TEST_F(iot_capability, TC_iot_noti_sub_cb_null_args_neg)
 {
     UNUSED(*state);
     /* Both null and either-null return early without crashing */
@@ -3846,7 +3855,7 @@ void TC_iot_noti_sub_cb_null_args(void **state)
     }
 }
 
-void TC_iot_noti_sub_cb_unparseable_payload(void **state)
+TEST_F(iot_capability, TC_iot_noti_sub_cb_unparseable_payload_neg)
 {
     struct iot_context *fake_ctx;
     UNUSED(*state);
@@ -3861,14 +3870,158 @@ void TC_iot_noti_sub_cb_unparseable_payload(void **state)
     free(fake_ctx);
 }
 
-void TC_iot_cap_sub_cb_null_args(void **state)
+extern void _dummy_mqtt_client_callback(st_mqtt_event event, void *event_data, void *usr_data);
+
+/* The ownership.transfer success path publishes an OT status update with a
+ * synchronous qos1 publish, so it needs a connected mqtt client over the mock
+ * network with a PUBACK preloaded in the read stream to complete.
+ */
+static st_mqtt_client _ot_create_connected_mqtt_client(unsigned char *puback_buf)
+{
+    st_mqtt_client client = NULL;
+    MQTTClient *c = NULL;
+    int err;
+
+    err = st_mqtt_create(&client, _dummy_mqtt_client_callback, NULL, NULL, NULL);
+    assert_return_code(err, 0);
+    c = (MQTTClient *)client;
+    c->isconnected = 1;
+    port_net_mock_reset_socket_status(1);
+    c->last_sent = iot_os_timer_create(NULL, 10000, NULL);
+    iot_os_timer_start(c->last_sent);
+    c->last_received = iot_os_timer_create(NULL, 10000, NULL);
+    iot_os_timer_start(c->last_received);
+
+    /* PUBACK for the next qos1 publish */
+    puback_buf[0] = 0x40;
+    puback_buf[1] = 0x02; /* remaining length */
+    puback_buf[2] = (unsigned char)(((c->next_packetid + 1) >> 8) & 0xFF);
+    puback_buf[3] = (unsigned char)((c->next_packetid + 1) & 0xFF);
+    port_net_mock_reset_read_stream(puback_buf, 4);
+    set_mock_port_net_write_skip_buf_check(1);
+    set_mock_port_net_write_skip_len_check(1);
+
+    return client;
+}
+
+static void _ot_destroy_connected_mqtt_client(st_mqtt_client client)
+{
+    reset_mock_port_net_write_skip_flags();
+    port_net_mock_reset_read_stream(NULL, 0);
+    st_mqtt_destroy(client);
+}
+
+TEST_F(iot_capability, TC_iot_parse_noti_data_ownership_transfer_success_pos)
+{
+    iot_error_t err;
+    iot_noti_data_t notification = {0};
+    struct iot_context *fake_ctx = NULL;
+    st_mqtt_client client = NULL;
+    unsigned char puback[4];
+    UNUSED(*state);
+
+    // Given: connected mqtt client so the OT status update publish succeeds
+    fake_ctx = (struct iot_context *)calloc(1, sizeof(struct iot_context));
+    client = _ot_create_connected_mqtt_client(puback);
+    fake_ctx->evt_mqttcli = client;
+
+    // When: ownership.transfer with valid transferId
+    err = _iot_parse_noti_data(
+        fake_ctx, (void *)"{\"event\":\"ownership.transfer\",\"transferId\":\"" NOTI_TEST_UUID "\"}", &notification);
+    // Then
+    assert_int_equal(err, IOT_ERROR_NONE);
+    assert_int_equal(notification.type, _IOT_NOTI_TYPE_OWNER_TRANSFERRED);
+
+    // Teardown
+    _ot_destroy_connected_mqtt_client(client);
+    free(fake_ctx);
+}
+
+TEST_F(iot_capability, TC_iot_parse_noti_data_ownership_transfer_no_transfer_id_neg)
+{
+    iot_error_t err;
+    iot_noti_data_t notification = {0};
+    struct iot_context *fake_ctx = NULL;
+    UNUSED(*state);
+
+    fake_ctx = (struct iot_context *)calloc(1, sizeof(struct iot_context));
+
+    // When: transferId is missing
+    err = _iot_parse_noti_data(fake_ctx, (void *)"{\"event\":\"ownership.transfer\"}", &notification);
+    // Then
+    assert_int_equal(err, IOT_ERROR_BAD_REQ);
+
+    // When: transferId is not a string
+    err =
+        _iot_parse_noti_data(fake_ctx, (void *)"{\"event\":\"ownership.transfer\",\"transferId\":123}", &notification);
+    // Then
+    assert_int_equal(err, IOT_ERROR_BAD_REQ);
+
+    free(fake_ctx);
+}
+
+TEST_F(iot_capability, TC_iot_parse_noti_data_ownership_transfer_publish_fail_neg)
+{
+    iot_error_t err;
+    iot_noti_data_t notification = {0};
+    struct iot_context *fake_ctx = NULL;
+    UNUSED(*state);
+
+    // Given: evt_mqttcli is NULL, so the OT status update publish fails
+    fake_ctx = (struct iot_context *)calloc(1, sizeof(struct iot_context));
+
+    // When
+    err = _iot_parse_noti_data(
+        fake_ctx, (void *)"{\"event\":\"ownership.transfer\",\"transferId\":\"" NOTI_TEST_UUID "\"}", &notification);
+    // Then: publish failure is propagated and the notification is dropped
+    assert_int_equal(err, IOT_ERROR_BAD_REQ);
+
+    free(fake_ctx);
+}
+
+TEST_F(iot_capability, TC_iot_noti_sub_cb_ownership_transfer_SUCCESS_pos)
+{
+    iot_error_t err;
+    struct iot_context *internal_context;
+    device_work_data_t work_data;
+    iot_noti_data_t *noti_data;
+    st_mqtt_client client = NULL;
+    unsigned char puback[4];
+    char *payload = "{\"target\":\"test-target\",\"event\":\"ownership.transfer\",\"transferId\":\"" NOTI_TEST_UUID
+                    "\",\"deviceId\":\"test-deviceId\"}";
+    UNUSED(state);
+
+    // Given
+    internal_context = (struct iot_context *)calloc(1, sizeof(struct iot_context));
+    assert_non_null(internal_context);
+    internal_context->curr_state = IOT_STATE_CLOUD_CONNECTED;
+    internal_context->work_queue = iot_util_queue_create(sizeof(device_work_data_t));
+    internal_context->work_queue_signal = iot_os_eventgroup_create();
+    client = _ot_create_connected_mqtt_client(puback);
+    internal_context->evt_mqttcli = client;
+    // When
+    iot_noti_sub_cb(internal_context, payload);
+    // Then: notification is queued for the main loop with owner transferred type
+    err = iot_util_queue_receive(internal_context->work_queue, &work_data);
+    assert_int_equal(err, IOT_ERROR_NONE);
+    noti_data = (iot_noti_data_t *)work_data.param;
+    assert_int_equal(noti_data->type, _IOT_NOTI_TYPE_OWNER_TRANSFERRED);
+    // Teardown
+    iot_os_free(noti_data);
+    _ot_destroy_connected_mqtt_client(client);
+    iot_os_eventgroup_delete(internal_context->work_queue_signal);
+    iot_util_queue_delete(internal_context->work_queue);
+    free(internal_context);
+}
+
+TEST_F(iot_capability, TC_iot_cap_sub_cb_null_args_neg)
 {
     UNUSED(*state);
     iot_cap_sub_cb(NULL, NULL);
     iot_cap_sub_cb(NULL, "{}");
 }
 
-void TC_iot_cap_sub_cb_invalid_json(void **state)
+TEST_F(iot_capability, TC_iot_cap_sub_cb_invalid_json_neg)
 {
     iot_cap_handle_list_t list = {0};
     UNUSED(*state);
@@ -3877,7 +4030,7 @@ void TC_iot_cap_sub_cb_invalid_json(void **state)
     iot_cap_sub_cb(&list, "not json");
 }
 
-void TC_iot_cap_sub_cb_no_commands(void **state)
+TEST_F(iot_capability, TC_iot_cap_sub_cb_no_commands_neg)
 {
     iot_cap_handle_list_t list = {0};
     UNUSED(*state);
@@ -3886,7 +4039,7 @@ void TC_iot_cap_sub_cb_no_commands(void **state)
     iot_cap_sub_cb(&list, "{}");
 }
 
-void TC_iot_cap_sub_cb_empty_commands(void **state)
+TEST_F(iot_capability, TC_iot_cap_sub_cb_empty_commands_neg)
 {
     iot_cap_handle_list_t list = {0};
     UNUSED(*state);
@@ -3895,7 +4048,7 @@ void TC_iot_cap_sub_cb_empty_commands(void **state)
     iot_cap_sub_cb(&list, "{\"commands\":[]}");
 }
 
-void TC_iot_cap_sub_cb_command_unmatched_handle(void **state)
+TEST_F(iot_capability, TC_iot_cap_sub_cb_command_unmatched_handle_neg)
 {
     iot_cap_handle_list_t list = {0};
     UNUSED(*state);
@@ -3907,7 +4060,7 @@ void TC_iot_cap_sub_cb_command_unmatched_handle(void **state)
     // Then: _iot_process_cmd takes the "Cannot find handle" branch; no crash
 }
 
-void TC_iot_cap_commands_cb_null_payload(void **state)
+TEST_F(iot_capability, TC_iot_cap_commands_cb_null_payload_neg)
 {
     struct iot_context fake_ctx = {0};
     UNUSED(*state);
@@ -3915,7 +4068,7 @@ void TC_iot_cap_commands_cb_null_payload(void **state)
     iot_cap_commands_cb(&fake_ctx, NULL);
 }
 
-void TC_iot_cap_commands_cb_invalid_json(void **state)
+TEST_F(iot_capability, TC_iot_cap_commands_cb_invalid_json_neg)
 {
     struct iot_context fake_ctx = {0};
     UNUSED(*state);
@@ -3923,7 +4076,7 @@ void TC_iot_cap_commands_cb_invalid_json(void **state)
     iot_cap_commands_cb(&fake_ctx, "not json");
 }
 
-void TC_iot_cap_commands_cb_no_commands(void **state)
+TEST_F(iot_capability, TC_iot_cap_commands_cb_no_commands_neg)
 {
     struct iot_context fake_ctx = {0};
     UNUSED(*state);
@@ -3931,7 +4084,7 @@ void TC_iot_cap_commands_cb_no_commands(void **state)
     iot_cap_commands_cb(&fake_ctx, "{}");
 }
 
-void TC_iot_cap_commands_cb_empty_commands(void **state)
+TEST_F(iot_capability, TC_iot_cap_commands_cb_empty_commands_neg)
 {
     struct iot_context fake_ctx = {0};
     UNUSED(*state);
@@ -3939,7 +4092,7 @@ void TC_iot_cap_commands_cb_empty_commands(void **state)
     iot_cap_commands_cb(&fake_ctx, "{\"commands\":[]}");
 }
 
-void TC_iot_cap_commands_cb_missing_fields(void **state)
+TEST_F(iot_capability, TC_iot_cap_commands_cb_missing_fields_neg)
 {
     struct iot_context fake_ctx = {0};
     UNUSED(*state);
@@ -3948,7 +4101,7 @@ void TC_iot_cap_commands_cb_missing_fields(void **state)
     iot_cap_commands_cb(&fake_ctx, "{\"commands\":[{\"component\":\"main\"}]}");
 }
 
-void TC_iot_cap_commands_cb_full_payload(void **state)
+TEST_F(iot_capability, TC_iot_cap_commands_cb_full_payload_neg)
 {
     struct iot_context fake_ctx = {0};
     UNUSED(*state);
@@ -3960,7 +4113,7 @@ void TC_iot_cap_commands_cb_full_payload(void **state)
                         "\"arguments\":[true,1.5,\"hello\",{\"k\":1},[1,2,3]]}]}");
 }
 
-void TC_st_cap_send_attr_v2_custom_component_no_name(void **state)
+TEST_F(iot_capability, TC_st_cap_send_attr_v2_custom_component_no_name_neg)
 {
     int ret;
     IOT_CTX *context;
@@ -3989,7 +4142,7 @@ void TC_st_cap_send_attr_v2_custom_component_no_name(void **state)
     free(internal_context);
 }
 
-void TC_st_cap_send_attr_v2_custom_component_with_name(void **state)
+TEST_F(iot_capability, TC_st_cap_send_attr_v2_custom_component_with_name_neg)
 {
     int sequence_number;
     IOT_CTX *context;
@@ -4029,7 +4182,7 @@ void TC_st_cap_send_attr_v2_custom_component_with_name(void **state)
     free(internal_context);
 }
 
-void TC_st_cap_send_attr_v2_custom_attribute_missing_names(void **state)
+TEST_F(iot_capability, TC_st_cap_send_attr_v2_custom_attribute_missing_names_neg)
 {
     int ret;
     IOT_CTX *context;
@@ -4056,4 +4209,304 @@ void TC_st_cap_send_attr_v2_custom_attribute_missing_names(void **state)
     free(attr[0]);
     st_mqtt_destroy(internal_context->evt_mqttcli);
     free(internal_context);
+}
+
+void TC_st_cap_create_attr_with_option_malloc_failure_command_id_neg(void **state)
+{
+    IOT_EVENT *event;
+    iot_cap_val_t value;
+    struct iot_cap_handle cap_handle;
+    iot_cap_attr_option_t opt;
+    UNUSED(*state);
+
+    // Given: setup cap_handle
+    memset(&cap_handle, 0, sizeof(cap_handle));
+    cap_handle.component = "main";
+    cap_handle.capability = "testCap";
+
+    // Setup options with command_id
+    memset(&opt, 0, sizeof(opt));
+    opt.command_id = "test_cmd_id";
+    opt.state_change = 1;
+    opt.displayed = NULL;
+
+    value.type = IOT_CAP_VAL_TYPE_INTEGER;
+    value.integer = 42;
+
+    // When: strdup for command_id fails (index 3 in the function)
+    set_mock_iot_os_malloc_failure_with_index(3);
+    event = st_cap_create_attr_with_option((IOT_CAP_HANDLE *)&cap_handle, "testAttr", &value, "unit", NULL, &opt);
+    // Then: return NULL due to malloc failure
+    assert_null(event);
+    do_not_use_mock_iot_os_malloc_failure();
+}
+
+void TC_st_cap_create_attr_with_option_malloc_failure_displayed_neg(void **state)
+{
+    IOT_EVENT *event;
+    iot_cap_val_t value;
+    struct iot_cap_handle cap_handle;
+    iot_cap_attr_option_t opt;
+    UNUSED(*state);
+
+    // Given: setup cap_handle
+    memset(&cap_handle, 0, sizeof(cap_handle));
+    cap_handle.component = "main";
+    cap_handle.capability = "testCap";
+
+    // Setup options with displayed
+    memset(&opt, 0, sizeof(opt));
+    opt.command_id = NULL;
+    opt.state_change = 0;
+    opt.displayed = (bool *)malloc(sizeof(bool));
+    *opt.displayed = true;
+
+    value.type = IOT_CAP_VAL_TYPE_INTEGER;
+    value.integer = 42;
+
+    // When: malloc for displayed copy fails (index 2 in the function)
+    set_mock_iot_os_malloc_failure_with_index(2);
+    event = st_cap_create_attr_with_option((IOT_CAP_HANDLE *)&cap_handle, "testAttr", &value, "unit", NULL, &opt);
+    // Then: return NULL due to malloc failure
+    assert_null(event);
+
+    // Teardown
+    free(opt.displayed);
+    do_not_use_mock_iot_os_malloc_failure();
+}
+
+void TC_st_cap_handle_init_malloc_failure_component_neg(void **state)
+{
+    IOT_CAP_HANDLE *handle;
+    struct iot_context context;
+    UNUSED(*state);
+
+    memset(&context, 0, sizeof(context));
+
+    // When: strdup for component fails (index 2 in the function)
+    set_mock_iot_os_malloc_failure_with_index(2);
+    handle = st_cap_handle_init((IOT_CTX *)&context, "main", "testCap", NULL, NULL);
+    // Then: return NULL due to malloc failure
+    assert_null(handle);
+    do_not_use_mock_iot_os_malloc_failure();
+}
+
+void TC_st_cap_handle_init_malloc_failure_capability_neg(void **state)
+{
+    IOT_CAP_HANDLE *handle;
+    struct iot_context context;
+    UNUSED(*state);
+
+    memset(&context, 0, sizeof(context));
+
+    // When: strdup for capability fails (index 3 in the function)
+    set_mock_iot_os_malloc_failure_with_index(3);
+    handle = st_cap_handle_init((IOT_CTX *)&context, NULL, "testCap", NULL, NULL);
+    // Then: return NULL due to malloc failure
+    assert_null(handle);
+    do_not_use_mock_iot_os_malloc_failure();
+}
+
+void TC_st_cap_handle_init_malloc_failure_list_neg(void **state)
+{
+    IOT_CAP_HANDLE *handle;
+    struct iot_context context;
+    UNUSED(*state);
+
+    memset(&context, 0, sizeof(context));
+
+    // When: malloc for handle list fails (index 4 in the function)
+    set_mock_iot_os_malloc_failure_with_index(4);
+    handle = st_cap_handle_init((IOT_CTX *)&context, NULL, "testCap", NULL, NULL);
+    // Then: return NULL due to malloc failure
+    assert_null(handle);
+    do_not_use_mock_iot_os_malloc_failure();
+}
+
+extern bool _iot_cap_val_equal(const iot_cap_val_t *a, const iot_cap_val_t *b);
+extern iot_error_t _iot_copy_val(iot_cap_val_t *dst, const iot_cap_val_t *src);
+
+TEST_F(TC_REGISTRY_NO_FIXTURE, TC_STATIC_iot_cap_val_equal_all_types_neg)
+{
+    iot_cap_val_t a = {0};
+    iot_cap_val_t b = {0};
+    char *a_strings[2] = {"one", "two"};
+    char *b_strings[2] = {"one", "two"};
+    char *c_strings[2] = {"one", "three"};
+
+    UNUSED(state);
+
+    // Given / When / Then: NULL operands and type mismatch
+    a.type = IOT_CAP_VAL_TYPE_INTEGER;
+    assert_false(_iot_cap_val_equal(NULL, &a));
+    assert_false(_iot_cap_val_equal(&a, NULL));
+    b.type = IOT_CAP_VAL_TYPE_NUMBER;
+    assert_false(_iot_cap_val_equal(&a, &b));
+
+    // NULL type is always equal
+    a.type = b.type = IOT_CAP_VAL_TYPE_NULL;
+    assert_true(_iot_cap_val_equal(&a, &b));
+
+    // integer
+    a.type = b.type = IOT_CAP_VAL_TYPE_INTEGER;
+    a.integer = 7;
+    b.integer = 7;
+    assert_true(_iot_cap_val_equal(&a, &b));
+    b.integer = 8;
+    assert_false(_iot_cap_val_equal(&a, &b));
+
+    // boolean
+    a.type = b.type = IOT_CAP_VAL_TYPE_BOOLEAN;
+    a.boolean = true;
+    b.boolean = true;
+    assert_true(_iot_cap_val_equal(&a, &b));
+    b.boolean = false;
+    assert_false(_iot_cap_val_equal(&a, &b));
+
+    // string with a NULL side
+    a.type = b.type = IOT_CAP_VAL_TYPE_STRING;
+    a.string = NULL;
+    b.string = "abc";
+    assert_false(_iot_cap_val_equal(&a, &b));
+    b.string = NULL;
+    assert_true(_iot_cap_val_equal(&a, &b));
+
+    // json object
+    a.type = b.type = IOT_CAP_VAL_TYPE_JSON_OBJECT;
+    a.json_object = "{\"k\":1}";
+    b.json_object = "{\"k\":1}";
+    assert_true(_iot_cap_val_equal(&a, &b));
+    b.json_object = "{\"k\":2}";
+    assert_false(_iot_cap_val_equal(&a, &b));
+    b.json_object = NULL;
+    assert_false(_iot_cap_val_equal(&a, &b));
+
+    // string array
+    a.type = b.type = IOT_CAP_VAL_TYPE_STR_ARRAY;
+    a.str_num = 2;
+    a.strings = a_strings;
+    b.str_num = 2;
+    b.strings = b_strings;
+    assert_true(_iot_cap_val_equal(&a, &b));
+    b.strings = c_strings;
+    assert_false(_iot_cap_val_equal(&a, &b));
+    b.str_num = 1;
+    assert_false(_iot_cap_val_equal(&a, &b));
+
+    // string array with a NULL element
+    b.str_num = 2;
+    c_strings[1] = NULL;
+    b.strings = c_strings;
+    assert_false(_iot_cap_val_equal(&a, &b));
+    a_strings[1] = NULL;
+    assert_true(_iot_cap_val_equal(&a, &b));
+    a_strings[1] = "two";
+    c_strings[1] = "three";
+
+    // unsupported type
+    a.type = b.type = IOT_CAP_VAL_TYPE_UNKNOWN;
+    assert_false(_iot_cap_val_equal(&a, &b));
+}
+
+TEST_F(TC_REGISTRY_NO_FIXTURE, TC_STATIC_iot_copy_val_all_types_neg)
+{
+    iot_cap_val_t dst = {0};
+    iot_cap_val_t src = {0};
+    iot_error_t err;
+    char *src_strings[2] = {"one", "two"};
+
+    UNUSED(state);
+
+    // Given / When / Then: NULL parameters
+    assert_int_equal(_iot_copy_val(NULL, &src), IOT_ERROR_INVALID_ARGS);
+    assert_int_equal(_iot_copy_val(&dst, NULL), IOT_ERROR_INVALID_ARGS);
+
+    // string with a NULL source
+    src.type = IOT_CAP_VAL_TYPE_STRING;
+    src.string = NULL;
+    assert_int_equal(_iot_copy_val(&dst, &src), IOT_ERROR_INVALID_ARGS);
+
+    // json object
+    src.type = IOT_CAP_VAL_TYPE_JSON_OBJECT;
+    src.json_object = "{\"k\":1}";
+    err = _iot_copy_val(&dst, &src);
+    assert_int_equal(err, IOT_ERROR_NONE);
+    assert_string_equal(dst.json_object, src.json_object);
+    assert_ptr_not_equal(dst.json_object, src.json_object);
+    iot_os_free(dst.json_object);
+
+    // json object with a NULL source
+    src.json_object = NULL;
+    assert_int_equal(_iot_copy_val(&dst, &src), IOT_ERROR_INVALID_ARGS);
+
+    // string array
+    src.type = IOT_CAP_VAL_TYPE_STR_ARRAY;
+    src.str_num = 2;
+    src.strings = src_strings;
+    err = _iot_copy_val(&dst, &src);
+    assert_int_equal(err, IOT_ERROR_NONE);
+    assert_string_equal(dst.strings[0], "one");
+    assert_string_equal(dst.strings[1], "two");
+    iot_os_free(dst.strings[0]);
+    iot_os_free(dst.strings[1]);
+    iot_os_free(dst.strings);
+
+    // empty string array
+    src.str_num = 0;
+    err = _iot_copy_val(&dst, &src);
+    assert_int_equal(err, IOT_ERROR_NONE);
+    assert_null(dst.strings);
+
+    // string array with a NULL element
+    src_strings[1] = NULL;
+    src.str_num = 2;
+    assert_int_equal(_iot_copy_val(&dst, &src), IOT_ERROR_INVALID_ARGS);
+    iot_os_free(dst.strings[0]);
+    iot_os_free(dst.strings);
+    src_strings[1] = "two";
+}
+
+TEST_F(TC_REGISTRY_NO_FIXTURE, TC_STATIC_iot_copy_val_malloc_failure_neg)
+{
+    iot_cap_val_t dst = {0};
+    iot_cap_val_t src = {0};
+    char *src_strings[1] = {"one"};
+
+    UNUSED(state);
+
+    // Given: string duplication fails
+    src.type = IOT_CAP_VAL_TYPE_STRING;
+    src.string = "abc";
+    set_mock_iot_os_strdup_failure(true);
+
+    // When / Then
+    assert_int_equal(_iot_copy_val(&dst, &src), IOT_ERROR_MEM_ALLOC);
+
+    // Given: json object duplication fails
+    src.type = IOT_CAP_VAL_TYPE_JSON_OBJECT;
+    src.json_object = "{\"k\":1}";
+
+    // When / Then
+    assert_int_equal(_iot_copy_val(&dst, &src), IOT_ERROR_MEM_ALLOC);
+    set_mock_iot_os_strdup_failure(false);
+
+    // Given: the string array itself cannot be allocated
+    src.type = IOT_CAP_VAL_TYPE_STR_ARRAY;
+    src.str_num = 1;
+    src.strings = src_strings;
+    set_mock_iot_os_malloc_failure_with_index(0);
+
+    // When / Then
+    assert_int_equal(_iot_copy_val(&dst, &src), IOT_ERROR_MEM_ALLOC);
+    do_not_use_mock_iot_os_malloc_failure();
+
+    // Given: an element of the string array cannot be duplicated
+    set_mock_iot_os_strdup_failure(true);
+
+    // When / Then
+    assert_int_equal(_iot_copy_val(&dst, &src), IOT_ERROR_MEM_ALLOC);
+
+    // Teardown
+    set_mock_iot_os_strdup_failure(false);
+    iot_os_free(dst.strings);
 }

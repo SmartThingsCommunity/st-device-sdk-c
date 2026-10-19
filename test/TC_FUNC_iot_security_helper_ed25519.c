@@ -21,6 +21,7 @@
 #include <iot_security_util.h>
 #include <string.h>
 
+#include "TC_REGISTRY.h"
 #include "cmocka_custom.h"
 
 unsigned char sample_seckey_ed25519[] = {
@@ -35,7 +36,9 @@ unsigned char sample_seckey_curve25519[] = {
 
 extern iot_error_t _iot_security_ed25519_convert_seckey(unsigned char *ed25519_key, unsigned char *curve25519_key);
 
-void TC_iot_security_ed25519_convert_seckey_null_parameters(void **state)
+TEST_SUITE("iot_security_helper_ed25519.c");
+
+TEST_F(TC_REGISTRY_NO_FIXTURE, TC_iot_security_ed25519_convert_seckey_null_parameters_neg)
 {
     iot_error_t err;
     unsigned char *ed25519_key = sample_seckey_ed25519;
@@ -57,7 +60,7 @@ void TC_iot_security_ed25519_convert_seckey_null_parameters(void **state)
     assert_int_equal(err, IOT_ERROR_INVALID_ARGS);
 }
 
-void TC_iot_security_ed25519_convert_seckey_success(void **state)
+TEST_F(TC_REGISTRY_NO_FIXTURE, TC_iot_security_ed25519_convert_seckey_success_pos)
 {
     iot_error_t err;
     unsigned char *ed25519_key;
@@ -70,4 +73,83 @@ void TC_iot_security_ed25519_convert_seckey_success(void **state)
     // Then
     assert_int_equal(err, IOT_ERROR_NONE);
     assert_memory_equal(curve25519_key, sample_seckey_curve25519, sizeof(sample_seckey_curve25519));
+}
+
+TEST_F(TC_REGISTRY_NO_FIXTURE, TC_iot_security_ed25519_convert_seckey_null_output_untouched_neg)
+{
+    iot_error_t err;
+    unsigned char curve25519_key[IOT_SECURITY_ED25519_LEN];
+
+    // Given: a canary in the output buffer
+    memset(curve25519_key, 0xA5, sizeof(curve25519_key));
+    // When: the ed25519 key is null
+    err = _iot_security_ed25519_convert_seckey(NULL, curve25519_key);
+    // Then: rejected without touching the output
+    assert_int_equal(err, IOT_ERROR_INVALID_ARGS);
+    for (size_t i = 0; i < sizeof(curve25519_key); i++) {
+        assert_int_equal(curve25519_key[i], 0xA5);
+    }
+}
+
+TEST_F(TC_REGISTRY_NO_FIXTURE, TC_iot_security_ed25519_convert_seckey_unclamped_bits_neg)
+{
+    iot_error_t err;
+    unsigned char ed25519_key[IOT_SECURITY_ED25519_LEN];
+    unsigned char curve25519_key[IOT_SECURITY_ED25519_LEN];
+
+    // Given: a key made of all ones, which would give unclamped curve25519 bits
+    memset(ed25519_key, 0xFF, sizeof(ed25519_key));
+    // When
+    err = _iot_security_ed25519_convert_seckey(ed25519_key, curve25519_key);
+    // Then: the non canonical scalar bits must have been masked out
+    assert_int_equal(err, IOT_ERROR_NONE);
+    assert_int_equal(curve25519_key[0] & 0x07, 0);
+    assert_int_equal(curve25519_key[31] & 0x80, 0);
+    assert_int_equal(curve25519_key[31] & 0x40, 0x40);
+}
+
+TEST_F(TC_REGISTRY_NO_FIXTURE, TC_iot_security_ed25519_convert_seckey_not_passthrough_neg)
+{
+    iot_error_t err;
+    unsigned char curve25519_key[IOT_SECURITY_ED25519_LEN];
+
+    // When
+    err = _iot_security_ed25519_convert_seckey(sample_seckey_ed25519, curve25519_key);
+    // Then: the converted key must not be a copy of the ed25519 key
+    assert_int_equal(err, IOT_ERROR_NONE);
+    assert_memory_not_equal(curve25519_key, sample_seckey_ed25519, sizeof(curve25519_key));
+}
+
+TEST_F(TC_REGISTRY_NO_FIXTURE, TC_iot_security_ed25519_convert_seckey_distinct_keys_neg)
+{
+    iot_error_t err;
+    unsigned char ed25519_key[IOT_SECURITY_ED25519_LEN];
+    unsigned char curve_a[IOT_SECURITY_ED25519_LEN];
+    unsigned char curve_b[IOT_SECURITY_ED25519_LEN];
+
+    // Given: two keys differing in a single byte
+    memcpy(ed25519_key, sample_seckey_ed25519, sizeof(ed25519_key));
+    err = _iot_security_ed25519_convert_seckey(ed25519_key, curve_a);
+    assert_int_equal(err, IOT_ERROR_NONE);
+    ed25519_key[0] ^= 0x01;
+    // When
+    err = _iot_security_ed25519_convert_seckey(ed25519_key, curve_b);
+    // Then: they must not collide onto the same curve25519 key
+    assert_int_equal(err, IOT_ERROR_NONE);
+    assert_memory_not_equal(curve_a, curve_b, sizeof(curve_a));
+}
+
+TEST_F(TC_REGISTRY_NO_FIXTURE, TC_iot_security_ed25519_convert_seckey_zero_key_neg)
+{
+    iot_error_t err;
+    unsigned char ed25519_key[IOT_SECURITY_ED25519_LEN] = {0};
+    unsigned char curve25519_key[IOT_SECURITY_ED25519_LEN] = {0};
+    unsigned char zero[IOT_SECURITY_ED25519_LEN] = {0};
+
+    // Given: an all zero ed25519 key
+    // When
+    err = _iot_security_ed25519_convert_seckey(ed25519_key, curve25519_key);
+    // Then: the hash based derivation must not leak the all zero key through
+    assert_int_equal(err, IOT_ERROR_NONE);
+    assert_memory_not_equal(curve25519_key, zero, sizeof(zero));
 }

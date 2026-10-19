@@ -18,6 +18,7 @@
 #include <iot_mqtt_packet.h>
 #include <string.h>
 
+#include "TC_REGISTRY.h"
 #include "cmocka_custom.h"
 
 #define UNUSED(x) (void)(x)
@@ -25,6 +26,8 @@
 /*
  * Build a PUBLISH wire packet into `buf` and return its length.
  */
+TEST_SUITE("iot_mqtt_deserialize_publish.c");
+
 static int _build_publish(unsigned char *buf, int qos, unsigned char dup, unsigned char retain, unsigned short packetid,
                           const char *topic, const unsigned char *payload, int payload_len)
 {
@@ -37,7 +40,7 @@ static int _build_publish(unsigned char *buf, int qos, unsigned char dup, unsign
 /*
  * Tests for MQTTDeserialize_publish
  */
-void TC_MQTTDeserialize_publish_qos0_success(void **state)
+TEST_F(TC_REGISTRY_NO_FIXTURE, TC_MQTTDeserialize_publish_qos0_success_pos)
 {
     unsigned char wire[128];
     unsigned char dup = 0xFF;
@@ -65,7 +68,7 @@ void TC_MQTTDeserialize_publish_qos0_success(void **state)
     assert_memory_equal(payload, "hi", 2);
 }
 
-void TC_MQTTDeserialize_publish_qos1_has_packetid(void **state)
+TEST_F(TC_REGISTRY_NO_FIXTURE, TC_MQTTDeserialize_publish_qos1_has_packetid_neg)
 {
     unsigned char wire[128];
     unsigned char dup = 0, retain = 0;
@@ -86,7 +89,7 @@ void TC_MQTTDeserialize_publish_qos1_has_packetid(void **state)
     assert_int_equal(packetid, 0x1234);
 }
 
-void TC_MQTTDeserialize_publish_dup_and_retain(void **state)
+TEST_F(TC_REGISTRY_NO_FIXTURE, TC_MQTTDeserialize_publish_dup_and_retain_neg)
 {
     unsigned char wire[128];
     unsigned char dup = 0, retain = 0;
@@ -107,7 +110,7 @@ void TC_MQTTDeserialize_publish_dup_and_retain(void **state)
     assert_int_equal(retain, 1);
 }
 
-void TC_MQTTDeserialize_publish_empty_payload(void **state)
+TEST_F(TC_REGISTRY_NO_FIXTURE, TC_MQTTDeserialize_publish_empty_payload_neg)
 {
     unsigned char wire[32];
     unsigned char dup = 0, retain = 0;
@@ -127,7 +130,7 @@ void TC_MQTTDeserialize_publish_empty_payload(void **state)
     assert_int_equal(payload_len, 0);
 }
 
-void TC_MQTTDeserialize_publish_wrong_type(void **state)
+TEST_F(TC_REGISTRY_NO_FIXTURE, TC_MQTTDeserialize_publish_wrong_type_neg)
 {
     unsigned char wire[] = {(unsigned char)(PUBACK << 4), 0x04, 0x00, 0x01, 0x00, 0x00};
     unsigned char dup = 0, retain = 0;
@@ -144,7 +147,7 @@ void TC_MQTTDeserialize_publish_wrong_type(void **state)
     assert_int_equal(rc, 0);
 }
 
-void TC_MQTTDeserialize_publish_truncated_length_field(void **state)
+TEST_F(TC_REGISTRY_NO_FIXTURE, TC_MQTTDeserialize_publish_truncated_length_field_neg)
 {
     /* header + only part of the length-field (need 2 bytes for readMQTTLenString) */
     unsigned char wire[] = {(unsigned char)(PUBLISH << 4), 0x01, 0x00};
@@ -172,7 +175,7 @@ void TC_MQTTDeserialize_publish_truncated_length_field(void **state)
 /*
  * Tests for MQTTDeserialize_ack
  */
-void TC_MQTTDeserialize_ack_success(void **state)
+TEST_F(TC_REGISTRY_NO_FIXTURE, TC_MQTTDeserialize_ack_success_pos)
 {
     unsigned char wire[] = {(unsigned char)(PUBACK << 4), 0x02, 0x12, 0x34};
     unsigned char packettype = 0, dup = 0;
@@ -186,7 +189,7 @@ void TC_MQTTDeserialize_ack_success(void **state)
     assert_int_equal(packetid, 0x1234);
 }
 
-void TC_MQTTDeserialize_ack_pubrec(void **state)
+TEST_F(TC_REGISTRY_NO_FIXTURE, TC_MQTTDeserialize_ack_pubrec_neg)
 {
     unsigned char wire[] = {(unsigned char)(PUBREC << 4), 0x02, 0x00, 0x42};
     unsigned char packettype = 0, dup = 0;
@@ -200,7 +203,7 @@ void TC_MQTTDeserialize_ack_pubrec(void **state)
     assert_int_equal(packetid, 0x42);
 }
 
-void TC_MQTTDeserialize_ack_remlen_too_short(void **state)
+TEST_F(TC_REGISTRY_NO_FIXTURE, TC_MQTTDeserialize_ack_remlen_too_short_neg)
 {
     unsigned char wire[] = {(unsigned char)(PUBACK << 4), 0x01, 0x00};
     unsigned char packettype = 0, dup = 0;
@@ -214,7 +217,7 @@ void TC_MQTTDeserialize_ack_remlen_too_short(void **state)
     assert_int_equal(packetid, 0xAAAA);
 }
 
-void TC_MQTTDeserialize_ack_with_dup_bit(void **state)
+TEST_F(TC_REGISTRY_NO_FIXTURE, TC_MQTTDeserialize_ack_with_dup_bit_neg)
 {
     unsigned char wire[] = {((unsigned char)PUBREL << 4) | 0x08 | 0x02, 0x02, 0x00, 0x10};
     unsigned char packettype = 0, dup = 0;
@@ -226,4 +229,60 @@ void TC_MQTTDeserialize_ack_with_dup_bit(void **state)
     assert_int_equal(rc, 1);
     assert_int_equal(packettype, PUBREL);
     assert_int_equal(dup, 1);
+}
+
+TEST_F(TC_REGISTRY_NO_FIXTURE, TC_MQTTDeserialize_publish_connect_type_neg)
+{
+    unsigned char wire[] = {(unsigned char)(CONNECT << 4), 0x02, 0x00, 0x00};
+    unsigned char dup = 0xFF, retain = 0xFF;
+    int qos = -1;
+    unsigned short packetid = 0xFFFF;
+    MQTTString topic_name = MQTTString_initializer;
+    unsigned char *payload = NULL;
+    int payload_len = -1;
+    int rc;
+    UNUSED(state);
+
+    // When: a CONNECT packet is handed to the PUBLISH deserializer
+    rc = MQTTDeserialize_publish(&dup, &qos, &retain, &packetid, &topic_name, &payload, &payload_len, wire,
+                                 sizeof(wire));
+    // Then: rejected and no output is produced
+    assert_int_equal(rc, 0);
+    assert_null(payload);
+    assert_int_equal(payload_len, -1);
+}
+
+TEST_F(TC_REGISTRY_NO_FIXTURE, TC_MQTTDeserialize_publish_qos3_reserved_neg)
+{
+    /* qos bits set to the reserved value 3 */
+    unsigned char wire[] = {(unsigned char)(PUBLISH << 4) | 0x06, 0x06, 0x00, 0x01, 't', 0x12, 0x34};
+    unsigned char dup = 0, retain = 0;
+    int qos = 0;
+    unsigned short packetid = 0;
+    MQTTString topic_name = MQTTString_initializer;
+    unsigned char *payload = NULL;
+    int payload_len = 0;
+    int rc;
+    UNUSED(state);
+
+    rc = MQTTDeserialize_publish(&dup, &qos, &retain, &packetid, &topic_name, &payload, &payload_len, wire,
+                                 sizeof(wire));
+    // The reserved qos value is reported as-is instead of being rejected
+    assert_int_equal(rc, 1);
+    assert_int_equal(qos, 3);
+}
+
+TEST_F(TC_REGISTRY_NO_FIXTURE, TC_MQTTDeserialize_ack_zero_remlen_neg)
+{
+    unsigned char wire[] = {(unsigned char)(PUBACK << 4), 0x00};
+    unsigned char packettype = 0, dup = 0;
+    unsigned short packetid = 0xBEEF;
+    int rc;
+    UNUSED(state);
+
+    // When: the remaining length says there is no packet id
+    rc = MQTTDeserialize_ack(&packettype, &dup, &packetid, wire, sizeof(wire));
+    // Then: the packet id output stays untouched
+    (void)rc;
+    assert_int_equal(packetid, 0xBEEF);
 }

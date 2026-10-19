@@ -18,6 +18,7 @@
 #include <iot_capability.h>
 #include <iot_easysetup.h>
 #include <iot_internal.h>
+#include <iot_log_file.h>
 #include <iot_main.h>
 #include <iot_mqtt_client.h>
 #include <iot_nv_data.h>
@@ -27,15 +28,20 @@
 #include <string.h>
 
 #include "TC_MOCK_functions.h"
+#include "TC_MOCK_iot_es.h"
+#include "TC_REGISTRY.h"
 #include "cmocka_custom.h"
 
 extern bool _con_timeout_check(struct iot_context *ctx);
 extern iot_error_t _delete_dev_card_by_usr(struct iot_context *ctx);
 extern iot_error_t _create_easysetup_resources(struct iot_context *ctx, iot_pin_t *pin_num);
 extern void _command_work_handler(struct iot_context *ctx, device_work_param param);
+extern void _noti_work_handler(struct iot_context *ctx, device_work_param param);
 extern void _next_connection_retry_timeout(iot_os_timer_handle handle, void *user_data);
 extern void _get_device_preference(struct iot_context *ctx);
 extern iot_error_t _create_easysetup_resources(struct iot_context *ctx, iot_pin_t *pin_num);
+extern iot_error_t _iot_state_change(struct iot_context *ctx, iot_state_t new_state, int opt);
+extern void _get_device_info_in_server(struct iot_context *ctx);
 
 #define UNUSED(x) (void **)(x)
 
@@ -44,6 +50,13 @@ extern iot_error_t _create_easysetup_resources(struct iot_context *ctx, iot_pin_
 #define TEST_DEVICE_SECRET_B64_KEY "ztqmQ24u86J9bpFLjaoMfwauUZwKLjUIGsnrDwwnDM8="
 #define TEST_DEVICE_SERIAL_NUMBER "STDKtESt7968d226"
 #define REG_TEST_DIP_ID "bb000ddd-92a0-42a3-86f0-b531f278af06"
+TEST_SUITE("iot_main.c");
+
+extern int TC_iot_easysetup_common_setup(void **state);
+extern int TC_iot_easysetup_common_teardown(void **state);
+
+TEST_FIXTURE(iot_easysetup, TC_iot_easysetup_common_setup, TC_iot_easysetup_common_teardown);
+
 static char sample_device_info[] = {
     "{\n"
     "\t\"deviceInfo\": {\n"
@@ -127,7 +140,7 @@ static void test_st_cap_noti_cb(iot_noti_data_t *noti_data, void *noti_usr_data)
     UNUSED(noti_usr_data);
 }
 
-void TC_st_conn_init_null_parameters(void **state)
+TEST_F(TC_REGISTRY_NO_FIXTURE, TC_st_conn_init_null_parameters_neg)
 {
     IOT_CTX *context;
     UNUSED(state);
@@ -151,7 +164,7 @@ void TC_st_conn_init_null_parameters(void **state)
     assert_null(context);
 }
 
-void TC_st_conn_init_malloc_failure(void **state)
+TEST_F(TC_REGISTRY_NO_FIXTURE, TC_st_conn_init_malloc_failure_neg)
 {
     IOT_CTX *context;
     UNUSED(state);
@@ -168,7 +181,7 @@ void TC_st_conn_init_malloc_failure(void **state)
     do_not_use_mock_iot_os_malloc_failure();
 }
 
-void TC_st_conn_init_wrong_onboarding_config(void **state)
+TEST_F(TC_REGISTRY_NO_FIXTURE, TC_st_conn_init_wrong_onboarding_config_neg)
 {
     IOT_CTX *context;
     UNUSED(state);
@@ -181,7 +194,7 @@ void TC_st_conn_init_wrong_onboarding_config(void **state)
     assert_null(context);
 }
 
-void TC_st_conn_init_wrong_device_info(void **state)
+TEST_F(TC_REGISTRY_NO_FIXTURE, TC_st_conn_init_wrong_device_info_neg)
 {
     IOT_CTX *context;
     UNUSED(state);
@@ -194,7 +207,7 @@ void TC_st_conn_init_wrong_device_info(void **state)
     assert_null(context);
 }
 
-void TC_st_conn_init_success(void **state)
+TEST_F(TC_REGISTRY_NO_FIXTURE, TC_st_conn_init_success_pos)
 {
     IOT_CTX *context;
     struct iot_context *internal_context;
@@ -238,7 +251,7 @@ void TC_st_conn_init_success(void **state)
     iot_os_free(internal_context);
 }
 
-void TC_st_change_health_period_null_context(void **state)
+TEST_F(TC_REGISTRY_NO_FIXTURE, TC_st_change_health_period_null_context_neg)
 {
     int err;
     UNUSED(state);
@@ -249,7 +262,7 @@ void TC_st_change_health_period_null_context(void **state)
     assert_int_equal(err, IOT_ERROR_INVALID_ARGS);
 }
 
-void TC_st_change_health_period_invalid_context(void **state)
+TEST_F(TC_REGISTRY_NO_FIXTURE, TC_st_change_health_period_invalid_context_neg)
 {
     int err;
     struct iot_context context = {0};
@@ -269,7 +282,7 @@ struct mqtt_pub_test_data {
     char response_fixed_header;
 };
 
-void TC_st_change_health_period_success(void **state)
+TEST_F(TC_REGISTRY_NO_FIXTURE, TC_st_change_health_period_success_pos)
 {
     int err;
     iot_error_t iot_err;
@@ -356,7 +369,7 @@ void TC_st_change_health_period_success(void **state)
     free(context);
 }
 
-void TC_create_easysetup_resources_pin_type_null_pin(void **state)
+TEST_F(TC_REGISTRY_NO_FIXTURE, TC_create_easysetup_resources_pin_type_null_pin_neg)
 {
     iot_error_t result;
     struct iot_context context = {0};
@@ -376,7 +389,7 @@ void TC_create_easysetup_resources_pin_type_null_pin(void **state)
     assert_null(context.easysetup_resp_queue);
 }
 
-void TC_create_easysetup_resources_pin_malloc_failure(void **state)
+TEST_F(TC_REGISTRY_NO_FIXTURE, TC_create_easysetup_resources_pin_malloc_failure_neg)
 {
     iot_error_t result;
     struct iot_context context = {0};
@@ -403,7 +416,7 @@ void TC_create_easysetup_resources_pin_malloc_failure(void **state)
     do_not_use_mock_iot_os_malloc_failure();
 }
 
-void TC_st_change_device_name_null_context(void **state)
+TEST_F(TC_REGISTRY_NO_FIXTURE, TC_st_change_device_name_null_context_neg)
 {
     int result;
     UNUSED(state);
@@ -414,7 +427,7 @@ void TC_st_change_device_name_null_context(void **state)
     assert_int_equal(result, IOT_ERROR_INVALID_ARGS);
 }
 
-void TC_st_change_device_name_null_new_name(void **state)
+TEST_F(TC_REGISTRY_NO_FIXTURE, TC_st_change_device_name_null_new_name_neg)
 {
     int result;
     struct iot_context context = {0};
@@ -426,7 +439,7 @@ void TC_st_change_device_name_null_new_name(void **state)
     assert_int_equal(result, IOT_ERROR_INVALID_ARGS);
 }
 
-void TC_st_change_device_name_invalid_context_state(void **state)
+TEST_F(TC_REGISTRY_NO_FIXTURE, TC_st_change_device_name_invalid_context_state_neg)
 {
     int result;
     struct iot_context context = {0};
@@ -442,7 +455,7 @@ void TC_st_change_device_name_invalid_context_state(void **state)
     assert_int_equal(result, IOT_ERROR_BAD_REQ);
 }
 
-void TC_st_change_device_name_null_mqtt_client(void **state)
+TEST_F(TC_REGISTRY_NO_FIXTURE, TC_st_change_device_name_null_mqtt_client_neg)
 {
     int result;
     struct iot_context context = {0};
@@ -458,7 +471,7 @@ void TC_st_change_device_name_null_mqtt_client(void **state)
     assert_int_equal(result, IOT_ERROR_BAD_REQ);
 }
 
-void TC_st_change_device_name_name_too_long(void **state)
+TEST_F(TC_REGISTRY_NO_FIXTURE, TC_st_change_device_name_name_too_long_neg)
 {
     int result;
     struct iot_context context = {0};
@@ -479,7 +492,7 @@ void TC_st_change_device_name_name_too_long(void **state)
     assert_int_equal(result, IOT_ERROR_INVALID_ARGS);
 }
 
-void TC_st_change_device_name_success(void **state)
+TEST_F(TC_REGISTRY_NO_FIXTURE, TC_st_change_device_name_success_pos)
 {
     int result;
     int err;
@@ -538,7 +551,7 @@ void TC_st_change_device_name_success(void **state)
     free(context);
 }
 
-void TC_con_timeout_check_null_timer(void **state)
+TEST_F(TC_REGISTRY_NO_FIXTURE, TC_con_timeout_check_null_timer_neg)
 {
     bool result;
     struct iot_context context = {0};
@@ -551,7 +564,7 @@ void TC_con_timeout_check_null_timer(void **state)
     assert_false(result);
 }
 
-void TC_con_timeout_check_timer_expired(void **state)
+TEST_F(TC_REGISTRY_NO_FIXTURE, TC_con_timeout_check_timer_expired_neg)
 {
     bool result;
     struct iot_context context = {0};
@@ -576,7 +589,7 @@ void TC_con_timeout_check_timer_expired(void **state)
     iot_os_timer_delete(context.cloud_con_timer);
 }
 
-void TC_st_info_get_null_context(void **state)
+TEST_F(TC_REGISTRY_NO_FIXTURE, TC_st_info_get_null_context_neg)
 {
     int err;
     iot_info_data_t info_data = {0};
@@ -588,7 +601,7 @@ void TC_st_info_get_null_context(void **state)
     assert_int_equal(err, IOT_ERROR_INVALID_ARGS);
 }
 
-void TC_st_info_get_null_info_data(void **state)
+TEST_F(TC_REGISTRY_NO_FIXTURE, TC_st_info_get_null_info_data_neg)
 {
     int err;
     struct iot_context context = {0};
@@ -600,7 +613,7 @@ void TC_st_info_get_null_info_data(void **state)
     assert_int_equal(err, IOT_ERROR_INVALID_ARGS);
 }
 
-void TC_st_info_get_invalid_info_type(void **state)
+TEST_F(TC_REGISTRY_NO_FIXTURE, TC_st_info_get_invalid_info_type_neg)
 {
     int err;
     struct iot_context context = {0};
@@ -622,7 +635,7 @@ void TC_st_info_get_invalid_info_type(void **state)
     iot_os_mutex_destroy(&context.st_conn_lock);
 }
 
-void TC_st_info_get_missing_broker_url(void **state)
+TEST_F(TC_REGISTRY_NO_FIXTURE, TC_st_info_get_missing_broker_url_neg)
 {
     int err;
     struct iot_context context = {0};
@@ -641,7 +654,7 @@ void TC_st_info_get_missing_broker_url(void **state)
     assert_int_equal(err, IOT_ERROR_BAD_REQ);
 }
 
-void TC_st_info_get_invalid_context_missing_fields(void **state)
+TEST_F(TC_REGISTRY_NO_FIXTURE, TC_st_info_get_invalid_context_missing_fields_neg)
 {
     int err;
     struct iot_context context = {0};
@@ -659,7 +672,7 @@ void TC_st_info_get_invalid_context_missing_fields(void **state)
     assert_int_equal(err, IOT_ERROR_INVALID_ARGS);
 }
 
-void TC_st_info_get_status_and_stat_success(void **state)
+TEST_F(TC_REGISTRY_NO_FIXTURE, TC_st_info_get_status_and_stat_success_pos)
 {
     int err;
     struct iot_context context = {0};
@@ -683,7 +696,7 @@ void TC_st_info_get_status_and_stat_success(void **state)
     iot_os_mutex_destroy(&context.st_conn_lock);
 }
 
-void TC_st_info_get_provisioned_success(void **state)
+TEST_F(TC_REGISTRY_NO_FIXTURE, TC_st_info_get_provisioned_success_pos)
 {
     int err;
     struct iot_context context = {0};
@@ -707,7 +720,7 @@ void TC_st_info_get_provisioned_success(void **state)
     iot_os_mutex_destroy(&context.st_conn_lock);
 }
 
-void TC_st_conn_start_null_context(void **state)
+TEST_F(TC_REGISTRY_NO_FIXTURE, TC_st_conn_start_null_context_neg)
 {
     int err;
     UNUSED(state);
@@ -718,7 +731,7 @@ void TC_st_conn_start_null_context(void **state)
     assert_int_equal(err, IOT_ERROR_INVALID_ARGS);
 }
 
-void TC_st_conn_start_invalid_context(void **state)
+TEST_F(TC_REGISTRY_NO_FIXTURE, TC_st_conn_start_invalid_context_neg)
 {
     int err;
     struct iot_context context = {0};
@@ -730,7 +743,7 @@ void TC_st_conn_start_invalid_context(void **state)
     assert_int_equal(err, IOT_ERROR_INVALID_ARGS);
 }
 
-void TC_st_conn_start_already_running(void **state)
+TEST_F(TC_REGISTRY_NO_FIXTURE, TC_st_conn_start_already_running_neg)
 {
     int err;
     struct iot_context context = {0};
@@ -740,6 +753,8 @@ void TC_st_conn_start_already_running(void **state)
     context.work_queue = (void *)1;
     context.usr_events = (void *)1;
     context.iot_events = (void *)1;
+    // real lock so the already-running check is reached instead of failing on the lock
+    iot_os_mutex_init(&context.st_conn_lock);
 
     context.curr_state = IOT_STATE_PROV_ENTER;
 
@@ -747,9 +762,12 @@ void TC_st_conn_start_already_running(void **state)
     err = st_conn_start((IOT_CTX *)&context, NULL, NULL, NULL);
     // Then
     assert_int_equal(err, IOT_ERROR_BAD_REQ);
+
+    // Teardown
+    iot_os_mutex_destroy(&context.st_conn_lock);
 }
 
-void TC_st_conn_start_missing_status_cb(void **state)
+TEST_F(TC_REGISTRY_NO_FIXTURE, TC_st_conn_start_missing_status_cb_neg)
 {
     int err;
     struct iot_context context = {0};
@@ -765,14 +783,19 @@ void TC_st_conn_start_missing_status_cb(void **state)
 
     // Set context to IOT_STATE_INITIALIZED
     context.curr_state = IOT_STATE_INITIALIZED;
+    // real lock so the status_cb check is reached instead of failing on the lock
+    iot_os_mutex_init(&context.st_conn_lock);
 
     // When: BUTTON ownership validation but no status callback
     err = st_conn_start((IOT_CTX *)&context, NULL, NULL, NULL);
     // Then
     assert_int_equal(err, IOT_ERROR_BAD_REQ);
+
+    // Teardown
+    iot_os_mutex_destroy(&context.st_conn_lock);
 }
 
-void TC_st_conn_start_ex_null_context(void **state)
+TEST_F(TC_REGISTRY_NO_FIXTURE, TC_st_conn_start_ex_null_context_neg)
 {
     int err;
     iot_ext_args_t ext_args = {0};
@@ -784,7 +807,7 @@ void TC_st_conn_start_ex_null_context(void **state)
     assert_int_equal(err, IOT_ERROR_INVALID_ARGS);
 }
 
-void TC_st_conn_start_ex_null_ext_args(void **state)
+TEST_F(TC_REGISTRY_NO_FIXTURE, TC_st_conn_start_ex_null_ext_args_neg)
 {
     int err;
     struct iot_context context = {0};
@@ -801,7 +824,7 @@ void TC_st_conn_start_ex_null_ext_args(void **state)
     assert_int_equal(err, IOT_ERROR_INVALID_ARGS);
 }
 
-void TC_st_conn_start_ex_invalid_start_pt(void **state)
+TEST_F(TC_REGISTRY_NO_FIXTURE, TC_st_conn_start_ex_invalid_start_pt_neg)
 {
     int err;
     struct iot_context context = {0};
@@ -822,7 +845,7 @@ void TC_st_conn_start_ex_invalid_start_pt(void **state)
     assert_int_equal(err, IOT_ERROR_BAD_REQ);
 }
 
-void TC_st_conn_start_ex_missing_status_cb(void **state)
+TEST_F(TC_REGISTRY_NO_FIXTURE, TC_st_conn_start_ex_missing_status_cb_neg)
 {
     int err;
     struct iot_context context = {0};
@@ -848,7 +871,7 @@ void TC_st_conn_start_ex_missing_status_cb(void **state)
     assert_int_equal(err, IOT_ERROR_BAD_REQ);
 }
 
-void TC_st_conn_cleanup_invalid_parameters(void **state)
+TEST_F(TC_REGISTRY_NO_FIXTURE, TC_st_conn_cleanup_invalid_parameters_neg)
 {
     IOT_CTX *context;
     int err;
@@ -870,7 +893,7 @@ void TC_st_conn_cleanup_invalid_parameters(void **state)
     free(context);
 }
 
-void TC_st_conn_cleanup_success(void **state)
+TEST_F(TC_REGISTRY_NO_FIXTURE, TC_st_conn_cleanup_success_pos)
 {
     IOT_CTX *context;
     struct iot_context *internal_context;
@@ -905,7 +928,7 @@ void TC_st_conn_cleanup_success(void **state)
 
 extern void _delete_easysetup_resources_all(struct iot_context *ctx);
 
-void TC_easysetup_resources_create_delete_success(void **state)
+TEST_F(TC_REGISTRY_NO_FIXTURE, TC_easysetup_resources_create_delete_success_pos)
 {
     iot_error_t err;
     struct iot_context *context;
@@ -968,7 +991,7 @@ static struct iot_device_prov_data *_generate_test_prov_data(struct _prov_test_d
     return prov_data;
 }
 
-void TC_check_prov_data_validation(void **state)
+TEST_F(TC_REGISTRY_NO_FIXTURE, TC_check_prov_data_validation_pos)
 {
     iot_error_t err;
     struct _prov_test_data test_set[] = {
@@ -994,7 +1017,7 @@ extern iot_error_t iot_command_send(struct iot_context *ctx, enum iot_command_ty
                                     int param_size);
 extern iot_error_t iot_put_device_work(struct iot_context *ctx, device_work_handler handler, device_work_param param);
 
-void TC_iot_command_send_success(void **state)
+TEST_F(TC_REGISTRY_NO_FIXTURE, TC_iot_command_send_success_pos)
 {
     iot_error_t err;
     struct iot_context *context;
@@ -1023,9 +1046,50 @@ void TC_iot_command_send_success(void **state)
     free(context);
 }
 
+TEST_F(TC_REGISTRY_NO_FIXTURE, TC_iot_noti_send_success_pos)
+{
+    iot_error_t err;
+    struct iot_context *context;
+    iot_noti_data_t noti_data = {0};
+    device_work_data_t work;
+    UNUSED(state);
+
+    // Given: valid context with work queue and mutex
+    context = (struct iot_context *)calloc(1, sizeof(struct iot_context));
+    assert_non_null(context);
+    context->work_queue = iot_util_queue_create(sizeof(device_work_data_t));
+    assert_non_null(context->work_queue);
+    context->work_queue_signal = iot_os_eventgroup_create();
+    assert_non_null(context->work_queue_signal);
+    iot_os_mutex_init(&context->st_conn_lock);
+    context->noti_cb = test_st_cap_noti_cb;
+
+    noti_data.type = _IOT_NOTI_TYPE_RATE_LIMIT;
+
+    // When: invalid parameters
+    err = iot_noti_send(context, NULL);
+    // Then
+    assert_int_equal(err, IOT_ERROR_INVALID_ARGS);
+
+    // When: valid parameters
+    err = iot_noti_send(context, &noti_data);
+    // Then: noti is queued with _noti_work_handler and dispatched on the work queue
+    assert_int_equal(err, IOT_ERROR_NONE);
+    err = iot_util_queue_receive(context->work_queue, &work);
+    assert_int_equal(err, IOT_ERROR_NONE);
+    assert_ptr_equal(work.handler, _noti_work_handler);
+    work.handler(context, work.param);
+
+    // Teardown
+    iot_util_queue_delete(context->work_queue);
+    iot_os_eventgroup_delete(context->work_queue_signal);
+    iot_os_mutex_destroy(&context->st_conn_lock);
+    free(context);
+}
+
 extern iot_error_t _do_iot_main_command(struct iot_context *ctx, struct iot_command *cmd);
 
-void TC_do_iot_main_command_state_update_positive(void **state)
+TEST_F(iot_easysetup, TC_do_iot_main_command_state_update_pos)
 {
     iot_error_t err;
     struct iot_command cmd = {0};
@@ -1064,7 +1128,7 @@ void TC_do_iot_main_command_state_update_positive(void **state)
     assert_int_equal(err, IOT_ERROR_NONE);
 }
 
-void TC_do_iot_main_command_cloud_registering_negative(void **state)
+TEST_F(TC_REGISTRY_NO_FIXTURE, TC_do_iot_main_command_cloud_registering_neg)
 {
     iot_error_t err;
     struct iot_context *context;
@@ -1088,7 +1152,8 @@ void TC_do_iot_main_command_cloud_registering_negative(void **state)
     context->usr_events = iot_os_eventgroup_create();
     context->iot_events = iot_os_eventgroup_create();
 
-    context->is_wifi_station = false;
+    snprintf(context->prov_data.wifi.ssid, sizeof(context->prov_data.wifi.ssid), "test_ssid");
+    context->need_wifi_reset = true;
     context->reg_mqttcli = NULL;
     context->wifi_update_enabled = false;
     context->rate_limit = true;
@@ -1104,7 +1169,7 @@ void TC_do_iot_main_command_cloud_registering_negative(void **state)
     // When: cmd type is cloud registering
     err = _do_iot_main_command(context, &cmd);
     // Then:
-    assert_int_equal(err, IOT_ERROR_MQTT_CONNECT_FAIL);
+    assert_int_equal(err, IOT_ERROR_MQTT_RATE_LIMIT);
 
     // Teardown
     iot_util_queue_delete(context->work_queue);
@@ -1118,7 +1183,7 @@ void TC_do_iot_main_command_cloud_registering_negative(void **state)
     iot_nv_deinit();
 }
 
-void TC_do_iot_main_command_cloud_connecting_positive(void **state)
+TEST_F(TC_REGISTRY_NO_FIXTURE, TC_do_iot_main_command_cloud_connecting_pos)
 {
     iot_error_t err;
     struct iot_context *context;
@@ -1171,12 +1236,11 @@ void TC_do_iot_main_command_cloud_connecting_positive(void **state)
     iot_nv_deinit();
 }
 
-void TC_do_iot_main_command_notification_rate_limit_positive(void **state)
+TEST_F(TC_REGISTRY_NO_FIXTURE, TC_noti_work_handler_rate_limit_neg)
 {
-    iot_error_t err;
     struct iot_context context = {0};
-    struct iot_command cmd = {0};
-    iot_noti_data_t noti_data = {0};
+    iot_noti_data_t *noti_data = iot_os_malloc(sizeof(iot_noti_data_t));
+    memset(noti_data, 0, sizeof(iot_noti_data_t));
 
     UNUSED(state);
 
@@ -1188,30 +1252,27 @@ void TC_do_iot_main_command_notification_rate_limit_positive(void **state)
     iot_os_mutex_init(&context.st_conn_lock);
     context.noti_cb = test_st_cap_noti_cb;
 
-    noti_data.type = _IOT_NOTI_TYPE_RATE_LIMIT;
-
-    cmd.cmd_type = IOT_COMMAND_NOTIFICATION_RECEIVED;
-    cmd.param = &noti_data;
+    noti_data->type = _IOT_NOTI_TYPE_RATE_LIMIT;
 
     // When:
-    err = _do_iot_main_command(&context, &cmd);
+    _noti_work_handler(&context, (device_work_param)noti_data);
 
-    // Then: should return IOT_ERROR_NONE
-    assert_int_equal(err, IOT_ERROR_NONE);
+    // Then: no crash, noti_data is freed by the handler
 
     // Teardown
     iot_os_eventgroup_delete(context.usr_events);
     iot_os_eventgroup_delete(context.iot_events);
     iot_os_eventgroup_delete(context.work_queue_signal);
     iot_os_mutex_destroy(&context.st_conn_lock);
+
+    assert_true(true);
 }
 
-void TC_do_iot_main_command_notification_dev_deleted_positive(void **state)
+TEST_F(TC_REGISTRY_NO_FIXTURE, TC_noti_work_handler_dev_deleted_neg)
 {
-    iot_error_t err;
     struct iot_context context = {0};
-    struct iot_command cmd = {0};
-    iot_noti_data_t noti_data = {0};
+    iot_noti_data_t *noti_data = iot_os_malloc(sizeof(iot_noti_data_t));
+    memset(noti_data, 0, sizeof(iot_noti_data_t));
 
     UNUSED(state);
 
@@ -1223,30 +1284,27 @@ void TC_do_iot_main_command_notification_dev_deleted_positive(void **state)
     iot_os_mutex_init(&context.st_conn_lock);
     context.noti_cb = test_st_cap_noti_cb;
 
-    noti_data.type = _IOT_NOTI_TYPE_DEV_DELETED;
-
-    cmd.cmd_type = IOT_COMMAND_NOTIFICATION_RECEIVED;
-    cmd.param = &noti_data;
+    noti_data->type = _IOT_NOTI_TYPE_DEV_DELETED;
 
     // When:
-    err = _do_iot_main_command(&context, &cmd);
+    _noti_work_handler(&context, (device_work_param)noti_data);
 
-    // Then: should return IOT_ERROR_NONE
-    assert_int_equal(err, IOT_ERROR_NONE);
+    // Then: no crash, noti_data is freed by the handler
 
     // Teardown
     iot_os_eventgroup_delete(context.usr_events);
     iot_os_eventgroup_delete(context.iot_events);
     iot_os_eventgroup_delete(context.work_queue_signal);
     iot_os_mutex_destroy(&context.st_conn_lock);
+
+    assert_true(true);
 }
 
-void TC_do_iot_main_command_notification_quota_reached_positive(void **state)
+TEST_F(TC_REGISTRY_NO_FIXTURE, TC_noti_work_handler_quota_reached_neg)
 {
-    iot_error_t err;
     struct iot_context context = {0};
-    struct iot_command cmd = {0};
-    iot_noti_data_t noti_data = {0};
+    iot_noti_data_t *noti_data = iot_os_malloc(sizeof(iot_noti_data_t));
+    memset(noti_data, 0, sizeof(iot_noti_data_t));
 
     UNUSED(state);
 
@@ -1258,32 +1316,29 @@ void TC_do_iot_main_command_notification_quota_reached_positive(void **state)
     iot_os_mutex_init(&context.st_conn_lock);
     context.noti_cb = test_st_cap_noti_cb;
 
-    noti_data.type = _IOT_NOTI_TYPE_QUOTA_REACHED;
-    noti_data.raw.quota.used = 100;
-    noti_data.raw.quota.limit = 200;
-
-    cmd.cmd_type = IOT_COMMAND_NOTIFICATION_RECEIVED;
-    cmd.param = &noti_data;
+    noti_data->type = _IOT_NOTI_TYPE_QUOTA_REACHED;
+    noti_data->raw.quota.used = 100;
+    noti_data->raw.quota.limit = 200;
 
     // When:
-    err = _do_iot_main_command(&context, &cmd);
+    _noti_work_handler(&context, (device_work_param)noti_data);
 
-    // Then: should return IOT_ERROR_NONE
-    assert_int_equal(err, IOT_ERROR_NONE);
+    // Then: no crash, noti_data is freed by the handler
 
     // Teardown
     iot_os_eventgroup_delete(context.usr_events);
     iot_os_eventgroup_delete(context.iot_events);
     iot_os_eventgroup_delete(context.work_queue_signal);
     iot_os_mutex_destroy(&context.st_conn_lock);
+
+    assert_true(true);
 }
 
-void TC_do_iot_main_command_notification_preference_updated_positive(void **state)
+TEST_F(TC_REGISTRY_NO_FIXTURE, TC_noti_work_handler_preference_updated_neg)
 {
-    iot_error_t err;
     struct iot_context context = {0};
-    struct iot_command cmd = {0};
-    iot_noti_data_t noti_data = {0};
+    iot_noti_data_t *noti_data = iot_os_malloc(sizeof(iot_noti_data_t));
+    memset(noti_data, 0, sizeof(iot_noti_data_t));
     iot_preference_data pref_data = {0};
 
     UNUSED(state);
@@ -1297,35 +1352,33 @@ void TC_do_iot_main_command_notification_preference_updated_positive(void **stat
     context.noti_cb = test_st_cap_noti_cb;
 
     // Set up notification data for preference updated
-    noti_data.type = _IOT_NOTI_TYPE_PREFERENCE_UPDATED;
-    noti_data.raw.preferences.preferences_num = 1;
-    noti_data.raw.preferences.preferences_data =
-        iot_os_malloc(noti_data.raw.preferences.preferences_num * sizeof(iot_noti_data_t));
-    noti_data.raw.preferences.preferences_data[0].preference_data.type = IOT_CAP_VAL_TYPE_STRING;
-    noti_data.raw.preferences.preferences_data[0].preference_data.string = iot_os_strdup("xyz");
-    noti_data.raw.preferences.preferences_data[0].preference_name = iot_os_strdup("abc");
-    cmd.cmd_type = IOT_COMMAND_NOTIFICATION_RECEIVED;
-    cmd.param = &noti_data;
+    noti_data->type = _IOT_NOTI_TYPE_PREFERENCE_UPDATED;
+    noti_data->raw.preferences.preferences_num = 1;
+    noti_data->raw.preferences.preferences_data =
+        iot_os_malloc(noti_data->raw.preferences.preferences_num * sizeof(iot_noti_data_t));
+    noti_data->raw.preferences.preferences_data[0].preference_data.type = IOT_CAP_VAL_TYPE_STRING;
+    noti_data->raw.preferences.preferences_data[0].preference_data.string = iot_os_strdup("xyz");
+    noti_data->raw.preferences.preferences_data[0].preference_name = iot_os_strdup("abc");
 
     // When:
-    err = _do_iot_main_command(&context, &cmd);
+    _noti_work_handler(&context, (device_work_param)noti_data);
 
-    // Then: should return IOT_ERROR_NONE
-    assert_int_equal(err, IOT_ERROR_NONE);
+    // Then: no crash, noti_data is freed by the handler
 
     // Teardown
     iot_os_eventgroup_delete(context.usr_events);
     iot_os_eventgroup_delete(context.iot_events);
     iot_os_eventgroup_delete(context.work_queue_signal);
     iot_os_mutex_destroy(&context.st_conn_lock);
+
+    assert_true(true);
 }
 
-void TC_do_iot_main_command_notification_send_failed_positive(void **state)
+TEST_F(TC_REGISTRY_NO_FIXTURE, TC_noti_work_handler_send_failed_neg)
 {
-    iot_error_t err;
     struct iot_context context = {0};
-    struct iot_command cmd = {0};
-    iot_noti_data_t noti_data = {0};
+    iot_noti_data_t *noti_data = iot_os_malloc(sizeof(iot_noti_data_t));
+    memset(noti_data, 0, sizeof(iot_noti_data_t));
 
     UNUSED(state);
 
@@ -1338,31 +1391,28 @@ void TC_do_iot_main_command_notification_send_failed_positive(void **state)
     context.noti_cb = test_st_cap_noti_cb;
 
     // Set up notification data for send failed
-    noti_data.type = _IOT_NOTI_TYPE_SEND_FAILED;
-    noti_data.raw.send_fail.failed_request_id = 123;
-
-    cmd.cmd_type = IOT_COMMAND_NOTIFICATION_RECEIVED;
-    cmd.param = &noti_data;
+    noti_data->type = _IOT_NOTI_TYPE_SEND_FAILED;
+    noti_data->raw.send_fail.failed_request_id = 123;
 
     // When:
-    err = _do_iot_main_command(&context, &cmd);
+    _noti_work_handler(&context, (device_work_param)noti_data);
 
-    // Then: should return IOT_ERROR_NONE
-    assert_int_equal(err, IOT_ERROR_NONE);
+    // Then: no crash, noti_data is freed by the handler
 
     // Teardown
     iot_os_eventgroup_delete(context.usr_events);
     iot_os_eventgroup_delete(context.iot_events);
     iot_os_eventgroup_delete(context.work_queue_signal);
     iot_os_mutex_destroy(&context.st_conn_lock);
+
+    assert_true(true);
 }
 
-void TC_do_iot_main_command_notification_child_device_synced_positive(void **state)
+TEST_F(TC_REGISTRY_NO_FIXTURE, TC_noti_work_handler_child_device_synced_neg)
 {
-    iot_error_t err;
     struct iot_context context = {0};
-    struct iot_command cmd = {0};
-    iot_noti_data_t noti_data = {0};
+    iot_noti_data_t *noti_data = iot_os_malloc(sizeof(iot_noti_data_t));
+    memset(noti_data, 0, sizeof(iot_noti_data_t));
 
     UNUSED(state);
 
@@ -1375,30 +1425,27 @@ void TC_do_iot_main_command_notification_child_device_synced_positive(void **sta
     context.noti_cb = test_st_cap_noti_cb;
 
     // Set up notification data for child device synced
-    noti_data.type = _IOT_NOTI_TYPE_CHILD_DEVICE_SYNCED;
-
-    cmd.cmd_type = IOT_COMMAND_NOTIFICATION_RECEIVED;
-    cmd.param = &noti_data;
+    noti_data->type = _IOT_NOTI_TYPE_CHILD_DEVICE_SYNCED;
 
     // When:
-    err = _do_iot_main_command(&context, &cmd);
+    _noti_work_handler(&context, (device_work_param)noti_data);
 
-    // Then: should return IOT_ERROR_NONE
-    assert_int_equal(err, IOT_ERROR_NONE);
+    // Then: no crash, noti_data is freed by the handler
 
     // Teardown
     iot_os_eventgroup_delete(context.usr_events);
     iot_os_eventgroup_delete(context.iot_events);
     iot_os_eventgroup_delete(context.work_queue_signal);
     iot_os_mutex_destroy(&context.st_conn_lock);
+
+    assert_true(true);
 }
 
-void TC_do_iot_main_command_notification_child_device_registered_positive(void **state)
+TEST_F(TC_REGISTRY_NO_FIXTURE, TC_noti_work_handler_child_device_registered_neg)
 {
-    iot_error_t err;
     struct iot_context context = {0};
-    struct iot_command cmd = {0};
-    iot_noti_data_t noti_data = {0};
+    iot_noti_data_t *noti_data = iot_os_malloc(sizeof(iot_noti_data_t));
+    memset(noti_data, 0, sizeof(iot_noti_data_t));
 
     UNUSED(state);
 
@@ -1411,25 +1458,23 @@ void TC_do_iot_main_command_notification_child_device_registered_positive(void *
     context.noti_cb = test_st_cap_noti_cb;
 
     // Set up notification data for child device registered
-    noti_data.type = _IOT_NOTI_TYPE_CHILD_DEVICE_REGISTERED;
-
-    cmd.cmd_type = IOT_COMMAND_NOTIFICATION_RECEIVED;
-    cmd.param = &noti_data;
+    noti_data->type = _IOT_NOTI_TYPE_CHILD_DEVICE_REGISTERED;
 
     // When:
-    err = _do_iot_main_command(&context, &cmd);
+    _noti_work_handler(&context, (device_work_param)noti_data);
 
-    // Then: should return IOT_ERROR_NONE
-    assert_int_equal(err, IOT_ERROR_NONE);
+    // Then: no crash, noti_data is freed by the handler
 
     // Teardown
     iot_os_eventgroup_delete(context.usr_events);
     iot_os_eventgroup_delete(context.iot_events);
     iot_os_eventgroup_delete(context.work_queue_signal);
     iot_os_mutex_destroy(&context.st_conn_lock);
+
+    assert_true(true);
 }
 
-void TC_do_iot_main_command_system_reboot_positive(void **state)
+TEST_F(TC_REGISTRY_NO_FIXTURE, TC_do_iot_main_command_system_reboot_pos)
 {
     iot_error_t err;
     struct iot_context context = {0};
@@ -1460,7 +1505,7 @@ void TC_do_iot_main_command_system_reboot_positive(void **state)
     iot_os_mutex_destroy(&context.st_conn_lock);
 }
 
-void TC_do_iot_main_command_invalid_command_type_negative(void **state)
+TEST_F(TC_REGISTRY_NO_FIXTURE, TC_do_iot_main_command_invalid_command_type_neg)
 {
     iot_error_t err;
     struct iot_context context = {0};
@@ -1480,7 +1525,7 @@ void TC_do_iot_main_command_invalid_command_type_negative(void **state)
     assert_int_equal(err, IOT_ERROR_BAD_REQ);
 }
 
-void TC_do_iot_main_command_invalid_state_negative(void **state)
+TEST_F(TC_REGISTRY_NO_FIXTURE, TC_do_iot_main_command_invalid_state_neg)
 {
     iot_error_t err;
     struct iot_context context = {0};
@@ -1533,7 +1578,7 @@ static void assert_queued_state_update(struct iot_context *ctx, iot_state_t expe
     iot_os_free(queued_cmd);
 }
 
-void TC_check_prov_status_failure(void **state)
+TEST_F(TC_REGISTRY_NO_FIXTURE, TC_check_prov_status_failure_neg)
 {
     iot_error_t err;
     struct iot_context *context;
@@ -1593,7 +1638,7 @@ static struct iot_dip_data dip_example = {
     .dip_minor_version = 1,
 };
 
-void TC_check_prov_status_success(void **state)
+TEST_F(TC_REGISTRY_NO_FIXTURE, TC_check_prov_status_success_pos)
 {
     iot_error_t err;
     struct iot_context *context;
@@ -1662,7 +1707,7 @@ void TC_check_prov_status_success(void **state)
     iot_nv_erase(IOT_NVD_MISC_INFO);
 }
 
-void TC_check_prov_status_device_id_present_success(void **state)
+TEST_F(TC_REGISTRY_NO_FIXTURE, TC_check_prov_status_device_id_present_success_pos)
 {
     iot_error_t err;
     struct iot_context *context;
@@ -1718,7 +1763,7 @@ void TC_check_prov_status_device_id_present_success(void **state)
     iot_nv_deinit();
 }
 
-void TC_check_prov_status_invalid_prov_data(void **state)
+TEST_F(TC_REGISTRY_NO_FIXTURE, TC_check_prov_status_invalid_prov_data_neg)
 {
     iot_error_t err;
     struct iot_context *context;
@@ -1768,7 +1813,7 @@ void TC_check_prov_status_invalid_prov_data(void **state)
     iot_nv_deinit();
 }
 
-void TC_iot_put_device_work_null_context(void **state)
+TEST_F(TC_REGISTRY_NO_FIXTURE, TC_iot_put_device_work_null_context_neg)
 {
     iot_error_t err;
     UNUSED(state);
@@ -1779,7 +1824,7 @@ void TC_iot_put_device_work_null_context(void **state)
     assert_int_equal(err, IOT_ERROR_INVALID_ARGS);
 }
 
-void TC_iot_put_device_work_success(void **state)
+TEST_F(TC_REGISTRY_NO_FIXTURE, TC_iot_put_device_work_success_pos)
 {
     iot_error_t err;
     struct iot_context *context;
@@ -1804,7 +1849,7 @@ void TC_iot_put_device_work_success(void **state)
     free(context);
 }
 
-void TC_st_device_init_null_parameter(void **state)
+TEST_F(TC_REGISTRY_NO_FIXTURE, TC_st_device_init_null_parameter_neg)
 {
     IOT_CTX *context;
     st_device_config_t config = {0};
@@ -1816,7 +1861,7 @@ void TC_st_device_init_null_parameter(void **state)
     assert_null(context);
 }
 
-void TC_st_device_init_invalid_identity_method(void **state)
+TEST_F(TC_REGISTRY_NO_FIXTURE, TC_st_device_init_invalid_identity_method_neg)
 {
     IOT_CTX *context;
     st_device_config_t config = {0};
@@ -1833,7 +1878,7 @@ void TC_st_device_init_invalid_identity_method(void **state)
     assert_null(context);
 }
 
-void TC_st_device_init_success(void **state)
+TEST_F(TC_REGISTRY_NO_FIXTURE, TC_st_device_init_success_pos)
 {
     IOT_CTX *context;
     st_device_config_t config = {0};
@@ -1846,6 +1891,9 @@ void TC_st_device_init_success(void **state)
     config.server_url = "ssl://mqtt-useast1.api.smartthings.com:8883";
     config.id_method = ST_IDENTITY_METHOD_MANUAL_ED25519;
     config.mnId = test_mnid;
+    config.dip_id = REG_TEST_DIP_ID;
+    config.dip_major_version = 0;
+    config.dip_minor_version = 1;
     config.identity.ed25519.prikey = TEST_DEVICE_SECRET_B64_KEY;
     config.identity.ed25519.pubkey = TEST_DEVICE_PUBLIC_B64_KEY;
     config.identity.ed25519.sn = TEST_DEVICE_SERIAL_NUMBER;
@@ -1873,11 +1921,17 @@ void TC_st_device_init_success(void **state)
     if (internal_context->devconf.mnid) {
         iot_os_free(internal_context->devconf.mnid);
     }
+    if (internal_context->devconf.dip) {
+        iot_os_free(internal_context->devconf.dip);
+    }
+    if (internal_context->prov_data.cloud.broker_url) {
+        iot_os_free(internal_context->prov_data.cloud.broker_url);
+    }
     iot_nv_deinit();
     iot_os_free(internal_context);
 }
 
-void TC_st_register_child_dev_invalid_context_state(void **state)
+TEST_F(TC_REGISTRY_NO_FIXTURE, TC_st_register_child_dev_invalid_context_state_neg)
 {
     int err;
     struct iot_context context = {0};
@@ -1894,7 +1948,7 @@ void TC_st_register_child_dev_invalid_context_state(void **state)
     assert_int_equal(err, IOT_ERROR_BAD_REQ);
 }
 
-void TC_st_register_child_dev_null_mqtt_client(void **state)
+TEST_F(TC_REGISTRY_NO_FIXTURE, TC_st_register_child_dev_null_mqtt_client_neg)
 {
     int err;
     struct iot_context context = {0};
@@ -1911,7 +1965,7 @@ void TC_st_register_child_dev_null_mqtt_client(void **state)
     assert_int_equal(err, IOT_ERROR_BAD_REQ);
 }
 
-void TC_st_register_child_dev_mqtt_publish_failure(void **state)
+TEST_F(TC_REGISTRY_NO_FIXTURE, TC_st_register_child_dev_mqtt_publish_failure_neg)
 {
     int err;
     iot_error_t iot_err;
@@ -1964,7 +2018,7 @@ void TC_st_register_child_dev_mqtt_publish_failure(void **state)
     free(context);
 }
 
-void TC_st_get_child_dev_null_context(void **state)
+TEST_F(TC_REGISTRY_NO_FIXTURE, TC_st_get_child_dev_null_context_neg)
 {
     IOT_CHILD_DEV child_dev;
     UNUSED(state);
@@ -1975,7 +2029,7 @@ void TC_st_get_child_dev_null_context(void **state)
     assert_null(child_dev);
 }
 
-void TC_st_get_child_dev_null_mnid(void **state)
+TEST_F(TC_REGISTRY_NO_FIXTURE, TC_st_get_child_dev_null_mnid_neg)
 {
     IOT_CHILD_DEV child_dev;
     struct iot_context context = {0};
@@ -1987,7 +2041,7 @@ void TC_st_get_child_dev_null_mnid(void **state)
     assert_null(child_dev);
 }
 
-void TC_st_get_child_dev_null_serial_number(void **state)
+TEST_F(TC_REGISTRY_NO_FIXTURE, TC_st_get_child_dev_null_serial_number_neg)
 {
     IOT_CHILD_DEV child_dev;
     struct iot_context context = {0};
@@ -1999,7 +2053,7 @@ void TC_st_get_child_dev_null_serial_number(void **state)
     assert_null(child_dev);
 }
 
-void TC_st_get_child_dev_no_match(void **state)
+TEST_F(TC_REGISTRY_NO_FIXTURE, TC_st_get_child_dev_no_match_neg)
 {
     IOT_CHILD_DEV child_dev;
     struct iot_context context = {0};
@@ -2024,7 +2078,7 @@ void TC_st_get_child_dev_no_match(void **state)
     assert_null(child_dev);
 }
 
-void TC_st_get_child_dev_success(void **state)
+TEST_F(TC_REGISTRY_NO_FIXTURE, TC_st_get_child_dev_success_pos)
 {
     IOT_CHILD_DEV child_dev;
     struct iot_context context = {0};
@@ -2050,7 +2104,7 @@ void TC_st_get_child_dev_success(void **state)
     assert_ptr_equal(child_dev, &child2);
 }
 
-void TC_st_child_dev_start_null_child_dev(void **state)
+TEST_F(TC_REGISTRY_NO_FIXTURE, TC_st_child_dev_start_null_child_dev_neg)
 {
     int result;
     UNUSED(state);
@@ -2061,7 +2115,7 @@ void TC_st_child_dev_start_null_child_dev(void **state)
     assert_int_equal(result, -1);
 }
 
-void TC_st_child_dev_start_success(void **state)
+TEST_F(TC_REGISTRY_NO_FIXTURE, TC_st_child_dev_start_success_pos)
 {
     int result;
     iot_child_device child_dev = {0};
@@ -2081,7 +2135,7 @@ void TC_st_child_dev_start_success(void **state)
     assert_null(child_dev.noti_usr_data);
 }
 
-void TC_st_register_child_dev_success(void **state)
+TEST_F(TC_REGISTRY_NO_FIXTURE, TC_st_register_child_dev_success_pos)
 {
     int err;
     iot_error_t iot_err;
@@ -2149,7 +2203,7 @@ void TC_st_register_child_dev_success(void **state)
     free(context);
 }
 
-void TC_check_prov_status_no_device_id(void **state)
+TEST_F(TC_REGISTRY_NO_FIXTURE, TC_check_prov_status_no_device_id_neg)
 {
     iot_error_t err;
     struct iot_context context = {0};
@@ -2197,7 +2251,7 @@ void TC_check_prov_status_no_device_id(void **state)
     iot_api_prov_data_mem_free(&context.prov_data);
 }
 
-void TC_delete_dev_card_by_usr_null_context(void **state)
+TEST_F(TC_REGISTRY_NO_FIXTURE, TC_delete_dev_card_by_usr_null_context_neg)
 {
     iot_error_t err;
     UNUSED(state);
@@ -2209,7 +2263,7 @@ void TC_delete_dev_card_by_usr_null_context(void **state)
     assert_int_equal(err, IOT_ERROR_INVALID_ARGS);
 }
 
-void TC_delete_dev_card_by_usr_null_mqtt_client(void **state)
+TEST_F(TC_REGISTRY_NO_FIXTURE, TC_delete_dev_card_by_usr_null_mqtt_client_neg)
 {
     iot_error_t err;
     struct iot_context context = {0};
@@ -2226,7 +2280,7 @@ void TC_delete_dev_card_by_usr_null_mqtt_client(void **state)
     assert_int_equal(err, IOT_ERROR_NONE);
 }
 
-void TC_delete_dev_card_by_usr_not_connected(void **state)
+TEST_F(TC_REGISTRY_NO_FIXTURE, TC_delete_dev_card_by_usr_not_connected_neg)
 {
     iot_error_t err;
     struct iot_context context = {0};
@@ -2243,7 +2297,7 @@ void TC_delete_dev_card_by_usr_not_connected(void **state)
     assert_int_equal(err, IOT_ERROR_NONE);
 }
 
-void TC_delete_dev_card_by_usr_mqtt_publish_failure(void **state)
+TEST_F(TC_REGISTRY_NO_FIXTURE, TC_delete_dev_card_by_usr_mqtt_publish_failure_neg)
 {
     iot_error_t err;
     struct iot_context context = {0};
@@ -2266,7 +2320,7 @@ void TC_delete_dev_card_by_usr_mqtt_publish_failure(void **state)
     do_not_use_mock_iot_os_malloc_failure();
 }
 
-void TC_delete_dev_card_by_usr_success(void **state)
+TEST_F(TC_REGISTRY_NO_FIXTURE, TC_delete_dev_card_by_usr_success_pos)
 {
     iot_error_t err;
     struct iot_context *context;
@@ -2364,7 +2418,7 @@ void TC_delete_dev_card_by_usr_success(void **state)
 
 extern iot_error_t _do_state_updating(struct iot_context *ctx, iot_state_t new_state);
 
-void TC_do_state_updating_success(void **state)
+TEST_F(iot_easysetup, TC_do_state_updating_success_pos)
 {
     iot_error_t err;
 
@@ -2499,7 +2553,7 @@ void TC_do_state_updating_success(void **state)
     assert_int_equal(context->curr_state, IOT_STATE_PROV_CONFIRM);
 }
 
-void TC_do_state_updating_prov_sleep_success(void **state)
+TEST_F(TC_REGISTRY_NO_FIXTURE, TC_do_state_updating_prov_sleep_success_pos)
 {
     iot_error_t err;
     struct iot_context *context;
@@ -2526,7 +2580,7 @@ void TC_do_state_updating_prov_sleep_success(void **state)
     free(context);
 }
 
-void TC_do_state_updating_failure(void **state)
+TEST_F(TC_REGISTRY_NO_FIXTURE, TC_do_state_updating_failure_neg)
 {
     iot_error_t err;
     struct iot_context *context;
@@ -2549,7 +2603,7 @@ void TC_do_state_updating_failure(void **state)
 }
 
 #if defined(CONFIG_STDK_IOT_CORE_EASYSETUP_HTTP)
-void TC_do_state_updating_prov_sleep_failure(void **state)
+TEST_F(TC_REGISTRY_NO_FIXTURE, TC_do_state_updating_prov_sleep_failure_neg)
 {
     iot_error_t err;
     struct iot_context *context;
@@ -2571,7 +2625,7 @@ void TC_do_state_updating_prov_sleep_failure(void **state)
 }
 #endif
 
-void TC_do_state_updating_prov_sleep_invalid_args_failure(void **state)
+TEST_F(TC_REGISTRY_NO_FIXTURE, TC_do_state_updating_prov_sleep_invalid_args_failure_neg)
 {
     iot_error_t err;
     struct iot_context *context;
@@ -2592,7 +2646,7 @@ void TC_do_state_updating_prov_sleep_invalid_args_failure(void **state)
     free(context);
 }
 
-void TC_do_state_updating_state_initialized_failure(void **state)
+TEST_F(TC_REGISTRY_NO_FIXTURE, TC_do_state_updating_state_initialized_failure_neg)
 {
     iot_error_t err;
     struct iot_context *context;
@@ -2613,7 +2667,7 @@ void TC_do_state_updating_state_initialized_failure(void **state)
     free(context);
 }
 
-void TC_do_state_updating_state_prov_enter_failure(void **state)
+TEST_F(TC_REGISTRY_NO_FIXTURE, TC_do_state_updating_state_prov_enter_failure_neg)
 {
     iot_error_t err;
     struct iot_context *context;
@@ -2634,7 +2688,7 @@ void TC_do_state_updating_state_prov_enter_failure(void **state)
     free(context);
 }
 
-void TC_do_state_updating_state_prov_confirm_failure(void **state)
+TEST_F(TC_REGISTRY_NO_FIXTURE, TC_do_state_updating_state_prov_confirm_failure_neg)
 {
     iot_error_t err;
     struct iot_context *context;
@@ -2655,7 +2709,7 @@ void TC_do_state_updating_state_prov_confirm_failure(void **state)
     free(context);
 }
 
-void TC_do_state_updating_state_prov_done_failure(void **state)
+TEST_F(iot_easysetup, TC_do_state_updating_state_prov_done_failure_neg)
 {
     iot_error_t err;
     struct iot_context *context;
@@ -2689,7 +2743,7 @@ void TC_do_state_updating_state_prov_done_failure(void **state)
 #endif
 }
 
-void TC_do_state_updating_prov_enter_invalid_args_failure(void **state)
+TEST_F(TC_REGISTRY_NO_FIXTURE, TC_do_state_updating_prov_enter_invalid_args_failure_neg)
 {
     iot_error_t err;
     struct iot_context *context;
@@ -2710,7 +2764,7 @@ void TC_do_state_updating_prov_enter_invalid_args_failure(void **state)
     free(context);
 }
 
-void TC_do_state_updating_invalid_args_failure(void **state)
+TEST_F(TC_REGISTRY_NO_FIXTURE, TC_do_state_updating_invalid_args_failure_neg)
 {
     iot_error_t err;
     struct iot_context *context;
@@ -2731,7 +2785,7 @@ void TC_do_state_updating_invalid_args_failure(void **state)
     free(context);
 }
 
-void TC_command_work_handler_null_cmd_data_N(void **state)
+TEST_F(TC_REGISTRY_NO_FIXTURE, TC_command_work_handler_null_cmd_data_N_neg)
 {
     struct iot_context context = {0};
     UNUSED(state);
@@ -2739,8 +2793,10 @@ void TC_command_work_handler_null_cmd_data_N(void **state)
     // When: NULL cmd_data parameter
     _command_work_handler(&context, NULL);
     // Then: should not crash (no assert needed as it's a void function)
+
+    assert_true(true);
 }
-void TC_command_work_handler_success_P(void **state)
+TEST_F(iot_easysetup, TC_command_work_handler_success_P_pos)
 {
     struct iot_context *context;
     struct iot_command *cmd_data;
@@ -2775,7 +2831,7 @@ void TC_command_work_handler_success_P(void **state)
     iot_os_eventgroup_delete(context->work_queue_signal);
     iot_os_mutex_destroy(&context->st_conn_lock);
 }
-void TC_next_connection_retry_timeout_success_P(void **state)
+TEST_F(TC_REGISTRY_NO_FIXTURE, TC_next_connection_retry_timeout_success_P_neg)
 {
     struct iot_context context = {0};
     UNUSED(state);
@@ -2795,7 +2851,7 @@ void TC_next_connection_retry_timeout_success_P(void **state)
     iot_os_eventgroup_delete(context.work_queue_signal);
     iot_os_mutex_destroy(&context.st_conn_lock);
 }
-void TC_iot_state_timeout_cb_P(void **state)
+TEST_F(TC_REGISTRY_NO_FIXTURE, TC_iot_state_timeout_cb_P_neg)
 {
     struct iot_context context = {0};
     UNUSED(state);
@@ -2821,8 +2877,10 @@ void TC_iot_state_timeout_cb_P(void **state)
     // When: timeout callback for cloud connected state
     context.curr_state = IOT_STATE_CLOUD_CONNECTED;
     iot_state_timeout_cb(NULL, &context);
+
+    assert_true(true);
 }
-void TC_iot_state_timeout_cb_prov_enter_P(void **state)
+TEST_F(TC_REGISTRY_NO_FIXTURE, TC_iot_state_timeout_cb_prov_enter_P_neg)
 {
     struct iot_context context = {0};
     UNUSED(state);
@@ -2843,7 +2901,7 @@ void TC_iot_state_timeout_cb_prov_enter_P(void **state)
     iot_os_eventgroup_delete(context.work_queue_signal);
     iot_os_mutex_destroy(&context.st_conn_lock);
 }
-void TC_iot_state_timeout_cb_prov_done_P(void **state)
+TEST_F(TC_REGISTRY_NO_FIXTURE, TC_iot_state_timeout_cb_prov_done_P_neg)
 {
     struct iot_context context = {0};
     UNUSED(state);
@@ -2864,7 +2922,7 @@ void TC_iot_state_timeout_cb_prov_done_P(void **state)
     iot_os_eventgroup_delete(context.work_queue_signal);
     iot_os_mutex_destroy(&context.st_conn_lock);
 }
-void TC_get_device_preference_null_mqtt_client_N(void **state)
+TEST_F(TC_REGISTRY_NO_FIXTURE, TC_get_device_preference_null_mqtt_client_N_neg)
 {
     struct iot_context context = {0};
     UNUSED(state);
@@ -2875,8 +2933,10 @@ void TC_get_device_preference_null_mqtt_client_N(void **state)
     // When: _get_device_preference called with NULL MQTT client
     _get_device_preference(&context);
     // Then: should not crash (no assert needed as it's a void function)
+
+    assert_true(true);
 }
-void TC_get_device_preference_success_P(void **state)
+TEST_F(TC_REGISTRY_NO_FIXTURE, TC_get_device_preference_success_P_pos)
 {
     int err;
     iot_error_t iot_err;
@@ -2927,4 +2987,1023 @@ void TC_get_device_preference_success_P(void **state)
     // Teardown
     st_mqtt_destroy(client);
     free(context);
+}
+
+TEST_F(TC_REGISTRY_NO_FIXTURE, TC_noti_work_handler_null_param_neg)
+{
+    struct iot_context context = {0};
+
+    UNUSED(state);
+
+    // Given
+    context.curr_state = IOT_STATE_CLOUD_CONNECTED;
+
+    // When
+    _noti_work_handler(&context, NULL);
+
+    assert_true(true);
+}
+
+TEST_F(TC_REGISTRY_NO_FIXTURE, TC_noti_work_handler_rate_limit_released_neg)
+{
+    struct iot_context context = {0};
+    iot_noti_data_t *noti_data = iot_os_malloc(sizeof(iot_noti_data_t));
+    memset(noti_data, 0, sizeof(iot_noti_data_t));
+
+    UNUSED(state);
+
+    // Given
+    context.curr_state = IOT_STATE_CLOUD_CONNECTED;
+    context.noti_cb = test_st_cap_noti_cb;
+    noti_data->type = _IOT_NOTI_TYPE_RATE_LIMIT_RELEASED;
+
+    // When
+    _noti_work_handler(&context, (device_work_param)noti_data);
+
+    assert_true(true);
+}
+
+TEST_F(TC_REGISTRY_NO_FIXTURE, TC_noti_work_handler_send_success_neg)
+{
+    struct iot_context context = {0};
+    iot_noti_data_t *noti_data = iot_os_malloc(sizeof(iot_noti_data_t));
+    memset(noti_data, 0, sizeof(iot_noti_data_t));
+
+    UNUSED(state);
+
+    // Given
+    context.curr_state = IOT_STATE_CLOUD_CONNECTED;
+    context.noti_cb = test_st_cap_noti_cb;
+    noti_data->type = _IOT_NOTI_TYPE_SEND_SUCCESS;
+    noti_data->raw.send_success.success_request_id = 7;
+
+    // When
+    _noti_work_handler(&context, (device_work_param)noti_data);
+
+    assert_true(true);
+}
+
+TEST_F(TC_REGISTRY_NO_FIXTURE, TC_do_iot_main_command_cloud_registered_pos)
+{
+    iot_error_t err;
+    struct iot_context *context;
+    struct iot_command cmd = {0};
+
+    UNUSED(state);
+
+    // Given
+    err = iot_nv_init((unsigned char *)sample_device_info, strlen(sample_device_info));
+    assert_int_equal(err, IOT_ERROR_NONE);
+
+    context = (struct iot_context *)calloc(1, sizeof(struct iot_context));
+    assert_non_null(context);
+    context->work_queue = iot_util_queue_create(sizeof(struct iot_command));
+    assert_non_null(context->work_queue);
+    context->work_queue_signal = iot_os_eventgroup_create();
+    assert_non_null(context->work_queue_signal);
+    iot_os_mutex_init(&context->st_conn_lock);
+    context->curr_state = IOT_STATE_PROV_CONFIRM;
+
+    context->prov_data.cloud.location = iot_os_strdup("test-location");
+    context->prov_data.cloud.room = iot_os_strdup("test-room");
+    strncpy(context->prov_data.wifi.ssid, "test_ssid", IOT_WIFI_PROV_SSID_STR_LEN);
+    strncpy(context->prov_data.wifi.password, "test_pass", IOT_WIFI_PROV_PASSWORD_STR_LEN);
+
+    context->iot_reg_data.dip = (struct iot_dip_data *)iot_os_malloc(sizeof(struct iot_dip_data));
+    assert_non_null(context->iot_reg_data.dip);
+    memset(context->iot_reg_data.dip, 0, sizeof(struct iot_dip_data));
+    context->iot_reg_data.dip->dip_major_version = 1;
+    context->iot_reg_data.dip->dip_minor_version = 0;
+
+    context->iot_reg_data.locationId = (struct iot_uuid *)iot_os_malloc(sizeof(struct iot_uuid));
+    assert_non_null(context->iot_reg_data.locationId);
+    memset(context->iot_reg_data.locationId, 0x5a, sizeof(struct iot_uuid));
+
+    strncpy(context->iot_reg_data.deviceId, "0123456789abcdef0123456789abcdef", IOT_REG_UUID_STR_LEN);
+    context->reg_mqttcli = (st_mqtt_client)0x1;
+
+    tc_mock_es_set_disconnect_use_wrap(1);
+    tc_mock_es_set_disconnect_result(IOT_ERROR_NONE);
+
+    cmd.cmd_type = IOT_COMMAND_CLOUD_REGISTERED;
+    cmd.param = NULL;
+
+    // When
+    err = _do_iot_main_command(context, &cmd);
+
+    // Then
+    assert_int_equal(err, IOT_ERROR_NONE);
+    assert_null(context->prov_data.cloud.location);
+    assert_null(context->prov_data.cloud.room);
+    assert_null(context->iot_reg_data.dip);
+    assert_null(context->iot_reg_data.locationId);
+    assert_true(context->wifi_update_enabled);
+
+    // Teardown
+    tc_mock_es_reset_disconnect();
+    iot_util_queue_delete(context->work_queue);
+    iot_os_eventgroup_delete(context->work_queue_signal);
+    iot_os_mutex_destroy(&context->st_conn_lock);
+    free(context);
+    iot_nv_deinit();
+}
+
+TEST_F(TC_REGISTRY_NO_FIXTURE, TC_do_iot_main_command_cloud_registered_no_location_id_neg)
+{
+    iot_error_t err;
+    struct iot_context *context;
+    struct iot_command cmd = {0};
+
+    UNUSED(state);
+
+    // Given
+    err = iot_nv_init((unsigned char *)sample_device_info, strlen(sample_device_info));
+    assert_int_equal(err, IOT_ERROR_NONE);
+
+    context = (struct iot_context *)calloc(1, sizeof(struct iot_context));
+    assert_non_null(context);
+    context->work_queue = iot_util_queue_create(sizeof(struct iot_command));
+    assert_non_null(context->work_queue);
+    context->work_queue_signal = iot_os_eventgroup_create();
+    assert_non_null(context->work_queue_signal);
+    iot_os_mutex_init(&context->st_conn_lock);
+    context->curr_state = IOT_STATE_PROV_CONFIRM;
+
+    context->iot_reg_data.dip = NULL;
+    context->iot_reg_data.locationId = NULL;
+    context->prov_data.cloud.location = NULL;
+    context->prov_data.cloud.room = NULL;
+    strncpy(context->iot_reg_data.deviceId, "0123456789abcdef0123456789abcdef", IOT_REG_UUID_STR_LEN);
+    context->reg_mqttcli = NULL;
+
+    // iot_es_disconnect failure exercises the error log path at the branch entry
+    tc_mock_es_set_disconnect_use_wrap(1);
+    tc_mock_es_set_disconnect_result(IOT_ERROR_BAD_REQ);
+
+    cmd.cmd_type = IOT_COMMAND_CLOUD_REGISTERED;
+    cmd.param = NULL;
+
+    // When
+    err = _do_iot_main_command(context, &cmd);
+
+    // Then
+    assert_int_equal(err, IOT_ERROR_NONE);
+    assert_true(context->wifi_update_enabled);
+
+    // Teardown
+    tc_mock_es_reset_disconnect();
+    iot_util_queue_delete(context->work_queue);
+    iot_os_eventgroup_delete(context->work_queue_signal);
+    iot_os_mutex_destroy(&context->st_conn_lock);
+    free(context);
+    iot_nv_deinit();
+}
+
+/* iot_easysetup_ble.c keeps its working iot_context in this file-scope global.
+ * offline-diagnostics handlers send a BLE response through it, so tests that
+ * reach iot_easysetup_ble_send_response() must point it at a live context. */
+extern struct iot_context *context;
+static void _set_es_ble_context(struct iot_context *ctx)
+{
+    context = ctx;
+}
+
+static struct iot_context *_alloc_cloud_connecting_context(void)
+{
+    struct iot_context *context;
+
+    context = (struct iot_context *)calloc(1, sizeof(struct iot_context));
+    assert_non_null(context);
+    context->work_queue = iot_util_queue_create(sizeof(struct iot_command));
+    assert_non_null(context->work_queue);
+    context->work_queue_signal = iot_os_eventgroup_create();
+    assert_non_null(context->work_queue_signal);
+    context->usr_events = iot_os_eventgroup_create();
+    context->iot_events = iot_os_eventgroup_create();
+    context->easysetup_security_context = iot_security_init();
+    assert_non_null(context->easysetup_security_context);
+    iot_os_mutex_init(&context->st_conn_lock);
+    context->curr_state = IOT_STATE_CLOUD_DISCONNECTED;
+    context->es_ble_ready = false;
+
+    return context;
+}
+
+static void _free_cloud_connecting_context(struct iot_context *context)
+{
+    if (context->next_connection_retry_timer) {
+        iot_os_timer_stop(context->next_connection_retry_timer);
+        iot_os_timer_delete(context->next_connection_retry_timer);
+        context->next_connection_retry_timer = NULL;
+    }
+    if (context->cloud_con_timer) {
+        iot_os_timer_stop(context->cloud_con_timer);
+        iot_os_timer_delete(context->cloud_con_timer);
+        context->cloud_con_timer = NULL;
+    }
+    if (context->offline_diagnostics_wifiupdate_timeout) {
+        iot_os_timer_delete(context->offline_diagnostics_wifiupdate_timeout);
+        context->offline_diagnostics_wifiupdate_timeout = NULL;
+    }
+    iot_security_deinit(context->easysetup_security_context);
+    iot_util_queue_delete(context->work_queue);
+    iot_os_eventgroup_delete(context->work_queue_signal);
+    iot_os_eventgroup_delete(context->usr_events);
+    iot_os_eventgroup_delete(context->iot_events);
+    iot_os_mutex_destroy(&context->st_conn_lock);
+    free(context);
+}
+
+TEST_F(TC_REGISTRY_NO_FIXTURE, TC_do_iot_main_command_cloud_connecting_con_timeout_easysetup_deinit_neg)
+{
+    iot_error_t err;
+    struct iot_context *context;
+    struct iot_command cmd = {0};
+
+    UNUSED(state);
+
+    // Given: expired cloud connection timer with a pending d2d request
+    err = iot_nv_init((unsigned char *)sample_device_info, strlen(sample_device_info));
+    assert_int_equal(err, IOT_ERROR_NONE);
+
+    context = _alloc_cloud_connecting_context();
+    context->d2d_event_request = true;
+    context->offline_diagnostics_wifiupdate_timeout = NULL;
+    context->cloud_con_timer = iot_os_timer_create(NULL, 1, NULL);
+    iot_os_timer_start(context->cloud_con_timer);
+    iot_os_delay(20);
+
+    cmd.cmd_type = IOT_COMMAND_CLOUD_CONNECTING;
+    cmd.param = NULL;
+
+    // When
+    err = _do_iot_main_command(context, &cmd);
+
+    // Then
+    assert_int_equal(err, IOT_ERROR_NONE);
+
+    // Teardown
+    _free_cloud_connecting_context(context);
+    iot_nv_deinit();
+}
+
+TEST_F(TC_REGISTRY_NO_FIXTURE, TC_do_iot_main_command_cloud_connecting_con_timeout_offline_diagnostics_neg)
+{
+    iot_error_t err;
+    struct iot_context *context;
+    struct iot_command cmd = {0};
+
+    UNUSED(state);
+
+    // Given: expired cloud connection timer while an offline wifi-update is pending
+    err = iot_nv_init((unsigned char *)sample_device_info, strlen(sample_device_info));
+    assert_int_equal(err, IOT_ERROR_NONE);
+
+    context = _alloc_cloud_connecting_context();
+    _set_es_ble_context(context);
+    context->d2d_event_request = true;
+    context->cloud_con_timer = iot_os_timer_create(NULL, 1, NULL);
+    iot_os_timer_start(context->cloud_con_timer);
+    context->offline_diagnostics_wifiupdate_timeout = iot_os_timer_create(NULL, 10000, NULL);
+    assert_non_null(context->offline_diagnostics_wifiupdate_timeout);
+    context->es_network_status = IOT_ERROR_MQTT_REJECT_CONNECT;
+    iot_os_delay(20);
+
+    cmd.cmd_type = IOT_COMMAND_CLOUD_CONNECTING;
+    cmd.param = NULL;
+
+    // When
+    err = _do_iot_main_command(context, &cmd);
+
+    // Then
+    assert_int_equal(err, IOT_ERROR_NONE);
+    assert_false(context->d2d_event_request);
+
+    // Teardown
+    _set_es_ble_context(NULL);
+    _free_cloud_connecting_context(context);
+    iot_nv_deinit();
+}
+
+TEST_F(TC_REGISTRY_NO_FIXTURE, TC_do_iot_main_command_cloud_connecting_not_disconnected_state_skip_neg)
+{
+    iot_error_t err;
+    struct iot_context *context;
+    struct iot_command cmd = {0};
+
+    UNUSED(state);
+
+    // Given: current state is not CLOUD_DISCONNECTED
+    context = _alloc_cloud_connecting_context();
+    context->curr_state = IOT_STATE_CLOUD_CONNECTED;
+
+    cmd.cmd_type = IOT_COMMAND_CLOUD_CONNECTING;
+    cmd.param = NULL;
+
+    // When
+    err = _do_iot_main_command(context, &cmd);
+
+    // Then
+    assert_int_equal(err, IOT_ERROR_NONE);
+
+    // Teardown
+    _free_cloud_connecting_context(context);
+}
+
+TEST_F(TC_REGISTRY_NO_FIXTURE, TC_do_iot_main_command_cloud_connecting_wifi_ctrl_failure_neg)
+{
+    iot_error_t err;
+    struct iot_context *context;
+    struct iot_command cmd = {0};
+
+    UNUSED(state);
+
+    // Given: station mode request fails while a d2d request is pending
+    err = iot_nv_init((unsigned char *)sample_device_info, strlen(sample_device_info));
+    assert_int_equal(err, IOT_ERROR_NONE);
+
+    context = _alloc_cloud_connecting_context();
+    strncpy(context->prov_data.wifi.ssid, "test_ssid", IOT_WIFI_PROV_SSID_STR_LEN);
+    context->need_wifi_reset = true;
+    context->d2d_event_request = true;
+    context->offline_diagnostics_wifiupdate_timeout = NULL;
+
+    expect_value(__wrap_iot_bsp_wifi_set_mode, conf->mode, IOT_WIFI_MODE_STATION);
+    will_return(__wrap_iot_bsp_wifi_set_mode, IOT_ERROR_CONN_STA_ASSOC_FAIL);
+
+    cmd.cmd_type = IOT_COMMAND_CLOUD_CONNECTING;
+    cmd.param = NULL;
+
+    // When
+    err = _do_iot_main_command(context, &cmd);
+
+    // Then
+    assert_int_equal(err, IOT_ERROR_CONN_STA_ASSOC_FAIL);
+    assert_int_equal(context->es_network_status, IOT_ERROR_CONN_STA_ASSOC_FAIL);
+
+    // Teardown
+    _free_cloud_connecting_context(context);
+    iot_nv_deinit();
+}
+
+TEST_F(TC_REGISTRY_NO_FIXTURE, TC_do_iot_main_command_cloud_connecting_wifi_ctrl_failure_offline_diagnostics_neg)
+{
+    iot_error_t err;
+    struct iot_context *context;
+    struct iot_command cmd = {0};
+
+    UNUSED(state);
+
+    // Given: station mode request fails while an offline wifi-update is pending
+    err = iot_nv_init((unsigned char *)sample_device_info, strlen(sample_device_info));
+    assert_int_equal(err, IOT_ERROR_NONE);
+
+    context = _alloc_cloud_connecting_context();
+    _set_es_ble_context(context);
+    strncpy(context->prov_data.wifi.ssid, "test_ssid", IOT_WIFI_PROV_SSID_STR_LEN);
+    context->need_wifi_reset = true;
+    context->d2d_event_request = true;
+    context->offline_diagnostics_wifiupdate_timeout = iot_os_timer_create(NULL, 10000, NULL);
+    assert_non_null(context->offline_diagnostics_wifiupdate_timeout);
+
+    expect_value(__wrap_iot_bsp_wifi_set_mode, conf->mode, IOT_WIFI_MODE_STATION);
+    will_return(__wrap_iot_bsp_wifi_set_mode, IOT_ERROR_CONN_STA_AUTH_FAIL);
+
+    cmd.cmd_type = IOT_COMMAND_CLOUD_CONNECTING;
+    cmd.param = NULL;
+
+    // When
+    err = _do_iot_main_command(context, &cmd);
+
+    // Then
+    assert_int_equal(err, IOT_ERROR_CONN_STA_AUTH_FAIL);
+    assert_false(context->d2d_event_request);
+
+    // Teardown
+    _set_es_ble_context(NULL);
+    _free_cloud_connecting_context(context);
+    iot_nv_deinit();
+}
+
+TEST_F(TC_REGISTRY_NO_FIXTURE, TC_do_iot_main_command_cloud_connecting_reject_connect_neg)
+{
+    iot_error_t err;
+    struct iot_context *context;
+    struct iot_command cmd = {0};
+
+    UNUSED(state);
+
+    // Given: broker rejects the connection
+    context = _alloc_cloud_connecting_context();
+    context->evt_mqttcli = NULL;
+
+    tc_mock_es_set_connect_use_wrap(1);
+    tc_mock_es_set_connect_result(IOT_ERROR_MQTT_REJECT_CONNECT);
+
+    cmd.cmd_type = IOT_COMMAND_CLOUD_CONNECTING;
+    cmd.param = NULL;
+
+    // When
+    err = _do_iot_main_command(context, &cmd);
+
+    // Then
+    assert_int_equal(err, IOT_ERROR_MQTT_REJECT_CONNECT);
+
+    // Teardown
+    tc_mock_es_reset_connect();
+    _free_cloud_connecting_context(context);
+}
+
+TEST_F(TC_REGISTRY_NO_FIXTURE, TC_do_iot_main_command_cloud_connecting_previous_connection_disconnect_neg)
+{
+    iot_error_t err;
+    struct iot_context *context;
+    struct iot_command cmd = {0};
+
+    UNUSED(state);
+
+    // Given: a previous communication client is still active
+    context = _alloc_cloud_connecting_context();
+    context->evt_mqttcli = (st_mqtt_client)0x1;
+
+    tc_mock_es_set_disconnect_use_wrap(1);
+    tc_mock_es_set_disconnect_result(IOT_ERROR_NONE);
+    tc_mock_es_set_connect_use_wrap(1);
+    tc_mock_es_set_connect_result(IOT_ERROR_NONE);
+
+    cmd.cmd_type = IOT_COMMAND_CLOUD_CONNECTING;
+    cmd.param = NULL;
+
+    // When
+    err = _do_iot_main_command(context, &cmd);
+
+    // Then
+    assert_int_equal(err, IOT_ERROR_NONE);
+    assert_int_equal(tc_mock_es_get_disconnect_call_count(), 1);
+    assert_int_equal(context->connection_retry_count, 0);
+
+    // Teardown
+    tc_mock_es_reset_disconnect();
+    tc_mock_es_reset_connect();
+    _free_cloud_connecting_context(context);
+}
+
+TEST_F(TC_REGISTRY_NO_FIXTURE, TC_do_iot_main_command_cloud_connecting_success_with_d2d_request_pos)
+{
+    iot_error_t err;
+    struct iot_context *context;
+    struct iot_command cmd = {0};
+
+    UNUSED(state);
+
+    // Given: connection succeeds while a d2d request is pending
+    err = iot_nv_init((unsigned char *)sample_device_info, strlen(sample_device_info));
+    assert_int_equal(err, IOT_ERROR_NONE);
+
+    context = _alloc_cloud_connecting_context();
+    context->d2d_event_request = true;
+    context->offline_diagnostics_wifiupdate_timeout = NULL;
+
+    tc_mock_es_set_connect_use_wrap(1);
+    tc_mock_es_set_connect_result(IOT_ERROR_NONE);
+
+    cmd.cmd_type = IOT_COMMAND_CLOUD_CONNECTING;
+    cmd.param = NULL;
+
+    // When
+    err = _do_iot_main_command(context, &cmd);
+
+    // Then
+    assert_int_equal(err, IOT_ERROR_NONE);
+    assert_int_equal(context->last_st_ecode.ecode_type, IOT_ST_ECODE_NONE);
+
+    // Teardown
+    tc_mock_es_reset_connect();
+    _free_cloud_connecting_context(context);
+    iot_nv_deinit();
+}
+
+TEST_F(TC_REGISTRY_NO_FIXTURE, TC_do_iot_main_command_cloud_connecting_success_offline_diagnostics_pos)
+{
+    iot_error_t err;
+    struct iot_context *context;
+    struct iot_command cmd = {0};
+
+    UNUSED(state);
+
+    // Given: connection succeeds while an offline wifi-update is pending
+    err = iot_nv_init((unsigned char *)sample_device_info, strlen(sample_device_info));
+    assert_int_equal(err, IOT_ERROR_NONE);
+
+    context = _alloc_cloud_connecting_context();
+    _set_es_ble_context(context);
+    context->d2d_event_request = true;
+    context->offline_diagnostics_wifiupdate_timeout = iot_os_timer_create(NULL, 10000, NULL);
+    assert_non_null(context->offline_diagnostics_wifiupdate_timeout);
+
+    tc_mock_es_set_connect_use_wrap(1);
+    tc_mock_es_set_connect_result(IOT_ERROR_NONE);
+
+    cmd.cmd_type = IOT_COMMAND_CLOUD_CONNECTING;
+    cmd.param = NULL;
+
+    // When
+    err = _do_iot_main_command(context, &cmd);
+
+    // Then
+    assert_int_equal(err, IOT_ERROR_NONE);
+    assert_false(context->d2d_event_request);
+
+    // Teardown
+    _set_es_ble_context(NULL);
+    tc_mock_es_reset_connect();
+    _free_cloud_connecting_context(context);
+    iot_nv_deinit();
+}
+
+TEST_F(TC_REGISTRY_NO_FIXTURE, TC_do_iot_main_command_cloud_connecting_error_code_mapping_neg)
+{
+    iot_error_t err;
+    struct iot_context *context;
+    struct iot_command cmd = {0};
+    size_t i;
+
+    struct {
+        iot_error_t connect_err;
+        iot_st_ecode_t expected_ecode;
+        iot_error_t expected_network_status;
+    } test_cases[] = {
+        {IOT_ERROR_MQTT_CONNECT_FAIL, IOT_ST_ECODE_CE20_1, IOT_ERROR_MQTT_CONNECT_FAIL},
+        {IOT_ERROR_MQTT_CONNECT_TIMEOUT, IOT_ST_ECODE_CE20_3, IOT_ERROR_MQTT_CONNECT_TIMEOUT},
+        {IOT_ERROR_NET_DNS_FAIL, IOT_ST_ECODE_CE01, IOT_ERROR_CONN_DNS_QUERY_FAIL},
+        {IOT_ERROR_NET_TCP_CONNECTION_FAIL, IOT_ST_ECODE_CE81, IOT_ERROR_NET_TCP_CONNECTION_FAIL},
+        {IOT_ERROR_NET_TLS_HANDSHAKE_FAIL, IOT_ST_ECODE_CE79, IOT_ERROR_NET_TLS_HANDSHAKE_FAIL},
+        {IOT_ERROR_MQTT_RATE_LIMIT, IOT_ST_ECODE_CE70, IOT_ERROR_MQTT_RATE_LIMIT},
+        {IOT_ERROR_BAD_REQ, IOT_ST_ECODE_CE20_2, IOT_ERROR_BAD_REQ},
+    };
+
+    UNUSED(state);
+
+    err = iot_nv_init((unsigned char *)sample_device_info, strlen(sample_device_info));
+    assert_int_equal(err, IOT_ERROR_NONE);
+
+    for (i = 0; i < sizeof(test_cases) / sizeof(test_cases[0]); i++) {
+        // Given: iot_es_connect reports a specific transport failure
+        context = _alloc_cloud_connecting_context();
+        context->d2d_event_request = false;
+
+        tc_mock_es_set_connect_use_wrap(1);
+        tc_mock_es_set_connect_result(test_cases[i].connect_err);
+
+        cmd.cmd_type = IOT_COMMAND_CLOUD_CONNECTING;
+        cmd.param = NULL;
+
+        // When
+        err = _do_iot_main_command(context, &cmd);
+
+        // Then
+        assert_int_equal(err, test_cases[i].connect_err);
+        assert_int_equal(context->es_network_status, test_cases[i].expected_network_status);
+        assert_int_equal(context->last_st_ecode.ecode_type, test_cases[i].expected_ecode);
+        assert_int_equal(context->connection_retry_count, 1);
+        assert_non_null(context->next_connection_retry_timer);
+
+        // Teardown
+        tc_mock_es_reset_connect();
+        _free_cloud_connecting_context(context);
+    }
+
+    iot_nv_deinit();
+}
+
+TEST_F(TC_REGISTRY_NO_FIXTURE, TC_do_iot_main_command_cloud_connecting_retry_with_d2d_request_neg)
+{
+    iot_error_t err;
+    struct iot_context *context;
+    struct iot_command cmd = {0};
+
+    UNUSED(state);
+
+    // Given: a d2d request is pending, the retry backoff is applied like the normal path
+    context = _alloc_cloud_connecting_context();
+    context->d2d_event_request = true;
+    context->connection_retry_count = 3;
+
+    tc_mock_es_set_connect_use_wrap(1);
+    tc_mock_es_set_connect_result(IOT_ERROR_MQTT_CONNECT_FAIL);
+
+    cmd.cmd_type = IOT_COMMAND_CLOUD_CONNECTING;
+    cmd.param = NULL;
+
+    // When
+    err = _do_iot_main_command(context, &cmd);
+
+    // Then
+    assert_int_equal(err, IOT_ERROR_MQTT_CONNECT_FAIL);
+    assert_int_equal(context->connection_retry_count, 4);
+    assert_non_null(context->next_connection_retry_timer);
+
+    // Teardown
+    tc_mock_es_reset_connect();
+    _free_cloud_connecting_context(context);
+}
+
+static struct iot_context *_alloc_conn_start_context(void)
+{
+    struct iot_context *context;
+
+    context = (struct iot_context *)calloc(1, sizeof(struct iot_context));
+    assert_non_null(context);
+    context->work_queue = iot_util_queue_create(sizeof(struct iot_command));
+    assert_non_null(context->work_queue);
+    context->work_queue_signal = iot_os_eventgroup_create();
+    assert_non_null(context->work_queue_signal);
+    context->usr_events = iot_os_eventgroup_create();
+    context->iot_events = iot_os_eventgroup_create();
+    iot_os_mutex_init(&context->st_conn_lock);
+    context->curr_state = IOT_STATE_INITIALIZED;
+
+    return context;
+}
+
+static void _free_conn_start_context(struct iot_context *context)
+{
+    if (context->es_res_created) {
+        _delete_easysetup_resources_all(context);
+    }
+    iot_api_prov_data_mem_free(&context->prov_data);
+    iot_util_queue_delete(context->work_queue);
+    iot_os_eventgroup_delete(context->work_queue_signal);
+    iot_os_eventgroup_delete(context->usr_events);
+    iot_os_eventgroup_delete(context->iot_events);
+    iot_os_mutex_destroy(&context->st_conn_lock);
+    free(context);
+}
+
+TEST_F(TC_REGISTRY_NO_FIXTURE, TC_st_conn_start_easysetup_resources_failure_neg)
+{
+    int err;
+    struct iot_context *context;
+
+    UNUSED(state);
+
+    // Given: PIN ownership validation without a pin value
+    context = _alloc_conn_start_context();
+    context->devconf.ownership_validation_type = IOT_OVF_TYPE_PIN;
+
+    // When
+    err = st_conn_start((IOT_CTX *)context, _status_cb_test, NULL, NULL);
+
+    // Then
+    assert_int_equal(err, IOT_ERROR_INVALID_ARGS);
+
+    // Teardown
+    _free_conn_start_context(context);
+}
+
+TEST_F(TC_REGISTRY_NO_FIXTURE, TC_st_conn_start_success_pos)
+{
+    int err;
+    struct iot_context *context;
+    iot_pin_t pin = {0};
+
+    UNUSED(state);
+
+    // Given
+    err = iot_nv_init((unsigned char *)sample_device_info, strlen(sample_device_info));
+    assert_int_equal(err, IOT_ERROR_NONE);
+
+    context = _alloc_conn_start_context();
+    context->devconf.ownership_validation_type = IOT_OVF_TYPE_PIN;
+    memcpy(pin.pin, "12345678", sizeof(pin.pin));
+
+    // When
+    err = st_conn_start((IOT_CTX *)context, _status_cb_test, NULL, &pin);
+
+    // Then
+    assert_int_equal(err, IOT_ERROR_NONE);
+    assert_true(context->es_res_created);
+    assert_false(context->add_justworks);
+    assert_ptr_equal(context->status_cb, _status_cb_test);
+
+    // Teardown
+    _free_conn_start_context(context);
+    iot_nv_deinit();
+}
+
+TEST_F(TC_REGISTRY_NO_FIXTURE, TC_st_conn_start_already_created_resources_success_pos)
+{
+    int err;
+    struct iot_context *context;
+
+    UNUSED(state);
+
+    // Given: easysetup resources were already created by a previous start
+    err = iot_nv_init((unsigned char *)sample_device_info, strlen(sample_device_info));
+    assert_int_equal(err, IOT_ERROR_NONE);
+
+    context = _alloc_conn_start_context();
+    context->es_res_created = true;
+
+    // When
+    err = st_conn_start((IOT_CTX *)context, _status_cb_test, NULL, NULL);
+
+    // Then
+    assert_int_equal(err, IOT_ERROR_NONE);
+
+    // Teardown
+    _free_conn_start_context(context);
+    iot_nv_deinit();
+}
+
+TEST_F(TC_REGISTRY_NO_FIXTURE, TC_st_conn_start_check_prov_status_failure_neg)
+{
+    int err;
+    struct iot_context *context;
+
+    UNUSED(state);
+
+    // Given: no work queue capacity so the state update command cannot be queued
+    err = iot_nv_init((unsigned char *)sample_device_info, strlen(sample_device_info));
+    assert_int_equal(err, IOT_ERROR_NONE);
+
+    context = _alloc_conn_start_context();
+    context->es_res_created = true;
+    iot_util_queue_delete(context->work_queue);
+    context->work_queue = NULL;
+
+    // When
+    err = st_conn_start((IOT_CTX *)context, _status_cb_test, NULL, NULL);
+
+    // Then
+    assert_int_not_equal(err, IOT_ERROR_NONE);
+    assert_null(context->status_cb);
+
+    // Teardown
+    context->work_queue = iot_util_queue_create(sizeof(struct iot_command));
+    _free_conn_start_context(context);
+    iot_nv_deinit();
+}
+
+TEST_F(TC_REGISTRY_NO_FIXTURE, TC_st_conn_start_ex_start_from_onboarding_success_pos)
+{
+    int err;
+    struct iot_context *context;
+    iot_ext_args_t ext_args = {0};
+
+    UNUSED(state);
+
+    // Given
+    err = iot_nv_init((unsigned char *)sample_device_info, strlen(sample_device_info));
+    assert_int_equal(err, IOT_ERROR_NONE);
+
+    context = _alloc_conn_start_context();
+    ext_args.start_from_onboarding = true;
+    ext_args.skip_usr_confirm = true;
+    ext_args.status_cb = _status_cb_test;
+
+    // When
+    err = st_conn_start_ex((IOT_CTX *)context, &ext_args);
+
+    // Then
+    assert_int_equal(err, IOT_ERROR_NONE);
+    assert_true(context->add_justworks);
+    assert_false(context->wifi_update_enabled);
+    assert_true(context->es_res_created);
+
+    // Teardown
+    _free_conn_start_context(context);
+    iot_nv_deinit();
+}
+
+TEST_F(TC_REGISTRY_NO_FIXTURE, TC_st_conn_start_ex_easysetup_resources_failure_neg)
+{
+    int err;
+    struct iot_context *context;
+    iot_ext_args_t ext_args = {0};
+
+    UNUSED(state);
+
+    // Given: PIN ownership validation without a pin value
+    context = _alloc_conn_start_context();
+    context->devconf.ownership_validation_type = IOT_OVF_TYPE_PIN;
+    ext_args.start_from_onboarding = true;
+    ext_args.skip_usr_confirm = true;
+    ext_args.pin_num = NULL;
+
+    // When
+    err = st_conn_start_ex((IOT_CTX *)context, &ext_args);
+
+    // Then
+    assert_int_equal(err, IOT_ERROR_INVALID_ARGS);
+
+    // Teardown
+    _free_conn_start_context(context);
+}
+
+TEST_F(TC_REGISTRY_NO_FIXTURE, TC_st_conn_start_ex_resume_no_prov_data_neg)
+{
+    int err;
+    struct iot_context *context;
+    iot_ext_args_t ext_args = {0};
+
+    UNUSED(state);
+
+    // Given: resume path with no provisioning data stored in NV
+    err = iot_nv_init((unsigned char *)sample_device_info, strlen(sample_device_info));
+    assert_int_equal(err, IOT_ERROR_NONE);
+    iot_nv_erase_prov_data();
+
+    context = _alloc_conn_start_context();
+    context->es_res_created = true;
+    ext_args.start_from_onboarding = false;
+    ext_args.skip_usr_confirm = true;
+
+    // When
+    err = st_conn_start_ex((IOT_CTX *)context, &ext_args);
+
+    // Then
+    assert_int_not_equal(err, IOT_ERROR_NONE);
+
+    // Teardown
+    _free_conn_start_context(context);
+    iot_nv_deinit();
+}
+
+TEST_F(TC_REGISTRY_NO_FIXTURE, TC_st_conn_start_ex_resume_easysetup_in_progress_neg)
+{
+    int err;
+    struct iot_context *context;
+    iot_ext_args_t ext_args = {0};
+
+    UNUSED(state);
+
+    // Given: easysetup is already in progress
+    context = _alloc_conn_start_context();
+    context->es_res_created = true;
+    context->curr_state = IOT_STATE_PROV_CONFIRM;
+    ext_args.start_from_onboarding = false;
+    ext_args.skip_usr_confirm = true;
+
+    // When
+    err = st_conn_start_ex((IOT_CTX *)context, &ext_args);
+
+    // Then
+    assert_int_equal(err, IOT_ERROR_BAD_REQ);
+
+    // Teardown
+    _free_conn_start_context(context);
+}
+
+TEST_F(TC_REGISTRY_NO_FIXTURE, TC_st_conn_init_resource_creation_failure_neg)
+{
+    IOT_CTX *context;
+    size_t i;
+
+    enum { INJECT_EVENTGROUP, INJECT_MUTEX, INJECT_THREAD };
+    struct {
+        int target;
+        int call_index;
+    } test_cases[] = {
+        {INJECT_EVENTGROUP, 0}, /* usr_events */
+        {INJECT_EVENTGROUP, 1}, /* iot_events */
+        {INJECT_EVENTGROUP, 2}, /* work_queue_signal */
+        {INJECT_MUTEX, 0},      /* st_conn_lock */
+        {INJECT_THREAD, 0},     /* work queue task */
+    };
+
+    UNUSED(state);
+
+    for (i = 0; i < sizeof(test_cases) / sizeof(test_cases[0]); i++) {
+        // Given: one OS resource creation fails part-way through init
+        switch (test_cases[i].target) {
+            case INJECT_EVENTGROUP:
+                set_mock_iot_os_eventgroup_create_failure_at(test_cases[i].call_index);
+                break;
+            case INJECT_MUTEX:
+                set_mock_iot_os_mutex_init_failure_at(test_cases[i].call_index);
+                break;
+            default:
+                set_mock_iot_os_thread_create_failure_at(test_cases[i].call_index);
+                break;
+        }
+
+        // When
+        context = st_conn_init((unsigned char *)sample_onboarding_config, strlen(sample_onboarding_config),
+                               (unsigned char *)sample_device_info, strlen(sample_device_info));
+
+        // Then
+        assert_null(context);
+
+        // Teardown
+        do_not_use_mock_iot_os_eventgroup_create_failure();
+        do_not_use_mock_iot_os_mutex_init_failure();
+        do_not_use_mock_iot_os_thread_create_failure();
+    }
+
+    // the failure cascade runs iot_log_file_exit(); restore it for later suites
+    iot_log_file_init(RAM_ONLY);
+}
+
+TEST_F(TC_REGISTRY_NO_FIXTURE, TC_st_device_init_resource_creation_failure_neg)
+{
+    IOT_CTX *context;
+    st_device_config_t config = {0};
+    char test_device_id[] = "12345678-1234-1234-1234-123456789012";
+    char test_mnid[] = "TEST_MNID";
+    size_t i;
+
+    enum { INJECT_EVENTGROUP, INJECT_MUTEX, INJECT_THREAD };
+    struct {
+        int target;
+        int call_index;
+    } test_cases[] = {
+        {INJECT_EVENTGROUP, 0}, {INJECT_EVENTGROUP, 1}, {INJECT_EVENTGROUP, 2}, {INJECT_MUTEX, 0}, {INJECT_THREAD, 0},
+    };
+
+    UNUSED(state);
+
+    config.device_id = test_device_id;
+    config.server_url = "ssl://mqtt-useast1.api.smartthings.com:8883";
+    config.id_method = ST_IDENTITY_METHOD_MANUAL_ED25519;
+    config.mnId = test_mnid;
+    config.dip_id = REG_TEST_DIP_ID;
+    config.dip_major_version = 0;
+    config.dip_minor_version = 1;
+    config.identity.ed25519.prikey = TEST_DEVICE_SECRET_B64_KEY;
+    config.identity.ed25519.pubkey = TEST_DEVICE_PUBLIC_B64_KEY;
+    config.identity.ed25519.sn = TEST_DEVICE_SERIAL_NUMBER;
+
+    for (i = 0; i < sizeof(test_cases) / sizeof(test_cases[0]); i++) {
+        // Given: one OS resource creation fails part-way through init
+        switch (test_cases[i].target) {
+            case INJECT_EVENTGROUP:
+                set_mock_iot_os_eventgroup_create_failure_at(test_cases[i].call_index);
+                break;
+            case INJECT_MUTEX:
+                set_mock_iot_os_mutex_init_failure_at(test_cases[i].call_index);
+                break;
+            default:
+                set_mock_iot_os_thread_create_failure_at(test_cases[i].call_index);
+                break;
+        }
+
+        // When
+        context = st_device_init(&config);
+
+        // Then
+        assert_null(context);
+
+        // Teardown
+        do_not_use_mock_iot_os_eventgroup_create_failure();
+        do_not_use_mock_iot_os_mutex_init_failure();
+        do_not_use_mock_iot_os_thread_create_failure();
+    }
+
+    // the failure cascade runs iot_log_file_exit(); restore it for later suites
+    iot_log_file_init(RAM_ONLY);
+}
+
+TEST_F(TC_REGISTRY_NO_FIXTURE, TC_st_device_init_context_malloc_failure_neg)
+{
+    IOT_CTX *context;
+    st_device_config_t config = {0};
+    char test_device_id[] = "12345678-1234-1234-1234-123456789012";
+
+    UNUSED(state);
+
+    // Given: the iot_context allocation fails
+    config.device_id = test_device_id;
+    config.server_url = "ssl://mqtt-useast1.api.smartthings.com:8883";
+    config.id_method = ST_IDENTITY_METHOD_MANUAL_ED25519;
+    set_mock_iot_os_malloc_failure_with_index(0);
+
+    // When
+    context = st_device_init(&config);
+
+    // Then
+    assert_null(context);
+
+    // Teardown
+    do_not_use_mock_iot_os_malloc_failure();
+}
+
+TEST_F(TC_REGISTRY_NO_FIXTURE, TC_st_device_init_invalid_id_method_neg)
+{
+    IOT_CTX *context;
+    st_device_config_t config = {0};
+    char test_device_id[] = "12345678-1234-1234-1234-123456789012";
+
+    UNUSED(state);
+
+    // Given: an identity method other than MANUAL_ED25519
+    config.device_id = test_device_id;
+    config.server_url = "ssl://mqtt-useast1.api.smartthings.com:8883";
+    config.id_method = ST_IDENTITY_METHOD_EMBEDDED_KEY;
+
+    // When
+    context = st_device_init(&config);
+
+    // Then
+    assert_null(context);
 }

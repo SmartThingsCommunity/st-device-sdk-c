@@ -703,7 +703,7 @@ static void _iot_mqtt_send_attr_callback(int chunk_id, st_mqtt_publish_result re
         noti_data.raw.send_fail.failed_request_id = chunk_id;
     }
 
-    iot_command_send(ctx, IOT_COMMAND_NOTIFICATION_RECEIVED, &noti_data, sizeof(noti_data));
+    iot_noti_send(ctx, &noti_data);
     IOT_DEBUG("send attr result: chunk_id=%d, result=%d", chunk_id, result);
 }
 
@@ -927,6 +927,323 @@ iot_error_t _iot_notify_child_devices_cloud_connected(struct iot_context *ctx, J
 }
 
 STATIC_FUNCTION
+iot_error_t _request_ot_status_update(struct iot_context *ctx, char *transfer_id)
+{
+    st_mqtt_msg msg = {0};
+    JSON_H *evt_root = NULL;
+    int ret = 0;
+
+    evt_root = JSON_CREATE_OBJECT();
+    if (evt_root == NULL) {
+        IOT_ERROR("Failed to create root");
+        return IOT_ERROR_MEM_ALLOC;
+    }
+    JSON_ADD_STRING_TO_OBJECT(evt_root, "event", SERVER_NOTI_TYPE_OWNERSHIP_TRANSFER);
+    JSON_ADD_STRING_TO_OBJECT(evt_root, "updateId", transfer_id);
+    JSON_ADD_BOOL_TO_OBJECT(evt_root, "success", true);
+
+#if defined(STDK_IOT_CORE_SERIALIZE_CBOR)
+    iot_serialize_json2cbor(evt_root, (uint8_t **)&msg.payload, (size_t *)&msg.payloadlen);
+#else
+    msg.payload = JSON_PRINT(evt_root);
+    if (msg.payload != NULL) {
+        msg.payloadlen = strlen(msg.payload);
+    }
+#endif
+    JSON_DELETE(evt_root);
+    if (msg.payload == NULL) {
+        IOT_ERROR("Fail to transfer to payload");
+        return IOT_ERROR_BAD_REQ;
+    }
+    msg.qos = st_mqtt_qos1;
+    msg.retained = false;
+    msg.topic = IOT_PUB_TOPIC_DEVICES_UPDATE_STATUS;
+
+    IOT_INFO("publish event, topic : %s, payload :\n%s", msg.topic, (char *)msg.payload);
+
+    ret = iot_mqtt_publish(ctx, ctx->evt_mqttcli, &msg);
+    free(msg.payload);
+    if (ret < 0) {
+        IOT_ERROR("Failed to publish OT mqtt response");
+        return IOT_ERROR_BAD_REQ;
+    }
+
+    return IOT_ERROR_NONE;
+}
+
+STATIC_FUNCTION
+iot_error_t _parse_preference_updated(JSON_H *json, iot_noti_data_t *noti_data)
+{
+    JSON_H *item = JSON_GET_OBJECT_ITEM(json, "values");
+    char *subitem_str;
+
+    if (item == NULL) {
+        IOT_ERROR("there is value in updated preference");
+        return IOT_ERROR_BAD_REQ;
+    }
+
+    int item_size = JSON_GET_ARRAY_SIZE(item);
+    if (item_size <= 0) {
+        IOT_INFO("No references");
+        return IOT_ERROR_BAD_REQ;
+    }
+
+    noti_data->raw.preferences.preferences_num = (size_t)item_size;
+    noti_data->raw.preferences.preferences_data = iot_os_malloc(sizeof(iot_preference_data) * item_size);
+    if (!noti_data->raw.preferences.preferences_data) {
+        IOT_ERROR("Failed to alloc preferences data");
+        return IOT_ERROR_BAD_REQ;
+    }
+    memset(noti_data->raw.preferences.preferences_data, 0, sizeof(iot_preference_data) * item_size);
+
+    for (int i = 0; i < item_size; i++) {
+        JSON_H *sub_item = JSON_GET_ARRAY_ITEM(item, i);
+        if (!sub_item) {
+            IOT_ERROR("Cannot get %dth item data", i);
+            continue;
+        }
+        JSON_H *preference_type = JSON_GET_OBJECT_ITEM(sub_item, "preferenceType");
+        JSON_H *preference_value = JSON_GET_OBJECT_ITEM(sub_item, "value");
+
+        subitem_str = JSON_GET_OBJECT_ITEM_STRING(sub_item);
+        if (subitem_str != NULL) {
+            noti_data->raw.preferences.preferences_data[i].preference_name = iot_os_strdup(subitem_str);
+        } else {
+            noti_data->raw.preferences.preferences_data[i].preference_name = NULL;
+        }
+
+        char *type_str = (preference_type != NULL) ? JSON_GET_STRING_VALUE(preference_type) : NULL;
+        if (preference_value == NULL || type_str == NULL) {
+            noti_data->raw.preferences.preferences_data[i].preference_data.type = IOT_CAP_VAL_TYPE_NULL;
+        } else if (!strncmp(type_str, "string", 6)) {
+            noti_data->raw.preferences.preferences_data[i].preference_data.type = IOT_CAP_VAL_TYPE_STRING;
+            noti_data->raw.preferences.preferences_data[i].preference_data.string =
+                iot_os_strdup(JSON_GET_STRING_VALUE(preference_value));
+        } else if (!strncmp(type_str, "number", 6)) {
+            noti_data->raw.preferences.preferences_data[i].preference_data.type = IOT_CAP_VAL_TYPE_NUMBER;
+            noti_data->raw.preferences.preferences_data[i].preference_data.number =
+                JSON_GET_NUMBER_VALUE(preference_value);
+        } else if (!strncmp(type_str, "boolean", 7)) {
+            noti_data->raw.preferences.preferences_data[i].preference_data.type = IOT_CAP_VAL_TYPE_BOOLEAN;
+            noti_data->raw.preferences.preferences_data[i].preference_data.boolean = JSON_IS_TRUE(preference_value);
+        } else if (!strncmp(type_str, "integer", 7)) {
+            noti_data->raw.preferences.preferences_data[i].preference_data.type = IOT_CAP_VAL_TYPE_INTEGER;
+            noti_data->raw.preferences.preferences_data[i].preference_data.integer = preference_value->valueint;
+        } else {
+            noti_data->raw.preferences.preferences_data[i].preference_data.type = IOT_CAP_VAL_TYPE_UNKNOWN;
+        }
+    }
+
+    return IOT_ERROR_NONE;
+}
+
+STATIC_FUNCTION
+iot_child_device *_find_or_create_child_device(struct iot_context *ctx, char *deviceId, JSON_H *meta_source,
+                                               const char *mnid_key, const char *serial_key)
+{
+    JSON_H *item;
+    iot_child_device *child_dev;
+
+    if (deviceId == NULL) {
+        IOT_ERROR("deviceId is NULL");
+        return NULL;
+    }
+
+    child_dev = ctx->child_device_list;
+    while (child_dev) {
+        if (!strncmp(child_dev->deviceId, deviceId, IOT_REG_UUID_STR_LEN)) {
+            break;
+        }
+        child_dev = child_dev->next;
+    }
+    if (child_dev) {
+        return child_dev;
+    }
+
+    child_dev = (iot_child_device *)iot_os_malloc(sizeof(iot_child_device));
+    if (child_dev == NULL) {
+        IOT_ERROR("Failed to alloc new child device struct");
+        return NULL;
+    }
+    memset(child_dev, 0, sizeof(iot_child_device));
+    snprintf(child_dev->deviceId, IOT_REG_UUID_STR_LEN + 1, "%s", deviceId);
+    child_dev->ctx = ctx;
+
+    item = JSON_GET_OBJECT_ITEM(meta_source, mnid_key);
+    if (item == NULL) {
+        IOT_ERROR("there is no %s", mnid_key);
+        iot_os_free(child_dev);
+        return NULL;
+    }
+    char *mnid_str = JSON_GET_STRING_VALUE(item);
+    if (mnid_str == NULL) {
+        IOT_ERROR("mnId value is not a string");
+        iot_os_free(child_dev);
+        return NULL;
+    }
+    child_dev->mnId = iot_os_strdup(mnid_str);
+    if (child_dev->mnId == NULL) {
+        IOT_ERROR("Failed to alloc mnId for child device");
+        iot_os_free(child_dev);
+        return NULL;
+    }
+
+    item = JSON_GET_OBJECT_ITEM(meta_source, serial_key);
+    if (item == NULL) {
+        IOT_ERROR("there is no %s", serial_key);
+        iot_os_free(child_dev->mnId);
+        iot_os_free(child_dev);
+        return NULL;
+    }
+    char *serial_str = JSON_GET_STRING_VALUE(item);
+    if (serial_str == NULL) {
+        IOT_ERROR("serialNumber value is not a string");
+        iot_os_free(child_dev->mnId);
+        iot_os_free(child_dev);
+        return NULL;
+    }
+    child_dev->serial_number = iot_os_strdup(serial_str);
+    if (child_dev->serial_number == NULL) {
+        IOT_ERROR("Failed to alloc serial number for child device");
+        iot_os_free(child_dev->mnId);
+        iot_os_free(child_dev);
+        return NULL;
+    }
+    child_dev->mqtt_event_topic = (char *)iot_os_malloc(IOT_TOPIC_SIZE);
+    if (!child_dev->mqtt_event_topic) {
+        IOT_ERROR("failed to malloc for child device event topic");
+        iot_os_free(child_dev->serial_number);
+        iot_os_free(child_dev->mnId);
+        iot_os_free(child_dev);
+        return NULL;
+    }
+    snprintf(child_dev->mqtt_event_topic, IOT_TOPIC_SIZE, IOT_PUB_TOPIC_EVENT, child_dev->deviceId);
+
+    child_dev->next = ctx->child_device_list;
+    ctx->child_device_list = child_dev;
+
+    return child_dev;
+}
+
+STATIC_FUNCTION
+iot_error_t _parse_dip_key(JSON_H *dip_key, struct iot_dip_data *dip)
+{
+    JSON_H *item;
+
+    if (dip_key == NULL) {
+        IOT_ERROR("there is no DIP");
+        return IOT_ERROR_BAD_REQ;
+    }
+
+    item = JSON_GET_OBJECT_ITEM(dip_key, "id");
+    if (item == NULL) {
+        IOT_ERROR("Can't find id for dip_key!!");
+        return IOT_ERROR_BAD_REQ;
+    }
+    char *id_str = JSON_GET_STRING_VALUE(item);
+    if (id_str == NULL) {
+        IOT_ERROR("id value is not a string");
+        return IOT_ERROR_BAD_REQ;
+    }
+    iot_util_convert_str_uuid(id_str, &dip->dip_id);
+
+    item = JSON_GET_OBJECT_ITEM(dip_key, "majorVersion");
+    if (!item) {
+        IOT_ERROR("Can't find majorVersion for dip_key!!");
+        return IOT_ERROR_BAD_REQ;
+    }
+    dip->dip_major_version = item->valueint;
+
+    item = JSON_GET_OBJECT_ITEM(dip_key, "minorVersion");
+    if (item) {
+        dip->dip_minor_version = item->valueint;
+    }
+
+    return IOT_ERROR_NONE;
+}
+
+STATIC_FUNCTION
+iot_error_t _parse_device_created(struct iot_context *ctx, JSON_H *json, iot_noti_data_t *noti_data)
+{
+    JSON_H *response = JSON_GET_OBJECT_ITEM(json, "response");
+    JSON_H *metadata;
+    JSON_H *item;
+    iot_child_device *child_dev;
+
+    if (response == NULL) {
+        IOT_ERROR("there is no response data in notification");
+        return IOT_ERROR_BAD_REQ;
+    }
+
+    item = JSON_GET_OBJECT_ITEM(response, "deviceId");
+    if (item == NULL) {
+        IOT_ERROR("there is no deviceId in response");
+        return IOT_ERROR_BAD_REQ;
+    }
+
+    metadata = JSON_GET_OBJECT_ITEM(response, "metadata");
+    if (metadata == NULL) {
+        IOT_ERROR("there is no metadata in response");
+        return IOT_ERROR_BAD_REQ;
+    }
+
+    child_dev = _find_or_create_child_device(ctx, JSON_GET_STRING_VALUE(item), metadata, "mnId", "serialNumber");
+    if (!child_dev) {
+        return IOT_ERROR_BAD_REQ;
+    }
+
+    JSON_H *dip_key = JSON_GET_OBJECT_ITEM(response, "deviceIntegrationProfileKey");
+    if (_parse_dip_key(dip_key, &child_dev->dip) != IOT_ERROR_NONE) {
+        return IOT_ERROR_BAD_REQ;
+    }
+
+    noti_data->type = _IOT_NOTI_TYPE_CHILD_DEVICE_REGISTERED;
+    noti_data->raw.child_device_registered.child_dev = child_dev;
+    noti_data->raw.child_device_registered.mnId = child_dev->mnId;
+    noti_data->raw.child_device_registered.serial_number = child_dev->serial_number;
+
+    return IOT_ERROR_NONE;
+}
+
+STATIC_FUNCTION
+iot_error_t _parse_device_get(struct iot_context *ctx, JSON_H *json, iot_noti_data_t *noti_data)
+{
+    JSON_H *child_devices = JSON_GET_OBJECT_ITEM(json, "childDevices");
+    JSON_H *item;
+    JSON_H *dip_key;
+
+    if (child_devices == NULL) {
+        IOT_ERROR("there is no child devices data in notification");
+        return IOT_ERROR_BAD_REQ;
+    }
+
+    for (int i = 0; i < JSON_GET_ARRAY_SIZE(child_devices); i++) {
+        JSON_H *each_child = JSON_GET_ARRAY_ITEM(child_devices, i);
+        iot_child_device *child_dev;
+
+        item = JSON_GET_OBJECT_ITEM(each_child, "id");
+        if (item == NULL) {
+            IOT_ERROR("there is no deviceId in child info");
+            return IOT_ERROR_BAD_REQ;
+        }
+
+        child_dev = _find_or_create_child_device(ctx, JSON_GET_STRING_VALUE(item), each_child, "mnId", "serialNumber");
+        if (!child_dev) {
+            return IOT_ERROR_BAD_REQ;
+        }
+
+        dip_key = JSON_GET_OBJECT_ITEM(each_child, "deviceIntegrationProfileKey");
+        if (_parse_dip_key(dip_key, &child_dev->dip) != IOT_ERROR_NONE) {
+            return IOT_ERROR_BAD_REQ;
+        }
+    }
+
+    iot_update_child_devices_health(ctx, NULL);
+    noti_data->type = _IOT_NOTI_TYPE_CHILD_DEVICE_SYNCED;
+
+    return IOT_ERROR_NONE;
+}
+
 iot_error_t _iot_parse_noti_data(struct iot_context *ctx, void *data, iot_noti_data_t *noti_data)
 {
     iot_error_t err = IOT_ERROR_NONE;
@@ -935,7 +1252,6 @@ iot_error_t _iot_parse_noti_data(struct iot_context *ctx, void *data, iot_noti_d
     JSON_H *item = NULL;
     char *noti_type_string = NULL;
     char *payload = NULL;
-    char *subitem_str = NULL;
 
     json = JSON_PARSE(data);
     if (json == NULL) {
@@ -1005,66 +1321,9 @@ iot_error_t _iot_parse_noti_data(struct iot_context *ctx, void *data, iot_noti_d
     } else if (!strncmp(noti_type_string, SERVER_NOTI_TYPE_PREFERENCE_UPDATED,
                         strlen(SERVER_NOTI_TYPE_PREFERENCE_UPDATED))) {
         noti_data->type = _IOT_NOTI_TYPE_PREFERENCE_UPDATED;
-
-        item = JSON_GET_OBJECT_ITEM(json, "values");
-        if (item == NULL) {
-            IOT_ERROR("there is value in updated preference");
-            err = IOT_ERROR_BAD_REQ;
+        err = _parse_preference_updated(json, noti_data);
+        if (err != IOT_ERROR_NONE) {
             goto out_noti_parse;
-        } else {
-            int item_size = JSON_GET_ARRAY_SIZE(item);
-
-            if (item_size <= 0) {
-                IOT_INFO("No references");
-                err = IOT_ERROR_BAD_REQ;
-                goto out_noti_parse;
-            }
-            noti_data->raw.preferences.preferences_num = (size_t)item_size;
-            noti_data->raw.preferences.preferences_data = iot_os_malloc(sizeof(iot_preference_data) * item_size);
-            if (!noti_data->raw.preferences.preferences_data) {
-                IOT_ERROR("Failed to alloc preferences data");
-                err = IOT_ERROR_BAD_REQ;
-                goto out_noti_parse;
-            }
-            memset(noti_data->raw.preferences.preferences_data, 0, sizeof(iot_preference_data) * item_size);
-
-            for (int i = 0; i < item_size; i++) {
-                JSON_H *sub_item = JSON_GET_ARRAY_ITEM(item, i);
-                if (!sub_item) {
-                    IOT_ERROR("Cannot get %dth item data", i);
-                    continue;
-                }
-                JSON_H *preference_type = JSON_GET_OBJECT_ITEM(sub_item, "preferenceType");
-                JSON_H *preference_value = JSON_GET_OBJECT_ITEM(sub_item, "value");
-
-                subitem_str = JSON_GET_OBJECT_ITEM_STRING(sub_item);
-                if (subitem_str != NULL) {
-                    noti_data->raw.preferences.preferences_data[i].preference_name = iot_os_strdup(subitem_str);
-                } else {
-                    noti_data->raw.preferences.preferences_data[i].preference_name = NULL;
-                }
-
-                if (preference_value == NULL) {
-                    noti_data->raw.preferences.preferences_data[i].preference_data.type = IOT_CAP_VAL_TYPE_NULL;
-                } else if (!strncmp(JSON_GET_STRING_VALUE(preference_type), "string", 6)) {
-                    noti_data->raw.preferences.preferences_data[i].preference_data.type = IOT_CAP_VAL_TYPE_STRING;
-                    noti_data->raw.preferences.preferences_data[i].preference_data.string =
-                        iot_os_strdup(JSON_GET_STRING_VALUE(preference_value));
-                } else if (!strncmp(JSON_GET_STRING_VALUE(preference_type), "number", 6)) {
-                    noti_data->raw.preferences.preferences_data[i].preference_data.type = IOT_CAP_VAL_TYPE_NUMBER;
-                    noti_data->raw.preferences.preferences_data[i].preference_data.number =
-                        JSON_GET_NUMBER_VALUE(preference_value);
-                } else if (!strncmp(JSON_GET_STRING_VALUE(preference_type), "boolean", 7)) {
-                    noti_data->raw.preferences.preferences_data[i].preference_data.type = IOT_CAP_VAL_TYPE_BOOLEAN;
-                    noti_data->raw.preferences.preferences_data[i].preference_data.boolean =
-                        JSON_IS_TRUE(preference_value);
-                } else if (!strncmp(JSON_GET_STRING_VALUE(preference_type), "integer", 7)) {
-                    noti_data->raw.preferences.preferences_data[i].preference_data.type = IOT_CAP_VAL_TYPE_INTEGER;
-                    noti_data->raw.preferences.preferences_data[i].preference_data.integer = preference_value->valueint;
-                } else {
-                    noti_data->raw.preferences.preferences_data[i].preference_data.type = IOT_CAP_VAL_TYPE_UNKNOWN;
-                }
-            }
         }
     } else if (!strncmp(noti_type_string, SERVER_NOTI_TYPE_DEVICE_UPDATED, strlen(SERVER_NOTI_TYPE_DEVICE_UPDATED))) {
         err = iot_misc_info_store(IOT_MISC_INFO_DIP, (const void *)ctx->devconf.dip);
@@ -1076,238 +1335,15 @@ iot_error_t _iot_parse_noti_data(struct iot_context *ctx, void *data, iot_noti_d
         }
         err = IOT_ERROR_BAD_REQ;
     } else if (!strncmp(noti_type_string, SERVER_NOTI_TYPE_DEVICE_CREATED, strlen(SERVER_NOTI_TYPE_DEVICE_CREATED))) {
-        iot_child_device *child_dev = NULL;
-        JSON_H *response = NULL;
-        JSON_H *dip_key = NULL;
-        JSON_H *meta_data = NULL;
-
-        response = JSON_GET_OBJECT_ITEM(json, "response");
-        if (response == NULL) {
-            IOT_ERROR("there is no response data in notification");
-            err = IOT_ERROR_BAD_REQ;
+        err = _parse_device_created(ctx, json, noti_data);
+        if (err != IOT_ERROR_NONE) {
             goto out_noti_parse;
         }
-
-        /* Device Id */
-        item = JSON_GET_OBJECT_ITEM(response, "deviceId");
-        if (item == NULL) {
-            IOT_ERROR("there is no deviceId in response");
-            err = IOT_ERROR_BAD_REQ;
-            goto out_noti_parse;
-        }
-        child_dev = ctx->child_device_list;
-        while (child_dev) {
-            if (!strncmp(child_dev->deviceId, JSON_GET_STRING_VALUE(item), IOT_REG_UUID_STR_LEN)) {
-                break;
-            }
-            child_dev = child_dev->next;
-        }
-        if (!child_dev) {
-            child_dev = (iot_child_device *)iot_os_malloc(sizeof(iot_child_device));
-            if (child_dev == NULL) {
-                IOT_ERROR("Failed to alloc new child device struct");
-                err = IOT_ERROR_BAD_REQ;
-                goto out_noti_parse;
-            }
-            memset(child_dev, 0, sizeof(iot_child_device));
-            memcpy(child_dev->deviceId, JSON_GET_STRING_VALUE(item), IOT_REG_UUID_STR_LEN);
-
-            child_dev->ctx = ctx;
-
-            /* mnId, serial number */
-            meta_data = JSON_GET_OBJECT_ITEM(response, "metadata");
-            if (meta_data == NULL) {
-                IOT_ERROR("there is no metadata in response");
-                iot_os_free(child_dev);
-                err = IOT_ERROR_BAD_REQ;
-                goto out_noti_parse;
-            }
-
-            item = JSON_GET_OBJECT_ITEM(meta_data, "mnId");
-            if (item == NULL) {
-                IOT_ERROR("there is no mnId in metadata");
-                iot_os_free(child_dev);
-                err = IOT_ERROR_BAD_REQ;
-                goto out_noti_parse;
-            }
-            child_dev->mnId = iot_os_strdup(JSON_GET_STRING_VALUE(item));
-            if (child_dev->mnId == NULL) {
-                IOT_ERROR("Failed to alloc mnId for child device");
-                iot_os_free(child_dev);
-                err = IOT_ERROR_BAD_REQ;
-                goto out_noti_parse;
-            }
-
-            item = JSON_GET_OBJECT_ITEM(meta_data, "serialNumber");
-            if (item == NULL) {
-                IOT_ERROR("there is no serial in metadata");
-                iot_os_free(child_dev->mnId);
-                iot_os_free(child_dev);
-                err = IOT_ERROR_BAD_REQ;
-                goto out_noti_parse;
-            }
-            child_dev->serial_number = iot_os_strdup(JSON_GET_STRING_VALUE(item));
-            if (child_dev->serial_number == NULL) {
-                IOT_ERROR("Failed to alloc serial number for child device");
-                iot_os_free(child_dev->mnId);
-                iot_os_free(child_dev);
-                err = IOT_ERROR_BAD_REQ;
-                goto out_noti_parse;
-            }
-            child_dev->mqtt_event_topic = (char *)iot_os_malloc(IOT_TOPIC_SIZE);
-            if (!child_dev->mqtt_event_topic) {
-                IOT_ERROR("failed to malloc for child device event topic");
-                iot_os_free(child_dev->serial_number);
-                iot_os_free(child_dev->mnId);
-                iot_os_free(child_dev);
-                err = IOT_ERROR_BAD_REQ;
-                goto out_noti_parse;
-            }
-            snprintf(child_dev->mqtt_event_topic, IOT_TOPIC_SIZE, IOT_PUB_TOPIC_EVENT, child_dev->deviceId);
-
-            child_dev->next = ctx->child_device_list;
-            ctx->child_device_list = child_dev;
-        }
-
-        /* dip Id*/
-        dip_key = JSON_GET_OBJECT_ITEM(response, "deviceIntegrationProfileKey");
-        if (dip_key == NULL) {
-            IOT_ERROR("there is no DIP in response");
-            err = IOT_ERROR_BAD_REQ;
-            goto out_noti_parse;
-        }
-        item = JSON_GET_OBJECT_ITEM(dip_key, "id");
-        iot_util_convert_str_uuid(JSON_GET_STRING_VALUE(item), &child_dev->dip.dip_id);
-        item = JSON_GET_OBJECT_ITEM(dip_key, "majorVersion");
-        if (!item) {
-            IOT_ERROR("Can't find majorVersion for dip_key!!");
-            err = IOT_ERROR_BAD_REQ;
-            goto out_noti_parse;
-        }
-        child_dev->dip.dip_major_version = item->valueint;
-        item = JSON_GET_OBJECT_ITEM(dip_key, "minorVersion");
-        if (item) {
-            child_dev->dip.dip_minor_version = item->valueint;
-        }
-
-        noti_data->type = _IOT_NOTI_TYPE_CHILD_DEVICE_REGISTERED;
-        noti_data->raw.child_device_registered.child_dev = child_dev;
-        noti_data->raw.child_device_registered.mnId = child_dev->mnId;
-        noti_data->raw.child_device_registered.serial_number = child_dev->serial_number;
     } else if (!strncmp(noti_type_string, SERVER_NOTI_TYPE_DEVICE_GET, strlen(SERVER_NOTI_TYPE_DEVICE_GET))) {
-        iot_child_device *child_dev = NULL;
-        JSON_H *child_devices = NULL;
-        JSON_H *each_child = NULL;
-        JSON_H *dip_key = NULL;
-
-        child_devices = JSON_GET_OBJECT_ITEM(json, "childDevices");
-        if (child_devices == NULL) {
-            IOT_ERROR("there is no child devices data in notification");
-            err = IOT_ERROR_BAD_REQ;
+        err = _parse_device_get(ctx, json, noti_data);
+        if (err != IOT_ERROR_NONE) {
             goto out_noti_parse;
         }
-
-        for (int i = 0; i < JSON_GET_ARRAY_SIZE(child_devices); i++) {
-            each_child = JSON_GET_ARRAY_ITEM(child_devices, i);
-
-            /* Device Id */
-            item = JSON_GET_OBJECT_ITEM(each_child, "id");
-            if (item == NULL) {
-                IOT_ERROR("there is no deviceId in child info");
-                err = IOT_ERROR_BAD_REQ;
-                goto out_noti_parse;
-            }
-
-            child_dev = ctx->child_device_list;
-            while (child_dev) {
-                if (!strncmp(child_dev->deviceId, JSON_GET_STRING_VALUE(item), IOT_REG_UUID_STR_LEN)) {
-                    break;
-                }
-                child_dev = child_dev->next;
-            }
-            if (!child_dev) {
-                child_dev = (iot_child_device *)iot_os_malloc(sizeof(iot_child_device));
-                if (child_dev == NULL) {
-                    IOT_ERROR("Failed to alloc new child device struct");
-                    err = IOT_ERROR_BAD_REQ;
-                    goto out_noti_parse;
-                }
-                memset(child_dev, 0, sizeof(iot_child_device));
-                memcpy(child_dev->deviceId, JSON_GET_STRING_VALUE(item), IOT_REG_UUID_STR_LEN);
-
-                child_dev->ctx = ctx;
-
-                /* mnId, serial number */
-                item = JSON_GET_OBJECT_ITEM(each_child, "mnId");
-                if (item == NULL) {
-                    IOT_ERROR("there is no mnId in child info");
-                    iot_os_free(child_dev);
-                    err = IOT_ERROR_BAD_REQ;
-                    goto out_noti_parse;
-                }
-                child_dev->mnId = iot_os_strdup(JSON_GET_STRING_VALUE(item));
-                if (child_dev->mnId == NULL) {
-                    IOT_ERROR("Failed to alloc mnId for child device");
-                    iot_os_free(child_dev);
-                    err = IOT_ERROR_BAD_REQ;
-                    goto out_noti_parse;
-                }
-
-                item = JSON_GET_OBJECT_ITEM(each_child, "serialNumber");
-                if (item == NULL) {
-                    IOT_ERROR("there is no serial in child info");
-                    iot_os_free(child_dev->mnId);
-                    iot_os_free(child_dev);
-                    err = IOT_ERROR_BAD_REQ;
-                    goto out_noti_parse;
-                }
-                child_dev->serial_number = iot_os_strdup(JSON_GET_STRING_VALUE(item));
-                if (child_dev->serial_number == NULL) {
-                    IOT_ERROR("Failed to alloc serial number for child device");
-                    iot_os_free(child_dev->mnId);
-                    iot_os_free(child_dev);
-                    err = IOT_ERROR_BAD_REQ;
-                    goto out_noti_parse;
-                }
-                child_dev->mqtt_event_topic = (char *)iot_os_malloc(IOT_TOPIC_SIZE);
-                if (!child_dev->mqtt_event_topic) {
-                    IOT_ERROR("failed to malloc for child device event topic");
-                    iot_os_free(child_dev->serial_number);
-                    iot_os_free(child_dev->mnId);
-                    iot_os_free(child_dev);
-                    err = IOT_ERROR_BAD_REQ;
-                    goto out_noti_parse;
-                }
-                snprintf(child_dev->mqtt_event_topic, IOT_TOPIC_SIZE, IOT_PUB_TOPIC_EVENT, child_dev->deviceId);
-
-                child_dev->next = ctx->child_device_list;
-                ctx->child_device_list = child_dev;
-            }
-
-            /* dip Id*/
-            dip_key = JSON_GET_OBJECT_ITEM(each_child, "deviceIntegrationProfileKey");
-            if (dip_key == NULL) {
-                IOT_ERROR("there is no DIP in child info");
-                err = IOT_ERROR_BAD_REQ;
-                goto out_noti_parse;
-            }
-            item = JSON_GET_OBJECT_ITEM(dip_key, "id");
-            iot_util_convert_str_uuid(JSON_GET_STRING_VALUE(item), &child_dev->dip.dip_id);
-            item = JSON_GET_OBJECT_ITEM(dip_key, "majorVersion");
-            if (!item) {
-                IOT_ERROR("Can't find majorVersion for dip_key!!");
-                err = IOT_ERROR_BAD_REQ;
-                goto out_noti_parse;
-            }
-            child_dev->dip.dip_major_version = item->valueint;
-            item = JSON_GET_OBJECT_ITEM(dip_key, "minorVersion");
-            if (item) {
-                child_dev->dip.dip_minor_version = item->valueint;
-            }
-        }
-
-        iot_update_child_devices_health(ctx, NULL);
-        noti_data->type = _IOT_NOTI_TYPE_CHILD_DEVICE_SYNCED;
     } else if (!strncmp(noti_type_string, SERVER_NOTI_TYPE_CHILD_DEVICE_HEALTH_RESPONSE,
                         strlen(SERVER_NOTI_TYPE_CHILD_DEVICE_HEALTH_RESPONSE))) {
         item = JSON_GET_OBJECT_ITEM(json, "success");
@@ -1319,6 +1355,23 @@ iot_error_t _iot_parse_noti_data(struct iot_context *ctx, void *data, iot_noti_d
         _iot_subscribe_child_devices_command(ctx, item);
         _iot_notify_child_devices_cloud_connected(ctx, item);
         err = IOT_ERROR_BAD_REQ;
+    } else if (!strncmp(noti_type_string, SERVER_NOTI_TYPE_OWNERSHIP_TRANSFER,
+                        strlen(SERVER_NOTI_TYPE_OWNERSHIP_TRANSFER))) {
+        noti_data->type = _IOT_NOTI_TYPE_OWNER_TRANSFERRED;
+
+        item = JSON_GET_OBJECT_ITEM(json, "transferId");
+        if (item == NULL || JSON_GET_STRING_VALUE(item) == NULL) {
+            IOT_ERROR("No transfer id");
+            err = IOT_ERROR_BAD_REQ;
+            goto out_noti_parse;
+        }
+
+        err = _request_ot_status_update(ctx, JSON_GET_STRING_VALUE(item));
+        if (err != IOT_ERROR_NONE) {
+            IOT_ERROR("Failed to request OT status update");
+            err = IOT_ERROR_BAD_REQ;
+            goto out_noti_parse;
+        }
     } else {
         IOT_WARN("There is no noti_type matched");
         err = IOT_ERROR_BAD_REQ;
@@ -1350,7 +1403,7 @@ void iot_noti_sub_cb(struct iot_context *ctx, char *payload)
         IOT_INFO("Ignore notification");
         return;
     }
-    iot_command_send(ctx, IOT_COMMAND_NOTIFICATION_RECEIVED, &noti_data, sizeof(noti_data));
+    iot_noti_send(ctx, &noti_data);
 }
 
 static iot_error_t _iot_process_cmd(iot_cap_handle_list_t *cap_handle_list, char *component_name, char *capability_name,

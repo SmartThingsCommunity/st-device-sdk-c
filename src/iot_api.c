@@ -177,6 +177,126 @@ int iot_mqtt_publish(struct iot_context *ctx, st_mqtt_client client, st_mqtt_msg
     return ret;
 }
 
+STATIC_FUNCTION
+void _handle_notification_received(struct iot_context *ctx, iot_noti_data_t *noti)
+{
+    if (!noti) {
+        IOT_ERROR("There is no noti handler");
+        return;
+    }
+
+    if (noti->type == (iot_noti_type_t)_IOT_NOTI_TYPE_DEV_DELETED) {
+        IOT_INFO("device deleted");
+
+        if (ctx->noti_cb)
+            ctx->noti_cb(noti, ctx->noti_usr_data);
+
+#if defined(CONFIG_STDK_DO_NOT_REBOOT_AFTER_DEVICE_DELETE)
+        iot_cleanup(ctx, false);
+#else
+        iot_cleanup(ctx, true);
+#endif
+    } else if (noti->type == (iot_noti_type_t)_IOT_NOTI_TYPE_RATE_LIMIT) {
+        IOT_INFO("rate limit");
+
+        if (ctx->noti_cb)
+            ctx->noti_cb(noti, ctx->noti_usr_data);
+    } else if (noti->type == (iot_noti_type_t)_IOT_NOTI_TYPE_RATE_LIMIT_RELEASED) {
+        IOT_INFO("rate limit released");
+
+        if (ctx->noti_cb)
+            ctx->noti_cb(noti, ctx->noti_usr_data);
+    } else if (noti->type == (iot_noti_type_t)_IOT_NOTI_TYPE_QUOTA_REACHED) {
+        IOT_INFO("quota reached");
+
+        if (ctx->noti_cb)
+            ctx->noti_cb(noti, ctx->noti_usr_data);
+    } else if (noti->type == (iot_noti_type_t)_IOT_NOTI_TYPE_PREFERENCE_UPDATED) {
+        IOT_INFO("preference updated");
+
+        if (ctx->noti_cb)
+            ctx->noti_cb(noti, ctx->noti_usr_data);
+
+        /* preference buffers were handed over via iot_noti_send's shallow copy,
+         * this dispatch point is their single owner and must free them
+         */
+        for (int i = 0; i < noti->raw.preferences.preferences_num; i++) {
+            if (noti->raw.preferences.preferences_data[i].preference_data.type == IOT_CAP_VAL_TYPE_STRING)
+                iot_os_free(noti->raw.preferences.preferences_data[i].preference_data.string);
+
+            iot_os_free(noti->raw.preferences.preferences_data[i].preference_name);
+        }
+        iot_os_free(noti->raw.preferences.preferences_data);
+    } else if (noti->type == (iot_noti_type_t)_IOT_NOTI_TYPE_SEND_FAILED) {
+        IOT_INFO("send failed request id : %d", noti->raw.send_fail.failed_request_id);
+
+        if (ctx->noti_cb)
+            ctx->noti_cb(noti, ctx->noti_usr_data);
+    } else if (noti->type == (iot_noti_type_t)_IOT_NOTI_TYPE_SEND_SUCCESS) {
+        IOT_INFO("send success request id : %d", noti->raw.send_success.success_request_id);
+
+        if (ctx->noti_cb)
+            ctx->noti_cb(noti, ctx->noti_usr_data);
+    } else if (noti->type == (iot_noti_type_t)_IOT_NOTI_TYPE_CHILD_DEVICE_SYNCED) {
+        IOT_INFO("Child device info updated");
+        if (ctx->noti_cb) {
+            ctx->noti_cb(noti, ctx->noti_usr_data);
+        }
+    } else if (noti->type == (iot_noti_type_t)_IOT_NOTI_TYPE_CHILD_DEVICE_REGISTERED) {
+        IOT_INFO("Child device is registered");
+        if (ctx->noti_cb) {
+            ctx->noti_cb(noti, ctx->noti_usr_data);
+        }
+    } else if (noti->type == (iot_noti_type_t)_IOT_NOTI_TYPE_OWNER_TRANSFERRED) {
+        IOT_INFO("Device ownership is changed");
+        if (ctx->noti_cb) {
+            ctx->noti_cb(noti, ctx->noti_usr_data);
+        }
+    }
+}
+
+/* Work queue handler owning the noti queued by iot_noti_send(): heap data
+ * embedded in the noti (e.g. preference buffers) is freed by the dispatch
+ * below, and the noti struct itself is freed here after dispatch.
+ */
+STATIC_FUNCTION
+void _noti_work_handler(struct iot_context *ctx, device_work_param param)
+{
+    iot_noti_data_t *noti = (iot_noti_data_t *)param;
+
+    _handle_notification_received(ctx, noti);
+
+    if (noti)
+        iot_os_free(noti);
+}
+
+iot_error_t iot_noti_send(struct iot_context *ctx, const iot_noti_data_t *noti_data)
+{
+    iot_noti_data_t *noti;
+    iot_error_t err;
+
+    if (!ctx || !noti_data) {
+        IOT_ERROR("There is no ctx or noti_data");
+        return IOT_ERROR_INVALID_ARGS;
+    }
+
+    noti = iot_os_malloc(sizeof(iot_noti_data_t));
+    if (noti == NULL) {
+        IOT_ERROR("Failed to malloc for noti data");
+        return IOT_ERROR_MEM_ALLOC;
+    }
+    /* shallow copy: heap pointers embedded in noti_data now belong to
+     * _noti_work_handler on success (see iot_noti_send contract in iot_internal.h)
+     */
+    memcpy(noti, noti_data, sizeof(iot_noti_data_t));
+
+    err = iot_put_device_work(ctx, _noti_work_handler, (device_work_param)noti);
+    if (err != IOT_ERROR_NONE)
+        iot_os_free(noti);
+
+    return err;
+}
+
 static void _iot_noti_rate_limit_cb(iot_os_timer_handle handle, void *user_data)
 {
     struct iot_context *ctx = (struct iot_context *)user_data;
@@ -186,7 +306,7 @@ static void _iot_noti_rate_limit_cb(iot_os_timer_handle handle, void *user_data)
 
     ctx->rate_limit = false;
     noti_data.type = _IOT_NOTI_TYPE_RATE_LIMIT_RELEASED;
-    iot_command_send(ctx, IOT_COMMAND_NOTIFICATION_RECEIVED, &noti_data, sizeof(noti_data));
+    iot_noti_send(ctx, &noti_data);
 }
 
 void iot_notify_rate_limit(struct iot_context *ctx, int remaining_time_ms)
@@ -218,15 +338,7 @@ void iot_notify_rate_limit(struct iot_context *ctx, int remaining_time_ms)
 
     noti_data.type = _IOT_NOTI_TYPE_RATE_LIMIT;
     noti_data.raw.rate_limit.remainingTime = remaining_time_ms;
-    iot_command_send(ctx, IOT_COMMAND_NOTIFICATION_RECEIVED, &noti_data, sizeof(noti_data));
-}
-
-iot_error_t iot_wifi_get_status(struct iot_context *ctx)
-{
-    iot_error_t con_result = IOT_ERROR_NONE;
-
-    con_result = iot_bsp_wifi_get_status();
-    return con_result;
+    iot_noti_send(ctx, &noti_data);
 }
 
 iot_error_t iot_wifi_ctrl_request(struct iot_context *ctx, iot_wifi_mode_t wifi_mode)
@@ -260,6 +372,7 @@ iot_error_t iot_wifi_ctrl_request(struct iot_context *ctx, iot_wifi_mode_t wifi_
                     memcpy(wifi_conf.bssid, ctx->prov_data.wifi.bssid.addr, IOT_WIFI_MAX_BSSID_LEN);
                 }
                 wifi_conf.authmode = ctx->prov_data.wifi.security_type;
+                wifi_conf.hidden = ctx->prov_data.wifi.hidden;
             } else { /* For IOT_WIFI_MODE_OFF case */
                 send_cmd = false;
 
@@ -317,6 +430,9 @@ iot_error_t iot_wifi_ctrl_request(struct iot_context *ctx, iot_wifi_mode_t wifi_
         if (iot_err < 0) {
             IOT_ERROR("failed to set wifi_set_mode %d", iot_err);
             iot_set_st_ecode_from_conn_error(ctx, iot_err);
+            if (wifi_mode == IOT_WIFI_MODE_STATION) {
+                ctx->need_wifi_reset = true;
+            }
             return iot_err;
         }
 
@@ -337,12 +453,8 @@ iot_error_t iot_wifi_ctrl_request(struct iot_context *ctx, iot_wifi_mode_t wifi_
         }
     }
 
-    if (iot_err == IOT_ERROR_NONE) {
-        if (wifi_mode == IOT_WIFI_MODE_STATION) {
-            ctx->is_wifi_station = true;
-        } else {
-            ctx->is_wifi_station = false;
-        }
+    if (wifi_mode == IOT_WIFI_MODE_STATION && iot_err == IOT_ERROR_NONE) {
+        ctx->need_wifi_reset = false;
     }
 
     return iot_err;
@@ -899,7 +1011,7 @@ iot_error_t iot_get_time_in_sec_by_long(long *sec)
     }
 
     gettimeofday(&tv_now, NULL);
-    *sec = tv_now.tv_sec;
+    *sec = (long)tv_now.tv_sec;
 
     return IOT_ERROR_NONE;
 }
@@ -967,6 +1079,48 @@ static const char name_marketing[] = "marketingName";
 static const char name_manufacturer[] = "manufacturerName";
 static const char name_manufacturer_code[] = "manufacturerCode";
 
+static char *_alloc_string_from_json(JSON_H *item)
+{
+    const char *val;
+    size_t str_len;
+    char *str;
+
+    if (!item)
+        return NULL;
+
+    val = JSON_GET_STRING_VALUE(item);
+    if (!val)
+        return NULL;
+
+    str_len = strlen(val);
+    str = iot_os_malloc(str_len + 1);
+    if (!str)
+        return NULL;
+
+    strncpy(str, val, str_len);
+    str[str_len] = '\0';
+    return str;
+}
+
+static iot_error_t _load_optional_string_field(JSON_H *profile, const char *field_name, char **out_str,
+                                               unsigned char *opt_info)
+{
+    JSON_H *item = JSON_GET_OBJECT_ITEM(profile, field_name);
+
+    if (!item) {
+        return IOT_ERROR_NONE;
+    }
+
+    *out_str = _alloc_string_from_json(item);
+    if (!*out_str) {
+        return IOT_ERROR_MEM_ALLOC;
+    }
+    if (opt_info)
+        (*opt_info)++;
+
+    return IOT_ERROR_NONE;
+}
+
 iot_error_t iot_api_device_info_load(unsigned char *device_info, unsigned int device_info_len,
                                      struct iot_device_info *info)
 {
@@ -975,18 +1129,15 @@ iot_error_t iot_api_device_info_load(unsigned char *device_info, unsigned int de
     JSON_H *profile = NULL;
     JSON_H *item = NULL;
     char *firmware_version = NULL;
-    char *model_number = NULL;
-    char *marketing_name = NULL;
-    char *manufacturer_name = NULL;
-    char *manufacturer_code = NULL;
     char *data = NULL;
-    size_t str_len = 0;
 #if defined(CONFIG_STDK_IOT_CORE_LOG_LEVEL_ERROR)
     char *current_name = NULL;
 #endif
 
     if (!device_info || !info || device_info_len == 0)
         return IOT_ERROR_INVALID_ARGS;
+
+    memset(info, 0, sizeof(struct iot_device_info));
 
     data = iot_os_malloc((size_t)device_info_len + 1);
     if (!data) {
@@ -1006,7 +1157,7 @@ iot_error_t iot_api_device_info_load(unsigned char *device_info, unsigned int de
         goto load_out;
     }
 
-    /* version */
+    /* version (mandatory) */
     item = JSON_GET_OBJECT_ITEM(profile, name_version);
     if (!item) {
 #if defined(CONFIG_STDK_IOT_CORE_LOG_LEVEL_ERROR)
@@ -1015,88 +1166,30 @@ iot_error_t iot_api_device_info_load(unsigned char *device_info, unsigned int de
         iot_err = IOT_ERROR_UNINITIALIZED;
         goto load_out;
     }
-    str_len = strlen(JSON_GET_STRING_VALUE(item));
-    firmware_version = iot_os_malloc(str_len + 1);
+    firmware_version = _alloc_string_from_json(item);
     if (!firmware_version) {
         iot_err = IOT_ERROR_MEM_ALLOC;
         goto load_out;
     }
-    strncpy(firmware_version, JSON_GET_STRING_VALUE(item), str_len);
-    firmware_version[str_len] = '\0';
 
     info->firmware_version = firmware_version;
-    info->opt_info = 0;
 
-    /* name_model_number */
-    item = JSON_GET_OBJECT_ITEM(profile, name_model_number);
-    if (item) {
-        str_len = strlen(JSON_GET_STRING_VALUE(item));
-        model_number = iot_os_malloc(str_len + 1);
-        if (!model_number) {
-            iot_err = IOT_ERROR_MEM_ALLOC;
-            goto load_out;
-        }
-        strncpy(model_number, JSON_GET_STRING_VALUE(item), str_len);
-        model_number[str_len] = '\0';
-        info->model_number = model_number;
-        info->opt_info++;
-    } else {
-        info->model_number = NULL;
-    }
+    /* optional fields */
+    iot_err = _load_optional_string_field(profile, name_model_number, &info->model_number, &info->opt_info);
+    if (iot_err != IOT_ERROR_NONE)
+        goto load_out;
 
-    /* name_marketing */
-    item = JSON_GET_OBJECT_ITEM(profile, name_marketing);
-    if (item) {
-        str_len = strlen(JSON_GET_STRING_VALUE(item));
-        marketing_name = iot_os_malloc(str_len + 1);
-        if (!marketing_name) {
-            iot_err = IOT_ERROR_MEM_ALLOC;
-            goto load_out;
-        }
-        strncpy(marketing_name, JSON_GET_STRING_VALUE(item), str_len);
-        marketing_name[str_len] = '\0';
+    iot_err = _load_optional_string_field(profile, name_marketing, &info->marketing_name, &info->opt_info);
+    if (iot_err != IOT_ERROR_NONE)
+        goto load_out;
 
-        info->marketing_name = marketing_name;
-        info->opt_info++;
-    } else {
-        info->marketing_name = NULL;
-    }
+    iot_err = _load_optional_string_field(profile, name_manufacturer, &info->manufacturer_name, &info->opt_info);
+    if (iot_err != IOT_ERROR_NONE)
+        goto load_out;
 
-    /* name_manufacturer */
-    item = JSON_GET_OBJECT_ITEM(profile, name_manufacturer);
-    if (item) {
-        str_len = strlen(JSON_GET_STRING_VALUE(item));
-        manufacturer_name = iot_os_malloc(str_len + 1);
-        if (!manufacturer_name) {
-            iot_err = IOT_ERROR_MEM_ALLOC;
-            goto load_out;
-        }
-        strncpy(manufacturer_name, JSON_GET_STRING_VALUE(item), str_len);
-        manufacturer_name[str_len] = '\0';
-
-        info->manufacturer_name = manufacturer_name;
-        info->opt_info++;
-    } else {
-        info->manufacturer_name = NULL;
-    }
-
-    /* manufacturerCode */
-    item = JSON_GET_OBJECT_ITEM(profile, name_manufacturer_code);
-    if (item) {
-        str_len = strlen(JSON_GET_STRING_VALUE(item));
-        manufacturer_code = iot_os_malloc(str_len + 1);
-        if (!manufacturer_code) {
-            iot_err = IOT_ERROR_MEM_ALLOC;
-            goto load_out;
-        }
-        strncpy(manufacturer_code, JSON_GET_STRING_VALUE(item), str_len);
-        manufacturer_code[str_len] = '\0';
-
-        info->manufacturer_code = manufacturer_code;
-        info->opt_info++;
-    } else {
-        info->manufacturer_code = NULL;
-    }
+    iot_err = _load_optional_string_field(profile, name_manufacturer_code, &info->manufacturer_code, &info->opt_info);
+    if (iot_err != IOT_ERROR_NONE)
+        goto load_out;
 
     if (root)
         JSON_DELETE(root);
@@ -1114,14 +1207,7 @@ load_out:
     }
 #endif
 
-    if (firmware_version)
-        iot_os_free(firmware_version);
-    if (marketing_name)
-        iot_os_free(marketing_name);
-    if (model_number)
-        iot_os_free(model_number);
-    if (manufacturer_name)
-        iot_os_free(manufacturer_name);
+    iot_api_device_info_mem_free(info);
 
     if (root)
         JSON_DELETE(root);
@@ -1765,6 +1851,15 @@ static iot_error_t iot_ecodeType_to_string(iot_st_ecode_t ecode_type, struct iot
         case IOT_ST_ECODE_CE70:
             strncpy(st_ecode->ecode, "CE70", sizeof(st_ecode->ecode));
             break;
+        case IOT_ST_ECODE_CE79:
+            strncpy(st_ecode->ecode, "CE79", sizeof(st_ecode->ecode));
+            break;
+        case IOT_ST_ECODE_CE81:
+            strncpy(st_ecode->ecode, "CE81", sizeof(st_ecode->ecode));
+            break;
+        case IOT_ST_ECODE_CE84_3:
+            strncpy(st_ecode->ecode, "CE84-3", sizeof(st_ecode->ecode));
+            break;
         case IOT_ST_ECODE_CE84_4:
             strncpy(st_ecode->ecode, "CE84-4", sizeof(st_ecode->ecode));
             break;
@@ -1965,10 +2060,6 @@ bool iot_check_dip_update_needed(struct iot_dip_data *new_dip)
     }
 
     if (new_dip->dip_major_version != old_dip.dip_major_version) {
-        return true;
-    }
-
-    if (new_dip->dip_minor_version != old_dip.dip_minor_version) {
         return true;
     }
 

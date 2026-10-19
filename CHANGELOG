@@ -1,5 +1,23 @@
 # HISTORY
 
+## 2.4.2 : Change for version 2.4.2
+
+New improvements or features:
+- Add Ownership Transfer feature
+
+Enhancements or amendments:
+- Complement D2D last error code for TCP, TLS, DHCP fail cases
+- Rework wifi get status porting API
+- Enable raspberry pi connect hidden/WPA3 Wifi
+- Enable wifi backoff connection feature
+- Remove DIP minor version comparison
+- Add document regarding AI Agent Skills
+
+Bug fixed:
+- Fix POSIX porting timer unit bug(ms -> ns)
+- Wake up MQTT listen socket when socke is closed
+- Replace mktime with timegm for UTC time
+
 ## 2.4.1 : Change for version 2.4.1
 
 New improvements or features:

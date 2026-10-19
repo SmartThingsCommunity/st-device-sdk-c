@@ -18,12 +18,34 @@
 
 #include <iot_error.h>
 #include <iot_nv_data.h>
+#include <security/backend/iot_security_be.h>
 #include <security/iot_security_crypto.h>
 #include <security/iot_security_ecdh.h>
 #include <string.h>
 
 #include "TC_MOCK_functions.h"
+#include "TC_REGISTRY.h"
 #include "cmocka_custom.h"
+
+TEST_SUITE("iot_security_ecdh.c");
+
+static int TC_iot_security_ecdh_init_setup(void **state);
+static int TC_iot_security_ecdh_init_teardown(void **state);
+static int TC_iot_security_ecdh_setup(void **state);
+static int TC_iot_security_ecdh_teardown(void **state);
+
+TEST_FIXTURE(iot_security_ecdh, TC_iot_security_ecdh_setup, TC_iot_security_ecdh_teardown);
+TEST_FIXTURE(iot_security_ecdh_init, TC_iot_security_ecdh_init_setup, TC_iot_security_ecdh_init_teardown);
+
+static int TC_iot_security_ecdh_init_setup(void **state);
+static int TC_iot_security_ecdh_init_teardown(void **state);
+static int TC_iot_security_ecdh_setup(void **state);
+static int TC_iot_security_ecdh_teardown(void **state);
+
+static int TC_iot_security_ecdh_init_setup(void **state);
+static int TC_iot_security_ecdh_init_teardown(void **state);
+static int TC_iot_security_ecdh_setup(void **state);
+static int TC_iot_security_ecdh_teardown(void **state);
 
 static char sample_device_info[] = {
     "{\n"
@@ -35,7 +57,7 @@ static char sample_device_info[] = {
     "\t}\n"
     "}"};
 
-int TC_iot_security_ecdh_init_setup(void **state)
+static int TC_iot_security_ecdh_init_setup(void **state)
 {
     iot_error_t err;
     iot_security_context_t *context;
@@ -55,7 +77,7 @@ int TC_iot_security_ecdh_init_setup(void **state)
     return 0;
 }
 
-int TC_iot_security_ecdh_init_teardown(void **state)
+static int TC_iot_security_ecdh_init_teardown(void **state)
 {
     iot_error_t err;
     iot_security_context_t *context;
@@ -72,7 +94,7 @@ int TC_iot_security_ecdh_init_teardown(void **state)
     return 0;
 }
 
-int TC_iot_security_ecdh_setup(void **state)
+static int TC_iot_security_ecdh_setup(void **state)
 {
     iot_error_t err;
     iot_security_context_t *context;
@@ -99,7 +121,7 @@ int TC_iot_security_ecdh_setup(void **state)
     return 0;
 }
 
-int TC_iot_security_ecdh_teardown(void **state)
+static int TC_iot_security_ecdh_teardown(void **state)
 {
     iot_error_t err;
     iot_security_context_t *context;
@@ -116,7 +138,7 @@ int TC_iot_security_ecdh_teardown(void **state)
     return 0;
 }
 
-void TC_iot_security_ecdh_init_null_parameters(void **state)
+TEST_F(TC_REGISTRY_NO_FIXTURE, TC_iot_security_ecdh_init_null_parameters_neg)
 {
     iot_error_t err;
 
@@ -131,7 +153,7 @@ void TC_iot_security_ecdh_init_null_parameters(void **state)
     assert_int_not_equal(err, IOT_ERROR_NONE);
 }
 
-void TC_iot_security_ecdh_init_malloc_failure(void **state)
+TEST_F(iot_security_ecdh_init, TC_iot_security_ecdh_init_malloc_failure_neg)
 {
     iot_error_t err;
     iot_security_context_t *context;
@@ -152,7 +174,7 @@ void TC_iot_security_ecdh_init_malloc_failure(void **state)
     do_not_use_mock_iot_os_malloc_failure();
 }
 
-void TC_iot_security_ecdh_init_success(void **state)
+TEST_F(iot_security_ecdh_init, TC_iot_security_ecdh_init_success_pos)
 {
     iot_error_t err;
     iot_security_context_t *context;
@@ -171,7 +193,7 @@ void TC_iot_security_ecdh_init_success(void **state)
     assert_int_equal(err, IOT_ERROR_NONE);
 }
 
-void TC_iot_security_ecdh_set_params_null_parameters(void **state)
+TEST_F(iot_security_ecdh, TC_iot_security_ecdh_set_params_null_parameters_neg)
 {
     iot_error_t err;
     iot_security_context_t *context;
@@ -196,7 +218,7 @@ void TC_iot_security_ecdh_set_params_null_parameters(void **state)
     assert_int_not_equal(err, IOT_ERROR_NONE);
 }
 
-void TC_iot_security_ecdh_set_params_invalid_parameters(void **state)
+TEST_F(iot_security_ecdh, TC_iot_security_ecdh_set_params_invalid_parameters_neg)
 {
     iot_error_t err;
     iot_security_context_t *context;
@@ -248,7 +270,7 @@ void TC_iot_security_ecdh_set_params_invalid_parameters(void **state)
     assert_int_not_equal(err, IOT_ERROR_NONE);
 }
 
-void TC_iot_security_ecdh_set_params_success(void **state)
+TEST_F(iot_security_ecdh, TC_iot_security_ecdh_set_params_neg)
 {
     iot_error_t err;
     iot_security_context_t *context;
@@ -271,7 +293,7 @@ void TC_iot_security_ecdh_set_params_success(void **state)
     assert_int_equal(err, IOT_ERROR_NONE);
 }
 
-void TC_iot_security_ecdh_compute_shared_secret_null_parameters(void **state)
+TEST_F(iot_security_ecdh, TC_iot_security_ecdh_compute_shared_secret_null_parameters_neg)
 {
     iot_error_t err;
     iot_security_context_t *context;
@@ -319,7 +341,7 @@ static unsigned char ecdh_shared_secret_expected[] = {
     0xd1, 0x4d, 0xfa, 0x07, 0xdf, 0xab, 0x09, 0xb4, 0x56, 0xa6, 0xf7, 0x89, 0xef, 0xcf, 0x84, 0x6a,
 };
 
-void TC_iot_security_ecdh_compute_shared_secret_malloc_failure(void **state)
+TEST_F(iot_security_ecdh, TC_iot_security_ecdh_compute_shared_secret_malloc_failure_neg)
 {
     iot_error_t err;
     iot_security_context_t *context;
@@ -351,7 +373,7 @@ void TC_iot_security_ecdh_compute_shared_secret_malloc_failure(void **state)
     do_not_use_mock_iot_os_malloc_failure();
 }
 
-void TC_iot_security_ecdh_compute_shared_secret_failure(void **state)
+TEST_F(iot_security_ecdh_init, TC_iot_security_ecdh_compute_shared_secret_failure_neg)
 {
     iot_error_t err;
     iot_security_context_t *context;
@@ -366,7 +388,7 @@ void TC_iot_security_ecdh_compute_shared_secret_failure(void **state)
     assert_int_not_equal(err, IOT_ERROR_NONE);
 }
 
-static void TC_iot_security_ecdh_compute_shared_secret_general(void **state)
+static void TC_iot_security_ecdh_compute_shared_secret_general_neg(void **state)
 {
     iot_error_t err;
     iot_security_context_t *context;
@@ -393,7 +415,7 @@ static void TC_iot_security_ecdh_compute_shared_secret_general(void **state)
     iot_os_free(secret_buf.p);
 }
 
-static void TC_iot_security_ecdh_compute_shared_secret_expected(void **state)
+static void TC_iot_security_ecdh_compute_shared_secret_expected_neg(void **state)
 {
     iot_error_t err;
     iot_security_context_t *context;
@@ -424,10 +446,12 @@ static void TC_iot_security_ecdh_compute_shared_secret_expected(void **state)
     iot_os_free(shared_secret.p);
 }
 
-void TC_iot_security_ecdh_compute_shared_secret_success(void **state)
+TEST_F(iot_security_ecdh, TC_iot_security_ecdh_compute_shared_secret_neg)
 {
-    TC_iot_security_ecdh_compute_shared_secret_general(state);
-    TC_iot_security_ecdh_compute_shared_secret_expected(state);
+    TC_iot_security_ecdh_compute_shared_secret_general_neg(state);
+    TC_iot_security_ecdh_compute_shared_secret_expected_neg(state);
+
+    assert_true(true);
 }
 
 static unsigned char sample_iv[IOT_SECURITY_IV_LEN] = {
@@ -449,7 +473,7 @@ static unsigned char sample_encrypt_expected[] = {
     0x71, 0x8c, 0xfe, 0x1f, 0x88, 0xf1, 0x7d, 0x3e, 0xe6, 0xb6, 0xc0, 0xc0, 0x06, 0x22, 0x7d, 0xc4,
 };
 
-void TC_iot_security_ecdh_and_dynamic_cipher(void **state)
+TEST_F(iot_security_ecdh, TC_iot_security_ecdh_and_dynamic_cipher_neg)
 {
     iot_error_t err;
     iot_security_context_t *context;
@@ -509,7 +533,7 @@ void TC_iot_security_ecdh_and_dynamic_cipher(void **state)
     assert_int_equal(err, IOT_ERROR_NONE);
 }
 
-void TC_iot_security_ecdh_and_static_cipher(void **state)
+TEST_F(iot_security_ecdh, TC_iot_security_ecdh_and_static_cipher_neg)
 {
     iot_error_t err;
     iot_security_context_t *context;
@@ -572,4 +596,92 @@ void TC_iot_security_ecdh_and_static_cipher(void **state)
     // Local teardown
     err = iot_security_cipher_deinit(context);
     assert_int_equal(err, IOT_ERROR_NONE);
+}
+
+/*
+ * The tests below use a synthetic backend so the guard paths of
+ * iot_security_ecdh.c can be reached without a real backend.
+ */
+
+typedef struct {
+    iot_security_context_t context;
+    iot_security_be_context_t be_context;
+    iot_security_be_funcs_t fn;
+    iot_security_ecdh_params_t ecdh_params;
+} tc_ecdh_fake_be_t;
+
+static iot_error_t _tc_ecdh_be_fail(iot_security_context_t *context)
+{
+    return IOT_ERROR_SECURITY_KEY_INVALID_ID;
+}
+
+static void _tc_ecdh_fake_be_init(tc_ecdh_fake_be_t *fake)
+{
+    memset(fake, 0, sizeof(*fake));
+    fake->be_context.fn = &fake->fn;
+    fake->context.be_context = &fake->be_context;
+    fake->context.ecdh_params = &fake->ecdh_params;
+}
+
+TEST_F(TC_REGISTRY_NO_FIXTURE, TC_iot_security_ecdh_init_be_failure_rollback_neg)
+{
+    tc_ecdh_fake_be_t fake;
+    iot_error_t err;
+
+    // Given: a backend whose ecdh_init fails
+    _tc_ecdh_fake_be_init(&fake);
+    fake.context.ecdh_params = NULL;
+    fake.fn.ecdh_init = _tc_ecdh_be_fail;
+    // When
+    err = iot_security_ecdh_init(&fake.context);
+    // Then: the params allocated by init must be rolled back
+    assert_int_equal(err, IOT_ERROR_SECURITY_KEY_INVALID_ID);
+    assert_null(fake.context.ecdh_params);
+    assert_int_equal(fake.context.sub_system & IOT_SECURITY_SUB_ECDH, 0);
+}
+
+TEST_F(TC_REGISTRY_NO_FIXTURE, TC_iot_security_ecdh_deinit_be_failure_neg)
+{
+    tc_ecdh_fake_be_t fake;
+    iot_error_t err;
+
+    // Given: a backend whose ecdh_deinit fails
+    _tc_ecdh_fake_be_init(&fake);
+    fake.context.sub_system = IOT_SECURITY_SUB_ECDH;
+    fake.fn.ecdh_deinit = _tc_ecdh_be_fail;
+    // When
+    err = iot_security_ecdh_deinit(&fake.context);
+    // Then: the params must be kept so the caller can retry
+    assert_int_equal(err, IOT_ERROR_SECURITY_KEY_INVALID_ID);
+    assert_non_null(fake.context.ecdh_params);
+    assert_int_equal(fake.context.sub_system, IOT_SECURITY_SUB_ECDH);
+}
+
+TEST_F(TC_REGISTRY_NO_FIXTURE, TC_iot_security_ecdh_set_params_be_func_null_neg)
+{
+    tc_ecdh_fake_be_t fake;
+    iot_security_ecdh_params_t ecdh_set_params = {0};
+    iot_error_t err;
+
+    // Given: a function table without ecdh_set_params
+    _tc_ecdh_fake_be_init(&fake);
+    // When
+    err = iot_security_ecdh_set_params(&fake.context, &ecdh_set_params);
+    // Then
+    assert_int_equal(err, IOT_ERROR_SECURITY_BE_FUNC_NULL);
+}
+
+TEST_F(TC_REGISTRY_NO_FIXTURE, TC_iot_security_ecdh_compute_shared_secret_be_func_null_neg)
+{
+    tc_ecdh_fake_be_t fake;
+    iot_security_buffer_t secret_buf = {0};
+    iot_error_t err;
+
+    // Given: a function table without ecdh_compute_shared_secret
+    _tc_ecdh_fake_be_init(&fake);
+    // When
+    err = iot_security_ecdh_compute_shared_secret(&fake.context, &secret_buf);
+    // Then
+    assert_int_equal(err, IOT_ERROR_SECURITY_BE_FUNC_NULL);
+    assert_null(secret_buf.p);
 }

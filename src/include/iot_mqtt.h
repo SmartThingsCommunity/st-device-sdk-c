@@ -124,6 +124,9 @@ enum {
     E_ST_MQTT_PACKET_TIMEOUT = -10,          /* MQTT MQTT pending packet timeout */
     E_ST_MQTT_PING_FAIL = -11,               /* MQTT send ping fail */
     E_ST_MQTT_PING_TIMEOUT = -12,            /* MQTT send ping timeout */
+    E_ST_MQTT_DNS_RESOLVE_FAIL = -13,        /* MQTT Resolve server host name fail */
+    E_ST_MQTT_TCP_CONNECTION_FAIL = -14,     /* MQTT TCP connection fail */
+    E_ST_MQTT_TLS_HANDSHAKE_FAIL = -15,      /* MQTT TLS handshake fail */
 };
 
 /**

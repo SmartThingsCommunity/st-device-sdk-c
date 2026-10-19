@@ -565,7 +565,8 @@ exit_failed:
 
 #include <JSON.h>
 
-static char *_iot_jwt_header_trim_certificate(const char *origin, size_t origin_len)
+STATIC_FUNCTION
+char *_iot_jwt_header_trim_certificate(const char *origin, size_t origin_len)
 {
     const char *certificate_prefix = "-----BEGIN CERTIFICATE-----";
     const char *certificate_suffix = "-----END CERTIFICATE-----";
@@ -610,7 +611,8 @@ static char *_iot_jwt_header_trim_certificate(const char *origin, size_t origin_
     return trim;
 }
 
-static iot_error_t _iot_jwt_header_set_certificate(JSON_H *object)
+STATIC_FUNCTION
+iot_error_t _iot_jwt_header_set_certificate(JSON_H *object)
 {
     JSON_H *array = NULL;
     char *cert_buf = NULL;
@@ -661,7 +663,8 @@ static iot_error_t _iot_jwt_header_set_certificate(JSON_H *object)
     return IOT_ERROR_NONE;
 }
 
-static char *_iot_jwt_header_rs256(const iot_wt_params_t *wt_params)
+STATIC_FUNCTION
+char *_iot_jwt_header_rs256(const iot_wt_params_t *wt_params)
 {
     JSON_H *object;
     char *object_str;
@@ -701,7 +704,8 @@ static char *_iot_jwt_header_rs256(const iot_wt_params_t *wt_params)
     return object_str;
 }
 
-static char *_iot_jwt_header_ed25519(const iot_wt_params_t *wt_params)
+STATIC_FUNCTION
+char *_iot_jwt_header_ed25519(const iot_wt_params_t *wt_params)
 {
     JSON_H *object;
     char *object_str;
@@ -731,7 +735,8 @@ static char *_iot_jwt_header_ed25519(const iot_wt_params_t *wt_params)
     return object_str;
 }
 
-static char *_iot_jwt_header_eccp256(const iot_wt_params_t *wt_params)
+STATIC_FUNCTION
+char *_iot_jwt_header_eccp256(const iot_wt_params_t *wt_params)
 {
     JSON_H *object;
     char *object_str;
@@ -771,7 +776,8 @@ static char *_iot_jwt_header_eccp256(const iot_wt_params_t *wt_params)
     return object_str;
 }
 
-static char *_iot_jwt_create_header(const iot_wt_params_t *wt_params, iot_security_key_type_t key_type)
+STATIC_FUNCTION
+char *_iot_jwt_create_header(const iot_wt_params_t *wt_params, iot_security_key_type_t key_type)
 {
     char *object_str;
 
@@ -794,8 +800,9 @@ static char *_iot_jwt_create_header(const iot_wt_params_t *wt_params, iot_securi
     return object_str;
 }
 
-static iot_error_t _iot_jwt_create_b64h(const iot_wt_params_t *wt_params, iot_security_key_type_t key_type,
-                                        iot_security_buffer_t *b64h_buf)
+STATIC_FUNCTION
+iot_error_t _iot_jwt_create_b64h(const iot_wt_params_t *wt_params, iot_security_key_type_t key_type,
+                                 iot_security_buffer_t *b64h_buf)
 {
     iot_error_t err = IOT_ERROR_NONE;
     iot_security_buffer_t *b64_buf;
@@ -837,7 +844,8 @@ exit:
     return err;
 }
 
-static char *_iot_jwt_create_payload(const iot_wt_params_t *wt_params)
+STATIC_FUNCTION
+char *_iot_jwt_create_payload(const iot_wt_params_t *wt_params)
 {
     iot_error_t err;
     JSON_H *object;
@@ -889,7 +897,8 @@ static char *_iot_jwt_create_payload(const iot_wt_params_t *wt_params)
     return object_str;
 }
 
-static iot_error_t _iot_jwt_create_b64p(const iot_wt_params_t *wt_params, iot_security_buffer_t *b64p_buf)
+STATIC_FUNCTION
+iot_error_t _iot_jwt_create_b64p(const iot_wt_params_t *wt_params, iot_security_buffer_t *b64p_buf)
 {
     iot_error_t err = IOT_ERROR_NONE;
     iot_security_buffer_t *b64_buf;
@@ -931,8 +940,9 @@ exit:
     return err;
 }
 
-static iot_error_t _iot_jwt_create_b64s(iot_security_context_t *security_context, unsigned char *b64hp, size_t hp_len,
-                                        iot_security_buffer_t *b64s_buf)
+STATIC_FUNCTION
+iot_error_t _iot_jwt_create_b64s(iot_security_context_t *security_context, unsigned char *b64hp, size_t hp_len,
+                                 iot_security_buffer_t *b64s_buf)
 {
     iot_error_t err;
     iot_security_buffer_t hp_buf = {0};
@@ -1000,7 +1010,8 @@ exit:
     return err;
 }
 
-static iot_error_t _iot_jwt_create(const iot_wt_params_t *wt_params, iot_security_buffer_t *token_buf)
+STATIC_FUNCTION
+iot_error_t _iot_jwt_create(const iot_wt_params_t *wt_params, iot_security_buffer_t *token_buf)
 {
     iot_error_t err;
     iot_security_context_t *security_context;

@@ -67,6 +67,102 @@ static bool is_header_content_length(char *header_key)
     return true;
 }
 
+static int _es_parse_get_uri(const char *uri)
+{
+    if (!strcmp(uri, IOT_ES_URI_GET_DEVICEINFO)) {
+        return IOT_EASYSETUP_STEP_DEVICEINFO;
+    } else if (!strcmp(uri, IOT_ES_URI_GET_WIFISCANINFO)) {
+        return IOT_EASYSETUP_STEP_WIFISCANINFO;
+    } else if (!strcmp(uri, IOT_ES_URI_GET_LOGS_SYSTEMINFO)) {
+        return IOT_EASYSETUP_STEP_LOG_SYSTEMINFO;
+    } else if (!strcmp(uri, IOT_ES_URI_GET_LOGS_DUMP)) {
+        return IOT_EASYSETUP_STEP_LOG_GET_DUMP;
+    } else {
+        IOT_ERROR("[GET] invalid step : %s", uri);
+        return IOT_EASYSETUP_INVALID_STEP;
+    }
+}
+
+static int _es_parse_post_uri(const char *uri)
+{
+    if (!strcmp(uri, IOT_ES_URI_POST_KEYINFO)) {
+        return IOT_EASYSETUP_STEP_KEYINFO;
+    } else if (!strcmp(uri, IOT_ES_URI_POST_CONFIRMINFO)) {
+        return IOT_EASYSETUP_STEP_CONFIRMINFO;
+    } else if (!strcmp(uri, IOT_ES_URI_POST_CONFIRM)) {
+        return IOT_EASYSETUP_STEP_CONFIRM;
+    } else if (!strcmp(uri, IOT_ES_URI_POST_WIFIPROVISIONINGINFO)) {
+        return IOT_EASYSETUP_STEP_WIFIPROVIONINGINFO;
+    } else if (!strcmp(uri, IOT_ES_URI_POST_SETUPCOMPLETE)) {
+        return IOT_EASYSETUP_STEP_SETUPCOMPLETE;
+    } else if (!strcmp(uri, IOT_ES_URI_POST_LOGS)) {
+        return IOT_EASYSETUP_STEP_LOG_CREATE_DUMP;
+    } else {
+        IOT_ERROR("[POST] invalid step : %s", uri);
+        return IOT_EASYSETUP_INVALID_STEP;
+    }
+}
+
+static iot_error_t _es_parse_post_headers(char *rx_buffer, size_t rx_buffer_len, char **payload, size_t *content_len)
+{
+    int post_content_len = -1;
+    header_t *p_hdr = reqhdr;
+    char *p_body = NULL;
+
+    while (p_hdr < reqhdr + MAX_HEADER_SUPPORT) {
+        char *key, *value;
+
+        key = strtok(NULL, "\r\n: \t");
+        if (!key)
+            break;
+
+        value = strtok(NULL, "\r\n");
+        if (!value)
+            break;
+
+        while (*value && *value == ' ')
+            value++;
+
+        p_hdr->name = key;
+        p_hdr->value = value;
+        if (is_header_content_length(p_hdr->name)) {
+            char *p_end;
+            long val;
+            val = strtol(p_hdr->value, &p_end, 10);
+            if (val == LONG_MAX || val == LONG_MIN || p_hdr->value == p_end) {
+                break;
+            }
+            post_content_len = (int)val;
+        }
+        p_hdr++;
+
+        p_body = value + strlen(value);
+        if (p_body[1] == '\n' && p_body[2] == '\r' && p_body[3] == '\n') {
+            // end of header
+            p_body += 3;
+            break;
+        }
+    }
+
+    if (p_body == NULL || post_content_len < 0) {
+        return IOT_ERROR_EASYSETUP_HTTP_PARSE_FAIL;
+    }
+
+    if (post_content_len == 0) {
+        *payload = NULL;
+    } else {
+        p_body++;
+        if ((p_body) < (rx_buffer + rx_buffer_len)) {
+            *payload = p_body;
+            *content_len = post_content_len;
+        } else {
+            IOT_ERROR("[POST] out-of-range");
+            return IOT_ERROR_EASYSETUP_HTTP_PARSE_FAIL;
+        }
+    }
+    return IOT_ERROR_NONE;
+}
+
 iot_error_t es_msg_parser(char *rx_buffer, size_t rx_buffer_len, char **payload, int *cmd, int *type,
                           size_t *content_len)
 {
@@ -91,92 +187,21 @@ iot_error_t es_msg_parser(char *rx_buffer, size_t rx_buffer_len, char **payload,
 
     if (!strcmp(method, "GET")) {
         *type = D2D_GET;
-        if (!strcmp(uri, IOT_ES_URI_GET_DEVICEINFO)) {
-            *cmd = IOT_EASYSETUP_STEP_DEVICEINFO;
-        } else if (!strcmp(uri, IOT_ES_URI_GET_WIFISCANINFO)) {
-            *cmd = IOT_EASYSETUP_STEP_WIFISCANINFO;
-        } else if (!strcmp(uri, IOT_ES_URI_GET_LOGS_SYSTEMINFO)) {
-            *cmd = IOT_EASYSETUP_STEP_LOG_SYSTEMINFO;
-        } else if (!strcmp(uri, IOT_ES_URI_GET_LOGS_DUMP)) {
-            *cmd = IOT_EASYSETUP_STEP_LOG_GET_DUMP;
-        } else {
-            IOT_ERROR("[GET] invalid step : %s", uri);
-            *cmd = IOT_EASYSETUP_INVALID_STEP;
-        }
+        *cmd = _es_parse_get_uri(uri);
     } else if (!strcmp(method, "POST")) {
-        int post_content_len = -1;
-        header_t *p_hdr = reqhdr;
-        char *p_body = NULL;
+        iot_error_t parse_err;
+        size_t post_content_len = 0;
 
-        while (p_hdr < reqhdr + MAX_HEADER_SUPPORT) {
-            char *key, *value;
-
-            key = strtok(NULL, "\r\n: \t");
-            if (!key)
-                break;
-
-            value = strtok(NULL, "\r\n");
-            if (!value)
-                break;
-
-            while (*value && *value == ' ')
-                value++;
-
-            p_hdr->name = key;
-            p_hdr->value = value;
-            if (is_header_content_length(p_hdr->name)) {
-                char *p_end;
-                long val;
-                val = strtol(p_hdr->value, &p_end, 10);
-                if (val == LONG_MAX || val == LONG_MIN || p_hdr->value == p_end) {
-                    break;
-                }
-                post_content_len = (int)val;
-            }
-            p_hdr++;
-
-            p_body = value + strlen(value);
-            if (p_body[1] == '\n' && p_body[2] == '\r' && p_body[3] == '\n') {
-                // end of header
-                p_body += 3;
-                break;
-            }
-        }
-
-        if (p_body == NULL || post_content_len < 0) {
-            return IOT_ERROR_EASYSETUP_HTTP_PARSE_FAIL;
-        }
-
-        if (post_content_len == 0) {
-            *payload = NULL;
-        } else {
-            p_body++;
-            if ((p_body) < (rx_buffer + rx_buffer_len)) {
-                *payload = p_body;
-                *content_len = post_content_len;
-            } else {
-                IOT_ERROR("[POST] out-of-range");
-                return IOT_ERROR_EASYSETUP_HTTP_PARSE_FAIL;
-            }
-        }
         *type = D2D_POST;
-        if (!strcmp(uri, IOT_ES_URI_POST_KEYINFO)) {
-            *cmd = IOT_EASYSETUP_STEP_KEYINFO;
-        } else if (!strcmp(uri, IOT_ES_URI_POST_CONFIRMINFO)) {
-            *cmd = IOT_EASYSETUP_STEP_CONFIRMINFO;
-        } else if (!strcmp(uri, IOT_ES_URI_POST_CONFIRM)) {
-            *cmd = IOT_EASYSETUP_STEP_CONFIRM;
-        } else if (!strcmp(uri, IOT_ES_URI_POST_WIFIPROVISIONINGINFO)) {
-            *cmd = IOT_EASYSETUP_STEP_WIFIPROVIONINGINFO;
-        } else if (!strcmp(uri, IOT_ES_URI_POST_SETUPCOMPLETE)) {
-            *cmd = IOT_EASYSETUP_STEP_SETUPCOMPLETE;
-        } else if (!strcmp(uri, IOT_ES_URI_POST_LOGS)) {
-            *cmd = IOT_EASYSETUP_STEP_LOG_CREATE_DUMP;
-        } else {
-            IOT_ERROR("[POST] invalid step : %s", uri);
-            *cmd = IOT_EASYSETUP_INVALID_STEP;
+        parse_err = _es_parse_post_headers(rx_buffer, rx_buffer_len, payload, &post_content_len);
+        if (parse_err != IOT_ERROR_NONE) {
+            return parse_err;
         }
-        IOT_DEBUG("cmd: %d, content-length: %d", *cmd, post_content_len);
+        if (content_len) {
+            *content_len = post_content_len;
+        }
+        *cmd = _es_parse_post_uri(uri);
+        IOT_DEBUG("cmd: %d, content-length: %d", *cmd, (int)post_content_len);
     } else {
         IOT_ERROR("[%s] not support type : %s", prot, method);
         *type = D2D_ERROR;

@@ -30,7 +30,6 @@
 #include "iot_debug.h"
 #include "iot_os_util.h"
 #include "iot_util.h"
-#include "lwip/apps/sntp.h"
 #include "lwip/inet.h"
 
 const int WIFI_STA_START_BIT = BIT0;
@@ -52,52 +51,6 @@ static esp_netif_t *g_sta_netif = NULL;
 static int32_t wifi_current_state;
 
 ESP_EVENT_DEFINE_BASE(SYSTEM_EVENT);
-
-static void _initialize_sntp(void)
-{
-    IOT_INFO("Initializing SNTP");
-    if (sntp_enabled()) {
-        IOT_INFO("SNTP is already working, STOP it first");
-        sntp_stop();
-    }
-
-    sntp_setoperatingmode(SNTP_OPMODE_POLL);
-    sntp_setservername(0, "pool.ntp.org");
-    sntp_setservername(1, "1.kr.pool.ntp.org");
-    sntp_setservername(2, "1.asia.pool.ntp.org");
-    sntp_setservername(3, "us.pool.ntp.org");
-    sntp_setservername(4, "1.cn.pool.ntp.org");
-    sntp_setservername(5, "1.hk.pool.ntp.org");
-    sntp_setservername(6, "europe.pool.ntp.org");
-    sntp_setservername(7, "time1.google.com");
-
-    sntp_init();
-}
-
-static void _obtain_time(void)
-{
-    time_t now = 0;
-    struct tm timeinfo = {0};
-    int retry = 0;
-    const int retry_count = 10;
-
-    _initialize_sntp();
-
-    while (timeinfo.tm_year < (2016 - 1900) && ++retry < retry_count) {
-        IOT_INFO("Waiting for system time to be set... (%d/%d)", retry, retry_count);
-        IOT_DUMP(IOT_DEBUG_LEVEL_DEBUG, IOT_DUMP_BSP_WIFI_SNTP_FAIL, retry, retry_count);
-        IOT_DELAY(2000);
-        time(&now);
-        localtime_r(&now, &timeinfo);
-    }
-
-    sntp_stop();
-
-    if (retry < 10) {
-        IOT_INFO("[WIFI] system time updated by %ld", now);
-        IOT_DUMP(IOT_DEBUG_LEVEL_DEBUG, IOT_DUMP_BSP_WIFI_SNTP_SUCCESS, now, retry);
-    }
-}
 
 static void esp_wifi_event_post_to_user(void *arg, esp_event_base_t base, int32_t id, void *data)
 {
@@ -359,8 +312,6 @@ iot_error_t iot_bsp_wifi_set_mode(iot_wifi_conf *conf)
 {
     int str_len = 0;
     wifi_config_t wifi_config;
-    time_t now;
-    struct tm timeinfo;
     EventBits_t uxBits = 0;
     esp_err_t esp_ret;
     iot_error_t err;
@@ -469,15 +420,6 @@ iot_error_t iot_bsp_wifi_set_mode(iot_wifi_conf *conf)
 
                 return s_latest_disconnect_reason;
             }
-
-            time(&now);
-            localtime_r(&now, &timeinfo);
-
-            if (timeinfo.tm_year < (2016 - 1900)) {
-                IOT_INFO("Time is not set yet. Connecting to WiFi and getting time over NTP.");
-                _obtain_time();
-            }
-
             break;
 
         case IOT_WIFI_MODE_SOFTAP:
@@ -661,26 +603,55 @@ iot_wifi_auth_mode_bits_t iot_bsp_wifi_get_auth_mode(void)
     return supported_mode_bits;
 }
 
-bool iot_bsp_wifi_is_dhcp_success()
+static iot_wifi_disconnected_reason _convert_disconnected_reason(iot_error_t conn_error)
 {
-    esp_netif_ip_info_t ip_info;
-    bool result = false;
-    esp_err_t err = ESP_FAIL;
-
-    if (g_sta_netif) {
-        err = esp_netif_get_ip_info(g_sta_netif, &ip_info);
-        if ((err == ESP_OK) && (ip_info.ip.addr != INADDR_ANY)) {
-            result = true;
-            IOT_DEBUG("Wifi station IP Address :" IPSTR ", ", IP2STR(&ip_info.ip));
-        } else {
-            result = false;
-            IOT_ERROR("Invalid wifi station IP address.");
-        }
+    switch (conn_error) {
+        case IOT_ERROR_CONN_STA_AP_NOT_FOUND:
+            return IOT_WIFI_DISCONNECTED_REASON_AP_NOT_FOUND;
+        case IOT_ERROR_CONN_STA_AUTH_FAIL:
+            return IOT_WIFI_DISCONNECTED_REASON_AUTH_FAIL;
+        case IOT_ERROR_CONN_STA_ASSOC_FAIL:
+            return IOT_WIFI_DISCONNECTED_REASON_ASSOC_FAIL;
+        case IOT_ERROR_CONN_STA_CONN_FAIL:
+            return IOT_WIFI_DISCONNECTED_REASON_CONNECTION_FAIL;
+        default:
+            return IOT_WIFI_DISCONNECTED_REASON_UNKNOWN;
     }
-    return result;
 }
 
-iot_error_t iot_bsp_wifi_get_status(void)
+void iot_bsp_wifi_get_status(iot_wifi_info *wifi_info)
 {
-    return s_latest_disconnect_reason;
+    wifi_mode_t mode;
+    wifi_ap_record_t ap_info;
+    esp_netif_ip_info_t ip_info;
+
+    memset(wifi_info, 0, sizeof(iot_wifi_info));
+
+    if (!WIFI_INITIALIZED || esp_wifi_get_mode(&mode) != ESP_OK) {
+        return;
+    }
+
+    if (mode == WIFI_MODE_NULL || mode == WIFI_MODE_AP) {
+        wifi_info->wifi_status = IOT_WIFI_STATUS_IDLE;
+        return;
+    }
+
+    if (esp_wifi_sta_get_ap_info(&ap_info) == ESP_OK) {
+        wifi_info->wifi_status = IOT_WIFI_STATUS_CONNECTED;
+        memcpy(wifi_info->ap_ssid, ap_info.ssid, IOT_WIFI_MAX_SSID_LEN);
+        memcpy(wifi_info->bssid.addr, ap_info.bssid, IOT_WIFI_MAX_BSSID_LEN);
+        wifi_info->rssi = ap_info.rssi;
+
+        wifi_info->ip_status = IOT_IP_STATUS_NOT_ASSIGNED;
+        if (g_sta_netif && (esp_netif_get_ip_info(g_sta_netif, &ip_info) == ESP_OK) &&
+            (ip_info.ip.addr != INADDR_ANY)) {
+            wifi_info->ip_status = IOT_IP_STATUS_ASSIGNED;
+            wifi_info->ip = ip_info.ip.addr;
+        }
+    } else if (wifi_current_state == WIFI_EVENT_STA_DISCONNECTED) {
+        wifi_info->wifi_status = IOT_WIFI_STATUS_DISCONNECTED;
+        wifi_info->last_disconnected_reason = _convert_disconnected_reason(s_latest_disconnect_reason);
+    } else {
+        wifi_info->wifi_status = IOT_WIFI_STATUS_IDLE;
+    }
 }

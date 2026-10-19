@@ -55,7 +55,7 @@ static struct iot_dump_state *_iot_dump_create_dump_state(struct iot_context *io
     COPY_STR_TO_BYTE(dump_state->bsp_version, iot_bsp_get_bsp_version_string(), sizeof(dump_state->bsp_version));
 
     gettimeofday(&time, NULL);
-    dump_state->log_time = time.tv_sec;
+    dump_state->log_time = (long)time.tv_sec;
 
     if (iot_ctx) {
         dump_state->sequence_number = iot_ctx->event_sequence_num;
@@ -347,7 +347,7 @@ void iot_dump_log(iot_debug_level_t level, dump_log_id_t log_id, int arg1, int a
     gettimeofday(&time, NULL);
 
     msg[0] = ((level & 0xf) << 28) | (log_id & 0xffff);
-    msg[1] = time.tv_sec;
+    msg[1] = (int)time.tv_sec;
     msg[2] = arg1;
     msg[3] = arg2;
 

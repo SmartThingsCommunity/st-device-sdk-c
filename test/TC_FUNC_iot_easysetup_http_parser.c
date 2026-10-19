@@ -21,9 +21,12 @@
 #include <string.h>
 
 #include "../src/easysetup/http/easysetup_http.h"
+#include "TC_REGISTRY.h"
 #include "cmocka_custom.h"
 
 #define UNUSED(x) (void **)(x)
+
+TEST_SUITE("iot_easysetup_http_parser.c");
 
 static char *gen_get_method_payload(char *uri)
 {
@@ -50,7 +53,7 @@ struct cgi_method_test_map {
     char post_body[64];
 };
 
-void TC_es_msg_parser_VALID_GET_METHOD(void **state)
+TEST_F(TC_REGISTRY_NO_FIXTURE, TC_es_msg_parser_VALID_GET_METHOD_pos)
 {
     iot_error_t err;
     int command = -1;
@@ -78,7 +81,7 @@ void TC_es_msg_parser_VALID_GET_METHOD(void **state)
     }
 }
 
-void TC_es_msg_parser_INVALID_GET_METHOD(void **state)
+TEST_F(TC_REGISTRY_NO_FIXTURE, TC_es_msg_parser_INVALID_GET_METHOD_neg)
 {
     iot_error_t err;
     int command = -1;
@@ -113,7 +116,7 @@ void TC_es_msg_parser_INVALID_GET_METHOD(void **state)
     assert_int_equal(command, IOT_EASYSETUP_INVALID_STEP);
 }
 
-#define TC_POST_CONTENT "test content"
+#define TC_POST_CONTENT_pos "test content"
 
 static char *gen_post_method_payload(char *uri, char *body)
 {
@@ -136,7 +139,7 @@ static char *gen_post_method_payload(char *uri, char *body)
     return strdup(buffer);
 }
 
-void TC_es_msg_parser_VALID_POST_METHOD(void **state)
+TEST_F(TC_REGISTRY_NO_FIXTURE, TC_es_msg_parser_VALID_POST_METHOD_pos)
 {
     iot_error_t err;
     int command;
@@ -175,7 +178,7 @@ void TC_es_msg_parser_VALID_POST_METHOD(void **state)
     }
 }
 
-void TC_es_msg_parser_INVALID_POST_METHOD(void **state)
+TEST_F(TC_REGISTRY_NO_FIXTURE, TC_es_msg_parser_INVALID_POST_METHOD_neg)
 {
     iot_error_t err;
     int command;

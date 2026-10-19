@@ -28,6 +28,7 @@
 #include <unistd.h>
 
 #include "TC_MOCK_functions.h"
+#include "TC_REGISTRY.h"
 #include "cmocka_custom.h"
 
 extern iot_security_storage_target_t _iot_security_be_bsp_fs_storage_id2target(iot_security_storage_id_t storage_id);
@@ -47,6 +48,8 @@ extern iot_error_t _iot_security_be_bsp_fs_remove(iot_security_be_context_t *be_
 extern void *__wrap_iot_os_malloc(size_t size);
 extern void __wrap_iot_os_free(void *ptr);
 
+TEST_SUITE("iot_security_be_bsp.c");
+
 static iot_error_t mock_external_device_info_cb_success(iot_nvd_t nv_id, iot_security_buffer_t *output_buf)
 {
     static const char canned[] = "external-device-info-data";
@@ -60,7 +63,7 @@ static iot_error_t mock_external_device_info_cb_success(iot_nvd_t nv_id, iot_sec
     return IOT_ERROR_NONE;
 }
 
-void TC_STATIC_iot_security_be_bsp_fs_storage_id2target_invalid_parameters(void **state)
+TEST_F(TC_REGISTRY_NO_FIXTURE, TC_STATIC_iot_security_be_bsp_fs_storage_id2target_invalid_parameters_neg)
 {
     iot_security_storage_id_t id;
     iot_security_storage_target_t target;
@@ -80,7 +83,7 @@ void TC_STATIC_iot_security_be_bsp_fs_storage_id2target_invalid_parameters(void 
     assert_int_equal(target, IOT_SECURITY_STORAGE_TARGET_UNKNOWN);
 }
 
-void TC_STATIC_iot_security_be_bsp_fs_storage_id2target_success(void **state)
+TEST_F(TC_REGISTRY_NO_FIXTURE, TC_STATIC_iot_security_be_bsp_fs_storage_id2target_success_pos)
 {
     iot_security_storage_id_t id;
     iot_security_storage_target_t target;
@@ -104,7 +107,7 @@ void TC_STATIC_iot_security_be_bsp_fs_storage_id2target_success(void **state)
 #endif
 }
 
-void TC_STATIC_iot_security_be_bsp_fs_storage_id2filename_invalid_parameters(void **state)
+TEST_F(TC_REGISTRY_NO_FIXTURE, TC_STATIC_iot_security_be_bsp_fs_storage_id2filename_invalid_parameters_neg)
 {
     iot_error_t err;
     iot_security_storage_id_t id;
@@ -139,7 +142,7 @@ void TC_STATIC_iot_security_be_bsp_fs_storage_id2filename_invalid_parameters(voi
     assert_int_equal(err, IOT_ERROR_SECURITY_STORAGE_INVALID_ID);
 }
 
-void TC_STATIC_iot_security_be_bsp_fs_storage_id2filename_success(void **state)
+TEST_F(TC_REGISTRY_NO_FIXTURE, TC_STATIC_iot_security_be_bsp_fs_storage_id2filename_success_pos)
 {
     iot_error_t err;
     iot_security_storage_id_t id;
@@ -153,7 +156,7 @@ void TC_STATIC_iot_security_be_bsp_fs_storage_id2filename_success(void **state)
     assert_int_equal(err, IOT_ERROR_NONE);
 }
 
-void TC_iot_security_be_bsp_fs_load_malloc_failure(void **state)
+TEST_F(TC_REGISTRY_NO_FIXTURE, TC_iot_security_be_bsp_fs_load_malloc_failure_neg)
 {
     iot_error_t err;
     iot_security_be_context_t be_context;
@@ -182,7 +185,7 @@ void TC_iot_security_be_bsp_fs_load_malloc_failure(void **state)
     do_not_use_mock_iot_os_malloc_failure();
 }
 
-void TC_iot_security_be_bsp_fs_load_invalid_parameters(void **state)
+TEST_F(TC_REGISTRY_NO_FIXTURE, TC_iot_security_be_bsp_fs_load_invalid_parameters_neg)
 {
     iot_error_t err;
     iot_security_be_context_t be_context;
@@ -214,7 +217,7 @@ void TC_iot_security_be_bsp_fs_load_invalid_parameters(void **state)
     assert_int_equal(err, IOT_ERROR_SECURITY_FS_INVALID_ARGS);
 }
 
-void TC_iot_security_be_bsp_fs_load_success(void **state)
+TEST_F(TC_REGISTRY_NO_FIXTURE, TC_iot_security_be_bsp_fs_load_success_pos)
 {
     iot_error_t err;
     iot_security_be_context_t be_context;
@@ -240,7 +243,7 @@ void TC_iot_security_be_bsp_fs_load_success(void **state)
     iot_os_free(load_buf.p);
 }
 
-void TC_iot_security_be_bsp_fs_store_invalid_parameters(void **state)
+TEST_F(TC_REGISTRY_NO_FIXTURE, TC_iot_security_be_bsp_fs_store_invalid_parameters_neg)
 {
     iot_error_t err;
     iot_security_storage_id_t id;
@@ -286,7 +289,7 @@ void TC_iot_security_be_bsp_fs_store_invalid_parameters(void **state)
     assert_int_equal(err, IOT_ERROR_SECURITY_FS_INVALID_TARGET);
 }
 
-void TC_iot_security_be_bsp_fs_store_success(void **state)
+TEST_F(TC_REGISTRY_NO_FIXTURE, TC_iot_security_be_bsp_fs_store_success_pos)
 {
     iot_error_t err;
     iot_security_storage_id_t id;
@@ -303,7 +306,7 @@ void TC_iot_security_be_bsp_fs_store_success(void **state)
     assert_int_equal(err, IOT_ERROR_NONE);
 }
 
-void TC_iot_security_be_bsp_fs_remove_invalid_parameters(void **state)
+TEST_F(TC_REGISTRY_NO_FIXTURE, TC_iot_security_be_bsp_fs_remove_invalid_parameters_neg)
 {
     iot_error_t err;
     iot_security_storage_id_t id;
@@ -323,7 +326,7 @@ void TC_iot_security_be_bsp_fs_remove_invalid_parameters(void **state)
     assert_int_equal(err, IOT_ERROR_SECURITY_FS_INVALID_TARGET);
 }
 
-void TC_iot_security_be_bsp_fs_remove_success(void **state)
+TEST_F(TC_REGISTRY_NO_FIXTURE, TC_iot_security_be_bsp_fs_remove_success_pos)
 {
     iot_error_t err;
     iot_security_storage_id_t id;
@@ -342,7 +345,7 @@ void TC_iot_security_be_bsp_fs_remove_success(void **state)
     assert_int_equal(err, IOT_ERROR_NONE);
 }
 
-void TC_iot_security_be_bsp_init_null_parameters(void **state)
+TEST_F(TC_REGISTRY_NO_FIXTURE, TC_iot_security_be_bsp_init_null_parameters_neg)
 {
     iot_error_t err;
 
@@ -352,7 +355,7 @@ void TC_iot_security_be_bsp_init_null_parameters(void **state)
     assert_int_equal(err, IOT_ERROR_SECURITY_BE_CONTEXT_NULL);
 }
 
-void TC_iot_security_be_bsp_init_success(void **state)
+TEST_F(TC_REGISTRY_NO_FIXTURE, TC_iot_security_be_bsp_init_success_pos)
 {
     iot_error_t err;
     iot_security_be_context_t be_context;
@@ -363,7 +366,7 @@ void TC_iot_security_be_bsp_init_success(void **state)
     assert_int_equal(err, IOT_ERROR_NONE);
 }
 
-void TC_STATIC_iot_security_be_bsp_fs_storage_id2target_factory_range(void **state)
+TEST_F(TC_REGISTRY_NO_FIXTURE, TC_STATIC_iot_security_be_bsp_fs_storage_id2target_factory_range_neg)
 {
     iot_security_storage_target_t target;
 
@@ -378,7 +381,7 @@ void TC_STATIC_iot_security_be_bsp_fs_storage_id2target_factory_range(void **sta
 #endif
 }
 
-void TC_STATIC_iot_security_be_bsp_fs_storage_id2target_serial_num(void **state)
+TEST_F(TC_REGISTRY_NO_FIXTURE, TC_STATIC_iot_security_be_bsp_fs_storage_id2target_serial_num_neg)
 {
     iot_security_storage_target_t target;
 
@@ -393,7 +396,7 @@ void TC_STATIC_iot_security_be_bsp_fs_storage_id2target_serial_num(void **state)
 #endif
 }
 
-void TC_STATIC_iot_security_be_bsp_fs_storage_id2target_above_max(void **state)
+TEST_F(TC_REGISTRY_NO_FIXTURE, TC_STATIC_iot_security_be_bsp_fs_storage_id2target_above_max_neg)
 {
     iot_security_storage_target_t target;
 
@@ -404,7 +407,7 @@ void TC_STATIC_iot_security_be_bsp_fs_storage_id2target_above_max(void **state)
     assert_int_equal(target, IOT_SECURITY_STORAGE_TARGET_UNKNOWN);
 }
 
-void TC_iot_security_be_bsp_fs_load_target_di_no_callback(void **state)
+TEST_F(TC_REGISTRY_NO_FIXTURE, TC_iot_security_be_bsp_fs_load_target_di_no_callback_neg)
 {
     iot_error_t err;
     iot_security_be_context_t be_context;
@@ -425,7 +428,7 @@ void TC_iot_security_be_bsp_fs_load_target_di_no_callback(void **state)
 #endif
 }
 
-void TC_iot_security_be_bsp_fs_load_target_di_with_callback(void **state)
+TEST_F(TC_REGISTRY_NO_FIXTURE, TC_iot_security_be_bsp_fs_load_target_di_with_callback_neg)
 {
     iot_error_t err;
     iot_security_be_context_t be_context;
@@ -450,7 +453,7 @@ void TC_iot_security_be_bsp_fs_load_target_di_with_callback(void **state)
 #endif
 }
 
-void TC_iot_security_be_bsp_fs_load_realloc_failure(void **state)
+TEST_F(TC_REGISTRY_NO_FIXTURE, TC_iot_security_be_bsp_fs_load_realloc_failure_neg)
 {
     iot_error_t err;
     iot_security_be_context_t be_context;
@@ -476,7 +479,7 @@ void TC_iot_security_be_bsp_fs_load_realloc_failure(void **state)
     set_mock_iot_os_realloc_failure(false);
 }
 
-void TC_iot_security_be_bsp_fs_load_from_nv_no_file(void **state)
+TEST_F(TC_REGISTRY_NO_FIXTURE, TC_iot_security_be_bsp_fs_load_from_nv_no_file_neg)
 {
     iot_error_t err;
     iot_security_buffer_t buf;
@@ -490,7 +493,7 @@ void TC_iot_security_be_bsp_fs_load_from_nv_no_file(void **state)
     assert_int_equal(err, IOT_ERROR_SECURITY_FS_NOT_FOUND);
 }
 
-void TC_iot_security_be_bsp_fs_load_invalid_id_unknown_target(void **state)
+TEST_F(TC_REGISTRY_NO_FIXTURE, TC_iot_security_be_bsp_fs_load_invalid_id_unknown_target_neg)
 {
     iot_error_t err;
     iot_security_be_context_t be_context;
@@ -505,7 +508,7 @@ void TC_iot_security_be_bsp_fs_load_invalid_id_unknown_target(void **state)
     assert_int_equal(err, IOT_ERROR_SECURITY_FS_UNKNOWN_TARGET);
 }
 
-void TC_iot_security_be_bsp_fs_load_resets_output_buffer(void **state)
+TEST_F(TC_REGISTRY_NO_FIXTURE, TC_iot_security_be_bsp_fs_load_resets_output_buffer_neg)
 {
     iot_error_t err;
     iot_security_be_context_t be_context;
@@ -524,7 +527,7 @@ void TC_iot_security_be_bsp_fs_load_resets_output_buffer(void **state)
     assert_int_equal(buf.len, 0);
 }
 
-void TC_iot_security_be_bsp_fs_remove_no_file(void **state)
+TEST_F(TC_REGISTRY_NO_FIXTURE, TC_iot_security_be_bsp_fs_remove_no_file_neg)
 {
     iot_error_t err;
 
@@ -536,7 +539,7 @@ void TC_iot_security_be_bsp_fs_remove_no_file(void **state)
     assert_int_equal(err, IOT_ERROR_SECURITY_FS_NOT_FOUND);
 }
 
-void TC_iot_security_be_bsp_fs_remove_unknown_id(void **state)
+TEST_F(TC_REGISTRY_NO_FIXTURE, TC_iot_security_be_bsp_fs_remove_unknown_id_neg)
 {
     iot_error_t err;
 
@@ -546,7 +549,7 @@ void TC_iot_security_be_bsp_fs_remove_unknown_id(void **state)
     assert_int_equal(err, IOT_ERROR_SECURITY_FS_UNKNOWN_TARGET);
 }
 
-void TC_iot_security_be_bsp_fs_store_factory_id_invalid_target(void **state)
+TEST_F(TC_REGISTRY_NO_FIXTURE, TC_iot_security_be_bsp_fs_store_factory_id_invalid_target_neg)
 {
     iot_error_t err;
     iot_security_buffer_t buf;
@@ -563,7 +566,7 @@ void TC_iot_security_be_bsp_fs_store_factory_id_invalid_target(void **state)
     assert_int_equal(err, IOT_ERROR_SECURITY_FS_INVALID_TARGET);
 }
 
-void TC_iot_security_be_bsp_fs_remove_factory_id_invalid_target(void **state)
+TEST_F(TC_REGISTRY_NO_FIXTURE, TC_iot_security_be_bsp_fs_remove_factory_id_invalid_target_neg)
 {
     iot_error_t err;
 
@@ -573,7 +576,7 @@ void TC_iot_security_be_bsp_fs_remove_factory_id_invalid_target(void **state)
     assert_int_equal(err, IOT_ERROR_SECURITY_FS_INVALID_TARGET);
 }
 
-void TC_iot_security_be_bsp_fs_load_unknown_target_factory_range_invalid_id(void **state)
+TEST_F(TC_REGISTRY_NO_FIXTURE, TC_iot_security_be_bsp_fs_load_unknown_target_factory_range_invalid_id_neg)
 {
     iot_error_t err;
     iot_security_be_context_t be_context;
@@ -588,7 +591,7 @@ void TC_iot_security_be_bsp_fs_load_unknown_target_factory_range_invalid_id(void
     assert_int_equal(err, IOT_ERROR_SECURITY_FS_UNKNOWN_TARGET);
 }
 
-void TC_iot_security_be_bsp_fs_store_then_load_roundtrip_multiple(void **state)
+TEST_F(TC_REGISTRY_NO_FIXTURE, TC_iot_security_be_bsp_fs_store_then_load_roundtrip_multiple_neg)
 {
     iot_error_t err;
     iot_security_be_context_t be_context;
@@ -617,7 +620,7 @@ void TC_iot_security_be_bsp_fs_store_then_load_roundtrip_multiple(void **state)
     (void)_iot_security_be_bsp_fs_remove(&be_context, IOT_NVD_DEVICE_ID);
 }
 
-void TC_iot_security_be_bsp_fs_store_open_failure(void **state)
+TEST_F(TC_REGISTRY_NO_FIXTURE, TC_iot_security_be_bsp_fs_store_open_failure_neg)
 {
     iot_error_t err;
     iot_security_buffer_t buf;
@@ -647,7 +650,7 @@ void TC_iot_security_be_bsp_fs_store_open_failure(void **state)
     assert_int_equal(err, IOT_ERROR_SECURITY_FS_OPEN);
 }
 
-void TC_iot_security_be_bsp_fs_load_from_nv_unknown_id(void **state)
+TEST_F(TC_REGISTRY_NO_FIXTURE, TC_iot_security_be_bsp_fs_load_from_nv_unknown_id_neg)
 {
     iot_error_t err;
     iot_security_buffer_t buf;
@@ -660,7 +663,7 @@ void TC_iot_security_be_bsp_fs_load_from_nv_unknown_id(void **state)
     assert_int_equal(err, IOT_ERROR_SECURITY_STORAGE_INVALID_ID);
 }
 
-void TC_iot_security_be_bsp_fs_load_from_nv_id_above_max(void **state)
+TEST_F(TC_REGISTRY_NO_FIXTURE, TC_iot_security_be_bsp_fs_load_from_nv_id_above_max_neg)
 {
     iot_error_t err;
     iot_security_buffer_t buf;
@@ -673,7 +676,7 @@ void TC_iot_security_be_bsp_fs_load_from_nv_id_above_max(void **state)
     assert_int_equal(err, IOT_ERROR_SECURITY_STORAGE_INVALID_ID);
 }
 
-void TC_iot_security_be_bsp_fs_load_read_failure_after_unlink(void **state)
+TEST_F(TC_REGISTRY_NO_FIXTURE, TC_iot_security_be_bsp_fs_load_read_failure_after_unlink_neg)
 {
     iot_error_t err;
     iot_security_be_context_t be_context;
@@ -705,7 +708,7 @@ void TC_iot_security_be_bsp_fs_load_read_failure_after_unlink(void **state)
     (void)_iot_security_be_bsp_fs_remove(&be_context, IOT_NVD_DEVICE_ID);
 }
 
-void TC_iot_security_be_bsp_init_sets_bsp_fn(void **state)
+TEST_F(TC_REGISTRY_NO_FIXTURE, TC_iot_security_be_bsp_init_sets_bsp_fn_neg)
 {
     iot_error_t err;
     iot_security_be_context_t be_context;
@@ -722,7 +725,7 @@ void TC_iot_security_be_bsp_init_sets_bsp_fn(void **state)
     assert_non_null(be_context.bsp_fn->bsp_fs_remove);
 }
 
-void TC_iot_security_be_bsp_fs_load_open_failure(void **state)
+TEST_F(TC_REGISTRY_NO_FIXTURE, TC_iot_security_be_bsp_fs_load_open_failure_neg)
 {
     iot_error_t err;
     iot_security_be_context_t be_context;
@@ -738,7 +741,7 @@ void TC_iot_security_be_bsp_fs_load_open_failure(void **state)
     assert_int_equal(err, IOT_ERROR_SECURITY_FS_OPEN);
 }
 
-void TC_iot_security_be_bsp_fs_load_read_no_file(void **state)
+TEST_F(TC_REGISTRY_NO_FIXTURE, TC_iot_security_be_bsp_fs_load_read_no_file_neg)
 {
     iot_error_t err;
     iot_security_be_context_t be_context;
@@ -761,7 +764,7 @@ void TC_iot_security_be_bsp_fs_load_read_no_file(void **state)
     (void)_iot_security_be_bsp_fs_remove(&be_context, IOT_NVD_DEVICE_ID);
 }
 
-void TC_iot_security_be_bsp_fs_load_read_generic_failure(void **state)
+TEST_F(TC_REGISTRY_NO_FIXTURE, TC_iot_security_be_bsp_fs_load_read_generic_failure_neg)
 {
     iot_error_t err;
     iot_security_be_context_t be_context;
@@ -784,7 +787,7 @@ void TC_iot_security_be_bsp_fs_load_read_generic_failure(void **state)
     (void)_iot_security_be_bsp_fs_remove(&be_context, IOT_NVD_DEVICE_ID);
 }
 
-void TC_iot_security_be_bsp_fs_load_close_failure(void **state)
+TEST_F(TC_REGISTRY_NO_FIXTURE, TC_iot_security_be_bsp_fs_load_close_failure_neg)
 {
     iot_error_t err;
     iot_security_be_context_t be_context;
@@ -810,7 +813,7 @@ void TC_iot_security_be_bsp_fs_load_close_failure(void **state)
     (void)_iot_security_be_bsp_fs_remove(&be_context, IOT_NVD_DEVICE_ID);
 }
 
-void TC_iot_security_be_bsp_fs_store_mocked_open_failure(void **state)
+TEST_F(TC_REGISTRY_NO_FIXTURE, TC_iot_security_be_bsp_fs_store_mocked_open_failure_neg)
 {
     iot_error_t err;
     iot_security_buffer_t buf;
@@ -826,7 +829,7 @@ void TC_iot_security_be_bsp_fs_store_mocked_open_failure(void **state)
     assert_int_equal(err, IOT_ERROR_SECURITY_FS_OPEN);
 }
 
-void TC_iot_security_be_bsp_fs_store_write_failure(void **state)
+TEST_F(TC_REGISTRY_NO_FIXTURE, TC_iot_security_be_bsp_fs_store_write_failure_neg)
 {
     iot_error_t err;
     iot_security_buffer_t buf;
@@ -843,7 +846,7 @@ void TC_iot_security_be_bsp_fs_store_write_failure(void **state)
     (void)_iot_security_be_bsp_fs_remove(NULL, IOT_NVD_DEVICE_ID);
 }
 
-void TC_iot_security_be_bsp_fs_store_close_failure(void **state)
+TEST_F(TC_REGISTRY_NO_FIXTURE, TC_iot_security_be_bsp_fs_store_close_failure_neg)
 {
     iot_error_t err;
     iot_security_buffer_t buf;
@@ -860,7 +863,7 @@ void TC_iot_security_be_bsp_fs_store_close_failure(void **state)
     (void)_iot_security_be_bsp_fs_remove(NULL, IOT_NVD_DEVICE_ID);
 }
 
-void TC_iot_security_be_bsp_fs_remove_underlying_failure(void **state)
+TEST_F(TC_REGISTRY_NO_FIXTURE, TC_iot_security_be_bsp_fs_remove_underlying_failure_neg)
 {
     iot_error_t err;
 

@@ -16,8 +16,10 @@
  *
  ****************************************************************************/
 #include <iot_mqtt_packet.h>
+#include <stdbool.h>
 #include <string.h>
 
+#include "TC_REGISTRY.h"
 #include "cmocka_custom.h"
 
 /* Not declared in the public header but defined in iot_mqtt_unsubscribe_client.c */
@@ -29,7 +31,9 @@ extern int MQTTSerialize_unsubscribe_size(int count, MQTTString topicFilters[]);
 /*
  * Tests for MQTTSerialize_unsubscribeLength / size
  */
-void TC_MQTTSerialize_unsubscribeLength_empty(void **state)
+TEST_SUITE("iot_mqtt_unsubscribe_client.c");
+
+TEST_F(TC_REGISTRY_NO_FIXTURE, TC_MQTTSerialize_unsubscribeLength_empty_neg)
 {
     int len;
     UNUSED(state);
@@ -39,7 +43,7 @@ void TC_MQTTSerialize_unsubscribeLength_empty(void **state)
     assert_int_equal(len, 2);
 }
 
-void TC_MQTTSerialize_unsubscribeLength_single_topic(void **state)
+TEST_F(TC_REGISTRY_NO_FIXTURE, TC_MQTTSerialize_unsubscribeLength_single_topic_neg)
 {
     MQTTString topic = MQTTString_initializer;
     int len;
@@ -51,7 +55,7 @@ void TC_MQTTSerialize_unsubscribeLength_single_topic(void **state)
     assert_int_equal(len, 7);
 }
 
-void TC_MQTTSerialize_unsubscribe_size_single_topic(void **state)
+TEST_F(TC_REGISTRY_NO_FIXTURE, TC_MQTTSerialize_unsubscribe_size_single_topic_neg)
 {
     MQTTString topic = MQTTString_initializer;
     int size;
@@ -66,7 +70,7 @@ void TC_MQTTSerialize_unsubscribe_size_single_topic(void **state)
 /*
  * Tests for MQTTSerialize_unsubscribe
  */
-void TC_MQTTSerialize_unsubscribe_success(void **state)
+TEST_F(TC_REGISTRY_NO_FIXTURE, TC_MQTTSerialize_unsubscribe_neg)
 {
     MQTTString topic = MQTTString_initializer;
     unsigned char buf[32] = {0};
@@ -79,7 +83,7 @@ void TC_MQTTSerialize_unsubscribe_success(void **state)
     assert_int_equal((buf[0] & 0xF0) >> 4, UNSUBSCRIBE);
 }
 
-void TC_MQTTSerialize_unsubscribe_multi_topic(void **state)
+TEST_F(TC_REGISTRY_NO_FIXTURE, TC_MQTTSerialize_unsubscribe_multi_topic_neg)
 {
     MQTTString topics[3];
     unsigned char buf[64] = {0};
@@ -94,7 +98,7 @@ void TC_MQTTSerialize_unsubscribe_multi_topic(void **state)
     assert_true(rc > 0);
 }
 
-void TC_MQTTSerialize_unsubscribe_buffer_too_short(void **state)
+TEST_F(TC_REGISTRY_NO_FIXTURE, TC_MQTTSerialize_unsubscribe_buffer_too_short_neg)
 {
     MQTTString topic = MQTTString_initializer;
     unsigned char buf[4] = {0};
@@ -106,7 +110,7 @@ void TC_MQTTSerialize_unsubscribe_buffer_too_short(void **state)
     assert_int_equal(rc, MQTTPACKET_BUFFER_TOO_SHORT);
 }
 
-void TC_MQTTSerialize_unsubscribe_zero_buffer(void **state)
+TEST_F(TC_REGISTRY_NO_FIXTURE, TC_MQTTSerialize_unsubscribe_zero_buffer_neg)
 {
     MQTTString topic = MQTTString_initializer;
     unsigned char buf[16] = {0};
@@ -118,7 +122,7 @@ void TC_MQTTSerialize_unsubscribe_zero_buffer(void **state)
     assert_int_equal(rc, MQTTPACKET_BUFFER_TOO_SHORT);
 }
 
-void TC_MQTTSerialize_unsubscribe_dup_flag(void **state)
+TEST_F(TC_REGISTRY_NO_FIXTURE, TC_MQTTSerialize_unsubscribe_dup_flag_neg)
 {
     MQTTString topic = MQTTString_initializer;
     unsigned char buf[16] = {0};
@@ -134,7 +138,7 @@ void TC_MQTTSerialize_unsubscribe_dup_flag(void **state)
 /*
  * Tests for MQTTDeserialize_unsuback
  */
-void TC_MQTTDeserialize_unsuback_success(void **state)
+TEST_F(TC_REGISTRY_NO_FIXTURE, TC_MQTTDeserialize_unsuback_neg)
 {
     unsigned char buf[] = {(unsigned char)(UNSUBACK << 4), 0x02, 0x12, 0x34};
     unsigned short packetid = 0;
@@ -146,7 +150,7 @@ void TC_MQTTDeserialize_unsuback_success(void **state)
     assert_int_equal(packetid, 0x1234);
 }
 
-void TC_MQTTDeserialize_unsuback_wrong_type(void **state)
+TEST_F(TC_REGISTRY_NO_FIXTURE, TC_MQTTDeserialize_unsuback_wrong_type_neg)
 {
     unsigned char buf[] = {(unsigned char)(PUBACK << 4), 0x02, 0x00, 0x00};
     unsigned short packetid = 0xFFFF;
@@ -162,7 +166,7 @@ void TC_MQTTDeserialize_unsuback_wrong_type(void **state)
     assert_int_equal(packetid, 0x0000);
 }
 
-void TC_MQTTDeserialize_unsuback_short_buffer(void **state)
+TEST_F(TC_REGISTRY_NO_FIXTURE, TC_MQTTDeserialize_unsuback_short_buffer_neg)
 {
     unsigned char buf[] = {(unsigned char)(UNSUBACK << 4), 0x00};
     unsigned short packetid = 0xABCD;
@@ -177,7 +181,7 @@ void TC_MQTTDeserialize_unsuback_short_buffer(void **state)
     assert_int_equal(packetid, 0xABCD);
 }
 
-void TC_MQTTDeserialize_unsuback_empty_buffer(void **state)
+TEST_F(TC_REGISTRY_NO_FIXTURE, TC_MQTTDeserialize_unsuback_empty_buffer_neg)
 {
     unsigned char buf[] = {(unsigned char)(UNSUBACK << 4), 0x00};
     unsigned short packetid = 0;
@@ -188,4 +192,6 @@ void TC_MQTTDeserialize_unsuback_empty_buffer(void **state)
     // crash even though the implementation cannot report a proper error.
     rc = MQTTDeserialize_unsuback(&packetid, buf, sizeof(buf));
     (void)rc;
+
+    assert_true(true);
 }

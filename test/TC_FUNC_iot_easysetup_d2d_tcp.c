@@ -30,15 +30,18 @@
 #include <sys/types.h>
 
 #include "TC_MOCK_functions.h"
+#include "TC_REGISTRY.h"
 #include "TC_UTIL_easysetup_common.h"
 #include "cmocka_custom.h"
 
 #define UNUSED(x) (void **)(x)
 
+TEST_SUITE("iot_easysetup_d2d_tcp.c");
+
 static const char sample_ssid[] = "STDK_E4fTST0016LWpcd226";
 static char sample_hashed_sn_b64url[] = "LWpcna0H5C-NEFcoRXRRBUWFqeU1XmOeyaigeYcxl1Q=";
 
-void TC_iot_easysetup_create_ssid_null_parameters(void **state)
+TEST_F(TC_REGISTRY_NO_FIXTURE, TC_iot_easysetup_create_ssid_null_parameters_neg)
 {
     iot_error_t err;
     char ssid[33];
@@ -61,7 +64,7 @@ void TC_iot_easysetup_create_ssid_null_parameters(void **state)
     assert_int_not_equal(err, IOT_ERROR_NONE);
 }
 
-void TC_iot_easysetup_create_ssid_success(void **state)
+TEST_F(TC_REGISTRY_NO_FIXTURE, TC_iot_easysetup_create_ssid_success_pos)
 {
     iot_error_t err;
     char ssid[33];
@@ -78,7 +81,7 @@ void TC_iot_easysetup_create_ssid_success(void **state)
     assert_string_equal(devconf->hashed_sn, sample_hashed_sn_b64url);
 }
 
-void TC_iot_easysetup_request_handler_invalid_parameters(void **state)
+TEST_F(TC_REGISTRY_NO_FIXTURE, TC_iot_easysetup_request_handler_invalid_parameters_neg)
 {
     struct iot_context *context;
     iot_error_t err;
@@ -115,7 +118,7 @@ void TC_iot_easysetup_request_handler_invalid_parameters(void **state)
 }
 static void assert_deviceinfo(char *payload, char *expected_firmware_version, char *expected_hashed_sn);
 
-void TC_iot_easysetup_request_handler_step_deviceinfo(void **state)
+TEST_F(TC_REGISTRY_NO_FIXTURE, TC_iot_easysetup_request_handler_step_deviceinfo_neg)
 {
     struct iot_context *context;
     iot_error_t err;
@@ -149,7 +152,7 @@ void TC_iot_easysetup_request_handler_step_deviceinfo(void **state)
 // Static function declare for test
 extern iot_error_t _es_deviceinfo_handler(struct iot_context *ctx, char **out_payload);
 
-void TC_STATIC_es_deviceinfo_handler_null_parameter(void **state)
+TEST_F(TC_REGISTRY_NO_FIXTURE, TC_STATIC_es_deviceinfo_handler_null_parameter_neg)
 {
     iot_error_t err;
     struct iot_context *context;
@@ -164,7 +167,7 @@ void TC_STATIC_es_deviceinfo_handler_null_parameter(void **state)
     assert_int_not_equal(err, IOT_ERROR_NONE);
 }
 
-void TC_STATIC_es_deviceinfo_handler_success(void **state)
+TEST_F(TC_REGISTRY_NO_FIXTURE, TC_STATIC_es_deviceinfo_handler_success_pos)
 {
     iot_error_t err;
     char *out_payload = NULL;
@@ -189,7 +192,7 @@ void TC_STATIC_es_deviceinfo_handler_success(void **state)
 extern iot_error_t _es_keyinfo_handler(struct iot_context *ctx, char *input_data, char **output_data);
 extern iot_error_t _es_crypto_cipher_gen_iv(iot_security_buffer_t *iv_buffer);
 
-void TC_STATIC_es_crypto_cipher_gen_iv_success(void **state)
+TEST_F(TC_REGISTRY_NO_FIXTURE, TC_STATIC_es_crypto_cipher_gen_iv_success_pos)
 {
     iot_error_t err;
     iot_security_buffer_t iv_buffer = {0};
@@ -202,7 +205,7 @@ void TC_STATIC_es_crypto_cipher_gen_iv_success(void **state)
     assert_iv_buffer(iv_buffer);
 }
 
-void TC_STATIC_es_keyinfo_handler_success(void **state)
+TEST_F(TC_REGISTRY_NO_FIXTURE, TC_STATIC_es_keyinfo_handler_success_pos)
 {
     iot_error_t err;
     char *out_payload = NULL;
@@ -236,7 +239,7 @@ void TC_STATIC_es_keyinfo_handler_success(void **state)
     free(in_payload);
 }
 
-void TC_STATIC_es_keyinfo_handler_success_with_y2038(void **state)
+TEST_F(TC_REGISTRY_NO_FIXTURE, TC_STATIC_es_keyinfo_handler_success_with_y2038_pos)
 {
     iot_error_t err;
     char *out_payload = NULL;
@@ -290,7 +293,7 @@ static char *_generate_post_wifiprovisioninginfo_payload(iot_security_cipher_par
 static void assert_lookup_id(const char *payload, iot_security_cipher_params_t *cipher);
 static void assert_wifi_provisioning(struct iot_context *context, struct test_wifi_provisioning_data prov);
 
-void TC_STATIC_es_wifiprovisioninginfo_handler_success(void **state)
+TEST_F(TC_REGISTRY_NO_FIXTURE, TC_STATIC_es_wifiprovisioninginfo_handler_success_pos)
 {
     iot_error_t err;
     char *out_payload = NULL;
@@ -344,7 +347,7 @@ void TC_STATIC_es_wifiprovisioninginfo_handler_success(void **state)
     free(context->scan_result);
 }
 
-void TC_STATIC_es_wifiprovisioninginfo_handler_success_without_authtype(void **state)
+TEST_F(TC_REGISTRY_NO_FIXTURE, TC_STATIC_es_wifiprovisioninginfo_handler_success_without_authtype_neg)
 {
     iot_error_t err;
     char *out_payload = NULL;
@@ -404,7 +407,7 @@ extern iot_error_t _es_wifiscaninfo_handler(struct iot_context *ctx, char **outp
 
 static void assert_wifiscaninfo_payload(iot_security_cipher_params_t *cipher, char *payload, int num_of_scanlist);
 
-void TC_STATIC_es_wifiscaninfo_handler_invalid_parameters(void **state)
+TEST_F(TC_REGISTRY_NO_FIXTURE, TC_STATIC_es_wifiscaninfo_handler_invalid_parameters_neg)
 {
     iot_error_t err;
     struct iot_context *context;
@@ -419,7 +422,7 @@ void TC_STATIC_es_wifiscaninfo_handler_invalid_parameters(void **state)
     assert_int_not_equal(err, IOT_ERROR_NONE);
 }
 
-void TC_STATIC_es_wifiscaninfo_handler_success(void **state)
+TEST_F(TC_REGISTRY_NO_FIXTURE, TC_STATIC_es_wifiscaninfo_handler_success_pos)
 {
     iot_error_t err;
     char *out_payload = NULL;
@@ -459,7 +462,7 @@ static char *_generate_confirminfo_payload(iot_security_cipher_params_t *cipher,
                                            enum ownership_validation_feature feature, const char *serial_number_for_qr);
 static void assert_empty_json(iot_security_cipher_params_t *cipher, char *payload);
 
-void TC_STATIC_es_confirminfo_handler_null_parameters(void **state)
+TEST_F(TC_REGISTRY_NO_FIXTURE, TC_STATIC_es_confirminfo_handler_null_parameters_neg)
 {
     iot_error_t err;
     char *in_payload;
@@ -500,7 +503,7 @@ void TC_STATIC_es_confirminfo_handler_null_parameters(void **state)
     free(in_payload);
 }
 
-void TC_STATIC_es_confirminfo_handler_out_ranged_otm_feature(void **state)
+TEST_F(TC_REGISTRY_NO_FIXTURE, TC_STATIC_es_confirminfo_handler_out_ranged_otm_feature_neg)
 {
     iot_error_t err;
     char *in_payload;
@@ -531,7 +534,7 @@ void TC_STATIC_es_confirminfo_handler_out_ranged_otm_feature(void **state)
     free(in_payload);
 }
 
-void TC_STATIC_es_confirminfo_handler_justworks_and_pin(void **state)
+TEST_F(TC_REGISTRY_NO_FIXTURE, TC_STATIC_es_confirminfo_handler_justworks_and_pin_neg)
 {
     iot_error_t err;
     char *in_payload;
@@ -586,7 +589,7 @@ void TC_STATIC_es_confirminfo_handler_justworks_and_pin(void **state)
     _free_cipher(server_cipher);
 }
 
-void TC_STATIC_es_confirminfo_handler_qr_code(void **state)
+TEST_F(TC_REGISTRY_NO_FIXTURE, TC_STATIC_es_confirminfo_handler_qr_code_neg)
 {
     iot_error_t err;
     char *in_payload;
@@ -641,7 +644,7 @@ void TC_STATIC_es_confirminfo_handler_qr_code(void **state)
     _free_cipher(server_cipher);
 }
 
-void TC_STATIC_es_confirminfo_handler_serial_number(void **state)
+TEST_F(TC_REGISTRY_NO_FIXTURE, TC_STATIC_es_confirminfo_handler_serial_number_neg)
 {
     iot_error_t err;
     char *in_payload;
@@ -708,7 +711,7 @@ static void _status_cb(st_device_status device_status, void *usr_data)
     }
 }
 
-void TC_STATIC_es_confirminfo_handler_button(void **state)
+TEST_F(TC_REGISTRY_NO_FIXTURE, TC_STATIC_es_confirminfo_handler_button_neg)
 {
     iot_error_t err;
     char *in_payload;
@@ -760,7 +763,7 @@ static char *_generate_wrong_container_payload();
 static char *_generate_invalid_json_payload(iot_security_cipher_params_t *cipher);
 static char *_generate_confirm_payload(iot_security_cipher_params_t *cipher, char *pin_str);
 
-void TC_STATIC_es_confirm_handler_success(void **state)
+TEST_F(TC_REGISTRY_NO_FIXTURE, TC_STATIC_es_confirm_handler_success_pos)
 {
     iot_error_t err;
     char *in_payload;
@@ -806,7 +809,7 @@ void TC_STATIC_es_confirm_handler_success(void **state)
 }
 
 #define MAX_TEST_PIN_LENGTH 10
-void TC_STATIC_es_confirm_handler_invalid_pin(void **state)
+TEST_F(TC_REGISTRY_NO_FIXTURE, TC_STATIC_es_confirm_handler_invalid_pin_neg)
 {
     iot_error_t err;
     char *in_payload;
@@ -861,7 +864,7 @@ void TC_STATIC_es_confirm_handler_invalid_pin(void **state)
     _free_cipher(server_cipher);
 }
 
-void TC_STATIC_es_confirm_handler_non_pin_otm(void **state)
+TEST_F(TC_REGISTRY_NO_FIXTURE, TC_STATIC_es_confirm_handler_non_pin_otm_neg)
 {
     iot_error_t err;
     char *in_payload;
@@ -914,7 +917,7 @@ enum {
     INVALID_PAYLOAD_MAX
 };
 
-void TC_STATIC_es_confirm_handler_invalid_payload(void **state)
+TEST_F(TC_REGISTRY_NO_FIXTURE, TC_STATIC_es_confirm_handler_invalid_payload_neg)
 {
     iot_error_t err;
     char *in_payload[INVALID_PAYLOAD_MAX];
@@ -967,7 +970,7 @@ void TC_STATIC_es_confirm_handler_invalid_payload(void **state)
 
 extern iot_error_t _es_setupcomplete_handler(struct iot_context *ctx, char *input_data, char **output_data);
 
-void TC_STATIC_es_setupcomplete_handler_success(void **state)
+TEST_F(TC_REGISTRY_NO_FIXTURE, TC_STATIC_es_setupcomplete_handler_success_pos)
 {
     iot_error_t err;
     struct iot_context *context;
@@ -1336,7 +1339,7 @@ static void assert_empty_json(iot_security_cipher_params_t *cipher, char *payloa
     free(plain_message);
 }
 
-void TC_st_conn_ownership_confirm_SUCCESS(void **state)
+TEST_F(TC_REGISTRY_NO_FIXTURE, TC_st_conn_ownership_confirm_SUCCESS_pos)
 {
     struct iot_context *internal_context;
     IOT_CTX *context;
@@ -1363,7 +1366,7 @@ void TC_st_conn_ownership_confirm_SUCCESS(void **state)
     free(internal_context);
 }
 
-void TC_st_conn_ownership_confirm_DENY(void **state)
+TEST_F(TC_REGISTRY_NO_FIXTURE, TC_st_conn_ownership_confirm_DENY_neg)
 {
     struct iot_context *internal_context;
     IOT_CTX *context;

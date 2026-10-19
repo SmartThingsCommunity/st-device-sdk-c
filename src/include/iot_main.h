@@ -71,6 +71,12 @@
 
 #define CLOUD_CON_TIMER_MS (60 * 1000)
 
+#define REGISTERING_NETWORK_CHECK_INTERVAL (1000)
+
+#if !defined(FIRMWARE_BUILD_EPOCH)
+#define FIRMWARE_BUILD_EPOCH (1767225600) /* 2026-01-01 00:00:00 UTC */
+#endif
+
 enum _iot_noti_type {
     /* Common notifications */
     _IOT_NOTI_TYPE_UNKNOWN = IOT_NOTI_TYPE_UNKNOWN,
@@ -84,6 +90,7 @@ enum _iot_noti_type {
     _IOT_NOTI_TYPE_PREFERENCE_UPDATED = IOT_NOTI_TYPE_PREFERENCE_UPDATED,
     _IOT_NOTI_TYPE_CHILD_DEVICE_SYNCED = IOT_NOTI_TYPE_CHILD_DEVICE_SYNCED,
     _IOT_NOTI_TYPE_CHILD_DEVICE_REGISTERED = IOT_NOTI_TYPE_CHILD_DEVICE_REGISTERED,
+    _IOT_NOTI_TYPE_OWNER_TRANSFERRED = IOT_NOTI_TYPE_OWNER_TRANSFERRED,
 };
 
 enum iot_command_type {
@@ -91,7 +98,7 @@ enum iot_command_type {
     IOT_COMMAND_CLOUD_REGISTERING,
     IOT_COMMAND_CLOUD_REGISTERED,
     IOT_COMMAND_CLOUD_CONNECTING,
-    IOT_COMMAND_NOTIFICATION_RECEIVED,
+    IOT_COMMAND_NOTIFICATION_RECEIVED, /* deprecated, use iot_noti_send() instead, kept to preserve enum values */
     IOT_COMMAND_SYSTEM_REBOOT,
     IOT_COMMAND_TYPE_MAX = IOT_COMMAND_SYSTEM_REBOOT, /* MAX : under 32 */
 };
@@ -186,6 +193,9 @@ typedef enum iot_st_ecode_type {
     IOT_ST_ECODE_CE51,
     IOT_ST_ECODE_CE60,
     IOT_ST_ECODE_CE70,
+    IOT_ST_ECODE_CE79,
+    IOT_ST_ECODE_CE81,
+    IOT_ST_ECODE_CE84_3,
     IOT_ST_ECODE_CE84_4,
     IOT_ST_ECODE_DS13_1,
     IOT_ST_ECODE_MAX = IOT_ST_ECODE_DS13_1,
@@ -200,6 +210,7 @@ struct iot_wifi_prov_data {
     char mac_str[IOT_WIFI_PROV_MAC_STR_LEN + 1];       /**< @brief wifi mac address string */
     struct iot_mac bssid;                              /**< @brief wifi bssid raw value */
     iot_wifi_auth_mode_t security_type;                /**< @brief wifi security type such as WEP, PSK2.. */
+    int hidden;                                        /**< @brief hidden wifi*/
 };
 
 /**
@@ -408,7 +419,7 @@ struct iot_context {
 
     struct iot_st_ecode last_st_ecode; /**< @brief last happended device error code to send SmartThings App */
 
-    bool is_wifi_station;          /**< @brief indicator if wifi is station mode or not */
+    bool need_wifi_reset;          /**< @brief indicator if wifi need to be reset */
     iot_error_t es_network_status; /**< @brief to check network connection status*/
     bool otm_confirmed;            /**< @brief to check user confirmation*/
     bool cloud_connection_pause;   /**< @brief cloud connection needs to pause*/

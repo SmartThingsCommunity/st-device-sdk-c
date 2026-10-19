@@ -92,6 +92,7 @@ typedef struct {
     char pass[IOT_WIFI_MAX_PASS_LEN + 1];  /**< @brief wifi password string */
     uint8_t bssid[IOT_WIFI_MAX_BSSID_LEN]; /**< @brief wifi mac address */
     iot_wifi_auth_mode_t authmode;         /**< @brief wifi authentication mode for station and softap*/
+    int hidden;                            /**< @brief hidden wifi*/
     int wifi_candidate_frequency;          /**< @brief the frequency of wifi candiate from st app*/
 } iot_wifi_conf;
 
@@ -104,6 +105,9 @@ typedef struct {
     int8_t rssi;                             /**< @brief wifi signal strength */
     uint16_t freq;                           /**< @brief wifi operation channel */
     iot_wifi_auth_mode_t authmode;           /**< @brief wifi authentication mode */
+    uint8_t ssid_len;       /**< @brief wifi SSID length in bytes. if 0, SDK uses strlen(ssid) instead */
+    uint8_t hexssid_needed; /**< @brief if set, SDK sends the SSID as an encoded hexSsid (e.g. SSID encoding is not
+                               guaranteed to be UTF-8) */
 } iot_wifi_scan_result_t;
 
 /**
@@ -112,6 +116,61 @@ typedef struct {
 struct iot_mac {
     unsigned char addr[IOT_WIFI_MAX_BSSID_LEN]; /**< @brief wifi mac address */
 };
+
+/**
+ * @brief Wi-Fi station connection status
+ */
+typedef enum {
+    IOT_WIFI_STATUS_UNKNOWN, /**< @brief status is unavailable (e.g. Wi-Fi is unsupported or not initialized). SDK
+                                proceeds with the server connection attempt */
+    IOT_WIFI_STATUS_IDLE,    /**< @brief Wi-Fi is off, or station interface is up without any connection attempt. SDK
+                                requests station mode (re)connection */
+    IOT_WIFI_STATUS_DISCONNECTED, /**< @brief the last connection attempt failed or the connection was lost. Set
+                                     last_disconnected_reason together */
+    IOT_WIFI_STATUS_SCANNING, /**< @brief scanning is in progress. SDK polls the status again after a short interval */
+    IOT_WIFI_STATUS_CONNECTING, /**< @brief association/authentication is in progress. SDK polls the status again after
+                                   a short interval */
+    IOT_WIFI_STATUS_CONNECTED,  /**< @brief associated with an AP. Set ap_ssid/bssid/rssi and the ip fields together */
+} iot_wifi_status;
+
+/**
+ * @brief reason of the last Wi-Fi disconnection. Only valid when wifi_status is IOT_WIFI_STATUS_DISCONNECTED
+ */
+typedef enum {
+    IOT_WIFI_DISCONNECTED_REASON_UNKNOWN,      /**< @brief reason is unavailable or not classified */
+    IOT_WIFI_DISCONNECTED_REASON_AP_NOT_FOUND, /**< @brief the target AP was not found */
+    IOT_WIFI_DISCONNECTED_REASON_AUTH_FAIL,  /**< @brief authentication failed (e.g. wrong password, handshake timeout)
+                                              */
+    IOT_WIFI_DISCONNECTED_REASON_ASSOC_FAIL, /**< @brief association was rejected by the AP (e.g. station limit
+                                                exceeded) */
+    IOT_WIFI_DISCONNECTED_REASON_CONNECTION_FAIL, /**< @brief connection failed for other reasons */
+} iot_wifi_disconnected_reason;
+
+/**
+ * @brief IP assignment status of the station interface
+ */
+typedef enum {
+    IOT_IP_STATUS_UNKNOWN,      /**< @brief status is unavailable */
+    IOT_IP_STATUS_NOT_ASSIGNED, /**< @brief IP address is not assigned yet (e.g. DHCP in progress). SDK polls the status
+                                   again after a short interval */
+    IOT_IP_STATUS_ASSIGNED,     /**< @brief IP address is assigned */
+} iot_ip_status;
+
+/**
+ * @brief current Wi-Fi connection information, filled by iot_bsp_wifi_get_status()
+ */
+typedef struct {
+    iot_wifi_status wifi_status;                           /**< @brief Wi-Fi station connection status */
+    iot_wifi_disconnected_reason last_disconnected_reason; /**< @brief reason of the last disconnection. Only valid when
+                                                              wifi_status is DISCONNECTED */
+    char ap_ssid[IOT_WIFI_MAX_SSID_LEN +
+                 1]; /**< @brief null-terminated SSID of the connected AP. Only valid when wifi_status is CONNECTED */
+    struct iot_mac bssid; /**< @brief BSSID of the connected AP. Only valid when wifi_status is CONNECTED */
+    int rssi;             /**< @brief RSSI of the connected AP in dBm. Only valid when wifi_status is CONNECTED */
+
+    iot_ip_status ip_status; /**< @brief IP assignment status of the station interface */
+    uint32_t ip;             /**< @brief IPv4 address in network byte order. Only valid when ip_status is ASSIGNED */
+} iot_wifi_info;
 
 /**
  * @brief  Initialize Wi-Fi function
@@ -200,17 +259,18 @@ void iot_bsp_wifi_clear_event_cb(void);
 iot_wifi_auth_mode_bits_t iot_bsp_wifi_get_auth_mode(void);
 
 /**
- * @brief Check DHCP operation is success
- * @return true if DHCP operation is success
+ * @brief  Get current Wi-Fi connection status
+ *
+ * This function fills every field of wifi_info with the current station status.
+ * Set IOT_WIFI_STATUS_UNKNOWN / IOT_IP_STATUS_UNKNOWN when a status is unavailable
+ * (e.g. the device does not support Wi-Fi).
+ * The SDK polls this function periodically (every few seconds) from its main task
+ * while establishing the server connection, so it must return quickly without
+ * blocking operations such as scanning.
+ *
+ * @param[out] wifi_info current Wi-Fi connection information
  */
-bool iot_bsp_wifi_is_dhcp_success();
-
-/**
- * @brief Get Wi-Fi connection status from wpa_supplicant.
- * @details Get Wi-Fi status.
- * @return IOT_ERROR_NONE if successful
- */
-iot_error_t iot_bsp_wifi_get_status();
+void iot_bsp_wifi_get_status(iot_wifi_info *wifi_info);
 
 #ifdef __cplusplus
 }

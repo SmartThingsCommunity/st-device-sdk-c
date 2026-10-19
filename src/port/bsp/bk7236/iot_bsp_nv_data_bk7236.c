@@ -36,6 +36,8 @@ const char *iot_bsp_nv_get_data_path(iot_nvd_t nv_type)
             return "IotAPBSSID";
         case IOT_NVD_AP_AUTH_TYPE:
             return "IotAPAuthType";
+        case IOT_NVD_AP_HIDDEN:
+            return "IotAPHidden";
         /* wifi prov data */
 
         /* cloud prov data */

@@ -30,6 +30,7 @@
 #define SERVER_NOTI_TYPE_DEVICE_GET "devices.get"
 #define SERVER_NOTI_TYPE_DEVICE_CREATED "secondary.device.created"
 #define SERVER_NOTI_TYPE_CHILD_DEVICE_HEALTH_RESPONSE "secondary.health.response"
+#define SERVER_NOTI_TYPE_OWNERSHIP_TRANSFER "ownership.transfer"
 
 #define MAX_SQNUM 0x7FFFFFFF
 

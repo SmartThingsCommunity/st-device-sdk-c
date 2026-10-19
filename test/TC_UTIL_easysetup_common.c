@@ -393,7 +393,7 @@ iot_security_cipher_params_t *_generate_device_cipher(unsigned char *iv_data, si
     return _generate_cipher(SERVER_KEYPAIR->curve25519_pk, DEVICE_KEYPAIR->curve25519_sk, iv_data, iv_length);
 }
 
-char *_generate_post_keyinfo_payload(int year, time_t *time_to_set)
+static char *_generate_post_keyinfo_payload_impl(int year, time_t *time_to_set, int utc)
 {
     char *post_message;
     JSON_H *root = NULL;
@@ -437,7 +437,7 @@ char *_generate_post_keyinfo_payload(int year, time_t *time_to_set)
     test_tm.tm_min = 40;
     test_tm.tm_sec = 14;
 
-    *time_to_set = mktime(&test_tm);
+    *time_to_set = utc ? timegm(&test_tm) : mktime(&test_tm);
 
     b64url_datetime = (unsigned char *)malloc(IOT_SECURITY_B64_ENCODE_LEN(strlen(datetime)));
     b64url_regionaldatetime = (unsigned char *)malloc(IOT_SECURITY_B64_ENCODE_LEN(strlen(regionaldatetime)));
@@ -475,6 +475,17 @@ char *_generate_post_keyinfo_payload(int year, time_t *time_to_set)
     free(b64url_timezoneid);
 
     return post_message;
+}
+
+char *_generate_post_keyinfo_payload(int year, time_t *time_to_set)
+{
+    return _generate_post_keyinfo_payload_impl(year, time_to_set, 0);
+}
+
+/* For transports whose _es_time_set interprets the datetime as UTC (timegm). */
+char *_generate_post_keyinfo_payload_utc(int year, time_t *time_to_set)
+{
+    return _generate_post_keyinfo_payload_impl(year, time_to_set, 1);
 }
 
 void assert_iv_buffer(iot_security_buffer_t iv_buffer)

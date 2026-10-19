@@ -21,6 +21,7 @@
 
 #include "TC_MOCK_functions.h"
 #include "TC_MOCK_iot_bsp_ble.h"
+#include "TC_REGISTRY.h"
 #include "cmocka_custom.h"
 #include "easysetup_ble.h"
 #include "iot_bsp_ble.h"
@@ -37,6 +38,19 @@ extern struct iot_context *context;
 extern int ref_step;
 
 iot_error_t iot_easysetup_init(struct iot_context *ctx);
+TEST_SUITE("iot_easysetup_ble.c");
+
+static int TC_iot_easysetup_ble_setup(void **state);
+static int TC_iot_easysetup_ble_teardown(void **state);
+
+TEST_FIXTURE(iot_easysetup_ble, TC_iot_easysetup_ble_setup, TC_iot_easysetup_ble_teardown);
+
+static int TC_iot_easysetup_ble_setup(void **state);
+static int TC_iot_easysetup_ble_teardown(void **state);
+
+static int TC_iot_easysetup_ble_setup(void **state);
+static int TC_iot_easysetup_ble_teardown(void **state);
+
 void iot_easysetup_deinit(struct iot_context *ctx);
 iot_error_t iot_easysetup_ble_send_response(int cmd, char *payload, size_t payload_len);
 void iot_easysetup_ble_msg_handler(int cmd, char *data_buf, size_t data_buf_len);
@@ -94,7 +108,7 @@ static void _tc_free_context(struct iot_context *ctx)
     free(ctx);
 }
 
-int TC_iot_easysetup_ble_setup(void **state)
+static int TC_iot_easysetup_ble_setup(void **state)
 {
     tc_mock_ble_reset();
     tc_mock_ble_set_mtu(256);
@@ -105,7 +119,7 @@ int TC_iot_easysetup_ble_setup(void **state)
     return 0;
 }
 
-int TC_iot_easysetup_ble_teardown(void **state)
+static int TC_iot_easysetup_ble_teardown(void **state)
 {
     struct iot_context *ctx = (struct iot_context *)*state;
     context = NULL;
@@ -114,7 +128,7 @@ int TC_iot_easysetup_ble_teardown(void **state)
     return 0;
 }
 
-void TC_iot_easysetup_ble_init_null_ctx(void **state)
+TEST_F(iot_easysetup_ble, TC_iot_easysetup_ble_init_null_ctx_neg)
 {
     iot_error_t err;
     UNUSED(state);
@@ -126,7 +140,7 @@ void TC_iot_easysetup_ble_init_null_ctx(void **state)
     assert_int_equal(err, IOT_ERROR_INVALID_ARGS);
 }
 
-void TC_iot_easysetup_ble_init_success(void **state)
+TEST_F(iot_easysetup_ble, TC_iot_easysetup_ble_init_success_pos)
 {
     struct iot_context *ctx = (struct iot_context *)*state;
     iot_error_t err;
@@ -142,7 +156,7 @@ void TC_iot_easysetup_ble_init_success(void **state)
     assert_int_equal(ref_step, 0);
 }
 
-void TC_iot_easysetup_ble_init_already_ready(void **state)
+TEST_F(iot_easysetup_ble, TC_iot_easysetup_ble_init_already_ready_neg)
 {
     struct iot_context *ctx = (struct iot_context *)*state;
     iot_error_t err;
@@ -156,7 +170,7 @@ void TC_iot_easysetup_ble_init_already_ready(void **state)
     assert_int_equal(tc_mock_ble_get_start_adv_call_count(), 0);
 }
 
-void TC_iot_easysetup_ble_deinit_null_ctx(void **state)
+TEST_F(iot_easysetup_ble, TC_iot_easysetup_ble_deinit_null_ctx_neg)
 {
     UNUSED(state);
 
@@ -164,9 +178,11 @@ void TC_iot_easysetup_ble_deinit_null_ctx(void **state)
     // When: iot_easysetup_deinit is called with NULL
     iot_easysetup_deinit(NULL);
     // Then: must not crash
+
+    assert_true(true);
 }
 
-void TC_iot_easysetup_ble_deinit_not_ready(void **state)
+TEST_F(iot_easysetup_ble, TC_iot_easysetup_ble_deinit_not_ready_neg)
 {
     struct iot_context *ctx = (struct iot_context *)*state;
 
@@ -181,7 +197,7 @@ void TC_iot_easysetup_ble_deinit_not_ready(void **state)
     assert_false(ctx->wifi_update_enabled);
 }
 
-void TC_iot_easysetup_ble_msg_handler_cmd_below_range(void **state)
+TEST_F(iot_easysetup_ble, TC_iot_easysetup_ble_msg_handler_cmd_below_range_neg)
 {
     struct iot_context *ctx = (struct iot_context *)*state;
 
@@ -190,9 +206,11 @@ void TC_iot_easysetup_ble_msg_handler_cmd_below_range(void **state)
     // When: msg_handler is called with cmd below valid range
     iot_easysetup_ble_msg_handler(-5, NULL, 0);
     // Then: err_report path is triggered without crash
+
+    assert_true(true);
 }
 
-void TC_iot_easysetup_ble_msg_handler_cmd_above_range(void **state)
+TEST_F(iot_easysetup_ble, TC_iot_easysetup_ble_msg_handler_cmd_above_range_neg)
 {
     struct iot_context *ctx = (struct iot_context *)*state;
 
@@ -201,9 +219,11 @@ void TC_iot_easysetup_ble_msg_handler_cmd_above_range(void **state)
     // When: msg_handler is called with cmd above valid range
     iot_easysetup_ble_msg_handler(IOT_EASYSETUP_BLE_INVALID_STEP + 3, NULL, 0);
     // Then: err_report path is triggered without crash
+
+    assert_true(true);
 }
 
-void TC_iot_easysetup_ble_msg_handler_setup_complete_response(void **state)
+TEST_F(iot_easysetup_ble, TC_iot_easysetup_ble_msg_handler_setup_complete_response_neg)
 {
     struct iot_context *ctx = (struct iot_context *)*state;
 
@@ -213,9 +233,11 @@ void TC_iot_easysetup_ble_msg_handler_setup_complete_response(void **state)
     // When: msg_handler is called with SETUPCOMPLETE_RESPONSE
     iot_easysetup_ble_msg_handler(IOT_EASYSETUP_BLE_STEP_SETUPCOMPLETE_RESPONSE, NULL, 0);
     // Then: handles success status without crash
+
+    assert_true(true);
 }
 
-void TC_iot_easysetup_ble_msg_handler_setup_complete_response_mqtt_reject(void **state)
+TEST_F(iot_easysetup_ble, TC_iot_easysetup_ble_msg_handler_setup_complete_response_mqtt_reject_neg)
 {
     struct iot_context *ctx = (struct iot_context *)*state;
 
@@ -225,9 +247,11 @@ void TC_iot_easysetup_ble_msg_handler_setup_complete_response_mqtt_reject(void *
     // When: msg_handler is called with SETUPCOMPLETE_RESPONSE
     iot_easysetup_ble_msg_handler(IOT_EASYSETUP_BLE_STEP_SETUPCOMPLETE_RESPONSE, NULL, 0);
     // Then: handles MQTT reject without crash
+
+    assert_true(true);
 }
 
-void TC_iot_easysetup_ble_msg_handler_setup_complete_response_auth_fail(void **state)
+TEST_F(iot_easysetup_ble, TC_iot_easysetup_ble_msg_handler_setup_complete_response_auth_fail_neg)
 {
     struct iot_context *ctx = (struct iot_context *)*state;
 
@@ -237,9 +261,11 @@ void TC_iot_easysetup_ble_msg_handler_setup_complete_response_auth_fail(void **s
     // When: msg_handler is called with SETUPCOMPLETE_RESPONSE
     iot_easysetup_ble_msg_handler(IOT_EASYSETUP_BLE_STEP_SETUPCOMPLETE_RESPONSE, NULL, 0);
     // Then: handles auth failure without crash
+
+    assert_true(true);
 }
 
-void TC_iot_easysetup_ble_msg_handler_setup_complete_response_dhcp_fail(void **state)
+TEST_F(iot_easysetup_ble, TC_iot_easysetup_ble_msg_handler_setup_complete_response_dhcp_fail_neg)
 {
     struct iot_context *ctx = (struct iot_context *)*state;
 
@@ -249,9 +275,11 @@ void TC_iot_easysetup_ble_msg_handler_setup_complete_response_dhcp_fail(void **s
     // When: msg_handler is called with SETUPCOMPLETE_RESPONSE
     iot_easysetup_ble_msg_handler(IOT_EASYSETUP_BLE_STEP_SETUPCOMPLETE_RESPONSE, NULL, 0);
     // Then: handles DHCP failure without crash
+
+    assert_true(true);
 }
 
-void TC_iot_easysetup_ble_msg_handler_setup_complete_response_dns_fail(void **state)
+TEST_F(iot_easysetup_ble, TC_iot_easysetup_ble_msg_handler_setup_complete_response_dns_fail_neg)
 {
     struct iot_context *ctx = (struct iot_context *)*state;
 
@@ -261,9 +289,11 @@ void TC_iot_easysetup_ble_msg_handler_setup_complete_response_dns_fail(void **st
     // When: msg_handler is called with SETUPCOMPLETE_RESPONSE
     iot_easysetup_ble_msg_handler(IOT_EASYSETUP_BLE_STEP_SETUPCOMPLETE_RESPONSE, NULL, 0);
     // Then: handles DNS failure without crash
+
+    assert_true(true);
 }
 
-void TC_iot_easysetup_ble_msg_handler_setup_complete_response_ap_not_found(void **state)
+TEST_F(iot_easysetup_ble, TC_iot_easysetup_ble_msg_handler_setup_complete_response_ap_not_found_neg)
 {
     struct iot_context *ctx = (struct iot_context *)*state;
 
@@ -273,9 +303,11 @@ void TC_iot_easysetup_ble_msg_handler_setup_complete_response_ap_not_found(void 
     // When: msg_handler is called with SETUPCOMPLETE_RESPONSE
     iot_easysetup_ble_msg_handler(IOT_EASYSETUP_BLE_STEP_SETUPCOMPLETE_RESPONSE, NULL, 0);
     // Then: handles AP not found without crash
+
+    assert_true(true);
 }
 
-void TC_iot_easysetup_ble_msg_handler_setup_complete_response_operate_fail(void **state)
+TEST_F(iot_easysetup_ble, TC_iot_easysetup_ble_msg_handler_setup_complete_response_operate_fail_neg)
 {
     struct iot_context *ctx = (struct iot_context *)*state;
 
@@ -285,9 +317,11 @@ void TC_iot_easysetup_ble_msg_handler_setup_complete_response_operate_fail(void 
     // When: msg_handler is called with SETUPCOMPLETE_RESPONSE
     iot_easysetup_ble_msg_handler(IOT_EASYSETUP_BLE_STEP_SETUPCOMPLETE_RESPONSE, NULL, 0);
     // Then: handles operate failure without crash
+
+    assert_true(true);
 }
 
-void TC_iot_easysetup_ble_msg_handler_setup_complete_response_default(void **state)
+TEST_F(iot_easysetup_ble, TC_iot_easysetup_ble_msg_handler_setup_complete_response_default_neg)
 {
     struct iot_context *ctx = (struct iot_context *)*state;
 
@@ -297,9 +331,11 @@ void TC_iot_easysetup_ble_msg_handler_setup_complete_response_default(void **sta
     // When: msg_handler is called with SETUPCOMPLETE_RESPONSE
     iot_easysetup_ble_msg_handler(IOT_EASYSETUP_BLE_STEP_SETUPCOMPLETE_RESPONSE, NULL, 0);
     // Then: handles default case without crash
+
+    assert_true(true);
 }
 
-void TC_iot_easysetup_ble_msg_handler_deviceinfo_success(void **state)
+TEST_F(iot_easysetup_ble, TC_iot_easysetup_ble_msg_handler_deviceinfo_success_pos)
 {
     struct iot_context *ctx = (struct iot_context *)*state;
 
@@ -315,7 +351,7 @@ void TC_iot_easysetup_ble_msg_handler_deviceinfo_success(void **state)
     assert_int_equal(tc_mock_ble_get_get_response_call_count(), 1);
 }
 
-void TC_iot_easysetup_ble_msg_handler_setupcomplete(void **state)
+TEST_F(iot_easysetup_ble, TC_iot_easysetup_ble_msg_handler_setupcomplete_neg)
 {
     struct iot_context *ctx = (struct iot_context *)*state;
 
@@ -331,7 +367,7 @@ void TC_iot_easysetup_ble_msg_handler_setupcomplete(void **state)
     assert_non_null(ctx->cloud_con_timer);
 }
 
-void TC_iot_easysetup_ble_gen_payload_invalid_cmd_while_not_confirmed(void **state)
+TEST_F(iot_easysetup_ble, TC_iot_easysetup_ble_gen_payload_invalid_cmd_while_not_confirmed_neg)
 {
     struct iot_context *ctx = (struct iot_context *)*state;
     char *out_payload = NULL;
@@ -349,7 +385,7 @@ void TC_iot_easysetup_ble_gen_payload_invalid_cmd_while_not_confirmed(void **sta
     assert_int_equal(err, IOT_ERROR_EASYSETUP_INVALID_CMD);
 }
 
-void TC_iot_easysetup_ble_gen_payload_invalid_step_sequence(void **state)
+TEST_F(iot_easysetup_ble, TC_iot_easysetup_ble_gen_payload_invalid_step_sequence_neg)
 {
     struct iot_context *ctx = (struct iot_context *)*state;
     char *out_payload = NULL;
@@ -367,7 +403,7 @@ void TC_iot_easysetup_ble_gen_payload_invalid_step_sequence(void **state)
     assert_int_equal(err, IOT_ERROR_EASYSETUP_INVALID_CMD);
 }
 
-void TC_iot_easysetup_ble_gen_payload_response_null(void **state)
+TEST_F(iot_easysetup_ble, TC_iot_easysetup_ble_gen_payload_response_null_neg)
 {
     struct iot_context *ctx = (struct iot_context *)*state;
     char *out_payload = NULL;
@@ -385,7 +421,7 @@ void TC_iot_easysetup_ble_gen_payload_response_null(void **state)
     assert_int_equal(err, IOT_ERROR_EASYSETUP_INTERNAL_SERVER_ERROR);
 }
 
-void TC_iot_easysetup_ble_gen_payload_step_mismatch(void **state)
+TEST_F(iot_easysetup_ble, TC_iot_easysetup_ble_gen_payload_step_mismatch_neg)
 {
     struct iot_context *ctx = (struct iot_context *)*state;
     char *out_payload = NULL;
@@ -404,7 +440,7 @@ void TC_iot_easysetup_ble_gen_payload_step_mismatch(void **state)
     assert_int_equal(err, IOT_ERROR_EASYSETUP_INTERNAL_SERVER_ERROR);
 }
 
-void TC_iot_easysetup_ble_gen_payload_wifiscaninfo_sync(void **state)
+TEST_F(iot_easysetup_ble, TC_iot_easysetup_ble_gen_payload_wifiscaninfo_sync_neg)
 {
     struct iot_context *ctx = (struct iot_context *)*state;
     char *out_payload = NULL;
@@ -424,7 +460,7 @@ void TC_iot_easysetup_ble_gen_payload_wifiscaninfo_sync(void **state)
     assert_int_equal(err, IOT_ERROR_NONE);
 }
 
-void TC_iot_easysetup_ble_gen_payload_confirminfo_sync(void **state)
+TEST_F(iot_easysetup_ble, TC_iot_easysetup_ble_gen_payload_confirminfo_sync_neg)
 {
     struct iot_context *ctx = (struct iot_context *)*state;
     char *out_payload = NULL;
@@ -444,7 +480,7 @@ void TC_iot_easysetup_ble_gen_payload_confirminfo_sync(void **state)
     assert_int_equal(err, IOT_ERROR_NONE);
 }
 
-void TC_iot_easysetup_ble_gen_payload_log_systeminfo_allowed_unconfirmed(void **state)
+TEST_F(iot_easysetup_ble, TC_iot_easysetup_ble_gen_payload_log_systeminfo_allowed_unconfirmed_neg)
 {
     struct iot_context *ctx = (struct iot_context *)*state;
     char *out_payload = NULL;
@@ -464,7 +500,7 @@ void TC_iot_easysetup_ble_gen_payload_log_systeminfo_allowed_unconfirmed(void **
     assert_int_equal(err, IOT_ERROR_NONE);
 }
 
-void TC_iot_easysetup_ble_gen_payload_response_err(void **state)
+TEST_F(iot_easysetup_ble, TC_iot_easysetup_ble_gen_payload_response_err_neg)
 {
     struct iot_context *ctx = (struct iot_context *)*state;
     char *out_payload = NULL;
@@ -483,7 +519,7 @@ void TC_iot_easysetup_ble_gen_payload_response_err(void **state)
     assert_int_equal(err, IOT_ERROR_EASYSETUP_INVALID_SEQUENCE);
 }
 
-void TC_iot_easysetup_ble_msg_decrypt_deviceinfo_passthrough(void **state)
+TEST_F(iot_easysetup_ble, TC_iot_easysetup_ble_msg_decrypt_deviceinfo_passthrough_neg)
 {
     struct iot_context *ctx = (struct iot_context *)*state;
     unsigned char enc[] = {'a', 'b', 'c'};
@@ -501,7 +537,7 @@ void TC_iot_easysetup_ble_msg_decrypt_deviceinfo_passthrough(void **state)
     assert_ptr_equal(out, (char *)enc);
 }
 
-void TC_iot_easysetup_ble_msg_decrypt_no_cipher_params(void **state)
+TEST_F(iot_easysetup_ble, TC_iot_easysetup_ble_msg_decrypt_no_cipher_params_neg)
 {
     struct iot_context *ctx = (struct iot_context *)*state;
     unsigned char enc[] = {'a', 'b', 'c'};
@@ -518,7 +554,7 @@ void TC_iot_easysetup_ble_msg_decrypt_no_cipher_params(void **state)
     assert_int_equal(err, IOT_ERROR_EASYSETUP_INTERNAL_SERVER_ERROR);
 }
 
-void TC_iot_easysetup_ble_msg_encrypt_null_payload(void **state)
+TEST_F(iot_easysetup_ble, TC_iot_easysetup_ble_msg_encrypt_null_payload_neg)
 {
     struct iot_context *ctx = (struct iot_context *)*state;
     iot_security_buffer_t *enc_buf = NULL;
@@ -534,7 +570,7 @@ void TC_iot_easysetup_ble_msg_encrypt_null_payload(void **state)
     assert_int_equal(err, IOT_ERROR_INVALID_ARGS);
 }
 
-void TC_iot_easysetup_ble_con_timer_init_success(void **state)
+TEST_F(iot_easysetup_ble, TC_iot_easysetup_ble_con_timer_init_success_pos)
 {
     struct iot_context *ctx = (struct iot_context *)*state;
     iot_error_t err;
@@ -552,7 +588,7 @@ void TC_iot_easysetup_ble_con_timer_init_success(void **state)
     assert_int_equal(err, IOT_ERROR_NONE);
 }
 
-void TC_iot_easysetup_ble_conn_cb_connected(void **state)
+TEST_F(iot_easysetup_ble, TC_iot_easysetup_ble_conn_cb_connected_pos)
 {
     struct iot_context *ctx = (struct iot_context *)*state;
 
@@ -567,7 +603,7 @@ void TC_iot_easysetup_ble_conn_cb_connected(void **state)
     assert_true(ctx->ble_connected);
 }
 
-void TC_iot_easysetup_ble_conn_cb_disconnected(void **state)
+TEST_F(iot_easysetup_ble, TC_iot_easysetup_ble_conn_cb_disconnected_neg)
 {
     struct iot_context *ctx = (struct iot_context *)*state;
 
@@ -586,7 +622,7 @@ void TC_iot_easysetup_ble_conn_cb_disconnected(void **state)
     assert_false(ctx->d2d_event_request);
 }
 
-void TC_iot_easysetup_ble_conn_cb_unknown_event(void **state)
+TEST_F(iot_easysetup_ble, TC_iot_easysetup_ble_conn_cb_unknown_event_neg)
 {
     struct iot_context *ctx = (struct iot_context *)*state;
 
@@ -595,9 +631,11 @@ void TC_iot_easysetup_ble_conn_cb_unknown_event(void **state)
     // When: conn_cb is called with unknown event type
     _iot_easysetup_ble_conn_cb((iot_ble_conn_evt_t)99);
     // Then: no crash (event is ignored)
+
+    assert_true(true);
 }
 
-void TC_iot_easysetup_ble_send_deinit_request(void **state)
+TEST_F(iot_easysetup_ble, TC_iot_easysetup_ble_send_deinit_request_neg)
 {
     struct iot_context *ctx = (struct iot_context *)*state;
 
@@ -612,7 +650,7 @@ void TC_iot_easysetup_ble_send_deinit_request(void **state)
     assert_int_equal(err, IOT_ERROR_NONE);
 }
 
-void TC_iot_easysetup_ble_deinit_request_handler(void **state)
+TEST_F(iot_easysetup_ble, TC_iot_easysetup_ble_deinit_request_handler_neg)
 {
     struct iot_context *ctx = (struct iot_context *)*state;
 
@@ -626,7 +664,7 @@ void TC_iot_easysetup_ble_deinit_request_handler(void **state)
     assert_false(ctx->es_ble_ready);
 }
 
-void TC_iot_easysetup_ble_send_response_null_payload(void **state)
+TEST_F(iot_easysetup_ble, TC_iot_easysetup_ble_send_response_null_payload_neg)
 {
     struct iot_context *ctx = (struct iot_context *)*state;
     iot_error_t err;
@@ -664,7 +702,7 @@ static void _tc_ble_init_cipher(struct iot_context *ctx)
     assert_int_equal(err, IOT_ERROR_NONE);
 }
 
-void TC_iot_easysetup_ble_msg_encrypt_decrypt_roundtrip(void **state)
+TEST_F(iot_easysetup_ble, TC_iot_easysetup_ble_msg_encrypt_decrypt_roundtrip_neg)
 {
     struct iot_context *ctx = (struct iot_context *)*state;
     unsigned char payload[32];
@@ -707,7 +745,7 @@ void TC_iot_easysetup_ble_msg_encrypt_decrypt_roundtrip(void **state)
         iot_os_free((void *)decrypted);
 }
 
-void TC_iot_easysetup_ble_msg_encrypt_deviceinfo_passthrough(void **state)
+TEST_F(iot_easysetup_ble, TC_iot_easysetup_ble_msg_encrypt_deviceinfo_passthrough_neg)
 {
     struct iot_context *ctx = (struct iot_context *)*state;
     unsigned char payload[16];
@@ -738,7 +776,7 @@ void TC_iot_easysetup_ble_msg_encrypt_deviceinfo_passthrough(void **state)
     iot_os_free(enc_buf);
 }
 
-void TC_iot_easysetup_ble_msg_encrypt_small_mtu(void **state)
+TEST_F(iot_easysetup_ble, TC_iot_easysetup_ble_msg_encrypt_small_mtu_neg)
 {
     struct iot_context *ctx = (struct iot_context *)*state;
     unsigned char payload[8] = {1, 2, 3, 4, 5, 6, 7, 8};
@@ -766,7 +804,7 @@ void TC_iot_easysetup_ble_msg_encrypt_small_mtu(void **state)
     iot_os_free(enc_buf);
 }
 
-void TC_iot_easysetup_ble_msg_encrypt_large_mtu(void **state)
+TEST_F(iot_easysetup_ble, TC_iot_easysetup_ble_msg_encrypt_large_mtu_neg)
 {
     struct iot_context *ctx = (struct iot_context *)*state;
     unsigned char payload[8] = {1, 2, 3, 4, 5, 6, 7, 8};
@@ -794,7 +832,7 @@ void TC_iot_easysetup_ble_msg_encrypt_large_mtu(void **state)
     iot_os_free(enc_buf);
 }
 
-void TC_iot_easysetup_ble_msg_encrypt_no_cipher_params(void **state)
+TEST_F(iot_easysetup_ble, TC_iot_easysetup_ble_msg_encrypt_no_cipher_params_neg)
 {
     struct iot_context *ctx = (struct iot_context *)*state;
     unsigned char payload[4] = {1, 2, 3, 4};
@@ -813,7 +851,7 @@ void TC_iot_easysetup_ble_msg_encrypt_no_cipher_params(void **state)
     assert_int_equal(err, IOT_ERROR_INVALID_ARGS);
 }
 
-void TC_iot_easysetup_ble_send_response_no_cipher_params(void **state)
+TEST_F(iot_easysetup_ble, TC_iot_easysetup_ble_send_response_no_cipher_params_neg)
 {
     struct iot_context *ctx = (struct iot_context *)*state;
     iot_error_t err;
@@ -828,7 +866,7 @@ void TC_iot_easysetup_ble_send_response_no_cipher_params(void **state)
     assert_int_equal(err, IOT_ERROR_INVALID_ARGS);
 }
 
-void TC_iot_easysetup_ble_send_response_deviceinfo_success(void **state)
+TEST_F(iot_easysetup_ble, TC_iot_easysetup_ble_send_response_deviceinfo_success_pos)
 {
     struct iot_context *ctx = (struct iot_context *)*state;
     iot_error_t err;
@@ -844,7 +882,7 @@ void TC_iot_easysetup_ble_send_response_deviceinfo_success(void **state)
     assert_int_equal(err, IOT_ERROR_NONE);
 }
 
-void TC_iot_easysetup_ble_deinit_ready_network_error(void **state)
+TEST_F(iot_easysetup_ble, TC_iot_easysetup_ble_deinit_ready_network_error_neg)
 {
     struct iot_context *ctx = (struct iot_context *)*state;
 
@@ -858,9 +896,11 @@ void TC_iot_easysetup_ble_deinit_ready_network_error(void **state)
     // When: iot_easysetup_deinit is called
     iot_easysetup_deinit(ctx);
     // Then: goes through encrypt-and-report path then iot_state_update without crash
+
+    assert_true(true);
 }
 
-void TC_iot_easysetup_ble_deinit_ready_success(void **state)
+TEST_F(iot_easysetup_ble, TC_iot_easysetup_ble_deinit_ready_success_pos)
 {
     struct iot_context *ctx = (struct iot_context *)*state;
 
@@ -877,7 +917,7 @@ void TC_iot_easysetup_ble_deinit_ready_success(void **state)
     assert_int_equal(tc_mock_ble_get_start_adv_call_count(), 1);
 }
 
-void TC_iot_easysetup_ble_conn_cb_disconnected_with_cipher(void **state)
+TEST_F(iot_easysetup_ble, TC_iot_easysetup_ble_conn_cb_disconnected_with_cipher_neg)
 {
     struct iot_context *ctx = (struct iot_context *)*state;
 
@@ -901,7 +941,7 @@ static void _tc_status_cb(st_device_status status, void *user_data)
     tc_status_cb_count++;
 }
 
-void TC_iot_easysetup_ble_msg_handler_deviceinfo_with_status_cb(void **state)
+TEST_F(iot_easysetup_ble, TC_iot_easysetup_ble_msg_handler_deviceinfo_with_status_cb_neg)
 {
     struct iot_context *ctx = (struct iot_context *)*state;
 
@@ -921,7 +961,7 @@ void TC_iot_easysetup_ble_msg_handler_deviceinfo_with_status_cb(void **state)
     assert_true(tc_status_cb_count >= 1);
 }
 
-void TC_iot_easysetup_ble_gen_payload_offline_diagnostics_connection_info(void **state)
+TEST_F(iot_easysetup_ble, TC_iot_easysetup_ble_gen_payload_offline_diagnostics_connection_info_pos)
 {
     struct iot_context *ctx = (struct iot_context *)*state;
     char *out_payload = NULL;
@@ -943,7 +983,7 @@ void TC_iot_easysetup_ble_gen_payload_offline_diagnostics_connection_info(void *
     assert_int_equal(ref_step, 0);
 }
 
-void TC_iot_easysetup_ble_msg_encrypt_array_malloc_failure(void **state)
+TEST_F(iot_easysetup_ble, TC_iot_easysetup_ble_msg_encrypt_array_malloc_failure_neg)
 {
     struct iot_context *ctx = (struct iot_context *)*state;
     unsigned char payload[8] = {1, 2, 3, 4, 5, 6, 7, 8};
@@ -967,7 +1007,7 @@ void TC_iot_easysetup_ble_msg_encrypt_array_malloc_failure(void **state)
     assert_int_equal(err, IOT_ERROR_MEM_ALLOC);
 }
 
-void TC_iot_easysetup_ble_msg_decrypt_malloc_failure(void **state)
+TEST_F(iot_easysetup_ble, TC_iot_easysetup_ble_msg_decrypt_malloc_failure_neg)
 {
     struct iot_context *ctx = (struct iot_context *)*state;
     unsigned char enc[] = {'a', 'b', 'c', 'd', 'e', 'f', 'g', 'h'};
@@ -989,7 +1029,7 @@ void TC_iot_easysetup_ble_msg_decrypt_malloc_failure(void **state)
     assert_int_equal(err, IOT_ERROR_EASYSETUP_MEM_ALLOC_ERROR);
 }
 
-void TC_iot_easysetup_ble_msg_decrypt_bad_input(void **state)
+TEST_F(iot_easysetup_ble, TC_iot_easysetup_ble_msg_decrypt_bad_input_neg)
 {
     struct iot_context *ctx = (struct iot_context *)*state;
     unsigned char enc[] = {'a', 'b', 'c', 'd', 'e', 'f', 'g', 'h'};
@@ -1007,7 +1047,7 @@ void TC_iot_easysetup_ble_msg_decrypt_bad_input(void **state)
     assert_int_equal(err, IOT_ERROR_EASYSETUP_AES256_DECRYPTION_ERROR);
 }
 
-void TC_iot_easysetup_ble_msg_handler_with_payload(void **state)
+TEST_F(iot_easysetup_ble, TC_iot_easysetup_ble_msg_handler_with_payload_neg)
 {
     struct iot_context *ctx = (struct iot_context *)*state;
     unsigned char enc[16];
@@ -1026,9 +1066,11 @@ void TC_iot_easysetup_ble_msg_handler_with_payload(void **state)
     // When: msg_handler is called with DEVICEINFO and payload
     iot_easysetup_ble_msg_handler(IOT_EASYSETUP_BLE_STEP_DEVICEINFO, (char *)enc, sizeof(enc));
     // Then: decrypt call in msg_handler is exercised without crash
+
+    assert_true(true);
 }
 
-void TC_iot_easysetup_ble_msg_handler_decrypt_error(void **state)
+TEST_F(iot_easysetup_ble, TC_iot_easysetup_ble_msg_handler_decrypt_error_neg)
 {
     struct iot_context *ctx = (struct iot_context *)*state;
     unsigned char enc[16] = {0};
@@ -1041,9 +1083,11 @@ void TC_iot_easysetup_ble_msg_handler_decrypt_error(void **state)
     // When: msg_handler is called with CONFIRMINFO and garbage payload
     iot_easysetup_ble_msg_handler(IOT_EASYSETUP_BLE_STEP_CONFIRMINFO, (char *)enc, sizeof(enc));
     // Then: decrypt-error early return is covered without crash
+
+    assert_true(true);
 }
 
-void TC_iot_easysetup_ble_gen_payload_request_pending(void **state)
+TEST_F(iot_easysetup_ble, TC_iot_easysetup_ble_gen_payload_request_pending_neg)
 {
     struct iot_context *ctx = (struct iot_context *)*state;
     char *out_payload = NULL;

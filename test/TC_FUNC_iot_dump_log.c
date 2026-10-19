@@ -19,10 +19,19 @@
 #include <iot_dump_log.h>
 #include <iot_internal.h>
 #include <iot_log_file.h>
+#include <security/iot_security_util.h>
 #include <string.h>
 
 #include "TC_MOCK_functions.h"
+#include "TC_REGISTRY.h"
 #include "cmocka_custom.h"
+
+TEST_SUITE("iot_dump_log.c");
+
+static int _tc_dump_log_setup(void **state);
+static int _tc_dump_log_teardown(void **state);
+
+TEST_FIXTURE(tc_dump_log, _tc_dump_log_setup, _tc_dump_log_teardown);
 
 static char sample_device_info[] = {
     "{\n"
@@ -47,7 +56,7 @@ static void write_log_lines(int number_of_lines)
     }
 }
 
-void TC_iot_dump_create_dump_state_failure(void **state)
+TEST_F(TC_REGISTRY_NO_FIXTURE, TC_iot_dump_create_dump_state_failure_neg)
 {
     struct iot_context *context = NULL;
     char *buf = NULL;
@@ -121,7 +130,7 @@ static void create_dump_test()
     free(context);
 }
 
-void TC_iot_dump_create_dump_state_success(void **state)
+TEST_F(tc_dump_log, TC_iot_dump_create_dump_state_neg)
 {
     iot_error_t iot_err;
     int log_file_type;
@@ -147,12 +156,146 @@ void TC_iot_dump_create_dump_state_success(void **state)
     }
     iot_log_file_exit();
 #endif  // CONFIG_STDK_IOT_CORE_LOG_FILE
+
+    assert_true(true);
 }
 
-void TC_iot_dump_log(void **state)
+TEST_F(TC_REGISTRY_NO_FIXTURE, TC_iot_dump_log_neg)
 {
     iot_dump_log(IOT_DEBUG_LEVEL_ERROR, 0xffffffff, 0, 0);
     iot_dump_log(IOT_DEBUG_LEVEL_WARN, 0xffffffff, 0, 0);
     iot_dump_log(IOT_DEBUG_LEVEL_INFO, 0xffffffff, 0, 0);
     iot_dump_log(IOT_DEBUG_LEVEL_DEBUG, 0xffffffff, 0, 0);
+
+    assert_true(true);
+}
+
+/* The dump path needs an initialized log file when CONFIG_STDK_IOT_CORE_LOG_FILE is on. */
+static void _tc_dump_log_file_init(void)
+{
+#ifdef CONFIG_STDK_IOT_CORE_LOG_FILE
+#if defined(CONFIG_STDK_IOT_CORE_LOG_FILE_RAM_ONLY)
+    assert_int_equal(iot_log_file_init(RAM_ONLY), IOT_ERROR_NONE);
+#else
+    assert_int_equal(iot_log_file_init(FLASH_WITH_RAM), IOT_ERROR_NONE);
+#endif
+#endif
+}
+
+static void _tc_dump_log_file_exit(void)
+{
+#ifdef CONFIG_STDK_IOT_CORE_LOG_FILE
+    iot_log_file_exit();
+#endif
+}
+
+static int _tc_dump_log_setup(void **state)
+{
+    _tc_dump_log_file_init();
+    return 0;
+}
+
+static int _tc_dump_log_teardown(void **state)
+{
+    _tc_dump_log_file_exit();
+    return 0;
+}
+
+TEST_F(TC_REGISTRY_NO_FIXTURE, TC_iot_dump_create_log_dump_base64_min_size_neg)
+{
+    char *buf = (char *)0x1;
+    size_t allocated_size = 0xdeadbeef;
+    size_t min_log_dump_size;
+    int mode = IOT_DUMP_MODE_NEED_BASE64 | IOT_DUMP_MODE_NEED_DUMP_STATE;
+    iot_error_t err;
+
+    // Given: one byte less than the minimum base64 encoded header + dump state
+    min_log_dump_size = IOT_SECURITY_B64_ENCODE_LEN(sizeof(struct iot_dump_header) + sizeof(struct iot_dump_state));
+    // When
+    err = st_create_log_dump(NULL, &buf, min_log_dump_size - 1, &allocated_size, mode);
+    // Then
+    assert_int_equal(err, IOT_ERROR_BAD_REQ);
+}
+
+TEST_F(TC_REGISTRY_NO_FIXTURE, TC_iot_dump_create_log_dump_raw_min_size_neg)
+{
+    char *buf = (char *)0x1;
+    size_t allocated_size = 0xdeadbeef;
+    size_t min_log_dump_size;
+    int mode = IOT_DUMP_MODE_NEED_DUMP_STATE;
+    iot_error_t err;
+
+    // Given: one byte less than the raw header + dump state size
+    min_log_dump_size = sizeof(struct iot_dump_header) + sizeof(struct iot_dump_state);
+    // When
+    err = st_create_log_dump(NULL, &buf, min_log_dump_size - 1, &allocated_size, mode);
+    // Then
+    assert_int_equal(err, IOT_ERROR_BAD_REQ);
+}
+
+TEST_F(TC_REGISTRY_NO_FIXTURE, TC_iot_dump_create_log_dump_output_cleared_on_failure_neg)
+{
+    char *buf = (char *)0x1;
+    size_t allocated_size = 0xdeadbeef;
+    int mode = IOT_DUMP_MODE_NEED_BASE64 | IOT_DUMP_MODE_NEED_DUMP_STATE;
+    iot_error_t err;
+
+    _tc_dump_log_file_init();
+
+    // Given: the malloc for the dump output buffer fails (index 0 is the log file handle)
+    do_not_use_mock_iot_os_malloc_failure();
+    set_mock_iot_os_malloc_failure_with_index(1);
+    // When
+    err = st_create_log_dump(NULL, &buf, 2048, &allocated_size, mode);
+    do_not_use_mock_iot_os_malloc_failure();
+    _tc_dump_log_file_exit();
+
+    // Then: caller visible outputs must be reset, not left dangling
+    assert_int_equal(err, IOT_ERROR_MEM_ALLOC);
+    assert_null(buf);
+    assert_int_equal(allocated_size, 0);
+}
+
+TEST_F(TC_REGISTRY_NO_FIXTURE, TC_iot_dump_create_log_dump_dip_not_dropped_neg)
+{
+    struct iot_context *context;
+    struct iot_dip_data dip;
+    char *dump_with_dip = NULL;
+    char *dump_without_dip = NULL;
+    size_t size_with_dip = 0;
+    size_t size_without_dip = 0;
+    int mode = IOT_DUMP_MODE_NEED_DUMP_STATE;
+    iot_error_t err;
+
+    _tc_dump_log_file_init();
+
+    context = (struct iot_context *)malloc(sizeof(struct iot_context));
+    assert_non_null(context);
+    memset(context, 0, sizeof(struct iot_context));
+    memset(&dip, 0, sizeof(dip));
+    memset(dip.dip_id.id, 0x5a, sizeof(dip.dip_id.id));
+    dip.dip_major_version = 0x1234;
+    dip.dip_minor_version = 0x5678;
+
+    // Given: a context without dip information
+    err = st_create_log_dump((IOT_CTX *)context, &dump_without_dip, 2048, &size_without_dip, mode);
+    assert_int_equal(err, IOT_ERROR_NONE);
+    assert_non_null(dump_without_dip);
+
+    // Given: the same context carrying dip information
+    context->devconf.dip = &dip;
+    // When
+    err = st_create_log_dump((IOT_CTX *)context, &dump_with_dip, 2048, &size_with_dip, mode);
+
+    free(context);
+    _tc_dump_log_file_exit();
+
+    // Then: the dip must not be silently dropped from the dump state
+    assert_int_equal(err, IOT_ERROR_NONE);
+    assert_non_null(dump_with_dip);
+    assert_int_equal(size_with_dip, size_without_dip);
+    assert_memory_not_equal(dump_with_dip, dump_without_dip, size_with_dip);
+
+    free(dump_with_dip);
+    free(dump_without_dip);
 }

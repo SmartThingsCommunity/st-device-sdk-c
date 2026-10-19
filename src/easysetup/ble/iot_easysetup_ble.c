@@ -157,7 +157,8 @@ void _iot_easysetup_ble_conn_cb(iot_ble_conn_evt_t evt)
                 IOT_INFO("BLE disconnection after onboarding");
                 IOT_INFO("get wifi provisioning info");
                 err = iot_nv_get_wifi_prov_data(&context->prov_data.wifi);
-                context->is_wifi_station = false;
+                context->need_wifi_reset = true;
+                context->connection_retry_count = 0;
                 if (err) {
                     IOT_ERROR("get wifi prov fail");
                 }
@@ -364,8 +365,14 @@ iot_error_t _iot_easysetup_ble_msg_encrypt(struct iot_context *context, int cmd,
 {
     iot_error_t err = IOT_ERROR_NONE;
     iot_security_buffer_t msg_buf = {0};
-    iot_security_context_t *security_context = context->easysetup_security_context;
+    iot_security_context_t *security_context;
     uint32_t buf_idx;
+
+    if (!context || !context->easysetup_security_context) {
+        IOT_ES_DUMP(IOT_DEBUG_LEVEL_ERROR, IOT_DUMP_EASYSETUP_INTERNAL_SERVER_ERROR, 0);
+        return IOT_ERROR_INVALID_ARGS;
+    }
+    security_context = context->easysetup_security_context;
 
     uint32_t max_att_len = iot_bsp_ble_get_mtu();
     if (max_att_len < MIN_MTU_SIZE) {
@@ -539,18 +546,13 @@ err_report:
                     break;
                 case IOT_ERROR_CONN_DNS_QUERY_FAIL:
                 case IOT_ERROR_CONN_STA_NO_INTERNET:
+                case IOT_ERROR_NET_TCP_CONNECTION_FAIL:
+                case IOT_ERROR_NET_TLS_HANDSHAKE_FAIL:
+                case IOT_ERROR_MQTT_CONNECT_FAIL:
+                case IOT_ERROR_MQTT_CONNECT_TIMEOUT:
+                case IOT_ERROR_MQTT_RATE_LIMIT:
                     err = IOT_ERROR_EASYSETUP_NOT_CONNECTED_WIRELESS_NETWORK;
                     IOT_ES_DUMP(IOT_DEBUG_LEVEL_INFO, IOT_DUMP_EASYSETUP_NOT_CONNECTED_WIRELESS_NETWORK, 0);
-                    break;
-                case IOT_ERROR_CONN_STA_AP_NOT_FOUND:
-                case IOT_ERROR_CONN_STA_ASSOC_FAIL:
-                case IOT_ERROR_CONN_STA_CONN_FAIL:
-                    err = IOT_ERROR_EASYSETUP_WIFI_NOT_DISCOVERED;
-                    IOT_ES_DUMP(IOT_DEBUG_LEVEL_INFO, IOT_DUMP_EASYSETUP_WIFI_NOT_DISCOVERED, 0);
-                    break;
-                case IOT_ERROR_CONN_OPERATE_FAIL:
-                    err = IOT_ERROR_EASYSETUP_WIFI_NOT_DISCOVERED;
-                    IOT_ES_DUMP(IOT_DEBUG_LEVEL_INFO, IOT_DUMP_EASYSETUP_WIFI_NOT_DISCOVERED, 0);
                     break;
                 default:
                     err = IOT_ERROR_EASYSETUP_WIFI_NOT_DISCOVERED;
@@ -650,7 +652,8 @@ void iot_easysetup_deinit(struct iot_context *ctx)
         } else if (ctx->wifi_update_enabled) {
             IOT_INFO("get wifi provisioning info");
             err = iot_nv_get_wifi_prov_data(&ctx->prov_data.wifi);
-            ctx->is_wifi_station = false;
+            ctx->need_wifi_reset = true;
+            ctx->connection_retry_count = 0;
             if (err) {
                 IOT_ERROR("get wifi prov fail");
             }

@@ -2,7 +2,7 @@
 
 ## Summary
 
-This example is providing simple IoT switch device application running on POSIX system. To run the example on POSIX system, you first register device profile on Developer Workspace according to [Getting Started](../../doc/getting_started.md). And for easy test purpose, this example skips onboarding(registering) process. So you should register your device on the cloud ahead manually according to [manual onboarding tool guide](../../tools/manual_onboarding/README.md).
+This example is providing simple IoT switch device application running on POSIX system. To run the example on POSIX system, you first register device profile on Console according to [Getting Started](../../doc/getting_started.md). And for easy test purpose, this example skips onboarding(registering) process. So you should register your device on the cloud ahead manually according to [manual onboarding tool guide](../../tools/manual_onboarding/README.md).
 
 ## Build environment
 
@@ -25,13 +25,13 @@ This example is providing simple IoT switch device application running on POSIX 
     // Below is config example.
     // You should replace with your device information.
     st_device_config_t dev_config = {
-    // You should replace your deviceId and server type.
-    // You can get deviceId and server type after registering your device with the manual registering tool.
+    // You should replace your deviceId and server url.
+    // You can get deviceId and server url after registering your device with the manual registering tool.
     .device_id = "12345678-1234-1234-1234-123456789012",
-    .server_type = SERVER_TYPE_AP_NORTH_EAST2,
+    .server_url = "ssl://mqtt-regional-apnortheast2.api.smartthings.com:8883",
 
     // You should replace your device identity info.
-    // You can get your device identity info from device_info.json created after using keygen tool.
+    // You can get your device identity info from device_info.json.
     .id_method = ST_IDENTITY_METHOD_MANUAL_ED25519,
     .identity = {
         .ed25519 = {
@@ -41,21 +41,23 @@ This example is providing simple IoT switch device application running on POSIX 
         },
     },
 
-    // You should replace your mnId.
-    // You can check your mnid from onboarding_config.json or Developer Workspace.
+    // You should replace your onboarding config info.
+    // You can get the info from onboarding_config.json.
     .mnId = "ABCD",
+    .dip_id = "12345678-1234-1234-1234-123456789012",
+    .dip_major_version = 0,
+    .dip_minor_version = 1,
     };
     ```
-    You can get `device_id`, `server_type`, `mnId` info from manual onboarding registration result. (See [manual onboarding tool guide](../../tools/manual_onboarding/README.md) for details).
+    You can get `device_id`, `server_url` info from manual onboarding registration result. (See [manual onboarding tool guide](../../tools/manual_onboarding/README.md) for details).
     ```sh
     /////// Registration Result ////////
     Device ID : d6f97986-3195-4936-ac91-91c214ce73a2
-    mnId : fkOP
-    Server Type : AP_NORTH EAST2
+    Server URL : ssl://mqtt-regional-apnortheast2.api.smartthings.com:8883
     ///////////////////////////////////
     ```
 
-    You can get `identity` from device_info.json. (See [keygen tool guide](../../tools/keygen/README.md) for details.)
+    You can get `identity` from device_info.json. (See [Getting Started](../../doc/getting_started.md#register-test-devices) for details.)
     ```json
      {
        "deviceInfo": {
@@ -65,6 +67,31 @@ This example is providing simple IoT switch device application running on POSIX 
          "serialNumber": "serialNumber_here"
        }
      }
+    ```
+
+    You can get `onboarding config` from onboarding_config.json. (See [Getting Started](../../doc/getting_started.md#download-onboarding_configjson) for details)
+    ```json
+    {
+        "onboardingConfig": {
+            "deviceOnboardingId": "NAME",
+            "mnId": "MNID",
+            "setupId": "999",
+            "vid": "VID",
+            "deviceTypeId": "TYPE",
+            "ownershipValidationTypes": [
+                "JUSTWORKS",
+                "BUTTON",
+                "PIN",
+                "QR"
+            ],
+            "identityType": "ED25519",
+            "deviceIntegrationProfileKey": {
+                "id": "DIP_UUID",
+                "majorVersion": 0,
+                "minorVersion": 1
+            }
+        }
+    }
     ```
 
 2. Move to example/posix directory, run cmake and build example.

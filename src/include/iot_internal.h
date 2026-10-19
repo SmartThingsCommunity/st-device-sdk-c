@@ -50,6 +50,7 @@
 #define IOT_PUB_TOPIC_DEVICES_CREATE "/v1/devices/create/cbor"
 #define IOT_PUB_TOPIC_GET_PREFERENCES "/v1/devices/preferences/get/cbor"
 #define IOT_PUB_TOPIC_GET "/v1/devices/get/cbor"
+#define IOT_PUB_TOPIC_DEVICES_UPDATE_STATUS "/v1/devices/updateStatus/cbor"
 #else
 #define IOT_PUB_TOPIC_REGISTRATION "/v1/registrations"
 #define IOT_SUB_TOPIC_REGISTRATION "/v1/registrations/notification/%s"
@@ -62,6 +63,7 @@
 #define IOT_PUB_TOPIC_DEVICES_CREATE "/v1/devices/create"
 #define IOT_PUB_TOPIC_GET_PREFERENCES "/v1/devices/preferences/get"
 #define IOT_PUB_TOPIC_GET "/v1/devices/get"
+#define IOT_PUB_TOPIC_DEVICES_UPDATE_STATUS "/v1/devices/updateStatus"
 #endif
 
 #define IOT_PUB_TOPIC_DELETE "/v1/devices/delete"
@@ -95,13 +97,28 @@ iot_error_t iot_command_send(struct iot_context *ctx, enum iot_command_type cmd_
                              int param_size);
 
 /**
- * @brief       wifi status check
- * @details     this function check wifi connection status
- * @param[in]   ctx                                     iot-core context
- * @retval      IOT_ERROR_NONE                  success.
- * @retval      IOT_ERROR_NV_DATA_ERROR         data set/get failed
+ * @brief	queue a notification to be handled on the device work queue task
+ * @details	this function makes a shallow copy of the noti_data struct and queues it,
+ *		the notification is dispatched to registered callbacks on the work queue task
+ *		and the queued copy is freed by the handler after dispatch.
+ *
+ *		Ownership contract (shallow copy):
+ *		- noti_data itself may live on the caller's stack, only the struct is copied.
+ *		- Heap pointers embedded in noti_data (e.g. raw.preferences.preferences_data
+ *		  and the name/string buffers it references) are NOT deep-copied.
+ *		- On IOT_ERROR_NONE, ownership of those embedded heap pointers transfers to
+ *		  the notification handler, which frees them after invoking user callbacks.
+ *		  The caller must not access or free them after a successful call.
+ *		- On any error return, embedded heap pointers remain owned by the caller,
+ *		  only the internal struct copy is freed.
+ * @param[in]	ctx			iot-core context
+ * @param[in]	noti_data		notification data to deliver
+ * @retval	IOT_ERROR_NONE		success.
+ * @retval	IOT_ERROR_INVALID_ARGS	ctx or noti_data is NULL
+ * @retval	IOT_ERROR_MEM_ALLOC	memory allocation failed
+ * @retval	IOT_ERROR_BAD_REQ	queue send error
  */
-iot_error_t iot_wifi_get_status(struct iot_context *ctx);
+iot_error_t iot_noti_send(struct iot_context *ctx, const iot_noti_data_t *noti_data);
 
 /**
  * @brief	send wifi control request

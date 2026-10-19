@@ -18,6 +18,7 @@
 #include <iot_mqtt_packet.h>
 #include <string.h>
 
+#include "TC_REGISTRY.h"
 #include "cmocka_custom.h"
 
 /* Not declared in the public header but defined in iot_mqtt_unsubscribe_server.c */
@@ -30,7 +31,9 @@ extern int MQTTSerialize_unsuback(unsigned char *buf, int buflen, unsigned short
 /*
  * Tests for MQTTDeserialize_unsubscribe
  */
-void TC_MQTTDeserialize_unsubscribe_success(void **state)
+TEST_SUITE("iot_mqtt_unsubscribe_server.c");
+
+TEST_F(TC_REGISTRY_NO_FIXTURE, TC_MQTTDeserialize_unsubscribe_neg)
 {
     unsigned char wire[64];
     MQTTString topics[4];
@@ -55,7 +58,7 @@ void TC_MQTTDeserialize_unsubscribe_success(void **state)
     assert_memory_equal(topics_out[0].lenstring.data, "t", 1);
 }
 
-void TC_MQTTDeserialize_unsubscribe_multi_topic(void **state)
+TEST_F(TC_REGISTRY_NO_FIXTURE, TC_MQTTDeserialize_unsubscribe_multi_topic_neg)
 {
     unsigned char wire[128];
     MQTTString topics[3];
@@ -79,7 +82,7 @@ void TC_MQTTDeserialize_unsubscribe_multi_topic(void **state)
     assert_int_equal(count, 3);
 }
 
-void TC_MQTTDeserialize_unsubscribe_wrong_type(void **state)
+TEST_F(TC_REGISTRY_NO_FIXTURE, TC_MQTTDeserialize_unsubscribe_wrong_type_neg)
 {
     unsigned char wire[] = {(unsigned char)(PUBACK << 4), 0x02, 0x00, 0x00};
     MQTTString topics_out[1];
@@ -93,7 +96,7 @@ void TC_MQTTDeserialize_unsubscribe_wrong_type(void **state)
     assert_int_equal(rc, 0);
 }
 
-void TC_MQTTDeserialize_unsubscribe_truncated_topic(void **state)
+TEST_F(TC_REGISTRY_NO_FIXTURE, TC_MQTTDeserialize_unsubscribe_truncated_topic_neg)
 {
     /* UNSUBSCRIBE header (qos=1) + remlen(4) + packetid + topic-len claiming 10 bytes */
     unsigned char wire[] = {0xA2, 0x04, 0x00, 0x01, 0x00, 0x0A};
@@ -111,7 +114,7 @@ void TC_MQTTDeserialize_unsubscribe_truncated_topic(void **state)
     assert_int_equal(count, 0);
 }
 
-void TC_MQTTDeserialize_unsubscribe_empty_topic_list(void **state)
+TEST_F(TC_REGISTRY_NO_FIXTURE, TC_MQTTDeserialize_unsubscribe_empty_topic_list_neg)
 {
     /* UNSUBSCRIBE header (qos=1) + remlen(2) + packetid only; zero topics. */
     unsigned char wire[] = {0xA2, 0x02, 0x00, 0x01};
@@ -132,7 +135,7 @@ void TC_MQTTDeserialize_unsubscribe_empty_topic_list(void **state)
 /*
  * Tests for MQTTSerialize_unsuback
  */
-void TC_MQTTSerialize_unsuback_success(void **state)
+TEST_F(TC_REGISTRY_NO_FIXTURE, TC_MQTTSerialize_unsuback_neg)
 {
     unsigned char buf[8] = {0};
     int rc;
@@ -146,7 +149,7 @@ void TC_MQTTSerialize_unsuback_success(void **state)
     assert_int_equal(buf[3], 0x34);
 }
 
-void TC_MQTTSerialize_unsuback_buffer_too_short(void **state)
+TEST_F(TC_REGISTRY_NO_FIXTURE, TC_MQTTSerialize_unsuback_buffer_too_short_neg)
 {
     unsigned char buf[1] = {0};
     int rc;
@@ -156,7 +159,7 @@ void TC_MQTTSerialize_unsuback_buffer_too_short(void **state)
     assert_int_equal(rc, MQTTPACKET_BUFFER_TOO_SHORT);
 }
 
-void TC_MQTTSerialize_unsuback_zero_buffer(void **state)
+TEST_F(TC_REGISTRY_NO_FIXTURE, TC_MQTTSerialize_unsuback_zero_buffer_neg)
 {
     unsigned char buf[8] = {0};
     int rc;
@@ -166,7 +169,7 @@ void TC_MQTTSerialize_unsuback_zero_buffer(void **state)
     assert_int_equal(rc, MQTTPACKET_BUFFER_TOO_SHORT);
 }
 
-void TC_MQTTSerialize_unsuback_various_packetids(void **state)
+TEST_F(TC_REGISTRY_NO_FIXTURE, TC_MQTTSerialize_unsuback_various_packetids_neg)
 {
     unsigned char buf[8];
     int rc;
@@ -181,4 +184,90 @@ void TC_MQTTSerialize_unsuback_various_packetids(void **state)
     assert_int_equal(rc, 4);
     assert_int_equal(buf[2], 0xFF);
     assert_int_equal(buf[3], 0xFF);
+}
+
+TEST_F(TC_REGISTRY_NO_FIXTURE, TC_MQTTSerialize_unsuback_negative_buflen_neg)
+{
+    unsigned char buf[8] = {0};
+    int rc;
+    UNUSED(state);
+
+    // When: a negative buffer length is passed
+    rc = MQTTSerialize_unsuback(buf, -1, 0x0001);
+    // Then
+    assert_int_equal(rc, MQTTPACKET_BUFFER_TOO_SHORT);
+}
+
+TEST_F(TC_REGISTRY_NO_FIXTURE, TC_MQTTDeserialize_unsubscribe_reserved_type_neg)
+{
+    unsigned char wire[] = {0x00, 0x02, 0x00, 0x01};
+    MQTTString topics_out[1];
+    unsigned char dup = 0;
+    unsigned short packetid = 0xFFFF;
+    int count = 0xFF;
+    int rc;
+    UNUSED(state);
+
+    memset(topics_out, 0, sizeof(topics_out));
+    // When: the reserved packet type 0 is deserialized as UNSUBSCRIBE
+    rc = MQTTDeserialize_unsubscribe(&dup, &packetid, 1, &count, topics_out, wire, sizeof(wire));
+    // Then: rejected before any output is written
+    assert_int_equal(rc, 0);
+    assert_int_equal(count, 0xFF);
+    assert_int_equal(packetid, 0xFFFF);
+}
+
+TEST_F(TC_REGISTRY_NO_FIXTURE, TC_MQTTDeserialize_unsubscribe_subscribe_type_neg)
+{
+    unsigned char wire[64];
+    MQTTString topics[1];
+    MQTTString topics_out[1];
+    unsigned char dup = 0;
+    unsigned short packetid = 0xFFFF;
+    int count = 0xFF;
+    int total;
+    int rc;
+    UNUSED(state);
+
+    // Given: a well formed SUBSCRIBE packet
+    memset(topics, 0, sizeof(topics));
+    topics[0].cstring = "t";
+    int qos[] = {0};
+    total = MQTTSerialize_subscribe(wire, sizeof(wire), 0, 0x0042, 1, topics, qos);
+    assert_true(total > 0);
+
+    memset(topics_out, 0, sizeof(topics_out));
+    // When: it is handed to the UNSUBSCRIBE deserializer
+    rc = MQTTDeserialize_unsubscribe(&dup, &packetid, 1, &count, topics_out, wire, total);
+    // Then
+    assert_int_equal(rc, 0);
+    assert_int_equal(count, 0xFF);
+}
+
+TEST_F(TC_REGISTRY_NO_FIXTURE, TC_MQTTDeserialize_unsubscribe_maxcount_not_enforced_neg)
+{
+    unsigned char wire[128];
+    MQTTString topics[3];
+    MQTTString topics_out[4];
+    unsigned char dup = 0;
+    unsigned short packetid = 0;
+    int count = 0;
+    int total;
+    int rc;
+    UNUSED(state);
+
+    // Given: three topic filters on the wire
+    memset(topics, 0, sizeof(topics));
+    topics[0].cstring = "a";
+    topics[1].cstring = "bb";
+    topics[2].cstring = "ccc";
+    total = MQTTSerialize_unsubscribe(wire, sizeof(wire), 0, 0x0001, 3, topics);
+    assert_true(total > 0);
+
+    memset(topics_out, 0, sizeof(topics_out));
+    // When: the caller only allows one filter
+    rc = MQTTDeserialize_unsubscribe(&dup, &packetid, 1, &count, topics_out, wire, total);
+    // Then: maxcount is not enforced, the caller array is written past its limit
+    assert_int_equal(rc, 1);
+    assert_int_equal(count, 3);
 }

@@ -40,6 +40,7 @@ typedef enum {
     IOT_NVD_AP_PASS,
     IOT_NVD_AP_BSSID,
     IOT_NVD_AP_AUTH_TYPE,
+    IOT_NVD_AP_HIDDEN,
     /* wifi prov data */
 
     /* cloud prov data */

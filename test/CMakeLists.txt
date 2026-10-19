@@ -55,9 +55,11 @@ if(ENABLE_STDK_TEST)
 
     add_executable(stdk_test
                    TEST_main.c
+                   TC_REGISTRY.c
                    TC_MOCK_iot_bsp.c
                    TC_MOCK_iot_os.c
                    TC_MOCK_iot_net.c
+                   TC_MOCK_iot_es.c
                    TC_FUNC_iot_util.c
                    TC_FUNC_iot_api.c
                    TC_FUNC_iot_uuid.c
@@ -86,6 +88,7 @@ if(ENABLE_STDK_TEST)
                    ${EASYSETUP_EXTRA_SRCS}
                    ${EASYSETUP_BLE_EXTRA_SRCS}
                    TC_FUNC_iot_wt.c
+                   TC_FUNC_iot_sntp.c
                    TC_FUNC_iot_dump_log.c
                    TC_FUNC_iot_log_file.c
                    TC_FUNC_iot_easysetup_st_mqtt.c

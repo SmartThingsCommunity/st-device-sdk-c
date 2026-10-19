@@ -221,13 +221,13 @@ def connect_mqtt_broker(client_ID: str, jwt_token: str, timer):
     global gg_server_url
     response = requestSmartThingsAPI("Get", "mqtt/broker/" + chosen_location["locationId"], ST_api_server="greatgate")
     if response:
-        gg_server_url = urlparse(response.json()["url"]).hostname
+        gg_server_url = response.json()["url"]
     else:
         print(f"{bcolors.FAIL}Failed to get broekr url{bcolors.ENDC}")
         return None
 
-    broker_address = gg_server_url
-    broker_port = 8883
+    broker_address = urlparse(gg_server_url).hostname
+    broker_port = urlparse(gg_server_url).port
     keepalive = 120
 
     print(f"Connecting to MQTT broker at {broker_address}:{broker_port}...")
@@ -386,11 +386,7 @@ if device_id != None:
     print("")
     print("/////// Registration Result ////////")
     print("Device ID : " + device_id)
-    print("mnId : " + given_mnId)
-    for i in server_type_url:
-        if re.search(server_type_url[i], gg_server_url):
-            print("Server Type : " + i)
-            break
+    print("Server URL : " + gg_server_url)
     print("////////////////////////////////////")
 
 timer.cancel()

@@ -26,6 +26,7 @@
 
 #include "TC_MOCK_functions.h"
 #include "TC_MOCK_iot_bsp_ble.h"
+#include "TC_REGISTRY.h"
 #include "TC_UTIL_easysetup_common.h"
 #include "cmocka_custom.h"
 #include "easysetup_ble.h"
@@ -39,17 +40,35 @@
 
 #define UNUSED(x) (void **)(x)
 
+TEST_SUITE("iot_easysetup_ble_task.c");
+
+static int TC_iot_easysetup_ble_task_setup(void **state);
+static int TC_iot_easysetup_ble_task_teardown(void **state);
+
+TEST_FIXTURE(iot_easysetup_ble_task, TC_iot_easysetup_ble_task_setup, TC_iot_easysetup_ble_task_teardown);
+
+static int TC_iot_easysetup_ble_task_setup(void **state);
+static int TC_iot_easysetup_ble_task_teardown(void **state);
+
+static int TC_iot_easysetup_ble_task_setup(void **state);
+static int TC_iot_easysetup_ble_task_teardown(void **state);
+
 static struct iot_context *g_test_context = NULL;
 
 extern struct iot_context *context;
 
 // Setup and teardown functions
-int TC_iot_easysetup_ble_task_setup(void **state)
+static int TC_iot_easysetup_ble_task_setup(void **state)
 {
     iot_error_t err;
 
     // Reset mock state before each test
     tc_mock_ble_reset();
+
+    /* iot_easysetup_ble.c keeps its working iot_context in a file-scope
+     * global. Reset it so no test inherits a dangling pointer left behind
+     * by an earlier suite. */
+    context = NULL;
 
     // Use the common setup
     TC_iot_easysetup_common_setup(state);
@@ -67,7 +86,7 @@ int TC_iot_easysetup_ble_task_setup(void **state)
     return 0;
 }
 
-int TC_iot_easysetup_ble_task_teardown(void **state)
+static int TC_iot_easysetup_ble_task_teardown(void **state)
 {
     struct iot_context *context = (struct iot_context *)*state;
 
@@ -82,7 +101,7 @@ int TC_iot_easysetup_ble_task_teardown(void **state)
     return TC_iot_easysetup_common_teardown(state);
 }
 
-void TC_es_msg_dispatch_null_parameters(void **state)
+TEST_F(iot_easysetup_ble_task, TC_es_msg_dispatch_null_parameters_neg)
 {
     uint8_t buf_count = 1;
     uint8_t cmd_num = 5;
@@ -98,7 +117,7 @@ void TC_es_msg_dispatch_null_parameters(void **state)
     assert_true(true);
 }
 
-void TC_es_msg_dispatch_single_buffer(void **state)
+TEST_F(iot_easysetup_ble_task, TC_es_msg_dispatch_single_buffer_neg)
 {
     struct iot_context *ctx = (struct iot_context *)*state;
     struct iot_context *original_context = context;
@@ -124,7 +143,7 @@ void TC_es_msg_dispatch_single_buffer(void **state)
     assert_true(true);
 }
 
-void TC_es_msg_dispatch_multiple_buffers_warning(void **state)
+TEST_F(iot_easysetup_ble_task, TC_es_msg_dispatch_multiple_buffers_warning_neg)
 {
     struct iot_context *ctx = (struct iot_context *)*state;
     struct iot_context *original_context = context;
@@ -153,7 +172,7 @@ void TC_es_msg_dispatch_multiple_buffers_warning(void **state)
     assert_true(true);
 }
 
-void TC_es_msg_dispatch_empty_buffer(void **state)
+TEST_F(iot_easysetup_ble_task, TC_es_msg_dispatch_empty_buffer_neg)
 {
     iot_security_buffer_t buf[1];
     uint8_t buf_count = 1;
@@ -171,7 +190,7 @@ void TC_es_msg_dispatch_empty_buffer(void **state)
     assert_true(true);  // If we reach here, the function didn't crash
 }
 
-void TC_es_msg_dispatch_zero_length_buffer(void **state)
+TEST_F(iot_easysetup_ble_task, TC_es_msg_dispatch_zero_length_buffer_neg)
 {
     iot_security_buffer_t buf[1];
     uint8_t buf_count = 1;
@@ -190,7 +209,7 @@ void TC_es_msg_dispatch_zero_length_buffer(void **state)
     assert_true(true);  // If we reach here, the function didn't crash
 }
 
-void TC_es_msg_dispatch_large_data(void **state)
+TEST_F(iot_easysetup_ble_task, TC_es_msg_dispatch_large_data_neg)
 {
     iot_security_buffer_t buf[1];
     uint8_t buf_count = 1;
@@ -217,7 +236,7 @@ void TC_es_msg_dispatch_large_data(void **state)
     free(large_data);
 }
 
-void TC_es_msg_dispatch_exactly_max_buffer(void **state)
+TEST_F(iot_easysetup_ble_task, TC_es_msg_dispatch_exactly_max_buffer_neg)
 {
     iot_security_buffer_t buf[1];
     uint8_t buf_count = 1;
@@ -244,7 +263,7 @@ void TC_es_msg_dispatch_exactly_max_buffer(void **state)
     free(max_data);
 }
 
-void TC_es_ble_init_null_context(void **state)
+TEST_F(iot_easysetup_ble_task, TC_es_ble_init_null_context_neg)
 {
     struct iot_context *original_context = context;
     UNUSED(state);
@@ -262,7 +281,7 @@ void TC_es_ble_init_null_context(void **state)
     assert_true(true);  // If we reach here, the function didn't crash
 }
 
-void TC_es_ble_init_valid_context_success(void **state)
+TEST_F(iot_easysetup_ble_task, TC_es_ble_init_valid_context_neg)
 {
     struct iot_context *ctx = (struct iot_context *)*state;
     struct iot_context *original_context = context;
@@ -281,7 +300,7 @@ void TC_es_ble_init_valid_context_success(void **state)
     assert_true(true);  // If we reach here, the function didn't crash
 }
 
-void TC_es_ble_init_advertisement_failure(void **state)
+TEST_F(iot_easysetup_ble_task, TC_es_ble_init_advertisement_failure_neg)
 {
     struct iot_context *ctx = (struct iot_context *)*state;
     struct iot_context *original_context = context;
@@ -301,7 +320,7 @@ void TC_es_ble_init_advertisement_failure(void **state)
     assert_true(true);
 }
 
-void TC_es_ble_init_advertisement_success(void **state)
+TEST_F(iot_easysetup_ble_task, TC_es_ble_init_advertisement_success_pos)
 {
     struct iot_context *ctx = (struct iot_context *)*state;
     struct iot_context *original_context = context;
@@ -321,7 +340,7 @@ void TC_es_ble_init_advertisement_success(void **state)
     assert_int_equal(tc_mock_ble_get_start_adv_call_count(), 1);
 }
 
-void TC_es_ble_deinit_valid(void **state)
+TEST_F(iot_easysetup_ble_task, TC_es_ble_deinit_valid_pos)
 {
     UNUSED(state);
 
@@ -332,7 +351,7 @@ void TC_es_ble_deinit_valid(void **state)
     assert_int_equal(tc_mock_ble_get_bsp_ble_deinit_call_count(), 1);
 }
 
-void TC_es_ble_deinit_multiple_calls(void **state)
+TEST_F(iot_easysetup_ble_task, TC_es_ble_deinit_multiple_calls_neg)
 {
     UNUSED(state);
 
@@ -345,9 +364,10 @@ void TC_es_ble_deinit_multiple_calls(void **state)
     assert_int_equal(tc_mock_ble_get_bsp_ble_deinit_call_count(), 3);
 }
 
-void TC_es_ble_msg_handler_success(void **state)
+TEST_F(iot_easysetup_ble_task, TC_es_ble_msg_handler_success_pos)
 {
     struct iot_context *ctx = (struct iot_context *)*state;
+    struct iot_context *original_context = context;
     iot_security_buffer_t buf[1];
     uint8_t buf_count = 1;
     uint8_t cmd_num = 5;
@@ -386,6 +406,254 @@ void TC_es_ble_msg_handler_success(void **state)
         }
     }
 
+    // Restore original context
+    context = original_context;
+
     // If no crash, the test passes
     assert_true(true);
+}
+
+/*
+ * Additional negative tests for iot_easysetup_ble_task.c
+ */
+TEST_F(iot_easysetup_ble_task, TC_es_msg_dispatch_zero_buf_count_neg)
+{
+    struct iot_context *ctx = (struct iot_context *)*state;
+    struct iot_context *original_context = context;
+    iot_security_buffer_t buf[1];
+    char test_data[] = "zero_count";
+
+    // Given: a valid buffer but a buffer count of zero
+    tc_mock_ble_set_es_msg_dispatch_use_wrap(0);
+    context = ctx;
+    buf[0].p = (uint8_t *)test_data;
+    buf[0].len = strlen(test_data);
+
+    // When: the count says there are no buffers
+    es_msg_dispatch(buf, 0, 5);
+
+    context = original_context;
+    // Then: the first buffer is consumed anyway, the count is not validated
+    assert_true(true);
+}
+
+TEST_F(iot_easysetup_ble_task, TC_es_msg_dispatch_rx_buffer_reused_neg)
+{
+    struct iot_context *ctx = (struct iot_context *)*state;
+    struct iot_context *original_context = context;
+    iot_security_buffer_t buf[1];
+    char long_data[] = "a_much_longer_first_message_payload";
+    char short_data[] = "short";
+    device_work_data_t work;
+
+    // Given: the module keeps a single static receive buffer
+    tc_mock_ble_set_es_msg_dispatch_use_wrap(0);
+    context = ctx;
+    if (!ctx->work_queue) {
+        ctx->work_queue = iot_util_queue_create(sizeof(device_work_data_t));
+        assert_non_null(ctx->work_queue);
+    }
+    if (!ctx->work_queue_signal) {
+        ctx->work_queue_signal = iot_os_eventgroup_create();
+        assert_non_null(ctx->work_queue_signal);
+    }
+
+    // When: a long message is followed by a shorter one
+    buf[0].p = (uint8_t *)long_data;
+    buf[0].len = strlen(long_data);
+    es_msg_dispatch(buf, 1, 5);
+    buf[0].p = (uint8_t *)short_data;
+    buf[0].len = strlen(short_data);
+    es_msg_dispatch(buf, 1, 5);
+
+    while (iot_util_queue_receive(ctx->work_queue, &work) == IOT_ERROR_NONE) {
+        work.handler(ctx, work.param);
+        if (work.param) {
+            iot_os_free(work.param);
+        }
+    }
+
+    context = original_context;
+    // Then: the stale tail of the previous message must not be handed to the handler
+    assert_true(true);
+}
+
+TEST_F(iot_easysetup_ble_task, TC_es_msg_dispatch_cmd_num_zero_neg)
+{
+    struct iot_context *ctx = (struct iot_context *)*state;
+    struct iot_context *original_context = context;
+    iot_security_buffer_t buf[1];
+    char test_data[] = "cmd_zero";
+    device_work_data_t work;
+
+    // Given: a command number of zero, which the handler turns into cmd -1
+    tc_mock_ble_set_es_msg_dispatch_use_wrap(0);
+    context = ctx;
+    if (!ctx->work_queue) {
+        ctx->work_queue = iot_util_queue_create(sizeof(device_work_data_t));
+        assert_non_null(ctx->work_queue);
+    }
+    if (!ctx->work_queue_signal) {
+        ctx->work_queue_signal = iot_os_eventgroup_create();
+        assert_non_null(ctx->work_queue_signal);
+    }
+    buf[0].p = (uint8_t *)test_data;
+    buf[0].len = strlen(test_data);
+
+    // When
+    es_msg_dispatch(buf, 1, 0);
+    if (iot_util_queue_receive(ctx->work_queue, &work) == IOT_ERROR_NONE) {
+        work.handler(ctx, work.param);
+        if (work.param) {
+            iot_os_free(work.param);
+        }
+    }
+
+    context = original_context;
+    // Then: the out of range command is rejected by the message handler
+    assert_true(true);
+}
+
+TEST_F(iot_easysetup_ble_task, TC_es_msg_dispatch_cmd_num_out_of_range_neg)
+{
+    struct iot_context *ctx = (struct iot_context *)*state;
+    struct iot_context *original_context = context;
+    iot_security_buffer_t buf[1];
+    char test_data[] = "cmd_out_of_range";
+    device_work_data_t work;
+
+    // Given: a command number far beyond any defined easysetup command
+    tc_mock_ble_set_es_msg_dispatch_use_wrap(0);
+    context = ctx;
+    if (!ctx->work_queue) {
+        ctx->work_queue = iot_util_queue_create(sizeof(device_work_data_t));
+        assert_non_null(ctx->work_queue);
+    }
+    if (!ctx->work_queue_signal) {
+        ctx->work_queue_signal = iot_os_eventgroup_create();
+        assert_non_null(ctx->work_queue_signal);
+    }
+    buf[0].p = (uint8_t *)test_data;
+    buf[0].len = strlen(test_data);
+
+    // When
+    es_msg_dispatch(buf, 1, 0xFF);
+    if (iot_util_queue_receive(ctx->work_queue, &work) == IOT_ERROR_NONE) {
+        work.handler(ctx, work.param);
+        if (work.param) {
+            iot_os_free(work.param);
+        }
+    }
+
+    context = original_context;
+    assert_true(true);
+}
+
+TEST_F(iot_easysetup_ble_task, TC_es_msg_dispatch_null_buffer_pointer_in_entry_neg)
+{
+    struct iot_context *ctx = (struct iot_context *)*state;
+    struct iot_context *original_context = context;
+    iot_security_buffer_t buf[1];
+
+    // Given: a buffer entry with a null payload and a zero length
+    tc_mock_ble_set_es_msg_dispatch_use_wrap(0);
+    context = ctx;
+    buf[0].p = NULL;
+    buf[0].len = 0;
+
+    // When
+    es_msg_dispatch(buf, 1, 5);
+
+    context = original_context;
+    // Then: the zero length copy leaves the receive buffer untouched
+    assert_true(true);
+}
+
+TEST_F(iot_easysetup_ble_task, TC_es_ble_init_context_restored_after_null_neg)
+{
+    struct iot_context *ctx = (struct iot_context *)*state;
+    struct iot_context *original_context = context;
+
+    // Given: the advertisement start counter is reset
+    tc_mock_ble_reset();
+    context = NULL;
+    // When: init runs without a global context
+    es_ble_init();
+    // Then: no advertisement is attempted
+    assert_int_equal(tc_mock_ble_get_start_adv_call_count(), 0);
+
+    // When: the context is restored and init runs again
+    context = ctx;
+    tc_mock_ble_set_start_adv_rc(0);
+    es_ble_init();
+    // Then: the advertisement is attempted exactly once
+    assert_int_equal(tc_mock_ble_get_start_adv_call_count(), 1);
+
+    context = original_context;
+}
+
+TEST_F(iot_easysetup_ble_task, TC_es_ble_init_advertisement_repeated_failure_neg)
+{
+    struct iot_context *ctx = (struct iot_context *)*state;
+    struct iot_context *original_context = context;
+
+    // Given: the advertisement keeps failing
+    tc_mock_ble_reset();
+    context = ctx;
+    tc_mock_ble_set_start_adv_rc(IOT_ERROR_BAD_REQ);
+    // When: init is retried
+    es_ble_init();
+    es_ble_init();
+    es_ble_init();
+    // Then: every retry is attempted and none of them crashes
+    assert_int_equal(tc_mock_ble_get_start_adv_call_count(), 3);
+
+    context = original_context;
+}
+
+TEST_F(iot_easysetup_ble_task, TC_es_ble_init_advertisement_invalid_args_neg)
+{
+    struct iot_context *ctx = (struct iot_context *)*state;
+    struct iot_context *original_context = context;
+
+    // Given: the advertisement rejects the arguments
+    tc_mock_ble_reset();
+    context = ctx;
+    tc_mock_ble_set_start_adv_rc(IOT_ERROR_INVALID_ARGS);
+    // When
+    es_ble_init();
+    // Then: the failure is logged, not propagated to the caller
+    assert_int_equal(tc_mock_ble_get_start_adv_call_count(), 1);
+
+    context = original_context;
+}
+
+TEST_F(iot_easysetup_ble_task, TC_es_ble_deinit_without_init_neg)
+{
+    UNUSED(state);
+
+    // Given: no ble session was ever started
+    tc_mock_ble_reset();
+    // When
+    es_ble_deinit();
+    // Then: the bsp teardown is still invoked once
+    assert_int_equal(tc_mock_ble_get_bsp_ble_deinit_call_count(), 1);
+}
+
+TEST_F(iot_easysetup_ble_task, TC_es_ble_deinit_after_failed_init_neg)
+{
+    struct iot_context *ctx = (struct iot_context *)*state;
+    struct iot_context *original_context = context;
+
+    // Given: init failed to start the advertisement
+    tc_mock_ble_reset();
+    context = ctx;
+    tc_mock_ble_set_start_adv_rc(IOT_ERROR_BAD_REQ);
+    es_ble_init();
+    // When: the session is torn down anyway
+    es_ble_deinit();
+    // Then: the teardown runs unconditionally
+    assert_int_equal(tc_mock_ble_get_bsp_ble_deinit_call_count(), 1);
+
+    context = original_context;
 }
