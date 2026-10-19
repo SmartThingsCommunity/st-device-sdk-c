@@ -164,6 +164,12 @@ The IoT core device library has a porting layer to support the use of the same A
 
 ![architecture](./res/st_device_sdk_arch.jpg)
 
+### Support Tools
+
+If you meet some porting trouble, try using the following tools.
+- [STDK Dev Support](./tools/STDK_dev_support/README.md) : It is designed to perform the onboarding process identically to the standard app and provide various information to the app side, so it is expected to be of great help in analyzing issues during porting.
+- [STDK Emulator](./tools/STDK_emulator/README.md) : You can obtain a reference device simply by installing the app. This is expected to help in the comparative analysis of issues that arise during porting.
+
 ### BSP(Board Support Package)
 
 The BSP is the well-defined set of functions that the IoT core device library invokes in order to interact with a platform's specific networking, file IO, random number generator, and system feature.

@@ -1,5 +1,54 @@
 # HISTORY
 
+## 2.4.2 : Change for version 2.4.2
+
+New improvements or features:
+- Add Ownership Transfer feature
+
+Enhancements or amendments:
+- Complement D2D last error code for TCP, TLS, DHCP fail cases
+- Rework wifi get status porting API
+- Enable raspberry pi connect hidden/WPA3 Wifi
+- Enable wifi backoff connection feature
+- Remove DIP minor version comparison
+- Add document regarding AI Agent Skills
+
+Bug fixed:
+- Fix POSIX porting timer unit bug(ms -> ns)
+- Wake up MQTT listen socket when socke is closed
+- Replace mktime with timegm for UTC time
+
+## 2.4.1 : Change for version 2.4.1
+
+New improvements or features:
+- Add Capability Local Cache feature
+- Add Rate Limit Checker feature
+- Add AI Skills md
+
+Enhancements or amendments:
+- Set network socket connect timeout
+- Set strong cipher suites for TLS connection
+- Remove device cleanup during Onboarding process
+
+Bug fixed:
+- Fix SDK data overflow and vulnerability
+- Fix work queue link bug in MQTT client
+- Remove JWT EXPIRED notification to avoid enum conflict
+
+## 2.4.0 : Change for version 2.4.0
+
+New improvements or features:
+- Add STDK emulator and developer support tools
+
+Enhancements or amendments:
+- Add offline diagnostics feature as default enable in examples
+- Add and update Capabilities helper headers
+- Update raspberry example with new bluez version(5.82)
+- Remove duplicate timer port APIs
+
+Bug fixed:
+- Fix network socket read infinite loop case(mbedtls_ssl_read return 0 case)
+
 ## 2.3.2 : Change for version 2.3.2
 
 Enhancements or amendments:

@@ -46,8 +46,6 @@ extern "C" {
 #define IOT_LOG_FILE_DEBUG(fmt, args...)
 #endif
 
-#define IOT_LOG_FILE_ERROR(fmt, args...) printf(IOT_LOG_FILE_COLOR_RED fmt IOT_LOG_FILE_COLOR_END, ##args)
-
 #define IOT_LOG_FILE_MAX_STRING_SIZE 128 /* Max input string size */
 #define IOT_LOG_FILE_MARGIN_CNT 1        /* magin count */
 

@@ -34,9 +34,28 @@ typedef struct {
     unsigned int device_cert_len; /**< @brief a size of device certificate chain */
 } port_net_tls_config;
 
+typedef enum {
+    PORT_NET_CONNECT_SUCCESS,
+    PORT_NET_CONNECT_INVALID_ARGS,
+    PORT_NET_CONNECT_OPERATION_FAIL,
+    PORT_NET_CONNECT_DNS_RESOLVE_FAIL,
+    PORT_NET_CONNECT_TCP_CONNECTION_FAIL,
+    PORT_NET_CONNECT_TLS_HANDSHAKE_FAIL,
+} port_net_connect_result;
+
+typedef enum {
+    PORT_NET_PROTO_TCP = 0,
+    PORT_NET_PROTO_UDP,
+} port_net_proto;
+
+PORT_NET_CONTEXT port_net_init(void);
+
 void port_net_free(PORT_NET_CONTEXT ctx);
 
-PORT_NET_CONTEXT port_net_connect(char *address, char *port, port_net_tls_config *config);
+/* config == NULL creates a plain (non-TLS) connection.
+ * proto == PORT_NET_PROTO_UDP requires config == NULL (DTLS is not supported). */
+port_net_connect_result port_net_connect(PORT_NET_CONTEXT ctx, char *address, char *port, port_net_proto proto,
+                                         port_net_tls_config *config);
 
 PORT_NET_CONTEXT port_net_listen(char *port, port_net_tls_config *config);
 

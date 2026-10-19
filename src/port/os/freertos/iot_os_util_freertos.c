@@ -180,54 +180,6 @@ void iot_os_delay(unsigned int delay_ms)
     vTaskDelay(pdMS_TO_TICKS(delay_ms));
 }
 
-typedef struct Freertos_Timer {
-    TickType_t xTicksToWait;
-    TimeOut_t xTimeOut;
-} Freertos_Timer;
-
-void iot_os_timer_count_ms(iot_os_timer timer, unsigned int timeout_ms)
-{
-    ((Freertos_Timer *)timer)->xTicksToWait = pdMS_TO_TICKS(timeout_ms); /* convert milliseconds to ticks */
-    vTaskSetTimeOutState(
-        &((Freertos_Timer *)timer)->xTimeOut); /* Record the time at which this function was entered. */
-}
-
-unsigned int iot_os_timer_left_ms(iot_os_timer timer)
-{
-    Freertos_Timer *freertos_timer = timer;
-
-    if ((xTaskCheckForTimeOut(&freertos_timer->xTimeOut, &freertos_timer->xTicksToWait)) == pdTRUE) {
-        return 0;
-    }
-
-    return (freertos_timer->xTicksToWait * portTICK_PERIOD_MS);
-}
-
-char iot_os_timer_isexpired(iot_os_timer timer)
-{
-    return xTaskCheckForTimeOut(&((Freertos_Timer *)timer)->xTimeOut, &((Freertos_Timer *)timer)->xTicksToWait) ==
-           pdTRUE;
-}
-
-int iot_os_timer_init(iot_os_timer *timer)
-{
-    *timer = malloc(sizeof(Freertos_Timer));
-    if (*timer == NULL)
-        return IOT_ERROR_MEM_ALLOC;
-    memset(*timer, '\0', sizeof(Freertos_Timer));
-
-    return IOT_ERROR_NONE;
-}
-
-void iot_os_timer_destroy(iot_os_timer *timer)
-{
-    if (timer == NULL || *timer == NULL)
-        return;
-
-    free(*timer);
-    *timer = NULL;
-}
-
 typedef struct _freertos_timer_handle {
     TimerHandle_t timer;
     bool is_started;

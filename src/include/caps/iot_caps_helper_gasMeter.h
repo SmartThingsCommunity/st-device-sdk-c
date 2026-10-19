@@ -27,7 +27,12 @@ extern "C" {
 
 enum { CAP_ENUM_GASMETER_GASMETER_UNIT_KWH, CAP_ENUM_GASMETER_GASMETER_UNIT_MAX };
 
-enum { CAP_ENUM_GASMETER_GASMETERVOLUME_UNIT_M3, CAP_ENUM_GASMETER_GASMETERVOLUME_UNIT_MAX };
+enum {
+    CAP_ENUM_GASMETER_GASMETERVOLUME_UNIT_M3,
+    CAP_ENUM_GASMETER_GASMETERVOLUME_UNIT_CF,
+    CAP_ENUM_GASMETER_GASMETERVOLUME_UNIT_CCF,
+    CAP_ENUM_GASMETER_GASMETERVOLUME_UNIT_MAX
+};
 
 const static struct iot_caps_gasMeter {
     const char *id;
@@ -42,13 +47,11 @@ const static struct iot_caps_gasMeter {
         const unsigned char valueType;
         const char *units[CAP_ENUM_GASMETER_GASMETER_UNIT_MAX];
         const char *unit_kWh;
-        const double min;
     } attr_gasMeter;
     const struct gasMeter_attr_gasMeterCalorific {
         const char *name;
         const unsigned char property;
         const unsigned char valueType;
-        const double min;
     } attr_gasMeterCalorific;
     const struct gasMeter_attr_gasMeterVolume {
         const char *name;
@@ -56,7 +59,8 @@ const static struct iot_caps_gasMeter {
         const unsigned char valueType;
         const char *units[CAP_ENUM_GASMETER_GASMETERVOLUME_UNIT_MAX];
         const char *unit_m3;
-        const double min;
+        const char *unit_cf;
+        const char *unit_ccf;
     } attr_gasMeterVolume;
     const struct gasMeter_attr_gasMeterPrecision {
         const char *name;
@@ -67,7 +71,6 @@ const static struct iot_caps_gasMeter {
         const char *name;
         const unsigned char property;
         const unsigned char valueType;
-        const double min;
     } attr_gasMeterConversion;
 } caps_helper_gasMeter = {
     .id = "gasMeter",
@@ -80,27 +83,26 @@ const static struct iot_caps_gasMeter {
     .attr_gasMeter =
         {
             .name = "gasMeter",
-            .property = ATTR_SET_VALUE_MIN | ATTR_SET_VALUE_REQUIRED,
+            .property = ATTR_SET_VALUE_REQUIRED,
             .valueType = VALUE_TYPE_NUMBER,
             .units = {"kWh"},
             .unit_kWh = "kWh",
-            .min = 0,
         },
     .attr_gasMeterCalorific =
         {
             .name = "gasMeterCalorific",
-            .property = ATTR_SET_VALUE_MIN | ATTR_SET_VALUE_REQUIRED,
+            .property = ATTR_SET_VALUE_REQUIRED,
             .valueType = VALUE_TYPE_NUMBER,
-            .min = 0,
         },
     .attr_gasMeterVolume =
         {
             .name = "gasMeterVolume",
-            .property = ATTR_SET_VALUE_MIN | ATTR_SET_VALUE_REQUIRED,
+            .property = ATTR_SET_VALUE_REQUIRED,
             .valueType = VALUE_TYPE_NUMBER,
-            .units = {"m^3"},
+            .units = {"m^3", "cf", "ccf"},
             .unit_m3 = "m^3",
-            .min = 0,
+            .unit_cf = "cf",
+            .unit_ccf = "ccf",
         },
     .attr_gasMeterPrecision =
         {
@@ -111,9 +113,8 @@ const static struct iot_caps_gasMeter {
     .attr_gasMeterConversion =
         {
             .name = "gasMeterConversion",
-            .property = ATTR_SET_VALUE_MIN | ATTR_SET_VALUE_REQUIRED,
+            .property = ATTR_SET_VALUE_REQUIRED,
             .valueType = VALUE_TYPE_NUMBER,
-            .min = 0,
         },
 };
 

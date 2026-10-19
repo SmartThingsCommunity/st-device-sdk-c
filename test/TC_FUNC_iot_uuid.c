@@ -23,11 +23,14 @@
 #include <string.h>
 
 #include "TC_MOCK_functions.h"
+#include "TC_REGISTRY.h"
 #include "cmocka_custom.h"
 
 #define UNUSED(x) (void **)(x)
 
-void TC_iot_get_uuid_from_mac(void **state)
+TEST_SUITE("iot_uuid.c");
+
+TEST(TC_iot_get_uuid_from_mac_neg)
 {
     iot_error_t err;
     struct iot_uuid uuid;
@@ -60,7 +63,7 @@ void TC_iot_get_uuid_from_mac(void **state)
     assert_int_not_equal(err, IOT_ERROR_NONE);
 }
 
-void TC_iot_get_uuid_from_mac_internal_failure(void **state)
+TEST(TC_iot_get_uuid_from_mac_internal_failure_neg)
 {
     iot_error_t err;
     struct iot_uuid uuid;
@@ -81,7 +84,7 @@ void TC_iot_get_uuid_from_mac_internal_failure(void **state)
     do_not_use_mock_iot_os_malloc_failure();
 }
 
-void TC_iot_get_random_uuid_from_mac(void **state)
+TEST(TC_iot_get_random_uuid_from_mac_neg)
 {
     iot_error_t err;
     struct iot_uuid uuid;
@@ -109,7 +112,7 @@ void TC_iot_get_random_uuid_from_mac(void **state)
     assert_int_not_equal(err, IOT_ERROR_NONE);
 }
 
-void TC_iot_get_random_uuid_from_mac_internal_failure(void **state)
+TEST(TC_iot_get_random_uuid_from_mac_internal_failure_neg)
 {
     iot_error_t err;
     struct iot_uuid uuid;
@@ -130,7 +133,7 @@ void TC_iot_get_random_uuid_from_mac_internal_failure(void **state)
     do_not_use_mock_iot_os_malloc_failure();
 }
 
-void TC_iot_get_random_uuid_random_failure(void **state)
+TEST(TC_iot_get_random_uuid_random_failure_neg)
 {
     iot_error_t err;
     struct iot_uuid uuid;
@@ -156,7 +159,7 @@ void TC_iot_get_random_uuid_random_failure(void **state)
     assert_int_equal(uuid2.id[8] & 0xc0, 0x80);  // RFC 4122 variant
 }
 
-void TC_iot_get_random_uuid_success(void **state)
+TEST(TC_iot_get_random_uuid_success_pos)
 {
     iot_error_t err;
     struct iot_uuid test_uuid_1;
@@ -179,7 +182,7 @@ void TC_iot_get_random_uuid_success(void **state)
     assert_memory_not_equal(&test_uuid_1, &test_uuid_2, sizeof(struct iot_uuid));
 }
 
-void TC_iot_get_random_uuid_null_parameter(void **state)
+TEST(TC_iot_get_random_uuid_null_parameter_neg)
 {
     iot_error_t err;
 
@@ -189,7 +192,7 @@ void TC_iot_get_random_uuid_null_parameter(void **state)
     assert_int_equal(err, IOT_ERROR_INVALID_ARGS);
 }
 
-void TC_iot_get_random_uuid_from_key_null_uuid(void **state)
+TEST(TC_iot_get_random_uuid_from_key_null_uuid_neg)
 {
     iot_error_t err;
     char test_key[] = "test_key";
@@ -200,7 +203,7 @@ void TC_iot_get_random_uuid_from_key_null_uuid(void **state)
     assert_int_equal(err, IOT_ERROR_INVALID_ARGS);
 }
 
-void TC_iot_get_random_uuid_from_key_null_key(void **state)
+TEST(TC_iot_get_random_uuid_from_key_null_key_neg)
 {
     iot_error_t err;
     struct iot_uuid uuid;
@@ -217,7 +220,7 @@ void TC_iot_get_random_uuid_from_key_null_key(void **state)
     }
 }
 
-void TC_iot_get_random_uuid_from_key_zero_length(void **state)
+TEST(TC_iot_get_random_uuid_from_key_zero_length_neg)
 {
     iot_error_t err;
     struct iot_uuid uuid;
@@ -233,7 +236,7 @@ void TC_iot_get_random_uuid_from_key_zero_length(void **state)
     assert_int_equal(uuid.id[8] & 0xc0, 0x80);  // RFC 4122 variant
 }
 
-void TC_iot_get_random_uuid_from_key_large_length(void **state)
+TEST(TC_iot_get_random_uuid_from_key_large_length_neg)
 {
     iot_error_t err;
     struct iot_uuid uuid;
@@ -252,7 +255,7 @@ void TC_iot_get_random_uuid_from_key_large_length(void **state)
     }
 }
 
-void TC_iot_get_random_uuid_from_mac_null_parameter(void **state)
+TEST(TC_iot_get_random_uuid_from_mac_null_parameter_neg)
 {
     iot_error_t err;
 
@@ -262,7 +265,7 @@ void TC_iot_get_random_uuid_from_mac_null_parameter(void **state)
     assert_int_equal(err, IOT_ERROR_INVALID_ARGS);
 }
 
-void TC_iot_get_uuid_from_mac_null_parameter(void **state)
+TEST(TC_iot_get_uuid_from_mac_null_parameter_neg)
 {
     iot_error_t err;
 
@@ -272,7 +275,7 @@ void TC_iot_get_uuid_from_mac_null_parameter(void **state)
     assert_int_equal(err, IOT_ERROR_INVALID_ARGS);
 }
 
-void TC_iot_get_random_uuid_from_key_wifi_failure(void **state)
+TEST(TC_iot_get_random_uuid_from_key_wifi_failure_neg)
 {
     iot_error_t err;
     struct iot_uuid uuid;
@@ -289,7 +292,7 @@ void TC_iot_get_random_uuid_from_key_wifi_failure(void **state)
     assert_int_equal(uuid.id[8] & 0xc0, 0x80);  // RFC 4122 variant
 }
 
-void TC_iot_get_random_uuid_boundary_test(void **state)
+TEST(TC_iot_get_random_uuid_boundary_test_neg)
 {
     iot_error_t err;
     struct iot_uuid uuid;
@@ -306,7 +309,7 @@ void TC_iot_get_random_uuid_boundary_test(void **state)
     }
 }
 
-void TC_iot_get_random_uuid_from_key_empty_string(void **state)
+TEST(TC_iot_get_random_uuid_from_key_empty_string_neg)
 {
     iot_error_t err;
     struct iot_uuid uuid;
@@ -322,7 +325,7 @@ void TC_iot_get_random_uuid_from_key_empty_string(void **state)
     assert_int_equal(uuid.id[8] & 0xc0, 0x80);  // RFC 4122 variant
 }
 
-void TC_iot_get_uuid_from_mac_empty_mac(void **state)
+TEST(TC_iot_get_uuid_from_mac_empty_mac_neg)
 {
     iot_error_t err;
     struct iot_uuid uuid;
@@ -342,7 +345,7 @@ void TC_iot_get_uuid_from_mac_empty_mac(void **state)
     assert_int_equal(uuid.id[8] & 0xc0, 0x80);  // RFC 4122 variant
 }
 
-void TC_iot_get_uuid_from_mac_short_mac(void **state)
+TEST(TC_iot_get_uuid_from_mac_short_mac_neg)
 {
     iot_error_t err;
     struct iot_uuid uuid;
@@ -362,7 +365,7 @@ void TC_iot_get_uuid_from_mac_short_mac(void **state)
     assert_int_equal(uuid.id[8] & 0xc0, 0x80);  // RFC 4122 variant
 }
 
-void TC_iot_get_uuid_from_mac_long_mac(void **state)
+TEST(TC_iot_get_uuid_from_mac_long_mac_neg)
 {
     iot_error_t err;
     struct iot_uuid uuid;
@@ -383,7 +386,7 @@ void TC_iot_get_uuid_from_mac_long_mac(void **state)
 }
 
 // Additional negative test cases for iot_get_random_uuid_from_mac
-void TC_iot_get_random_uuid_from_mac_wifi_failure(void **state)
+TEST(TC_iot_get_random_uuid_from_mac_wifi_failure_neg)
 {
     iot_error_t err;
     struct iot_uuid uuid;
@@ -398,7 +401,7 @@ void TC_iot_get_random_uuid_from_mac_wifi_failure(void **state)
     assert_int_not_equal(err, IOT_ERROR_NONE);
 }
 
-void TC_iot_get_random_uuid_from_mac_malloc_failure(void **state)
+TEST(TC_iot_get_random_uuid_from_mac_malloc_failure_neg)
 {
     iot_error_t err;
     struct iot_uuid uuid;
@@ -419,7 +422,7 @@ void TC_iot_get_random_uuid_from_mac_malloc_failure(void **state)
     do_not_use_mock_iot_os_malloc_failure();
 }
 
-void TC_iot_get_random_uuid_from_mac_invalid_mac(void **state)
+TEST(TC_iot_get_random_uuid_from_mac_invalid_mac_neg)
 {
     iot_error_t err;
     struct iot_uuid uuid;
@@ -439,7 +442,7 @@ void TC_iot_get_random_uuid_from_mac_invalid_mac(void **state)
     assert_int_equal(uuid.id[8] & 0xc0, 0x80);  // RFC 4122 variant
 }
 
-void TC_iot_get_random_uuid_from_mac_empty_mac(void **state)
+TEST(TC_iot_get_random_uuid_from_mac_empty_mac_neg)
 {
     iot_error_t err;
     struct iot_uuid uuid;
@@ -460,7 +463,7 @@ void TC_iot_get_random_uuid_from_mac_empty_mac(void **state)
 }
 
 // Additional negative test cases for iot_get_random_uuid
-void TC_iot_get_random_uuid_multiple_calls(void **state)
+TEST(TC_iot_get_random_uuid_multiple_calls_neg)
 {
     iot_error_t err;
     struct iot_uuid uuid[5];
@@ -483,7 +486,7 @@ void TC_iot_get_random_uuid_multiple_calls(void **state)
     }
 }
 
-void TC_iot_get_random_uuid_structure_validation(void **state)
+TEST(TC_iot_get_random_uuid_structure_validation_pos)
 {
     iot_error_t err;
     struct iot_uuid uuid;

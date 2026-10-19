@@ -32,10 +32,24 @@
 #include <unistd.h>
 
 #include "../src/easysetup/http/easysetup_http.h"
+#include "TC_REGISTRY.h"
 #include "TC_UTIL_easysetup_common.h"
 #include "cmocka_custom.h"
 
-int TC_iot_easysetup_httpd_setup(void **state)
+TEST_SUITE("iot_easysetup_httpd.c");
+
+static int TC_iot_easysetup_httpd_setup(void **state);
+static int TC_iot_easysetup_httpd_teardown(void **state);
+
+TEST_FIXTURE(iot_easysetup_httpd, TC_iot_easysetup_httpd_setup, TC_iot_easysetup_httpd_teardown);
+
+static int TC_iot_easysetup_httpd_setup(void **state);
+static int TC_iot_easysetup_httpd_teardown(void **state);
+
+static int TC_iot_easysetup_httpd_setup(void **state);
+static int TC_iot_easysetup_httpd_teardown(void **state);
+
+static int TC_iot_easysetup_httpd_setup(void **state)
 {
     struct iot_context *context;
     iot_error_t err;
@@ -67,7 +81,7 @@ int TC_iot_easysetup_httpd_setup(void **state)
     return 0;
 }
 
-int TC_iot_easysetup_httpd_teardown(void **state)
+static int TC_iot_easysetup_httpd_teardown(void **state)
 {
     struct iot_context *context = (struct iot_context *)*state;
 
@@ -191,7 +205,7 @@ enum {
     REQ_MAX,
 };
 
-void TC_iot_easysetup_httpd_invalid_request(void **state)
+TEST_F(iot_easysetup_httpd, TC_iot_easysetup_httpd_invalid_request_neg)
 {
     int sock;
     ssize_t len;
@@ -254,7 +268,7 @@ void assert_device_info_response(char *buffer)
     JSON_DELETE(root);
 }
 
-void TC_iot_easysetup_httpd_deviceinfo_success(void **state)
+TEST_F(iot_easysetup_httpd, TC_iot_easysetup_httpd_deviceinfo_success_pos)
 {
     int sock;
     ssize_t len;
@@ -309,7 +323,7 @@ void assert_keyinfo_http_response(char *buffer, iot_security_cipher_params_t *se
 
 extern int ref_step;
 
-void TC_iot_easysetup_httpd_keyinfo_single_transfer_success(void **state)
+TEST_F(iot_easysetup_httpd, TC_iot_easysetup_httpd_keyinfo_single_transfer_success_pos)
 {
     int sock;
     ssize_t len;
@@ -375,7 +389,7 @@ void TC_iot_easysetup_httpd_keyinfo_single_transfer_success(void **state)
     close(sock);
 }
 
-void TC_iot_easysetup_httpd_keyinfo_separated_transfer_success(void **state)
+TEST_F(iot_easysetup_httpd, TC_iot_easysetup_httpd_keyinfo_separated_transfer_success_pos)
 {
     int sock;
     ssize_t len;

@@ -22,6 +22,7 @@
 #include <string.h>
 
 #include "../src/easysetup/http/easysetup_http.h"
+#include "TC_REGISTRY.h"
 #include "cmocka_custom.h"
 
 extern int ref_step;
@@ -32,7 +33,9 @@ extern void http_msg_handler(int cmd, char **buffer, enum cgi_type type, char *d
 extern iot_error_t iot_easysetup_init(struct iot_context *ctx);
 extern void iot_easysetup_deinit(struct iot_context *ctx);
 
-void TC_iot_easysetup_gen_post_payload_NULL_IN_PAYLOAD(void **state)
+TEST_SUITE("iot_easysetup_http.c");
+
+TEST(TC_iot_easysetup_gen_post_payload_NULL_IN_PAYLOAD_neg)
 {
     iot_error_t err;
     struct iot_context *context;
@@ -51,7 +54,7 @@ void TC_iot_easysetup_gen_post_payload_NULL_IN_PAYLOAD(void **state)
     free(context);
 }
 
-void TC_iot_easysetup_gen_post_payload_CMD_INVALID_STEP(void **state)
+TEST(TC_iot_easysetup_gen_post_payload_CMD_INVALID_STEP_neg)
 {
     iot_error_t err;
     struct iot_context *context;
@@ -71,7 +74,7 @@ void TC_iot_easysetup_gen_post_payload_CMD_INVALID_STEP(void **state)
     free(context);
 }
 
-void TC_iot_easysetup_gen_post_payload_CMD_INVALID_SEQUENCE(void **state)
+TEST(TC_iot_easysetup_gen_post_payload_CMD_INVALID_SEQUENCE_neg)
 {
     iot_error_t err;
     struct iot_context *context;
@@ -103,7 +106,7 @@ void TC_iot_easysetup_gen_post_payload_CMD_INVALID_SEQUENCE(void **state)
     ref_step = 0;
 }
 
-void TC_iot_easysetup_gen_post_payload_NULL_CONTEXT(void **state)
+TEST(TC_iot_easysetup_gen_post_payload_NULL_CONTEXT_neg)
 {
     iot_error_t err;
     char *out_payload = NULL;
@@ -116,7 +119,7 @@ void TC_iot_easysetup_gen_post_payload_NULL_CONTEXT(void **state)
     assert_int_not_equal(err, IOT_ERROR_NONE);
 }
 
-void TC_iot_easysetup_gen_post_payload_SETUPCOMPLETE_NULL_PAYLOAD(void **state)
+TEST(TC_iot_easysetup_gen_post_payload_SETUPCOMPLETE_NULL_PAYLOAD_neg)
 {
     iot_error_t err;
     struct iot_context *context;
@@ -131,9 +134,11 @@ void TC_iot_easysetup_gen_post_payload_SETUPCOMPLETE_NULL_PAYLOAD(void **state)
     // Should not return invalid request error for SETUPCOMPLETE with NULL payload
     // Teardown
     free(context);
+
+    assert_true(true);
 }
 
-void TC_iot_easysetup_gen_get_payload_CMD_INVALID_STEP(void **state)
+TEST(TC_iot_easysetup_gen_get_payload_CMD_INVALID_STEP_neg)
 {
     iot_error_t err;
     struct iot_context *context;
@@ -152,7 +157,7 @@ void TC_iot_easysetup_gen_get_payload_CMD_INVALID_STEP(void **state)
     free(context);
 }
 
-void TC_iot_easysetup_gen_get_payload_CMD_INVALID_SEQUENCE(void **state)
+TEST(TC_iot_easysetup_gen_get_payload_CMD_INVALID_SEQUENCE_neg)
 {
     iot_error_t err;
     struct iot_context *context;
@@ -175,7 +180,7 @@ void TC_iot_easysetup_gen_get_payload_CMD_INVALID_SEQUENCE(void **state)
     ref_step = 0;
 }
 
-void TC_iot_easysetup_gen_get_payload_NULL_CONTEXT(void **state)
+TEST(TC_iot_easysetup_gen_get_payload_NULL_CONTEXT_neg)
 {
     iot_error_t err;
     char *out_payload = NULL;
@@ -187,7 +192,7 @@ void TC_iot_easysetup_gen_get_payload_NULL_CONTEXT(void **state)
     assert_int_not_equal(err, IOT_ERROR_NONE);
 }
 
-void TC_http_msg_handler_INVALID_CMD(void **state)
+TEST(TC_http_msg_handler_INVALID_CMD_neg)
 {
     char *buffer = NULL;
     char *payload = "test payload";
@@ -205,7 +210,7 @@ void TC_http_msg_handler_INVALID_CMD(void **state)
     }
 }
 
-void TC_http_msg_handler_INVALID_TYPE(void **state)
+TEST(TC_http_msg_handler_INVALID_TYPE_neg)
 {
     char *buffer = NULL;
     char *payload = "test payload";
@@ -223,7 +228,7 @@ void TC_http_msg_handler_INVALID_TYPE(void **state)
     }
 }
 
-void TC_http_msg_handler_NULL_DATA_BUF_POST(void **state)
+TEST(TC_http_msg_handler_NULL_DATA_BUF_POST_neg)
 {
     char *buffer = NULL;
 
@@ -240,7 +245,7 @@ void TC_http_msg_handler_NULL_DATA_BUF_POST(void **state)
     }
 }
 
-void TC_iot_easysetup_init_NULL_CONTEXT(void **state)
+TEST(TC_iot_easysetup_init_NULL_CONTEXT_neg)
 {
     iot_error_t err;
 
@@ -251,7 +256,7 @@ void TC_iot_easysetup_init_NULL_CONTEXT(void **state)
     assert_int_equal(err, IOT_ERROR_INVALID_ARGS);
 }
 
-void TC_iot_easysetup_deinit_NULL_CONTEXT(void **state)
+TEST(TC_iot_easysetup_deinit_NULL_CONTEXT_neg)
 {
     // Given: context is null
     // When

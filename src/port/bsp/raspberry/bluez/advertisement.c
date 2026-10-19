@@ -46,8 +46,10 @@ static const gchar introspection_xml[] =
     "    <method name='Release' />"
     "    <property type='s' name='Type' access='readwrite'/>"
     "    <property type='a{qv}' name='ManufacturerData' access='readwrite'/>"
-    "    <property type='a{qv}' name='ManufacturerDataSR' access='readwrite'/>"
+    "    <property type='a{qv}' name='ScanResponseManufacturerData' access='readwrite'/>"
     "    <property type='s' name='LocalName' access='readwrite'/>"
+    "    <property type='u' name='MinInterval' access='read'/>"
+    "    <property type='u' name='MaxInterval' access='read'/>"
     "  </interface>"
     "</node>";
 
@@ -108,7 +110,7 @@ static GVariant *handle_get_property(GDBusConnection *connection, const gchar *s
 
         ret = g_variant_new("a{qv}", inner_builder);
         IOT_DEBUG("Response Type: %s", g_variant_get_type_string(ret));
-    } else if (g_strcmp0(property_name, "ManufacturerDataSR") == 0) {
+    } else if (g_strcmp0(property_name, "ScanResponseManufacturerData") == 0) {
         GVariantBuilder *inner_builder = NULL;
         GVariantBuilder *builder1 = NULL;
         GVariant *desc_val = NULL;
@@ -134,6 +136,12 @@ static GVariant *handle_get_property(GDBusConnection *connection, const gchar *s
         IOT_DEBUG("Response Type: %s", g_variant_get_type_string(ret));
     } else if (g_strcmp0(property_name, "LocalName") == 0) {
         ret = g_variant_new("s", g_local_name);
+        IOT_DEBUG("Response Type: %s", g_variant_get_type_string(ret));
+    } else if (g_strcmp0(property_name, "MinInterval") == 0) {
+        ret = g_variant_new("u", 20);
+        IOT_DEBUG("Response Type: %s", g_variant_get_type_string(ret));
+    } else if (g_strcmp0(property_name, "MaxInterval") == 0) {
+        ret = g_variant_new("u", 40);
         IOT_DEBUG("Response Type: %s", g_variant_get_type_string(ret));
     }
     return ret;

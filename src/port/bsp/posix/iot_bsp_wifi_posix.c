@@ -114,7 +114,8 @@ iot_wifi_auth_mode_bits_t iot_bsp_wifi_get_auth_mode(void)
     return supported_mode_bits;
 }
 
-iot_error_t iot_bsp_wifi_get_status(void)
+void iot_bsp_wifi_get_status(iot_wifi_info *wifi_info)
 {
-    return IOT_ERROR_NONE;
+    /* posix port doesn't manage the wifi connection, report status unavailable */
+    memset(wifi_info, 0, sizeof(iot_wifi_info));
 }

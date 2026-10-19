@@ -56,18 +56,25 @@ STATIC_FUNCTION
 iot_error_t _iot_easysetup_con_timer_init(struct iot_context *ctx)
 {
     iot_error_t err = IOT_ERROR_NONE;
+    int ret;
 
     if (ctx->cloud_con_timer) {
-        iot_os_timer_destroy(&ctx->cloud_con_timer);
+        iot_os_timer_delete(ctx->cloud_con_timer);
         ctx->cloud_con_timer = NULL;
     }
 
-    err = iot_os_timer_init(&ctx->cloud_con_timer);
-    if (err != IOT_ERROR_NONE) {
-        IOT_ERROR("failed to malloc for cloud_con_timer");
+    ctx->cloud_con_timer = iot_os_timer_create(NULL, CLOUD_CON_TIMER_MS, ctx);
+    if (!ctx->cloud_con_timer) {
+        err = IOT_ERROR_BAD_REQ;
+        IOT_ERROR("Failed to create cloud con timer");
     } else {
-        iot_os_timer_count_ms(ctx->cloud_con_timer, CLOUD_CON_TIMER_MS);
-        IOT_INFO("cloud connection start");
+        ret = iot_os_timer_start(ctx->cloud_con_timer);
+        if (ret) {
+            err = IOT_ERROR_BAD_REQ;
+            IOT_ERROR("Failed to start timer");
+        } else {
+            IOT_INFO("cloud connection start");
+        }
     }
 
     return err;
@@ -108,7 +115,7 @@ void _iot_easysetup_ble_conn_cb(iot_ble_conn_evt_t evt)
     iot_error_t err = IOT_ERROR_NONE;
 
     if (context->cloud_con_timer) {
-        iot_os_timer_destroy(&context->cloud_con_timer);
+        iot_os_timer_delete(context->cloud_con_timer);
         context->cloud_con_timer = NULL;
     }
 
@@ -144,14 +151,14 @@ void _iot_easysetup_ble_conn_cb(iot_ble_conn_evt_t evt)
                 device_work_data_t work;
                 while (iot_util_queue_receive(context->work_queue, &work) == IOT_ERROR_NONE) {
                 }
-                iot_device_cleanup(context);
                 context->curr_state = IOT_STATE_INITIALIZED;
                 iot_state_update(context, IOT_STATE_PROV_ENTER, 0);
             } else {
                 IOT_INFO("BLE disconnection after onboarding");
                 IOT_INFO("get wifi provisioning info");
                 err = iot_nv_get_wifi_prov_data(&context->prov_data.wifi);
-                context->is_wifi_station = false;
+                context->need_wifi_reset = true;
+                context->connection_retry_count = 0;
                 if (err) {
                     IOT_ERROR("get wifi prov fail");
                 }
@@ -160,7 +167,7 @@ void _iot_easysetup_ble_conn_cb(iot_ble_conn_evt_t evt)
             context->d2d_event_request = false;
 
             if (context->cloud_con_timer) {
-                iot_os_timer_destroy(&context->cloud_con_timer);
+                iot_os_timer_delete(context->cloud_con_timer);
                 context->cloud_con_timer = NULL;
             }
 
@@ -358,8 +365,14 @@ iot_error_t _iot_easysetup_ble_msg_encrypt(struct iot_context *context, int cmd,
 {
     iot_error_t err = IOT_ERROR_NONE;
     iot_security_buffer_t msg_buf = {0};
-    iot_security_context_t *security_context = context->easysetup_security_context;
+    iot_security_context_t *security_context;
     uint32_t buf_idx;
+
+    if (!context || !context->easysetup_security_context) {
+        IOT_ES_DUMP(IOT_DEBUG_LEVEL_ERROR, IOT_DUMP_EASYSETUP_INTERNAL_SERVER_ERROR, 0);
+        return IOT_ERROR_INVALID_ARGS;
+    }
+    security_context = context->easysetup_security_context;
 
     uint32_t max_att_len = iot_bsp_ble_get_mtu();
     if (max_att_len < MIN_MTU_SIZE) {
@@ -533,18 +546,13 @@ err_report:
                     break;
                 case IOT_ERROR_CONN_DNS_QUERY_FAIL:
                 case IOT_ERROR_CONN_STA_NO_INTERNET:
+                case IOT_ERROR_NET_TCP_CONNECTION_FAIL:
+                case IOT_ERROR_NET_TLS_HANDSHAKE_FAIL:
+                case IOT_ERROR_MQTT_CONNECT_FAIL:
+                case IOT_ERROR_MQTT_CONNECT_TIMEOUT:
+                case IOT_ERROR_MQTT_RATE_LIMIT:
                     err = IOT_ERROR_EASYSETUP_NOT_CONNECTED_WIRELESS_NETWORK;
                     IOT_ES_DUMP(IOT_DEBUG_LEVEL_INFO, IOT_DUMP_EASYSETUP_NOT_CONNECTED_WIRELESS_NETWORK, 0);
-                    break;
-                case IOT_ERROR_CONN_STA_AP_NOT_FOUND:
-                case IOT_ERROR_CONN_STA_ASSOC_FAIL:
-                case IOT_ERROR_CONN_STA_CONN_FAIL:
-                    err = IOT_ERROR_EASYSETUP_WIFI_NOT_DISCOVERED;
-                    IOT_ES_DUMP(IOT_DEBUG_LEVEL_INFO, IOT_DUMP_EASYSETUP_WIFI_NOT_DISCOVERED, 0);
-                    break;
-                case IOT_ERROR_CONN_OPERATE_FAIL:
-                    err = IOT_ERROR_EASYSETUP_WIFI_NOT_DISCOVERED;
-                    IOT_ES_DUMP(IOT_DEBUG_LEVEL_INFO, IOT_DUMP_EASYSETUP_WIFI_NOT_DISCOVERED, 0);
                     break;
                 default:
                     err = IOT_ERROR_EASYSETUP_WIFI_NOT_DISCOVERED;
@@ -644,7 +652,8 @@ void iot_easysetup_deinit(struct iot_context *ctx)
         } else if (ctx->wifi_update_enabled) {
             IOT_INFO("get wifi provisioning info");
             err = iot_nv_get_wifi_prov_data(&ctx->prov_data.wifi);
-            ctx->is_wifi_station = false;
+            ctx->need_wifi_reset = true;
+            ctx->connection_retry_count = 0;
             if (err) {
                 IOT_ERROR("get wifi prov fail");
             }

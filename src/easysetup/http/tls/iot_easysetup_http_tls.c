@@ -77,11 +77,9 @@ static void es_http_tls_task(void *data)
             if (ret < 0) {
                 IOT_ERROR("Read error");
                 break;
-            } else
-                (ret == 0)
-                {
-                    continue;
-                }
+            } else if (ret == 0) {
+                continue;
+            }
             len = sizeof(buf) - 1;
             memset(buf, 0, sizeof(buf));
             ret = port_net_read(net_ctx, buf, len);
@@ -96,7 +94,8 @@ static void es_http_tls_task(void *data)
             http_msg_handler(cmd, &tx_buffer, type, payload);
 
         memset(buf, 0, sizeof(buf));
-        len = sprintf(buf, tx_buffer);
+        len = snprintf(buf, sizeof(buf), "%s", tx_buffer);
+
         if (tx_buffer) {
             iot_os_free(tx_buffer);
             tx_buffer = NULL;

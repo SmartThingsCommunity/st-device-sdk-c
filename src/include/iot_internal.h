@@ -50,6 +50,7 @@
 #define IOT_PUB_TOPIC_DEVICES_CREATE "/v1/devices/create/cbor"
 #define IOT_PUB_TOPIC_GET_PREFERENCES "/v1/devices/preferences/get/cbor"
 #define IOT_PUB_TOPIC_GET "/v1/devices/get/cbor"
+#define IOT_PUB_TOPIC_DEVICES_UPDATE_STATUS "/v1/devices/updateStatus/cbor"
 #else
 #define IOT_PUB_TOPIC_REGISTRATION "/v1/registrations"
 #define IOT_SUB_TOPIC_REGISTRATION "/v1/registrations/notification/%s"
@@ -62,6 +63,7 @@
 #define IOT_PUB_TOPIC_DEVICES_CREATE "/v1/devices/create"
 #define IOT_PUB_TOPIC_GET_PREFERENCES "/v1/devices/preferences/get"
 #define IOT_PUB_TOPIC_GET "/v1/devices/get"
+#define IOT_PUB_TOPIC_DEVICES_UPDATE_STATUS "/v1/devices/updateStatus"
 #endif
 
 #define IOT_PUB_TOPIC_DELETE "/v1/devices/delete"
@@ -95,13 +97,28 @@ iot_error_t iot_command_send(struct iot_context *ctx, enum iot_command_type cmd_
                              int param_size);
 
 /**
- * @brief       wifi status check
- * @details     this function check wifi connection status
- * @param[in]   ctx                                     iot-core context
- * @retval      IOT_ERROR_NONE                  success.
- * @retval      IOT_ERROR_NV_DATA_ERROR         data set/get failed
+ * @brief	queue a notification to be handled on the device work queue task
+ * @details	this function makes a shallow copy of the noti_data struct and queues it,
+ *		the notification is dispatched to registered callbacks on the work queue task
+ *		and the queued copy is freed by the handler after dispatch.
+ *
+ *		Ownership contract (shallow copy):
+ *		- noti_data itself may live on the caller's stack, only the struct is copied.
+ *		- Heap pointers embedded in noti_data (e.g. raw.preferences.preferences_data
+ *		  and the name/string buffers it references) are NOT deep-copied.
+ *		- On IOT_ERROR_NONE, ownership of those embedded heap pointers transfers to
+ *		  the notification handler, which frees them after invoking user callbacks.
+ *		  The caller must not access or free them after a successful call.
+ *		- On any error return, embedded heap pointers remain owned by the caller,
+ *		  only the internal struct copy is freed.
+ * @param[in]	ctx			iot-core context
+ * @param[in]	noti_data		notification data to deliver
+ * @retval	IOT_ERROR_NONE		success.
+ * @retval	IOT_ERROR_INVALID_ARGS	ctx or noti_data is NULL
+ * @retval	IOT_ERROR_MEM_ALLOC	memory allocation failed
+ * @retval	IOT_ERROR_BAD_REQ	queue send error
  */
-iot_error_t iot_wifi_get_status(struct iot_context *ctx);
+iot_error_t iot_noti_send(struct iot_context *ctx, const iot_noti_data_t *noti_data);
 
 /**
  * @brief	send wifi control request
@@ -421,12 +438,75 @@ iot_error_t iot_set_st_ecode_from_conn_error(struct iot_context *ctx, iot_error_
 iot_error_t iot_cleanup(struct iot_context *ctx, bool reboot);
 
 /**
- * @brief      update dip depends on server type
+ * @brief      update server environment
  *
  * @param[in]  ctx                     iot-core context
- * @param[in]  server_type             server type
+ * @param[in]  server_env             server environment
  */
-void iot_update_dip_from_server_type(struct iot_context *ctx, iot_server_type_t server_type);
+void iot_update_server_env(struct iot_context *ctx, server_env_type server_env);
+
+/**
+ * @brief      check wheter dip update is needed
+ *
+ * @param[in]  new_dip             new dip information
+ */
+bool iot_check_dip_update_needed(struct iot_dip_data *new_dip);
+
+/**
+ * @brief      Check publish rate limit
+ * @details    This function checks if the publish rate limit is exceeded.
+ *             It uses a circular buffer of timestamps to track recent publishes.
+ * @param[in]  ctx   iot-core context
+ * @return     true if publish is allowed, false if rate limit exceeded
+ */
+bool iot_check_publish_rate_limit(struct iot_context *ctx);
+
+/**
+ * @brief      Record publish timestamp
+ * @details    This function records the current timestamp in the circular buffer
+ *             for rate limit tracking.
+ * @param[in]  ctx   iot-core context
+ */
+void iot_record_publish_timestamp(struct iot_context *ctx);
+
+/**
+ * @brief      Clear publish timestamps
+ * @details    This function clears all timestamps in the circular buffer.
+ *             Called when rate limit penalty is applied.
+ * @param[in]  ctx   iot-core context
+ */
+void iot_clear_publish_timestamp(struct iot_context *ctx);
+
+/**
+ * @brief      Internal wrapper for st_mqtt_publish_async with rate limit handling
+ * @details    This function provides a common interface for MQTT publish operations
+ *             with built-in rate limit checking and timestamp recording.
+ * @param[in]  ctx          iot-core context
+ * @param[in]  client       MQTT client handle
+ * @param[in]  msg          MQTT message to publish
+ * @retval     int          0 on success, negative error code on failure
+ */
+int iot_mqtt_publish_async(struct iot_context *ctx, st_mqtt_client client, st_mqtt_msg *msg,
+                           st_mqtt_publish_callback publish_cb, void *usr_data);
+
+/**
+ * @brief      Notify rate limit to app
+ *
+ * @param[in]  ctx          iot-core context
+ * @param[in]  remaining_time_ms       remaining time in ms until rate limit released
+ */
+void iot_notify_rate_limit(struct iot_context *ctx, int remaining_time_ms);
+
+/**
+ * @brief      Internal wrapper for st_mqtt_publish with rate limit handling
+ * @details    This function provides a common interface for synchronous MQTT publish operations
+ *             with built-in rate limit checking and timestamp recording.
+ * @param[in]  ctx          iot-core context
+ * @param[in]  client       MQTT client handle
+ * @param[in]  msg          MQTT message to publish
+ * @retval     int          0 on success, negative error code on failure
+ */
+int iot_mqtt_publish(struct iot_context *ctx, st_mqtt_client client, st_mqtt_msg *msg);
 
 #if defined(CONFIG_STDK_IOT_CORE_EASYSETUP_WIFI_UPDATE)
 /**

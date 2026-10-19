@@ -425,7 +425,81 @@ bool iot_bsp_wifi_is_dhcp_success()
     return gotIP ? true : false;
 }
 
-iot_error_t iot_bsp_wifi_get_status(void)
+static iot_wifi_disconnected_reason convert_disconnected_reason(iot_error_t conn_error)
 {
-    return s_latest_disconnect_reason;
+    switch (conn_error) {
+        case IOT_ERROR_CONN_STA_AP_NOT_FOUND:
+            return IOT_WIFI_DISCONNECTED_REASON_AP_NOT_FOUND;
+        case IOT_ERROR_CONN_STA_AUTH_FAIL:
+            return IOT_WIFI_DISCONNECTED_REASON_AUTH_FAIL;
+        case IOT_ERROR_CONN_STA_ASSOC_FAIL:
+            return IOT_WIFI_DISCONNECTED_REASON_ASSOC_FAIL;
+        case IOT_ERROR_CONN_STA_CONN_FAIL:
+            return IOT_WIFI_DISCONNECTED_REASON_CONNECTION_FAIL;
+        default:
+            return IOT_WIFI_DISCONNECTED_REASON_UNKNOWN;
+    }
+}
+
+void iot_bsp_wifi_get_status(iot_wifi_info *wifi_info)
+{
+    wifi_linkstate_reason_t linkstate_reason;
+    wifi_link_status_t link_status;
+    netif_ip4_config_t ip4_config;
+
+    memset(wifi_info, 0, sizeof(iot_wifi_info));
+
+    if (!WIFI_INITIALIZED) {
+        return;
+    }
+
+    /* If STA is not started (e.g. WiFi off or AP-only mode), report idle */
+    if (!wifi_sta_is_started()) {
+        wifi_info->wifi_status = IOT_WIFI_STATUS_IDLE;
+        return;
+    }
+
+    if (bk_wifi_sta_get_linkstate_with_reason(&linkstate_reason) != BK_OK) {
+        IOT_ERROR("failed to get wifi linkstate with reason");
+        return;
+    }
+
+    switch (linkstate_reason.state) {
+        case WIFI_LINKSTATE_STA_CONNECTED:
+        case WIFI_LINKSTATE_STA_GOT_IP: {
+            if (bk_wifi_sta_get_link_status(&link_status) == BK_OK) {
+                wifi_info->wifi_status = IOT_WIFI_STATUS_CONNECTED;
+                memcpy(wifi_info->ap_ssid, link_status.ssid, IOT_WIFI_MAX_SSID_LEN);
+                memcpy(wifi_info->bssid.addr, link_status.bssid, IOT_WIFI_MAX_BSSID_LEN);
+                wifi_info->rssi = link_status.rssi;
+            } else {
+                IOT_ERROR("failed to get wifi link status");
+                wifi_info->wifi_status = IOT_WIFI_STATUS_CONNECTED;
+            }
+
+            wifi_info->ip_status = IOT_IP_STATUS_NOT_ASSIGNED;
+            if (gotIP && (bk_netif_get_ip4_config(NETIF_IF_STA, &ip4_config) == BK_OK)) {
+                if (strcmp(ip4_config.ip, BK_STR_NULL_IP) != 0) {
+                    ip4_addr_t ipaddr;
+                    if (inet_aton(ip4_config.ip, &ipaddr)) {
+                        wifi_info->ip_status = IOT_IP_STATUS_ASSIGNED;
+                        wifi_info->ip = ipaddr.addr;
+                    }
+                }
+            }
+            break;
+        }
+        case WIFI_LINKSTATE_STA_DISCONNECTED:
+        case WIFI_LINKSTATE_STA_CONNECT_FAILED:
+            wifi_info->wifi_status = IOT_WIFI_STATUS_DISCONNECTED;
+            wifi_info->last_disconnected_reason = convert_disconnected_reason(s_latest_disconnect_reason);
+            break;
+        case WIFI_LINKSTATE_STA_CONNECTING:
+            wifi_info->wifi_status = IOT_WIFI_STATUS_CONNECTING;
+            break;
+        case WIFI_LINKSTATE_STA_IDLE:
+        default:
+            wifi_info->wifi_status = IOT_WIFI_STATUS_IDLE;
+            break;
+    }
 }

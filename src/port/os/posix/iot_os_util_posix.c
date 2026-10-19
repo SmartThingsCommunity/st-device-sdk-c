@@ -333,88 +333,6 @@ void iot_os_delay(unsigned int delay_ms)
     nanosleep(&ts, NULL);
 }
 
-void iot_os_timer_count_ms(iot_os_timer timer, unsigned int timeout_ms)
-{
-    timer_t *timer_id = (timer_t *)timer;
-    struct itimerspec it;
-
-    it.it_interval.tv_sec = 0;
-    it.it_interval.tv_nsec = 0;
-    it.it_value.tv_sec = timeout_ms / 1000;
-    it.it_value.tv_nsec = (timeout_ms % 1000) * 1000000;
-
-    int ret = timer_settime(*timer_id, 0, &it, NULL);
-    if (ret == -1) {
-        return;
-    }
-}
-
-unsigned int iot_os_timer_left_ms(iot_os_timer timer)
-{
-    timer_t *timer_id = (timer_t *)timer;
-    struct itimerspec it = {
-        0,
-    };
-    unsigned int left = 0;
-
-    int ret = timer_gettime(*timer_id, &it);
-    if (ret == -1) {
-        return 0;
-    }
-
-    return (it.it_value.tv_sec * 1000) + (it.it_value.tv_nsec / 1000000);
-}
-
-char iot_os_timer_isexpired(iot_os_timer timer)
-{
-    timer_t *timer_id = (timer_t *)timer;
-    struct itimerspec it = {
-        0,
-    };
-
-    int ret = timer_gettime(*timer_id, &it);
-    if (ret == -1) {
-        return IOT_OS_TRUE;
-    }
-
-    if (it.it_value.tv_sec == 0 && it.it_value.tv_nsec == 0) {
-        return IOT_OS_TRUE;
-    } else {
-        return IOT_OS_FALSE;
-    }
-}
-
-int iot_os_timer_init(iot_os_timer *timer)
-{
-    timer_t *timer_id = malloc(sizeof(timer_t));
-    struct sigevent sig;
-
-    if (timer_id == NULL)
-        return IOT_ERROR_MEM_ALLOC;
-
-    memset(&sig, '\0', sizeof(struct sigevent));
-    sig.sigev_notify = SIGEV_NONE;
-    sig.sigev_value.sival_ptr = timer_id;
-    int ret = timer_create(CLOCK_REALTIME, &sig, timer_id);
-    if (ret == -1) {
-        free(timer_id);
-        return IOT_ERROR_BAD_REQ;
-    }
-
-    *timer = timer_id;
-
-    return IOT_ERROR_NONE;
-}
-
-void iot_os_timer_destroy(iot_os_timer *timer)
-{
-    timer_t *timer_id = (timer_t *)*timer;
-
-    timer_delete(*timer_id);
-    free(timer_id);
-    timer = NULL;
-}
-
 void *iot_os_malloc(size_t size)
 {
     return malloc(size);
@@ -442,7 +360,6 @@ char *iot_os_strdup(const char *src)
 
 typedef struct _posix_timer_handle {
     timer_t timerId;
-    bool is_started;
     iot_os_timer_cb user_cb;
     void *user_data;
     unsigned int expiry_time_ms;
@@ -451,7 +368,6 @@ typedef struct _posix_timer_handle {
 static void _port_timer_cb(union sigval timer_data)
 {
     posix_timer_handle_t *timer_handle = timer_data.sival_ptr;
-    timer_handle->is_started = false;
 
     if (timer_handle->user_cb) {
         timer_handle->user_cb((iot_os_timer_handle)timer_handle, timer_handle->user_data);
@@ -481,7 +397,6 @@ iot_os_timer_handle iot_os_timer_create(iot_os_timer_cb cb, unsigned int expiry_
 
     new_timer_handle->user_cb = cb;
     new_timer_handle->user_data = user_data;
-    new_timer_handle->is_started = false;
     new_timer_handle->expiry_time_ms = expiry_time_ms;
 
     return (iot_os_timer_handle)new_timer_handle;
@@ -508,13 +423,11 @@ int iot_os_timer_start(iot_os_timer_handle timer_handle)
     int err;
 
     its.it_value.tv_sec = port_timer_handle->expiry_time_ms / 1000;
-    its.it_value.tv_nsec = (port_timer_handle->expiry_time_ms % 1000) * 1000;
+    its.it_value.tv_nsec = (port_timer_handle->expiry_time_ms % 1000) * 1000000;
 
     err = timer_settime(port_timer_handle->timerId, 0, &its, NULL);
     if (err != 0) {
         printf("Failed to start timer\n");
-    } else {
-        port_timer_handle->is_started = true;
     }
     return err;
 }
@@ -530,8 +443,6 @@ int iot_os_timer_stop(iot_os_timer_handle timer_handle)
     err = timer_settime(port_timer_handle->timerId, 0, &its, NULL);
     if (err != 0) {
         printf("Failed to stop timer\n");
-    } else {
-        port_timer_handle->is_started = false;
     }
     return err;
 }
@@ -539,5 +450,10 @@ int iot_os_timer_stop(iot_os_timer_handle timer_handle)
 bool iot_os_timer_is_active(iot_os_timer_handle timer_handle)
 {
     posix_timer_handle_t *port_timer_handle = (posix_timer_handle_t *)timer_handle;
-    return port_timer_handle->is_started;
+    struct itimerspec its;
+
+    if (timer_gettime(port_timer_handle->timerId, &its) != 0) {
+        return false;
+    }
+    return (its.it_value.tv_sec != 0 || its.it_value.tv_nsec != 0);
 }

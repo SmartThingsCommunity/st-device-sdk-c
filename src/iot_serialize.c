@@ -106,6 +106,132 @@ static CborError _iot_cbor_map_to_json(CborValue *it, char *out, size_t len, siz
     return CborNoError;
 }
 
+static CborError _iot_cbor_double_to_json(CborValue *it, char *out, size_t len, int *c_out)
+{
+    double val_dbl;
+    uint64_t val_i64;
+    int sret = 0;
+    int c = 0;
+
+    cbor_value_get_double(it, &val_dbl);
+
+    if (fpclassify(val_dbl) < 0) {
+        return CborErrorIO;
+    }
+#if IOT_SERIALIZE_SPRINTF_FLOAT
+    val_i64 = (uint64_t)fabs(val_dbl);
+    if ((double)val_i64 == fabs(val_dbl)) {
+        /* print as integer so we get the full precision */
+        sret = snprintf(out + c, len - c, "%s%" PRIu64, val_dbl < 0 ? "-" : "", val_i64);
+        if (sret < 0)
+            return CborErrorInvalidUtf8TextString;
+        c += sret;
+    } else {
+        /* this number is definitely not a 64-bit integer */
+        sret = snprintf(out + c, len - c, "%." DBL_DECIMAL_DIG_STR "g", val_dbl);
+        if (sret < 0)
+            return CborErrorInvalidUtf8TextString;
+        c += sret;
+    }
+#else
+    double intpart, fracpart;
+    fracpart = modf(val_dbl, &intpart);
+    sret = snprintf(out + c, len - c, "%d", (int)intpart);
+    if (sret < 0)
+        return CborErrorInvalidUtf8TextString;
+    c += sret;
+
+    if (fracpart != 0) {
+        c += snprintf(out + c, len - c, ".");
+
+        fracpart = round(fracpart * IOT_SERIALIZE_DECIMAL_PRECISION) / IOT_SERIALIZE_DECIMAL_PRECISION;
+        if (fracpart < 0) {
+            fracpart *= -1;
+        }
+        while (fracpart != (int)fracpart) {
+            fracpart *= 10;
+            sret = snprintf(out + c, len - c, "%d", ((int)fracpart) % 10);
+            if (sret < 0)
+                return CborErrorInvalidUtf8TextString;
+            c += sret;
+        }
+    }
+#endif
+
+    *c_out = c;
+    return CborNoError;
+}
+
+static CborError _iot_cbor_tag_to_json(CborValue *it, char *out, size_t len, size_t *olen)
+{
+    CborError err;
+    CborTag result;
+    CborValue recursed;
+    size_t c = 0;
+    int sret = 0;
+
+    (void)cbor_value_get_tag(it, &result);
+
+    switch (result) {
+        /* Cbor Decimal Tag type has 2 array values exponent and mantissa */
+        case CborDecimalTag: {
+            uint64_t exp, man;
+            bool man_sign;
+            err = cbor_value_advance_fixed(it);
+            if (err) {
+                return err;
+            }
+            err = cbor_value_enter_container(it, &recursed);
+            if (err) {
+                return err;
+            }
+            cbor_value_get_raw_integer(&recursed, &exp);
+            exp = pow(10, (uint32_t)exp);
+            err = cbor_value_advance_fixed(&recursed);
+            if (err) {
+                return err;
+            }
+            cbor_value_get_raw_integer(&recursed, &man);
+            man_sign = cbor_value_is_negative_integer(&recursed);
+
+            err = cbor_value_advance_fixed(&recursed);
+            if (err) {
+                return err;
+            }
+            err = cbor_value_leave_container(it, &recursed);
+            if (err) {
+                return err;
+            }
+
+            /* mantissa is negative */
+            if (man_sign) {
+                c += snprintf(out + c, len - c, "-");
+            }
+
+            sret = snprintf(out + c, len - c, "%u", (uint32_t)(man / exp));
+            if (sret < 0)
+                return CborErrorInvalidUtf8TextString;
+            c += sret;
+
+            c += snprintf(out + c, len - c, ".");
+            if (exp > IOT_SERIALIZE_DECIMAL_PRECISION)
+                sret =
+                    snprintf(out + c, len - c, "%u", (uint32_t)((man % exp) / (exp / IOT_SERIALIZE_DECIMAL_PRECISION)));
+            else
+                sret = snprintf(out + c, len - c, "%u", (uint32_t)(man % exp));
+
+            if (sret < 0)
+                return CborErrorInvalidUtf8TextString;
+            c += sret;
+
+            *olen = (size_t)c;
+            return CborNoError;
+        }
+        default:
+            return CborErrorUnknownType;
+    }
+}
+
 static CborError _iot_cbor_value_to_json(CborValue *it, char *out, size_t len, size_t *olen)
 {
     CborError err;
@@ -118,9 +244,6 @@ static CborError _iot_cbor_value_to_json(CborValue *it, char *out, size_t len, s
     uint64_t val_i64;
     double val_dbl;
     bool val_bool;
-#if !IOT_SERIALIZE_SPRINTF_FLOAT
-    double intpart, fracpart;
-#endif
 
     type = cbor_value_get_type(it);
 
@@ -188,117 +311,17 @@ static CborError _iot_cbor_value_to_json(CborValue *it, char *out, size_t len, s
             c += sret;
 
             break;
-        case CborDoubleType:
-            cbor_value_get_double(it, &val_dbl);
-
-            if (fpclassify(val_dbl) < 0) {
-                return CborErrorIO;
-            }
-#if IOT_SERIALIZE_SPRINTF_FLOAT
-            val_i64 = (uint64_t)fabs(val_dbl);
-            if ((double)val_i64 == fabs(val_dbl)) {
-                /* print as integer so we get the full precision */
-                sret = snprintf(out + c, len - c, "%s%" PRIu64, val_dbl < 0 ? "-" : "", val_i64);
-                if (sret < 0)
-                    return CborErrorInvalidUtf8TextString;
-                c += sret;
-            } else {
-                /* this number is definitely not a 64-bit integer */
-                sret = snprintf(out + c, len - c, "%." DBL_DECIMAL_DIG_STR "g", val_dbl);
-                if (sret < 0)
-                    return CborErrorInvalidUtf8TextString;
-                c += sret;
-            }
-#else
-            fracpart = modf(val_dbl, &intpart);
-            sret = snprintf(out + c, len - c, "%d", (int)intpart);
-            if (sret < 0)
-                return CborErrorInvalidUtf8TextString;
-            c += sret;
-
-            if (fracpart != 0) {
-                c += snprintf(out + c, len - c, ".");
-
-                fracpart = round(fracpart * IOT_SERIALIZE_DECIMAL_PRECISION) / IOT_SERIALIZE_DECIMAL_PRECISION;
-                if (fracpart < 0) {
-                    fracpart *= -1;
-                }
-                while (fracpart != (int)fracpart) {
-                    fracpart *= 10;
-                    sret = snprintf(out + c, len - c, "%d", ((int)fracpart) % 10);
-                    if (sret < 0)
-                        return CborErrorInvalidUtf8TextString;
-                    c += sret;
-                }
-            }
-#endif
-
-            break;
-        case CborTagType: {
-            CborTag result;
-            err = cbor_value_get_tag(it, &result);
+        case CborDoubleType: {
+            int dbl_c = 0;
+            err = _iot_cbor_double_to_json(it, out + c, len - c, &dbl_c);
             if (err) {
                 return err;
             }
-            switch (result) {
-                /* Cbor Decimal Tag type has 2 array values exponent and mantissa */
-                case CborDecimalTag: {
-                    uint64_t exp, man;
-                    bool man_sign;
-                    err = cbor_value_advance_fixed(it);
-                    if (err) {
-                        return err;
-                    }
-                    err = cbor_value_enter_container(it, &recursed);
-                    if (err) {
-                        return err;
-                    }
-                    cbor_value_get_raw_integer(&recursed, &exp);
-                    exp = pow(10, (uint32_t)exp);
-                    err = cbor_value_advance_fixed(&recursed);
-                    if (err) {
-                        return err;
-                    }
-                    cbor_value_get_raw_integer(&recursed, &man);
-                    man_sign = cbor_value_is_negative_integer(&recursed);
-
-                    err = cbor_value_advance_fixed(&recursed);
-                    if (err) {
-                        return err;
-                    }
-                    err = cbor_value_leave_container(it, &recursed);
-                    if (err) {
-                        return err;
-                    }
-
-                    /* mantissa is negative */
-                    if (man_sign) {
-                        c += snprintf(out + c, len - c, "-");
-                    }
-
-                    sret = snprintf(out + c, len - c, "%u", (uint32_t)(man / exp));
-                    if (sret < 0)
-                        return CborErrorInvalidUtf8TextString;
-                    c += sret;
-
-                    c += snprintf(out + c, len - c, ".");
-                    if (exp > IOT_SERIALIZE_DECIMAL_PRECISION)
-                        sret = snprintf(out + c, len - c, "%u",
-                                        (uint32_t)((man % exp) / (exp / IOT_SERIALIZE_DECIMAL_PRECISION)));
-                    else
-                        sret = snprintf(out + c, len - c, "%u", (uint32_t)(man % exp));
-
-                    if (sret < 0)
-                        return CborErrorInvalidUtf8TextString;
-                    c += sret;
-
-                    *olen = (size_t)c;
-                    return CborNoError;
-                } break;
-                default:
-                    return CborErrorUnknownType;
-            }
-        } break;
+            c += dbl_c;
+            break;
+        }
+        case CborTagType:
+            return _iot_cbor_tag_to_json(it, out, len, olen);
         case CborBooleanType:
             err = cbor_value_get_boolean(it, &val_bool);
             if (err) {

@@ -26,6 +26,7 @@ extern "C" {
 #endif
 
 enum {
+    CAP_ENUM_DUSTHEALTHCONCERN_DUSTHEALTHCONCERN_VALUE_UNKNOWN,
     CAP_ENUM_DUSTHEALTHCONCERN_DUSTHEALTHCONCERN_VALUE_GOOD,
     CAP_ENUM_DUSTHEALTHCONCERN_DUSTHEALTHCONCERN_VALUE_MODERATE,
     CAP_ENUM_DUSTHEALTHCONCERN_DUSTHEALTHCONCERN_VALUE_SLIGHTLYUNHEALTHY,
@@ -34,7 +35,6 @@ enum {
     CAP_ENUM_DUSTHEALTHCONCERN_DUSTHEALTHCONCERN_VALUE_HAZARDOUS,
     CAP_ENUM_DUSTHEALTHCONCERN_DUSTHEALTHCONCERN_VALUE_MAX
 };
-
 const static struct iot_caps_dustHealthConcern {
     const char *id;
     const struct dustHealthConcern_attr_dustHealthConcern {
@@ -42,6 +42,7 @@ const static struct iot_caps_dustHealthConcern {
         const unsigned char property;
         const unsigned char valueType;
         const char *values[CAP_ENUM_DUSTHEALTHCONCERN_DUSTHEALTHCONCERN_VALUE_MAX];
+        const char *value_unknown;
         const char *value_good;
         const char *value_moderate;
         const char *value_slightlyUnhealthy;
@@ -49,6 +50,19 @@ const static struct iot_caps_dustHealthConcern {
         const char *value_veryUnhealthy;
         const char *value_hazardous;
     } attr_dustHealthConcern;
+    const struct dustHealthConcern_attr_supportedDustValues {
+        const char *name;
+        const unsigned char property;
+        const unsigned char valueType;
+        const char *values[CAP_ENUM_DUSTHEALTHCONCERN_DUSTHEALTHCONCERN_VALUE_MAX];
+        const char *value_unknown;
+        const char *value_good;
+        const char *value_moderate;
+        const char *value_slightlyUnhealthy;
+        const char *value_unhealthy;
+        const char *value_veryUnhealthy;
+        const char *value_hazardous;
+    } attr_supportedDustValues;
 } caps_helper_dustHealthConcern = {
     .id = "dustHealthConcern",
     .attr_dustHealthConcern =
@@ -56,7 +70,22 @@ const static struct iot_caps_dustHealthConcern {
             .name = "dustHealthConcern",
             .property = ATTR_SET_VALUE_REQUIRED,
             .valueType = VALUE_TYPE_STRING,
-            .values = {"good", "moderate", "slightlyUnhealthy", "unhealthy", "veryUnhealthy", "hazardous"},
+            .values = {"unknown", "good", "moderate", "slightlyUnhealthy", "unhealthy", "veryUnhealthy", "hazardous"},
+            .value_unknown = "unknown",
+            .value_good = "good",
+            .value_moderate = "moderate",
+            .value_slightlyUnhealthy = "slightlyUnhealthy",
+            .value_unhealthy = "unhealthy",
+            .value_veryUnhealthy = "veryUnhealthy",
+            .value_hazardous = "hazardous",
+        },
+    .attr_supportedDustValues =
+        {
+            .name = "supportedDustValues",
+            .property = ATTR_SET_VALUE_ARRAY,
+            .valueType = VALUE_TYPE_STRING,
+            .values = {"unknown", "good", "moderate", "slightlyUnhealthy", "unhealthy", "veryUnhealthy", "hazardous"},
+            .value_unknown = "unknown",
             .value_good = "good",
             .value_moderate = "moderate",
             .value_slightlyUnhealthy = "slightlyUnhealthy",

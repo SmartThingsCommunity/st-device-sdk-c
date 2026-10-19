@@ -85,7 +85,7 @@ typedef struct iot_mqtt_packet_chunk {
 
     unsigned char *chunk_data;
     size_t chunk_size;
-    unsigned int chunk_id;
+    int chunk_id;
     int chunk_state;
 
     iot_os_timer_handle expiry_time;
@@ -93,6 +93,9 @@ typedef struct iot_mqtt_packet_chunk {
 
     unsigned char have_owner;
     int return_code;
+
+    st_mqtt_publish_callback publish_cb;
+    void *publish_cb_user_data;
 
     struct iot_mqtt_packet_chunk *next;
 } iot_mqtt_packet_chunk_t;
@@ -129,6 +132,8 @@ typedef struct MQTTClient {
 
     iot_os_eventgroup *work_queue_signal;
     iot_util_queue_t *work_queue;
+
+    unsigned int client_id_hash;
 } MQTTClient;
 
 #if defined(__cplusplus)

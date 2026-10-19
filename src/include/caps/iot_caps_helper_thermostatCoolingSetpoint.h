@@ -33,6 +33,35 @@ enum {
 
 const static struct iot_caps_thermostatCoolingSetpoint {
     const char *id;
+    const struct thermostatCoolingSetpoint_attr_coolingSetpointRange {
+        const char *name;
+        const unsigned char property;
+        const unsigned char valueType;
+        const char *units[CAP_ENUM_THERMOSTATCOOLINGSETPOINT_COOLINGSETPOINT_UNIT_MAX];
+        const char *unit_F;
+        const char *unit_C;
+        const struct coolingSetpointRange_value_minimum {
+            const char *name;
+            const unsigned char property;
+            const unsigned char valueType;
+            const double min;
+            const double max;
+        } value_minimum;
+        const struct coolingSetpointRange_value_maximum {
+            const char *name;
+            const unsigned char property;
+            const unsigned char valueType;
+            const double min;
+            const double max;
+        } value_maximum;
+        const struct coolingSetpointRange_value_step {
+            const char *name;
+            const unsigned char property;
+            const unsigned char valueType;
+            const double min;
+            const double max;
+        } value_step;
+    } attr_coolingSetpointRange;
     const struct thermostatCoolingSetpoint_attr_coolingSetpoint {
         const char *name;
         const unsigned char property;
@@ -48,6 +77,39 @@ const static struct iot_caps_thermostatCoolingSetpoint {
     } cmd_setCoolingSetpoint;
 } caps_helper_thermostatCoolingSetpoint = {
     .id = "thermostatCoolingSetpoint",
+    .attr_coolingSetpointRange =
+        {
+            .name = "coolingSetpointRange",
+            .property = ATTR_SET_VALUE_REQUIRED | ATTR_SET_UNIT_REQUIRED,
+            .valueType = VALUE_TYPE_OBJECT,
+            .units = {"F", "C"},
+            .unit_F = "F",
+            .unit_C = "C",
+            .value_minimum =
+                {
+                    .name = "minimum",
+                    .property = ATTR_SET_VALUE_MIN | ATTR_SET_VALUE_MAX | ATTR_SET_VALUE_REQUIRED,
+                    .valueType = VALUE_TYPE_NUMBER,
+                    .min = -460,
+                    .max = 10000,
+                },
+            .value_maximum =
+                {
+                    .name = "maximum",
+                    .property = ATTR_SET_VALUE_MIN | ATTR_SET_VALUE_MAX | ATTR_SET_VALUE_REQUIRED,
+                    .valueType = VALUE_TYPE_NUMBER,
+                    .min = -460,
+                    .max = 10000,
+                },
+            .value_step =
+                {
+                    .name = "step",
+                    .property = ATTR_SET_VALUE_MIN | ATTR_SET_VALUE_MAX,
+                    .valueType = VALUE_TYPE_NUMBER,
+                    .min = -460,
+                    .max = 10000,
+                },
+        },
     .attr_coolingSetpoint =
         {
             .name = "coolingSetpoint",

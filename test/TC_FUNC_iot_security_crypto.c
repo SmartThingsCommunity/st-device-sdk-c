@@ -19,14 +19,51 @@
 #include <bsp/iot_bsp_random.h>
 #include <iot_error.h>
 #include <iot_nv_data.h>
+#include <security/backend/iot_security_be.h>
 #include <security/iot_security_crypto.h>
 #include <stdlib.h>
 #include <string.h>
 
 #include "TC_MOCK_functions.h"
+#include "TC_REGISTRY.h"
 #include "cmocka_custom.h"
 
 #if defined(CONFIG_STDK_IOT_CORE_CRYPTO_SUPPORT_ED25519)
+TEST_SUITE("iot_security_crypto.c");
+
+static int TC_iot_security_cipher_init_setup(void **state);
+static int TC_iot_security_cipher_init_teardown(void **state);
+static int TC_iot_security_cipher_setup(void **state);
+static int TC_iot_security_cipher_teardown(void **state);
+static int TC_iot_security_pk_init_setup(void **state);
+static int TC_iot_security_pk_init_teardown(void **state);
+static int TC_iot_security_pk_setup(void **state);
+static int TC_iot_security_pk_teardown(void **state);
+
+TEST_FIXTURE(iot_security_cipher, TC_iot_security_cipher_setup, TC_iot_security_cipher_teardown);
+TEST_FIXTURE(iot_security_cipher_init, TC_iot_security_cipher_init_setup, TC_iot_security_cipher_init_teardown);
+TEST_FIXTURE(iot_security_cipher_deinit, TC_iot_security_cipher_setup, TC_iot_security_cipher_init_teardown);
+TEST_FIXTURE(iot_security_pk, TC_iot_security_pk_setup, TC_iot_security_pk_teardown);
+TEST_FIXTURE(iot_security_pk_init, TC_iot_security_pk_init_setup, TC_iot_security_pk_init_teardown);
+
+static int TC_iot_security_cipher_init_setup(void **state);
+static int TC_iot_security_cipher_init_teardown(void **state);
+static int TC_iot_security_cipher_setup(void **state);
+static int TC_iot_security_cipher_teardown(void **state);
+static int TC_iot_security_pk_init_setup(void **state);
+static int TC_iot_security_pk_init_teardown(void **state);
+static int TC_iot_security_pk_setup(void **state);
+static int TC_iot_security_pk_teardown(void **state);
+
+static int TC_iot_security_cipher_init_setup(void **state);
+static int TC_iot_security_cipher_init_teardown(void **state);
+static int TC_iot_security_cipher_setup(void **state);
+static int TC_iot_security_cipher_teardown(void **state);
+static int TC_iot_security_pk_init_setup(void **state);
+static int TC_iot_security_pk_init_teardown(void **state);
+static int TC_iot_security_pk_setup(void **state);
+static int TC_iot_security_pk_teardown(void **state);
+
 static char sample_device_info[] = {
     "{\n"
     "\t\"deviceInfo\": {\n"
@@ -141,7 +178,7 @@ static char sample_device_info[] = {
     "}"};
 #endif
 
-int TC_iot_security_pk_init_setup(void **state)
+static int TC_iot_security_pk_init_setup(void **state)
 {
     iot_error_t err;
     iot_security_context_t *context;
@@ -163,7 +200,7 @@ int TC_iot_security_pk_init_setup(void **state)
     return 0;
 }
 
-int TC_iot_security_pk_init_teardown(void **state)
+static int TC_iot_security_pk_init_teardown(void **state)
 {
     iot_error_t err;
     iot_security_context_t *context;
@@ -182,7 +219,7 @@ int TC_iot_security_pk_init_teardown(void **state)
     return 0;
 }
 
-int TC_iot_security_pk_setup(void **state)
+static int TC_iot_security_pk_setup(void **state)
 {
     iot_error_t err;
     iot_security_context_t *context;
@@ -207,7 +244,7 @@ int TC_iot_security_pk_setup(void **state)
     return 0;
 }
 
-int TC_iot_security_pk_teardown(void **state)
+static int TC_iot_security_pk_teardown(void **state)
 {
     iot_error_t err;
     iot_security_context_t *context;
@@ -229,7 +266,7 @@ int TC_iot_security_pk_teardown(void **state)
     return 0;
 }
 
-void TC_iot_security_pk_init_null_parameters(void **state)
+TEST_F(iot_security_pk_init, TC_iot_security_pk_init_null_parameters_neg)
 {
     iot_error_t err;
 
@@ -239,7 +276,7 @@ void TC_iot_security_pk_init_null_parameters(void **state)
     assert_int_not_equal(err, IOT_ERROR_NONE);
 }
 
-void TC_iot_security_pk_init_malloc_failure(void **state)
+TEST_F(iot_security_pk_init, TC_iot_security_pk_init_malloc_failure_neg)
 {
     iot_error_t err;
     iot_security_context_t *context;
@@ -260,7 +297,7 @@ void TC_iot_security_pk_init_malloc_failure(void **state)
     do_not_use_mock_iot_os_malloc_failure();
 }
 
-void TC_iot_security_pk_init_success(void **state)
+TEST_F(iot_security_pk_init, TC_iot_security_pk_init_success_pos)
 {
     iot_error_t err;
     iot_security_context_t *context;
@@ -277,7 +314,7 @@ void TC_iot_security_pk_init_success(void **state)
     assert_int_equal(err, IOT_ERROR_NONE);
 }
 
-void TC_iot_security_pk_deinit_null_parameters(void **state)
+TEST_F(iot_security_pk, TC_iot_security_pk_deinit_null_parameters_neg)
 {
     iot_error_t err;
     iot_security_context_t *context;
@@ -291,7 +328,7 @@ void TC_iot_security_pk_deinit_null_parameters(void **state)
     assert_int_not_equal(err, IOT_ERROR_NONE);
 }
 
-void TC_iot_security_pk_deinit_success(void **state)
+TEST_F(iot_security_pk_init, TC_iot_security_pk_deinit_success_pos)
 {
     iot_error_t err;
     iot_security_context_t *context;
@@ -308,7 +345,7 @@ void TC_iot_security_pk_deinit_success(void **state)
     assert_int_equal(err, IOT_ERROR_NONE);
 }
 
-void TC_iot_security_pk_get_signature_len_failure(void **state)
+TEST(TC_iot_security_pk_get_signature_len_failure_neg)
 {
     iot_security_key_type_t pk_type;
     size_t sig_len;
@@ -321,7 +358,7 @@ void TC_iot_security_pk_get_signature_len_failure(void **state)
     assert_int_equal((int)sig_len, IOT_SECURITY_SIGNATURE_UNKNOWN_LEN);
 }
 
-void TC_iot_security_pk_get_signature_len_success(void **state)
+TEST(TC_iot_security_pk_get_signature_len_success_pos)
 {
     iot_security_key_type_t pk_type;
     size_t sig_len;
@@ -348,7 +385,7 @@ void TC_iot_security_pk_get_signature_len_success(void **state)
     assert_int_equal((int)sig_len, IOT_SECURITY_SIGNATURE_ECCP256_LEN);
 }
 
-void TC_iot_security_pk_get_key_type_failure(void **state)
+TEST_F(iot_security_pk_init, TC_iot_security_pk_get_key_type_failure_neg)
 {
     iot_error_t err;
     iot_security_context_t *context;
@@ -363,7 +400,7 @@ void TC_iot_security_pk_get_key_type_failure(void **state)
     assert_int_not_equal(err, IOT_ERROR_NONE);
 }
 
-void TC_iot_security_pk_get_key_type_success(void **state)
+TEST_F(iot_security_pk, TC_iot_security_pk_get_key_type_success_pos)
 {
     iot_error_t err;
     iot_security_context_t *context;
@@ -378,7 +415,7 @@ void TC_iot_security_pk_get_key_type_success(void **state)
     assert_int_equal(err, IOT_ERROR_NONE);
 }
 
-void TC_iot_security_pk_sign_invalid_parameters(void **state)
+TEST_F(iot_security_pk, TC_iot_security_pk_sign_invalid_parameters_neg)
 {
     iot_error_t err;
     iot_security_context_t *context;
@@ -406,7 +443,7 @@ void TC_iot_security_pk_sign_invalid_parameters(void **state)
     assert_int_not_equal(err, IOT_ERROR_NONE);
 }
 
-void TC_iot_security_pk_sign_null_parameters(void **state)
+TEST_F(iot_security_pk, TC_iot_security_pk_sign_null_parameters_neg)
 {
     iot_error_t err;
     iot_security_context_t *context;
@@ -441,7 +478,7 @@ void TC_iot_security_pk_sign_null_parameters(void **state)
     assert_int_not_equal(err, IOT_ERROR_NONE);
 }
 
-void TC_iot_security_pk_sign_malloc_failure(void **state)
+TEST_F(iot_security_pk, TC_iot_security_pk_sign_malloc_failure_neg)
 {
     iot_error_t err;
     iot_security_context_t *context;
@@ -475,7 +512,7 @@ void TC_iot_security_pk_sign_malloc_failure(void **state)
     do_not_use_mock_iot_os_malloc_failure();
 }
 
-void TC_iot_security_pk_sign_failure(void **state)
+TEST_F(iot_security_pk_init, TC_iot_security_pk_sign_failure_neg)
 {
     iot_error_t err;
     iot_security_context_t *context;
@@ -491,7 +528,7 @@ void TC_iot_security_pk_sign_failure(void **state)
     assert_int_not_equal(err, IOT_ERROR_NONE);
 }
 
-void TC_iot_security_pk_verify_invalid_parameters(void **state)
+TEST_F(iot_security_pk, TC_iot_security_pk_verify_invalid_parameters_neg)
 {
     iot_error_t err;
     iot_security_context_t *context;
@@ -549,7 +586,7 @@ void TC_iot_security_pk_verify_invalid_parameters(void **state)
     iot_os_free(sig_buf.p);
 }
 
-void TC_iot_security_pk_verify_null_parameters(void **state)
+TEST_F(iot_security_pk, TC_iot_security_pk_verify_null_parameters_neg)
 {
     iot_error_t err;
     iot_security_context_t *context;
@@ -584,7 +621,7 @@ void TC_iot_security_pk_verify_null_parameters(void **state)
     assert_int_not_equal(err, IOT_ERROR_NONE);
 }
 
-void TC_iot_security_pk_verify_failure(void **state)
+TEST_F(iot_security_pk_init, TC_iot_security_pk_verify_failure_neg)
 {
     iot_error_t err;
     iot_security_context_t *context;
@@ -600,7 +637,7 @@ void TC_iot_security_pk_verify_failure(void **state)
     assert_int_not_equal(err, IOT_ERROR_NONE);
 }
 
-void TC_iot_security_pk_success(void **state)
+TEST_F(iot_security_pk, TC_iot_security_pk_success_pos)
 {
     iot_error_t err;
     iot_security_context_t *context;
@@ -635,7 +672,7 @@ void TC_iot_security_pk_success(void **state)
     iot_os_free(sig_buf.p);
 }
 
-int TC_iot_security_cipher_init_setup(void **state)
+static int TC_iot_security_cipher_init_setup(void **state)
 {
     iot_security_context_t *context;
 
@@ -647,7 +684,7 @@ int TC_iot_security_cipher_init_setup(void **state)
     return 0;
 }
 
-int TC_iot_security_cipher_init_teardown(void **state)
+static int TC_iot_security_cipher_init_teardown(void **state)
 {
     iot_error_t err;
     iot_security_context_t *context;
@@ -661,7 +698,7 @@ int TC_iot_security_cipher_init_teardown(void **state)
     return 0;
 }
 
-int TC_iot_security_cipher_setup(void **state)
+static int TC_iot_security_cipher_setup(void **state)
 {
     iot_error_t err;
     iot_security_context_t *context;
@@ -681,7 +718,7 @@ int TC_iot_security_cipher_setup(void **state)
     return 0;
 }
 
-int TC_iot_security_cipher_teardown(void **state)
+static int TC_iot_security_cipher_teardown(void **state)
 {
     iot_error_t err;
     iot_security_context_t *context;
@@ -698,7 +735,7 @@ int TC_iot_security_cipher_teardown(void **state)
     return 0;
 }
 
-void TC_iot_security_cipher_init_null_parameters(void **state)
+TEST_F(iot_security_cipher_init, TC_iot_security_cipher_init_null_parameters_neg)
 {
     iot_error_t err;
 
@@ -708,7 +745,7 @@ void TC_iot_security_cipher_init_null_parameters(void **state)
     assert_int_not_equal(err, IOT_ERROR_NONE);
 }
 
-void TC_iot_security_cipher_init_malloc_failure(void **state)
+TEST_F(iot_security_cipher_init, TC_iot_security_cipher_init_malloc_failure_neg)
 {
     iot_error_t err;
     iot_security_context_t *context;
@@ -729,7 +766,7 @@ void TC_iot_security_cipher_init_malloc_failure(void **state)
     do_not_use_mock_iot_os_malloc_failure();
 }
 
-void TC_iot_security_cipher_init_success(void **state)
+TEST_F(iot_security_cipher_init, TC_iot_security_cipher_init_success_pos)
 {
     iot_error_t err;
     iot_security_context_t *context;
@@ -743,7 +780,7 @@ void TC_iot_security_cipher_init_success(void **state)
     assert_int_equal(err, IOT_ERROR_NONE);
 }
 
-void TC_iot_security_cipher_deinit_null_parameters(void **state)
+TEST_F(iot_security_cipher, TC_iot_security_cipher_deinit_null_parameters_neg)
 {
     iot_error_t err;
 
@@ -753,7 +790,7 @@ void TC_iot_security_cipher_deinit_null_parameters(void **state)
     assert_int_not_equal(err, IOT_ERROR_NONE);
 }
 
-void TC_iot_security_cipher_deinit_success(void **state)
+TEST_F(iot_security_cipher_deinit, TC_iot_security_cipher_deinit_success_pos)
 {
     iot_error_t err;
     iot_security_context_t *context;
@@ -767,7 +804,7 @@ void TC_iot_security_cipher_deinit_success(void **state)
     assert_int_equal(err, IOT_ERROR_NONE);
 }
 
-void TC_iot_security_cipher_set_params_invalid_parameters(void **state)
+TEST_F(iot_security_cipher, TC_iot_security_cipher_set_params_invalid_parameters_neg)
 {
     iot_error_t err;
     iot_security_context_t *context;
@@ -794,7 +831,7 @@ void TC_iot_security_cipher_set_params_invalid_parameters(void **state)
     assert_int_not_equal(err, IOT_ERROR_NONE);
 }
 
-void TC_iot_security_cipher_set_params_null_parameters(void **state)
+TEST_F(iot_security_cipher, TC_iot_security_cipher_set_params_null_parameters_neg)
 {
     iot_error_t err;
     iot_security_context_t *context;
@@ -819,7 +856,7 @@ void TC_iot_security_cipher_set_params_null_parameters(void **state)
     assert_int_not_equal(err, IOT_ERROR_NONE);
 }
 
-void TC_iot_security_cipher_set_params_success(void **state)
+TEST_F(iot_security_cipher, TC_iot_security_cipher_set_params_success_pos)
 {
     iot_error_t err;
     iot_security_context_t *context;
@@ -844,7 +881,7 @@ void TC_iot_security_cipher_set_params_success(void **state)
     assert_int_equal(err, IOT_ERROR_NONE);
 }
 
-void TC_iot_security_cipher_aes_encrypt_invalid_parameters(void **state)
+TEST_F(iot_security_cipher, TC_iot_security_cipher_aes_encrypt_invalid_parameters_neg)
 {
     iot_error_t err;
     iot_security_context_t *context;
@@ -878,7 +915,7 @@ void TC_iot_security_cipher_aes_encrypt_invalid_parameters(void **state)
     assert_int_not_equal(err, IOT_ERROR_NONE);
 }
 
-void TC_iot_security_cipher_aes_encrypt_null_parameters(void **state)
+TEST_F(iot_security_cipher, TC_iot_security_cipher_aes_encrypt_null_parameters_neg)
 {
     iot_error_t err;
     iot_security_context_t *context;
@@ -913,7 +950,7 @@ void TC_iot_security_cipher_aes_encrypt_null_parameters(void **state)
     assert_int_not_equal(err, IOT_ERROR_NONE);
 }
 
-void TC_iot_security_cipher_aes_encrypt_malloc_failure(void **state)
+TEST_F(iot_security_cipher, TC_iot_security_cipher_aes_encrypt_malloc_failure_neg)
 {
     iot_error_t err;
     iot_security_context_t *context;
@@ -963,7 +1000,7 @@ void TC_iot_security_cipher_aes_encrypt_malloc_failure(void **state)
     do_not_use_mock_iot_os_malloc_failure();
 }
 
-void TC_iot_security_cipher_aes_encrypt_failure(void **state)
+TEST_F(iot_security_cipher_init, TC_iot_security_cipher_aes_encrypt_failure_neg)
 {
     iot_error_t err;
     iot_security_context_t *context;
@@ -979,7 +1016,7 @@ void TC_iot_security_cipher_aes_encrypt_failure(void **state)
     assert_int_not_equal(err, IOT_ERROR_NONE);
 }
 
-void TC_iot_security_cipher_aes_decrypt_invalid_parameters(void **state)
+TEST_F(iot_security_cipher, TC_iot_security_cipher_aes_decrypt_invalid_parameters_neg)
 {
     iot_error_t err;
     iot_security_context_t *context;
@@ -1015,7 +1052,7 @@ void TC_iot_security_cipher_aes_decrypt_invalid_parameters(void **state)
     assert_int_not_equal(err, IOT_ERROR_NONE);
 }
 
-void TC_iot_security_cipher_aes_decrypt_null_parameters(void **state)
+TEST_F(iot_security_cipher, TC_iot_security_cipher_aes_decrypt_null_parameters_neg)
 {
     iot_error_t err;
     iot_security_context_t *context;
@@ -1050,7 +1087,7 @@ void TC_iot_security_cipher_aes_decrypt_null_parameters(void **state)
     assert_int_not_equal(err, IOT_ERROR_NONE);
 }
 
-void TC_iot_security_cipher_aes_decrypt_malloc_failure(void **state)
+TEST_F(iot_security_cipher, TC_iot_security_cipher_aes_decrypt_malloc_failure_neg)
 {
     iot_error_t err;
     iot_security_context_t *context;
@@ -1105,7 +1142,7 @@ void TC_iot_security_cipher_aes_decrypt_malloc_failure(void **state)
     iot_os_free(encrypt_buf.p);
 }
 
-void TC_iot_security_cipher_aes_decrypt_failure(void **state)
+TEST_F(iot_security_cipher_init, TC_iot_security_cipher_aes_decrypt_failure_neg)
 {
     iot_error_t err;
     iot_security_context_t *context;
@@ -1121,7 +1158,7 @@ void TC_iot_security_cipher_aes_decrypt_failure(void **state)
     assert_int_not_equal(err, IOT_ERROR_NONE);
 }
 
-void TC_iot_security_cipher_aes_success(void **state)
+TEST_F(iot_security_cipher, TC_iot_security_cipher_aes_success_pos)
 {
     iot_error_t err;
     iot_security_context_t *context;
@@ -1185,4 +1222,378 @@ void TC_iot_security_cipher_aes_success(void **state)
     iot_os_free(decrypt_buf.p);
     iot_os_free(encrypt_buf.p);
     iot_os_free(plain_buf.p);
+}
+
+/*
+ * The tests below use a synthetic backend so that every guard and error
+ * propagation path of iot_security_crypto.c can be reached without a real
+ * backend implementation.
+ */
+
+#define TC_CRYPTO_BE_ERR IOT_ERROR_SECURITY_PK_INVALID_SECKEY
+
+typedef struct {
+    iot_security_context_t context;
+    iot_security_be_context_t be_context;
+    iot_security_be_funcs_t fn;
+    iot_security_pk_params_t pk_params;
+    iot_security_cipher_params_t cipher_params;
+} tc_crypto_fake_be_t;
+
+static void _tc_crypto_fake_be_init(tc_crypto_fake_be_t *fake)
+{
+    memset(fake, 0, sizeof(*fake));
+    fake->be_context.fn = &fake->fn;
+    fake->context.be_context = &fake->be_context;
+    fake->context.pk_params = &fake->pk_params;
+    fake->context.cipher_params = &fake->cipher_params;
+}
+
+static iot_error_t _tc_crypto_be_fail(iot_security_context_t *context)
+{
+    return TC_CRYPTO_BE_ERR;
+}
+
+static iot_error_t _tc_crypto_be_key_type_fail(iot_security_context_t *context, iot_security_key_type_t *key_type)
+{
+    return TC_CRYPTO_BE_ERR;
+}
+
+static iot_error_t _tc_crypto_be_sign_type_fail(iot_security_context_t *context,
+                                                iot_security_pk_sign_type_t pk_sign_type)
+{
+    return TC_CRYPTO_BE_ERR;
+}
+
+static iot_error_t _tc_crypto_be_sign_type_ok(iot_security_context_t *context, iot_security_pk_sign_type_t pk_sign_type)
+{
+    return IOT_ERROR_NONE;
+}
+
+static iot_error_t _tc_crypto_be_buf2_fail(iot_security_context_t *context, iot_security_buffer_t *in,
+                                           iot_security_buffer_t *out)
+{
+    return TC_CRYPTO_BE_ERR;
+}
+
+static iot_error_t _tc_crypto_be_cipher_params_fail(iot_security_context_t *context,
+                                                    iot_security_cipher_params_t *cipher_params)
+{
+    return TC_CRYPTO_BE_ERR;
+}
+
+TEST(TC_iot_security_pk_init_be_failure_rollback_neg)
+{
+    tc_crypto_fake_be_t fake;
+    iot_error_t err;
+
+    // Given: a backend whose pk_init fails
+    _tc_crypto_fake_be_init(&fake);
+    fake.context.pk_params = NULL;
+    fake.fn.pk_init = _tc_crypto_be_fail;
+    // When
+    err = iot_security_pk_init(&fake.context);
+    // Then: the params allocated by init must be rolled back
+    assert_int_equal(err, TC_CRYPTO_BE_ERR);
+    assert_null(fake.context.pk_params);
+    assert_int_equal(fake.context.sub_system & IOT_SECURITY_SUB_PK, 0);
+}
+
+TEST(TC_iot_security_pk_deinit_be_failure_neg)
+{
+    tc_crypto_fake_be_t fake;
+    iot_error_t err;
+
+    // Given: a backend whose pk_deinit fails
+    _tc_crypto_fake_be_init(&fake);
+    fake.context.sub_system = IOT_SECURITY_SUB_PK;
+    fake.fn.pk_deinit = _tc_crypto_be_fail;
+    // When
+    err = iot_security_pk_deinit(&fake.context);
+    // Then: the params must be kept so the caller can retry
+    assert_int_equal(err, TC_CRYPTO_BE_ERR);
+    assert_non_null(fake.context.pk_params);
+    assert_int_equal(fake.context.sub_system, IOT_SECURITY_SUB_PK);
+}
+
+TEST(TC_iot_security_pk_get_key_type_context_null_neg)
+{
+    iot_security_key_type_t key_type = IOT_SECURITY_KEY_TYPE_UNKNOWN;
+
+    // When
+    iot_error_t err = iot_security_pk_get_key_type(NULL, &key_type);
+    // Then
+    assert_int_equal(err, IOT_ERROR_SECURITY_CONTEXT_NULL);
+}
+
+TEST(TC_iot_security_pk_get_key_type_output_null_neg)
+{
+    tc_crypto_fake_be_t fake;
+
+    _tc_crypto_fake_be_init(&fake);
+    // When: no output pointer is given
+    iot_error_t err = iot_security_pk_get_key_type(&fake.context, NULL);
+    // Then
+    assert_int_equal(err, IOT_ERROR_SECURITY_INVALID_ARGS);
+}
+
+TEST(TC_iot_security_pk_get_key_type_be_func_null_neg)
+{
+    tc_crypto_fake_be_t fake;
+    iot_security_key_type_t key_type = IOT_SECURITY_KEY_TYPE_UNKNOWN;
+
+    // Given: a function table without pk_get_key_type
+    _tc_crypto_fake_be_init(&fake);
+    // When
+    iot_error_t err = iot_security_pk_get_key_type(&fake.context, &key_type);
+    // Then
+    assert_int_equal(err, IOT_ERROR_SECURITY_BE_FUNC_NULL);
+}
+
+TEST(TC_iot_security_pk_get_key_type_be_failure_neg)
+{
+    tc_crypto_fake_be_t fake;
+    iot_security_key_type_t key_type = IOT_SECURITY_KEY_TYPE_UNKNOWN;
+
+    // Given: a backend whose pk_get_key_type fails
+    _tc_crypto_fake_be_init(&fake);
+    fake.fn.pk_get_key_type = _tc_crypto_be_key_type_fail;
+    // When
+    iot_error_t err = iot_security_pk_get_key_type(&fake.context, &key_type);
+    // Then
+    assert_int_equal(err, TC_CRYPTO_BE_ERR);
+}
+
+TEST(TC_iot_security_pk_set_sign_type_context_null_neg)
+{
+    // When
+    iot_error_t err = iot_security_pk_set_sign_type(NULL, IOT_SECURITY_PK_SIGN_TYPE_DER);
+    // Then
+    assert_int_equal(err, IOT_ERROR_SECURITY_CONTEXT_NULL);
+}
+
+TEST(TC_iot_security_pk_set_sign_type_be_func_null_neg)
+{
+    tc_crypto_fake_be_t fake;
+
+    // Given: a function table without pk_set_sign_type
+    _tc_crypto_fake_be_init(&fake);
+    // When
+    iot_error_t err = iot_security_pk_set_sign_type(&fake.context, IOT_SECURITY_PK_SIGN_TYPE_DER);
+    // Then
+    assert_int_equal(err, IOT_ERROR_SECURITY_BE_FUNC_NULL);
+}
+
+TEST(TC_iot_security_pk_set_sign_type_be_failure_neg)
+{
+    tc_crypto_fake_be_t fake;
+
+    // Given: a backend whose pk_set_sign_type fails
+    _tc_crypto_fake_be_init(&fake);
+    fake.fn.pk_set_sign_type = _tc_crypto_be_sign_type_fail;
+    // When
+    iot_error_t err = iot_security_pk_set_sign_type(&fake.context, IOT_SECURITY_PK_SIGN_TYPE_RAW);
+    // Then
+    assert_int_equal(err, TC_CRYPTO_BE_ERR);
+}
+
+TEST(TC_iot_security_pk_set_sign_type_unknown_type_not_rejected_neg)
+{
+    tc_crypto_fake_be_t fake;
+
+    // Given: a backend that accepts anything
+    _tc_crypto_fake_be_init(&fake);
+    fake.fn.pk_set_sign_type = _tc_crypto_be_sign_type_ok;
+    // When: an unknown signature type is requested
+    iot_error_t err = iot_security_pk_set_sign_type(&fake.context, IOT_SECURITY_PK_SIGN_TYPE_UNKNOWN);
+    // Then: the common layer does not validate the type, the backend owns that check
+    assert_int_equal(err, IOT_ERROR_NONE);
+}
+
+TEST(TC_iot_security_pk_sign_be_func_null_neg)
+{
+    tc_crypto_fake_be_t fake;
+    unsigned char data[] = "sign me";
+    iot_security_buffer_t input_buf = {.p = data, .len = sizeof(data) - 1};
+    iot_security_buffer_t sig_buf = {0};
+
+    // Given: a function table without pk_sign
+    _tc_crypto_fake_be_init(&fake);
+    // When
+    iot_error_t err = iot_security_pk_sign(&fake.context, &input_buf, &sig_buf);
+    // Then
+    assert_int_equal(err, IOT_ERROR_SECURITY_BE_FUNC_NULL);
+    assert_null(sig_buf.p);
+}
+
+TEST(TC_iot_security_pk_sign_be_failure_neg)
+{
+    tc_crypto_fake_be_t fake;
+    unsigned char data[] = "sign me";
+    iot_security_buffer_t input_buf = {.p = data, .len = sizeof(data) - 1};
+    iot_security_buffer_t sig_buf = {0};
+
+    // Given: a backend whose pk_sign fails
+    _tc_crypto_fake_be_init(&fake);
+    fake.fn.pk_sign = _tc_crypto_be_buf2_fail;
+    // When
+    iot_error_t err = iot_security_pk_sign(&fake.context, &input_buf, &sig_buf);
+    // Then
+    assert_int_equal(err, TC_CRYPTO_BE_ERR);
+    assert_null(sig_buf.p);
+}
+
+TEST(TC_iot_security_pk_verify_be_func_null_neg)
+{
+    tc_crypto_fake_be_t fake;
+    unsigned char data[] = "verify me";
+    iot_security_buffer_t input_buf = {.p = data, .len = sizeof(data) - 1};
+    iot_security_buffer_t sig_buf = {.p = data, .len = sizeof(data) - 1};
+
+    // Given: a function table without pk_verify
+    _tc_crypto_fake_be_init(&fake);
+    // When
+    iot_error_t err = iot_security_pk_verify(&fake.context, &input_buf, &sig_buf);
+    // Then
+    assert_int_equal(err, IOT_ERROR_SECURITY_BE_FUNC_NULL);
+}
+
+TEST(TC_iot_security_pk_verify_be_failure_neg)
+{
+    tc_crypto_fake_be_t fake;
+    unsigned char data[] = "verify me";
+    iot_security_buffer_t input_buf = {.p = data, .len = sizeof(data) - 1};
+    iot_security_buffer_t sig_buf = {.p = data, .len = sizeof(data) - 1};
+
+    // Given: a backend whose pk_verify rejects the signature
+    _tc_crypto_fake_be_init(&fake);
+    fake.fn.pk_verify = _tc_crypto_be_buf2_fail;
+    // When
+    iot_error_t err = iot_security_pk_verify(&fake.context, &input_buf, &sig_buf);
+    // Then
+    assert_int_equal(err, TC_CRYPTO_BE_ERR);
+}
+
+TEST(TC_iot_security_pk_get_signature_len_invalid_type_neg)
+{
+    // When: an unsupported or out of range key type is asked for
+    assert_int_equal(iot_security_pk_get_signature_len(IOT_SECURITY_KEY_TYPE_UNKNOWN),
+                     IOT_SECURITY_SIGNATURE_UNKNOWN_LEN);
+    assert_int_equal(iot_security_pk_get_signature_len(IOT_SECURITY_KEY_TYPE_MAX), IOT_SECURITY_SIGNATURE_UNKNOWN_LEN);
+    assert_int_equal(iot_security_pk_get_signature_len((iot_security_key_type_t)0x7fff),
+                     IOT_SECURITY_SIGNATURE_UNKNOWN_LEN);
+}
+
+TEST(TC_iot_security_cipher_init_be_failure_neg)
+{
+    tc_crypto_fake_be_t fake;
+    iot_error_t err;
+
+    // Given: a backend whose cipher_init fails
+    _tc_crypto_fake_be_init(&fake);
+    fake.context.cipher_params = NULL;
+    fake.fn.cipher_init = _tc_crypto_be_fail;
+    // When
+    err = iot_security_cipher_init(&fake.context);
+    // Then: the params allocated by init must be rolled back
+    assert_int_equal(err, IOT_ERROR_SECURITY_CIPHER_INIT);
+    assert_null(fake.context.cipher_params);
+    assert_int_equal(fake.context.sub_system & IOT_SECURITY_SUB_CIPHER, 0);
+}
+
+TEST(TC_iot_security_cipher_deinit_be_failure_neg)
+{
+    tc_crypto_fake_be_t fake;
+    iot_error_t err;
+
+    // Given: a backend whose cipher_deinit fails
+    _tc_crypto_fake_be_init(&fake);
+    fake.context.sub_system = IOT_SECURITY_SUB_CIPHER;
+    fake.fn.cipher_deinit = _tc_crypto_be_fail;
+    // When
+    err = iot_security_cipher_deinit(&fake.context);
+    // Then
+    assert_int_equal(err, TC_CRYPTO_BE_ERR);
+    assert_non_null(fake.context.cipher_params);
+    assert_int_equal(fake.context.sub_system, IOT_SECURITY_SUB_CIPHER);
+}
+
+TEST(TC_iot_security_cipher_set_params_be_func_null_neg)
+{
+    tc_crypto_fake_be_t fake;
+    iot_security_cipher_params_t set_params = {0};
+
+    // Given: a function table without cipher_set_params
+    _tc_crypto_fake_be_init(&fake);
+    // When
+    iot_error_t err = iot_security_cipher_set_params(&fake.context, &set_params);
+    // Then
+    assert_int_equal(err, IOT_ERROR_SECURITY_BE_FUNC_NULL);
+}
+
+TEST(TC_iot_security_cipher_set_params_be_failure_neg)
+{
+    tc_crypto_fake_be_t fake;
+    iot_security_cipher_params_t set_params = {0};
+
+    // Given: a backend whose cipher_set_params fails
+    _tc_crypto_fake_be_init(&fake);
+    fake.fn.cipher_set_params = _tc_crypto_be_cipher_params_fail;
+    // When
+    iot_error_t err = iot_security_cipher_set_params(&fake.context, &set_params);
+    // Then
+    assert_int_equal(err, TC_CRYPTO_BE_ERR);
+}
+
+TEST(TC_iot_security_cipher_aes_encrypt_be_func_null_neg)
+{
+    tc_crypto_fake_be_t fake;
+    unsigned char data[] = "plain";
+    iot_security_buffer_t input_buf = {.p = data, .len = sizeof(data) - 1};
+    iot_security_buffer_t output_buf;
+
+    // Given: a function table without cipher_aes_encrypt
+    _tc_crypto_fake_be_init(&fake);
+    memset(&output_buf, 0xA5, sizeof(output_buf));
+    // When
+    iot_error_t err = iot_security_cipher_aes_encrypt(&fake.context, &input_buf, &output_buf);
+    // Then: the output buffer is cleared before the guard rejects the call
+    assert_int_equal(err, IOT_ERROR_SECURITY_BE_FUNC_NULL);
+    assert_null(output_buf.p);
+    assert_int_equal(output_buf.len, 0);
+}
+
+TEST(TC_iot_security_cipher_aes_decrypt_be_func_null_neg)
+{
+    tc_crypto_fake_be_t fake;
+    unsigned char data[] = "cipher";
+    iot_security_buffer_t input_buf = {.p = data, .len = sizeof(data) - 1};
+    iot_security_buffer_t output_buf;
+
+    // Given: a function table without cipher_aes_decrypt
+    _tc_crypto_fake_be_init(&fake);
+    memset(&output_buf, 0xA5, sizeof(output_buf));
+    // When
+    iot_error_t err = iot_security_cipher_aes_decrypt(&fake.context, &input_buf, &output_buf);
+    // Then
+    assert_int_equal(err, IOT_ERROR_SECURITY_BE_FUNC_NULL);
+    assert_null(output_buf.p);
+    assert_int_equal(output_buf.len, 0);
+}
+
+TEST(TC_iot_security_cipher_aes_encrypt_be_failure_neg)
+{
+    tc_crypto_fake_be_t fake;
+    unsigned char data[] = "plain";
+    iot_security_buffer_t input_buf = {.p = data, .len = sizeof(data) - 1};
+    iot_security_buffer_t output_buf = {0};
+
+    // Given: a backend whose cipher_aes_encrypt fails
+    _tc_crypto_fake_be_init(&fake);
+    fake.fn.cipher_aes_encrypt = _tc_crypto_be_buf2_fail;
+    // When
+    iot_error_t err = iot_security_cipher_aes_encrypt(&fake.context, &input_buf, &output_buf);
+    // Then
+    assert_int_equal(err, TC_CRYPTO_BE_ERR);
+    assert_null(output_buf.p);
 }

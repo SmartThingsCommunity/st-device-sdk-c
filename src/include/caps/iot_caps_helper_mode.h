@@ -32,6 +32,11 @@ const static struct iot_caps_mode {
         const unsigned char property;
         const unsigned char valueType;
     } attr_supportedModes;
+    const struct mode_attr_supportedArguments {
+        const char *name;
+        const unsigned char property;
+        const unsigned char valueType;
+    } attr_supportedArguments;
     const struct mode_attr_mode {
         const char *name;
         const unsigned char property;
@@ -45,6 +50,12 @@ const static struct iot_caps_mode {
     .attr_supportedModes =
         {
             .name = "supportedModes",
+            .property = ATTR_SET_VALUE_ARRAY,
+            .valueType = VALUE_TYPE_STRING,
+        },
+    .attr_supportedArguments =
+        {
+            .name = "supportedArguments",
             .property = ATTR_SET_VALUE_ARRAY,
             .valueType = VALUE_TYPE_STRING,
         },

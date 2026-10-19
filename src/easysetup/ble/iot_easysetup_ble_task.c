@@ -35,6 +35,11 @@ extern struct iot_context *context;
 
 void es_msg_dispatch(iot_security_buffer_t *buf, uint8_t buf_count, uint8_t cmd_num)
 {
+    if (buf == NULL) {
+        IOT_ERROR("NULL buffer parameter provided");
+        return;
+    }
+
     g_write_cmd_num = cmd_num;
     g_write_callback_len = buf[0].len;
     memcpy(rx_buffer, buf[0].p, buf[0].len);
@@ -57,6 +62,11 @@ static void _es_ble_msg_handler(struct iot_context *ctx, device_work_param param
 
 void es_ble_init()
 {
+    if (context == NULL) {
+        IOT_ERROR("Global context is NULL");
+        return;
+    }
+
     iot_error_t iot_err = IOT_ERROR_NONE;
     IOT_INFO("ble init!!");
 

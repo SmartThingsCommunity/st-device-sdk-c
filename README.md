@@ -25,10 +25,12 @@ Using BLE is expected to not only support new SmartThings features, but also imp
 
 This core device library provides the following features :
 
+- [SmartThings Onboarding](./doc/BLE_Onboarding_ED25519.md) : Enables seamless device registration within SmartThings
 - Customized MQTT in order to reduce memory consumption and enhance stability
 - Easy and efficient APIs
   - Connection APIs : You can do onboarding & MQTT connection by just calling only a few these APIs.
   - Capability APIs : More than hundred different capabilities can be implemented as only a few APIs.
+- [Offline diagnostics](./doc/Offline_Diagnostics.md) : A feature designed to assist users in self-diagnosing issues when an IoT device is detected as offline, providing root cause analysis along with actionable recovery recommendations
 
 ## Recommended Features
 
@@ -37,6 +39,17 @@ In line with SmartThings' policy of extending these features to partner products
 If you're considering a commercial product, SmartThings recommends these features as essential.
 
 - [WiFi Update](./doc/WiFi_Update.md)
+
+## AI Agent Skills
+
+If you use an AI coding agent such as Claude Code, OpenAI Codex, or Gemini CLI, the [skills](./skills) directory gives it STDK-specific knowledge. Each skill is a `SKILL.md` file in the open [Agent Skills](https://agentskills.io) format, so the same files work across agents.
+
+- [stdk-docs-reference](./skills/stdk-docs-reference/SKILL.md) : Answers SDK questions (APIs, onboarding flow, device states, porting, key/QR generation) from the live documentation in this repository, with code examples and source links.
+- [stdk-error-lookup](./skills/stdk-error-lookup/SKILL.md) : Explains mobile app error codes (`81-001`, `04-100`, ...) and SDK internal codes (`NE01`, `CE01`, ...) with causes and a fix checklist.
+- [stdk-log-analysis](./skills/stdk-log-analysis/SKILL.md) : Reads an STDK device log, rebuilds the onboarding and connection timeline, and reports root causes and fixes by severity.
+- [stdk-github-search](./skills/stdk-github-search/SKILL.md) : Finds the right document, source file, or GitHub issue in the STDK repositories for a given question.
+
+To install, copy the skill folders into your agent's skills directory (for example `~/.claude/skills/`, `~/.codex/skills/`, or `~/.gemini/skills/`). See [skills/README.md](./skills/README.md) for per-agent instructions and a fallback for agents without native skill support.
 
 ## How to get started?
 
@@ -61,11 +74,15 @@ We are managing two git branch categories. One is `develop` branch. The other is
 - `develop` branch : Latest devleoping features. Recommand for new feature test or POC.
 - `release/v{version}` branchs : Tested and stable branchs. Recommand for Commercial product.
 
-## Quick PoC development on Linux distribution
+## Developer Support Tools
 
-You can build and test the SDK on your Linux distribution environment without real target board. In this way, you can easily make PoC demo for your product and check your IoT device feasibility on SmartThings platform. Also in real product developing, building and testing on Linux environment can accelerate product development speed.
+You can get the useful tools in [this link](./tools). It will help you to make sure for SmartThings Device SDK.
 
-We provide `example/posix` example to demonstrate how to build and test the SDK on Linux distribution. But before running the example, you should acquire [Getting Started](./doc/getting_started.md) to be familiar with the SDK development process and register your test device profile on [Developer Workspace](https://developer.smartthings.com/workspace/). And this example skips onboarding(registering) process, so before test, you should register your device on the cloud manually with [manual onboarding tool](./tools/manual_onboarding/README.md) provided in `tools/manual_onboarding` folder.
+- [Key Generation](./tools/keygen/README.md) : It will generate a key pair to be used for device authentication.
+- [QR Generation](./tools/qrgen/README.md) : It will help you create QR codes to attach to SmartThings-compliant devices.
+- [STDK Dev Support](./tools/STDK_dev_support/README.md) : It is designed to perform the onboarding process identically to the standard app and provide various information to the app side, so it is expected to be of great help in analyzing issues during porting.
+- [STDK Emulator](./tools/STDK_emulator/README.md) : You can obtain a reference device simply by installing the app. This is expected to help in the comparative analysis of issues that arise during porting.
+- [Manual Onboarding](./tools/manual_onboarding/README.md) : You can build and test the SDK on your Linux distribution environment without real target board. In this way, you can easily make PoC demo for your product and check your IoT device feasibility on SmartThings platform. Also in real product developing, building and testing on Linux environment can accelerate product development speed.
 
 ## Learn more
 
@@ -73,11 +90,12 @@ For more information, please review the following documents:
 
 - [Getting Started](./doc/getting_started.md) : It covers the overall workflow and detailed steps for starters to work with SDK.
 - [API References](./doc/APIs.md) : It provide all API reference that SDK offers.
-- [Commercialization Guide](./doc/Commercialization_Guide.md) : It provides guide for ones who consider commercializing their IoT products with SDK.
-- [Capabilities Reference](https://developer.smartthings.com/docs/devices/capabilities/capabilities-reference) : This page serves as a reference for the supported capabilities.
 - [Developer Workspace](https://developer.smartthings.com/workspace/) : It provides functions related to device information registration and device integration in the SmartThings cloud.
+- [Device Registration](./doc/BLE_Onboarding_ED25519.md) : This page is a guide explaining the device registration process.
+- [Capabilities Reference](https://developer.smartthings.com/docs/devices/capabilities/capabilities-reference) : This page serves as a reference for the supported capabilities.
 - [Capability Attribute Update](./doc/Capability_Attribute_Update.md) : This development page guides how to use Capability Attribute update APIs.
-- [Device Registration](./doc/onboarding_seq_flow.md) : This page is a guide explaining the device registration process.
+- [Cloud Interaction](./doc/cloud_interface_seq.md) : This page is an explanatory guide to cloud connection and the event transmission.
+- [Commercialization Guide](./doc/Commercialization_Guide.md) : It provides guide for ones who consider commercializing their IoT products with SDK.
 
 ## Commercialization
 

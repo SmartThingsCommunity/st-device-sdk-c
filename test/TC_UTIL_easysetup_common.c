@@ -393,10 +393,11 @@ iot_security_cipher_params_t *_generate_device_cipher(unsigned char *iv_data, si
     return _generate_cipher(SERVER_KEYPAIR->curve25519_pk, DEVICE_KEYPAIR->curve25519_sk, iv_data, iv_length);
 }
 
-char *_generate_post_keyinfo_payload(int year, time_t *time_to_set)
+static char *_generate_post_keyinfo_payload_impl(int year, time_t *time_to_set, int utc)
 {
     char *post_message;
     JSON_H *root = NULL;
+    JSON_H *data = NULL;
     iot_error_t err;
     size_t out_length;
     unsigned char *curve25519_server_pk_b64;
@@ -436,7 +437,7 @@ char *_generate_post_keyinfo_payload(int year, time_t *time_to_set)
     test_tm.tm_min = 40;
     test_tm.tm_sec = 14;
 
-    *time_to_set = mktime(&test_tm);
+    *time_to_set = utc ? timegm(&test_tm) : mktime(&test_tm);
 
     b64url_datetime = (unsigned char *)malloc(IOT_SECURITY_B64_ENCODE_LEN(strlen(datetime)));
     b64url_regionaldatetime = (unsigned char *)malloc(IOT_SECURITY_B64_ENCODE_LEN(strlen(regionaldatetime)));
@@ -456,11 +457,16 @@ char *_generate_post_keyinfo_payload(int year, time_t *time_to_set)
 
     root = JSON_CREATE_OBJECT();
     assert_non_null(root);
-    JSON_ADD_ITEM_TO_OBJECT(root, "spub", JSON_CREATE_STRING((const char *)curve25519_server_pk_b64));
-    JSON_ADD_ITEM_TO_OBJECT(root, "rand", JSON_CREATE_STRING(TEST_SRAND));
-    JSON_ADD_ITEM_TO_OBJECT(root, "datetime", JSON_CREATE_STRING((const char *)b64url_datetime));
-    JSON_ADD_ITEM_TO_OBJECT(root, "regionaldatetime", JSON_CREATE_STRING((const char *)b64url_regionaldatetime));
-    JSON_ADD_ITEM_TO_OBJECT(root, "timezoneid", JSON_CREATE_STRING((const char *)b64url_timezoneid));
+
+    // Create data object to wrap all the fields as expected by _es_keyinfo_handler
+    data = JSON_CREATE_OBJECT();
+    JSON_ADD_ITEM_TO_OBJECT(root, "data", data);
+
+    JSON_ADD_ITEM_TO_OBJECT(data, "spub", JSON_CREATE_STRING((const char *)curve25519_server_pk_b64));
+    JSON_ADD_ITEM_TO_OBJECT(data, "rand", JSON_CREATE_STRING(TEST_SRAND));
+    JSON_ADD_ITEM_TO_OBJECT(data, "datetime", JSON_CREATE_STRING((const char *)b64url_datetime));
+    JSON_ADD_ITEM_TO_OBJECT(data, "regionaldatetime", JSON_CREATE_STRING((const char *)b64url_regionaldatetime));
+    JSON_ADD_ITEM_TO_OBJECT(data, "timezoneid", JSON_CREATE_STRING((const char *)b64url_timezoneid));
     post_message = JSON_PRINT(root);
     JSON_DELETE(root);
     free(curve25519_server_pk_b64);
@@ -469,6 +475,17 @@ char *_generate_post_keyinfo_payload(int year, time_t *time_to_set)
     free(b64url_timezoneid);
 
     return post_message;
+}
+
+char *_generate_post_keyinfo_payload(int year, time_t *time_to_set)
+{
+    return _generate_post_keyinfo_payload_impl(year, time_to_set, 0);
+}
+
+/* For transports whose _es_time_set interprets the datetime as UTC (timegm). */
+char *_generate_post_keyinfo_payload_utc(int year, time_t *time_to_set)
+{
+    return _generate_post_keyinfo_payload_impl(year, time_to_set, 1);
 }
 
 void assert_iv_buffer(iot_security_buffer_t iv_buffer)

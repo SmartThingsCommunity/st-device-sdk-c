@@ -465,6 +465,25 @@ iot_error_t iot_nv_get_wifi_prov_data(struct iot_wifi_prov_data *wifi_prov)
         goto exit;
     }
 
+    /* IOT_NVD_AP_HIDDEN */
+    ret = _iot_nv_read_data(IOT_NVD_AP_HIDDEN, data, DATA_SIZE, NULL);
+    if (ret == IOT_ERROR_NONE) {
+        if (!strncmp(data, "HIDDEN", 6)) {
+            IOT_INFO("Hidden AP");
+            wifi_prov->hidden = 1;
+        } else {
+            wifi_prov->hidden = 0;
+        }
+    } else if (ret == IOT_ERROR_NV_DATA_NOT_EXIST) {
+        wifi_prov->hidden = 0;
+        ret = IOT_ERROR_NONE;
+    } else {
+        IOT_ERROR("AP Hidden : read failed");
+        IOT_DUMP(IOT_DEBUG_LEVEL_DEBUG, IOT_DUMP_NV_DATA_READ_FAIL, IOT_NVD_AP_HIDDEN, __LINE__);
+        ret = IOT_ERROR_NV_DATA_ERROR;
+        goto exit;
+    }
+
 exit:
     free(data);
     if (ret) {
@@ -577,6 +596,23 @@ iot_error_t iot_nv_set_wifi_prov_data(struct iot_wifi_prov_data *wifi_prov)
         if (ret != IOT_ERROR_NONE) {
             IOT_DEBUG("Auth Type : write failed");
             IOT_DUMP(IOT_DEBUG_LEVEL_DEBUG, IOT_DUMP_NV_DATA_WRITE_FAIL, IOT_NVD_AP_AUTH_TYPE, __LINE__);
+            ret = IOT_ERROR_NV_DATA_ERROR;
+            goto exit;
+        }
+    }
+
+    /* IOT_NVD_AP_HIDDEN */
+    if (!wifi_prov->hidden) {
+        iot_nv_erase(IOT_NVD_AP_HIDDEN);
+    } else {
+        size = 6;
+        memcpy(data, "HIDDEN", size);
+        data[size] = '\0';
+
+        ret = _iot_nv_write_data(IOT_NVD_AP_HIDDEN, data, size);
+        if (ret != IOT_ERROR_NONE) {
+            IOT_DEBUG("AP Hidden : write failed");
+            IOT_DUMP(IOT_DEBUG_LEVEL_DEBUG, IOT_DUMP_NV_DATA_WRITE_FAIL, IOT_NVD_AP_HIDDEN, __LINE__);
             ret = IOT_ERROR_NV_DATA_ERROR;
             goto exit;
         }

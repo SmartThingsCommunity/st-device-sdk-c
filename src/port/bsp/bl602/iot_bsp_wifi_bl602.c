@@ -526,7 +526,102 @@ bool iot_bsp_wifi_is_dhcp_success()
     return false;
 }
 
-iot_error_t iot_bsp_wifi_get_status(void)
+static iot_wifi_disconnected_reason _convert_disconnected_reason(iot_error_t conn_error)
 {
-    return s_latest_disconnect_reason;
+    switch (conn_error) {
+        case IOT_ERROR_CONN_STA_AP_NOT_FOUND:
+            return IOT_WIFI_DISCONNECTED_REASON_AP_NOT_FOUND;
+        case IOT_ERROR_CONN_STA_AUTH_FAIL:
+            return IOT_WIFI_DISCONNECTED_REASON_AUTH_FAIL;
+        case IOT_ERROR_CONN_STA_ASSOC_FAIL:
+            return IOT_WIFI_DISCONNECTED_REASON_ASSOC_FAIL;
+        case IOT_ERROR_CONN_STA_CONN_FAIL:
+            return IOT_WIFI_DISCONNECTED_REASON_CONNECTION_FAIL;
+        default:
+            return IOT_WIFI_DISCONNECTED_REASON_UNKNOWN;
+    }
+}
+
+void iot_bsp_wifi_get_status(iot_wifi_info *wifi_info)
+{
+    int state = WIFI_STATE_UNKNOWN;
+    int rssi = 0;
+    uint32_t ip = 0, gw = 0, mask = 0;
+    wifi_mgmr_sta_connect_ind_stat_info_t conn_info;
+
+    memset(wifi_info, 0, sizeof(iot_wifi_info));
+
+    if (!WIFI_INITIALIZED) {
+        return;
+    }
+
+    if (wifi_mgmr_state_get(&state) != 0) {
+        IOT_ERROR("failed to get wifi state");
+        wifi_info->wifi_status = IOT_WIFI_STATUS_UNKNOWN;
+        return;
+    }
+
+    /* Mask out AP-enabled bit (0x10) to get STA-only state */
+    int sta_state = state & 0x0F;
+
+    switch (sta_state) {
+        case WIFI_STATE_IDLE:
+            wifi_info->wifi_status = IOT_WIFI_STATUS_IDLE;
+            break;
+
+        case WIFI_STATE_CONNECTING:
+            wifi_info->wifi_status = IOT_WIFI_STATUS_CONNECTING;
+            break;
+
+        case WIFI_STATE_CONNECTED_IP_GETTING:
+            wifi_info->wifi_status = IOT_WIFI_STATUS_CONNECTED;
+            /* Fill connection info (SSID, BSSID) */
+            memset(&conn_info, 0, sizeof(conn_info));
+            wifi_mgmr_sta_connect_ind_stat_get(&conn_info);
+            memcpy(wifi_info->ap_ssid, conn_info.ssid, IOT_WIFI_MAX_SSID_LEN);
+            memcpy(wifi_info->bssid.addr, conn_info.bssid, IOT_WIFI_MAX_BSSID_LEN);
+            /* Fill RSSI */
+            if (wifi_mgmr_rssi_get(&rssi) == 0) {
+                wifi_info->rssi = rssi;
+            }
+            /* IP not yet assigned */
+            wifi_info->ip_status = IOT_IP_STATUS_NOT_ASSIGNED;
+            break;
+
+        case WIFI_STATE_CONNECTED_IP_GOT:
+            wifi_info->wifi_status = IOT_WIFI_STATUS_CONNECTED;
+            /* Fill connection info (SSID, BSSID) */
+            memset(&conn_info, 0, sizeof(conn_info));
+            wifi_mgmr_sta_connect_ind_stat_get(&conn_info);
+            memcpy(wifi_info->ap_ssid, conn_info.ssid, IOT_WIFI_MAX_SSID_LEN);
+            memcpy(wifi_info->bssid.addr, conn_info.bssid, IOT_WIFI_MAX_BSSID_LEN);
+            /* Fill RSSI */
+            if (wifi_mgmr_rssi_get(&rssi) == 0) {
+                wifi_info->rssi = rssi;
+            }
+            /* Fill IP address */
+            if (wifi_mgmr_sta_ip_get(&ip, &gw, &mask) == 0 && ip != 0) {
+                wifi_info->ip_status = IOT_IP_STATUS_ASSIGNED;
+                wifi_info->ip = ip;
+            } else {
+                wifi_info->ip_status = IOT_IP_STATUS_NOT_ASSIGNED;
+            }
+            break;
+
+        case WIFI_STATE_DISCONNECT:
+        case WIFI_STATE_PSK_ERROR:
+        case WIFI_STATE_NO_AP_FOUND:
+            wifi_info->wifi_status = IOT_WIFI_STATUS_DISCONNECTED;
+            wifi_info->last_disconnected_reason = _convert_disconnected_reason(s_latest_disconnect_reason);
+            break;
+
+        case WIFI_STATE_IFDOWN:
+            wifi_info->wifi_status = IOT_WIFI_STATUS_IDLE;
+            break;
+
+        default:
+            /* WIFI_STATE_UNKNOWN, WIFI_STATE_SNIFFER, or any other state */
+            wifi_info->wifi_status = IOT_WIFI_STATUS_UNKNOWN;
+            break;
+    }
 }

@@ -26,6 +26,8 @@ extern "C" {
 #endif
 
 #define CAP_ENUM_DISHWASHEROPERATINGSTATE_SUPPORTEDMACHINESTATES_VALUE_MAX 3
+enum { CAP_ENUM_DISHWASHEROPERATINGSTATE_PROGRESS_UNIT_PERCENT, CAP_ENUM_DISHWASHEROPERATINGSTATE_PROGRESS_UNIT_MAX };
+
 enum {
     CAP_ENUM_DISHWASHEROPERATINGSTATE_MACHINESTATE_VALUE_PAUSE,
     CAP_ENUM_DISHWASHEROPERATINGSTATE_MACHINESTATE_VALUE_RUN,
@@ -55,6 +57,15 @@ const static struct iot_caps_dishwasherOperatingState {
         const unsigned char property;
         const unsigned char valueType;
     } attr_completionTime;
+    const struct dishwasherOperatingState_attr_progress {
+        const char *name;
+        const unsigned char property;
+        const unsigned char valueType;
+        const char *units[CAP_ENUM_DISHWASHEROPERATINGSTATE_PROGRESS_UNIT_MAX];
+        const char *unit_percent;
+        const int min;
+        const int max;
+    } attr_progress;
     const struct dishwasherOperatingState_attr_supportedMachineStates {
         const char *name;
         const unsigned char property;
@@ -100,6 +111,16 @@ const static struct iot_caps_dishwasherOperatingState {
             .name = "completionTime",
             .property = ATTR_SET_VALUE_REQUIRED,
             .valueType = VALUE_TYPE_STRING,
+        },
+    .attr_progress =
+        {
+            .name = "progress",
+            .property = ATTR_SET_VALUE_MIN | ATTR_SET_VALUE_MAX | ATTR_SET_VALUE_REQUIRED,
+            .valueType = VALUE_TYPE_INTEGER,
+            .units = {"%"},
+            .unit_percent = "%",
+            .min = 0,
+            .max = 100,
         },
     .attr_supportedMachineStates =
         {

@@ -210,13 +210,6 @@ uint16_t iot_util_convert_channel_freq(uint8_t channel);
 uint8_t iot_util_convert_freq_channel(uint16_t freq);
 
 /**
- * @brief       To convert server url to server_type enum
- * @param[in]   server url string
- * @return      server type correspond to serever url
- */
-iot_server_type_t iot_util_get_server_type(char *server_url);
-
-/**
  * @brief       Print Wifi ssid securely
  * @param[in]   func calling func name
  * @param[in]   func_line line number of calling

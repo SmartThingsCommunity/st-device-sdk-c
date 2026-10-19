@@ -138,7 +138,7 @@ const static struct iot_caps_soundDetection {
     .attr_soundDetected =
         {
             .name = "soundDetected",
-            .property = 0,
+            .property = ATTR_SET_VALUE_REQUIRED,
             .valueType = VALUE_TYPE_STRING,
             .values = {"noSound",        "babyCrying",    "glassBreaking", "fireAlarm",      "applianceAlarm",
                        "emergencyAlarm", "screaming",     "dogBarking",    "dogGrowling",    "dogHowling",
@@ -172,7 +172,7 @@ const static struct iot_caps_soundDetection {
     .attr_soundDetectionState =
         {
             .name = "soundDetectionState",
-            .property = 0,
+            .property = ATTR_SET_VALUE_REQUIRED,
             .valueType = VALUE_TYPE_STRING,
             .values = {"enabled", "disabled"},
             .value_enabled = "enabled",
@@ -181,7 +181,7 @@ const static struct iot_caps_soundDetection {
     .attr_supportedSoundTypes =
         {
             .name = "supportedSoundTypes",
-            .property = ATTR_SET_VALUE_ARRAY,
+            .property = ATTR_SET_VALUE_REQUIRED | ATTR_SET_VALUE_ARRAY,
             .valueType = VALUE_TYPE_STRING,
             .values = {"noSound",        "babyCrying",    "glassBreaking", "fireAlarm",      "applianceAlarm",
                        "emergencyAlarm", "screaming",     "dogBarking",    "dogGrowling",    "dogHowling",

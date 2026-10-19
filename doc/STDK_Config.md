@@ -93,3 +93,21 @@
 #### CONFIG_STDK_IOT_CORE_EASYSETUP_OFFLINE_DIAGNOSTICS
 - Type : Bool
 - Description : Enable offline diagnostics feature. When enabled, SmartThings app can diagnose device offline issue.
+
+#### CONFIG_STDK_IOT_CORE_SUPPORT_ATTR_CACHE
+- Type : Bool
+- Description : Support attribute value cache for de-duplication. When enabled, `st_cap_send_attr()` caches the last value successfully delivered for each attribute and skips publishing an attribute whose value is unchanged, to avoid unnecessary traffic. When every attribute in a call is a duplicate, nothing is published and 0 is returned (not an error). An attribute with the `stateChange` option forced is always published regardless of its cached value.
+- Default : n
+
+## Network
+
+#### CONFIG_STDK_IOT_CORE_PUBLISH_RATE_LIMIT
+- Type : Bool
+- Description : Enable client-side publish rate limit. When enabled, STDK will check the publish rate limit on the client side before sending attribute events to the server. Events exceeding the rate limit will be rejected with IOT_ERROR_MQTT_RATE_LIMIT.
+- Default : n
+
+#### CONFIG_STDK_IOT_CORE_PUBLISH_RATE_LIMIT_COUNT
+- Type : Int
+- Description : Maximum number of attribute events that can be published within a 1-minute window.
+- Default : 50
+- Depends on : CONFIG_STDK_IOT_CORE_PUBLISH_RATE_LIMIT

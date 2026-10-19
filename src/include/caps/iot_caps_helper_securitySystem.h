@@ -26,6 +26,19 @@ extern "C" {
 #endif
 
 enum {
+    CAP_ENUM_SECURITYSYSTEM_SENSORSTATUS_VALUE_READY,
+    CAP_ENUM_SECURITYSYSTEM_SENSORSTATUS_VALUE_BYPASSEDNOTREADY,
+    CAP_ENUM_SECURITYSYSTEM_SENSORSTATUS_VALUE_MAX
+};
+
+enum {
+    CAP_ENUM_SECURITYSYSTEM_SUPPORTEDSECURITYSYSTEMCOMMANDS_VALUE_ARMAWAY,
+    CAP_ENUM_SECURITYSYSTEM_SUPPORTEDSECURITYSYSTEMCOMMANDS_VALUE_ARMSTAY,
+    CAP_ENUM_SECURITYSYSTEM_SUPPORTEDSECURITYSYSTEMCOMMANDS_VALUE_DISARM,
+    CAP_ENUM_SECURITYSYSTEM_SUPPORTEDSECURITYSYSTEMCOMMANDS_VALUE_MAX
+};
+
+enum {
     CAP_ENUM_SECURITYSYSTEM_SECURITYSYSTEMSTATUS_VALUE_ARMEDAWAY,
     CAP_ENUM_SECURITYSYSTEM_SECURITYSYSTEMSTATUS_VALUE_ARMEDSTAY,
     CAP_ENUM_SECURITYSYSTEM_SECURITYSYSTEMSTATUS_VALUE_DISARMED,
@@ -34,12 +47,29 @@ enum {
 
 const static struct iot_caps_securitySystem {
     const char *id;
+    const struct securitySystem_attr_sensorStatus {
+        const char *name;
+        const unsigned char property;
+        const unsigned char valueType;
+        const char *values[CAP_ENUM_SECURITYSYSTEM_SENSORSTATUS_VALUE_MAX];
+        const char *value_ready;
+        const char *value_bypassedNotReady;
+    } attr_sensorStatus;
     const struct securitySystem_attr_alarm {
         const char *name;
         const unsigned char property;
         const unsigned char valueType;
         const unsigned int max_length;
     } attr_alarm;
+    const struct securitySystem_attr_supportedSecuritySystemCommands {
+        const char *name;
+        const unsigned char property;
+        const unsigned char valueType;
+        const char *values[CAP_ENUM_SECURITYSYSTEM_SUPPORTEDSECURITYSYSTEMCOMMANDS_VALUE_MAX];
+        const char *value_armAway;
+        const char *value_armStay;
+        const char *value_disarm;
+    } attr_supportedSecuritySystemCommands;
     const struct securitySystem_attr_securitySystemStatus {
         const char *name;
         const unsigned char property;
@@ -49,6 +79,15 @@ const static struct iot_caps_securitySystem {
         const char *value_armedStay;
         const char *value_disarmed;
     } attr_securitySystemStatus;
+    const struct securitySystem_attr_supportedSecuritySystemStatuses {
+        const char *name;
+        const unsigned char property;
+        const unsigned char valueType;
+        const char *values[CAP_ENUM_SECURITYSYSTEM_SECURITYSYSTEMSTATUS_VALUE_MAX];
+        const char *value_armedAway;
+        const char *value_armedStay;
+        const char *value_disarmed;
+    } attr_supportedSecuritySystemStatuses;
     const struct securitySystem_cmd_armStay {
         const char *name;
     } cmd_armStay;
@@ -60,6 +99,15 @@ const static struct iot_caps_securitySystem {
     } cmd_armAway;
 } caps_helper_securitySystem = {
     .id = "securitySystem",
+    .attr_sensorStatus =
+        {
+            .name = "sensorStatus",
+            .property = 0,
+            .valueType = VALUE_TYPE_STRING,
+            .values = {"ready", "bypassedNotReady"},
+            .value_ready = "ready",
+            .value_bypassedNotReady = "bypassedNotReady",
+        },
     .attr_alarm =
         {
             .name = "alarm",
@@ -67,10 +115,30 @@ const static struct iot_caps_securitySystem {
             .valueType = VALUE_TYPE_STRING,
             .max_length = 255,
         },
+    .attr_supportedSecuritySystemCommands =
+        {
+            .name = "supportedSecuritySystemCommands",
+            .property = ATTR_SET_VALUE_ARRAY,
+            .valueType = VALUE_TYPE_STRING,
+            .values = {"armAway", "armStay", "disarm"},
+            .value_armAway = "armAway",
+            .value_armStay = "armStay",
+            .value_disarm = "disarm",
+        },
     .attr_securitySystemStatus =
         {
             .name = "securitySystemStatus",
             .property = ATTR_SET_VALUE_REQUIRED,
+            .valueType = VALUE_TYPE_STRING,
+            .values = {"armedAway", "armedStay", "disarmed"},
+            .value_armedAway = "armedAway",
+            .value_armedStay = "armedStay",
+            .value_disarmed = "disarmed",
+        },
+    .attr_supportedSecuritySystemStatuses =
+        {
+            .name = "supportedSecuritySystemStatuses",
+            .property = ATTR_SET_VALUE_ARRAY,
             .valueType = VALUE_TYPE_STRING,
             .values = {"armedAway", "armedStay", "disarmed"},
             .value_armedAway = "armedAway",

@@ -19,6 +19,8 @@
 #ifndef _IOT_MAIN_H_
 #define _IOT_MAIN_H_
 
+#include <time.h>
+
 #include "iot_bsp_wifi.h"
 #include "iot_error.h"
 #include "iot_mqtt.h"
@@ -46,6 +48,12 @@
 #define IOT_MAIN_TASK_DEFAULT_CYCLE 100 /* in ms */
 #define IOT_MQTT_CONNECT_CRITICAL_REJECT_MAX 3
 #define IOT_RATE_LIMIT_BREAK_TIME 60000
+#define IOT_PUBLISH_RATE_LIMIT_WINDOW_SEC (60 + 2) /* publish count rate limit time windows(60) + margine(2) */
+#if defined(CONFIG_STDK_IOT_CORE_PUBLISH_RATE_LIMIT_COUNT)
+#define IOT_PUBLISH_RATE_LIMIT_COUNT CONFIG_STDK_IOT_CORE_PUBLISH_RATE_LIMIT_COUNT
+#else
+#define IOT_PUBLISH_RATE_LIMIT_COUNT (50)
+#endif
 #define IOT_PREVERR_LEN 5
 
 #define IOT_DEVICE_NAME_MAX_LENGTH 20
@@ -63,20 +71,26 @@
 
 #define CLOUD_CON_TIMER_MS (60 * 1000)
 
+#define REGISTERING_NETWORK_CHECK_INTERVAL (1000)
+
+#if !defined(FIRMWARE_BUILD_EPOCH)
+#define FIRMWARE_BUILD_EPOCH (1767225600) /* 2026-01-01 00:00:00 UTC */
+#endif
+
 enum _iot_noti_type {
     /* Common notifications */
     _IOT_NOTI_TYPE_UNKNOWN = IOT_NOTI_TYPE_UNKNOWN,
 
     _IOT_NOTI_TYPE_DEV_DELETED = IOT_NOTI_TYPE_DEV_DELETED,
     _IOT_NOTI_TYPE_RATE_LIMIT = IOT_NOTI_TYPE_RATE_LIMIT,
+    _IOT_NOTI_TYPE_RATE_LIMIT_RELEASED = IOT_NOTI_TYPE_RATE_LIMIT_RELEASED,
     _IOT_NOTI_TYPE_QUOTA_REACHED = IOT_NOTI_TYPE_QUOTA_REACHED,
     _IOT_NOTI_TYPE_SEND_FAILED = IOT_NOTI_TYPE_SEND_FAILED,
+    _IOT_NOTI_TYPE_SEND_SUCCESS = IOT_NOTI_TYPE_SEND_SUCCESS,
     _IOT_NOTI_TYPE_PREFERENCE_UPDATED = IOT_NOTI_TYPE_PREFERENCE_UPDATED,
     _IOT_NOTI_TYPE_CHILD_DEVICE_SYNCED = IOT_NOTI_TYPE_CHILD_DEVICE_SYNCED,
     _IOT_NOTI_TYPE_CHILD_DEVICE_REGISTERED = IOT_NOTI_TYPE_CHILD_DEVICE_REGISTERED,
-
-    /* Internal only notifications */
-    _IOT_NOTI_TYPE_JWT_EXPIRED,
+    _IOT_NOTI_TYPE_OWNER_TRANSFERRED = IOT_NOTI_TYPE_OWNER_TRANSFERRED,
 };
 
 enum iot_command_type {
@@ -84,7 +98,7 @@ enum iot_command_type {
     IOT_COMMAND_CLOUD_REGISTERING,
     IOT_COMMAND_CLOUD_REGISTERED,
     IOT_COMMAND_CLOUD_CONNECTING,
-    IOT_COMMAND_NOTIFICATION_RECEIVED,
+    IOT_COMMAND_NOTIFICATION_RECEIVED, /* deprecated, use iot_noti_send() instead, kept to preserve enum values */
     IOT_COMMAND_SYSTEM_REBOOT,
     IOT_COMMAND_TYPE_MAX = IOT_COMMAND_SYSTEM_REBOOT, /* MAX : under 32 */
 };
@@ -179,6 +193,9 @@ typedef enum iot_st_ecode_type {
     IOT_ST_ECODE_CE51,
     IOT_ST_ECODE_CE60,
     IOT_ST_ECODE_CE70,
+    IOT_ST_ECODE_CE79,
+    IOT_ST_ECODE_CE81,
+    IOT_ST_ECODE_CE84_3,
     IOT_ST_ECODE_CE84_4,
     IOT_ST_ECODE_DS13_1,
     IOT_ST_ECODE_MAX = IOT_ST_ECODE_DS13_1,
@@ -193,6 +210,7 @@ struct iot_wifi_prov_data {
     char mac_str[IOT_WIFI_PROV_MAC_STR_LEN + 1];       /**< @brief wifi mac address string */
     struct iot_mac bssid;                              /**< @brief wifi bssid raw value */
     iot_wifi_auth_mode_t security_type;                /**< @brief wifi security type such as WEP, PSK2.. */
+    int hidden;                                        /**< @brief hidden wifi*/
 };
 
 /**
@@ -273,7 +291,6 @@ struct iot_registered_data {
     struct iot_uuid *locationId;             /**< @brief location Id, allocated from server */
     char deviceId[IOT_REG_UUID_STR_LEN + 1]; /**< @brief device Id, allocated from server */
     bool updated;                            /**< @brief reflect getting device id */
-    bool new_reged;                          /**< @brief reflect that it is new registration process or not */
 };
 
 /**
@@ -360,7 +377,6 @@ struct iot_context {
     struct iot_device_prov_data prov_data; /**< @brief allocated device provisioning data */
     struct iot_devconf_prov_data devconf;  /**< @brief allocated device configuration data */
     struct iot_device_info device_info;    /**< @brief allocated device information data */
-    st_server_type server_type;            /**< @brief Server info for device to connect. */
 
     iot_security_context_t *easysetup_security_context; /**< @brief security context ref. for easy-setup process */
 
@@ -393,12 +409,17 @@ struct iot_context {
     bool rate_limit;                        /**< @brief whether rate limit occurs */
     iot_os_timer_handle rate_limit_timeout; /**< @brief timeout for rate limit penalty */
 
+#if defined(CONFIG_STDK_IOT_CORE_PUBLISH_RATE_LIMIT)
+    time_t publish_timestamps[IOT_PUBLISH_RATE_LIMIT_COUNT]; /**< @brief circular queue of publish timestamps */
+    int publish_timestamp_offset;                            /**< @brief current offset in circular queue */
+#endif
+
     unsigned int mqtt_connection_success_count; /**< @brief MQTT connection success count */
     unsigned int mqtt_connection_try_count;     /**< @brief MQTT connection try count */
 
     struct iot_st_ecode last_st_ecode; /**< @brief last happended device error code to send SmartThings App */
 
-    bool is_wifi_station;          /**< @brief indicator if wifi is station mode or not */
+    bool need_wifi_reset;          /**< @brief indicator if wifi need to be reset */
     iot_error_t es_network_status; /**< @brief to check network connection status*/
     bool otm_confirmed;            /**< @brief to check user confirmation*/
     bool cloud_connection_pause;   /**< @brief cloud connection needs to pause*/
@@ -408,13 +429,15 @@ struct iot_context {
 
     unsigned int connection_retry_count;             /**< @brief MQTT server connection retry count */
     iot_os_timer_handle next_connection_retry_timer; /**< @brief timer for next connection retry count */
-    iot_os_timer cloud_con_timer;                    /**< @brief timer for cloud connection check */
+    iot_os_timer_handle cloud_con_timer;             /**< @brief timer for cloud connection check */
     bool ble_connected;                              /**< @brief indicator if ble connected */
     bool dip_need_update;                            /** @brief Is DIP updated(by softwoare update etc.) */
 
     iot_os_timer_handle
         offline_diagnostics_wifiupdate_timeout; /**< @brief timeout for offline diagnostic wifi update command */
     iot_child_device *child_device_list;        /**< @brief child device list */
+
+    server_env_type server_env; /**< server environment type */
 };
 
 typedef void *device_work_param;
@@ -427,5 +450,7 @@ typedef struct _device_work_data {
 } device_work_data_t;
 
 iot_error_t iot_put_device_work(struct iot_context *ctx, device_work_handler handler, device_work_param param);
+
+void iot_state_timeout_cb(iot_os_timer_handle handle, void *user_data);
 
 #endif /* _IOT_MAIN_H_ */

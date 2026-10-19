@@ -53,6 +53,7 @@ int TC_iot_easysetup_common_setup(void **state);
 int TC_iot_easysetup_common_teardown(void **state);
 
 char *_generate_post_keyinfo_payload(int year, time_t *time_to_set);
+char *_generate_post_keyinfo_payload_utc(int year, time_t *time_to_set);
 void assert_iv_buffer(iot_security_buffer_t iv_buffer);
 void assert_keyinfo(char *payload, iot_security_cipher_params_t *server_cipher, unsigned int expected_otm_support);
 

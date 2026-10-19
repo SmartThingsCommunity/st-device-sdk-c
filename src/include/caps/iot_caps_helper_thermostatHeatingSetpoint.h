@@ -33,6 +33,35 @@ enum {
 
 const static struct iot_caps_thermostatHeatingSetpoint {
     const char *id;
+    const struct thermostatHeatingSetpoint_attr_heatingSetpointRange {
+        const char *name;
+        const unsigned char property;
+        const unsigned char valueType;
+        const char *units[CAP_ENUM_THERMOSTATHEATINGSETPOINT_HEATINGSETPOINT_UNIT_MAX];
+        const char *unit_F;
+        const char *unit_C;
+        const struct heatingSetpointRange_value_minimum {
+            const char *name;
+            const unsigned char property;
+            const unsigned char valueType;
+            const double min;
+            const double max;
+        } value_minimum;
+        const struct heatingSetpointRange_value_maximum {
+            const char *name;
+            const unsigned char property;
+            const unsigned char valueType;
+            const double min;
+            const double max;
+        } value_maximum;
+        const struct heatingSetpointRange_value_step {
+            const char *name;
+            const unsigned char property;
+            const unsigned char valueType;
+            const double min;
+            const double max;
+        } value_step;
+    } attr_heatingSetpointRange;
     const struct thermostatHeatingSetpoint_attr_heatingSetpoint {
         const char *name;
         const unsigned char property;
@@ -48,6 +77,39 @@ const static struct iot_caps_thermostatHeatingSetpoint {
     } cmd_setHeatingSetpoint;
 } caps_helper_thermostatHeatingSetpoint = {
     .id = "thermostatHeatingSetpoint",
+    .attr_heatingSetpointRange =
+        {
+            .name = "heatingSetpointRange",
+            .property = ATTR_SET_VALUE_REQUIRED | ATTR_SET_UNIT_REQUIRED,
+            .valueType = VALUE_TYPE_OBJECT,
+            .units = {"F", "C"},
+            .unit_F = "F",
+            .unit_C = "C",
+            .value_minimum =
+                {
+                    .name = "minimum",
+                    .property = ATTR_SET_VALUE_MIN | ATTR_SET_VALUE_MAX | ATTR_SET_VALUE_REQUIRED,
+                    .valueType = VALUE_TYPE_NUMBER,
+                    .min = -460,
+                    .max = 10000,
+                },
+            .value_maximum =
+                {
+                    .name = "maximum",
+                    .property = ATTR_SET_VALUE_MIN | ATTR_SET_VALUE_MAX | ATTR_SET_VALUE_REQUIRED,
+                    .valueType = VALUE_TYPE_NUMBER,
+                    .min = -460,
+                    .max = 10000,
+                },
+            .value_step =
+                {
+                    .name = "step",
+                    .property = ATTR_SET_VALUE_MIN | ATTR_SET_VALUE_MAX,
+                    .valueType = VALUE_TYPE_NUMBER,
+                    .min = -460,
+                    .max = 10000,
+                },
+        },
     .attr_heatingSetpoint =
         {
             .name = "heatingSetpoint",

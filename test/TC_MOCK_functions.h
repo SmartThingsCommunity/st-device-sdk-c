@@ -21,10 +21,31 @@
 
 #include <stdbool.h>
 
+#include "iot_error.h"
+#include "port_net.h"
+
 void set_mock_iot_os_malloc_failure_with_index(unsigned int index);
 void set_mock_iot_os_malloc_failure();
 void do_not_use_mock_iot_os_malloc_failure();
+void set_mock_iot_os_realloc_failure(bool fail);
+void set_mock_iot_os_strdup_failure(bool fail);
 void set_mock_detect_memory_leak(bool detect);
+
+/* Fail the Nth (0-based) call; every other call delegates to the real function. */
+void set_mock_iot_os_eventgroup_create_failure_at(int index);
+void do_not_use_mock_iot_os_eventgroup_create_failure(void);
+void set_mock_iot_os_mutex_init_failure_at(int index);
+void do_not_use_mock_iot_os_mutex_init_failure(void);
+void set_mock_iot_os_thread_create_failure_at(int index);
+void do_not_use_mock_iot_os_thread_create_failure(void);
+
+void set_mock_iot_bsp_fs_open_failure(iot_error_t err);
+void set_mock_iot_bsp_fs_read_failure(iot_error_t err);
+void set_mock_iot_bsp_fs_write_failure(iot_error_t err);
+void set_mock_iot_bsp_fs_close_failure(iot_error_t err);
+void set_mock_iot_bsp_fs_remove_failure(iot_error_t err);
+void set_mock_iot_bsp_system_set_time_failure(iot_error_t err);
+
 void set_mock_port_net_write_failure(int failure);
 void set_mock_port_net_write_skip_buf_check(int skip);
 void set_mock_port_net_write_skip_len_check(int skip);
@@ -32,5 +53,6 @@ void reset_mock_port_net_write_skip_flags(void);
 
 void port_net_mock_reset_read_stream(unsigned char *read_stream, size_t size);
 void port_net_mock_reset_socket_status(int status);
+void port_net_mock_set_connect_fail_result(port_net_connect_result result);
 
 #endif  // ST_DEVICE_SDK_C_TC_MOCK_FUNCTIONS_H

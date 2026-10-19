@@ -44,10 +44,17 @@ enum {
     CAP_ENUM_MEDIAINPUTSOURCE_INPUTSOURCE_VALUE_DIGITAL,
     CAP_ENUM_MEDIAINPUTSOURCE_INPUTSOURCE_VALUE_MELON,
     CAP_ENUM_MEDIAINPUTSOURCE_INPUTSOURCE_VALUE_WIFI,
+    CAP_ENUM_MEDIAINPUTSOURCE_INPUTSOURCE_VALUE_NETWORK,
+    CAP_ENUM_MEDIAINPUTSOURCE_INPUTSOURCE_VALUE_OPTICAL,
+    CAP_ENUM_MEDIAINPUTSOURCE_INPUTSOURCE_VALUE_COAXIAL,
+    CAP_ENUM_MEDIAINPUTSOURCE_INPUTSOURCE_VALUE_ANALOG1,
+    CAP_ENUM_MEDIAINPUTSOURCE_INPUTSOURCE_VALUE_ANALOG2,
+    CAP_ENUM_MEDIAINPUTSOURCE_INPUTSOURCE_VALUE_ANALOG3,
+    CAP_ENUM_MEDIAINPUTSOURCE_INPUTSOURCE_VALUE_PHONO,
     CAP_ENUM_MEDIAINPUTSOURCE_INPUTSOURCE_VALUE_MAX
 };
 
-#define CAP_ENUM_MEDIAINPUTSOURCE_SUPPORTEDINPUTSOURCES_VALUE_MAX 18
+#define CAP_ENUM_MEDIAINPUTSOURCE_SUPPORTEDINPUTSOURCES_VALUE_MAX 25
 const static struct iot_caps_mediaInputSource {
     const char *id;
     const struct mediaInputSource_attr_inputSource {
@@ -73,6 +80,13 @@ const static struct iot_caps_mediaInputSource {
         const char *value_digital;
         const char *value_melon;
         const char *value_wifi;
+        const char *value_network;
+        const char *value_optical;
+        const char *value_coaxial;
+        const char *value_analog1;
+        const char *value_analog2;
+        const char *value_analog3;
+        const char *value_phono;
     } attr_inputSource;
     const struct mediaInputSource_attr_supportedInputSources {
         const char *name;
@@ -97,6 +111,13 @@ const static struct iot_caps_mediaInputSource {
         const char *value_digital;
         const char *value_melon;
         const char *value_wifi;
+        const char *value_network;
+        const char *value_optical;
+        const char *value_coaxial;
+        const char *value_analog1;
+        const char *value_analog2;
+        const char *value_analog3;
+        const char *value_phono;
     } attr_supportedInputSources;
     const struct mediaInputSource_cmd_setInputSource {
         const char *name;
@@ -108,8 +129,10 @@ const static struct iot_caps_mediaInputSource {
             .name = "inputSource",
             .property = ATTR_SET_VALUE_REQUIRED,
             .valueType = VALUE_TYPE_STRING,
-            .values = {"AM", "CD", "FM", "HDMI", "HDMI1", "HDMI2", "HDMI3", "HDMI4", "HDMI5", "HDMI6", "digitalTv",
-                       "USB", "YouTube", "aux", "bluetooth", "digital", "melon", "wifi"},
+            .values = {"AM",        "CD",      "FM",      "HDMI",      "HDMI1",   "HDMI2",   "HDMI3",
+                       "HDMI4",     "HDMI5",   "HDMI6",   "digitalTv", "USB",     "YouTube", "aux",
+                       "bluetooth", "digital", "melon",   "wifi",      "network", "optical", "coaxial",
+                       "analog1",   "analog2", "analog3", "phono"},
             .value_AM = "AM",
             .value_CD = "CD",
             .value_FM = "FM",
@@ -128,14 +151,23 @@ const static struct iot_caps_mediaInputSource {
             .value_digital = "digital",
             .value_melon = "melon",
             .value_wifi = "wifi",
+            .value_network = "network",
+            .value_optical = "optical",
+            .value_coaxial = "coaxial",
+            .value_analog1 = "analog1",
+            .value_analog2 = "analog2",
+            .value_analog3 = "analog3",
+            .value_phono = "phono",
         },
     .attr_supportedInputSources =
         {
             .name = "supportedInputSources",
             .property = ATTR_SET_VALUE_REQUIRED | ATTR_SET_VALUE_ARRAY,
             .valueType = VALUE_TYPE_STRING,
-            .values = {"AM", "CD", "FM", "HDMI", "HDMI1", "HDMI2", "HDMI3", "HDMI4", "HDMI5", "HDMI6", "digitalTv",
-                       "USB", "YouTube", "aux", "bluetooth", "digital", "melon", "wifi"},
+            .values = {"AM",        "CD",      "FM",      "HDMI",      "HDMI1",   "HDMI2",   "HDMI3",
+                       "HDMI4",     "HDMI5",   "HDMI6",   "digitalTv", "USB",     "YouTube", "aux",
+                       "bluetooth", "digital", "melon",   "wifi",      "network", "optical", "coaxial",
+                       "analog1",   "analog2", "analog3", "phono"},
             .value_AM = "AM",
             .value_CD = "CD",
             .value_FM = "FM",
@@ -154,6 +186,13 @@ const static struct iot_caps_mediaInputSource {
             .value_digital = "digital",
             .value_melon = "melon",
             .value_wifi = "wifi",
+            .value_network = "network",
+            .value_optical = "optical",
+            .value_coaxial = "coaxial",
+            .value_analog1 = "analog1",
+            .value_analog2 = "analog2",
+            .value_analog3 = "analog3",
+            .value_phono = "phono",
         },
     .cmd_setInputSource = {.name = "setInputSource"},  // arguments: mode(string)
 };

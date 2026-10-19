@@ -45,6 +45,12 @@ const static struct iot_caps_imageCapture {
     const struct imageCapture_cmd_take {
         const char *name;
     } cmd_take;
+    const struct imageCapture_cmd_uploadComplete {
+        const char *name;
+    } cmd_uploadComplete;
+    const struct imageCapture_cmd_uploadFailed {
+        const char *name;
+    } cmd_uploadFailed;
 } caps_helper_imageCapture = {
     .id = "imageCapture",
     .attr_encrypted =
@@ -66,6 +72,10 @@ const static struct iot_caps_imageCapture {
             .valueType = VALUE_TYPE_STRING,
         },
     .cmd_take = {.name = "take"},  // arguments: correlationId(string) reason(string)
+    .cmd_uploadComplete =
+        {.name =
+             "uploadComplete"},  // arguments: imageId(string) mediaUrl(string) expirationTime(string) clipId(string)
+    .cmd_uploadFailed = {.name = "uploadFailed"},  // arguments: imageId(string) error(object)
 };
 
 #ifdef __cplusplus

@@ -36,6 +36,7 @@ enum {
     CAP_ENUM_ROBOTCLEANERMOVEMENT_ROBOTCLEANERMOVEMENT_VALUE_AFTER,
     CAP_ENUM_ROBOTCLEANERMOVEMENT_ROBOTCLEANERMOVEMENT_VALUE_CLEANING,
     CAP_ENUM_ROBOTCLEANERMOVEMENT_ROBOTCLEANERMOVEMENT_VALUE_PAUSE,
+    CAP_ENUM_ROBOTCLEANERMOVEMENT_ROBOTCLEANERMOVEMENT_VALUE_WASHINGMOP,
     CAP_ENUM_ROBOTCLEANERMOVEMENT_ROBOTCLEANERMOVEMENT_VALUE_MAX
 };
 
@@ -56,6 +57,7 @@ const static struct iot_caps_robotCleanerMovement {
         const char *value_after;
         const char *value_cleaning;
         const char *value_pause;
+        const char *value_washingMop;
     } attr_robotCleanerMovement;
     const struct robotCleanerMovement_cmd_setRobotCleanerMovement {
         const char *name;
@@ -68,7 +70,7 @@ const static struct iot_caps_robotCleanerMovement {
             .property = ATTR_SET_VALUE_REQUIRED,
             .valueType = VALUE_TYPE_STRING,
             .values = {"homing", "idle", "charging", "alarm", "powerOff", "reserve", "point", "after", "cleaning",
-                       "pause"},
+                       "pause", "washingMop"},
             .value_homing = "homing",
             .value_idle = "idle",
             .value_charging = "charging",
@@ -79,6 +81,7 @@ const static struct iot_caps_robotCleanerMovement {
             .value_after = "after",
             .value_cleaning = "cleaning",
             .value_pause = "pause",
+            .value_washingMop = "washingMop",
         },
     .cmd_setRobotCleanerMovement = {.name = "setRobotCleanerMovement"},  // arguments: mode(string)
 };

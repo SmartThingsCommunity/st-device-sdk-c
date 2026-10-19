@@ -23,7 +23,7 @@
 #define VER_MAJOR 2
 
 /* minor: feature added. keep api backward compatibility */
-#define VER_MINOR 3
+#define VER_MINOR 4
 
 /* patch: bug fix */
 #define VER_PATCH 2

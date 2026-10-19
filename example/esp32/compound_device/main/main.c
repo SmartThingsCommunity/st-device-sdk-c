@@ -66,19 +66,19 @@ int child_dev2_switch_state = SWITCH_OFF;
 
 static void update_switch_attribute(IOT_CAP_HANDLE switch_cap_handle, int state)
 {
-    int32_t sequence_no = 1;
+    int32_t request_id = 1;
 
     /* Send initial switch attribute */
     if (state == SWITCH_OFF) {
-        ST_CAP_SEND_ATTR_STRING(switch_cap_handle, "switch", "off", NULL, NULL, sequence_no);
+        ST_CAP_SEND_ATTR_STRING(switch_cap_handle, "switch", "off", NULL, NULL, request_id);
     } else {
-        ST_CAP_SEND_ATTR_STRING(switch_cap_handle, "switch", "on", NULL, NULL, sequence_no);
+        ST_CAP_SEND_ATTR_STRING(switch_cap_handle, "switch", "on", NULL, NULL, request_id);
     }
 
-    if (sequence_no < 0)
+    if (request_id < 0)
         printf("fail to send switch value\n");
     else
-        printf("Sequence number return : %ld\n", sequence_no);
+        printf("Request id return : %ld\n", request_id);
 }
 
 static void cap_switch_init_cb(IOT_CAP_HANDLE *handle, void *usr_data)
@@ -226,8 +226,9 @@ static void iot_noti_cb(iot_noti_data_t *noti_data, void *noti_usr_data)
     if (noti_data->type == IOT_NOTI_TYPE_DEV_DELETED) {
         printf("[device deleted]\n");
     } else if (noti_data->type == IOT_NOTI_TYPE_RATE_LIMIT) {
-        printf("[rate limit] Remaining time:%d, sequence number:%d\n", noti_data->raw.rate_limit.remainingTime,
-               noti_data->raw.rate_limit.sequenceNumber);
+        printf("[rate limit] Remaining time:%d\n", noti_data->raw.rate_limit.remainingTime);
+    } else if (noti_data->type == IOT_NOTI_TYPE_RATE_LIMIT_RELEASED) {
+        printf("[rate limit] Released\n");
     } else if (noti_data->type == IOT_NOTI_TYPE_PREFERENCE_UPDATED) {
         for (int i = 0; i < noti_data->raw.preferences.preferences_num; i++) {
             printf("[preference update] name : %s value : ",

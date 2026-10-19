@@ -26,6 +26,7 @@ extern "C" {
 #endif
 
 enum {
+    CAP_ENUM_VERYFINEDUSTHEALTHCONCERN_VERYFINEDUSTHEALTHCONCERN_VALUE_UNKNOWN,
     CAP_ENUM_VERYFINEDUSTHEALTHCONCERN_VERYFINEDUSTHEALTHCONCERN_VALUE_GOOD,
     CAP_ENUM_VERYFINEDUSTHEALTHCONCERN_VERYFINEDUSTHEALTHCONCERN_VALUE_MODERATE,
     CAP_ENUM_VERYFINEDUSTHEALTHCONCERN_VERYFINEDUSTHEALTHCONCERN_VALUE_SLIGHTLYUNHEALTHY,
@@ -42,6 +43,7 @@ const static struct iot_caps_veryFineDustHealthConcern {
         const unsigned char property;
         const unsigned char valueType;
         const char *values[CAP_ENUM_VERYFINEDUSTHEALTHCONCERN_VERYFINEDUSTHEALTHCONCERN_VALUE_MAX];
+        const char *value_unknown;
         const char *value_good;
         const char *value_moderate;
         const char *value_slightlyUnhealthy;
@@ -49,6 +51,19 @@ const static struct iot_caps_veryFineDustHealthConcern {
         const char *value_veryUnhealthy;
         const char *value_hazardous;
     } attr_veryFineDustHealthConcern;
+    const struct veryFineDustHealthConcern_attr_supportedVeryFineDustValues {
+        const char *name;
+        const unsigned char property;
+        const unsigned char valueType;
+        const char *values[CAP_ENUM_VERYFINEDUSTHEALTHCONCERN_VERYFINEDUSTHEALTHCONCERN_VALUE_MAX];
+        const char *value_unknown;
+        const char *value_good;
+        const char *value_moderate;
+        const char *value_slightlyUnhealthy;
+        const char *value_unhealthy;
+        const char *value_veryUnhealthy;
+        const char *value_hazardous;
+    } attr_supportedVeryFineDustValues;
 } caps_helper_veryFineDustHealthConcern = {
     .id = "veryFineDustHealthConcern",
     .attr_veryFineDustHealthConcern =
@@ -56,7 +71,22 @@ const static struct iot_caps_veryFineDustHealthConcern {
             .name = "veryFineDustHealthConcern",
             .property = ATTR_SET_VALUE_REQUIRED,
             .valueType = VALUE_TYPE_STRING,
-            .values = {"good", "moderate", "slightlyUnhealthy", "unhealthy", "veryUnhealthy", "hazardous"},
+            .values = {"unknown", "good", "moderate", "slightlyUnhealthy", "unhealthy", "veryUnhealthy", "hazardous"},
+            .value_unknown = "unknown",
+            .value_good = "good",
+            .value_moderate = "moderate",
+            .value_slightlyUnhealthy = "slightlyUnhealthy",
+            .value_unhealthy = "unhealthy",
+            .value_veryUnhealthy = "veryUnhealthy",
+            .value_hazardous = "hazardous",
+        },
+    .attr_supportedVeryFineDustValues =
+        {
+            .name = "supportedVeryFineDustValues",
+            .property = ATTR_SET_VALUE_ARRAY,
+            .valueType = VALUE_TYPE_STRING,
+            .values = {"unknown", "good", "moderate", "slightlyUnhealthy", "unhealthy", "veryUnhealthy", "hazardous"},
+            .value_unknown = "unknown",
             .value_good = "good",
             .value_moderate = "moderate",
             .value_slightlyUnhealthy = "slightlyUnhealthy",

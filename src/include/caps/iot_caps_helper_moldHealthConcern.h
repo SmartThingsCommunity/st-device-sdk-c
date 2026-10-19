@@ -26,6 +26,7 @@ extern "C" {
 #endif
 
 enum {
+    CAP_ENUM_MOLDHEALTHCONCERN_MOLDHEALTHCONCERN_VALUE_UNKNOWN,
     CAP_ENUM_MOLDHEALTHCONCERN_MOLDHEALTHCONCERN_VALUE_GOOD,
     CAP_ENUM_MOLDHEALTHCONCERN_MOLDHEALTHCONCERN_VALUE_MODERATE,
     CAP_ENUM_MOLDHEALTHCONCERN_MOLDHEALTHCONCERN_VALUE_SLIGHTLYUNHEALTHY,
@@ -42,6 +43,7 @@ const static struct iot_caps_moldHealthConcern {
         const unsigned char property;
         const unsigned char valueType;
         const char *values[CAP_ENUM_MOLDHEALTHCONCERN_MOLDHEALTHCONCERN_VALUE_MAX];
+        const char *value_unknown;
         const char *value_good;
         const char *value_moderate;
         const char *value_slightlyUnhealthy;
@@ -49,6 +51,19 @@ const static struct iot_caps_moldHealthConcern {
         const char *value_veryUnhealthy;
         const char *value_hazardous;
     } attr_moldHealthConcern;
+    const struct moldHealthConcern_attr_supportedMoldValues {
+        const char *name;
+        const unsigned char property;
+        const unsigned char valueType;
+        const char *values[CAP_ENUM_MOLDHEALTHCONCERN_MOLDHEALTHCONCERN_VALUE_MAX];
+        const char *value_unknown;
+        const char *value_good;
+        const char *value_moderate;
+        const char *value_slightlyUnhealthy;
+        const char *value_unhealthy;
+        const char *value_veryUnhealthy;
+        const char *value_hazardous;
+    } attr_supportedMoldValues;
 } caps_helper_moldHealthConcern = {
     .id = "moldHealthConcern",
     .attr_moldHealthConcern =
@@ -56,7 +71,22 @@ const static struct iot_caps_moldHealthConcern {
             .name = "moldHealthConcern",
             .property = ATTR_SET_VALUE_REQUIRED,
             .valueType = VALUE_TYPE_STRING,
-            .values = {"good", "moderate", "slightlyUnhealthy", "unhealthy", "veryUnhealthy", "hazardous"},
+            .values = {"unknown", "good", "moderate", "slightlyUnhealthy", "unhealthy", "veryUnhealthy", "hazardous"},
+            .value_unknown = "unknown",
+            .value_good = "good",
+            .value_moderate = "moderate",
+            .value_slightlyUnhealthy = "slightlyUnhealthy",
+            .value_unhealthy = "unhealthy",
+            .value_veryUnhealthy = "veryUnhealthy",
+            .value_hazardous = "hazardous",
+        },
+    .attr_supportedMoldValues =
+        {
+            .name = "supportedMoldValues",
+            .property = ATTR_SET_VALUE_ARRAY,
+            .valueType = VALUE_TYPE_STRING,
+            .values = {"unknown", "good", "moderate", "slightlyUnhealthy", "unhealthy", "veryUnhealthy", "hazardous"},
+            .value_unknown = "unknown",
             .value_good = "good",
             .value_moderate = "moderate",
             .value_slightlyUnhealthy = "slightlyUnhealthy",

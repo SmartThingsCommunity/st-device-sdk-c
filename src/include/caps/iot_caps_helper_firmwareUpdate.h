@@ -34,7 +34,20 @@ enum {
 enum {
     CAP_ENUM_FIRMWAREUPDATE_STATE_VALUE_NORMALOPERATION,
     CAP_ENUM_FIRMWAREUPDATE_STATE_VALUE_UPDATEINPROGRESS,
+    CAP_ENUM_FIRMWAREUPDATE_STATE_VALUE_INSUFFICIENTSTORAGE,
+    CAP_ENUM_FIRMWAREUPDATE_STATE_VALUE_UPDATEREQUESTED,
     CAP_ENUM_FIRMWAREUPDATE_STATE_VALUE_MAX
+};
+
+enum {
+    CAP_ENUM_FIRMWAREUPDATE_IMAGETRANSFERPROGRESS_UNIT_PERCENT,
+    CAP_ENUM_FIRMWAREUPDATE_IMAGETRANSFERPROGRESS_UNIT_MAX
+};
+
+enum {
+    CAP_ENUM_FIRMWAREUPDATE_SUPPORTEDCOMMANDS_VALUE_CHECKFORFIRMWAREUPDATE,
+    CAP_ENUM_FIRMWAREUPDATE_SUPPORTEDCOMMANDS_VALUE_UPDATEFIRMWARE,
+    CAP_ENUM_FIRMWAREUPDATE_SUPPORTEDCOMMANDS_VALUE_MAX
 };
 
 const static struct iot_caps_firmwareUpdate {
@@ -54,7 +67,24 @@ const static struct iot_caps_firmwareUpdate {
         const char *values[CAP_ENUM_FIRMWAREUPDATE_STATE_VALUE_MAX];
         const char *value_normalOperation;
         const char *value_updateInProgress;
+        const char *value_insufficientStorage;
+        const char *value_updateRequested;
     } attr_state;
+    const struct firmwareUpdate_attr_estimatedTimeRemaining {
+        const char *name;
+        const unsigned char property;
+        const unsigned char valueType;
+        const int min;
+    } attr_estimatedTimeRemaining;
+    const struct firmwareUpdate_attr_imageTransferProgress {
+        const char *name;
+        const unsigned char property;
+        const unsigned char valueType;
+        const char *units[CAP_ENUM_FIRMWAREUPDATE_IMAGETRANSFERPROGRESS_UNIT_MAX];
+        const char *unit_percent;
+        const int min;
+        const int max;
+    } attr_imageTransferProgress;
     const struct firmwareUpdate_attr_currentVersion {
         const char *name;
         const unsigned char property;
@@ -81,6 +111,19 @@ const static struct iot_caps_firmwareUpdate {
         const unsigned char property;
         const unsigned char valueType;
     } attr_updateAvailable;
+    const struct firmwareUpdate_attr_supportedCommands {
+        const char *name;
+        const unsigned char property;
+        const unsigned char valueType;
+        const char *values[CAP_ENUM_FIRMWAREUPDATE_SUPPORTEDCOMMANDS_VALUE_MAX];
+        const char *value_checkForFirmwareUpdate;
+        const char *value_updateFirmware;
+    } attr_supportedCommands;
+    const struct firmwareUpdate_attr_supportsProgressReports {
+        const char *name;
+        const unsigned char property;
+        const unsigned char valueType;
+    } attr_supportsProgressReports;
 
     const struct firmwareUpdate_cmd_checkForFirmwareUpdate {
         const char *name;
@@ -104,9 +147,28 @@ const static struct iot_caps_firmwareUpdate {
             .name = "state",
             .property = 0,
             .valueType = VALUE_TYPE_STRING,
-            .values = {"normalOperation", "updateInProgress"},
+            .values = {"normalOperation", "updateInProgress", "insufficientStorage", "updateRequested"},
             .value_normalOperation = "normalOperation",
             .value_updateInProgress = "updateInProgress",
+            .value_insufficientStorage = "insufficientStorage",
+            .value_updateRequested = "updateRequested",
+        },
+    .attr_estimatedTimeRemaining =
+        {
+            .name = "estimatedTimeRemaining",
+            .property = ATTR_SET_VALUE_MIN,
+            .valueType = VALUE_TYPE_INTEGER,
+            .min = 0,
+        },
+    .attr_imageTransferProgress =
+        {
+            .name = "imageTransferProgress",
+            .property = ATTR_SET_VALUE_MIN | ATTR_SET_VALUE_MAX | ATTR_SET_VALUE_REQUIRED,
+            .valueType = VALUE_TYPE_INTEGER,
+            .units = {"%"},
+            .unit_percent = "%",
+            .min = 0,
+            .max = 100,
         },
     .attr_currentVersion =
         {
@@ -136,6 +198,21 @@ const static struct iot_caps_firmwareUpdate {
     .attr_updateAvailable =
         {
             .name = "updateAvailable",
+            .property = 0,
+            .valueType = VALUE_TYPE_BOOLEAN,
+        },
+    .attr_supportedCommands =
+        {
+            .name = "supportedCommands",
+            .property = ATTR_SET_VALUE_ARRAY,
+            .valueType = VALUE_TYPE_STRING,
+            .values = {"checkForFirmwareUpdate", "updateFirmware"},
+            .value_checkForFirmwareUpdate = "checkForFirmwareUpdate",
+            .value_updateFirmware = "updateFirmware",
+        },
+    .attr_supportsProgressReports =
+        {
+            .name = "supportsProgressReports",
             .property = 0,
             .valueType = VALUE_TYPE_BOOLEAN,
         },

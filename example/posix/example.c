@@ -64,45 +64,45 @@ static void iot_status_cb(st_device_status device_status, void *usr_data)
 
 void cap_switch_init_cb(IOT_CAP_HANDLE *handle, void *usr_data)
 {
-    int32_t sequence_no = 1;
+    int32_t request_id = 1;
 
     /* Send initial switch attribute */
-    ST_CAP_SEND_ATTR_STRING(handle, "switch", "on", NULL, NULL, sequence_no);
+    ST_CAP_SEND_ATTR_STRING(handle, "switch", "on", NULL, NULL, request_id);
 
-    if (sequence_no < 0)
+    if (request_id < 0)
         printf("fail to send switch value\n");
     else
-        printf("Sequence number return : %d\n", sequence_no);
+        printf("Request id return : %d\n", request_id);
 }
 
 void cap_switch_cmd_off_cb(IOT_CAP_HANDLE *handle, iot_cap_cmd_data_t *cmd_data, void *usr_data)
 {
-    int32_t sequence_no = 1;
+    int32_t request_id = 1;
 
     printf("OFF command received");
 
     /* Update switch attribute */
-    ST_CAP_SEND_ATTR_STRING(handle, "switch", "off", NULL, NULL, sequence_no);
+    ST_CAP_SEND_ATTR_STRING(handle, "switch", "off", NULL, NULL, request_id);
 
-    if (sequence_no < 0)
+    if (request_id < 0)
         printf("fail to send switch value\n");
     else
-        printf("Sequence number return : %d\n", sequence_no);
+        printf("Request id return : %d\n", request_id);
 }
 
 void cap_switch_cmd_on_cb(IOT_CAP_HANDLE *handle, iot_cap_cmd_data_t *cmd_data, void *usr_data)
 {
-    int32_t sequence_no = 1;
+    int32_t request_id = 1;
 
     printf("ON command received");
 
     /* Update switch attribute */
-    ST_CAP_SEND_ATTR_STRING(handle, "switch", "on", NULL, NULL, sequence_no);
+    ST_CAP_SEND_ATTR_STRING(handle, "switch", "on", NULL, NULL, request_id);
 
-    if (sequence_no < 0)
+    if (request_id < 0)
         printf("fail to send switch value\n");
     else
-        printf("Sequence number return : %d\n", sequence_no);
+        printf("Request id return : %d\n", request_id);
 }
 
 void iot_noti_cb(iot_noti_data_t *noti_data, void *noti_usr_data)
@@ -112,8 +112,9 @@ void iot_noti_cb(iot_noti_data_t *noti_data, void *noti_usr_data)
     if (noti_data->type == IOT_NOTI_TYPE_DEV_DELETED) {
         printf("[device deleted]\n");
     } else if (noti_data->type == IOT_NOTI_TYPE_RATE_LIMIT) {
-        printf("[rate limit] Remaining time:%d, sequence number:%d\n", noti_data->raw.rate_limit.remainingTime,
-               noti_data->raw.rate_limit.sequenceNumber);
+        printf("[rate limit] Remaining time:%d\n", noti_data->raw.rate_limit.remainingTime);
+    } else if (noti_data->type == IOT_NOTI_TYPE_RATE_LIMIT_RELEASED) {
+        printf("[rate limit] Released\n");
     }
 }
 
@@ -147,13 +148,13 @@ void main(void)
     /* Below is config example.
      * You should replace with your device information.
     st_device_config_t dev_config = {
-        // You should replace your deviceId and server type.
-        // You can get deviceId and server type after registering your device with the manual registering tool.
+        // You should replace your deviceId and server url.
+        // You can get deviceId and server url after registering your device with the manual registering tool.
         .device_id = "12345678-1234-1234-1234-123456789012",
-        .server_type = SERVER_TYPE_AP_NORTH_EAST2,
+        .server_url = "ssl://mqtt-regional-apnortheast2.api.smartthings.com:8883",
 
         // You should replace your device identity info.
-        // You can get your device identity info from device_info.json created after using keygen tool.
+        // You can get your device identity info from device_info.json.
         .id_method = ST_IDENTITY_METHOD_MANUAL_ED25519,
         .identity = {
             .ed25519 = {
@@ -163,9 +164,12 @@ void main(void)
             },
         },
 
-        // You should replace your mnId.
-        // You can check your mnid from onboarding_config.json or Developer Workspace.
+        // You should replace your onboarding config info.
+        // You can get the info from onboarding_config.json.
         .mnId = "ABCD",
+        .dip_id = "12345678-1234-1234-1234-123456789012",
+        .dip_major_version = 0,
+        .dip_minor_version = 1,
     };
     */
 

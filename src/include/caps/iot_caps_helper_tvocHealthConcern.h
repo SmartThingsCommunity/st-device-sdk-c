@@ -26,6 +26,7 @@ extern "C" {
 #endif
 
 enum {
+    CAP_ENUM_TVOCHEALTHCONCERN_VALUE_UNKNOWN,
     CAP_ENUM_TVOCHEALTHCONCERN_VALUE_GOOD,
     CAP_ENUM_TVOCHEALTHCONCERN_VALUE_MODERATE,
     CAP_ENUM_TVOCHEALTHCONCERN_VALUE_SLIGHTLY_UNHEALTHY,
@@ -42,6 +43,7 @@ const static struct iot_caps_tvocHealthConcern {
         const unsigned char property;
         const unsigned char valueType;
         const char *values[CAP_ENUM_TVOCHEALTHCONCERN_VALUE_MAX];
+        const char *value_unknown;
         const char *value_good;
         const char *value_moderate;
         const char *value_slightly_unhealthy;
@@ -49,6 +51,19 @@ const static struct iot_caps_tvocHealthConcern {
         const char *value_very_unhealthy;
         const char *value_hazardous;
     } attr_tvocHealthConcern;
+    const struct tvocHealthConcern_attr_supportedTvocValues {
+        const char *name;
+        const unsigned char property;
+        const unsigned char valueType;
+        const char *values[CAP_ENUM_TVOCHEALTHCONCERN_VALUE_MAX];
+        const char *value_unknown;
+        const char *value_good;
+        const char *value_moderate;
+        const char *value_slightly_unhealthy;
+        const char *value_unhealthy;
+        const char *value_very_unhealthy;
+        const char *value_hazardous;
+    } attr_supportedTvocValues;
 } caps_helper_tvocHealthConcern = {
     .id = "tvocHealthConcern",
     .attr_tvocHealthConcern =
@@ -56,7 +71,22 @@ const static struct iot_caps_tvocHealthConcern {
             .name = "tvocHealthConcern",
             .property = ATTR_SET_VALUE_REQUIRED,
             .valueType = VALUE_TYPE_STRING,
-            .values = {"good", "moderate", "slightlyUnhealthy", "unhealthy", "veryUnhealthy", "hazardous"},
+            .values = {"unknown", "good", "moderate", "slightlyUnhealthy", "unhealthy", "veryUnhealthy", "hazardous"},
+            .value_unknown = "unknown",
+            .value_good = "good",
+            .value_moderate = "moderate",
+            .value_slightly_unhealthy = "slightlyUnhealthy",
+            .value_unhealthy = "unhealthy",
+            .value_very_unhealthy = "veryUnhealthy",
+            .value_hazardous = "hazardous",
+        },
+    .attr_supportedTvocValues =
+        {
+            .name = "supportedTvocValues",
+            .property = ATTR_SET_VALUE_ARRAY,
+            .valueType = VALUE_TYPE_STRING,
+            .values = {"unknown", "good", "moderate", "slightlyUnhealthy", "unhealthy", "veryUnhealthy", "hazardous"},
+            .value_unknown = "unknown",
             .value_good = "good",
             .value_moderate = "moderate",
             .value_slightly_unhealthy = "slightlyUnhealthy",

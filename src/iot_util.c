@@ -596,43 +596,6 @@ unsigned int iot_util_generator_backoff(unsigned int try_count, unsigned int max
     return backoff;
 }
 
-static const char server_url_prod_apnortheast2[] = "mqtt-regional-apnortheast2.api.smartthings.com";
-static const char server_url_prod_useast1[] = "mqtt-regional-useast1.api.smartthings.com";
-static const char server_url_prod_euwest1[] = "mqtt-regional-euwest1.api.smartthings.com";
-static const char server_url_prod_china[] = "mqtt-regional-cnnorth1.samsungiotcloud.cn";
-static const char server_url_acc_useast2[] = "mqtt-acceptance-useast2.stacceptance.com";
-static const char server_url_stg_useast1[] = "mqtt-staging-useast1.smartthingsgdev.com";
-static const char server_url_stg_china[] = "mqtt-staging-cnnorth1.samsungiots.cn";
-static const char server_url_dev_useast1[] = "mqtt-dev-useast1.smartthingsgdev.com";
-iot_server_type_t iot_util_get_server_type(char *server_url)
-{
-    iot_server_type_t server_type = IOT_SERVER_UNKNOWN;
-
-    if (server_url == NULL) {
-        IOT_ERROR("Server url string is null!");
-        return IOT_SERVER_UNKNOWN;
-    }
-
-    if (!strncmp(server_url, server_url_prod_apnortheast2, strlen(server_url_prod_apnortheast2)))
-        server_type = IOT_SERVER_PROD_AP_NORTH_EAST2;
-    else if (!strncmp(server_url, server_url_prod_useast1, strlen(server_url_prod_useast1)))
-        server_type = IOT_SERVER_PROD_US_EAST1;
-    else if (!strncmp(server_url, server_url_prod_euwest1, strlen(server_url_prod_euwest1)))
-        server_type = IOT_SERVER_PROD_EU_WEST1;
-    else if (!strncmp(server_url, server_url_prod_china, strlen(server_url_prod_china)))
-        server_type = IOT_SERVER_PROD_CHINA;
-    else if (!strncmp(server_url, server_url_acc_useast2, strlen(server_url_acc_useast2)))
-        server_type = IOT_SERVER_ACC_US_EAST2;
-    else if (!strncmp(server_url, server_url_stg_useast1, strlen(server_url_stg_useast1)))
-        server_type = IOT_SERVER_STG_US_EAST1;
-    else if (!strncmp(server_url, server_url_stg_china, strlen(server_url_stg_china)))
-        server_type = IOT_SERVER_STG_CHINA;
-    else if (!strncmp(server_url, server_url_dev_useast1, strlen(server_url_dev_useast1)))
-        server_type = IOT_SERVER_DEV_US_EAST1;
-
-    return server_type;
-}
-
 void iot_util_print_ssid_secure(const char *func, const int func_line, char *prefix, char *ssid)
 {
 #if defined(CONFIG_STDK_IOT_CORE_LOG_LEVEL_SENSITIVE_INFO)

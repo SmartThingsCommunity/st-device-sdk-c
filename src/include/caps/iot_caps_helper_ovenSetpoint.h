@@ -25,27 +25,103 @@
 extern "C" {
 #endif
 
+enum {
+    CAP_ENUM_OVENSETPOINT_OVENSETPOINT_UNIT_F,
+    CAP_ENUM_OVENSETPOINT_OVENSETPOINT_UNIT_C,
+    CAP_ENUM_OVENSETPOINT_OVENSETPOINT_UNIT_MAX
+};
+
 const static struct iot_caps_ovenSetpoint {
     const char *id;
+    const struct ovenSetpoint_attr_ovenSetpointRange {
+        const char *name;
+        const unsigned char property;
+        const unsigned char valueType;
+        const char *units[CAP_ENUM_OVENSETPOINT_OVENSETPOINT_UNIT_MAX];
+        const char *unit_F;
+        const char *unit_C;
+        const struct ovenSetpointRange_value_minimum {
+            const char *name;
+            const unsigned char property;
+            const unsigned char valueType;
+            const double min;
+            const double max;
+        } value_minimum;
+        const struct ovenSetpointRange_value_maximum {
+            const char *name;
+            const unsigned char property;
+            const unsigned char valueType;
+            const double min;
+            const double max;
+        } value_maximum;
+        const struct ovenSetpointRange_value_step {
+            const char *name;
+            const unsigned char property;
+            const unsigned char valueType;
+            const double min;
+            const double max;
+        } value_step;
+    } attr_ovenSetpointRange;
     const struct ovenSetpoint_attr_ovenSetpoint {
         const char *name;
         const unsigned char property;
         const unsigned char valueType;
-        const int min;
+        const char *units[CAP_ENUM_OVENSETPOINT_OVENSETPOINT_UNIT_MAX];
+        const char *unit_F;
+        const char *unit_C;
+        const double min;
+        const double max;
     } attr_ovenSetpoint;
     const struct ovenSetpoint_cmd_setOvenSetpoint {
         const char *name;
     } cmd_setOvenSetpoint;
 } caps_helper_ovenSetpoint = {
     .id = "ovenSetpoint",
+    .attr_ovenSetpointRange =
+        {
+            .name = "ovenSetpointRange",
+            .property = ATTR_SET_VALUE_REQUIRED,
+            .valueType = VALUE_TYPE_OBJECT,
+            .units = {"F", "C"},
+            .unit_F = "F",
+            .unit_C = "C",
+            .value_minimum =
+                {
+                    .name = "minimum",
+                    .property = ATTR_SET_VALUE_MIN | ATTR_SET_VALUE_MAX | ATTR_SET_VALUE_REQUIRED,
+                    .valueType = VALUE_TYPE_NUMBER,
+                    .min = -460,
+                    .max = 10000,
+                },
+            .value_maximum =
+                {
+                    .name = "maximum",
+                    .property = ATTR_SET_VALUE_MIN | ATTR_SET_VALUE_MAX | ATTR_SET_VALUE_REQUIRED,
+                    .valueType = VALUE_TYPE_NUMBER,
+                    .min = -460,
+                    .max = 10000,
+                },
+            .value_step =
+                {
+                    .name = "step",
+                    .property = ATTR_SET_VALUE_MIN | ATTR_SET_VALUE_MAX,
+                    .valueType = VALUE_TYPE_NUMBER,
+                    .min = -460,
+                    .max = 10000,
+                },
+        },
     .attr_ovenSetpoint =
         {
             .name = "ovenSetpoint",
-            .property = ATTR_SET_VALUE_MIN | ATTR_SET_VALUE_REQUIRED,
-            .valueType = VALUE_TYPE_INTEGER,
-            .min = 0,
+            .property = ATTR_SET_VALUE_MIN | ATTR_SET_VALUE_MAX | ATTR_SET_VALUE_REQUIRED,
+            .valueType = VALUE_TYPE_NUMBER,
+            .units = {"F", "C"},
+            .unit_F = "F",
+            .unit_C = "C",
+            .min = -460,
+            .max = 10000,
         },
-    .cmd_setOvenSetpoint = {.name = "setOvenSetpoint"},  // arguments: setpoint(integer)
+    .cmd_setOvenSetpoint = {.name = "setOvenSetpoint"},  // arguments: setpoint(number)
 };
 
 #ifdef __cplusplus

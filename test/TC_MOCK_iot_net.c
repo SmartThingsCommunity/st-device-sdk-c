@@ -102,13 +102,28 @@ int __wrap_port_net_write(PORT_NET_CONTEXT ctx, void *buf, size_t len)
     return len;
 }
 
-PORT_NET_CONTEXT __wrap_port_net_connect(char *address, char *port, port_net_tls_config *config)
+static port_net_connect_result mock_connect_fail_result = PORT_NET_CONNECT_OPERATION_FAIL;
+void port_net_mock_set_connect_fail_result(port_net_connect_result result)
 {
+    mock_connect_fail_result = result;
+}
+
+PORT_NET_CONTEXT __wrap_port_net_init(void)
+{
+    return (PORT_NET_CONTEXT)1;
+}
+
+port_net_connect_result __wrap_port_net_connect(PORT_NET_CONTEXT ctx, char *address, char *port, port_net_proto proto,
+                                                port_net_tls_config *config)
+{
+    UNUSED(ctx);
     UNUSED(address);
+    UNUSED(port);
+    UNUSED(proto);
     UNUSED(config);
     if (mock_socket_status == 1)
-        return (PORT_NET_CONTEXT)1;
-    return NULL;
+        return PORT_NET_CONNECT_SUCCESS;
+    return mock_connect_fail_result;
 }
 
 void __wrap_port_net_close(PORT_NET_CONTEXT ctx)
