@@ -1,6 +1,8 @@
 ---
 name: stdk-log-analysis
 description: Comprehensive SmartThings Device SDK (STDK) log analysis with automatic error extraction, operation flow reconstruction, and issue diagnosis. Identifies problems, provides root cause analysis, and recommends solutions with GitHub source code references.
+metadata:
+  version: "1.0.0"
 ---
 
 # STDK Log Analysis
@@ -517,3 +519,8 @@ User shares log file
         ↓
 User receives comprehensive analysis with solutions
 ```
+
+## Version
+
+- Version: 1.0.0 (2026-11-03)
+- Initial versioned release. Bump the `metadata.version` front matter and this section together on every change (semver: MAJOR for breaking changes to the trigger or output format, MINOR for new capabilities, PATCH for fixes and wording).

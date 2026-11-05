@@ -12,10 +12,12 @@ any other agent that supports the format. Agents that do not support skills
 natively can still use the content as plain context (see
 [Other agents](#other-agents-or-no-skill-support)).
 
-All skills fetch their facts live from the public GitHub repositories
+The skills fetch their facts live from the public GitHub repositories
 [st-device-sdk-c](https://github.com/SmartThingsCommunity/st-device-sdk-c) and
 [st-device-sdk-c-ref](https://github.com/SmartThingsCommunity/st-device-sdk-c-ref),
 so the agent needs outbound access to `github.com` / `raw.githubusercontent.com`.
+The exception is `stdk-chipset-porting`, which works from the chipset vendor's SDK
+that you point it at.
 
 ## Available skills
 
@@ -25,9 +27,10 @@ so the agent needs outbound access to `github.com` / `raw.githubusercontent.com`
 | [`stdk-error-lookup`](./stdk-error-lookup/SKILL.md) | Looks up mobile app error codes (`81-001`, `04-100`, ...) from `doc/mobile_error_codes_guide.md` and SDK internal codes (`NE01`, `CE01`, `EE01`, ...) from `src/include/iot_main.h`. Returns meaning, likely causes, and a developer checklist. Tells you how to escalate if the code is unknown. | "What does error 38-100 mean?" / "My log shows CE20. What should I check?" |
 | [`stdk-log-analysis`](./stdk-log-analysis/SKILL.md) | Parses STDK device logs (`[I]/[D]/[W]/[E] tag: message`), reconstructs the boot → onboarding → Wi-Fi → MQTT → runtime timeline, classifies issues by severity, and gives root cause and fix per issue. Knows the EasySetup `cmd:N` steps for both BLE and SoftAP, and cloud rejection errors such as `ConstraintViolationError`. | "Here is my device log. Why does onboarding stop after cmd:3?" / "Why is my attribute publish rejected with `NotValidValue`?" |
 | [`stdk-github-search`](./stdk-github-search/SKILL.md) | Knows the layout of both STDK repositories (`doc/`, `src/`, `example/`, `tools/`) and how to fetch files, search issues, or clone them. Picks the right document or source file for a question type (API, porting, security, onboarding, cloud). | "Where is the BLE onboarding implemented?" / "Find open issues about MQTT reconnect." |
+| [`stdk-chipset-porting`](./stdk-chipset-porting/SKILL.md) | Ports STDK to a new chipset from a link to the vendor's SDK. Confirms the SDK matches the chipset, writes the BSP layer under `src/port/bsp/<chipset>/` (Wi-Fi, BLE, file system, NV data, random, system, debug) and the Kconfig/CMake wiring, then checks the result against the SDK. Run it inside this repository. | "Port STDK to `<chipset>`. Its SDK is at `<link to the vendor SDK>`." |
 
 The skills reference each other. For example `stdk-log-analysis` will hand an
-unknown error code to `stdk-error-lookup`. Installing all four together gives the
+unknown error code to `stdk-error-lookup`. Installing them together gives the
 best result.
 
 Each skill folder also contains a Node.js helper module (`*.js`, Node 18+). The
@@ -86,7 +89,7 @@ mkdir -p /path/to/your/project/.agents/skills
 cp -r stdk-* /path/to/your/project/.agents/skills/
 ```
 
-Restart Codex. Type `/skills` to confirm the four `stdk-*` entries are listed.
+Restart Codex. Type `/skills` to confirm the `stdk-*` entries are listed.
 Codex applies a skill when the request matches its description, or you can name
 it directly with `$`:
 
@@ -157,10 +160,40 @@ checklist rather than a generic reply.
 - **Network access is required.** The skills deliberately do not embed SDK facts,
   so the answer always reflects the current `main` branch.
 
+## Versioning policy
+
+Each skill has its own version, separate from the SDK version. The current
+version is in the `metadata.version` field of the skill's `SKILL.md` front
+matter, and the same number is listed in the `## Version` section at the end of
+that file. Both must be updated together.
+
+The version uses [Semantic Versioning](https://semver.org) `MAJOR.MINOR.PATCH`:
+
+| Change | Bump | Examples |
+|--------|------|----------|
+| Breaking change | MAJOR | The skill's `name` or trigger changes. The output format changes in a way that breaks callers or automation. The helper `*.js` module's interface changes. |
+| New capability | MINOR | A new supported code format, a new log type, or a new section in the answer. Existing behavior still works. |
+| Fix or wording | PATCH | A wrong fact is corrected, a source link is updated, or the instructions are clarified without changing behavior. |
+
+Rules:
+
+- Bump the version in the same change that alters the skill. Do not change a
+  skill without a version bump.
+- Add a dated line to the `## Version` section for each bump, describing what
+  changed.
+- Skills that reference each other are versioned independently. A change to one
+  skill does not require a bump to another, unless the referenced behavior it
+  depends on was changed.
+- Versions are not tied to the SDK release. The SDK docs are read live from
+  GitHub, so a skill version does not indicate which SDK release it supports.
+
 ## Updating
 
-The skills are versioned with the SDK. To update, pull the repository and copy
-the folders again, overwriting the old ones.
+Each skill is versioned on its own. To update, check the `metadata.version` of
+the installed skill against the repository. If the repository version is higher,
+copy the folder again, overwriting the old one. Use the Versioning policy above
+to decide whether a higher version may break your existing setup. A MAJOR bump
+means you should read the changelog in the `## Version` section before updating.
 
 ## Feedback
 

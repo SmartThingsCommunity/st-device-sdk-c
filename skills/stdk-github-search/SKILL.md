@@ -1,6 +1,8 @@
 ---
 name: stdk-github-search
 description: Search SmartThings Device SDK (STDK) GitHub repositories for issues, documents, and source code. Provides multiple search methods and repository structure information.
+metadata:
+  version: "1.0.0"
 ---
 
 # STDK GitHub Search
@@ -197,3 +199,8 @@ gh api repos/SmartThingsCommunity/st-device-sdk-c/contents/doc/getting_started.m
 - **stdk-docs-reference** — Fetch and analyze documentation comprehensively
 - **stdk-error-lookup** — Look up specific error codes and solutions
 - **stdk-log-analysis** — Analyze device logs and identify issues
+
+## Version
+
+- Version: 1.0.0 (2026-11-03)
+- Initial versioned release. Bump the `metadata.version` front matter and this section together on every change (semver: MAJOR for breaking changes to the trigger or output format, MINOR for new capabilities, PATCH for fixes and wording).
