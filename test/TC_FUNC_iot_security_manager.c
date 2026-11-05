@@ -107,7 +107,7 @@ static int TC_iot_security_manager_teardown(void **state)
     return 0;
 }
 
-TEST(TC_iot_security_manager_init_null_parameters_neg)
+TEST_F(TC_REGISTRY_NO_FIXTURE, TC_iot_security_manager_init_null_parameters_neg)
 {
     iot_error_t err;
 
@@ -117,7 +117,7 @@ TEST(TC_iot_security_manager_init_null_parameters_neg)
     assert_int_equal(err, IOT_ERROR_SECURITY_CONTEXT_NULL);
 }
 
-TEST(TC_iot_security_manager_init_success_pos)
+TEST_F(TC_REGISTRY_NO_FIXTURE, TC_iot_security_manager_init_success_pos)
 {
     iot_error_t err;
     iot_security_context_t *context;
@@ -131,7 +131,7 @@ TEST(TC_iot_security_manager_init_success_pos)
     assert_int_equal(err, IOT_ERROR_NONE);
 }
 
-TEST(TC_iot_security_manager_deinit_null_parameters_neg)
+TEST_F(TC_REGISTRY_NO_FIXTURE, TC_iot_security_manager_deinit_null_parameters_neg)
 {
     iot_error_t err;
 
@@ -141,7 +141,7 @@ TEST(TC_iot_security_manager_deinit_null_parameters_neg)
     assert_int_equal(err, IOT_ERROR_SECURITY_CONTEXT_NULL);
 }
 
-TEST(TC_iot_security_manager_deinit_success_pos)
+TEST_F(TC_REGISTRY_NO_FIXTURE, TC_iot_security_manager_deinit_success_pos)
 {
     iot_error_t err;
     iot_security_context_t *context;
@@ -511,7 +511,7 @@ TEST_F(iot_security_manager, TC_iot_security_manager_get_certificate_nv_target_n
 /*
  * iot_security_manager_generate_key tests
  */
-TEST(TC_iot_security_manager_generate_key_null_context_neg)
+TEST_F(TC_REGISTRY_NO_FIXTURE, TC_iot_security_manager_generate_key_null_context_neg)
 {
     iot_error_t err;
     (void)state;
@@ -571,7 +571,7 @@ TEST_F(iot_security_manager, TC_iot_security_manager_generate_key_success_pos)
 /*
  * iot_security_manager_remove_key tests
  */
-TEST(TC_iot_security_manager_remove_key_null_context_neg)
+TEST_F(TC_REGISTRY_NO_FIXTURE, TC_iot_security_manager_remove_key_null_context_neg)
 {
     iot_error_t err;
     (void)state;
@@ -671,7 +671,7 @@ static iot_error_t _tc_manager_be_get_cert_fail(iot_security_context_t *context,
     return TC_MANAGER_BE_ERR;
 }
 
-TEST(TC_iot_security_manager_init_be_failure_neg)
+TEST_F(TC_REGISTRY_NO_FIXTURE, TC_iot_security_manager_init_be_failure_neg)
 {
     tc_manager_fake_be_t fake;
     iot_error_t err;
@@ -686,7 +686,7 @@ TEST(TC_iot_security_manager_init_be_failure_neg)
     assert_int_equal(fake.context.sub_system & IOT_SECURITY_SUB_MANAGER, 0);
 }
 
-TEST(TC_iot_security_manager_deinit_context_null_neg)
+TEST_F(TC_REGISTRY_NO_FIXTURE, TC_iot_security_manager_deinit_context_null_neg)
 {
     // When
     iot_error_t err = iot_security_manager_deinit(NULL);
@@ -694,7 +694,7 @@ TEST(TC_iot_security_manager_deinit_context_null_neg)
     assert_int_equal(err, IOT_ERROR_SECURITY_CONTEXT_NULL);
 }
 
-TEST(TC_iot_security_manager_deinit_be_failure_neg)
+TEST_F(TC_REGISTRY_NO_FIXTURE, TC_iot_security_manager_deinit_be_failure_neg)
 {
     tc_manager_fake_be_t fake;
     iot_error_t err;
@@ -710,7 +710,7 @@ TEST(TC_iot_security_manager_deinit_be_failure_neg)
     assert_int_equal(fake.context.sub_system, IOT_SECURITY_SUB_MANAGER);
 }
 
-TEST(TC_iot_security_manager_generate_key_be_func_null_neg)
+TEST_F(TC_REGISTRY_NO_FIXTURE, TC_iot_security_manager_generate_key_be_func_null_neg)
 {
     tc_manager_fake_be_t fake;
     iot_error_t err;
@@ -723,7 +723,7 @@ TEST(TC_iot_security_manager_generate_key_be_func_null_neg)
     assert_int_equal(err, IOT_ERROR_SECURITY_BE_FUNC_NULL);
 }
 
-TEST(TC_iot_security_manager_generate_key_be_failure_neg)
+TEST_F(TC_REGISTRY_NO_FIXTURE, TC_iot_security_manager_generate_key_be_failure_neg)
 {
     tc_manager_fake_be_t fake;
     iot_error_t err;
@@ -737,7 +737,7 @@ TEST(TC_iot_security_manager_generate_key_be_failure_neg)
     assert_int_equal(err, TC_MANAGER_BE_ERR);
 }
 
-TEST(TC_iot_security_manager_remove_key_be_func_null_neg)
+TEST_F(TC_REGISTRY_NO_FIXTURE, TC_iot_security_manager_remove_key_be_func_null_neg)
 {
     tc_manager_fake_be_t fake;
     iot_error_t err;
@@ -750,7 +750,7 @@ TEST(TC_iot_security_manager_remove_key_be_func_null_neg)
     assert_int_equal(err, IOT_ERROR_SECURITY_BE_FUNC_NULL);
 }
 
-TEST(TC_iot_security_manager_remove_key_be_failure_neg)
+TEST_F(TC_REGISTRY_NO_FIXTURE, TC_iot_security_manager_remove_key_be_failure_neg)
 {
     tc_manager_fake_be_t fake;
     iot_error_t err;
@@ -764,7 +764,7 @@ TEST(TC_iot_security_manager_remove_key_be_failure_neg)
     assert_int_equal(err, TC_MANAGER_BE_ERR);
 }
 
-TEST(TC_iot_security_manager_set_key_be_func_null_neg)
+TEST_F(TC_REGISTRY_NO_FIXTURE, TC_iot_security_manager_set_key_be_func_null_neg)
 {
     tc_manager_fake_be_t fake;
     iot_security_key_params_t key_params = {0};
@@ -779,7 +779,7 @@ TEST(TC_iot_security_manager_set_key_be_func_null_neg)
     assert_int_equal(err, IOT_ERROR_SECURITY_BE_FUNC_NULL);
 }
 
-TEST(TC_iot_security_manager_set_key_be_failure_neg)
+TEST_F(TC_REGISTRY_NO_FIXTURE, TC_iot_security_manager_set_key_be_failure_neg)
 {
     tc_manager_fake_be_t fake;
     iot_security_key_params_t key_params = {0};
@@ -795,7 +795,7 @@ TEST(TC_iot_security_manager_set_key_be_failure_neg)
     assert_int_equal(err, TC_MANAGER_BE_ERR);
 }
 
-TEST(TC_iot_security_manager_get_key_be_func_null_neg)
+TEST_F(TC_REGISTRY_NO_FIXTURE, TC_iot_security_manager_get_key_be_func_null_neg)
 {
     tc_manager_fake_be_t fake;
     iot_security_buffer_t key_buf;
@@ -812,7 +812,7 @@ TEST(TC_iot_security_manager_get_key_be_func_null_neg)
     assert_int_equal(key_buf.len, 0);
 }
 
-TEST(TC_iot_security_manager_get_certificate_be_func_null_neg)
+TEST_F(TC_REGISTRY_NO_FIXTURE, TC_iot_security_manager_get_certificate_be_func_null_neg)
 {
     tc_manager_fake_be_t fake;
     iot_security_buffer_t cert_buf;
@@ -829,7 +829,7 @@ TEST(TC_iot_security_manager_get_certificate_be_func_null_neg)
     assert_int_equal(cert_buf.len, 0);
 }
 
-TEST(TC_iot_security_manager_get_certificate_be_failure_neg)
+TEST_F(TC_REGISTRY_NO_FIXTURE, TC_iot_security_manager_get_certificate_be_failure_neg)
 {
     tc_manager_fake_be_t fake;
     iot_security_buffer_t cert_buf = {0};

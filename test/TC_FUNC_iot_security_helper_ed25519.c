@@ -38,7 +38,7 @@ extern iot_error_t _iot_security_ed25519_convert_seckey(unsigned char *ed25519_k
 
 TEST_SUITE("iot_security_helper_ed25519.c");
 
-TEST(TC_iot_security_ed25519_convert_seckey_null_parameters_neg)
+TEST_F(TC_REGISTRY_NO_FIXTURE, TC_iot_security_ed25519_convert_seckey_null_parameters_neg)
 {
     iot_error_t err;
     unsigned char *ed25519_key = sample_seckey_ed25519;
@@ -60,7 +60,7 @@ TEST(TC_iot_security_ed25519_convert_seckey_null_parameters_neg)
     assert_int_equal(err, IOT_ERROR_INVALID_ARGS);
 }
 
-TEST(TC_iot_security_ed25519_convert_seckey_success_pos)
+TEST_F(TC_REGISTRY_NO_FIXTURE, TC_iot_security_ed25519_convert_seckey_success_pos)
 {
     iot_error_t err;
     unsigned char *ed25519_key;
@@ -75,7 +75,7 @@ TEST(TC_iot_security_ed25519_convert_seckey_success_pos)
     assert_memory_equal(curve25519_key, sample_seckey_curve25519, sizeof(sample_seckey_curve25519));
 }
 
-TEST(TC_iot_security_ed25519_convert_seckey_null_output_untouched_neg)
+TEST_F(TC_REGISTRY_NO_FIXTURE, TC_iot_security_ed25519_convert_seckey_null_output_untouched_neg)
 {
     iot_error_t err;
     unsigned char curve25519_key[IOT_SECURITY_ED25519_LEN];
@@ -91,7 +91,7 @@ TEST(TC_iot_security_ed25519_convert_seckey_null_output_untouched_neg)
     }
 }
 
-TEST(TC_iot_security_ed25519_convert_seckey_unclamped_bits_neg)
+TEST_F(TC_REGISTRY_NO_FIXTURE, TC_iot_security_ed25519_convert_seckey_unclamped_bits_neg)
 {
     iot_error_t err;
     unsigned char ed25519_key[IOT_SECURITY_ED25519_LEN];
@@ -108,7 +108,7 @@ TEST(TC_iot_security_ed25519_convert_seckey_unclamped_bits_neg)
     assert_int_equal(curve25519_key[31] & 0x40, 0x40);
 }
 
-TEST(TC_iot_security_ed25519_convert_seckey_not_passthrough_neg)
+TEST_F(TC_REGISTRY_NO_FIXTURE, TC_iot_security_ed25519_convert_seckey_not_passthrough_neg)
 {
     iot_error_t err;
     unsigned char curve25519_key[IOT_SECURITY_ED25519_LEN];
@@ -120,7 +120,7 @@ TEST(TC_iot_security_ed25519_convert_seckey_not_passthrough_neg)
     assert_memory_not_equal(curve25519_key, sample_seckey_ed25519, sizeof(curve25519_key));
 }
 
-TEST(TC_iot_security_ed25519_convert_seckey_distinct_keys_neg)
+TEST_F(TC_REGISTRY_NO_FIXTURE, TC_iot_security_ed25519_convert_seckey_distinct_keys_neg)
 {
     iot_error_t err;
     unsigned char ed25519_key[IOT_SECURITY_ED25519_LEN];
@@ -139,7 +139,7 @@ TEST(TC_iot_security_ed25519_convert_seckey_distinct_keys_neg)
     assert_memory_not_equal(curve_a, curve_b, sizeof(curve_a));
 }
 
-TEST(TC_iot_security_ed25519_convert_seckey_zero_key_neg)
+TEST_F(TC_REGISTRY_NO_FIXTURE, TC_iot_security_ed25519_convert_seckey_zero_key_neg)
 {
     iot_error_t err;
     unsigned char ed25519_key[IOT_SECURITY_ED25519_LEN] = {0};

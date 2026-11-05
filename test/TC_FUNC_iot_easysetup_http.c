@@ -35,7 +35,7 @@ extern void iot_easysetup_deinit(struct iot_context *ctx);
 
 TEST_SUITE("iot_easysetup_http.c");
 
-TEST(TC_iot_easysetup_gen_post_payload_NULL_IN_PAYLOAD_neg)
+TEST_F(TC_REGISTRY_NO_FIXTURE, TC_iot_easysetup_gen_post_payload_NULL_IN_PAYLOAD_neg)
 {
     iot_error_t err;
     struct iot_context *context;
@@ -54,7 +54,7 @@ TEST(TC_iot_easysetup_gen_post_payload_NULL_IN_PAYLOAD_neg)
     free(context);
 }
 
-TEST(TC_iot_easysetup_gen_post_payload_CMD_INVALID_STEP_neg)
+TEST_F(TC_REGISTRY_NO_FIXTURE, TC_iot_easysetup_gen_post_payload_CMD_INVALID_STEP_neg)
 {
     iot_error_t err;
     struct iot_context *context;
@@ -74,7 +74,7 @@ TEST(TC_iot_easysetup_gen_post_payload_CMD_INVALID_STEP_neg)
     free(context);
 }
 
-TEST(TC_iot_easysetup_gen_post_payload_CMD_INVALID_SEQUENCE_neg)
+TEST_F(TC_REGISTRY_NO_FIXTURE, TC_iot_easysetup_gen_post_payload_CMD_INVALID_SEQUENCE_neg)
 {
     iot_error_t err;
     struct iot_context *context;
@@ -106,7 +106,7 @@ TEST(TC_iot_easysetup_gen_post_payload_CMD_INVALID_SEQUENCE_neg)
     ref_step = 0;
 }
 
-TEST(TC_iot_easysetup_gen_post_payload_NULL_CONTEXT_neg)
+TEST_F(TC_REGISTRY_NO_FIXTURE, TC_iot_easysetup_gen_post_payload_NULL_CONTEXT_neg)
 {
     iot_error_t err;
     char *out_payload = NULL;
@@ -119,7 +119,7 @@ TEST(TC_iot_easysetup_gen_post_payload_NULL_CONTEXT_neg)
     assert_int_not_equal(err, IOT_ERROR_NONE);
 }
 
-TEST(TC_iot_easysetup_gen_post_payload_SETUPCOMPLETE_NULL_PAYLOAD_neg)
+TEST_F(TC_REGISTRY_NO_FIXTURE, TC_iot_easysetup_gen_post_payload_SETUPCOMPLETE_NULL_PAYLOAD_neg)
 {
     iot_error_t err;
     struct iot_context *context;
@@ -138,7 +138,7 @@ TEST(TC_iot_easysetup_gen_post_payload_SETUPCOMPLETE_NULL_PAYLOAD_neg)
     assert_true(true);
 }
 
-TEST(TC_iot_easysetup_gen_get_payload_CMD_INVALID_STEP_neg)
+TEST_F(TC_REGISTRY_NO_FIXTURE, TC_iot_easysetup_gen_get_payload_CMD_INVALID_STEP_neg)
 {
     iot_error_t err;
     struct iot_context *context;
@@ -157,7 +157,7 @@ TEST(TC_iot_easysetup_gen_get_payload_CMD_INVALID_STEP_neg)
     free(context);
 }
 
-TEST(TC_iot_easysetup_gen_get_payload_CMD_INVALID_SEQUENCE_neg)
+TEST_F(TC_REGISTRY_NO_FIXTURE, TC_iot_easysetup_gen_get_payload_CMD_INVALID_SEQUENCE_neg)
 {
     iot_error_t err;
     struct iot_context *context;
@@ -180,7 +180,7 @@ TEST(TC_iot_easysetup_gen_get_payload_CMD_INVALID_SEQUENCE_neg)
     ref_step = 0;
 }
 
-TEST(TC_iot_easysetup_gen_get_payload_NULL_CONTEXT_neg)
+TEST_F(TC_REGISTRY_NO_FIXTURE, TC_iot_easysetup_gen_get_payload_NULL_CONTEXT_neg)
 {
     iot_error_t err;
     char *out_payload = NULL;
@@ -192,7 +192,7 @@ TEST(TC_iot_easysetup_gen_get_payload_NULL_CONTEXT_neg)
     assert_int_not_equal(err, IOT_ERROR_NONE);
 }
 
-TEST(TC_http_msg_handler_INVALID_CMD_neg)
+TEST_F(TC_REGISTRY_NO_FIXTURE, TC_http_msg_handler_INVALID_CMD_neg)
 {
     char *buffer = NULL;
     char *payload = "test payload";
@@ -210,7 +210,7 @@ TEST(TC_http_msg_handler_INVALID_CMD_neg)
     }
 }
 
-TEST(TC_http_msg_handler_INVALID_TYPE_neg)
+TEST_F(TC_REGISTRY_NO_FIXTURE, TC_http_msg_handler_INVALID_TYPE_neg)
 {
     char *buffer = NULL;
     char *payload = "test payload";
@@ -228,7 +228,7 @@ TEST(TC_http_msg_handler_INVALID_TYPE_neg)
     }
 }
 
-TEST(TC_http_msg_handler_NULL_DATA_BUF_POST_neg)
+TEST_F(TC_REGISTRY_NO_FIXTURE, TC_http_msg_handler_NULL_DATA_BUF_POST_neg)
 {
     char *buffer = NULL;
 
@@ -245,7 +245,7 @@ TEST(TC_http_msg_handler_NULL_DATA_BUF_POST_neg)
     }
 }
 
-TEST(TC_iot_easysetup_init_NULL_CONTEXT_neg)
+TEST_F(TC_REGISTRY_NO_FIXTURE, TC_iot_easysetup_init_NULL_CONTEXT_neg)
 {
     iot_error_t err;
 
@@ -256,7 +256,7 @@ TEST(TC_iot_easysetup_init_NULL_CONTEXT_neg)
     assert_int_equal(err, IOT_ERROR_INVALID_ARGS);
 }
 
-TEST(TC_iot_easysetup_deinit_NULL_CONTEXT_neg)
+TEST_F(TC_REGISTRY_NO_FIXTURE, TC_iot_easysetup_deinit_NULL_CONTEXT_neg)
 {
     // Given: context is null
     // When

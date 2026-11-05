@@ -607,7 +607,7 @@ extern char *_iot_jwt_create_header(const iot_wt_params_t *wt_params, iot_securi
 
 #define TEST_TRIMMED_CERTIFICATE "MIIBhTCCASugAwIBAgIQIRi6zePL6mKjOipn+dNuaZefaAoQCwYDK2VwMDoxCzAJBgNV"
 
-TEST(TC_STATIC_iot_jwt_header_trim_certificate_success_pos)
+TEST_F(TC_REGISTRY_NO_FIXTURE, TC_STATIC_iot_jwt_header_trim_certificate_success_pos)
 {
     char *trimmed;
 
@@ -627,7 +627,7 @@ TEST(TC_STATIC_iot_jwt_header_trim_certificate_success_pos)
     free(trimmed);
 }
 
-TEST(TC_STATIC_iot_jwt_header_trim_certificate_no_prefix_success_neg)
+TEST_F(TC_REGISTRY_NO_FIXTURE, TC_STATIC_iot_jwt_header_trim_certificate_no_prefix_success_neg)
 {
     char *trimmed;
 
@@ -647,7 +647,7 @@ TEST(TC_STATIC_iot_jwt_header_trim_certificate_no_prefix_success_neg)
     free(trimmed);
 }
 
-TEST(TC_STATIC_iot_jwt_header_set_certificate_success_pos)
+TEST_F(TC_REGISTRY_NO_FIXTURE, TC_STATIC_iot_jwt_header_set_certificate_success_pos)
 {
     iot_error_t err;
     JSON_H *object;
@@ -676,7 +676,7 @@ TEST(TC_STATIC_iot_jwt_header_set_certificate_success_pos)
     tc_mock_ble_set_get_certificate_use_wrap(0);
 }
 
-TEST(TC_STATIC_iot_jwt_header_set_certificate_get_certificate_failure_neg)
+TEST_F(TC_REGISTRY_NO_FIXTURE, TC_STATIC_iot_jwt_header_set_certificate_get_certificate_failure_neg)
 {
     iot_error_t err;
     JSON_H *object;
@@ -701,7 +701,7 @@ TEST(TC_STATIC_iot_jwt_header_set_certificate_get_certificate_failure_neg)
     tc_mock_ble_set_get_certificate_use_wrap(0);
 }
 
-TEST(TC_STATIC_iot_jwt_header_rs256_success_pos)
+TEST_F(TC_REGISTRY_NO_FIXTURE, TC_STATIC_iot_jwt_header_rs256_success_pos)
 {
     char *header;
     iot_wt_params_t wt_params = {0};
@@ -727,7 +727,7 @@ TEST(TC_STATIC_iot_jwt_header_rs256_success_pos)
     free(header);
 }
 
-TEST(TC_STATIC_iot_jwt_header_rs256_with_dipid_success_pos)
+TEST_F(TC_REGISTRY_NO_FIXTURE, TC_STATIC_iot_jwt_header_rs256_with_dipid_success_pos)
 {
     char *header;
     iot_wt_params_t wt_params = {0};
@@ -761,7 +761,7 @@ TEST(TC_STATIC_iot_jwt_header_rs256_with_dipid_success_pos)
     tc_mock_ble_set_get_certificate_use_wrap(0);
 }
 
-TEST(TC_STATIC_iot_jwt_header_rs256_certificate_failure_neg)
+TEST_F(TC_REGISTRY_NO_FIXTURE, TC_STATIC_iot_jwt_header_rs256_certificate_failure_neg)
 {
     char *header;
     iot_wt_params_t wt_params = {0};
@@ -790,7 +790,7 @@ TEST(TC_STATIC_iot_jwt_header_rs256_certificate_failure_neg)
     tc_mock_ble_set_get_certificate_use_wrap(0);
 }
 
-TEST(TC_STATIC_iot_jwt_header_eccp256_success_pos)
+TEST_F(TC_REGISTRY_NO_FIXTURE, TC_STATIC_iot_jwt_header_eccp256_success_pos)
 {
     char *header;
     iot_wt_params_t wt_params = {0};
@@ -816,7 +816,7 @@ TEST(TC_STATIC_iot_jwt_header_eccp256_success_pos)
     free(header);
 }
 
-TEST(TC_STATIC_iot_jwt_header_eccp256_with_dipid_success_pos)
+TEST_F(TC_REGISTRY_NO_FIXTURE, TC_STATIC_iot_jwt_header_eccp256_with_dipid_success_pos)
 {
     char *header;
     iot_wt_params_t wt_params = {0};
@@ -847,7 +847,7 @@ TEST(TC_STATIC_iot_jwt_header_eccp256_with_dipid_success_pos)
     tc_mock_ble_set_get_certificate_use_wrap(0);
 }
 
-TEST(TC_STATIC_iot_jwt_header_eccp256_certificate_failure_neg)
+TEST_F(TC_REGISTRY_NO_FIXTURE, TC_STATIC_iot_jwt_header_eccp256_certificate_failure_neg)
 {
     char *header;
     iot_wt_params_t wt_params = {0};
@@ -876,7 +876,7 @@ TEST(TC_STATIC_iot_jwt_header_eccp256_certificate_failure_neg)
     tc_mock_ble_set_get_certificate_use_wrap(0);
 }
 
-TEST(TC_STATIC_iot_jwt_create_header_rsa2048_success_pos)
+TEST_F(TC_REGISTRY_NO_FIXTURE, TC_STATIC_iot_jwt_create_header_rsa2048_success_pos)
 {
     char *header;
     iot_wt_params_t wt_params = {0};
@@ -898,7 +898,7 @@ TEST(TC_STATIC_iot_jwt_create_header_rsa2048_success_pos)
     free(header);
 }
 
-TEST(TC_STATIC_iot_jwt_create_header_eccp256_success_pos)
+TEST_F(TC_REGISTRY_NO_FIXTURE, TC_STATIC_iot_jwt_create_header_eccp256_success_pos)
 {
     char *header;
     iot_wt_params_t wt_params = {0};
@@ -920,7 +920,7 @@ TEST(TC_STATIC_iot_jwt_create_header_eccp256_success_pos)
     free(header);
 }
 
-TEST(TC_STATIC_iot_jwt_create_header_unsupported_key_type_failure_neg)
+TEST_F(TC_REGISTRY_NO_FIXTURE, TC_STATIC_iot_jwt_create_header_unsupported_key_type_failure_neg)
 {
     char *header;
     iot_wt_params_t wt_params = {0};

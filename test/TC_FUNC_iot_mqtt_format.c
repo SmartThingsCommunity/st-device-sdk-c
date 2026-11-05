@@ -32,19 +32,19 @@
  */
 TEST_SUITE("iot_mqtt_format.c");
 
-TEST(TC_MQTTPacket_getName_connect_pos)
+TEST_F(TC_REGISTRY_NO_FIXTURE, TC_MQTTPacket_getName_connect_pos)
 {
     UNUSED(state);
     assert_string_equal(MQTTPacket_getName(1), "CONNECT");
 }
 
-TEST(TC_MQTTPacket_getName_publish_neg)
+TEST_F(TC_REGISTRY_NO_FIXTURE, TC_MQTTPacket_getName_publish_neg)
 {
     UNUSED(state);
     assert_string_equal(MQTTPacket_getName(3), "PUBLISH");
 }
 
-TEST(TC_MQTTPacket_getName_disconnect_neg)
+TEST_F(TC_REGISTRY_NO_FIXTURE, TC_MQTTPacket_getName_disconnect_neg)
 {
     UNUSED(state);
     assert_string_equal(MQTTPacket_getName(14), "DISCONNECT");
@@ -53,7 +53,7 @@ TEST(TC_MQTTPacket_getName_disconnect_neg)
 /*
  * Tests for MQTTStringFormat_connack
  */
-TEST(TC_MQTTStringFormat_connack_success_pos)
+TEST_F(TC_REGISTRY_NO_FIXTURE, TC_MQTTStringFormat_connack_success_pos)
 {
     char buf[64] = {0};
     int n;
@@ -64,7 +64,7 @@ TEST(TC_MQTTStringFormat_connack_success_pos)
     assert_non_null(strstr(buf, "CONNACK"));
 }
 
-TEST(TC_MQTTStringFormat_connack_truncated_neg)
+TEST_F(TC_REGISTRY_NO_FIXTURE, TC_MQTTStringFormat_connack_truncated_neg)
 {
     char buf[4] = {0};
     int n;
@@ -78,7 +78,7 @@ TEST(TC_MQTTStringFormat_connack_truncated_neg)
 /*
  * Tests for MQTTStringFormat_ack
  */
-TEST(TC_MQTTStringFormat_ack_success_pos)
+TEST_F(TC_REGISTRY_NO_FIXTURE, TC_MQTTStringFormat_ack_success_pos)
 {
     char buf[64] = {0};
     int n;
@@ -89,7 +89,7 @@ TEST(TC_MQTTStringFormat_ack_success_pos)
     assert_non_null(strstr(buf, "PUBACK"));
 }
 
-TEST(TC_MQTTStringFormat_ack_with_dup_neg)
+TEST_F(TC_REGISTRY_NO_FIXTURE, TC_MQTTStringFormat_ack_with_dup_neg)
 {
     char buf[64] = {0};
     int n;
@@ -101,7 +101,7 @@ TEST(TC_MQTTStringFormat_ack_with_dup_neg)
     assert_non_null(strstr(buf, "dup"));
 }
 
-TEST(TC_MQTTStringFormat_ack_no_dup_bit_neg)
+TEST_F(TC_REGISTRY_NO_FIXTURE, TC_MQTTStringFormat_ack_no_dup_bit_neg)
 {
     char buf[64] = {0};
     int n;
@@ -115,7 +115,7 @@ TEST(TC_MQTTStringFormat_ack_no_dup_bit_neg)
 /*
  * Tests for MQTTStringFormat_publish
  */
-TEST(TC_MQTTStringFormat_publish_short_payload_neg)
+TEST_F(TC_REGISTRY_NO_FIXTURE, TC_MQTTStringFormat_publish_short_payload_neg)
 {
     char buf[128] = {0};
     MQTTString topic = MQTTString_initializer;
@@ -130,7 +130,7 @@ TEST(TC_MQTTStringFormat_publish_short_payload_neg)
     assert_non_null(strstr(buf, "PUBLISH"));
 }
 
-TEST(TC_MQTTStringFormat_publish_long_topic_neg)
+TEST_F(TC_REGISTRY_NO_FIXTURE, TC_MQTTStringFormat_publish_long_topic_neg)
 {
     char buf[256] = {0};
     char long_topic[32];
@@ -146,7 +146,7 @@ TEST(TC_MQTTStringFormat_publish_long_topic_neg)
     assert_true(n > 0);
 }
 
-TEST(TC_MQTTStringFormat_publish_long_payload_neg)
+TEST_F(TC_REGISTRY_NO_FIXTURE, TC_MQTTStringFormat_publish_long_payload_neg)
 {
     char buf[256] = {0};
     MQTTString topic = MQTTString_initializer;
@@ -164,7 +164,7 @@ TEST(TC_MQTTStringFormat_publish_long_payload_neg)
 /*
  * Tests for MQTTStringFormat_connect
  */
-TEST(TC_MQTTStringFormat_connect_basic_pos)
+TEST_F(TC_REGISTRY_NO_FIXTURE, TC_MQTTStringFormat_connect_basic_pos)
 {
     char buf[256] = {0};
     MQTTPacket_connectData data = MQTTPacket_connectData_initializer;
@@ -178,7 +178,7 @@ TEST(TC_MQTTStringFormat_connect_basic_pos)
     assert_non_null(strstr(buf, "CONNECT"));
 }
 
-TEST(TC_MQTTStringFormat_connect_with_will_pos)
+TEST_F(TC_REGISTRY_NO_FIXTURE, TC_MQTTStringFormat_connect_with_will_pos)
 {
     char buf[512] = {0};
     MQTTPacket_connectData data = MQTTPacket_connectData_initializer;
@@ -199,7 +199,7 @@ TEST(TC_MQTTStringFormat_connect_with_will_pos)
     assert_non_null(strstr(buf, "will"));
 }
 
-TEST(TC_MQTTStringFormat_connect_with_credentials_pos)
+TEST_F(TC_REGISTRY_NO_FIXTURE, TC_MQTTStringFormat_connect_with_credentials_pos)
 {
     char buf[512] = {0};
     MQTTPacket_connectData data = MQTTPacket_connectData_initializer;
@@ -218,7 +218,7 @@ TEST(TC_MQTTStringFormat_connect_with_credentials_pos)
     assert_non_null(strstr(buf, "secret"));
 }
 
-TEST(TC_MQTTStringFormat_connect_no_credentials_neg)
+TEST_F(TC_REGISTRY_NO_FIXTURE, TC_MQTTStringFormat_connect_no_credentials_neg)
 {
     char buf[256] = {0};
     MQTTPacket_connectData data = MQTTPacket_connectData_initializer;
@@ -236,7 +236,7 @@ TEST(TC_MQTTStringFormat_connect_no_credentials_neg)
 /*
  * Tests for MQTTStringFormat_subscribe / suback / unsubscribe
  */
-TEST(TC_MQTTStringFormat_subscribe_success_pos)
+TEST_F(TC_REGISTRY_NO_FIXTURE, TC_MQTTStringFormat_subscribe_success_pos)
 {
     char buf[128] = {0};
     MQTTString topics[1];
@@ -252,7 +252,7 @@ TEST(TC_MQTTStringFormat_subscribe_success_pos)
     assert_non_null(strstr(buf, "SUBSCRIBE"));
 }
 
-TEST(TC_MQTTStringFormat_suback_success_pos)
+TEST_F(TC_REGISTRY_NO_FIXTURE, TC_MQTTStringFormat_suback_success_pos)
 {
     char buf[128] = {0};
     int granted[] = {2};
@@ -264,7 +264,7 @@ TEST(TC_MQTTStringFormat_suback_success_pos)
     assert_non_null(strstr(buf, "SUBACK"));
 }
 
-TEST(TC_MQTTStringFormat_unsubscribe_neg)
+TEST_F(TC_REGISTRY_NO_FIXTURE, TC_MQTTStringFormat_unsubscribe_neg)
 {
     char buf[128] = {0};
     MQTTString topics[1];
@@ -279,7 +279,7 @@ TEST(TC_MQTTStringFormat_unsubscribe_neg)
     assert_non_null(strstr(buf, "UNSUBSCRIBE"));
 }
 
-TEST(TC_MQTTStringFormat_subscribe_zero_buffer_neg)
+TEST_F(TC_REGISTRY_NO_FIXTURE, TC_MQTTStringFormat_subscribe_zero_buffer_neg)
 {
     char buf[1] = {0};
     MQTTString topics[1];
@@ -297,7 +297,7 @@ TEST(TC_MQTTStringFormat_subscribe_zero_buffer_neg)
     assert_int_equal(buf[0], '\0');
 }
 
-TEST(TC_MQTTStringFormat_suback_zero_buffer_neg)
+TEST_F(TC_REGISTRY_NO_FIXTURE, TC_MQTTStringFormat_suback_zero_buffer_neg)
 {
     char buf[1] = {0};
     int granted[] = {0};
@@ -309,7 +309,7 @@ TEST(TC_MQTTStringFormat_suback_zero_buffer_neg)
     assert_int_equal(buf[0], '\0');
 }
 
-TEST(TC_MQTTStringFormat_unsubscribe_zero_buffer_neg)
+TEST_F(TC_REGISTRY_NO_FIXTURE, TC_MQTTStringFormat_unsubscribe_zero_buffer_neg)
 {
     char buf[1] = {0};
     MQTTString topics[1];
@@ -327,14 +327,14 @@ TEST(TC_MQTTStringFormat_unsubscribe_zero_buffer_neg)
 /*
  * Additional negative tests for iot_mqtt_format.c
  */
-TEST(TC_MQTTPacket_getName_reserved_neg)
+TEST_F(TC_REGISTRY_NO_FIXTURE, TC_MQTTPacket_getName_reserved_neg)
 {
     UNUSED(state);
     // The reserved type 0 must not be reported as a real packet name
     assert_string_equal(MQTTPacket_getName(0), "RESERVED");
 }
 
-TEST(TC_MQTTPacket_getName_all_known_types_neg)
+TEST_F(TC_REGISTRY_NO_FIXTURE, TC_MQTTPacket_getName_all_known_types_neg)
 {
     static const char *expected[] = {"RESERVED",    "CONNECT",  "CONNACK", "PUBLISH",   "PUBACK",
                                      "PUBREC",      "PUBREL",   "PUBCOMP", "SUBSCRIBE", "SUBACK",
@@ -347,7 +347,7 @@ TEST(TC_MQTTPacket_getName_all_known_types_neg)
     }
 }
 
-TEST(TC_MQTTStringFormat_connack_zero_buffer_neg)
+TEST_F(TC_REGISTRY_NO_FIXTURE, TC_MQTTStringFormat_connack_zero_buffer_neg)
 {
     char buf[1] = {0x7f};
     int n;
@@ -360,7 +360,7 @@ TEST(TC_MQTTStringFormat_connack_zero_buffer_neg)
     assert_int_equal(buf[0], 0x7f);
 }
 
-TEST(TC_MQTTStringFormat_connack_out_of_range_rc_neg)
+TEST_F(TC_REGISTRY_NO_FIXTURE, TC_MQTTStringFormat_connack_out_of_range_rc_neg)
 {
     char buf[64] = {0};
     UNUSED(state);
@@ -371,7 +371,7 @@ TEST(TC_MQTTStringFormat_connack_out_of_range_rc_neg)
     assert_non_null(strstr(buf, "rc 255"));
 }
 
-TEST(TC_MQTTStringFormat_connack_out_of_range_session_present_neg)
+TEST_F(TC_REGISTRY_NO_FIXTURE, TC_MQTTStringFormat_connack_out_of_range_session_present_neg)
 {
     char buf[64] = {0};
     UNUSED(state);
@@ -380,7 +380,7 @@ TEST(TC_MQTTStringFormat_connack_out_of_range_session_present_neg)
     assert_non_null(strstr(buf, "session present 255"));
 }
 
-TEST(TC_MQTTStringFormat_publish_zero_buffer_neg)
+TEST_F(TC_REGISTRY_NO_FIXTURE, TC_MQTTStringFormat_publish_zero_buffer_neg)
 {
     MQTTString topic = MQTTString_initializer;
     char buf[1] = {0x7f};
@@ -396,7 +396,7 @@ TEST(TC_MQTTStringFormat_publish_zero_buffer_neg)
     assert_int_equal(buf[0], 0x7f);
 }
 
-TEST(TC_MQTTStringFormat_publish_topic_capped_at_20_neg)
+TEST_F(TC_REGISTRY_NO_FIXTURE, TC_MQTTStringFormat_publish_topic_capped_at_20_neg)
 {
     MQTTString topic = MQTTString_initializer;
     char buf[256] = {0};
@@ -410,7 +410,7 @@ TEST(TC_MQTTStringFormat_publish_topic_capped_at_20_neg)
     assert_non_null(strstr(buf, "topic 01234567890123456789,"));
 }
 
-TEST(TC_MQTTStringFormat_publish_payload_capped_at_20_neg)
+TEST_F(TC_REGISTRY_NO_FIXTURE, TC_MQTTStringFormat_publish_payload_capped_at_20_neg)
 {
     MQTTString topic = MQTTString_initializer;
     unsigned char payload[31];
@@ -427,7 +427,7 @@ TEST(TC_MQTTStringFormat_publish_payload_capped_at_20_neg)
     assert_null(strstr(buf, "aaaaaaaaaaaaaaaaaaaaa"));
 }
 
-TEST(TC_MQTTStringFormat_publish_reserved_qos_neg)
+TEST_F(TC_REGISTRY_NO_FIXTURE, TC_MQTTStringFormat_publish_reserved_qos_neg)
 {
     MQTTString topic = MQTTString_initializer;
     char buf[256] = {0};
@@ -441,7 +441,7 @@ TEST(TC_MQTTStringFormat_publish_reserved_qos_neg)
     assert_non_null(strstr(buf, "QoS 3"));
 }
 
-TEST(TC_MQTTStringFormat_publish_negative_qos_neg)
+TEST_F(TC_REGISTRY_NO_FIXTURE, TC_MQTTStringFormat_publish_negative_qos_neg)
 {
     MQTTString topic = MQTTString_initializer;
     char buf[256] = {0};
@@ -454,7 +454,7 @@ TEST(TC_MQTTStringFormat_publish_negative_qos_neg)
     assert_non_null(strstr(buf, "QoS -1"));
 }
 
-TEST(TC_MQTTStringFormat_publish_zero_length_topic_neg)
+TEST_F(TC_REGISTRY_NO_FIXTURE, TC_MQTTStringFormat_publish_zero_length_topic_neg)
 {
     MQTTString topic = MQTTString_initializer;
     char buf[256] = {0};
@@ -467,7 +467,7 @@ TEST(TC_MQTTStringFormat_publish_zero_length_topic_neg)
     assert_non_null(strstr(buf, "topic ,"));
 }
 
-TEST(TC_MQTTStringFormat_publish_dup_and_retained_neg)
+TEST_F(TC_REGISTRY_NO_FIXTURE, TC_MQTTStringFormat_publish_dup_and_retained_neg)
 {
     MQTTString topic = MQTTString_initializer;
     char buf[256] = {0};
@@ -481,7 +481,7 @@ TEST(TC_MQTTStringFormat_publish_dup_and_retained_neg)
     assert_non_null(strstr(buf, "packet id 65535"));
 }
 
-TEST(TC_MQTTStringFormat_ack_zero_buffer_neg)
+TEST_F(TC_REGISTRY_NO_FIXTURE, TC_MQTTStringFormat_ack_zero_buffer_neg)
 {
     char buf[1] = {0x7f};
     int n;
@@ -494,7 +494,7 @@ TEST(TC_MQTTStringFormat_ack_zero_buffer_neg)
     assert_int_equal(buf[0], 0x7f);
 }
 
-TEST(TC_MQTTStringFormat_ack_reserved_type_neg)
+TEST_F(TC_REGISTRY_NO_FIXTURE, TC_MQTTStringFormat_ack_reserved_type_neg)
 {
     char buf[64] = {0};
     UNUSED(state);
@@ -505,7 +505,7 @@ TEST(TC_MQTTStringFormat_ack_reserved_type_neg)
     assert_non_null(strstr(buf, "RESERVED"));
 }
 
-TEST(TC_MQTTStringFormat_ack_max_packetid_neg)
+TEST_F(TC_REGISTRY_NO_FIXTURE, TC_MQTTStringFormat_ack_max_packetid_neg)
 {
     char buf[64] = {0};
     UNUSED(state);
@@ -514,7 +514,7 @@ TEST(TC_MQTTStringFormat_ack_max_packetid_neg)
     assert_non_null(strstr(buf, "packet id 65535"));
 }
 
-TEST(TC_MQTTStringFormat_ack_zero_packetid_neg)
+TEST_F(TC_REGISTRY_NO_FIXTURE, TC_MQTTStringFormat_ack_zero_packetid_neg)
 {
     char buf[64] = {0};
     UNUSED(state);
@@ -524,7 +524,7 @@ TEST(TC_MQTTStringFormat_ack_zero_packetid_neg)
     assert_non_null(strstr(buf, "packet id 0"));
 }
 
-TEST(TC_MQTTStringFormat_subscribe_zero_count_neg)
+TEST_F(TC_REGISTRY_NO_FIXTURE, TC_MQTTStringFormat_subscribe_zero_count_neg)
 {
     MQTTString filters[1];
     int qos[1] = {0};
@@ -538,7 +538,7 @@ TEST(TC_MQTTStringFormat_subscribe_zero_count_neg)
     assert_non_null(strstr(buf, "count 0"));
 }
 
-TEST(TC_MQTTStringFormat_subscribe_negative_count_neg)
+TEST_F(TC_REGISTRY_NO_FIXTURE, TC_MQTTStringFormat_subscribe_negative_count_neg)
 {
     MQTTString filters[1];
     int qos[1] = {0};
@@ -551,7 +551,7 @@ TEST(TC_MQTTStringFormat_subscribe_negative_count_neg)
     assert_non_null(strstr(buf, "count -1"));
 }
 
-TEST(TC_MQTTStringFormat_subscribe_reserved_qos_neg)
+TEST_F(TC_REGISTRY_NO_FIXTURE, TC_MQTTStringFormat_subscribe_reserved_qos_neg)
 {
     MQTTString filters[1];
     int qos[1] = {3};
@@ -566,7 +566,7 @@ TEST(TC_MQTTStringFormat_subscribe_reserved_qos_neg)
     assert_non_null(strstr(buf, "qos 3"));
 }
 
-TEST(TC_MQTTStringFormat_subscribe_dup_set_neg)
+TEST_F(TC_REGISTRY_NO_FIXTURE, TC_MQTTStringFormat_subscribe_dup_set_neg)
 {
     MQTTString filters[1];
     int qos[1] = {1};
@@ -581,7 +581,7 @@ TEST(TC_MQTTStringFormat_subscribe_dup_set_neg)
     assert_non_null(strstr(buf, "packet id 65535"));
 }
 
-TEST(TC_MQTTStringFormat_suback_zero_count_neg)
+TEST_F(TC_REGISTRY_NO_FIXTURE, TC_MQTTStringFormat_suback_zero_count_neg)
 {
     int qos[1] = {0};
     char buf[128] = {0};
@@ -592,7 +592,7 @@ TEST(TC_MQTTStringFormat_suback_zero_count_neg)
     assert_non_null(strstr(buf, "count 0"));
 }
 
-TEST(TC_MQTTStringFormat_suback_failure_qos_neg)
+TEST_F(TC_REGISTRY_NO_FIXTURE, TC_MQTTStringFormat_suback_failure_qos_neg)
 {
     int qos[1] = {0x80};
     char buf[128] = {0};
@@ -603,7 +603,7 @@ TEST(TC_MQTTStringFormat_suback_failure_qos_neg)
     assert_non_null(strstr(buf, "granted qos 128"));
 }
 
-TEST(TC_MQTTStringFormat_suback_negative_count_neg)
+TEST_F(TC_REGISTRY_NO_FIXTURE, TC_MQTTStringFormat_suback_negative_count_neg)
 {
     int qos[1] = {0};
     char buf[128] = {0};
@@ -613,7 +613,7 @@ TEST(TC_MQTTStringFormat_suback_negative_count_neg)
     assert_non_null(strstr(buf, "count -1"));
 }
 
-TEST(TC_MQTTStringFormat_unsubscribe_zero_count_neg)
+TEST_F(TC_REGISTRY_NO_FIXTURE, TC_MQTTStringFormat_unsubscribe_zero_count_neg)
 {
     MQTTString filters[1];
     char buf[128] = {0};
@@ -624,7 +624,7 @@ TEST(TC_MQTTStringFormat_unsubscribe_zero_count_neg)
     assert_non_null(strstr(buf, "count 0"));
 }
 
-TEST(TC_MQTTSerialize_unsubscribe_negative_count_neg)
+TEST_F(TC_REGISTRY_NO_FIXTURE, TC_MQTTSerialize_unsubscribe_negative_count_neg)
 {
     MQTTString filters[1];
     char buf[128] = {0};
@@ -635,7 +635,7 @@ TEST(TC_MQTTSerialize_unsubscribe_negative_count_neg)
     assert_non_null(strstr(buf, "count -1"));
 }
 
-TEST(TC_MQTTStringFormat_unsubscribe_dup_set_neg)
+TEST_F(TC_REGISTRY_NO_FIXTURE, TC_MQTTStringFormat_unsubscribe_dup_set_neg)
 {
     MQTTString filters[1];
     char buf[128] = {0};
@@ -649,7 +649,7 @@ TEST(TC_MQTTStringFormat_unsubscribe_dup_set_neg)
     assert_non_null(strstr(buf, "packet id 65535"));
 }
 
-TEST(TC_MQTTStringFormat_connect_zero_buffer_neg)
+TEST_F(TC_REGISTRY_NO_FIXTURE, TC_MQTTStringFormat_connect_zero_buffer_neg)
 {
     MQTTPacket_connectData data = MQTTPacket_connectData_initializer;
     char buf[1] = {0x7f};
@@ -664,7 +664,7 @@ TEST(TC_MQTTStringFormat_connect_zero_buffer_neg)
     assert_int_equal(buf[0], 0x7f);
 }
 
-TEST(TC_MQTTStringFormat_connect_empty_client_id_neg)
+TEST_F(TC_REGISTRY_NO_FIXTURE, TC_MQTTStringFormat_connect_empty_client_id_neg)
 {
     MQTTPacket_connectData data = MQTTPacket_connectData_initializer;
     char buf[256] = {0};
@@ -677,7 +677,7 @@ TEST(TC_MQTTStringFormat_connect_empty_client_id_neg)
     assert_non_null(strstr(buf, "client id ,"));
 }
 
-TEST(TC_MQTTStringFormat_connect_unknown_version_neg)
+TEST_F(TC_REGISTRY_NO_FIXTURE, TC_MQTTStringFormat_connect_unknown_version_neg)
 {
     MQTTPacket_connectData data = MQTTPacket_connectData_initializer;
     char buf[256] = {0};
@@ -689,7 +689,7 @@ TEST(TC_MQTTStringFormat_connect_unknown_version_neg)
     assert_non_null(strstr(buf, "MQTT version 5"));
 }
 
-TEST(TC_MQTTStringFormat_connect_will_flag_without_will_neg)
+TEST_F(TC_REGISTRY_NO_FIXTURE, TC_MQTTStringFormat_connect_will_flag_without_will_neg)
 {
     MQTTPacket_connectData data = MQTTPacket_connectData_initializer;
     char buf[256] = {0};
@@ -703,7 +703,7 @@ TEST(TC_MQTTStringFormat_connect_will_flag_without_will_neg)
     assert_non_null(strstr(buf, "will topic ,"));
 }
 
-TEST(TC_MQTTStringFormat_connect_password_without_username_neg)
+TEST_F(TC_REGISTRY_NO_FIXTURE, TC_MQTTStringFormat_connect_password_without_username_neg)
 {
     MQTTPacket_connectData data = MQTTPacket_connectData_initializer;
     char buf[256] = {0};
@@ -719,7 +719,7 @@ TEST(TC_MQTTStringFormat_connect_password_without_username_neg)
     assert_non_null(strstr(buf, "password pass"));
 }
 
-TEST(TC_MQTTStringFormat_connect_zero_length_username_neg)
+TEST_F(TC_REGISTRY_NO_FIXTURE, TC_MQTTStringFormat_connect_zero_length_username_neg)
 {
     MQTTPacket_connectData data = MQTTPacket_connectData_initializer;
     char buf[256] = {0};
@@ -734,7 +734,7 @@ TEST(TC_MQTTStringFormat_connect_zero_length_username_neg)
     assert_null(strstr(buf, "user name"));
 }
 
-TEST(TC_MQTTStringFormat_connect_null_username_pointer_neg)
+TEST_F(TC_REGISTRY_NO_FIXTURE, TC_MQTTStringFormat_connect_null_username_pointer_neg)
 {
     MQTTPacket_connectData data = MQTTPacket_connectData_initializer;
     char buf[256] = {0};
@@ -749,7 +749,7 @@ TEST(TC_MQTTStringFormat_connect_null_username_pointer_neg)
     assert_null(strstr(buf, "user name"));
 }
 
-TEST(TC_MQTTStringFormat_connect_wrapped_keepalive_neg)
+TEST_F(TC_REGISTRY_NO_FIXTURE, TC_MQTTStringFormat_connect_wrapped_keepalive_neg)
 {
     MQTTPacket_connectData data = MQTTPacket_connectData_initializer;
     char buf[256] = {0};
@@ -763,7 +763,7 @@ TEST(TC_MQTTStringFormat_connect_wrapped_keepalive_neg)
     assert_non_null(strstr(buf, "keep alive 65535"));
 }
 
-TEST(TC_MQTTStringFormat_connect_reserved_will_qos_neg)
+TEST_F(TC_REGISTRY_NO_FIXTURE, TC_MQTTStringFormat_connect_reserved_will_qos_neg)
 {
     MQTTPacket_connectData data = MQTTPacket_connectData_initializer;
     char buf[256] = {0};

@@ -578,7 +578,7 @@ static void _tc_storage_fake_be_init(tc_storage_fake_be_t *fake)
     fake->context.storage_params = &fake->storage_params;
 }
 
-TEST(TC_iot_security_storage_set_storage_id_context_null_neg)
+TEST_F(TC_REGISTRY_NO_FIXTURE, TC_iot_security_storage_set_storage_id_context_null_neg)
 {
     // When
     iot_error_t err = _iot_security_storage_set_storage_id(NULL, IOT_NVD_DEVICE_ID);
@@ -586,7 +586,7 @@ TEST(TC_iot_security_storage_set_storage_id_context_null_neg)
     assert_int_equal(err, IOT_ERROR_SECURITY_CONTEXT_NULL);
 }
 
-TEST(TC_iot_security_storage_set_storage_id_params_null_neg)
+TEST_F(TC_REGISTRY_NO_FIXTURE, TC_iot_security_storage_set_storage_id_params_null_neg)
 {
     iot_security_context_t context = {0};
 
@@ -596,7 +596,7 @@ TEST(TC_iot_security_storage_set_storage_id_params_null_neg)
     assert_int_equal(err, IOT_ERROR_SECURITY_STORAGE_PARAMS_NULL);
 }
 
-TEST(TC_iot_security_storage_set_storage_id_below_range_neg)
+TEST_F(TC_REGISTRY_NO_FIXTURE, TC_iot_security_storage_set_storage_id_below_range_neg)
 {
     tc_storage_fake_be_t fake;
 
@@ -608,7 +608,7 @@ TEST(TC_iot_security_storage_set_storage_id_below_range_neg)
     assert_int_equal(fake.storage_params.storage_id, 0);
 }
 
-TEST(TC_iot_security_storage_set_storage_id_above_range_neg)
+TEST_F(TC_REGISTRY_NO_FIXTURE, TC_iot_security_storage_set_storage_id_above_range_neg)
 {
     tc_storage_fake_be_t fake;
 
@@ -620,7 +620,7 @@ TEST(TC_iot_security_storage_set_storage_id_above_range_neg)
     assert_int_equal(fake.storage_params.storage_id, 0);
 }
 
-TEST(TC_iot_security_storage_init_be_failure_neg)
+TEST_F(TC_REGISTRY_NO_FIXTURE, TC_iot_security_storage_init_be_failure_neg)
 {
     tc_storage_fake_be_t fake;
     iot_error_t err;
@@ -637,7 +637,7 @@ TEST(TC_iot_security_storage_init_be_failure_neg)
     assert_int_equal(fake.context.sub_system & IOT_SECURITY_SUB_STORAGE, 0);
 }
 
-TEST(TC_iot_security_storage_deinit_be_failure_neg)
+TEST_F(TC_REGISTRY_NO_FIXTURE, TC_iot_security_storage_deinit_be_failure_neg)
 {
     tc_storage_fake_be_t fake;
     iot_error_t err;
@@ -654,7 +654,7 @@ TEST(TC_iot_security_storage_deinit_be_failure_neg)
     assert_int_equal(fake.context.sub_system, IOT_SECURITY_SUB_STORAGE);
 }
 
-TEST(TC_iot_security_storage_read_be_func_null_neg)
+TEST_F(TC_REGISTRY_NO_FIXTURE, TC_iot_security_storage_read_be_func_null_neg)
 {
     tc_storage_fake_be_t fake;
     iot_security_buffer_t buf;
@@ -671,7 +671,7 @@ TEST(TC_iot_security_storage_read_be_func_null_neg)
     assert_int_equal(buf.len, 0);
 }
 
-TEST(TC_iot_security_storage_write_be_func_null_neg)
+TEST_F(TC_REGISTRY_NO_FIXTURE, TC_iot_security_storage_write_be_func_null_neg)
 {
     tc_storage_fake_be_t fake;
     unsigned char data[] = "payload";
@@ -686,7 +686,7 @@ TEST(TC_iot_security_storage_write_be_func_null_neg)
     assert_int_equal(err, IOT_ERROR_SECURITY_BE_FUNC_NULL);
 }
 
-TEST(TC_iot_security_storage_remove_be_func_null_neg)
+TEST_F(TC_REGISTRY_NO_FIXTURE, TC_iot_security_storage_remove_be_func_null_neg)
 {
     tc_storage_fake_be_t fake;
     iot_error_t err;

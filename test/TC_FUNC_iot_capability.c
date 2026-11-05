@@ -980,7 +980,7 @@ TEST_F(iot_capability, TC_iot_parse_noti_data_quota_done_invalid_neg)
     free(fake_ctx);
 }
 
-TEST(TC_st_cap_create_attr_with_id_success_pos)
+TEST_F(TC_REGISTRY_NO_FIXTURE, TC_st_cap_create_attr_with_id_success_pos)
 {
     IOT_EVENT *evt;
     iot_cap_evt_data_t *event_data = NULL;
@@ -1002,7 +1002,7 @@ TEST(TC_st_cap_create_attr_with_id_success_pos)
     assert_string_equal(event_data->evt_type, "testIdAttr");
 }
 
-TEST(TC_st_cap_create_attr_with_option_null_parameter_neg)
+TEST_F(TC_REGISTRY_NO_FIXTURE, TC_st_cap_create_attr_with_option_null_parameter_neg)
 {
     IOT_EVENT *evt;
     iot_cap_val_t value;
@@ -4326,7 +4326,7 @@ void TC_st_cap_handle_init_malloc_failure_list_neg(void **state)
 extern bool _iot_cap_val_equal(const iot_cap_val_t *a, const iot_cap_val_t *b);
 extern iot_error_t _iot_copy_val(iot_cap_val_t *dst, const iot_cap_val_t *src);
 
-TEST(TC_STATIC_iot_cap_val_equal_all_types_neg)
+TEST_F(TC_REGISTRY_NO_FIXTURE, TC_STATIC_iot_cap_val_equal_all_types_neg)
 {
     iot_cap_val_t a = {0};
     iot_cap_val_t b = {0};
@@ -4408,7 +4408,7 @@ TEST(TC_STATIC_iot_cap_val_equal_all_types_neg)
     assert_false(_iot_cap_val_equal(&a, &b));
 }
 
-TEST(TC_STATIC_iot_copy_val_all_types_neg)
+TEST_F(TC_REGISTRY_NO_FIXTURE, TC_STATIC_iot_copy_val_all_types_neg)
 {
     iot_cap_val_t dst = {0};
     iot_cap_val_t src = {0};
@@ -4466,7 +4466,7 @@ TEST(TC_STATIC_iot_copy_val_all_types_neg)
     src_strings[1] = "two";
 }
 
-TEST(TC_STATIC_iot_copy_val_malloc_failure_neg)
+TEST_F(TC_REGISTRY_NO_FIXTURE, TC_STATIC_iot_copy_val_malloc_failure_neg)
 {
     iot_cap_val_t dst = {0};
     iot_cap_val_t src = {0};

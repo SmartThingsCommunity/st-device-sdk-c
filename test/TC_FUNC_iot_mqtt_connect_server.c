@@ -34,7 +34,7 @@ extern int MQTTPacket_checkVersion(MQTTString *protocol, int version);
  */
 TEST_SUITE("iot_mqtt_connect_server.c");
 
-TEST(TC_MQTTPacket_checkVersion_v3_success_pos)
+TEST_F(TC_REGISTRY_NO_FIXTURE, TC_MQTTPacket_checkVersion_v3_success_pos)
 {
     MQTTString proto = MQTTString_initializer;
     UNUSED(state);
@@ -44,7 +44,7 @@ TEST(TC_MQTTPacket_checkVersion_v3_success_pos)
     assert_int_equal(MQTTPacket_checkVersion(&proto, 3), 1);
 }
 
-TEST(TC_MQTTPacket_checkVersion_v4_success_pos)
+TEST_F(TC_REGISTRY_NO_FIXTURE, TC_MQTTPacket_checkVersion_v4_success_pos)
 {
     MQTTString proto = MQTTString_initializer;
     UNUSED(state);
@@ -54,7 +54,7 @@ TEST(TC_MQTTPacket_checkVersion_v4_success_pos)
     assert_int_equal(MQTTPacket_checkVersion(&proto, 4), 1);
 }
 
-TEST(TC_MQTTPacket_checkVersion_v3_wrong_name_neg)
+TEST_F(TC_REGISTRY_NO_FIXTURE, TC_MQTTPacket_checkVersion_v3_wrong_name_neg)
 {
     MQTTString proto = MQTTString_initializer;
     UNUSED(state);
@@ -64,7 +64,7 @@ TEST(TC_MQTTPacket_checkVersion_v3_wrong_name_neg)
     assert_int_equal(MQTTPacket_checkVersion(&proto, 3), 0);
 }
 
-TEST(TC_MQTTPacket_checkVersion_v4_wrong_name_neg)
+TEST_F(TC_REGISTRY_NO_FIXTURE, TC_MQTTPacket_checkVersion_v4_wrong_name_neg)
 {
     MQTTString proto = MQTTString_initializer;
     UNUSED(state);
@@ -74,7 +74,7 @@ TEST(TC_MQTTPacket_checkVersion_v4_wrong_name_neg)
     assert_int_equal(MQTTPacket_checkVersion(&proto, 4), 0);
 }
 
-TEST(TC_MQTTPacket_checkVersion_unsupported_version_neg)
+TEST_F(TC_REGISTRY_NO_FIXTURE, TC_MQTTPacket_checkVersion_unsupported_version_neg)
 {
     MQTTString proto = MQTTString_initializer;
     UNUSED(state);
@@ -84,7 +84,7 @@ TEST(TC_MQTTPacket_checkVersion_unsupported_version_neg)
     assert_int_equal(MQTTPacket_checkVersion(&proto, 5), 0);
 }
 
-TEST(TC_MQTTPacket_checkVersion_zero_length_neg)
+TEST_F(TC_REGISTRY_NO_FIXTURE, TC_MQTTPacket_checkVersion_zero_length_neg)
 {
     MQTTString proto = MQTTString_initializer;
     char empty[1] = {0};
@@ -99,7 +99,7 @@ TEST(TC_MQTTPacket_checkVersion_zero_length_neg)
 /*
  * Tests for MQTTSerialize_connack
  */
-TEST(TC_MQTTSerialize_connack_success_pos)
+TEST_F(TC_REGISTRY_NO_FIXTURE, TC_MQTTSerialize_connack_success_pos)
 {
     unsigned char buf[8] = {0};
     int rc;
@@ -113,7 +113,7 @@ TEST(TC_MQTTSerialize_connack_success_pos)
     assert_int_equal(buf[3], 0);
 }
 
-TEST(TC_MQTTSerialize_connack_session_present_neg)
+TEST_F(TC_REGISTRY_NO_FIXTURE, TC_MQTTSerialize_connack_session_present_neg)
 {
     unsigned char buf[8] = {0};
     int rc;
@@ -124,7 +124,7 @@ TEST(TC_MQTTSerialize_connack_session_present_neg)
     assert_int_equal(buf[2] & 0x01, 1);
 }
 
-TEST(TC_MQTTSerialize_connack_with_rc_neg)
+TEST_F(TC_REGISTRY_NO_FIXTURE, TC_MQTTSerialize_connack_with_rc_neg)
 {
     unsigned char buf[8] = {0};
     int rc;
@@ -135,7 +135,7 @@ TEST(TC_MQTTSerialize_connack_with_rc_neg)
     assert_int_equal(buf[3], 0x05);
 }
 
-TEST(TC_MQTTSerialize_connack_buffer_too_short_neg)
+TEST_F(TC_REGISTRY_NO_FIXTURE, TC_MQTTSerialize_connack_buffer_too_short_neg)
 {
     unsigned char buf[1] = {0};
     int rc;
@@ -145,7 +145,7 @@ TEST(TC_MQTTSerialize_connack_buffer_too_short_neg)
     assert_int_equal(rc, MQTTPACKET_BUFFER_TOO_SHORT);
 }
 
-TEST(TC_MQTTSerialize_connack_zero_buffer_neg)
+TEST_F(TC_REGISTRY_NO_FIXTURE, TC_MQTTSerialize_connack_zero_buffer_neg)
 {
     unsigned char buf[4] = {0};
     int rc;
@@ -163,7 +163,7 @@ static int _build_connect_frame(unsigned char *buf, int cap, MQTTPacket_connectD
     return MQTTSerialize_connect(buf, cap, opts);
 }
 
-TEST(TC_MQTTDeserialize_connect_success_pos)
+TEST_F(TC_REGISTRY_NO_FIXTURE, TC_MQTTDeserialize_connect_success_pos)
 {
     unsigned char buf[128] = {0};
     MQTTPacket_connectData options = MQTTPacket_connectData_initializer;
@@ -189,7 +189,7 @@ TEST(TC_MQTTDeserialize_connect_success_pos)
     assert_memory_equal(out.clientID.lenstring.data, "cli", 3);
 }
 
-TEST(TC_MQTTDeserialize_connect_with_will_pos)
+TEST_F(TC_REGISTRY_NO_FIXTURE, TC_MQTTDeserialize_connect_with_will_pos)
 {
     unsigned char buf[256] = {0};
     MQTTPacket_connectData options = MQTTPacket_connectData_initializer;
@@ -216,7 +216,7 @@ TEST(TC_MQTTDeserialize_connect_with_will_pos)
     assert_int_equal(out.will.retained, 1);
 }
 
-TEST(TC_MQTTDeserialize_connect_with_username_password_pos)
+TEST_F(TC_REGISTRY_NO_FIXTURE, TC_MQTTDeserialize_connect_with_username_password_pos)
 {
     unsigned char buf[256] = {0};
     MQTTPacket_connectData options = MQTTPacket_connectData_initializer;
@@ -239,7 +239,7 @@ TEST(TC_MQTTDeserialize_connect_with_username_password_pos)
     assert_memory_equal(out.password.lenstring.data, "pass", 4);
 }
 
-TEST(TC_MQTTDeserialize_connect_wrong_type_neg)
+TEST_F(TC_REGISTRY_NO_FIXTURE, TC_MQTTDeserialize_connect_wrong_type_neg)
 {
     unsigned char buf[] = {(unsigned char)(PUBACK << 4), 0x02, 0x00, 0x00};
     MQTTPacket_connectData out = MQTTPacket_connectData_initializer;
@@ -250,7 +250,7 @@ TEST(TC_MQTTDeserialize_connect_wrong_type_neg)
     assert_int_equal(rc, 0);
 }
 
-TEST(TC_MQTTDeserialize_connect_truncated_neg)
+TEST_F(TC_REGISTRY_NO_FIXTURE, TC_MQTTDeserialize_connect_truncated_neg)
 {
     /* header + remlen but no protocol data */
     unsigned char buf[] = {(unsigned char)(CONNECT << 4), 0x00};
@@ -262,7 +262,7 @@ TEST(TC_MQTTDeserialize_connect_truncated_neg)
     assert_int_equal(rc, 0);
 }
 
-TEST(TC_MQTTDeserialize_connect_unknown_protocol_version_neg)
+TEST_F(TC_REGISTRY_NO_FIXTURE, TC_MQTTDeserialize_connect_unknown_protocol_version_neg)
 {
     /* Minimal CONNECT where the protocol version is bogus (99) so the
      * parser must refuse to continue. */
@@ -288,7 +288,7 @@ TEST(TC_MQTTDeserialize_connect_unknown_protocol_version_neg)
     assert_int_equal(rc, 0);
 }
 
-TEST(TC_MQTTDeserialize_connect_password_without_username_neg)
+TEST_F(TC_REGISTRY_NO_FIXTURE, TC_MQTTDeserialize_connect_password_without_username_neg)
 {
     /* Construct a CONNECT with password flag but no username flag. */
     unsigned char buf[] = {
@@ -318,7 +318,7 @@ TEST(TC_MQTTDeserialize_connect_password_without_username_neg)
 /*
  * Additional negative tests for iot_mqtt_connect_server.c
  */
-TEST(TC_MQTTPacket_checkVersion_v3_with_v4_name_neg)
+TEST_F(TC_REGISTRY_NO_FIXTURE, TC_MQTTPacket_checkVersion_v3_with_v4_name_neg)
 {
     MQTTString protocol = MQTTString_initializer;
     UNUSED(state);
@@ -330,7 +330,7 @@ TEST(TC_MQTTPacket_checkVersion_v3_with_v4_name_neg)
     assert_int_equal(MQTTPacket_checkVersion(&protocol, 3), 0);
 }
 
-TEST(TC_MQTTPacket_checkVersion_v4_with_v3_name_neg)
+TEST_F(TC_REGISTRY_NO_FIXTURE, TC_MQTTPacket_checkVersion_v4_with_v3_name_neg)
 {
     MQTTString protocol = MQTTString_initializer;
     UNUSED(state);
@@ -342,7 +342,7 @@ TEST(TC_MQTTPacket_checkVersion_v4_with_v3_name_neg)
     assert_int_equal(MQTTPacket_checkVersion(&protocol, 4), 0);
 }
 
-TEST(TC_MQTTPacket_checkVersion_negative_version_neg)
+TEST_F(TC_REGISTRY_NO_FIXTURE, TC_MQTTPacket_checkVersion_negative_version_neg)
 {
     MQTTString protocol = MQTTString_initializer;
     UNUSED(state);
@@ -353,7 +353,7 @@ TEST(TC_MQTTPacket_checkVersion_negative_version_neg)
     assert_int_equal(MQTTPacket_checkVersion(&protocol, -1), 0);
 }
 
-TEST(TC_MQTTPacket_checkVersion_version_five_neg)
+TEST_F(TC_REGISTRY_NO_FIXTURE, TC_MQTTPacket_checkVersion_version_five_neg)
 {
     MQTTString protocol = MQTTString_initializer;
     UNUSED(state);
@@ -364,7 +364,7 @@ TEST(TC_MQTTPacket_checkVersion_version_five_neg)
     assert_int_equal(MQTTPacket_checkVersion(&protocol, 5), 0);
 }
 
-TEST(TC_MQTTPacket_checkVersion_v4_truncated_name_neg)
+TEST_F(TC_REGISTRY_NO_FIXTURE, TC_MQTTPacket_checkVersion_v4_truncated_name_neg)
 {
     MQTTString protocol = MQTTString_initializer;
     UNUSED(state);
@@ -376,7 +376,7 @@ TEST(TC_MQTTPacket_checkVersion_v4_truncated_name_neg)
     assert_int_equal(MQTTPacket_checkVersion(&protocol, 4), 1);
 }
 
-TEST(TC_MQTTSerialize_connack_negative_buflen_neg)
+TEST_F(TC_REGISTRY_NO_FIXTURE, TC_MQTTSerialize_connack_negative_buflen_neg)
 {
     unsigned char buf[8] = {0};
     UNUSED(state);
@@ -386,7 +386,7 @@ TEST(TC_MQTTSerialize_connack_negative_buflen_neg)
     assert_int_equal(buf[0], 0);
 }
 
-TEST(TC_MQTTSerialize_connack_undersized_buffer_not_detected_neg)
+TEST_F(TC_REGISTRY_NO_FIXTURE, TC_MQTTSerialize_connack_undersized_buffer_not_detected_neg)
 {
     unsigned char buf[8] = {0};
     UNUSED(state);
@@ -399,7 +399,7 @@ TEST(TC_MQTTSerialize_connack_undersized_buffer_not_detected_neg)
     assert_int_equal(MQTTSerialize_connack(buf, 3, 0, 0), 4);
 }
 
-TEST(TC_MQTTSerialize_connack_out_of_range_rc_neg)
+TEST_F(TC_REGISTRY_NO_FIXTURE, TC_MQTTSerialize_connack_out_of_range_rc_neg)
 {
     unsigned char buf[8] = {0};
     int rc;
@@ -412,7 +412,7 @@ TEST(TC_MQTTSerialize_connack_out_of_range_rc_neg)
     assert_int_equal(buf[3], 0xFF);
 }
 
-TEST(TC_MQTTDeserialize_connect_reserved_type_neg)
+TEST_F(TC_REGISTRY_NO_FIXTURE, TC_MQTTDeserialize_connect_reserved_type_neg)
 {
     unsigned char buf[] = {0x00, 0x02, 0x00, 0x00};
     MQTTPacket_connectData out = MQTTPacket_connectData_initializer;
@@ -423,7 +423,7 @@ TEST(TC_MQTTDeserialize_connect_reserved_type_neg)
     assert_int_equal(out.keepAliveInterval, 60);
 }
 
-TEST(TC_MQTTDeserialize_connect_connack_type_neg)
+TEST_F(TC_REGISTRY_NO_FIXTURE, TC_MQTTDeserialize_connect_connack_type_neg)
 {
     unsigned char buf[] = {(unsigned char)(CONNACK << 4), 0x02, 0x00, 0x00};
     MQTTPacket_connectData out = MQTTPacket_connectData_initializer;
@@ -432,7 +432,7 @@ TEST(TC_MQTTDeserialize_connect_connack_type_neg)
     assert_int_equal(MQTTDeserialize_connect(&out, buf, sizeof(buf)), 0);
 }
 
-TEST(TC_MQTTDeserialize_connect_protocol_name_overruns_neg)
+TEST_F(TC_REGISTRY_NO_FIXTURE, TC_MQTTDeserialize_connect_protocol_name_overruns_neg)
 {
     /* protocol name length claims 10 bytes but only 4 are present */
     unsigned char buf[] = {(unsigned char)(CONNECT << 4), 0x06, 0x00, 0x0A, 'M', 'Q', 'T', 'T'};
@@ -442,7 +442,7 @@ TEST(TC_MQTTDeserialize_connect_protocol_name_overruns_neg)
     assert_int_equal(MQTTDeserialize_connect(&out, buf, sizeof(buf)), 0);
 }
 
-TEST(TC_MQTTDeserialize_connect_missing_client_id_neg)
+TEST_F(TC_REGISTRY_NO_FIXTURE, TC_MQTTDeserialize_connect_missing_client_id_neg)
 {
     /* valid v4 header and flags, but the client id length field is cut off */
     unsigned char buf[] = {
@@ -454,7 +454,7 @@ TEST(TC_MQTTDeserialize_connect_missing_client_id_neg)
     assert_int_equal(MQTTDeserialize_connect(&out, buf, sizeof(buf)), 0);
 }
 
-TEST(TC_MQTTDeserialize_connect_will_flag_without_will_neg)
+TEST_F(TC_REGISTRY_NO_FIXTURE, TC_MQTTDeserialize_connect_will_flag_without_will_neg)
 {
     /* will flag set but neither will topic nor will message follows */
     unsigned char buf[] = {
@@ -466,7 +466,7 @@ TEST(TC_MQTTDeserialize_connect_will_flag_without_will_neg)
     assert_int_equal(MQTTDeserialize_connect(&out, buf, sizeof(buf)), 0);
 }
 
-TEST(TC_MQTTDeserialize_connect_will_topic_without_message_neg)
+TEST_F(TC_REGISTRY_NO_FIXTURE, TC_MQTTDeserialize_connect_will_topic_without_message_neg)
 {
     /* will flag set, will topic present, will message missing */
     unsigned char buf[] = {
@@ -496,7 +496,7 @@ TEST(TC_MQTTDeserialize_connect_will_topic_without_message_neg)
     assert_int_equal(MQTTDeserialize_connect(&out, buf, sizeof(buf)), 0);
 }
 
-TEST(TC_MQTTDeserialize_connect_username_flag_without_username_neg)
+TEST_F(TC_REGISTRY_NO_FIXTURE, TC_MQTTDeserialize_connect_username_flag_without_username_neg)
 {
     /* username flag set but no username follows the client id */
     unsigned char buf[] = {
@@ -508,7 +508,7 @@ TEST(TC_MQTTDeserialize_connect_username_flag_without_username_neg)
     assert_int_equal(MQTTDeserialize_connect(&out, buf, sizeof(buf)), 0);
 }
 
-TEST(TC_MQTTDeserialize_connect_password_flag_without_password_neg)
+TEST_F(TC_REGISTRY_NO_FIXTURE, TC_MQTTDeserialize_connect_password_flag_without_password_neg)
 {
     /* username and password flags set, username present, password missing */
     unsigned char buf[] = {
@@ -539,7 +539,7 @@ TEST(TC_MQTTDeserialize_connect_password_flag_without_password_neg)
     assert_int_equal(MQTTDeserialize_connect(&out, buf, sizeof(buf)), 0);
 }
 
-TEST(TC_MQTTDeserialize_connect_zero_length_buffer_neg)
+TEST_F(TC_REGISTRY_NO_FIXTURE, TC_MQTTDeserialize_connect_zero_length_buffer_neg)
 {
     unsigned char buf[] = {(unsigned char)(CONNECT << 4)};
     MQTTPacket_connectData out = MQTTPacket_connectData_initializer;
@@ -549,7 +549,7 @@ TEST(TC_MQTTDeserialize_connect_zero_length_buffer_neg)
     assert_int_equal(MQTTDeserialize_connect(&out, buf, 1), 0);
 }
 
-TEST(TC_MQTTDeserialize_connect_v3_name_with_v4_version_neg)
+TEST_F(TC_REGISTRY_NO_FIXTURE, TC_MQTTDeserialize_connect_v3_name_with_v4_version_neg)
 {
     /* MQIsdp protocol name declared as version 4 */
     unsigned char buf[] = {

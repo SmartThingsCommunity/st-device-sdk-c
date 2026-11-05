@@ -1,6 +1,8 @@
 ---
 name: stdk-error-lookup
 description: Look up SmartThings Device SDK (STDK) error codes and provide solutions. Fetches live error code definitions from GitHub. Supports mobile error codes (81-001, 04-100) and SDK internal error codes (NE01, CE01).
+metadata:
+  version: "1.0.0"
 ---
 
 # STDK Error Code Lookup
@@ -86,3 +88,9 @@ If error code cannot be found in GitHub repository:
 3. **Reference source files** — Point to GitHub file locations for deeper investigation
 4. **Escalate when needed** — Use escalation guide for unknown error codes
 5. **Cross-reference** — Link related error codes and state machine information from official docs
+
+
+## Version
+
+- Version: 1.0.0 (2026-11-03)
+- Initial versioned release. Bump the `metadata.version` front matter and this section together on every change (semver: MAJOR for breaking changes to the trigger or output format, MINOR for new capabilities, PATCH for fixes and wording).

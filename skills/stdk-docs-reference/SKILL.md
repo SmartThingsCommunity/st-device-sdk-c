@@ -1,6 +1,8 @@
 ---
 name: stdk-docs-reference
 description: Comprehensive SmartThings Device SDK (STDK) reference with detailed documentation analysis, code examples, and sequence diagrams. Fetches live documentation from official GitHub repositories. Provides complete guides for development, APIs, onboarding, porting, and commercialization.
+metadata:
+  version: "1.0.0"
 ---
 
 # STDK Documentation Reference Skill
@@ -164,3 +166,8 @@ This skill provides:
 - Synthesizes information across multiple documents to provide accurate, comprehensive answers
 - Always provides information based on the latest official documentation
 - Enables reference to original sources via GitHub links
+
+## Version
+
+- Version: 1.0.0 (2026-11-03)
+- Initial versioned release. Bump the `metadata.version` front matter and this section together on every change (semver: MAJOR for breaking changes to the trigger or output format, MINOR for new capabilities, PATCH for fixes and wording).

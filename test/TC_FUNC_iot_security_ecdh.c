@@ -138,7 +138,7 @@ static int TC_iot_security_ecdh_teardown(void **state)
     return 0;
 }
 
-TEST(TC_iot_security_ecdh_init_null_parameters_neg)
+TEST_F(TC_REGISTRY_NO_FIXTURE, TC_iot_security_ecdh_init_null_parameters_neg)
 {
     iot_error_t err;
 
@@ -623,7 +623,7 @@ static void _tc_ecdh_fake_be_init(tc_ecdh_fake_be_t *fake)
     fake->context.ecdh_params = &fake->ecdh_params;
 }
 
-TEST(TC_iot_security_ecdh_init_be_failure_rollback_neg)
+TEST_F(TC_REGISTRY_NO_FIXTURE, TC_iot_security_ecdh_init_be_failure_rollback_neg)
 {
     tc_ecdh_fake_be_t fake;
     iot_error_t err;
@@ -640,7 +640,7 @@ TEST(TC_iot_security_ecdh_init_be_failure_rollback_neg)
     assert_int_equal(fake.context.sub_system & IOT_SECURITY_SUB_ECDH, 0);
 }
 
-TEST(TC_iot_security_ecdh_deinit_be_failure_neg)
+TEST_F(TC_REGISTRY_NO_FIXTURE, TC_iot_security_ecdh_deinit_be_failure_neg)
 {
     tc_ecdh_fake_be_t fake;
     iot_error_t err;
@@ -657,7 +657,7 @@ TEST(TC_iot_security_ecdh_deinit_be_failure_neg)
     assert_int_equal(fake.context.sub_system, IOT_SECURITY_SUB_ECDH);
 }
 
-TEST(TC_iot_security_ecdh_set_params_be_func_null_neg)
+TEST_F(TC_REGISTRY_NO_FIXTURE, TC_iot_security_ecdh_set_params_be_func_null_neg)
 {
     tc_ecdh_fake_be_t fake;
     iot_security_ecdh_params_t ecdh_set_params = {0};
@@ -671,7 +671,7 @@ TEST(TC_iot_security_ecdh_set_params_be_func_null_neg)
     assert_int_equal(err, IOT_ERROR_SECURITY_BE_FUNC_NULL);
 }
 
-TEST(TC_iot_security_ecdh_compute_shared_secret_be_func_null_neg)
+TEST_F(TC_REGISTRY_NO_FIXTURE, TC_iot_security_ecdh_compute_shared_secret_be_func_null_neg)
 {
     tc_ecdh_fake_be_t fake;
     iot_security_buffer_t secret_buf = {0};

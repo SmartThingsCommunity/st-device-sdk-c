@@ -36,7 +36,7 @@ extern int MQTTSerialize_zero(unsigned char *buf, int buflen, unsigned char pack
  */
 TEST_SUITE("iot_mqtt_connect_client.c");
 
-TEST(TC_MQTTSerialize_connectLength_v4_only_pos)
+TEST_F(TC_REGISTRY_NO_FIXTURE, TC_MQTTSerialize_connectLength_v4_only_pos)
 {
     MQTTPacket_connectData opts = MQTTPacket_connectData_initializer;
     int len;
@@ -49,7 +49,7 @@ TEST(TC_MQTTSerialize_connectLength_v4_only_pos)
     assert_int_equal(len, 14);
 }
 
-TEST(TC_MQTTSerialize_connectLength_v3_pos)
+TEST_F(TC_REGISTRY_NO_FIXTURE, TC_MQTTSerialize_connectLength_v3_pos)
 {
     MQTTPacket_connectData opts = MQTTPacket_connectData_initializer;
     int len;
@@ -62,7 +62,7 @@ TEST(TC_MQTTSerialize_connectLength_v3_pos)
     assert_int_equal(len, 16);
 }
 
-TEST(TC_MQTTSerialize_connectLength_with_will_pos)
+TEST_F(TC_REGISTRY_NO_FIXTURE, TC_MQTTSerialize_connectLength_with_will_pos)
 {
     MQTTPacket_connectData opts = MQTTPacket_connectData_initializer;
     int len;
@@ -78,7 +78,7 @@ TEST(TC_MQTTSerialize_connectLength_with_will_pos)
     assert_int_equal(len, 22);
 }
 
-TEST(TC_MQTTSerialize_connectLength_with_credentials_pos)
+TEST_F(TC_REGISTRY_NO_FIXTURE, TC_MQTTSerialize_connectLength_with_credentials_pos)
 {
     MQTTPacket_connectData opts = MQTTPacket_connectData_initializer;
     int len;
@@ -93,7 +93,7 @@ TEST(TC_MQTTSerialize_connectLength_with_credentials_pos)
     assert_int_equal(len, 23);
 }
 
-TEST(TC_MQTTSerialize_connectLength_unknown_version_neg)
+TEST_F(TC_REGISTRY_NO_FIXTURE, TC_MQTTSerialize_connectLength_unknown_version_neg)
 {
     MQTTPacket_connectData opts = MQTTPacket_connectData_initializer;
     int len;
@@ -109,7 +109,7 @@ TEST(TC_MQTTSerialize_connectLength_unknown_version_neg)
 /*
  * Tests for MQTTSerialize_connect
  */
-TEST(TC_MQTTSerialize_connect_v4_success_pos)
+TEST_F(TC_REGISTRY_NO_FIXTURE, TC_MQTTSerialize_connect_v4_success_pos)
 {
     unsigned char buf[32] = {0};
     MQTTPacket_connectData opts = MQTTPacket_connectData_initializer;
@@ -123,7 +123,7 @@ TEST(TC_MQTTSerialize_connect_v4_success_pos)
     assert_int_equal((buf[0] & 0xF0) >> 4, CONNECT);
 }
 
-TEST(TC_MQTTSerialize_connect_v3_success_pos)
+TEST_F(TC_REGISTRY_NO_FIXTURE, TC_MQTTSerialize_connect_v3_success_pos)
 {
     unsigned char buf[32] = {0};
     MQTTPacket_connectData opts = MQTTPacket_connectData_initializer;
@@ -138,7 +138,7 @@ TEST(TC_MQTTSerialize_connect_v3_success_pos)
     assert_non_null(memmem(buf, rc, "MQIsdp", 6));
 }
 
-TEST(TC_MQTTSerialize_connect_will_flags_pos)
+TEST_F(TC_REGISTRY_NO_FIXTURE, TC_MQTTSerialize_connect_will_flags_pos)
 {
     unsigned char buf[64] = {0};
     MQTTPacket_connectData opts = MQTTPacket_connectData_initializer;
@@ -156,7 +156,7 @@ TEST(TC_MQTTSerialize_connect_will_flags_pos)
     assert_true(rc > 0);
 }
 
-TEST(TC_MQTTSerialize_connect_buffer_too_short_neg)
+TEST_F(TC_REGISTRY_NO_FIXTURE, TC_MQTTSerialize_connect_buffer_too_short_neg)
 {
     unsigned char buf[4] = {0};
     MQTTPacket_connectData opts = MQTTPacket_connectData_initializer;
@@ -169,7 +169,7 @@ TEST(TC_MQTTSerialize_connect_buffer_too_short_neg)
     assert_int_equal(rc, MQTTPACKET_BUFFER_TOO_SHORT);
 }
 
-TEST(TC_MQTTSerialize_connect_zero_buffer_neg)
+TEST_F(TC_REGISTRY_NO_FIXTURE, TC_MQTTSerialize_connect_zero_buffer_neg)
 {
     unsigned char buf[32] = {0};
     MQTTPacket_connectData opts = MQTTPacket_connectData_initializer;
@@ -185,7 +185,7 @@ TEST(TC_MQTTSerialize_connect_zero_buffer_neg)
 /*
  * Tests for MQTTDeserialize_connack
  */
-TEST(TC_MQTTDeserialize_connack_success_pos)
+TEST_F(TC_REGISTRY_NO_FIXTURE, TC_MQTTDeserialize_connack_success_pos)
 {
     unsigned char buf[] = {(unsigned char)(CONNACK << 4), 0x02, 0x01, 0x00};
     unsigned char session_present = 0, rc_code = 0xFF;
@@ -198,7 +198,7 @@ TEST(TC_MQTTDeserialize_connack_success_pos)
     assert_int_equal(rc_code, 0);
 }
 
-TEST(TC_MQTTDeserialize_connack_wrong_type_neg)
+TEST_F(TC_REGISTRY_NO_FIXTURE, TC_MQTTDeserialize_connack_wrong_type_neg)
 {
     unsigned char buf[] = {(unsigned char)(PUBACK << 4), 0x02, 0x00, 0x00};
     unsigned char session_present = 0, rc_code = 0;
@@ -209,7 +209,7 @@ TEST(TC_MQTTDeserialize_connack_wrong_type_neg)
     assert_int_equal(rc, 0);
 }
 
-TEST(TC_MQTTDeserialize_connack_short_remlen_neg)
+TEST_F(TC_REGISTRY_NO_FIXTURE, TC_MQTTDeserialize_connack_short_remlen_neg)
 {
     unsigned char buf[] = {(unsigned char)(CONNACK << 4), 0x01, 0x00};
     unsigned char session_present = 0xFF, rc_code = 0xFF;
@@ -228,7 +228,7 @@ TEST(TC_MQTTDeserialize_connack_short_remlen_neg)
 /*
  * Tests for MQTTSerialize_zero / _disconnect / _pingreq
  */
-TEST(TC_MQTTSerialize_zero_neg)
+TEST_F(TC_REGISTRY_NO_FIXTURE, TC_MQTTSerialize_zero_neg)
 {
     unsigned char buf[4] = {0};
     int rc;
@@ -240,7 +240,7 @@ TEST(TC_MQTTSerialize_zero_neg)
     assert_int_equal(buf[1], 0);
 }
 
-TEST(TC_MQTTSerialize_zero_buffer_too_short_neg)
+TEST_F(TC_REGISTRY_NO_FIXTURE, TC_MQTTSerialize_zero_buffer_too_short_neg)
 {
     unsigned char buf[1] = {0};
     int rc;
@@ -250,7 +250,7 @@ TEST(TC_MQTTSerialize_zero_buffer_too_short_neg)
     assert_int_equal(rc, MQTTPACKET_BUFFER_TOO_SHORT);
 }
 
-TEST(TC_MQTTSerialize_zero_zero_buffer_neg)
+TEST_F(TC_REGISTRY_NO_FIXTURE, TC_MQTTSerialize_zero_zero_buffer_neg)
 {
     unsigned char buf[4] = {0};
     int rc;
@@ -260,7 +260,7 @@ TEST(TC_MQTTSerialize_zero_zero_buffer_neg)
     assert_int_equal(rc, MQTTPACKET_BUFFER_TOO_SHORT);
 }
 
-TEST(TC_MQTTSerialize_disconnect_neg)
+TEST_F(TC_REGISTRY_NO_FIXTURE, TC_MQTTSerialize_disconnect_neg)
 {
     unsigned char buf[4] = {0};
     int rc;
@@ -271,7 +271,7 @@ TEST(TC_MQTTSerialize_disconnect_neg)
     assert_int_equal((buf[0] & 0xF0) >> 4, DISCONNECT);
 }
 
-TEST(TC_MQTTSerialize_disconnect_buffer_too_short_neg)
+TEST_F(TC_REGISTRY_NO_FIXTURE, TC_MQTTSerialize_disconnect_buffer_too_short_neg)
 {
     unsigned char buf[1] = {0};
     int rc;
@@ -281,7 +281,7 @@ TEST(TC_MQTTSerialize_disconnect_buffer_too_short_neg)
     assert_int_equal(rc, MQTTPACKET_BUFFER_TOO_SHORT);
 }
 
-TEST(TC_MQTTSerialize_pingreq_success_pos)
+TEST_F(TC_REGISTRY_NO_FIXTURE, TC_MQTTSerialize_pingreq_success_pos)
 {
     unsigned char buf[4] = {0};
     int rc;
@@ -292,7 +292,7 @@ TEST(TC_MQTTSerialize_pingreq_success_pos)
     assert_int_equal((buf[0] & 0xF0) >> 4, PINGREQ);
 }
 
-TEST(TC_MQTTSerialize_pingreq_buffer_too_short_neg)
+TEST_F(TC_REGISTRY_NO_FIXTURE, TC_MQTTSerialize_pingreq_buffer_too_short_neg)
 {
     unsigned char buf[1] = {0};
     int rc;
@@ -305,7 +305,7 @@ TEST(TC_MQTTSerialize_pingreq_buffer_too_short_neg)
 /*
  * Additional negative tests for iot_mqtt_connect_client.c
  */
-TEST(TC_MQTTSerialize_connectLength_version_zero_neg)
+TEST_F(TC_REGISTRY_NO_FIXTURE, TC_MQTTSerialize_connectLength_version_zero_neg)
 {
     MQTTPacket_connectData opts = MQTTPacket_connectData_initializer;
     UNUSED(state);
@@ -317,7 +317,7 @@ TEST(TC_MQTTSerialize_connectLength_version_zero_neg)
     assert_int_equal(MQTTSerialize_connectLength(&opts), 4);
 }
 
-TEST(TC_MQTTSerialize_connectLength_version_five_neg)
+TEST_F(TC_REGISTRY_NO_FIXTURE, TC_MQTTSerialize_connectLength_version_five_neg)
 {
     MQTTPacket_connectData opts = MQTTPacket_connectData_initializer;
     UNUSED(state);
@@ -327,7 +327,7 @@ TEST(TC_MQTTSerialize_connectLength_version_five_neg)
     assert_int_equal(MQTTSerialize_connectLength(&opts), 4);
 }
 
-TEST(TC_MQTTSerialize_connectLength_negative_version_neg)
+TEST_F(TC_REGISTRY_NO_FIXTURE, TC_MQTTSerialize_connectLength_negative_version_neg)
 {
     MQTTPacket_connectData opts = MQTTPacket_connectData_initializer;
     UNUSED(state);
@@ -337,7 +337,7 @@ TEST(TC_MQTTSerialize_connectLength_negative_version_neg)
     assert_int_equal(MQTTSerialize_connectLength(&opts), 4);
 }
 
-TEST(TC_MQTTSerialize_connectLength_empty_client_id_neg)
+TEST_F(TC_REGISTRY_NO_FIXTURE, TC_MQTTSerialize_connectLength_empty_client_id_neg)
 {
     MQTTPacket_connectData opts = MQTTPacket_connectData_initializer;
     UNUSED(state);
@@ -348,7 +348,7 @@ TEST(TC_MQTTSerialize_connectLength_empty_client_id_neg)
     assert_int_equal(MQTTSerialize_connectLength(&opts), 12);
 }
 
-TEST(TC_MQTTSerialize_connectLength_will_flag_without_will_neg)
+TEST_F(TC_REGISTRY_NO_FIXTURE, TC_MQTTSerialize_connectLength_will_flag_without_will_neg)
 {
     MQTTPacket_connectData opts = MQTTPacket_connectData_initializer;
     UNUSED(state);
@@ -361,7 +361,7 @@ TEST(TC_MQTTSerialize_connectLength_will_flag_without_will_neg)
     assert_int_equal(MQTTSerialize_connectLength(&opts), 18);
 }
 
-TEST(TC_MQTTSerialize_connectLength_password_without_username_neg)
+TEST_F(TC_REGISTRY_NO_FIXTURE, TC_MQTTSerialize_connectLength_password_without_username_neg)
 {
     MQTTPacket_connectData opts = MQTTPacket_connectData_initializer;
     UNUSED(state);
@@ -374,7 +374,7 @@ TEST(TC_MQTTSerialize_connectLength_password_without_username_neg)
     assert_int_equal(MQTTSerialize_connectLength(&opts), 18);
 }
 
-TEST(TC_MQTTSerialize_connectLength_zero_length_lenstring_username_neg)
+TEST_F(TC_REGISTRY_NO_FIXTURE, TC_MQTTSerialize_connectLength_zero_length_lenstring_username_neg)
 {
     MQTTPacket_connectData opts = MQTTPacket_connectData_initializer;
     UNUSED(state);
@@ -388,7 +388,7 @@ TEST(TC_MQTTSerialize_connectLength_zero_length_lenstring_username_neg)
     assert_int_equal(MQTTSerialize_connectLength(&opts), 16);
 }
 
-TEST(TC_MQTTSerialize_connectLength_cstring_wins_over_lenstring_neg)
+TEST_F(TC_REGISTRY_NO_FIXTURE, TC_MQTTSerialize_connectLength_cstring_wins_over_lenstring_neg)
 {
     MQTTPacket_connectData opts = MQTTPacket_connectData_initializer;
     UNUSED(state);
@@ -402,7 +402,7 @@ TEST(TC_MQTTSerialize_connectLength_cstring_wins_over_lenstring_neg)
     assert_int_equal(MQTTSerialize_connectLength(&opts), 14);
 }
 
-TEST(TC_MQTTSerialize_connect_size_unknown_version_neg)
+TEST_F(TC_REGISTRY_NO_FIXTURE, TC_MQTTSerialize_connect_size_unknown_version_neg)
 {
     MQTTPacket_connectData opts = MQTTPacket_connectData_initializer;
     UNUSED(state);
@@ -413,7 +413,7 @@ TEST(TC_MQTTSerialize_connect_size_unknown_version_neg)
     assert_int_equal(MQTTSerialize_connect_size(&opts), 6);
 }
 
-TEST(TC_MQTTSerialize_connect_size_two_byte_remlen_neg)
+TEST_F(TC_REGISTRY_NO_FIXTURE, TC_MQTTSerialize_connect_size_two_byte_remlen_neg)
 {
     MQTTPacket_connectData opts = MQTTPacket_connectData_initializer;
     char long_id[200];
@@ -427,7 +427,7 @@ TEST(TC_MQTTSerialize_connect_size_two_byte_remlen_neg)
     assert_int_equal(MQTTSerialize_connect_size(&opts), 214);
 }
 
-TEST(TC_MQTTSerialize_connect_negative_buflen_neg)
+TEST_F(TC_REGISTRY_NO_FIXTURE, TC_MQTTSerialize_connect_negative_buflen_neg)
 {
     unsigned char buf[32] = {0};
     MQTTPacket_connectData opts = MQTTPacket_connectData_initializer;
@@ -440,7 +440,7 @@ TEST(TC_MQTTSerialize_connect_negative_buflen_neg)
     assert_int_equal(buf[0], 0);
 }
 
-TEST(TC_MQTTSerialize_connect_one_byte_short_neg)
+TEST_F(TC_REGISTRY_NO_FIXTURE, TC_MQTTSerialize_connect_one_byte_short_neg)
 {
     unsigned char buf[64] = {0};
     MQTTPacket_connectData opts = MQTTPacket_connectData_initializer;
@@ -458,7 +458,7 @@ TEST(TC_MQTTSerialize_connect_one_byte_short_neg)
     assert_int_equal(MQTTSerialize_connect(buf, required, &opts), required);
 }
 
-TEST(TC_MQTTSerialize_connect_unknown_version_falls_back_to_v3_neg)
+TEST_F(TC_REGISTRY_NO_FIXTURE, TC_MQTTSerialize_connect_unknown_version_falls_back_to_v3_neg)
 {
     unsigned char buf[64] = {0};
     MQTTPacket_connectData opts = MQTTPacket_connectData_initializer;
@@ -475,7 +475,7 @@ TEST(TC_MQTTSerialize_connect_unknown_version_falls_back_to_v3_neg)
     assert_non_null(memmem(buf, rc, "MQIsdp", 6));
 }
 
-TEST(TC_MQTTSerialize_connect_reserved_will_qos_neg)
+TEST_F(TC_REGISTRY_NO_FIXTURE, TC_MQTTSerialize_connect_reserved_will_qos_neg)
 {
     unsigned char buf[64] = {0};
     MQTTPacket_connectData opts = MQTTPacket_connectData_initializer;
@@ -495,7 +495,7 @@ TEST(TC_MQTTSerialize_connect_reserved_will_qos_neg)
     assert_int_equal((buf[9] >> 3) & 0x03, 3);
 }
 
-TEST(TC_MQTTSerialize_connect_will_qos_ignored_without_will_flag_neg)
+TEST_F(TC_REGISTRY_NO_FIXTURE, TC_MQTTSerialize_connect_will_qos_ignored_without_will_flag_neg)
 {
     unsigned char buf[64] = {0};
     MQTTPacket_connectData opts = MQTTPacket_connectData_initializer;
@@ -514,7 +514,7 @@ TEST(TC_MQTTSerialize_connect_will_qos_ignored_without_will_flag_neg)
     assert_int_equal(buf[9] & 0x3C, 0);
 }
 
-TEST(TC_MQTTSerialize_connect_password_without_username_flag_neg)
+TEST_F(TC_REGISTRY_NO_FIXTURE, TC_MQTTSerialize_connect_password_without_username_flag_neg)
 {
     unsigned char buf[64] = {0};
     MQTTPacket_connectData opts = MQTTPacket_connectData_initializer;
@@ -533,7 +533,7 @@ TEST(TC_MQTTSerialize_connect_password_without_username_flag_neg)
     assert_int_equal((buf[9] >> 7) & 0x01, 0);
 }
 
-TEST(TC_MQTTSerialize_connect_empty_client_id_neg)
+TEST_F(TC_REGISTRY_NO_FIXTURE, TC_MQTTSerialize_connect_empty_client_id_neg)
 {
     unsigned char buf[64] = {0};
     MQTTPacket_connectData opts = MQTTPacket_connectData_initializer;
@@ -550,7 +550,7 @@ TEST(TC_MQTTSerialize_connect_empty_client_id_neg)
     assert_int_equal(buf[rc - 1], 0);
 }
 
-TEST(TC_MQTTSerialize_connect_zero_keepalive_neg)
+TEST_F(TC_REGISTRY_NO_FIXTURE, TC_MQTTSerialize_connect_zero_keepalive_neg)
 {
     unsigned char buf[64] = {0};
     MQTTPacket_connectData opts = MQTTPacket_connectData_initializer;
@@ -567,7 +567,7 @@ TEST(TC_MQTTSerialize_connect_zero_keepalive_neg)
     assert_int_equal(buf[11], 0);
 }
 
-TEST(TC_MQTTSerialize_connect_max_keepalive_neg)
+TEST_F(TC_REGISTRY_NO_FIXTURE, TC_MQTTSerialize_connect_max_keepalive_neg)
 {
     unsigned char buf[64] = {0};
     MQTTPacket_connectData opts = MQTTPacket_connectData_initializer;
@@ -583,7 +583,7 @@ TEST(TC_MQTTSerialize_connect_max_keepalive_neg)
     assert_int_equal(buf[11], 0xFF);
 }
 
-TEST(TC_MQTTSerialize_connect_lenstring_client_id_neg)
+TEST_F(TC_REGISTRY_NO_FIXTURE, TC_MQTTSerialize_connect_lenstring_client_id_neg)
 {
     unsigned char buf[64] = {0};
     MQTTPacket_connectData opts = MQTTPacket_connectData_initializer;
@@ -599,7 +599,7 @@ TEST(TC_MQTTSerialize_connect_lenstring_client_id_neg)
     assert_non_null(memmem(buf, rc, "abcd", 4));
 }
 
-TEST(TC_MQTTSerialize_connect_v3_buffer_too_short_neg)
+TEST_F(TC_REGISTRY_NO_FIXTURE, TC_MQTTSerialize_connect_v3_buffer_too_short_neg)
 {
     unsigned char buf[8] = {0};
     MQTTPacket_connectData opts = MQTTPacket_connectData_initializer;
@@ -611,7 +611,7 @@ TEST(TC_MQTTSerialize_connect_v3_buffer_too_short_neg)
     assert_int_equal(MQTTSerialize_connect(buf, sizeof(buf), &opts), MQTTPACKET_BUFFER_TOO_SHORT);
 }
 
-TEST(TC_MQTTDeserialize_connack_reserved_type_neg)
+TEST_F(TC_REGISTRY_NO_FIXTURE, TC_MQTTDeserialize_connack_reserved_type_neg)
 {
     unsigned char buf[] = {0x00, 0x02, 0x00, 0x00};
     unsigned char session_present = 0xFF, rc_code = 0xFF;
@@ -623,7 +623,7 @@ TEST(TC_MQTTDeserialize_connack_reserved_type_neg)
     assert_int_equal(rc_code, 0xFF);
 }
 
-TEST(TC_MQTTDeserialize_connack_connect_type_neg)
+TEST_F(TC_REGISTRY_NO_FIXTURE, TC_MQTTDeserialize_connack_connect_type_neg)
 {
     unsigned char buf[] = {(unsigned char)(CONNECT << 4), 0x02, 0x00, 0x00};
     unsigned char session_present = 0xFF, rc_code = 0xFF;
@@ -633,7 +633,7 @@ TEST(TC_MQTTDeserialize_connack_connect_type_neg)
     assert_int_equal(rc_code, 0xFF);
 }
 
-TEST(TC_MQTTDeserialize_connack_zero_remlen_neg)
+TEST_F(TC_REGISTRY_NO_FIXTURE, TC_MQTTDeserialize_connack_zero_remlen_neg)
 {
     unsigned char buf[] = {(unsigned char)(CONNACK << 4), 0x00};
     unsigned char session_present = 0xFF, rc_code = 0xFF;
@@ -646,7 +646,7 @@ TEST(TC_MQTTDeserialize_connack_zero_remlen_neg)
     assert_int_equal(rc_code, 0xFF);
 }
 
-TEST(TC_MQTTDeserialize_connack_refused_rc_neg)
+TEST_F(TC_REGISTRY_NO_FIXTURE, TC_MQTTDeserialize_connack_refused_rc_neg)
 {
     unsigned char buf[] = {(unsigned char)(CONNACK << 4), 0x02, 0x00, 0x05};
     unsigned char session_present = 0xFF, rc_code = 0;
@@ -659,7 +659,7 @@ TEST(TC_MQTTDeserialize_connack_refused_rc_neg)
     assert_int_equal(session_present, 0);
 }
 
-TEST(TC_MQTTDeserialize_connack_unknown_rc_neg)
+TEST_F(TC_REGISTRY_NO_FIXTURE, TC_MQTTDeserialize_connack_unknown_rc_neg)
 {
     unsigned char buf[] = {(unsigned char)(CONNACK << 4), 0x02, 0x00, 0xFF};
     unsigned char session_present = 0, rc_code = 0;
@@ -671,7 +671,7 @@ TEST(TC_MQTTDeserialize_connack_unknown_rc_neg)
     assert_int_equal(rc_code, 0xFF);
 }
 
-TEST(TC_MQTTDeserialize_connack_reserved_flag_bits_neg)
+TEST_F(TC_REGISTRY_NO_FIXTURE, TC_MQTTDeserialize_connack_reserved_flag_bits_neg)
 {
     unsigned char buf[] = {(unsigned char)(CONNACK << 4), 0x02, 0xFE, 0x00};
     unsigned char session_present = 0xFF, rc_code = 0xFF;
@@ -683,7 +683,7 @@ TEST(TC_MQTTDeserialize_connack_reserved_flag_bits_neg)
     assert_int_equal(session_present, 0);
 }
 
-TEST(TC_MQTTDeserialize_connack_extra_trailing_bytes_neg)
+TEST_F(TC_REGISTRY_NO_FIXTURE, TC_MQTTDeserialize_connack_extra_trailing_bytes_neg)
 {
     unsigned char buf[] = {(unsigned char)(CONNACK << 4), 0x02, 0x00, 0x00, 0xAA, 0xBB};
     unsigned char session_present = 0xFF, rc_code = 0xFF;
@@ -696,7 +696,7 @@ TEST(TC_MQTTDeserialize_connack_extra_trailing_bytes_neg)
     assert_int_equal(rc_code, 0);
 }
 
-TEST(TC_MQTTDeserialize_connack_oversized_remlen_neg)
+TEST_F(TC_REGISTRY_NO_FIXTURE, TC_MQTTDeserialize_connack_oversized_remlen_neg)
 {
     /* remlen claims 100 bytes but only 2 follow */
     unsigned char buf[] = {(unsigned char)(CONNACK << 4), 0x64, 0x00, 0x00};
@@ -708,7 +708,7 @@ TEST(TC_MQTTDeserialize_connack_oversized_remlen_neg)
     assert_int_equal(session_present, 0);
 }
 
-TEST(TC_MQTTSerialize_zero_negative_buflen_neg)
+TEST_F(TC_REGISTRY_NO_FIXTURE, TC_MQTTSerialize_zero_negative_buflen_neg)
 {
     unsigned char buf[4] = {0};
     UNUSED(state);
@@ -717,7 +717,7 @@ TEST(TC_MQTTSerialize_zero_negative_buflen_neg)
     assert_int_equal(buf[0], 0);
 }
 
-TEST(TC_MQTTSerialize_zero_reserved_type_neg)
+TEST_F(TC_REGISTRY_NO_FIXTURE, TC_MQTTSerialize_zero_reserved_type_neg)
 {
     unsigned char buf[4] = {0};
     int rc;
@@ -730,7 +730,7 @@ TEST(TC_MQTTSerialize_zero_reserved_type_neg)
     assert_int_equal(buf[0], 0);
 }
 
-TEST(TC_MQTTSerialize_zero_out_of_range_type_neg)
+TEST_F(TC_REGISTRY_NO_FIXTURE, TC_MQTTSerialize_zero_out_of_range_type_neg)
 {
     unsigned char buf[4] = {0};
     int rc;
@@ -743,7 +743,7 @@ TEST(TC_MQTTSerialize_zero_out_of_range_type_neg)
     assert_int_equal((buf[0] & MQTT_FIXED_HEADER_PACKET_TYPE_MASK) >> MQTT_FIXED_HEADER_PACKET_TYPE_OFFSET, 0x0F);
 }
 
-TEST(TC_MQTTSerialize_zero_publish_type_neg)
+TEST_F(TC_REGISTRY_NO_FIXTURE, TC_MQTTSerialize_zero_publish_type_neg)
 {
     unsigned char buf[4] = {0};
     int rc;
@@ -757,7 +757,7 @@ TEST(TC_MQTTSerialize_zero_publish_type_neg)
     assert_int_equal(buf[1], 0);
 }
 
-TEST(TC_st_mqtt_disconnect_negative_buflen_neg)
+TEST_F(TC_REGISTRY_NO_FIXTURE, TC_st_mqtt_disconnect_negative_buflen_neg)
 {
     unsigned char buf[4] = {0};
     UNUSED(state);
@@ -766,7 +766,7 @@ TEST(TC_st_mqtt_disconnect_negative_buflen_neg)
     assert_int_equal(buf[0], 0);
 }
 
-TEST(TC_MQTTSerialize_disconnect_zero_buffer_neg)
+TEST_F(TC_REGISTRY_NO_FIXTURE, TC_MQTTSerialize_disconnect_zero_buffer_neg)
 {
     unsigned char buf[4] = {0};
     UNUSED(state);
@@ -775,7 +775,7 @@ TEST(TC_MQTTSerialize_disconnect_zero_buffer_neg)
     assert_int_equal(buf[0], 0);
 }
 
-TEST(TC_MQTTSerialize_disconnect_exact_buffer_neg)
+TEST_F(TC_REGISTRY_NO_FIXTURE, TC_MQTTSerialize_disconnect_exact_buffer_neg)
 {
     unsigned char buf[2] = {0};
     UNUSED(state);
@@ -784,7 +784,7 @@ TEST(TC_MQTTSerialize_disconnect_exact_buffer_neg)
     assert_int_equal(MQTTSerialize_disconnect(buf, sizeof(buf)), MQTT_DISCONNECT_PACKET_SIZE);
 }
 
-TEST(TC_MQTTSerialize_pingreq_negative_buflen_neg)
+TEST_F(TC_REGISTRY_NO_FIXTURE, TC_MQTTSerialize_pingreq_negative_buflen_neg)
 {
     unsigned char buf[4] = {0};
     UNUSED(state);
@@ -793,7 +793,7 @@ TEST(TC_MQTTSerialize_pingreq_negative_buflen_neg)
     assert_int_equal(buf[0], 0);
 }
 
-TEST(TC_MQTTSerialize_pingreq_zero_buffer_neg)
+TEST_F(TC_REGISTRY_NO_FIXTURE, TC_MQTTSerialize_pingreq_zero_buffer_neg)
 {
     unsigned char buf[4] = {0};
     UNUSED(state);
@@ -802,7 +802,7 @@ TEST(TC_MQTTSerialize_pingreq_zero_buffer_neg)
     assert_int_equal(buf[0], 0);
 }
 
-TEST(TC_MQTTSerialize_pingreq_exact_buffer_neg)
+TEST_F(TC_REGISTRY_NO_FIXTURE, TC_MQTTSerialize_pingreq_exact_buffer_neg)
 {
     unsigned char buf[2] = {0};
     UNUSED(state);
@@ -811,7 +811,7 @@ TEST(TC_MQTTSerialize_pingreq_exact_buffer_neg)
     assert_int_equal((buf[0] & MQTT_FIXED_HEADER_PACKET_TYPE_MASK) >> MQTT_FIXED_HEADER_PACKET_TYPE_OFFSET, PINGREQ);
 }
 
-TEST(TC_MQTTSerialize_connect_will_retain_bit_neg)
+TEST_F(TC_REGISTRY_NO_FIXTURE, TC_MQTTSerialize_connect_will_retain_bit_neg)
 {
     unsigned char buf[64] = {0};
     MQTTPacket_connectData opts = MQTTPacket_connectData_initializer;
@@ -829,7 +829,7 @@ TEST(TC_MQTTSerialize_connect_will_retain_bit_neg)
     assert_int_equal((buf[9] >> 5) & 0x01, 1);
 }
 
-TEST(TC_MQTTSerialize_connect_clean_session_bit_neg)
+TEST_F(TC_REGISTRY_NO_FIXTURE, TC_MQTTSerialize_connect_clean_session_bit_neg)
 {
     unsigned char buf[64] = {0};
     MQTTPacket_connectData opts = MQTTPacket_connectData_initializer;
@@ -846,7 +846,7 @@ TEST(TC_MQTTSerialize_connect_clean_session_bit_neg)
     assert_int_equal((buf[9] >> 1) & 0x01, 0);
 }
 
-TEST(TC_MQTTSerialize_connect_username_flag_from_lenstring_neg)
+TEST_F(TC_REGISTRY_NO_FIXTURE, TC_MQTTSerialize_connect_username_flag_from_lenstring_neg)
 {
     unsigned char buf[64] = {0};
     MQTTPacket_connectData opts = MQTTPacket_connectData_initializer;
@@ -864,7 +864,7 @@ TEST(TC_MQTTSerialize_connect_username_flag_from_lenstring_neg)
     assert_int_equal((buf[9] >> 7) & 0x01, 1);
 }
 
-TEST(TC_MQTTSerialize_connect_zero_length_username_still_flagged_neg)
+TEST_F(TC_REGISTRY_NO_FIXTURE, TC_MQTTSerialize_connect_zero_length_username_still_flagged_neg)
 {
     unsigned char buf[64] = {0};
     MQTTPacket_connectData opts = MQTTPacket_connectData_initializer;
@@ -882,7 +882,7 @@ TEST(TC_MQTTSerialize_connect_zero_length_username_still_flagged_neg)
     assert_int_equal((buf[9] >> 7) & 0x01, 1);
 }
 
-TEST(TC_MQTTSerialize_connect_roundtrip_unknown_version_downgraded_neg)
+TEST_F(TC_REGISTRY_NO_FIXTURE, TC_MQTTSerialize_connect_roundtrip_unknown_version_downgraded_neg)
 {
     unsigned char buf[64] = {0};
     MQTTPacket_connectData opts = MQTTPacket_connectData_initializer;
@@ -902,7 +902,7 @@ TEST(TC_MQTTSerialize_connect_roundtrip_unknown_version_downgraded_neg)
     assert_non_null(memmem(buf, total, "MQIsdp", 6));
 }
 
-TEST(TC_MQTTSerialize_connect_will_topic_only_neg)
+TEST_F(TC_REGISTRY_NO_FIXTURE, TC_MQTTSerialize_connect_will_topic_only_neg)
 {
     unsigned char buf[64] = {0};
     MQTTPacket_connectData opts = MQTTPacket_connectData_initializer;
@@ -921,7 +921,7 @@ TEST(TC_MQTTSerialize_connect_will_topic_only_neg)
     assert_int_equal(buf[rc - 1], 0);
 }
 
-TEST(TC_MQTTSerialize_connect_all_flags_neg)
+TEST_F(TC_REGISTRY_NO_FIXTURE, TC_MQTTSerialize_connect_all_flags_neg)
 {
     unsigned char buf[96] = {0};
     MQTTPacket_connectData opts = MQTTPacket_connectData_initializer;

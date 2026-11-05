@@ -53,7 +53,7 @@ struct cgi_method_test_map {
     char post_body[64];
 };
 
-TEST(TC_es_msg_parser_VALID_GET_METHOD_pos)
+TEST_F(TC_REGISTRY_NO_FIXTURE, TC_es_msg_parser_VALID_GET_METHOD_pos)
 {
     iot_error_t err;
     int command = -1;
@@ -81,7 +81,7 @@ TEST(TC_es_msg_parser_VALID_GET_METHOD_pos)
     }
 }
 
-TEST(TC_es_msg_parser_INVALID_GET_METHOD_neg)
+TEST_F(TC_REGISTRY_NO_FIXTURE, TC_es_msg_parser_INVALID_GET_METHOD_neg)
 {
     iot_error_t err;
     int command = -1;
@@ -139,7 +139,7 @@ static char *gen_post_method_payload(char *uri, char *body)
     return strdup(buffer);
 }
 
-TEST(TC_es_msg_parser_VALID_POST_METHOD_pos)
+TEST_F(TC_REGISTRY_NO_FIXTURE, TC_es_msg_parser_VALID_POST_METHOD_pos)
 {
     iot_error_t err;
     int command;
@@ -178,7 +178,7 @@ TEST(TC_es_msg_parser_VALID_POST_METHOD_pos)
     }
 }
 
-TEST(TC_es_msg_parser_INVALID_POST_METHOD_neg)
+TEST_F(TC_REGISTRY_NO_FIXTURE, TC_es_msg_parser_INVALID_POST_METHOD_neg)
 {
     iot_error_t err;
     int command;

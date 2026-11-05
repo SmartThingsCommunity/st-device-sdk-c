@@ -345,7 +345,7 @@ TEST_F(iot_security_pk_init, TC_iot_security_pk_deinit_success_pos)
     assert_int_equal(err, IOT_ERROR_NONE);
 }
 
-TEST(TC_iot_security_pk_get_signature_len_failure_neg)
+TEST_F(TC_REGISTRY_NO_FIXTURE, TC_iot_security_pk_get_signature_len_failure_neg)
 {
     iot_security_key_type_t pk_type;
     size_t sig_len;
@@ -358,7 +358,7 @@ TEST(TC_iot_security_pk_get_signature_len_failure_neg)
     assert_int_equal((int)sig_len, IOT_SECURITY_SIGNATURE_UNKNOWN_LEN);
 }
 
-TEST(TC_iot_security_pk_get_signature_len_success_pos)
+TEST_F(TC_REGISTRY_NO_FIXTURE, TC_iot_security_pk_get_signature_len_success_pos)
 {
     iot_security_key_type_t pk_type;
     size_t sig_len;
@@ -1282,7 +1282,7 @@ static iot_error_t _tc_crypto_be_cipher_params_fail(iot_security_context_t *cont
     return TC_CRYPTO_BE_ERR;
 }
 
-TEST(TC_iot_security_pk_init_be_failure_rollback_neg)
+TEST_F(TC_REGISTRY_NO_FIXTURE, TC_iot_security_pk_init_be_failure_rollback_neg)
 {
     tc_crypto_fake_be_t fake;
     iot_error_t err;
@@ -1299,7 +1299,7 @@ TEST(TC_iot_security_pk_init_be_failure_rollback_neg)
     assert_int_equal(fake.context.sub_system & IOT_SECURITY_SUB_PK, 0);
 }
 
-TEST(TC_iot_security_pk_deinit_be_failure_neg)
+TEST_F(TC_REGISTRY_NO_FIXTURE, TC_iot_security_pk_deinit_be_failure_neg)
 {
     tc_crypto_fake_be_t fake;
     iot_error_t err;
@@ -1316,7 +1316,7 @@ TEST(TC_iot_security_pk_deinit_be_failure_neg)
     assert_int_equal(fake.context.sub_system, IOT_SECURITY_SUB_PK);
 }
 
-TEST(TC_iot_security_pk_get_key_type_context_null_neg)
+TEST_F(TC_REGISTRY_NO_FIXTURE, TC_iot_security_pk_get_key_type_context_null_neg)
 {
     iot_security_key_type_t key_type = IOT_SECURITY_KEY_TYPE_UNKNOWN;
 
@@ -1326,7 +1326,7 @@ TEST(TC_iot_security_pk_get_key_type_context_null_neg)
     assert_int_equal(err, IOT_ERROR_SECURITY_CONTEXT_NULL);
 }
 
-TEST(TC_iot_security_pk_get_key_type_output_null_neg)
+TEST_F(TC_REGISTRY_NO_FIXTURE, TC_iot_security_pk_get_key_type_output_null_neg)
 {
     tc_crypto_fake_be_t fake;
 
@@ -1337,7 +1337,7 @@ TEST(TC_iot_security_pk_get_key_type_output_null_neg)
     assert_int_equal(err, IOT_ERROR_SECURITY_INVALID_ARGS);
 }
 
-TEST(TC_iot_security_pk_get_key_type_be_func_null_neg)
+TEST_F(TC_REGISTRY_NO_FIXTURE, TC_iot_security_pk_get_key_type_be_func_null_neg)
 {
     tc_crypto_fake_be_t fake;
     iot_security_key_type_t key_type = IOT_SECURITY_KEY_TYPE_UNKNOWN;
@@ -1350,7 +1350,7 @@ TEST(TC_iot_security_pk_get_key_type_be_func_null_neg)
     assert_int_equal(err, IOT_ERROR_SECURITY_BE_FUNC_NULL);
 }
 
-TEST(TC_iot_security_pk_get_key_type_be_failure_neg)
+TEST_F(TC_REGISTRY_NO_FIXTURE, TC_iot_security_pk_get_key_type_be_failure_neg)
 {
     tc_crypto_fake_be_t fake;
     iot_security_key_type_t key_type = IOT_SECURITY_KEY_TYPE_UNKNOWN;
@@ -1364,7 +1364,7 @@ TEST(TC_iot_security_pk_get_key_type_be_failure_neg)
     assert_int_equal(err, TC_CRYPTO_BE_ERR);
 }
 
-TEST(TC_iot_security_pk_set_sign_type_context_null_neg)
+TEST_F(TC_REGISTRY_NO_FIXTURE, TC_iot_security_pk_set_sign_type_context_null_neg)
 {
     // When
     iot_error_t err = iot_security_pk_set_sign_type(NULL, IOT_SECURITY_PK_SIGN_TYPE_DER);
@@ -1372,7 +1372,7 @@ TEST(TC_iot_security_pk_set_sign_type_context_null_neg)
     assert_int_equal(err, IOT_ERROR_SECURITY_CONTEXT_NULL);
 }
 
-TEST(TC_iot_security_pk_set_sign_type_be_func_null_neg)
+TEST_F(TC_REGISTRY_NO_FIXTURE, TC_iot_security_pk_set_sign_type_be_func_null_neg)
 {
     tc_crypto_fake_be_t fake;
 
@@ -1384,7 +1384,7 @@ TEST(TC_iot_security_pk_set_sign_type_be_func_null_neg)
     assert_int_equal(err, IOT_ERROR_SECURITY_BE_FUNC_NULL);
 }
 
-TEST(TC_iot_security_pk_set_sign_type_be_failure_neg)
+TEST_F(TC_REGISTRY_NO_FIXTURE, TC_iot_security_pk_set_sign_type_be_failure_neg)
 {
     tc_crypto_fake_be_t fake;
 
@@ -1397,7 +1397,7 @@ TEST(TC_iot_security_pk_set_sign_type_be_failure_neg)
     assert_int_equal(err, TC_CRYPTO_BE_ERR);
 }
 
-TEST(TC_iot_security_pk_set_sign_type_unknown_type_not_rejected_neg)
+TEST_F(TC_REGISTRY_NO_FIXTURE, TC_iot_security_pk_set_sign_type_unknown_type_not_rejected_neg)
 {
     tc_crypto_fake_be_t fake;
 
@@ -1410,7 +1410,7 @@ TEST(TC_iot_security_pk_set_sign_type_unknown_type_not_rejected_neg)
     assert_int_equal(err, IOT_ERROR_NONE);
 }
 
-TEST(TC_iot_security_pk_sign_be_func_null_neg)
+TEST_F(TC_REGISTRY_NO_FIXTURE, TC_iot_security_pk_sign_be_func_null_neg)
 {
     tc_crypto_fake_be_t fake;
     unsigned char data[] = "sign me";
@@ -1426,7 +1426,7 @@ TEST(TC_iot_security_pk_sign_be_func_null_neg)
     assert_null(sig_buf.p);
 }
 
-TEST(TC_iot_security_pk_sign_be_failure_neg)
+TEST_F(TC_REGISTRY_NO_FIXTURE, TC_iot_security_pk_sign_be_failure_neg)
 {
     tc_crypto_fake_be_t fake;
     unsigned char data[] = "sign me";
@@ -1443,7 +1443,7 @@ TEST(TC_iot_security_pk_sign_be_failure_neg)
     assert_null(sig_buf.p);
 }
 
-TEST(TC_iot_security_pk_verify_be_func_null_neg)
+TEST_F(TC_REGISTRY_NO_FIXTURE, TC_iot_security_pk_verify_be_func_null_neg)
 {
     tc_crypto_fake_be_t fake;
     unsigned char data[] = "verify me";
@@ -1458,7 +1458,7 @@ TEST(TC_iot_security_pk_verify_be_func_null_neg)
     assert_int_equal(err, IOT_ERROR_SECURITY_BE_FUNC_NULL);
 }
 
-TEST(TC_iot_security_pk_verify_be_failure_neg)
+TEST_F(TC_REGISTRY_NO_FIXTURE, TC_iot_security_pk_verify_be_failure_neg)
 {
     tc_crypto_fake_be_t fake;
     unsigned char data[] = "verify me";
@@ -1474,7 +1474,7 @@ TEST(TC_iot_security_pk_verify_be_failure_neg)
     assert_int_equal(err, TC_CRYPTO_BE_ERR);
 }
 
-TEST(TC_iot_security_pk_get_signature_len_invalid_type_neg)
+TEST_F(TC_REGISTRY_NO_FIXTURE, TC_iot_security_pk_get_signature_len_invalid_type_neg)
 {
     // When: an unsupported or out of range key type is asked for
     assert_int_equal(iot_security_pk_get_signature_len(IOT_SECURITY_KEY_TYPE_UNKNOWN),
@@ -1484,7 +1484,7 @@ TEST(TC_iot_security_pk_get_signature_len_invalid_type_neg)
                      IOT_SECURITY_SIGNATURE_UNKNOWN_LEN);
 }
 
-TEST(TC_iot_security_cipher_init_be_failure_neg)
+TEST_F(TC_REGISTRY_NO_FIXTURE, TC_iot_security_cipher_init_be_failure_neg)
 {
     tc_crypto_fake_be_t fake;
     iot_error_t err;
@@ -1501,7 +1501,7 @@ TEST(TC_iot_security_cipher_init_be_failure_neg)
     assert_int_equal(fake.context.sub_system & IOT_SECURITY_SUB_CIPHER, 0);
 }
 
-TEST(TC_iot_security_cipher_deinit_be_failure_neg)
+TEST_F(TC_REGISTRY_NO_FIXTURE, TC_iot_security_cipher_deinit_be_failure_neg)
 {
     tc_crypto_fake_be_t fake;
     iot_error_t err;
@@ -1518,7 +1518,7 @@ TEST(TC_iot_security_cipher_deinit_be_failure_neg)
     assert_int_equal(fake.context.sub_system, IOT_SECURITY_SUB_CIPHER);
 }
 
-TEST(TC_iot_security_cipher_set_params_be_func_null_neg)
+TEST_F(TC_REGISTRY_NO_FIXTURE, TC_iot_security_cipher_set_params_be_func_null_neg)
 {
     tc_crypto_fake_be_t fake;
     iot_security_cipher_params_t set_params = {0};
@@ -1531,7 +1531,7 @@ TEST(TC_iot_security_cipher_set_params_be_func_null_neg)
     assert_int_equal(err, IOT_ERROR_SECURITY_BE_FUNC_NULL);
 }
 
-TEST(TC_iot_security_cipher_set_params_be_failure_neg)
+TEST_F(TC_REGISTRY_NO_FIXTURE, TC_iot_security_cipher_set_params_be_failure_neg)
 {
     tc_crypto_fake_be_t fake;
     iot_security_cipher_params_t set_params = {0};
@@ -1545,7 +1545,7 @@ TEST(TC_iot_security_cipher_set_params_be_failure_neg)
     assert_int_equal(err, TC_CRYPTO_BE_ERR);
 }
 
-TEST(TC_iot_security_cipher_aes_encrypt_be_func_null_neg)
+TEST_F(TC_REGISTRY_NO_FIXTURE, TC_iot_security_cipher_aes_encrypt_be_func_null_neg)
 {
     tc_crypto_fake_be_t fake;
     unsigned char data[] = "plain";
@@ -1563,7 +1563,7 @@ TEST(TC_iot_security_cipher_aes_encrypt_be_func_null_neg)
     assert_int_equal(output_buf.len, 0);
 }
 
-TEST(TC_iot_security_cipher_aes_decrypt_be_func_null_neg)
+TEST_F(TC_REGISTRY_NO_FIXTURE, TC_iot_security_cipher_aes_decrypt_be_func_null_neg)
 {
     tc_crypto_fake_be_t fake;
     unsigned char data[] = "cipher";
@@ -1581,7 +1581,7 @@ TEST(TC_iot_security_cipher_aes_decrypt_be_func_null_neg)
     assert_int_equal(output_buf.len, 0);
 }
 
-TEST(TC_iot_security_cipher_aes_encrypt_be_failure_neg)
+TEST_F(TC_REGISTRY_NO_FIXTURE, TC_iot_security_cipher_aes_encrypt_be_failure_neg)
 {
     tc_crypto_fake_be_t fake;
     unsigned char data[] = "plain";

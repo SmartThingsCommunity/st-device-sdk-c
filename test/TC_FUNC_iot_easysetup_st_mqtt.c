@@ -74,7 +74,7 @@ struct registration_test_condition {
     bool use_opt;
 };
 
-TEST(TC_STATIC_iot_es_mqtt_registration_SUCCESS_pos)
+TEST_F(TC_REGISTRY_NO_FIXTURE, TC_STATIC_iot_es_mqtt_registration_SUCCESS_pos)
 {
     char *output_str;
     size_t msglen;
@@ -110,7 +110,7 @@ TEST(TC_STATIC_iot_es_mqtt_registration_SUCCESS_pos)
     assert_true(true);
 }
 
-TEST(TC_STATIC_iot_es_mqtt_registration_json_NULL_context_neg)
+TEST_F(TC_REGISTRY_NO_FIXTURE, TC_STATIC_iot_es_mqtt_registration_json_NULL_context_neg)
 {
     // Given: NULL context
     struct iot_context *context = NULL;
@@ -125,7 +125,7 @@ TEST(TC_STATIC_iot_es_mqtt_registration_json_NULL_context_neg)
     assert_int_equal(msglen, 0);
 }
 
-TEST(TC_STATIC_iot_es_mqtt_registration_json_no_serial_neg)
+TEST_F(TC_REGISTRY_NO_FIXTURE, TC_STATIC_iot_es_mqtt_registration_json_no_serial_neg)
 {
     // Given: Context with no serial numbers
     struct iot_context *context = (struct iot_context *)malloc(sizeof(struct iot_context));
@@ -157,7 +157,7 @@ TEST(TC_STATIC_iot_es_mqtt_registration_json_no_serial_neg)
     free(context);
 }
 
-TEST(TC_STATIC_iot_es_mqtt_registration_json_no_lookup_id_neg)
+TEST_F(TC_REGISTRY_NO_FIXTURE, TC_STATIC_iot_es_mqtt_registration_json_no_lookup_id_neg)
 {
     // Given: Context with no lookup_id
     struct iot_context *context = (struct iot_context *)malloc(sizeof(struct iot_context));
@@ -193,7 +193,7 @@ TEST(TC_STATIC_iot_es_mqtt_registration_json_no_lookup_id_neg)
     free(context);
 }
 
-TEST(TC_STATIC_iot_es_mqtt_registration_json_no_dip_data_neg)
+TEST_F(TC_REGISTRY_NO_FIXTURE, TC_STATIC_iot_es_mqtt_registration_json_no_dip_data_neg)
 {
     // Given: Context with no DIP data
     struct iot_context *context = (struct iot_context *)malloc(sizeof(struct iot_context));
@@ -355,7 +355,7 @@ void assert_es_mqtt_registration_json(struct iot_context *context, char *payload
 #define DIP_KEY "123e4567-e89b-12d3-a456-426614174000"
 #define REG_DEVICE_ID "123e4567-e89b-12d3-a456-426614174000"
 #define REG_LOCATION_ID "123e4567-e89b-12d3-a456-426614174000"
-TEST(TC_STATIC_iot_es_mqtt_registration_client_callback_SUCCESS_pos)
+TEST_F(TC_REGISTRY_NO_FIXTURE, TC_STATIC_iot_es_mqtt_registration_client_callback_SUCCESS_pos)
 {
     st_mqtt_msg msg;
     struct iot_uuid uuid;
@@ -416,7 +416,7 @@ TEST(TC_STATIC_iot_es_mqtt_registration_client_callback_SUCCESS_pos)
     free(context);
 }
 
-TEST(TC_STATIC_iot_es_mqtt_registration_client_callback_NULL_context_neg)
+TEST_F(TC_REGISTRY_NO_FIXTURE, TC_STATIC_iot_es_mqtt_registration_client_callback_NULL_context_neg)
 {
     // Given: NULL context
     st_mqtt_msg msg = {0};
@@ -434,7 +434,7 @@ TEST(TC_STATIC_iot_es_mqtt_registration_client_callback_NULL_context_neg)
     assert_true(true);
 }
 
-TEST(TC_STATIC_iot_es_mqtt_registration_client_callback_NULL_payload_neg)
+TEST_F(TC_REGISTRY_NO_FIXTURE, TC_STATIC_iot_es_mqtt_registration_client_callback_NULL_payload_neg)
 {
     // Given: Context with NULL payload
     st_mqtt_msg msg;
@@ -464,7 +464,7 @@ TEST(TC_STATIC_iot_es_mqtt_registration_client_callback_NULL_payload_neg)
     assert_true(true);
 }
 
-TEST(TC_STATIC_iot_es_mqtt_registration_client_callback_invalid_event_neg)
+TEST_F(TC_REGISTRY_NO_FIXTURE, TC_STATIC_iot_es_mqtt_registration_client_callback_invalid_event_neg)
 {
     // Given: Invalid event type
     st_mqtt_msg msg;
@@ -496,7 +496,7 @@ TEST(TC_STATIC_iot_es_mqtt_registration_client_callback_invalid_event_neg)
     assert_true(true);
 }
 
-TEST(TC_STATIC_iot_es_mqtt_registration_client_callback_invalid_json_neg)
+TEST_F(TC_REGISTRY_NO_FIXTURE, TC_STATIC_iot_es_mqtt_registration_client_callback_invalid_json_neg)
 {
     // Given: Invalid JSON payload
     st_mqtt_msg msg;
@@ -527,7 +527,7 @@ TEST(TC_STATIC_iot_es_mqtt_registration_client_callback_invalid_json_neg)
     assert_true(true);
 }
 
-TEST(TC_STATIC_iot_es_mqtt_registration_client_callback_expired_jwt_neg)
+TEST_F(TC_REGISTRY_NO_FIXTURE, TC_STATIC_iot_es_mqtt_registration_client_callback_expired_jwt_neg)
 {
     // Given: Expired JWT payload
     st_mqtt_msg msg;
@@ -558,7 +558,7 @@ TEST(TC_STATIC_iot_es_mqtt_registration_client_callback_expired_jwt_neg)
     assert_true(true);
 }
 
-TEST(TC_STATIC_iot_es_mqtt_registration_client_callback_error_event_neg)
+TEST_F(TC_REGISTRY_NO_FIXTURE, TC_STATIC_iot_es_mqtt_registration_client_callback_error_event_neg)
 {
     // Given: Error event payload
     st_mqtt_msg msg;
@@ -591,7 +591,7 @@ TEST(TC_STATIC_iot_es_mqtt_registration_client_callback_error_event_neg)
 
 #endif /* STDK_IOT_CORE_SERIALIZE_CBOR */
 
-TEST(TC_STATIC_iot_es_mqtt_check_connection_response_NULL_payload_neg)
+TEST_F(TC_REGISTRY_NO_FIXTURE, TC_STATIC_iot_es_mqtt_check_connection_response_NULL_payload_neg)
 {
     // Given: NULL payload
     char *response_payload = NULL;
@@ -607,7 +607,7 @@ TEST(TC_STATIC_iot_es_mqtt_check_connection_response_NULL_payload_neg)
     assert_int_equal(result, GG_CONNECTION_REQUEST_STATUS_FAIL);
 }
 
-TEST(TC_STATIC_iot_es_mqtt_check_connection_response_empty_payload_neg)
+TEST_F(TC_REGISTRY_NO_FIXTURE, TC_STATIC_iot_es_mqtt_check_connection_response_empty_payload_neg)
 {
     // Given: Empty payload
     char *response_payload = "";
@@ -623,7 +623,7 @@ TEST(TC_STATIC_iot_es_mqtt_check_connection_response_empty_payload_neg)
     assert_int_equal(result, GG_CONNECTION_REQUEST_STATUS_FAIL);
 }
 
-TEST(TC_STATIC_iot_es_mqtt_check_connection_response_invalid_json_neg)
+TEST_F(TC_REGISTRY_NO_FIXTURE, TC_STATIC_iot_es_mqtt_check_connection_response_invalid_json_neg)
 {
     // Given: Invalid JSON payload
     char *response_payload = "{ invalid json }";
@@ -639,7 +639,7 @@ TEST(TC_STATIC_iot_es_mqtt_check_connection_response_invalid_json_neg)
     assert_int_equal(result, GG_CONNECTION_REQUEST_STATUS_FAIL);
 }
 
-TEST(TC_STATIC_iot_es_mqtt_check_connection_response_no_event_neg)
+TEST_F(TC_REGISTRY_NO_FIXTURE, TC_STATIC_iot_es_mqtt_check_connection_response_no_event_neg)
 {
     // Given: JSON without event field
     char *response_payload = "{\"someOtherKey\":\"value\"}";
@@ -655,7 +655,7 @@ TEST(TC_STATIC_iot_es_mqtt_check_connection_response_no_event_neg)
     assert_int_equal(result, GG_CONNECTION_REQUEST_STATUS_WAITING);
 }
 
-TEST(TC_STATIC_iot_es_mqtt_check_connection_response_expired_jwt_no_current_time_neg)
+TEST_F(TC_REGISTRY_NO_FIXTURE, TC_STATIC_iot_es_mqtt_check_connection_response_expired_jwt_no_current_time_neg)
 {
     // Given: Expired JWT without currentTime
     char *response_payload = "{\"event\":\"expired.jwt\"}";
@@ -671,7 +671,7 @@ TEST(TC_STATIC_iot_es_mqtt_check_connection_response_expired_jwt_no_current_time
     assert_int_equal(result, GG_CONNECTION_REQUEST_STATUS_FAIL);
 }
 
-TEST(TC_STATIC_iot_es_mqtt_check_connection_response_unknown_event_neg)
+TEST_F(TC_REGISTRY_NO_FIXTURE, TC_STATIC_iot_es_mqtt_check_connection_response_unknown_event_neg)
 {
     // Given: Unknown event type
     char *response_payload = "{\"event\":\"unknown.event\"}";
@@ -687,7 +687,7 @@ TEST(TC_STATIC_iot_es_mqtt_check_connection_response_unknown_event_neg)
     assert_int_equal(result, GG_CONNECTION_REQUEST_STATUS_WAITING);
 }
 
-TEST(TC_STATIC_check_connection_response_connection_success_pos)
+TEST_F(TC_REGISTRY_NO_FIXTURE, TC_STATIC_check_connection_response_connection_success_pos)
 {
     // Given: Unknown event type
     char *response_connect_success_payload = "{\"event\":\"connect.success\"}";
@@ -730,7 +730,7 @@ TEST(TC_STATIC_check_connection_response_connection_success_pos)
     assert_int_equal(ctx.server_env, SERVER_ENV_DEV);
 }
 
-TEST(TC_STATIC_iot_es_mqtt_connect_NULL_context_neg)
+TEST_F(TC_REGISTRY_NO_FIXTURE, TC_STATIC_iot_es_mqtt_connect_NULL_context_neg)
 {
     // Given: NULL context
     st_mqtt_client target_cli = NULL;
@@ -744,7 +744,7 @@ TEST(TC_STATIC_iot_es_mqtt_connect_NULL_context_neg)
     assert_int_equal(result, IOT_ERROR_INVALID_ARGS);
 }
 
-TEST(TC_STATIC_iot_es_mqtt_connect_NULL_username_neg)
+TEST_F(TC_REGISTRY_NO_FIXTURE, TC_STATIC_iot_es_mqtt_connect_NULL_username_neg)
 {
     // Given: NULL username
     struct iot_context *context = (struct iot_context *)malloc(sizeof(struct iot_context));
@@ -764,7 +764,7 @@ TEST(TC_STATIC_iot_es_mqtt_connect_NULL_username_neg)
     free(context);
 }
 
-TEST(TC_STATIC_iot_es_mqtt_connect_NULL_sign_data_neg)
+TEST_F(TC_REGISTRY_NO_FIXTURE, TC_STATIC_iot_es_mqtt_connect_NULL_sign_data_neg)
 {
     // Given: NULL sign_data
     struct iot_context *context = (struct iot_context *)malloc(sizeof(struct iot_context));
@@ -784,7 +784,7 @@ TEST(TC_STATIC_iot_es_mqtt_connect_NULL_sign_data_neg)
     free(context);
 }
 
-TEST(TC_STATIC_iot_es_mqtt_es_connect_NULL_context_neg)
+TEST_F(TC_REGISTRY_NO_FIXTURE, TC_STATIC_iot_es_mqtt_es_connect_NULL_context_neg)
 {
     // Given: NULL context
     int conn_type = IOT_CONNECT_TYPE_REGISTRATION;
@@ -796,7 +796,7 @@ TEST(TC_STATIC_iot_es_mqtt_es_connect_NULL_context_neg)
     assert_int_equal(result, IOT_ERROR_INVALID_ARGS);
 }
 
-TEST(TC_STATIC_iot_es_mqtt_es_connect_invalid_conn_type_neg)
+TEST_F(TC_REGISTRY_NO_FIXTURE, TC_STATIC_iot_es_mqtt_es_connect_invalid_conn_type_neg)
 {
     // Given: Invalid connection type
     struct iot_context *context = (struct iot_context *)malloc(sizeof(struct iot_context));
@@ -815,7 +815,7 @@ TEST(TC_STATIC_iot_es_mqtt_es_connect_invalid_conn_type_neg)
     free(context);
 }
 
-TEST(TC_STATIC_iot_es_mqtt_es_connect_rate_limit_neg)
+TEST_F(TC_REGISTRY_NO_FIXTURE, TC_STATIC_iot_es_mqtt_es_connect_rate_limit_neg)
 {
     // Given: Context with rate limit set
     struct iot_context *context = (struct iot_context *)malloc(sizeof(struct iot_context));
@@ -835,7 +835,7 @@ TEST(TC_STATIC_iot_es_mqtt_es_connect_rate_limit_neg)
     free(context);
 }
 
-TEST(TC_STATIC_iot_es_mqtt_disconnect_NULL_context_neg)
+TEST_F(TC_REGISTRY_NO_FIXTURE, TC_STATIC_iot_es_mqtt_disconnect_NULL_context_neg)
 {
     // Given: NULL context
     int conn_type = IOT_CONNECT_TYPE_REGISTRATION;
@@ -847,7 +847,7 @@ TEST(TC_STATIC_iot_es_mqtt_disconnect_NULL_context_neg)
     assert_int_equal(result, IOT_ERROR_INVALID_ARGS);
 }
 
-TEST(TC_STATIC_iot_es_mqtt_disconnect_invalid_conn_type_neg)
+TEST_F(TC_REGISTRY_NO_FIXTURE, TC_STATIC_iot_es_mqtt_disconnect_invalid_conn_type_neg)
 {
     // Given: Invalid connection type
     struct iot_context *context = (struct iot_context *)malloc(sizeof(struct iot_context));
@@ -866,7 +866,7 @@ TEST(TC_STATIC_iot_es_mqtt_disconnect_invalid_conn_type_neg)
     free(context);
 }
 
-TEST(TC_STATIC_iot_es_mqtt_disconnect_no_mqtt_context_neg)
+TEST_F(TC_REGISTRY_NO_FIXTURE, TC_STATIC_iot_es_mqtt_disconnect_no_mqtt_context_neg)
 {
     // Given: Context with no MQTT context
     struct iot_context *context = (struct iot_context *)malloc(sizeof(struct iot_context));
@@ -889,7 +889,7 @@ TEST(TC_STATIC_iot_es_mqtt_disconnect_no_mqtt_context_neg)
     free(context);
 }
 
-TEST(TC_STATIC_iot_es_mqtt_update_dip_NULL_context_neg)
+TEST_F(TC_REGISTRY_NO_FIXTURE, TC_STATIC_iot_es_mqtt_update_dip_NULL_context_neg)
 {
     // Given: NULL context
     st_mqtt_client mqtt_cli = NULL;
@@ -901,7 +901,7 @@ TEST(TC_STATIC_iot_es_mqtt_update_dip_NULL_context_neg)
     assert_int_equal(result, IOT_ERROR_INVALID_ARGS);
 }
 
-TEST(TC_STATIC_iot_es_mqtt_update_dip_NULL_mqtt_client_neg)
+TEST_F(TC_REGISTRY_NO_FIXTURE, TC_STATIC_iot_es_mqtt_update_dip_NULL_mqtt_client_neg)
 {
     // Given: NULL MQTT client
     struct iot_context *context = (struct iot_context *)malloc(sizeof(struct iot_context));
@@ -925,7 +925,7 @@ TEST(TC_STATIC_iot_es_mqtt_update_dip_NULL_mqtt_client_neg)
     free(context);
 }
 
-TEST(TC_STATIC_iot_es_mqtt_update_dip_no_dip_data_neg)
+TEST_F(TC_REGISTRY_NO_FIXTURE, TC_STATIC_iot_es_mqtt_update_dip_no_dip_data_neg)
 {
     // Given: Context with no DIP data
     struct iot_context *context = (struct iot_context *)malloc(sizeof(struct iot_context));
@@ -944,7 +944,7 @@ TEST(TC_STATIC_iot_es_mqtt_update_dip_no_dip_data_neg)
     free(context);
 }
 
-TEST(TC_STATIC_iot_es_mqtt_registration_NULL_context_neg)
+TEST_F(TC_REGISTRY_NO_FIXTURE, TC_STATIC_iot_es_mqtt_registration_NULL_context_neg)
 {
     // Given: NULL context
     st_mqtt_client mqtt_ctx = NULL;
@@ -956,7 +956,7 @@ TEST(TC_STATIC_iot_es_mqtt_registration_NULL_context_neg)
     assert_int_equal(result, IOT_ERROR_INVALID_ARGS);
 }
 
-TEST(TC_STATIC_iot_es_mqtt_registration_NULL_mqtt_context_neg)
+TEST_F(TC_REGISTRY_NO_FIXTURE, TC_STATIC_iot_es_mqtt_registration_NULL_mqtt_context_neg)
 {
     // Given: NULL MQTT context
     struct iot_context *context = (struct iot_context *)malloc(sizeof(struct iot_context));
@@ -990,7 +990,7 @@ TEST(TC_STATIC_iot_es_mqtt_registration_NULL_mqtt_context_neg)
     free(context);
 }
 
-TEST(TC_STATIC_iot_es_mqtt_registration_no_serial_numbers_neg)
+TEST_F(TC_REGISTRY_NO_FIXTURE, TC_STATIC_iot_es_mqtt_registration_no_serial_numbers_neg)
 {
     // Given: Context with no serial numbers
     struct iot_context *context = (struct iot_context *)malloc(sizeof(struct iot_context));
@@ -1039,7 +1039,7 @@ static void _tc_status_cb_test(int status, void *usr_data)
     _tc_status_cb_last_status = status;
 }
 
-TEST(TC_STATIC_iot_es_mqtt_disconnect_communication_with_topics_neg)
+TEST_F(TC_REGISTRY_NO_FIXTURE, TC_STATIC_iot_es_mqtt_disconnect_communication_with_topics_neg)
 {
     struct iot_context *context;
 
@@ -1063,7 +1063,7 @@ TEST(TC_STATIC_iot_es_mqtt_disconnect_communication_with_topics_neg)
     free(context);
 }
 
-TEST(TC_STATIC_iot_es_mqtt_disconnect_registration_with_mqtt_neg)
+TEST_F(TC_REGISTRY_NO_FIXTURE, TC_STATIC_iot_es_mqtt_disconnect_registration_with_mqtt_neg)
 {
     struct iot_context *context;
 
@@ -1083,7 +1083,7 @@ TEST(TC_STATIC_iot_es_mqtt_disconnect_registration_with_mqtt_neg)
     free(context);
 }
 
-TEST(TC_STATIC_iot_es_mqtt_update_dip_publish_failure_neg)
+TEST_F(TC_REGISTRY_NO_FIXTURE, TC_STATIC_iot_es_mqtt_update_dip_publish_failure_neg)
 {
     struct iot_context *context;
     st_mqtt_client mqtt_cli;
@@ -1112,7 +1112,7 @@ TEST(TC_STATIC_iot_es_mqtt_update_dip_publish_failure_neg)
     free(context);
 }
 
-TEST(TC_STATIC_iot_es_mqtt_signin_client_callback_msg_pre_success_pos)
+TEST_F(TC_REGISTRY_NO_FIXTURE, TC_STATIC_iot_es_mqtt_signin_client_callback_msg_pre_success_pos)
 {
     struct iot_context *context;
     st_mqtt_msg msg = {0};
@@ -1132,7 +1132,7 @@ TEST(TC_STATIC_iot_es_mqtt_signin_client_callback_msg_pre_success_pos)
     free(context);
 }
 
-TEST(TC_STATIC_iot_es_mqtt_signin_client_callback_msg_command_topic_self_neg)
+TEST_F(TC_REGISTRY_NO_FIXTURE, TC_STATIC_iot_es_mqtt_signin_client_callback_msg_command_topic_self_neg)
 {
     struct iot_context *context;
     st_mqtt_msg msg = {0};
@@ -1156,7 +1156,7 @@ TEST(TC_STATIC_iot_es_mqtt_signin_client_callback_msg_command_topic_self_neg)
     assert_true(true);
 }
 
-TEST(TC_STATIC_iot_es_mqtt_signin_client_callback_msg_command_topic_unknown_neg)
+TEST_F(TC_REGISTRY_NO_FIXTURE, TC_STATIC_iot_es_mqtt_signin_client_callback_msg_command_topic_unknown_neg)
 {
     struct iot_context *context;
     st_mqtt_msg msg = {0};
@@ -1180,7 +1180,7 @@ TEST(TC_STATIC_iot_es_mqtt_signin_client_callback_msg_command_topic_unknown_neg)
     assert_true(true);
 }
 
-TEST(TC_STATIC_iot_es_mqtt_signin_client_callback_msg_notification_topic_neg)
+TEST_F(TC_REGISTRY_NO_FIXTURE, TC_STATIC_iot_es_mqtt_signin_client_callback_msg_notification_topic_neg)
 {
     struct iot_context *context;
     st_mqtt_msg msg = {0};
@@ -1202,7 +1202,7 @@ TEST(TC_STATIC_iot_es_mqtt_signin_client_callback_msg_notification_topic_neg)
     assert_true(true);
 }
 
-TEST(TC_STATIC_iot_es_mqtt_signin_client_callback_msg_unknown_topic_neg)
+TEST_F(TC_REGISTRY_NO_FIXTURE, TC_STATIC_iot_es_mqtt_signin_client_callback_msg_unknown_topic_neg)
 {
     struct iot_context *context;
     st_mqtt_msg msg = {0};
@@ -1223,7 +1223,7 @@ TEST(TC_STATIC_iot_es_mqtt_signin_client_callback_msg_unknown_topic_neg)
     assert_true(true);
 }
 
-TEST(TC_STATIC_iot_es_mqtt_signin_client_callback_disconnected_ping_fail_neg)
+TEST_F(TC_REGISTRY_NO_FIXTURE, TC_STATIC_iot_es_mqtt_signin_client_callback_disconnected_ping_fail_neg)
 {
     struct iot_context *context;
     st_mqtt_evt_dis_reason reason = MQTT_DISCONNECTED_PING_FAIL;
@@ -1254,7 +1254,7 @@ TEST(TC_STATIC_iot_es_mqtt_signin_client_callback_disconnected_ping_fail_neg)
     assert_true(true);
 }
 
-TEST(TC_STATIC_iot_es_mqtt_signin_client_callback_disconnected_ping_timeout_neg)
+TEST_F(TC_REGISTRY_NO_FIXTURE, TC_STATIC_iot_es_mqtt_signin_client_callback_disconnected_ping_timeout_neg)
 {
     struct iot_context *context;
     st_mqtt_evt_dis_reason reason = MQTT_DISCONNECTED_PING_TIMEOUT;
@@ -1285,7 +1285,7 @@ TEST(TC_STATIC_iot_es_mqtt_signin_client_callback_disconnected_ping_timeout_neg)
     assert_true(true);
 }
 
-TEST(TC_STATIC_iot_es_mqtt_signin_client_callback_unknown_event_neg)
+TEST_F(TC_REGISTRY_NO_FIXTURE, TC_STATIC_iot_es_mqtt_signin_client_callback_unknown_event_neg)
 {
     struct iot_context *context;
 
@@ -1299,7 +1299,7 @@ TEST(TC_STATIC_iot_es_mqtt_signin_client_callback_unknown_event_neg)
     assert_true(true);
 }
 
-TEST(TC_STATIC_iot_es_mqtt_registration_client_callback_with_status_cb_neg)
+TEST_F(TC_REGISTRY_NO_FIXTURE, TC_STATIC_iot_es_mqtt_registration_client_callback_with_status_cb_neg)
 {
     struct iot_context *context;
     st_mqtt_msg msg;
@@ -1347,7 +1347,7 @@ TEST(TC_STATIC_iot_es_mqtt_registration_client_callback_with_status_cb_neg)
     free(context);
 }
 
-TEST(TC_STATIC_iot_es_mqtt_registration_client_callback_expired_jwt_branch_neg)
+TEST_F(TC_REGISTRY_NO_FIXTURE, TC_STATIC_iot_es_mqtt_registration_client_callback_expired_jwt_branch_neg)
 {
     struct iot_context *context;
     st_mqtt_msg msg;
@@ -1387,7 +1387,7 @@ TEST(TC_STATIC_iot_es_mqtt_registration_client_callback_expired_jwt_branch_neg)
     assert_true(true);
 }
 
-TEST(TC_STATIC_iot_es_mqtt_registration_client_callback_error_event_in_payload_neg)
+TEST_F(TC_REGISTRY_NO_FIXTURE, TC_STATIC_iot_es_mqtt_registration_client_callback_error_event_in_payload_neg)
 {
     struct iot_context *context;
     st_mqtt_msg msg;
@@ -1407,7 +1407,7 @@ TEST(TC_STATIC_iot_es_mqtt_registration_client_callback_error_event_in_payload_n
     assert_true(true);
 }
 
-TEST(TC_STATIC_iot_es_mqtt_registration_client_callback_unknown_event_in_payload_neg)
+TEST_F(TC_REGISTRY_NO_FIXTURE, TC_STATIC_iot_es_mqtt_registration_client_callback_unknown_event_in_payload_neg)
 {
     struct iot_context *context;
     st_mqtt_msg msg;
@@ -1427,7 +1427,7 @@ TEST(TC_STATIC_iot_es_mqtt_registration_client_callback_unknown_event_in_payload
     assert_true(true);
 }
 
-TEST(TC_STATIC_iot_es_mqtt_registration_client_callback_dip_missing_id_neg)
+TEST_F(TC_REGISTRY_NO_FIXTURE, TC_STATIC_iot_es_mqtt_registration_client_callback_dip_missing_id_neg)
 {
     struct iot_context *context;
     st_mqtt_msg msg;
@@ -1447,7 +1447,7 @@ TEST(TC_STATIC_iot_es_mqtt_registration_client_callback_dip_missing_id_neg)
     assert_true(true);
 }
 
-TEST(TC_STATIC_iot_es_mqtt_registration_client_callback_dip_missing_major_neg)
+TEST_F(TC_REGISTRY_NO_FIXTURE, TC_STATIC_iot_es_mqtt_registration_client_callback_dip_missing_major_neg)
 {
     struct iot_context *context;
     st_mqtt_msg msg;
@@ -1467,7 +1467,7 @@ TEST(TC_STATIC_iot_es_mqtt_registration_client_callback_dip_missing_major_neg)
     assert_true(true);
 }
 
-TEST(TC_STATIC_iot_es_mqtt_registration_client_callback_dip_missing_minor_neg)
+TEST_F(TC_REGISTRY_NO_FIXTURE, TC_STATIC_iot_es_mqtt_registration_client_callback_dip_missing_minor_neg)
 {
     struct iot_context *context;
     st_mqtt_msg msg;
@@ -1490,7 +1490,7 @@ TEST(TC_STATIC_iot_es_mqtt_registration_client_callback_dip_missing_minor_neg)
     assert_true(true);
 }
 
-TEST(TC_STATIC_iot_es_mqtt_registration_client_callback_invalid_location_neg)
+TEST_F(TC_REGISTRY_NO_FIXTURE, TC_STATIC_iot_es_mqtt_registration_client_callback_invalid_location_neg)
 {
     struct iot_context *context;
     st_mqtt_msg msg;
@@ -1520,7 +1520,7 @@ static char _tc_es_connect_device_info[] = {
     "\t}\n"
     "}"};
 
-TEST(TC_STATIC_iot_es_mqtt_es_connect_registration_no_broker_neg)
+TEST_F(TC_REGISTRY_NO_FIXTURE, TC_STATIC_iot_es_mqtt_es_connect_registration_no_broker_neg)
 {
     struct iot_context *context;
     iot_error_t result;
@@ -1551,7 +1551,7 @@ TEST(TC_STATIC_iot_es_mqtt_es_connect_registration_no_broker_neg)
     iot_nv_deinit();
 }
 
-TEST(TC_STATIC_iot_es_mqtt_es_connect_registration_unknown_server_neg)
+TEST_F(TC_REGISTRY_NO_FIXTURE, TC_STATIC_iot_es_mqtt_es_connect_registration_unknown_server_neg)
 {
     struct iot_context *context;
     iot_error_t result;
@@ -1579,7 +1579,7 @@ TEST(TC_STATIC_iot_es_mqtt_es_connect_registration_unknown_server_neg)
     iot_nv_deinit();
 }
 
-TEST(TC_STATIC_iot_es_mqtt_es_connect_communication_no_reg_neg)
+TEST_F(TC_REGISTRY_NO_FIXTURE, TC_STATIC_iot_es_mqtt_es_connect_communication_no_reg_neg)
 {
     struct iot_context *context;
     iot_error_t err;
@@ -1605,7 +1605,7 @@ TEST(TC_STATIC_iot_es_mqtt_es_connect_communication_no_reg_neg)
     iot_nv_deinit();
 }
 
-TEST(TC_STATIC_iot_es_mqtt_es_connect_communication_with_reg_no_broker_neg)
+TEST_F(TC_REGISTRY_NO_FIXTURE, TC_STATIC_iot_es_mqtt_es_connect_communication_with_reg_no_broker_neg)
 {
     struct iot_context *context;
     iot_error_t err;
@@ -1640,7 +1640,7 @@ TEST(TC_STATIC_iot_es_mqtt_es_connect_communication_with_reg_no_broker_neg)
     iot_nv_deinit();
 }
 
-TEST(TC_STATIC_iot_es_mqtt_registration_publish_path_neg)
+TEST_F(TC_REGISTRY_NO_FIXTURE, TC_STATIC_iot_es_mqtt_registration_publish_path_neg)
 {
     struct iot_context *context;
     st_mqtt_client mqtt_ctx;
@@ -1664,7 +1664,7 @@ TEST(TC_STATIC_iot_es_mqtt_registration_publish_path_neg)
     free(context);
 }
 
-TEST(TC_STATIC_iot_es_mqtt_update_dip_publish_path_neg)
+TEST_F(TC_REGISTRY_NO_FIXTURE, TC_STATIC_iot_es_mqtt_update_dip_publish_path_neg)
 {
     struct iot_context *context;
     st_mqtt_client mqtt_cli;
@@ -1690,7 +1690,7 @@ TEST(TC_STATIC_iot_es_mqtt_update_dip_publish_path_neg)
     free(context);
 }
 
-TEST(TC_STATIC_iot_es_mqtt_registration_json_with_location_room_neg)
+TEST_F(TC_REGISTRY_NO_FIXTURE, TC_STATIC_iot_es_mqtt_registration_json_with_location_room_neg)
 {
     /* Cover the optional cloud.location, cloud.label and cloud.room branches
      * of _iot_es_mqtt_registration_json. */
@@ -1713,7 +1713,7 @@ TEST(TC_STATIC_iot_es_mqtt_registration_json_with_location_room_neg)
     free(context);
 }
 
-TEST(TC_STATIC_iot_es_mqtt_registration_json_with_combo_sn_neg)
+TEST_F(TC_REGISTRY_NO_FIXTURE, TC_STATIC_iot_es_mqtt_registration_json_with_combo_sn_neg)
 {
     /* combo_sn-set path frees combo_sn after use (lines 717-719). */
     struct iot_context *context;
@@ -1751,7 +1751,7 @@ static void _tc_install_connack_stream(unsigned char *buffer, size_t buffer_size
     port_net_mock_reset_socket_status(1);
 }
 
-TEST(TC_STATIC_iot_es_mqtt_connect_success_path_pos)
+TEST_F(TC_REGISTRY_NO_FIXTURE, TC_STATIC_iot_es_mqtt_connect_success_path_pos)
 {
     struct iot_context *context;
     st_mqtt_client mqtt_cli;
@@ -1832,7 +1832,7 @@ static void _tc_run_es_mqtt_connect_with_connack_rc(unsigned char rc)
     iot_nv_deinit();
 }
 
-TEST(TC_STATIC_iot_es_mqtt_connect_unacceptable_protocol_neg)
+TEST_F(TC_REGISTRY_NO_FIXTURE, TC_STATIC_iot_es_mqtt_connect_unacceptable_protocol_neg)
 {
     /* connack rc=0x01 -> E_ST_MQTT_UNNACCEPTABLE_PROTOCOL -> IOT_ERROR_MQTT_SERVER_UNAVAIL */
     _tc_run_es_mqtt_connect_with_connack_rc(0x01);
@@ -1840,7 +1840,7 @@ TEST(TC_STATIC_iot_es_mqtt_connect_unacceptable_protocol_neg)
     assert_true(true);
 }
 
-TEST(TC_STATIC_iot_es_mqtt_connect_server_unavailable_neg)
+TEST_F(TC_REGISTRY_NO_FIXTURE, TC_STATIC_iot_es_mqtt_connect_server_unavailable_neg)
 {
     /* connack rc=0x03 -> E_ST_MQTT_SERVER_UNAVAILABLE */
     _tc_run_es_mqtt_connect_with_connack_rc(0x03);
@@ -1848,7 +1848,7 @@ TEST(TC_STATIC_iot_es_mqtt_connect_server_unavailable_neg)
     assert_true(true);
 }
 
-TEST(TC_STATIC_iot_es_mqtt_connect_clientid_rejected_neg)
+TEST_F(TC_REGISTRY_NO_FIXTURE, TC_STATIC_iot_es_mqtt_connect_clientid_rejected_neg)
 {
     /* connack rc=0x02 -> E_ST_MQTT_CLIENTID_REJECTED -> retry path or REJECT_CONNECT */
     _tc_run_es_mqtt_connect_with_connack_rc(0x02);
@@ -1856,7 +1856,7 @@ TEST(TC_STATIC_iot_es_mqtt_connect_clientid_rejected_neg)
     assert_true(true);
 }
 
-TEST(TC_STATIC_iot_es_mqtt_connect_bad_credentials_neg)
+TEST_F(TC_REGISTRY_NO_FIXTURE, TC_STATIC_iot_es_mqtt_connect_bad_credentials_neg)
 {
     /* connack rc=0x04 -> E_ST_MQTT_BAD_USERNAME_OR_PASSWORD */
     _tc_run_es_mqtt_connect_with_connack_rc(0x04);
@@ -1864,7 +1864,7 @@ TEST(TC_STATIC_iot_es_mqtt_connect_bad_credentials_neg)
     assert_true(true);
 }
 
-TEST(TC_STATIC_iot_es_mqtt_connect_not_authorized_neg)
+TEST_F(TC_REGISTRY_NO_FIXTURE, TC_STATIC_iot_es_mqtt_connect_not_authorized_neg)
 {
     /* connack rc=0x05 -> E_ST_MQTT_NOT_AUTHORIZED */
     _tc_run_es_mqtt_connect_with_connack_rc(0x05);
@@ -1872,7 +1872,7 @@ TEST(TC_STATIC_iot_es_mqtt_connect_not_authorized_neg)
     assert_true(true);
 }
 
-TEST(TC_STATIC_iot_es_mqtt_connect_critical_reject_max_neg)
+TEST_F(TC_REGISTRY_NO_FIXTURE, TC_STATIC_iot_es_mqtt_connect_critical_reject_max_neg)
 {
     struct iot_context *context;
     st_mqtt_client mqtt_cli;
@@ -1907,7 +1907,7 @@ TEST(TC_STATIC_iot_es_mqtt_connect_critical_reject_max_neg)
     iot_nv_deinit();
 }
 
-TEST(TC_STATIC_iot_es_mqtt_check_connection_response_expired_jwt_with_current_time_neg)
+TEST_F(TC_REGISTRY_NO_FIXTURE, TC_STATIC_iot_es_mqtt_check_connection_response_expired_jwt_with_current_time_neg)
 {
     /* Given: Expired JWT with currentTime present — exercises the
      * iot_bsp_system_set_time_in_sec path and returns FAIL. */
@@ -1925,7 +1925,7 @@ TEST(TC_STATIC_iot_es_mqtt_check_connection_response_expired_jwt_with_current_ti
     assert_int_equal(result, GG_CONNECTION_REQUEST_STATUS_FAIL);
 }
 
-TEST(TC_STATIC_iot_es_mqtt_connect_unknown_error_neg)
+TEST_F(TC_REGISTRY_NO_FIXTURE, TC_STATIC_iot_es_mqtt_connect_unknown_error_neg)
 {
     /* connack rc=0x06 -> _iot_mqtt_convert_return_code default ->
      * E_ST_MQTT_FAILURE -> default case in _iot_es_mqtt_connect switch */
@@ -1965,21 +1965,21 @@ static void _tc_run_es_mqtt_connect_with_net_fail(port_net_connect_result net_fa
     iot_nv_deinit();
 }
 
-TEST(TC_STATIC_iot_es_mqtt_connect_dns_resolve_fail_neg)
+TEST_F(TC_REGISTRY_NO_FIXTURE, TC_STATIC_iot_es_mqtt_connect_dns_resolve_fail_neg)
 {
     _tc_run_es_mqtt_connect_with_net_fail(PORT_NET_CONNECT_DNS_RESOLVE_FAIL);
 
     assert_true(true);
 }
 
-TEST(TC_STATIC_iot_es_mqtt_connect_tcp_connection_fail_neg)
+TEST_F(TC_REGISTRY_NO_FIXTURE, TC_STATIC_iot_es_mqtt_connect_tcp_connection_fail_neg)
 {
     _tc_run_es_mqtt_connect_with_net_fail(PORT_NET_CONNECT_TCP_CONNECTION_FAIL);
 
     assert_true(true);
 }
 
-TEST(TC_STATIC_iot_es_mqtt_connect_tls_handshake_fail_neg)
+TEST_F(TC_REGISTRY_NO_FIXTURE, TC_STATIC_iot_es_mqtt_connect_tls_handshake_fail_neg)
 {
     _tc_run_es_mqtt_connect_with_net_fail(PORT_NET_CONNECT_TLS_HANDSHAKE_FAIL);
 

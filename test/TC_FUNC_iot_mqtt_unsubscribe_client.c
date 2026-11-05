@@ -33,7 +33,7 @@ extern int MQTTSerialize_unsubscribe_size(int count, MQTTString topicFilters[]);
  */
 TEST_SUITE("iot_mqtt_unsubscribe_client.c");
 
-TEST(TC_MQTTSerialize_unsubscribeLength_empty_neg)
+TEST_F(TC_REGISTRY_NO_FIXTURE, TC_MQTTSerialize_unsubscribeLength_empty_neg)
 {
     int len;
     UNUSED(state);
@@ -43,7 +43,7 @@ TEST(TC_MQTTSerialize_unsubscribeLength_empty_neg)
     assert_int_equal(len, 2);
 }
 
-TEST(TC_MQTTSerialize_unsubscribeLength_single_topic_neg)
+TEST_F(TC_REGISTRY_NO_FIXTURE, TC_MQTTSerialize_unsubscribeLength_single_topic_neg)
 {
     MQTTString topic = MQTTString_initializer;
     int len;
@@ -55,7 +55,7 @@ TEST(TC_MQTTSerialize_unsubscribeLength_single_topic_neg)
     assert_int_equal(len, 7);
 }
 
-TEST(TC_MQTTSerialize_unsubscribe_size_single_topic_neg)
+TEST_F(TC_REGISTRY_NO_FIXTURE, TC_MQTTSerialize_unsubscribe_size_single_topic_neg)
 {
     MQTTString topic = MQTTString_initializer;
     int size;
@@ -70,7 +70,7 @@ TEST(TC_MQTTSerialize_unsubscribe_size_single_topic_neg)
 /*
  * Tests for MQTTSerialize_unsubscribe
  */
-TEST(TC_MQTTSerialize_unsubscribe_neg)
+TEST_F(TC_REGISTRY_NO_FIXTURE, TC_MQTTSerialize_unsubscribe_neg)
 {
     MQTTString topic = MQTTString_initializer;
     unsigned char buf[32] = {0};
@@ -83,7 +83,7 @@ TEST(TC_MQTTSerialize_unsubscribe_neg)
     assert_int_equal((buf[0] & 0xF0) >> 4, UNSUBSCRIBE);
 }
 
-TEST(TC_MQTTSerialize_unsubscribe_multi_topic_neg)
+TEST_F(TC_REGISTRY_NO_FIXTURE, TC_MQTTSerialize_unsubscribe_multi_topic_neg)
 {
     MQTTString topics[3];
     unsigned char buf[64] = {0};
@@ -98,7 +98,7 @@ TEST(TC_MQTTSerialize_unsubscribe_multi_topic_neg)
     assert_true(rc > 0);
 }
 
-TEST(TC_MQTTSerialize_unsubscribe_buffer_too_short_neg)
+TEST_F(TC_REGISTRY_NO_FIXTURE, TC_MQTTSerialize_unsubscribe_buffer_too_short_neg)
 {
     MQTTString topic = MQTTString_initializer;
     unsigned char buf[4] = {0};
@@ -110,7 +110,7 @@ TEST(TC_MQTTSerialize_unsubscribe_buffer_too_short_neg)
     assert_int_equal(rc, MQTTPACKET_BUFFER_TOO_SHORT);
 }
 
-TEST(TC_MQTTSerialize_unsubscribe_zero_buffer_neg)
+TEST_F(TC_REGISTRY_NO_FIXTURE, TC_MQTTSerialize_unsubscribe_zero_buffer_neg)
 {
     MQTTString topic = MQTTString_initializer;
     unsigned char buf[16] = {0};
@@ -122,7 +122,7 @@ TEST(TC_MQTTSerialize_unsubscribe_zero_buffer_neg)
     assert_int_equal(rc, MQTTPACKET_BUFFER_TOO_SHORT);
 }
 
-TEST(TC_MQTTSerialize_unsubscribe_dup_flag_neg)
+TEST_F(TC_REGISTRY_NO_FIXTURE, TC_MQTTSerialize_unsubscribe_dup_flag_neg)
 {
     MQTTString topic = MQTTString_initializer;
     unsigned char buf[16] = {0};
@@ -138,7 +138,7 @@ TEST(TC_MQTTSerialize_unsubscribe_dup_flag_neg)
 /*
  * Tests for MQTTDeserialize_unsuback
  */
-TEST(TC_MQTTDeserialize_unsuback_neg)
+TEST_F(TC_REGISTRY_NO_FIXTURE, TC_MQTTDeserialize_unsuback_neg)
 {
     unsigned char buf[] = {(unsigned char)(UNSUBACK << 4), 0x02, 0x12, 0x34};
     unsigned short packetid = 0;
@@ -150,7 +150,7 @@ TEST(TC_MQTTDeserialize_unsuback_neg)
     assert_int_equal(packetid, 0x1234);
 }
 
-TEST(TC_MQTTDeserialize_unsuback_wrong_type_neg)
+TEST_F(TC_REGISTRY_NO_FIXTURE, TC_MQTTDeserialize_unsuback_wrong_type_neg)
 {
     unsigned char buf[] = {(unsigned char)(PUBACK << 4), 0x02, 0x00, 0x00};
     unsigned short packetid = 0xFFFF;
@@ -166,7 +166,7 @@ TEST(TC_MQTTDeserialize_unsuback_wrong_type_neg)
     assert_int_equal(packetid, 0x0000);
 }
 
-TEST(TC_MQTTDeserialize_unsuback_short_buffer_neg)
+TEST_F(TC_REGISTRY_NO_FIXTURE, TC_MQTTDeserialize_unsuback_short_buffer_neg)
 {
     unsigned char buf[] = {(unsigned char)(UNSUBACK << 4), 0x00};
     unsigned short packetid = 0xABCD;
@@ -181,7 +181,7 @@ TEST(TC_MQTTDeserialize_unsuback_short_buffer_neg)
     assert_int_equal(packetid, 0xABCD);
 }
 
-TEST(TC_MQTTDeserialize_unsuback_empty_buffer_neg)
+TEST_F(TC_REGISTRY_NO_FIXTURE, TC_MQTTDeserialize_unsuback_empty_buffer_neg)
 {
     unsigned char buf[] = {(unsigned char)(UNSUBACK << 4), 0x00};
     unsigned short packetid = 0;

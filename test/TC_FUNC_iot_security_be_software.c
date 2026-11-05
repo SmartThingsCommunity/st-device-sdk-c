@@ -168,7 +168,7 @@ static void free_test_security_context(iot_security_context_t *context)
     free(context);
 }
 
-TEST(TC_iot_security_be_init_success_pos)
+TEST_F(TC_REGISTRY_NO_FIXTURE, TC_iot_security_be_init_success_pos)
 {
     iot_security_be_context_t *be_context;
 
@@ -184,7 +184,7 @@ TEST(TC_iot_security_be_init_success_pos)
     iot_security_be_deinit(be_context);
 }
 
-TEST(TC_iot_security_be_init_malloc_failure_neg)
+TEST_F(TC_REGISTRY_NO_FIXTURE, TC_iot_security_be_init_malloc_failure_neg)
 {
     iot_security_be_context_t *be_context;
 
@@ -198,7 +198,7 @@ TEST(TC_iot_security_be_init_malloc_failure_neg)
     do_not_use_mock_iot_os_malloc_failure();
 }
 
-TEST(TC_iot_security_be_init_bsp_init_failure_neg)
+TEST_F(TC_REGISTRY_NO_FIXTURE, TC_iot_security_be_init_bsp_init_failure_neg)
 {
     iot_security_be_context_t *be_context;
 
@@ -216,7 +216,7 @@ TEST(TC_iot_security_be_init_bsp_init_failure_neg)
     assert_true(true);
 }
 
-TEST(TC_iot_security_be_init_with_callback_neg)
+TEST_F(TC_REGISTRY_NO_FIXTURE, TC_iot_security_be_init_with_callback_neg)
 {
     iot_security_be_context_t *be_context;
 
@@ -229,7 +229,7 @@ TEST(TC_iot_security_be_init_with_callback_neg)
     iot_security_be_deinit(be_context);
 }
 
-TEST(TC_iot_security_be_init_consecutive_calls_neg)
+TEST_F(TC_REGISTRY_NO_FIXTURE, TC_iot_security_be_init_consecutive_calls_neg)
 {
     iot_security_be_context_t *be_context1;
     iot_security_be_context_t *be_context2;
@@ -247,7 +247,7 @@ TEST(TC_iot_security_be_init_consecutive_calls_neg)
     iot_security_be_deinit(be_context2);
 }
 
-TEST(TC_iot_security_be_init_funcs_not_null_neg)
+TEST_F(TC_REGISTRY_NO_FIXTURE, TC_iot_security_be_init_funcs_not_null_neg)
 {
     iot_security_be_context_t *be_context;
 
@@ -281,7 +281,7 @@ TEST(TC_iot_security_be_init_funcs_not_null_neg)
     iot_security_be_deinit(be_context);
 }
 
-TEST(TC_iot_security_be_deinit_success_pos)
+TEST_F(TC_REGISTRY_NO_FIXTURE, TC_iot_security_be_deinit_success_pos)
 {
     iot_security_be_context_t *be_context;
     iot_error_t err;
@@ -294,7 +294,7 @@ TEST(TC_iot_security_be_deinit_success_pos)
     assert_int_equal(err, IOT_ERROR_NONE);
 }
 
-TEST(TC_iot_security_be_deinit_null_context_neg)
+TEST_F(TC_REGISTRY_NO_FIXTURE, TC_iot_security_be_deinit_null_context_neg)
 {
     iot_error_t err;
 
@@ -305,7 +305,7 @@ TEST(TC_iot_security_be_deinit_null_context_neg)
     assert_int_not_equal(err, IOT_ERROR_NONE);
 }
 
-TEST(TC_iot_security_be_deinit_multiple_contexts_neg)
+TEST_F(TC_REGISTRY_NO_FIXTURE, TC_iot_security_be_deinit_multiple_contexts_neg)
 {
     iot_security_be_context_t *be_contexts[3];
     iot_error_t err;
@@ -324,7 +324,7 @@ TEST(TC_iot_security_be_deinit_multiple_contexts_neg)
     }
 }
 
-TEST(TC_iot_security_be_check_context_params_valid_success_pos)
+TEST_F(TC_REGISTRY_NO_FIXTURE, TC_iot_security_be_check_context_params_valid_success_pos)
 {
     iot_security_context_t *context;
     iot_error_t err;
@@ -340,7 +340,7 @@ TEST(TC_iot_security_be_check_context_params_valid_success_pos)
     free_test_security_context(context);
 }
 
-TEST(TC_iot_security_be_check_context_params_null_context_neg)
+TEST_F(TC_REGISTRY_NO_FIXTURE, TC_iot_security_be_check_context_params_null_context_neg)
 {
     iot_error_t err;
 
@@ -351,7 +351,7 @@ TEST(TC_iot_security_be_check_context_params_null_context_neg)
     assert_int_not_equal(err, IOT_ERROR_NONE);
 }
 
-TEST(TC_iot_security_be_check_context_params_null_pk_params_neg)
+TEST_F(TC_REGISTRY_NO_FIXTURE, TC_iot_security_be_check_context_params_null_pk_params_neg)
 {
     iot_security_context_t *context;
     iot_error_t err;
@@ -370,7 +370,7 @@ TEST(TC_iot_security_be_check_context_params_null_pk_params_neg)
     free_test_security_context(context);
 }
 
-TEST(TC_iot_security_be_check_context_params_null_cipher_params_neg)
+TEST_F(TC_REGISTRY_NO_FIXTURE, TC_iot_security_be_check_context_params_null_cipher_params_neg)
 {
     iot_security_context_t *context;
     iot_error_t err;
@@ -389,7 +389,7 @@ TEST(TC_iot_security_be_check_context_params_null_cipher_params_neg)
     free_test_security_context(context);
 }
 
-TEST(TC_iot_security_be_check_context_params_null_ecdh_params_neg)
+TEST_F(TC_REGISTRY_NO_FIXTURE, TC_iot_security_be_check_context_params_null_ecdh_params_neg)
 {
     iot_security_context_t *context;
     iot_error_t err;
@@ -408,7 +408,7 @@ TEST(TC_iot_security_be_check_context_params_null_ecdh_params_neg)
     free_test_security_context(context);
 }
 
-TEST(TC_iot_security_be_check_context_params_null_storage_params_neg)
+TEST_F(TC_REGISTRY_NO_FIXTURE, TC_iot_security_be_check_context_params_null_storage_params_neg)
 {
     iot_security_context_t *context;
     iot_error_t err;
@@ -427,7 +427,7 @@ TEST(TC_iot_security_be_check_context_params_null_storage_params_neg)
     free_test_security_context(context);
 }
 
-TEST(TC_iot_security_be_check_context_params_multiple_subs_neg)
+TEST_F(TC_REGISTRY_NO_FIXTURE, TC_iot_security_be_check_context_params_multiple_subs_neg)
 {
     iot_security_context_t *context;
     iot_error_t err;
@@ -443,7 +443,7 @@ TEST(TC_iot_security_be_check_context_params_multiple_subs_neg)
     free_test_security_context(context);
 }
 
-TEST(TC_iot_security_be_software_id_check_permission_public_key_neg)
+TEST_F(TC_REGISTRY_NO_FIXTURE, TC_iot_security_be_software_id_check_permission_public_key_neg)
 {
     iot_error_t err;
 
@@ -454,7 +454,7 @@ TEST(TC_iot_security_be_software_id_check_permission_public_key_neg)
     assert_int_equal(err, IOT_ERROR_NONE);
 }
 
-TEST(TC_iot_security_be_software_id_check_permission_private_key_denied_neg)
+TEST_F(TC_REGISTRY_NO_FIXTURE, TC_iot_security_be_software_id_check_permission_private_key_denied_neg)
 {
     iot_error_t err;
 
@@ -465,7 +465,7 @@ TEST(TC_iot_security_be_software_id_check_permission_private_key_denied_neg)
     assert_int_not_equal(err, IOT_ERROR_NONE);
 }
 
-TEST(TC_iot_security_be_software_id_check_permission_unknown_id_neg)
+TEST_F(TC_REGISTRY_NO_FIXTURE, TC_iot_security_be_software_id_check_permission_unknown_id_neg)
 {
     iot_error_t err;
 
@@ -476,7 +476,7 @@ TEST(TC_iot_security_be_software_id_check_permission_unknown_id_neg)
     assert_int_equal(err, IOT_ERROR_NONE);
 }
 
-TEST(TC_iot_security_be_software_id_check_permission_device_cert_neg)
+TEST_F(TC_REGISTRY_NO_FIXTURE, TC_iot_security_be_software_id_check_permission_device_cert_neg)
 {
     iot_error_t err;
 
@@ -487,7 +487,7 @@ TEST(TC_iot_security_be_software_id_check_permission_device_cert_neg)
     assert_int_equal(err, IOT_ERROR_NONE);
 }
 
-TEST(TC_iot_security_be_software_id_check_permission_root_ca_neg)
+TEST_F(TC_REGISTRY_NO_FIXTURE, TC_iot_security_be_software_id_check_permission_root_ca_neg)
 {
     iot_error_t err;
 
@@ -498,7 +498,7 @@ TEST(TC_iot_security_be_software_id_check_permission_root_ca_neg)
     assert_int_equal(err, IOT_ERROR_NONE);
 }
 
-TEST(TC_iot_security_be_software_bsp_fs_load_null_context_neg)
+TEST_F(TC_REGISTRY_NO_FIXTURE, TC_iot_security_be_software_bsp_fs_load_null_context_neg)
 {
     iot_error_t err;
     iot_security_buffer_t output_buf = {0};
@@ -510,7 +510,7 @@ TEST(TC_iot_security_be_software_bsp_fs_load_null_context_neg)
     assert_int_not_equal(err, IOT_ERROR_NONE);
 }
 
-TEST(TC_iot_security_be_software_bsp_fs_load_null_be_context_neg)
+TEST_F(TC_REGISTRY_NO_FIXTURE, TC_iot_security_be_software_bsp_fs_load_null_be_context_neg)
 {
     iot_error_t err;
     iot_security_context_t context;
@@ -524,7 +524,7 @@ TEST(TC_iot_security_be_software_bsp_fs_load_null_be_context_neg)
     assert_int_not_equal(err, IOT_ERROR_NONE);
 }
 
-TEST(TC_iot_security_be_software_bsp_fs_load_null_bsp_fn_neg)
+TEST_F(TC_REGISTRY_NO_FIXTURE, TC_iot_security_be_software_bsp_fs_load_null_bsp_fn_neg)
 {
     iot_error_t err;
     iot_security_context_t context;
@@ -541,7 +541,7 @@ TEST(TC_iot_security_be_software_bsp_fs_load_null_bsp_fn_neg)
     assert_int_not_equal(err, IOT_ERROR_NONE);
 }
 
-TEST(TC_iot_security_be_software_bsp_fs_load_null_bsp_fs_load_fn_neg)
+TEST_F(TC_REGISTRY_NO_FIXTURE, TC_iot_security_be_software_bsp_fs_load_null_bsp_fs_load_fn_neg)
 {
     iot_error_t err;
     iot_security_context_t context;
@@ -561,7 +561,7 @@ TEST(TC_iot_security_be_software_bsp_fs_load_null_bsp_fs_load_fn_neg)
     assert_int_not_equal(err, IOT_ERROR_NONE);
 }
 
-TEST(TC_iot_security_be_software_bsp_fs_load_invalid_storage_id_neg)
+TEST_F(TC_REGISTRY_NO_FIXTURE, TC_iot_security_be_software_bsp_fs_load_invalid_storage_id_neg)
 {
     iot_security_context_t *context;
     iot_error_t err;
@@ -578,7 +578,7 @@ TEST(TC_iot_security_be_software_bsp_fs_load_invalid_storage_id_neg)
     free_test_security_context(context);
 }
 
-TEST(TC_iot_security_be_software_pk_deinit_success_pos)
+TEST_F(TC_REGISTRY_NO_FIXTURE, TC_iot_security_be_software_pk_deinit_success_pos)
 {
     iot_security_context_t *context;
     iot_error_t err;
@@ -598,7 +598,7 @@ TEST(TC_iot_security_be_software_pk_deinit_success_pos)
     free_test_security_context(context);
 }
 
-TEST(TC_iot_security_be_software_pk_deinit_null_context_neg)
+TEST_F(TC_REGISTRY_NO_FIXTURE, TC_iot_security_be_software_pk_deinit_null_context_neg)
 {
     iot_error_t err;
 
@@ -609,7 +609,7 @@ TEST(TC_iot_security_be_software_pk_deinit_null_context_neg)
     assert_int_not_equal(err, IOT_ERROR_NONE);
 }
 
-TEST(TC_iot_security_be_software_pk_deinit_null_pk_params_neg)
+TEST_F(TC_REGISTRY_NO_FIXTURE, TC_iot_security_be_software_pk_deinit_null_pk_params_neg)
 {
     iot_security_context_t *context;
     iot_error_t err;
@@ -628,7 +628,7 @@ TEST(TC_iot_security_be_software_pk_deinit_null_pk_params_neg)
     free_test_security_context(context);
 }
 
-TEST(TC_iot_security_be_software_pk_deinit_null_pubkey_neg)
+TEST_F(TC_REGISTRY_NO_FIXTURE, TC_iot_security_be_software_pk_deinit_null_pubkey_neg)
 {
     iot_security_context_t *context;
     iot_error_t err;
@@ -646,7 +646,7 @@ TEST(TC_iot_security_be_software_pk_deinit_null_pubkey_neg)
     free_test_security_context(context);
 }
 
-TEST(TC_iot_security_be_software_pk_deinit_null_seckey_neg)
+TEST_F(TC_REGISTRY_NO_FIXTURE, TC_iot_security_be_software_pk_deinit_null_seckey_neg)
 {
     iot_security_context_t *context;
     iot_error_t err;
@@ -664,7 +664,7 @@ TEST(TC_iot_security_be_software_pk_deinit_null_seckey_neg)
     free_test_security_context(context);
 }
 
-TEST(TC_iot_security_be_software_pk_deinit_both_null_keys_neg)
+TEST_F(TC_REGISTRY_NO_FIXTURE, TC_iot_security_be_software_pk_deinit_both_null_keys_neg)
 {
     iot_security_context_t *context;
     iot_error_t err;
@@ -680,7 +680,7 @@ TEST(TC_iot_security_be_software_pk_deinit_both_null_keys_neg)
     free_test_security_context(context);
 }
 
-TEST(TC_iot_security_be_software_pk_get_key_type_success_pos)
+TEST_F(TC_REGISTRY_NO_FIXTURE, TC_iot_security_be_software_pk_get_key_type_success_pos)
 {
     iot_security_context_t *context;
     iot_error_t err;
@@ -699,7 +699,7 @@ TEST(TC_iot_security_be_software_pk_get_key_type_success_pos)
     free_test_security_context(context);
 }
 
-TEST(TC_iot_security_be_software_pk_get_key_type_null_context_neg)
+TEST_F(TC_REGISTRY_NO_FIXTURE, TC_iot_security_be_software_pk_get_key_type_null_context_neg)
 {
     iot_error_t err;
     iot_security_key_type_t key_type;
@@ -711,7 +711,7 @@ TEST(TC_iot_security_be_software_pk_get_key_type_null_context_neg)
     assert_int_not_equal(err, IOT_ERROR_NONE);
 }
 
-TEST(TC_iot_security_be_software_pk_get_key_type_null_pk_params_neg)
+TEST_F(TC_REGISTRY_NO_FIXTURE, TC_iot_security_be_software_pk_get_key_type_null_pk_params_neg)
 {
     iot_security_context_t *context;
     iot_error_t err;
@@ -731,7 +731,7 @@ TEST(TC_iot_security_be_software_pk_get_key_type_null_pk_params_neg)
     free_test_security_context(context);
 }
 
-TEST(TC_iot_security_be_software_pk_get_key_type_rsa_neg)
+TEST_F(TC_REGISTRY_NO_FIXTURE, TC_iot_security_be_software_pk_get_key_type_rsa_neg)
 {
     iot_security_context_t *context;
     iot_error_t err;
@@ -750,7 +750,7 @@ TEST(TC_iot_security_be_software_pk_get_key_type_rsa_neg)
     free_test_security_context(context);
 }
 
-TEST(TC_iot_security_be_software_pk_get_key_type_ecdsa_neg)
+TEST_F(TC_REGISTRY_NO_FIXTURE, TC_iot_security_be_software_pk_get_key_type_ecdsa_neg)
 {
     iot_security_context_t *context;
     iot_error_t err;
@@ -769,7 +769,7 @@ TEST(TC_iot_security_be_software_pk_get_key_type_ecdsa_neg)
     free_test_security_context(context);
 }
 
-TEST(TC_iot_security_be_software_pk_init_null_context_neg)
+TEST_F(TC_REGISTRY_NO_FIXTURE, TC_iot_security_be_software_pk_init_null_context_neg)
 {
     iot_error_t err;
 
@@ -780,7 +780,7 @@ TEST(TC_iot_security_be_software_pk_init_null_context_neg)
     assert_int_not_equal(err, IOT_ERROR_NONE);
 }
 
-TEST(TC_iot_security_be_software_pk_sign_null_context_neg)
+TEST_F(TC_REGISTRY_NO_FIXTURE, TC_iot_security_be_software_pk_sign_null_context_neg)
 {
     iot_error_t err;
     iot_security_buffer_t input_buf = {0};
@@ -793,7 +793,7 @@ TEST(TC_iot_security_be_software_pk_sign_null_context_neg)
     assert_int_not_equal(err, IOT_ERROR_NONE);
 }
 
-TEST(TC_iot_security_be_software_pk_sign_null_pk_params_neg)
+TEST_F(TC_REGISTRY_NO_FIXTURE, TC_iot_security_be_software_pk_sign_null_pk_params_neg)
 {
     iot_security_context_t *context;
     iot_error_t err;
@@ -814,7 +814,7 @@ TEST(TC_iot_security_be_software_pk_sign_null_pk_params_neg)
     free_test_security_context(context);
 }
 
-TEST(TC_iot_security_be_software_pk_verify_null_context_neg)
+TEST_F(TC_REGISTRY_NO_FIXTURE, TC_iot_security_be_software_pk_verify_null_context_neg)
 {
     iot_error_t err;
     iot_security_buffer_t input_buf = {0};
@@ -827,7 +827,7 @@ TEST(TC_iot_security_be_software_pk_verify_null_context_neg)
     assert_int_not_equal(err, IOT_ERROR_NONE);
 }
 
-TEST(TC_iot_security_be_software_pk_verify_null_pk_params_neg)
+TEST_F(TC_REGISTRY_NO_FIXTURE, TC_iot_security_be_software_pk_verify_null_pk_params_neg)
 {
     iot_security_context_t *context;
     iot_error_t err;
@@ -848,7 +848,7 @@ TEST(TC_iot_security_be_software_pk_verify_null_pk_params_neg)
     free_test_security_context(context);
 }
 
-TEST(TC_iot_security_be_software_cipher_deinit_success_pos)
+TEST_F(TC_REGISTRY_NO_FIXTURE, TC_iot_security_be_software_cipher_deinit_success_pos)
 {
     iot_security_context_t *context;
     iot_error_t err;
@@ -868,7 +868,7 @@ TEST(TC_iot_security_be_software_cipher_deinit_success_pos)
     free_test_security_context(context);
 }
 
-TEST(TC_iot_security_be_software_cipher_deinit_null_context_neg)
+TEST_F(TC_REGISTRY_NO_FIXTURE, TC_iot_security_be_software_cipher_deinit_null_context_neg)
 {
     iot_error_t err;
 
@@ -879,7 +879,7 @@ TEST(TC_iot_security_be_software_cipher_deinit_null_context_neg)
     assert_int_not_equal(err, IOT_ERROR_NONE);
 }
 
-TEST(TC_iot_security_be_software_cipher_deinit_null_cipher_params_neg)
+TEST_F(TC_REGISTRY_NO_FIXTURE, TC_iot_security_be_software_cipher_deinit_null_cipher_params_neg)
 {
     iot_security_context_t *context;
     iot_error_t err;
@@ -898,7 +898,7 @@ TEST(TC_iot_security_be_software_cipher_deinit_null_cipher_params_neg)
     free_test_security_context(context);
 }
 
-TEST(TC_iot_security_be_software_cipher_deinit_null_key_neg)
+TEST_F(TC_REGISTRY_NO_FIXTURE, TC_iot_security_be_software_cipher_deinit_null_key_neg)
 {
     iot_security_context_t *context;
     iot_error_t err;
@@ -916,7 +916,7 @@ TEST(TC_iot_security_be_software_cipher_deinit_null_key_neg)
     free_test_security_context(context);
 }
 
-TEST(TC_iot_security_be_software_cipher_deinit_null_iv_neg)
+TEST_F(TC_REGISTRY_NO_FIXTURE, TC_iot_security_be_software_cipher_deinit_null_iv_neg)
 {
     iot_security_context_t *context;
     iot_error_t err;
@@ -934,7 +934,7 @@ TEST(TC_iot_security_be_software_cipher_deinit_null_iv_neg)
     free_test_security_context(context);
 }
 
-TEST(TC_iot_security_be_software_cipher_deinit_both_null_neg)
+TEST_F(TC_REGISTRY_NO_FIXTURE, TC_iot_security_be_software_cipher_deinit_both_null_neg)
 {
     iot_security_context_t *context;
     iot_error_t err;
@@ -950,7 +950,7 @@ TEST(TC_iot_security_be_software_cipher_deinit_both_null_neg)
     free_test_security_context(context);
 }
 
-TEST(TC_iot_security_be_software_cipher_set_params_success_pos)
+TEST_F(TC_REGISTRY_NO_FIXTURE, TC_iot_security_be_software_cipher_set_params_success_pos)
 {
     iot_security_context_t *context;
     iot_error_t err;
@@ -975,7 +975,7 @@ TEST(TC_iot_security_be_software_cipher_set_params_success_pos)
     free_test_security_context(context);
 }
 
-TEST(TC_iot_security_be_software_cipher_set_params_null_context_neg)
+TEST_F(TC_REGISTRY_NO_FIXTURE, TC_iot_security_be_software_cipher_set_params_null_context_neg)
 {
     iot_error_t err;
     iot_security_cipher_params_t cipher_set_params;
@@ -988,7 +988,7 @@ TEST(TC_iot_security_be_software_cipher_set_params_null_context_neg)
     assert_int_not_equal(err, IOT_ERROR_NONE);
 }
 
-TEST(TC_iot_security_be_software_cipher_set_params_null_params_neg)
+TEST_F(TC_REGISTRY_NO_FIXTURE, TC_iot_security_be_software_cipher_set_params_null_params_neg)
 {
     iot_security_context_t *context;
     iot_error_t err;
@@ -1004,7 +1004,7 @@ TEST(TC_iot_security_be_software_cipher_set_params_null_params_neg)
     free_test_security_context(context);
 }
 
-TEST(TC_iot_security_be_software_cipher_set_params_null_cipher_params_neg)
+TEST_F(TC_REGISTRY_NO_FIXTURE, TC_iot_security_be_software_cipher_set_params_null_cipher_params_neg)
 {
     iot_security_context_t *context;
     iot_error_t err;
@@ -1025,7 +1025,7 @@ TEST(TC_iot_security_be_software_cipher_set_params_null_cipher_params_neg)
     free_test_security_context(context);
 }
 
-TEST(TC_iot_security_be_software_cipher_set_params_zero_key_len_neg)
+TEST_F(TC_REGISTRY_NO_FIXTURE, TC_iot_security_be_software_cipher_set_params_zero_key_len_neg)
 {
     iot_security_context_t *context;
     iot_error_t err;
@@ -1046,7 +1046,7 @@ TEST(TC_iot_security_be_software_cipher_set_params_zero_key_len_neg)
     free_test_security_context(context);
 }
 
-TEST(TC_iot_security_be_software_cipher_aes_encrypt_null_context_neg)
+TEST_F(TC_REGISTRY_NO_FIXTURE, TC_iot_security_be_software_cipher_aes_encrypt_null_context_neg)
 {
     iot_error_t err;
     iot_security_buffer_t input_buf = {0};
@@ -1059,7 +1059,7 @@ TEST(TC_iot_security_be_software_cipher_aes_encrypt_null_context_neg)
     assert_int_not_equal(err, IOT_ERROR_NONE);
 }
 
-TEST(TC_iot_security_be_software_cipher_aes_encrypt_null_cipher_params_neg)
+TEST_F(TC_REGISTRY_NO_FIXTURE, TC_iot_security_be_software_cipher_aes_encrypt_null_cipher_params_neg)
 {
     iot_security_context_t *context;
     iot_error_t err;
@@ -1080,7 +1080,7 @@ TEST(TC_iot_security_be_software_cipher_aes_encrypt_null_cipher_params_neg)
     free_test_security_context(context);
 }
 
-TEST(TC_iot_security_be_software_cipher_aes_decrypt_null_context_neg)
+TEST_F(TC_REGISTRY_NO_FIXTURE, TC_iot_security_be_software_cipher_aes_decrypt_null_context_neg)
 {
     iot_error_t err;
     iot_security_buffer_t input_buf = {0};
@@ -1093,7 +1093,7 @@ TEST(TC_iot_security_be_software_cipher_aes_decrypt_null_context_neg)
     assert_int_not_equal(err, IOT_ERROR_NONE);
 }
 
-TEST(TC_iot_security_be_software_cipher_aes_decrypt_null_cipher_params_neg)
+TEST_F(TC_REGISTRY_NO_FIXTURE, TC_iot_security_be_software_cipher_aes_decrypt_null_cipher_params_neg)
 {
     iot_security_context_t *context;
     iot_error_t err;
@@ -1114,7 +1114,7 @@ TEST(TC_iot_security_be_software_cipher_aes_decrypt_null_cipher_params_neg)
     free_test_security_context(context);
 }
 
-TEST(TC_iot_security_be_software_manager_generate_key_invalid_key_id_neg)
+TEST_F(TC_REGISTRY_NO_FIXTURE, TC_iot_security_be_software_manager_generate_key_invalid_key_id_neg)
 {
     iot_security_context_t *context;
     iot_error_t err;
@@ -1130,7 +1130,7 @@ TEST(TC_iot_security_be_software_manager_generate_key_invalid_key_id_neg)
     free_test_security_context(context);
 }
 
-TEST(TC_iot_security_be_software_manager_generate_key_shared_secret_id_neg)
+TEST_F(TC_REGISTRY_NO_FIXTURE, TC_iot_security_be_software_manager_generate_key_shared_secret_id_neg)
 {
     iot_security_context_t *context;
     iot_error_t err;
@@ -1146,7 +1146,7 @@ TEST(TC_iot_security_be_software_manager_generate_key_shared_secret_id_neg)
     free_test_security_context(context);
 }
 
-TEST(TC_iot_security_be_software_manager_generate_key_device_private_id_neg)
+TEST_F(TC_REGISTRY_NO_FIXTURE, TC_iot_security_be_software_manager_generate_key_device_private_id_neg)
 {
     iot_security_context_t *context;
     iot_error_t err;
@@ -1162,7 +1162,7 @@ TEST(TC_iot_security_be_software_manager_generate_key_device_private_id_neg)
     free_test_security_context(context);
 }
 
-TEST(TC_iot_security_be_software_manager_generate_key_zero_id_neg)
+TEST_F(TC_REGISTRY_NO_FIXTURE, TC_iot_security_be_software_manager_generate_key_zero_id_neg)
 {
     iot_security_context_t *context;
     iot_error_t err;
@@ -1178,7 +1178,7 @@ TEST(TC_iot_security_be_software_manager_generate_key_zero_id_neg)
     free_test_security_context(context);
 }
 
-TEST(TC_iot_security_be_software_manager_remove_key_invalid_key_id_neg)
+TEST_F(TC_REGISTRY_NO_FIXTURE, TC_iot_security_be_software_manager_remove_key_invalid_key_id_neg)
 {
     iot_security_context_t *context;
     iot_error_t err;
@@ -1194,7 +1194,7 @@ TEST(TC_iot_security_be_software_manager_remove_key_invalid_key_id_neg)
     free_test_security_context(context);
 }
 
-TEST(TC_iot_security_be_software_manager_remove_key_shared_secret_id_neg)
+TEST_F(TC_REGISTRY_NO_FIXTURE, TC_iot_security_be_software_manager_remove_key_shared_secret_id_neg)
 {
     iot_security_context_t *context;
     iot_error_t err;
@@ -1210,7 +1210,7 @@ TEST(TC_iot_security_be_software_manager_remove_key_shared_secret_id_neg)
     free_test_security_context(context);
 }
 
-TEST(TC_iot_security_be_software_manager_remove_key_zero_id_neg)
+TEST_F(TC_REGISTRY_NO_FIXTURE, TC_iot_security_be_software_manager_remove_key_zero_id_neg)
 {
     iot_security_context_t *context;
     iot_error_t err;
@@ -1226,7 +1226,7 @@ TEST(TC_iot_security_be_software_manager_remove_key_zero_id_neg)
     free_test_security_context(context);
 }
 
-TEST(TC_iot_security_be_software_manager_remove_key_ephemeral_no_generate_neg)
+TEST_F(TC_REGISTRY_NO_FIXTURE, TC_iot_security_be_software_manager_remove_key_ephemeral_no_generate_neg)
 {
     iot_security_context_t *context;
     iot_error_t err;
@@ -1242,7 +1242,7 @@ TEST(TC_iot_security_be_software_manager_remove_key_ephemeral_no_generate_neg)
     free_test_security_context(context);
 }
 
-TEST(TC_iot_security_be_software_manager_set_key_null_context_neg)
+TEST_F(TC_REGISTRY_NO_FIXTURE, TC_iot_security_be_software_manager_set_key_null_context_neg)
 {
     iot_error_t err;
     iot_security_key_params_t key_params;
@@ -1255,7 +1255,7 @@ TEST(TC_iot_security_be_software_manager_set_key_null_context_neg)
     assert_int_not_equal(err, IOT_ERROR_NONE);
 }
 
-TEST(TC_iot_security_be_software_manager_set_key_null_params_neg)
+TEST_F(TC_REGISTRY_NO_FIXTURE, TC_iot_security_be_software_manager_set_key_null_params_neg)
 {
     iot_security_context_t *context;
     iot_error_t err;
@@ -1271,7 +1271,7 @@ TEST(TC_iot_security_be_software_manager_set_key_null_params_neg)
     free_test_security_context(context);
 }
 
-TEST(TC_iot_security_be_software_manager_set_key_null_cipher_params_neg)
+TEST_F(TC_REGISTRY_NO_FIXTURE, TC_iot_security_be_software_manager_set_key_null_cipher_params_neg)
 {
     iot_security_context_t *context;
     iot_error_t err;
@@ -1292,7 +1292,7 @@ TEST(TC_iot_security_be_software_manager_set_key_null_cipher_params_neg)
     free_test_security_context(context);
 }
 
-TEST(TC_iot_security_be_software_manager_set_key_invalid_key_id_neg)
+TEST_F(TC_REGISTRY_NO_FIXTURE, TC_iot_security_be_software_manager_set_key_invalid_key_id_neg)
 {
     iot_security_context_t *context;
     iot_error_t err;
@@ -1311,7 +1311,7 @@ TEST(TC_iot_security_be_software_manager_set_key_invalid_key_id_neg)
     free_test_security_context(context);
 }
 
-TEST(TC_iot_security_be_software_manager_set_key_shared_secret_success_pos)
+TEST_F(TC_REGISTRY_NO_FIXTURE, TC_iot_security_be_software_manager_set_key_shared_secret_success_pos)
 {
     iot_security_context_t *context;
     iot_error_t err;
@@ -1336,7 +1336,7 @@ TEST(TC_iot_security_be_software_manager_set_key_shared_secret_success_pos)
     free_test_security_context(context);
 }
 
-TEST(TC_iot_security_be_software_manager_get_key_null_context_neg)
+TEST_F(TC_REGISTRY_NO_FIXTURE, TC_iot_security_be_software_manager_get_key_null_context_neg)
 {
     iot_error_t err;
     iot_security_buffer_t key_buf = {0};
@@ -1348,7 +1348,7 @@ TEST(TC_iot_security_be_software_manager_get_key_null_context_neg)
     assert_int_not_equal(err, IOT_ERROR_NONE);
 }
 
-TEST(TC_iot_security_be_software_manager_get_key_private_key_denied_neg)
+TEST_F(TC_REGISTRY_NO_FIXTURE, TC_iot_security_be_software_manager_get_key_private_key_denied_neg)
 {
     iot_security_context_t *context;
     iot_error_t err;
@@ -1365,7 +1365,7 @@ TEST(TC_iot_security_be_software_manager_get_key_private_key_denied_neg)
     free_test_security_context(context);
 }
 
-TEST(TC_iot_security_be_software_manager_get_key_shared_secret_not_set_neg)
+TEST_F(TC_REGISTRY_NO_FIXTURE, TC_iot_security_be_software_manager_get_key_shared_secret_not_set_neg)
 {
     iot_security_context_t *context;
     iot_error_t err;
@@ -1382,7 +1382,7 @@ TEST(TC_iot_security_be_software_manager_get_key_shared_secret_not_set_neg)
     free_test_security_context(context);
 }
 
-TEST(TC_iot_security_be_software_manager_get_key_ephemeral_not_set_neg)
+TEST_F(TC_REGISTRY_NO_FIXTURE, TC_iot_security_be_software_manager_get_key_ephemeral_not_set_neg)
 {
     iot_security_context_t *context;
     iot_error_t err;
@@ -1399,7 +1399,7 @@ TEST(TC_iot_security_be_software_manager_get_key_ephemeral_not_set_neg)
     free_test_security_context(context);
 }
 
-TEST(TC_iot_security_be_software_manager_get_certificate_null_context_neg)
+TEST_F(TC_REGISTRY_NO_FIXTURE, TC_iot_security_be_software_manager_get_certificate_null_context_neg)
 {
     iot_error_t err;
     iot_security_buffer_t cert_buf = {0};
@@ -1411,7 +1411,7 @@ TEST(TC_iot_security_be_software_manager_get_certificate_null_context_neg)
     assert_int_not_equal(err, IOT_ERROR_NONE);
 }
 
-TEST(TC_iot_security_be_software_manager_get_certificate_invalid_id_neg)
+TEST_F(TC_REGISTRY_NO_FIXTURE, TC_iot_security_be_software_manager_get_certificate_invalid_id_neg)
 {
     iot_security_context_t *context;
     iot_error_t err;
@@ -1428,7 +1428,7 @@ TEST(TC_iot_security_be_software_manager_get_certificate_invalid_id_neg)
     free_test_security_context(context);
 }
 
-TEST(TC_iot_security_be_software_ecdh_init_null_context_neg)
+TEST_F(TC_REGISTRY_NO_FIXTURE, TC_iot_security_be_software_ecdh_init_null_context_neg)
 {
     iot_error_t err;
 
@@ -1439,7 +1439,7 @@ TEST(TC_iot_security_be_software_ecdh_init_null_context_neg)
     assert_int_not_equal(err, IOT_ERROR_NONE);
 }
 
-TEST(TC_iot_security_be_software_ecdh_init_null_ecdh_params_neg)
+TEST_F(TC_REGISTRY_NO_FIXTURE, TC_iot_security_be_software_ecdh_init_null_ecdh_params_neg)
 {
     iot_security_context_t *context;
     iot_error_t err;
@@ -1458,7 +1458,7 @@ TEST(TC_iot_security_be_software_ecdh_init_null_ecdh_params_neg)
     free_test_security_context(context);
 }
 
-TEST(TC_iot_security_be_software_ecdh_deinit_success_pos)
+TEST_F(TC_REGISTRY_NO_FIXTURE, TC_iot_security_be_software_ecdh_deinit_success_pos)
 {
     iot_security_context_t *context;
     iot_error_t err;
@@ -1480,7 +1480,7 @@ TEST(TC_iot_security_be_software_ecdh_deinit_success_pos)
     free_test_security_context(context);
 }
 
-TEST(TC_iot_security_be_software_ecdh_deinit_null_context_neg)
+TEST_F(TC_REGISTRY_NO_FIXTURE, TC_iot_security_be_software_ecdh_deinit_null_context_neg)
 {
     iot_error_t err;
 
@@ -1491,7 +1491,7 @@ TEST(TC_iot_security_be_software_ecdh_deinit_null_context_neg)
     assert_int_not_equal(err, IOT_ERROR_NONE);
 }
 
-TEST(TC_iot_security_be_software_ecdh_deinit_null_ecdh_params_neg)
+TEST_F(TC_REGISTRY_NO_FIXTURE, TC_iot_security_be_software_ecdh_deinit_null_ecdh_params_neg)
 {
     iot_security_context_t *context;
     iot_error_t err;
@@ -1510,7 +1510,7 @@ TEST(TC_iot_security_be_software_ecdh_deinit_null_ecdh_params_neg)
     free_test_security_context(context);
 }
 
-TEST(TC_iot_security_be_software_ecdh_deinit_null_t_seckey_neg)
+TEST_F(TC_REGISTRY_NO_FIXTURE, TC_iot_security_be_software_ecdh_deinit_null_t_seckey_neg)
 {
     iot_security_context_t *context;
     iot_error_t err;
@@ -1528,7 +1528,7 @@ TEST(TC_iot_security_be_software_ecdh_deinit_null_t_seckey_neg)
     free_test_security_context(context);
 }
 
-TEST(TC_iot_security_be_software_ecdh_deinit_null_c_pubkey_neg)
+TEST_F(TC_REGISTRY_NO_FIXTURE, TC_iot_security_be_software_ecdh_deinit_null_c_pubkey_neg)
 {
     iot_security_context_t *context;
     iot_error_t err;
@@ -1546,7 +1546,7 @@ TEST(TC_iot_security_be_software_ecdh_deinit_null_c_pubkey_neg)
     free_test_security_context(context);
 }
 
-TEST(TC_iot_security_be_software_ecdh_deinit_null_salt_neg)
+TEST_F(TC_REGISTRY_NO_FIXTURE, TC_iot_security_be_software_ecdh_deinit_null_salt_neg)
 {
     iot_security_context_t *context;
     iot_error_t err;
@@ -1566,7 +1566,7 @@ TEST(TC_iot_security_be_software_ecdh_deinit_null_salt_neg)
     free_test_security_context(context);
 }
 
-TEST(TC_iot_security_be_software_ecdh_set_params_null_context_neg)
+TEST_F(TC_REGISTRY_NO_FIXTURE, TC_iot_security_be_software_ecdh_set_params_null_context_neg)
 {
     iot_error_t err;
     iot_security_ecdh_params_t ecdh_params;
@@ -1579,7 +1579,7 @@ TEST(TC_iot_security_be_software_ecdh_set_params_null_context_neg)
     assert_int_not_equal(err, IOT_ERROR_NONE);
 }
 
-TEST(TC_iot_security_be_software_ecdh_set_params_null_params_neg)
+TEST_F(TC_REGISTRY_NO_FIXTURE, TC_iot_security_be_software_ecdh_set_params_null_params_neg)
 {
     iot_security_context_t *context;
     iot_error_t err;
@@ -1595,7 +1595,7 @@ TEST(TC_iot_security_be_software_ecdh_set_params_null_params_neg)
     free_test_security_context(context);
 }
 
-TEST(TC_iot_security_be_software_ecdh_set_params_null_ecdh_params_neg)
+TEST_F(TC_REGISTRY_NO_FIXTURE, TC_iot_security_be_software_ecdh_set_params_null_ecdh_params_neg)
 {
     iot_security_context_t *context;
     iot_error_t err;
@@ -1616,7 +1616,7 @@ TEST(TC_iot_security_be_software_ecdh_set_params_null_ecdh_params_neg)
     free_test_security_context(context);
 }
 
-TEST(TC_iot_security_be_software_ecdh_set_params_zero_len_seckey_neg)
+TEST_F(TC_REGISTRY_NO_FIXTURE, TC_iot_security_be_software_ecdh_set_params_zero_len_seckey_neg)
 {
     iot_security_context_t *context;
     iot_error_t err;
@@ -1637,7 +1637,7 @@ TEST(TC_iot_security_be_software_ecdh_set_params_zero_len_seckey_neg)
     free_test_security_context(context);
 }
 
-TEST(TC_iot_security_be_software_ecdh_compute_shared_secret_null_context_neg)
+TEST_F(TC_REGISTRY_NO_FIXTURE, TC_iot_security_be_software_ecdh_compute_shared_secret_null_context_neg)
 {
     iot_error_t err;
     iot_security_buffer_t output_buf = {0};
@@ -1649,7 +1649,7 @@ TEST(TC_iot_security_be_software_ecdh_compute_shared_secret_null_context_neg)
     assert_int_not_equal(err, IOT_ERROR_NONE);
 }
 
-TEST(TC_iot_security_be_software_ecdh_compute_shared_secret_null_ecdh_params_neg)
+TEST_F(TC_REGISTRY_NO_FIXTURE, TC_iot_security_be_software_ecdh_compute_shared_secret_null_ecdh_params_neg)
 {
     iot_security_context_t *context;
     iot_error_t err;
@@ -1669,7 +1669,7 @@ TEST(TC_iot_security_be_software_ecdh_compute_shared_secret_null_ecdh_params_neg
     free_test_security_context(context);
 }
 
-TEST(TC_iot_security_be_software_ecdh_compute_shared_secret_ephemeral_no_seckey_neg)
+TEST_F(TC_REGISTRY_NO_FIXTURE, TC_iot_security_be_software_ecdh_compute_shared_secret_ephemeral_no_seckey_neg)
 {
     iot_security_context_t *context;
     iot_error_t err;
@@ -1693,7 +1693,7 @@ TEST(TC_iot_security_be_software_ecdh_compute_shared_secret_ephemeral_no_seckey_
     free_test_security_context(context);
 }
 
-TEST(TC_iot_security_be_software_ecdh_compute_shared_secret_ephemeral_with_seckey_neg)
+TEST_F(TC_REGISTRY_NO_FIXTURE, TC_iot_security_be_software_ecdh_compute_shared_secret_ephemeral_with_seckey_neg)
 {
     iot_security_context_t *context;
     iot_error_t err;
@@ -1724,7 +1724,7 @@ TEST(TC_iot_security_be_software_ecdh_compute_shared_secret_ephemeral_with_secke
     free_test_security_context(context);
 }
 
-TEST(TC_iot_security_be_software_ecdh_compute_shared_secret_default_key_id_neg)
+TEST_F(TC_REGISTRY_NO_FIXTURE, TC_iot_security_be_software_ecdh_compute_shared_secret_default_key_id_neg)
 {
     iot_security_context_t *context;
     iot_error_t err;
@@ -1755,7 +1755,7 @@ TEST(TC_iot_security_be_software_ecdh_compute_shared_secret_default_key_id_neg)
     free_test_security_context(context);
 }
 
-TEST(TC_iot_security_be_software_ecdh_compute_shared_secret_null_c_pubkey_neg)
+TEST_F(TC_REGISTRY_NO_FIXTURE, TC_iot_security_be_software_ecdh_compute_shared_secret_null_c_pubkey_neg)
 {
     iot_security_context_t *context;
     iot_error_t err;
@@ -1779,7 +1779,7 @@ TEST(TC_iot_security_be_software_ecdh_compute_shared_secret_null_c_pubkey_neg)
     free_test_security_context(context);
 }
 
-TEST(TC_iot_security_be_software_ecdh_compute_shared_secret_with_cipher_subsystem_neg)
+TEST_F(TC_REGISTRY_NO_FIXTURE, TC_iot_security_be_software_ecdh_compute_shared_secret_with_cipher_subsystem_neg)
 {
     iot_security_context_t *context;
     iot_error_t err;
@@ -1811,7 +1811,7 @@ TEST(TC_iot_security_be_software_ecdh_compute_shared_secret_with_cipher_subsyste
     free_test_security_context(context);
 }
 
-TEST(TC_iot_security_be_software_storage_read_null_context_neg)
+TEST_F(TC_REGISTRY_NO_FIXTURE, TC_iot_security_be_software_storage_read_null_context_neg)
 {
     iot_error_t err;
     iot_security_buffer_t data_buf = {0};
@@ -1823,7 +1823,7 @@ TEST(TC_iot_security_be_software_storage_read_null_context_neg)
     assert_int_not_equal(err, IOT_ERROR_NONE);
 }
 
-TEST(TC_iot_security_be_software_storage_read_null_storage_params_neg)
+TEST_F(TC_REGISTRY_NO_FIXTURE, TC_iot_security_be_software_storage_read_null_storage_params_neg)
 {
     iot_security_context_t *context;
     iot_error_t err;
@@ -1843,7 +1843,7 @@ TEST(TC_iot_security_be_software_storage_read_null_storage_params_neg)
     free_test_security_context(context);
 }
 
-TEST(TC_iot_security_be_software_storage_write_null_context_neg)
+TEST_F(TC_REGISTRY_NO_FIXTURE, TC_iot_security_be_software_storage_write_null_context_neg)
 {
     iot_error_t err;
     iot_security_buffer_t data_buf = {0};
@@ -1855,7 +1855,7 @@ TEST(TC_iot_security_be_software_storage_write_null_context_neg)
     assert_int_not_equal(err, IOT_ERROR_NONE);
 }
 
-TEST(TC_iot_security_be_software_storage_write_null_storage_params_neg)
+TEST_F(TC_REGISTRY_NO_FIXTURE, TC_iot_security_be_software_storage_write_null_storage_params_neg)
 {
     iot_security_context_t *context;
     iot_error_t err;
@@ -1875,7 +1875,7 @@ TEST(TC_iot_security_be_software_storage_write_null_storage_params_neg)
     free_test_security_context(context);
 }
 
-TEST(TC_iot_security_be_software_storage_write_null_bsp_fn_neg)
+TEST_F(TC_REGISTRY_NO_FIXTURE, TC_iot_security_be_software_storage_write_null_bsp_fn_neg)
 {
     iot_error_t err;
     iot_security_context_t context;
@@ -1896,7 +1896,7 @@ TEST(TC_iot_security_be_software_storage_write_null_bsp_fn_neg)
     free(context.storage_params);
 }
 
-TEST(TC_iot_security_be_software_storage_write_null_bsp_store_neg)
+TEST_F(TC_REGISTRY_NO_FIXTURE, TC_iot_security_be_software_storage_write_null_bsp_store_neg)
 {
     iot_error_t err;
     iot_security_context_t context;
@@ -1920,7 +1920,7 @@ TEST(TC_iot_security_be_software_storage_write_null_bsp_store_neg)
     free(context.storage_params);
 }
 
-TEST(TC_iot_security_be_software_storage_remove_null_context_neg)
+TEST_F(TC_REGISTRY_NO_FIXTURE, TC_iot_security_be_software_storage_remove_null_context_neg)
 {
     iot_error_t err;
 
@@ -1931,7 +1931,7 @@ TEST(TC_iot_security_be_software_storage_remove_null_context_neg)
     assert_int_not_equal(err, IOT_ERROR_NONE);
 }
 
-TEST(TC_iot_security_be_software_storage_remove_null_storage_params_neg)
+TEST_F(TC_REGISTRY_NO_FIXTURE, TC_iot_security_be_software_storage_remove_null_storage_params_neg)
 {
     iot_security_context_t *context;
     iot_error_t err;
@@ -1950,7 +1950,7 @@ TEST(TC_iot_security_be_software_storage_remove_null_storage_params_neg)
     free_test_security_context(context);
 }
 
-TEST(TC_iot_security_be_software_storage_remove_null_bsp_fn_neg)
+TEST_F(TC_REGISTRY_NO_FIXTURE, TC_iot_security_be_software_storage_remove_null_bsp_fn_neg)
 {
     iot_error_t err;
     iot_security_context_t context;
@@ -1969,7 +1969,7 @@ TEST(TC_iot_security_be_software_storage_remove_null_bsp_fn_neg)
     assert_int_not_equal(err, IOT_ERROR_NONE);
 }
 
-TEST(TC_iot_security_be_software_storage_remove_null_bsp_remove_neg)
+TEST_F(TC_REGISTRY_NO_FIXTURE, TC_iot_security_be_software_storage_remove_null_bsp_remove_neg)
 {
     iot_error_t err;
     iot_security_context_t context;
@@ -1991,7 +1991,7 @@ TEST(TC_iot_security_be_software_storage_remove_null_bsp_remove_neg)
     assert_int_not_equal(err, IOT_ERROR_NONE);
 }
 
-TEST(TC_iot_security_ed25519_convert_seckey_null_ed25519_key_neg)
+TEST_F(TC_REGISTRY_NO_FIXTURE, TC_iot_security_ed25519_convert_seckey_null_ed25519_key_neg)
 {
     iot_error_t err;
     unsigned char curve25519_key[32];
@@ -2003,7 +2003,7 @@ TEST(TC_iot_security_ed25519_convert_seckey_null_ed25519_key_neg)
     assert_int_not_equal(err, IOT_ERROR_NONE);
 }
 
-TEST(TC_iot_security_ed25519_convert_seckey_null_curve25519_key_neg)
+TEST_F(TC_REGISTRY_NO_FIXTURE, TC_iot_security_ed25519_convert_seckey_null_curve25519_key_neg)
 {
     iot_error_t err;
     unsigned char ed25519_key[32];
@@ -2015,7 +2015,7 @@ TEST(TC_iot_security_ed25519_convert_seckey_null_curve25519_key_neg)
     assert_int_not_equal(err, IOT_ERROR_NONE);
 }
 
-TEST(TC_iot_security_ed25519_convert_seckey_both_null_neg)
+TEST_F(TC_REGISTRY_NO_FIXTURE, TC_iot_security_ed25519_convert_seckey_both_null_neg)
 {
     iot_error_t err;
 
@@ -2026,7 +2026,7 @@ TEST(TC_iot_security_ed25519_convert_seckey_both_null_neg)
     assert_int_not_equal(err, IOT_ERROR_NONE);
 }
 
-TEST(TC_iot_security_be_software_cipher_copy_params_null_src_neg)
+TEST_F(TC_REGISTRY_NO_FIXTURE, TC_iot_security_be_software_cipher_copy_params_null_src_neg)
 {
     iot_error_t err;
     iot_security_buffer_t src = {0};
@@ -2039,7 +2039,7 @@ TEST(TC_iot_security_be_software_cipher_copy_params_null_src_neg)
     assert_int_equal(err, IOT_ERROR_NONE);
 }
 
-TEST(TC_iot_security_be_software_cipher_copy_params_zero_len_neg)
+TEST_F(TC_REGISTRY_NO_FIXTURE, TC_iot_security_be_software_cipher_copy_params_zero_len_neg)
 {
     iot_error_t err;
     iot_security_buffer_t src;
@@ -2055,7 +2055,7 @@ TEST(TC_iot_security_be_software_cipher_copy_params_zero_len_neg)
     assert_int_not_equal(err, IOT_ERROR_NONE);
 }
 
-TEST(TC_iot_security_be_software_cipher_copy_params_with_existing_dst_neg)
+TEST_F(TC_REGISTRY_NO_FIXTURE, TC_iot_security_be_software_cipher_copy_params_with_existing_dst_neg)
 {
     iot_error_t err;
     iot_security_buffer_t src;
@@ -2075,7 +2075,7 @@ TEST(TC_iot_security_be_software_cipher_copy_params_with_existing_dst_neg)
     }
 }
 
-TEST(TC_iot_security_be_software_ecdh_copy_params_null_src_neg)
+TEST_F(TC_REGISTRY_NO_FIXTURE, TC_iot_security_be_software_ecdh_copy_params_null_src_neg)
 {
     iot_error_t err;
     iot_security_buffer_t src = {0};
@@ -2088,7 +2088,7 @@ TEST(TC_iot_security_be_software_ecdh_copy_params_null_src_neg)
     assert_int_equal(err, IOT_ERROR_NONE);
 }
 
-TEST(TC_iot_security_be_software_ecdh_copy_params_zero_len_neg)
+TEST_F(TC_REGISTRY_NO_FIXTURE, TC_iot_security_be_software_ecdh_copy_params_zero_len_neg)
 {
     iot_error_t err;
     iot_security_buffer_t src;
@@ -2104,7 +2104,7 @@ TEST(TC_iot_security_be_software_ecdh_copy_params_zero_len_neg)
     assert_int_not_equal(err, IOT_ERROR_NONE);
 }
 
-TEST(TC_iot_security_be_software_ecdh_copy_params_with_existing_dst_neg)
+TEST_F(TC_REGISTRY_NO_FIXTURE, TC_iot_security_be_software_ecdh_copy_params_with_existing_dst_neg)
 {
     iot_error_t err;
     iot_security_buffer_t src;

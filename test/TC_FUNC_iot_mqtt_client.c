@@ -113,7 +113,7 @@ static st_mqtt_client _connected_client_setup(mqtt_observer_t *obs)
     return client;
 }
 
-TEST(TC_st_mqtt_create_success_pos)
+TEST_F(TC_REGISTRY_NO_FIXTURE, TC_st_mqtt_create_success_pos)
 {
     int err;
     st_mqtt_client client;
@@ -133,7 +133,7 @@ TEST(TC_st_mqtt_create_success_pos)
     set_mock_detect_memory_leak(false);
 }
 
-TEST(TC_st_mqtt_create_failure_neg)
+TEST_F(TC_REGISTRY_NO_FIXTURE, TC_st_mqtt_create_failure_neg)
 {
     int err;
     st_mqtt_client client;
@@ -209,7 +209,7 @@ static void _st_mqtt_connect_test_with_parameter(unsigned char give_rc, int expe
     free(mock_read_buffer);
 }
 
-TEST(TC_st_mqtt_connect_with_connack_rc_neg)
+TEST_F(TC_REGISTRY_NO_FIXTURE, TC_st_mqtt_connect_with_connack_rc_neg)
 {
     UNUSED(state);
 
@@ -226,7 +226,7 @@ TEST(TC_st_mqtt_connect_with_connack_rc_neg)
     assert_true(true);
 }
 
-TEST(TC_st_mqtt_disconnect_neg)
+TEST_F(TC_REGISTRY_NO_FIXTURE, TC_st_mqtt_disconnect_neg)
 {
     int err;
     iot_error_t iot_err;
@@ -270,7 +270,7 @@ struct mqtt_pub_test_data {
     char response_fixed_header;
 };
 
-TEST(TC_st_mqtt_publish_success_pos)
+TEST_F(TC_REGISTRY_NO_FIXTURE, TC_st_mqtt_publish_success_pos)
 {
     int err;
     iot_error_t iot_err;
@@ -381,7 +381,7 @@ TEST(TC_st_mqtt_publish_success_pos)
     st_mqtt_destroy(client);
 }
 
-TEST(TC_st_mqtt_create_null_callback_neg)
+TEST_F(TC_REGISTRY_NO_FIXTURE, TC_st_mqtt_create_null_callback_neg)
 {
     int err;
     st_mqtt_client client;
@@ -393,7 +393,7 @@ TEST(TC_st_mqtt_create_null_callback_neg)
     assert_int_equal(err, E_ST_MQTT_FAILURE);
 }
 
-TEST(TC_st_mqtt_create_malloc_failure_index_2_neg)
+TEST_F(TC_REGISTRY_NO_FIXTURE, TC_st_mqtt_create_malloc_failure_index_2_neg)
 {
     int err;
     st_mqtt_client client;
@@ -410,7 +410,7 @@ TEST(TC_st_mqtt_create_malloc_failure_index_2_neg)
     do_not_use_mock_iot_os_malloc_failure();
 }
 
-TEST(TC_st_mqtt_create_malloc_failure_index_3_neg)
+TEST_F(TC_REGISTRY_NO_FIXTURE, TC_st_mqtt_create_malloc_failure_index_3_neg)
 {
     int err;
     st_mqtt_client client = NULL;
@@ -433,7 +433,7 @@ TEST(TC_st_mqtt_create_malloc_failure_index_3_neg)
     }
 }
 
-TEST(TC_st_mqtt_destroy_null_neg)
+TEST_F(TC_REGISTRY_NO_FIXTURE, TC_st_mqtt_destroy_null_neg)
 {
     UNUSED(state);
 
@@ -443,7 +443,7 @@ TEST(TC_st_mqtt_destroy_null_neg)
     assert_true(true);
 }
 
-TEST(TC_st_mqtt_subscribe_invalid_count_neg)
+TEST_F(TC_REGISTRY_NO_FIXTURE, TC_st_mqtt_subscribe_invalid_count_neg)
 {
     int err;
     st_mqtt_client client;
@@ -467,7 +467,7 @@ TEST(TC_st_mqtt_subscribe_invalid_count_neg)
     st_mqtt_destroy(client);
 }
 
-TEST(TC_st_mqtt_subscribe_null_topics_neg)
+TEST_F(TC_REGISTRY_NO_FIXTURE, TC_st_mqtt_subscribe_null_topics_neg)
 {
     int err;
     st_mqtt_client client;
@@ -485,7 +485,7 @@ TEST(TC_st_mqtt_subscribe_null_topics_neg)
     st_mqtt_destroy(client);
 }
 
-TEST(TC_st_mqtt_subscribe_null_qos_neg)
+TEST_F(TC_REGISTRY_NO_FIXTURE, TC_st_mqtt_subscribe_null_qos_neg)
 {
     int err;
     st_mqtt_client client;
@@ -503,7 +503,7 @@ TEST(TC_st_mqtt_subscribe_null_qos_neg)
     st_mqtt_destroy(client);
 }
 
-TEST(TC_st_mqtt_subscribe_topics_malloc_failure_neg)
+TEST_F(TC_REGISTRY_NO_FIXTURE, TC_st_mqtt_subscribe_topics_malloc_failure_neg)
 {
     int err;
     st_mqtt_client client;
@@ -525,7 +525,7 @@ TEST(TC_st_mqtt_subscribe_topics_malloc_failure_neg)
     st_mqtt_destroy(client);
 }
 
-TEST(TC_st_mqtt_unsubscribe_invalid_count_neg)
+TEST_F(TC_REGISTRY_NO_FIXTURE, TC_st_mqtt_unsubscribe_invalid_count_neg)
 {
     int err;
     st_mqtt_client client;
@@ -548,7 +548,7 @@ TEST(TC_st_mqtt_unsubscribe_invalid_count_neg)
     st_mqtt_destroy(client);
 }
 
-TEST(TC_st_mqtt_unsubscribe_null_topics_neg)
+TEST_F(TC_REGISTRY_NO_FIXTURE, TC_st_mqtt_unsubscribe_null_topics_neg)
 {
     int err;
     st_mqtt_client client;
@@ -565,7 +565,7 @@ TEST(TC_st_mqtt_unsubscribe_null_topics_neg)
     st_mqtt_destroy(client);
 }
 
-TEST(TC_st_mqtt_unsubscribe_topics_malloc_failure_neg)
+TEST_F(TC_REGISTRY_NO_FIXTURE, TC_st_mqtt_unsubscribe_topics_malloc_failure_neg)
 {
     int err;
     st_mqtt_client client;
@@ -586,7 +586,7 @@ TEST(TC_st_mqtt_unsubscribe_topics_malloc_failure_neg)
     st_mqtt_destroy(client);
 }
 
-TEST(TC_st_mqtt_publish_async_not_connected_neg)
+TEST_F(TC_REGISTRY_NO_FIXTURE, TC_st_mqtt_publish_async_not_connected_neg)
 {
     int err;
     st_mqtt_client client;
@@ -610,7 +610,7 @@ TEST(TC_st_mqtt_publish_async_not_connected_neg)
     st_mqtt_destroy(client);
 }
 
-TEST(TC_st_mqtt_publish_null_client_neg)
+TEST_F(TC_REGISTRY_NO_FIXTURE, TC_st_mqtt_publish_null_client_neg)
 {
     int err;
     st_mqtt_msg msg = {0};
@@ -630,7 +630,7 @@ TEST(TC_st_mqtt_publish_null_client_neg)
 /*
  * st_mqtt_disconnect negative tests
  */
-TEST(TC_st_mqtt_disconnect_null_client_neg)
+TEST_F(TC_REGISTRY_NO_FIXTURE, TC_st_mqtt_disconnect_null_client_neg)
 {
     int err;
     UNUSED(state);
@@ -641,7 +641,7 @@ TEST(TC_st_mqtt_disconnect_null_client_neg)
     assert_int_equal(err, E_ST_MQTT_FAILURE);
 }
 
-TEST(TC_st_mqtt_change_ping_period_null_client_neg)
+TEST_F(TC_REGISTRY_NO_FIXTURE, TC_st_mqtt_change_ping_period_null_client_neg)
 {
     UNUSED(state);
 
@@ -651,7 +651,7 @@ TEST(TC_st_mqtt_change_ping_period_null_client_neg)
     assert_true(true);
 }
 
-TEST(TC_st_mqtt_change_ping_period_bad_magic_neg)
+TEST_F(TC_REGISTRY_NO_FIXTURE, TC_st_mqtt_change_ping_period_bad_magic_neg)
 {
     st_mqtt_client client;
     MQTTClient *c;
@@ -676,7 +676,7 @@ TEST(TC_st_mqtt_change_ping_period_bad_magic_neg)
     st_mqtt_destroy(client);
 }
 
-TEST(TC_st_mqtt_change_ping_period_success_pos)
+TEST_F(TC_REGISTRY_NO_FIXTURE, TC_st_mqtt_change_ping_period_success_pos)
 {
     st_mqtt_client client;
     MQTTClient *c;
@@ -695,7 +695,7 @@ TEST(TC_st_mqtt_change_ping_period_success_pos)
     st_mqtt_destroy(client);
 }
 
-TEST(TC_st_mqtt_yield_disconnected_zero_time_neg)
+TEST_F(TC_REGISTRY_NO_FIXTURE, TC_st_mqtt_yield_disconnected_zero_time_neg)
 {
     st_mqtt_client client;
     MQTTClient *c;
@@ -716,7 +716,7 @@ TEST(TC_st_mqtt_yield_disconnected_zero_time_neg)
     st_mqtt_destroy(client);
 }
 
-TEST(TC_st_mqtt_yield_disconnected_short_time_neg)
+TEST_F(TC_REGISTRY_NO_FIXTURE, TC_st_mqtt_yield_disconnected_short_time_neg)
 {
     st_mqtt_client client;
     MQTTClient *c;
@@ -737,7 +737,7 @@ TEST(TC_st_mqtt_yield_disconnected_short_time_neg)
     st_mqtt_destroy(client);
 }
 
-TEST(TC_st_mqtt_connect_net_unreachable_neg)
+TEST_F(TC_REGISTRY_NO_FIXTURE, TC_st_mqtt_connect_net_unreachable_neg)
 {
     int err;
     st_mqtt_client client;
@@ -770,7 +770,7 @@ TEST(TC_st_mqtt_connect_net_unreachable_neg)
     st_mqtt_destroy(client);
 }
 
-TEST(TC_st_mqtt_yield_delivers_publish_qos0_neg)
+TEST_F(TC_REGISTRY_NO_FIXTURE, TC_st_mqtt_yield_delivers_publish_qos0_neg)
 {
     st_mqtt_client client;
     mqtt_observer_t obs;
@@ -805,7 +805,7 @@ TEST(TC_st_mqtt_yield_delivers_publish_qos0_neg)
     st_mqtt_destroy(client);
 }
 
-TEST(TC_st_mqtt_yield_publish_qos1_sends_puback_neg)
+TEST_F(TC_REGISTRY_NO_FIXTURE, TC_st_mqtt_yield_publish_qos1_sends_puback_neg)
 {
     st_mqtt_client client;
     mqtt_observer_t obs;
@@ -842,7 +842,7 @@ TEST(TC_st_mqtt_yield_publish_qos1_sends_puback_neg)
     st_mqtt_destroy(client);
 }
 
-TEST(TC_st_mqtt_yield_publish_dup_is_discarded_neg)
+TEST_F(TC_REGISTRY_NO_FIXTURE, TC_st_mqtt_yield_publish_dup_is_discarded_neg)
 {
     st_mqtt_client client;
     mqtt_observer_t obs;
@@ -877,7 +877,7 @@ TEST(TC_st_mqtt_yield_publish_dup_is_discarded_neg)
     st_mqtt_destroy(client);
 }
 
-TEST(TC_st_mqtt_yield_unknown_packet_type_neg)
+TEST_F(TC_REGISTRY_NO_FIXTURE, TC_st_mqtt_yield_unknown_packet_type_neg)
 {
     st_mqtt_client client;
     mqtt_observer_t obs;
@@ -898,7 +898,7 @@ TEST(TC_st_mqtt_yield_unknown_packet_type_neg)
     st_mqtt_destroy(client);
 }
 
-TEST(TC_st_mqtt_yield_network_error_triggers_disconnect_neg)
+TEST_F(TC_REGISTRY_NO_FIXTURE, TC_st_mqtt_yield_network_error_triggers_disconnect_neg)
 {
     st_mqtt_client client;
     mqtt_observer_t obs;
@@ -922,7 +922,7 @@ TEST(TC_st_mqtt_yield_network_error_triggers_disconnect_neg)
     st_mqtt_destroy(client);
 }
 
-TEST(TC_st_mqtt_subscribe_success_pos)
+TEST_F(TC_REGISTRY_NO_FIXTURE, TC_st_mqtt_subscribe_success_pos)
 {
     st_mqtt_client client;
     MQTTClient *c;
@@ -955,7 +955,7 @@ TEST(TC_st_mqtt_subscribe_success_pos)
     st_mqtt_destroy(client);
 }
 
-TEST(TC_st_mqtt_subscribe_granted_qos2_neg)
+TEST_F(TC_REGISTRY_NO_FIXTURE, TC_st_mqtt_subscribe_granted_qos2_neg)
 {
     st_mqtt_client client;
     MQTTClient *c;
@@ -987,7 +987,7 @@ TEST(TC_st_mqtt_subscribe_granted_qos2_neg)
     st_mqtt_destroy(client);
 }
 
-TEST(TC_st_mqtt_unsubscribe_neg)
+TEST_F(TC_REGISTRY_NO_FIXTURE, TC_st_mqtt_unsubscribe_neg)
 {
     st_mqtt_client client;
     MQTTClient *c;
@@ -1018,7 +1018,7 @@ TEST(TC_st_mqtt_unsubscribe_neg)
     st_mqtt_destroy(client);
 }
 
-TEST(TC_st_mqtt_publish_write_failure_neg)
+TEST_F(TC_REGISTRY_NO_FIXTURE, TC_st_mqtt_publish_write_failure_neg)
 {
     st_mqtt_client client;
     mqtt_observer_t obs;
@@ -1046,7 +1046,7 @@ TEST(TC_st_mqtt_publish_write_failure_neg)
     st_mqtt_destroy(client);
 }
 
-TEST(TC_st_mqtt_yield_with_short_timer_neg)
+TEST_F(TC_REGISTRY_NO_FIXTURE, TC_st_mqtt_yield_with_short_timer_neg)
 {
     st_mqtt_client client;
     mqtt_observer_t obs;
@@ -1063,7 +1063,7 @@ TEST(TC_st_mqtt_yield_with_short_timer_neg)
     st_mqtt_destroy(client);
 }
 
-TEST(TC_st_mqtt_change_ping_period_with_active_timers_neg)
+TEST_F(TC_REGISTRY_NO_FIXTURE, TC_st_mqtt_change_ping_period_with_active_timers_neg)
 {
     st_mqtt_client client;
     MQTTClient *c;
@@ -1080,7 +1080,7 @@ TEST(TC_st_mqtt_change_ping_period_with_active_timers_neg)
     st_mqtt_destroy(client);
 }
 
-TEST(TC_st_mqtt_disconnect_while_disconnected_neg)
+TEST_F(TC_REGISTRY_NO_FIXTURE, TC_st_mqtt_disconnect_while_disconnected_neg)
 {
     st_mqtt_client client;
     MQTTClient *c;
@@ -1102,7 +1102,7 @@ TEST(TC_st_mqtt_disconnect_while_disconnected_neg)
     st_mqtt_destroy(client);
 }
 
-TEST(TC_st_mqtt_publish_qos0_success_pos)
+TEST_F(TC_REGISTRY_NO_FIXTURE, TC_st_mqtt_publish_qos0_success_pos)
 {
     st_mqtt_client client;
     mqtt_observer_t obs;
@@ -1138,7 +1138,7 @@ static void _test_publish_async_cb(int chunk_id, st_mqtt_publish_result result, 
     }
 }
 
-TEST(TC_st_mqtt_publish_async_connected_pos)
+TEST_F(TC_REGISTRY_NO_FIXTURE, TC_st_mqtt_publish_async_connected_pos)
 {
     st_mqtt_client client;
     mqtt_observer_t obs;
@@ -1165,7 +1165,7 @@ TEST(TC_st_mqtt_publish_async_connected_pos)
     st_mqtt_destroy(client);
 }
 
-TEST(TC_st_mqtt_subscribe_write_failure_neg)
+TEST_F(TC_REGISTRY_NO_FIXTURE, TC_st_mqtt_subscribe_write_failure_neg)
 {
     st_mqtt_client client;
     mqtt_observer_t obs;
@@ -1187,7 +1187,7 @@ TEST(TC_st_mqtt_subscribe_write_failure_neg)
     st_mqtt_destroy(client);
 }
 
-TEST(TC_st_mqtt_unsubscribe_write_failure_neg)
+TEST_F(TC_REGISTRY_NO_FIXTURE, TC_st_mqtt_unsubscribe_write_failure_neg)
 {
     st_mqtt_client client;
     mqtt_observer_t obs;
@@ -1214,7 +1214,7 @@ TEST(TC_st_mqtt_unsubscribe_write_failure_neg)
  *   - receiving a PUBREL and the PUBREC->PUBCOMP recycling in
  *     _iot_mqtt_process_received_pubrec_pubrel
  */
-TEST(TC_st_mqtt_yield_publish_qos2_flow_neg)
+TEST_F(TC_REGISTRY_NO_FIXTURE, TC_st_mqtt_yield_publish_qos2_flow_neg)
 {
     st_mqtt_client client;
     mqtt_observer_t obs;
@@ -1259,7 +1259,7 @@ TEST(TC_st_mqtt_yield_publish_qos2_flow_neg)
     st_mqtt_destroy(client);
 }
 
-TEST(TC_st_mqtt_yield_pubrec_without_pending_neg)
+TEST_F(TC_REGISTRY_NO_FIXTURE, TC_st_mqtt_yield_pubrec_without_pending_neg)
 {
     st_mqtt_client client;
     mqtt_observer_t obs;
@@ -1281,7 +1281,7 @@ TEST(TC_st_mqtt_yield_pubrec_without_pending_neg)
     st_mqtt_destroy(client);
 }
 
-TEST(TC_st_mqtt_yield_pubrel_without_pending_neg)
+TEST_F(TC_REGISTRY_NO_FIXTURE, TC_st_mqtt_yield_pubrel_without_pending_neg)
 {
     st_mqtt_client client;
     mqtt_observer_t obs;
@@ -1299,7 +1299,7 @@ TEST(TC_st_mqtt_yield_pubrel_without_pending_neg)
     st_mqtt_destroy(client);
 }
 
-TEST(TC_st_mqtt_yield_pingresp_without_pending_neg)
+TEST_F(TC_REGISTRY_NO_FIXTURE, TC_st_mqtt_yield_pingresp_without_pending_neg)
 {
     st_mqtt_client client;
     mqtt_observer_t obs;
@@ -1317,7 +1317,7 @@ TEST(TC_st_mqtt_yield_pingresp_without_pending_neg)
     st_mqtt_destroy(client);
 }
 
-TEST(TC_st_mqtt_yield_puback_without_pending_neg)
+TEST_F(TC_REGISTRY_NO_FIXTURE, TC_st_mqtt_yield_puback_without_pending_neg)
 {
     st_mqtt_client client;
     mqtt_observer_t obs;
@@ -1335,7 +1335,7 @@ TEST(TC_st_mqtt_yield_puback_without_pending_neg)
     st_mqtt_destroy(client);
 }
 
-TEST(TC_st_mqtt_yield_unsuback_without_pending_neg)
+TEST_F(TC_REGISTRY_NO_FIXTURE, TC_st_mqtt_yield_unsuback_without_pending_neg)
 {
     st_mqtt_client client;
     mqtt_observer_t obs;
@@ -1353,7 +1353,7 @@ TEST(TC_st_mqtt_yield_unsuback_without_pending_neg)
     st_mqtt_destroy(client);
 }
 
-TEST(TC_st_mqtt_yield_pubcomp_without_pending_neg)
+TEST_F(TC_REGISTRY_NO_FIXTURE, TC_st_mqtt_yield_pubcomp_without_pending_neg)
 {
     st_mqtt_client client;
     mqtt_observer_t obs;
@@ -1371,7 +1371,7 @@ TEST(TC_st_mqtt_yield_pubcomp_without_pending_neg)
     st_mqtt_destroy(client);
 }
 
-TEST(TC_st_mqtt_connect_with_will_flag_pos)
+TEST_F(TC_REGISTRY_NO_FIXTURE, TC_st_mqtt_connect_with_will_flag_pos)
 {
     int err;
     st_mqtt_client client;
@@ -1409,7 +1409,7 @@ TEST(TC_st_mqtt_connect_with_will_flag_pos)
     st_mqtt_destroy(client);
 }
 
-TEST(TC_st_mqtt_connect_reserved_rc_pos)
+TEST_F(TC_REGISTRY_NO_FIXTURE, TC_st_mqtt_connect_reserved_rc_pos)
 {
     int err;
     st_mqtt_client client;
@@ -1440,7 +1440,7 @@ TEST(TC_st_mqtt_connect_reserved_rc_pos)
     st_mqtt_destroy(client);
 }
 
-TEST(TC_st_mqtt_publish_with_work_queue_neg)
+TEST_F(TC_REGISTRY_NO_FIXTURE, TC_st_mqtt_publish_with_work_queue_neg)
 {
     st_mqtt_client client;
     MQTTClient *c;
@@ -1489,7 +1489,7 @@ TEST(TC_st_mqtt_publish_with_work_queue_neg)
     iot_os_eventgroup_delete(work_signal);
 }
 
-TEST(TC_st_mqtt_publish_async_with_work_queue_neg)
+TEST_F(TC_REGISTRY_NO_FIXTURE, TC_st_mqtt_publish_async_with_work_queue_neg)
 {
     st_mqtt_client client;
     MQTTClient *c;
@@ -1533,7 +1533,7 @@ TEST(TC_st_mqtt_publish_async_with_work_queue_neg)
     iot_os_eventgroup_delete(work_signal);
 }
 
-TEST(TC_st_mqtt_subscribe_bad_magic_neg)
+TEST_F(TC_REGISTRY_NO_FIXTURE, TC_st_mqtt_subscribe_bad_magic_neg)
 {
     st_mqtt_client client;
     MQTTClient *c;
@@ -1556,7 +1556,7 @@ TEST(TC_st_mqtt_subscribe_bad_magic_neg)
     st_mqtt_destroy(client);
 }
 
-TEST(TC_st_mqtt_unsubscribe_bad_magic_neg)
+TEST_F(TC_REGISTRY_NO_FIXTURE, TC_st_mqtt_unsubscribe_bad_magic_neg)
 {
     st_mqtt_client client;
     MQTTClient *c;
@@ -1578,7 +1578,7 @@ TEST(TC_st_mqtt_unsubscribe_bad_magic_neg)
     st_mqtt_destroy(client);
 }
 
-TEST(TC_st_mqtt_disconnect_bad_magic_neg)
+TEST_F(TC_REGISTRY_NO_FIXTURE, TC_st_mqtt_disconnect_bad_magic_neg)
 {
     st_mqtt_client client;
     MQTTClient *c;
@@ -1599,7 +1599,7 @@ TEST(TC_st_mqtt_disconnect_bad_magic_neg)
     st_mqtt_destroy(client);
 }
 
-TEST(TC_st_mqtt_connect_bad_magic_neg)
+TEST_F(TC_REGISTRY_NO_FIXTURE, TC_st_mqtt_connect_bad_magic_neg)
 {
     int err;
     st_mqtt_client client;
@@ -1632,7 +1632,7 @@ TEST(TC_st_mqtt_connect_bad_magic_neg)
     st_mqtt_destroy(client);
 }
 
-TEST(TC_st_mqtt_disconnect_chunk_malloc_failure_neg)
+TEST_F(TC_REGISTRY_NO_FIXTURE, TC_st_mqtt_disconnect_chunk_malloc_failure_neg)
 {
     int err;
     st_mqtt_client client;
@@ -1651,7 +1651,7 @@ TEST(TC_st_mqtt_disconnect_chunk_malloc_failure_neg)
     st_mqtt_destroy(client);
 }
 
-TEST(TC_st_mqtt_subscribe_chunk_malloc_failure_neg)
+TEST_F(TC_REGISTRY_NO_FIXTURE, TC_st_mqtt_subscribe_chunk_malloc_failure_neg)
 {
     int err;
     st_mqtt_client client;
@@ -1673,7 +1673,7 @@ TEST(TC_st_mqtt_subscribe_chunk_malloc_failure_neg)
     st_mqtt_destroy(client);
 }
 
-TEST(TC_st_mqtt_unsubscribe_chunk_malloc_failure_neg)
+TEST_F(TC_REGISTRY_NO_FIXTURE, TC_st_mqtt_unsubscribe_chunk_malloc_failure_neg)
 {
     int err;
     st_mqtt_client client;
@@ -1693,7 +1693,7 @@ TEST(TC_st_mqtt_unsubscribe_chunk_malloc_failure_neg)
     st_mqtt_destroy(client);
 }
 
-TEST(TC_st_mqtt_publish_chunk_malloc_failure_neg)
+TEST_F(TC_REGISTRY_NO_FIXTURE, TC_st_mqtt_publish_chunk_malloc_failure_neg)
 {
     st_mqtt_client client;
     mqtt_observer_t obs;
@@ -1753,7 +1753,7 @@ static iot_mqtt_packet_chunk_t *_tc_make_chunk(int packet_type, unsigned int pac
     return chunk;
 }
 
-TEST(TC_STATIC_iot_mqtt_queue_pop_by_type_and_id_multi_entry_neg)
+TEST_F(TC_REGISTRY_NO_FIXTURE, TC_STATIC_iot_mqtt_queue_pop_by_type_and_id_multi_entry_neg)
 {
     iot_mqtt_packet_chunk_queue_t queue;
     iot_mqtt_packet_chunk_t *c1, *c2, *c3, *popped;
@@ -1795,7 +1795,7 @@ TEST(TC_STATIC_iot_mqtt_queue_pop_by_type_and_id_multi_entry_neg)
     _iot_mqtt_queue_destroy(&queue);
 }
 
-TEST(TC_STATIC_iot_mqtt_queue_pop_by_type_and_id_middle_entry_neg)
+TEST_F(TC_REGISTRY_NO_FIXTURE, TC_STATIC_iot_mqtt_queue_pop_by_type_and_id_middle_entry_neg)
 {
     iot_mqtt_packet_chunk_queue_t queue;
     iot_mqtt_packet_chunk_t *c1, *c2, *c3, *popped;
@@ -1825,7 +1825,7 @@ TEST(TC_STATIC_iot_mqtt_queue_pop_by_type_and_id_middle_entry_neg)
     _iot_mqtt_queue_destroy(&queue);
 }
 
-TEST(TC_STATIC_iot_mqtt_queue_pop_by_expiry_single_entry_neg)
+TEST_F(TC_REGISTRY_NO_FIXTURE, TC_STATIC_iot_mqtt_queue_pop_by_expiry_single_entry_neg)
 {
     iot_mqtt_packet_chunk_queue_t queue;
     iot_mqtt_packet_chunk_t *c1, *popped;
@@ -1860,7 +1860,7 @@ TEST(TC_STATIC_iot_mqtt_queue_pop_by_expiry_single_entry_neg)
     _iot_mqtt_queue_destroy(&queue);
 }
 
-TEST(TC_STATIC_iot_mqtt_queue_pop_by_expiry_multi_entry_neg)
+TEST_F(TC_REGISTRY_NO_FIXTURE, TC_STATIC_iot_mqtt_queue_pop_by_expiry_multi_entry_neg)
 {
     iot_mqtt_packet_chunk_queue_t queue;
     iot_mqtt_packet_chunk_t *c1, *c2, *c3, *popped;
@@ -1907,7 +1907,7 @@ TEST(TC_STATIC_iot_mqtt_queue_pop_by_expiry_multi_entry_neg)
     _iot_mqtt_queue_destroy(&queue);
 }
 
-TEST(TC_STATIC_iot_mqtt_queue_pop_by_expiry_tail_entry_neg)
+TEST_F(TC_REGISTRY_NO_FIXTURE, TC_STATIC_iot_mqtt_queue_pop_by_expiry_tail_entry_neg)
 {
     iot_mqtt_packet_chunk_queue_t queue;
     iot_mqtt_packet_chunk_t *c1, *c2, *popped;
@@ -1937,7 +1937,7 @@ TEST(TC_STATIC_iot_mqtt_queue_pop_by_expiry_tail_entry_neg)
     _iot_mqtt_queue_destroy(&queue);
 }
 
-TEST(TC_STATIC_iot_mqtt_notify_publish_failed_all_states_neg)
+TEST_F(TC_REGISTRY_NO_FIXTURE, TC_STATIC_iot_mqtt_notify_publish_failed_all_states_neg)
 {
     MQTTClient client = {0};
     iot_mqtt_packet_chunk_t chunk = {0};
@@ -1988,7 +1988,7 @@ TEST(TC_STATIC_iot_mqtt_notify_publish_failed_all_states_neg)
     assert_int_equal(_tc_publish_cb_count, 2);
 }
 
-TEST(TC_STATIC_iot_mqtt_notify_publish_success_pos)
+TEST_F(TC_REGISTRY_NO_FIXTURE, TC_STATIC_iot_mqtt_notify_publish_success_pos)
 {
     MQTTClient client = {0};
     iot_mqtt_packet_chunk_t chunk = {0};
@@ -2018,7 +2018,7 @@ TEST(TC_STATIC_iot_mqtt_notify_publish_success_pos)
     assert_int_equal(_tc_publish_cb_count, 1);
 }
 
-TEST(TC_STATIC_iot_mqtt_process_user_callback_publish_results_neg)
+TEST_F(TC_REGISTRY_NO_FIXTURE, TC_STATIC_iot_mqtt_process_user_callback_publish_results_neg)
 {
     MQTTClient client = {0};
     iot_mqtt_packet_chunk_t *chunk;
@@ -2061,7 +2061,7 @@ TEST(TC_STATIC_iot_mqtt_process_user_callback_publish_results_neg)
     _iot_mqtt_queue_destroy(&client.user_event_callback_queue);
 }
 
-TEST(TC_STATIC_iot_mqtt_process_user_callback_invalid_client_neg)
+TEST_F(TC_REGISTRY_NO_FIXTURE, TC_STATIC_iot_mqtt_process_user_callback_invalid_client_neg)
 {
     MQTTClient client = {0};
 
@@ -2108,7 +2108,7 @@ static void _tc_client_deinit(MQTTClient *client)
     iot_os_mutex_destroy(&client->write_lock);
 }
 
-TEST(TC_STATIC_iot_mqtt_check_alive_invalid_client_neg)
+TEST_F(TC_REGISTRY_NO_FIXTURE, TC_STATIC_iot_mqtt_check_alive_invalid_client_neg)
 {
     MQTTClient client = {0};
 
@@ -2122,7 +2122,7 @@ TEST(TC_STATIC_iot_mqtt_check_alive_invalid_client_neg)
     assert_int_equal(_iot_mqtt_check_alive(NULL), E_ST_MQTT_PING_FAIL);
 }
 
-TEST(TC_STATIC_iot_mqtt_check_alive_schedules_ping_neg)
+TEST_F(TC_REGISTRY_NO_FIXTURE, TC_STATIC_iot_mqtt_check_alive_schedules_ping_neg)
 {
     MQTTClient client;
     iot_mqtt_packet_chunk_t ping = {0};
@@ -2150,7 +2150,7 @@ TEST(TC_STATIC_iot_mqtt_check_alive_schedules_ping_neg)
     _tc_client_deinit(&client);
 }
 
-TEST(TC_STATIC_iot_mqtt_check_alive_ping_timeout_neg)
+TEST_F(TC_REGISTRY_NO_FIXTURE, TC_STATIC_iot_mqtt_check_alive_ping_timeout_neg)
 {
     MQTTClient client;
     iot_mqtt_packet_chunk_t ping = {0};
@@ -2176,7 +2176,7 @@ TEST(TC_STATIC_iot_mqtt_check_alive_ping_timeout_neg)
     _tc_client_deinit(&client);
 }
 
-TEST(TC_STATIC_iot_mqtt_check_alive_ping_in_flight_neg)
+TEST_F(TC_REGISTRY_NO_FIXTURE, TC_STATIC_iot_mqtt_check_alive_ping_in_flight_neg)
 {
     MQTTClient client;
     iot_mqtt_packet_chunk_t ping = {0};
@@ -2201,7 +2201,7 @@ TEST(TC_STATIC_iot_mqtt_check_alive_ping_in_flight_neg)
     _tc_client_deinit(&client);
 }
 
-TEST(TC_STATIC_iot_mqtt_check_alive_timers_active_neg)
+TEST_F(TC_REGISTRY_NO_FIXTURE, TC_STATIC_iot_mqtt_check_alive_timers_active_neg)
 {
     MQTTClient client;
     iot_mqtt_packet_chunk_t ping = {0};
@@ -2227,7 +2227,7 @@ TEST(TC_STATIC_iot_mqtt_check_alive_timers_active_neg)
     _tc_client_deinit(&client);
 }
 
-TEST(TC_STATIC_iot_mqtt_process_pending_packets_invalid_client_neg)
+TEST_F(TC_REGISTRY_NO_FIXTURE, TC_STATIC_iot_mqtt_process_pending_packets_invalid_client_neg)
 {
     MQTTClient client = {0};
 
@@ -2243,7 +2243,7 @@ TEST(TC_STATIC_iot_mqtt_process_pending_packets_invalid_client_neg)
     assert_true(true);
 }
 
-TEST(TC_STATIC_iot_mqtt_process_pending_packets_connect_timeout_neg)
+TEST_F(TC_REGISTRY_NO_FIXTURE, TC_STATIC_iot_mqtt_process_pending_packets_connect_timeout_neg)
 {
     MQTTClient client;
     iot_mqtt_packet_chunk_t *owned, *unowned;
@@ -2281,7 +2281,7 @@ TEST(TC_STATIC_iot_mqtt_process_pending_packets_connect_timeout_neg)
     _tc_client_deinit(&client);
 }
 
-TEST(TC_STATIC_iot_mqtt_process_pending_packets_publish_retry_neg)
+TEST_F(TC_REGISTRY_NO_FIXTURE, TC_STATIC_iot_mqtt_process_pending_packets_publish_retry_neg)
 {
     MQTTClient client;
     iot_mqtt_packet_chunk_t *chunk;
@@ -2310,7 +2310,7 @@ TEST(TC_STATIC_iot_mqtt_process_pending_packets_publish_retry_neg)
     _tc_client_deinit(&client);
 }
 
-TEST(TC_STATIC_iot_mqtt_process_pending_packets_publish_retry_exhausted_neg)
+TEST_F(TC_REGISTRY_NO_FIXTURE, TC_STATIC_iot_mqtt_process_pending_packets_publish_retry_exhausted_neg)
 {
     MQTTClient client;
     iot_mqtt_packet_chunk_t *owned, *unowned;

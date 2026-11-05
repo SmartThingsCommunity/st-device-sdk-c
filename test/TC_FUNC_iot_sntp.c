@@ -54,7 +54,7 @@ static void _expect_sntp_request(void)
     expect_value(__wrap_port_net_write, len, SNTP_PACKET_SIZE);
 }
 
-TEST(TC_iot_sntp_sync_success_pos)
+TEST_F(TC_REGISTRY_NO_FIXTURE, TC_iot_sntp_sync_success_pos)
 {
     iot_error_t err;
     unsigned char response[SNTP_PACKET_SIZE];
@@ -80,7 +80,7 @@ TEST(TC_iot_sntp_sync_success_pos)
     port_net_mock_reset_read_stream(NULL, 0);
 }
 
-TEST(TC_iot_sntp_sync_era1_rollover_success_pos)
+TEST_F(TC_REGISTRY_NO_FIXTURE, TC_iot_sntp_sync_era1_rollover_success_pos)
 {
     iot_error_t err;
     unsigned char response[SNTP_PACKET_SIZE];
@@ -106,7 +106,7 @@ TEST(TC_iot_sntp_sync_era1_rollover_success_pos)
     port_net_mock_reset_read_stream(NULL, 0);
 }
 
-TEST(TC_iot_sntp_sync_connect_failure_neg)
+TEST_F(TC_REGISTRY_NO_FIXTURE, TC_iot_sntp_sync_connect_failure_neg)
 {
     iot_error_t err;
 
@@ -124,7 +124,7 @@ TEST(TC_iot_sntp_sync_connect_failure_neg)
     assert_int_equal(err, IOT_ERROR_NET_SNTP);
 }
 
-TEST(TC_iot_sntp_sync_response_timeout_neg)
+TEST_F(TC_REGISTRY_NO_FIXTURE, TC_iot_sntp_sync_response_timeout_neg)
 {
     iot_error_t err;
 
@@ -143,7 +143,7 @@ TEST(TC_iot_sntp_sync_response_timeout_neg)
     assert_int_equal(err, IOT_ERROR_NET_SNTP);
 }
 
-TEST(TC_iot_sntp_sync_short_response_neg)
+TEST_F(TC_REGISTRY_NO_FIXTURE, TC_iot_sntp_sync_short_response_neg)
 {
     iot_error_t err;
     unsigned char response[SNTP_PACKET_SIZE];
@@ -167,7 +167,7 @@ TEST(TC_iot_sntp_sync_short_response_neg)
     port_net_mock_reset_read_stream(NULL, 0);
 }
 
-TEST(TC_iot_sntp_sync_invalid_mode_neg)
+TEST_F(TC_REGISTRY_NO_FIXTURE, TC_iot_sntp_sync_invalid_mode_neg)
 {
     iot_error_t err;
     unsigned char response[SNTP_PACKET_SIZE];
@@ -191,7 +191,7 @@ TEST(TC_iot_sntp_sync_invalid_mode_neg)
     port_net_mock_reset_read_stream(NULL, 0);
 }
 
-TEST(TC_iot_sntp_sync_kod_stratum_zero_neg)
+TEST_F(TC_REGISTRY_NO_FIXTURE, TC_iot_sntp_sync_kod_stratum_zero_neg)
 {
     iot_error_t err;
     unsigned char response[SNTP_PACKET_SIZE];
@@ -215,7 +215,7 @@ TEST(TC_iot_sntp_sync_kod_stratum_zero_neg)
     port_net_mock_reset_read_stream(NULL, 0);
 }
 
-TEST(TC_iot_sntp_sync_clock_unsynchronized_neg)
+TEST_F(TC_REGISTRY_NO_FIXTURE, TC_iot_sntp_sync_clock_unsynchronized_neg)
 {
     iot_error_t err;
     unsigned char response[SNTP_PACKET_SIZE];
@@ -240,7 +240,7 @@ TEST(TC_iot_sntp_sync_clock_unsynchronized_neg)
     port_net_mock_reset_read_stream(NULL, 0);
 }
 
-TEST(TC_iot_sntp_sync_set_time_failure_neg)
+TEST_F(TC_REGISTRY_NO_FIXTURE, TC_iot_sntp_sync_set_time_failure_neg)
 {
     iot_error_t err;
     unsigned char response[SNTP_PACKET_SIZE];

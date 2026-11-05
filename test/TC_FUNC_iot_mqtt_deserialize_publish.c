@@ -40,7 +40,7 @@ static int _build_publish(unsigned char *buf, int qos, unsigned char dup, unsign
 /*
  * Tests for MQTTDeserialize_publish
  */
-TEST(TC_MQTTDeserialize_publish_qos0_success_pos)
+TEST_F(TC_REGISTRY_NO_FIXTURE, TC_MQTTDeserialize_publish_qos0_success_pos)
 {
     unsigned char wire[128];
     unsigned char dup = 0xFF;
@@ -68,7 +68,7 @@ TEST(TC_MQTTDeserialize_publish_qos0_success_pos)
     assert_memory_equal(payload, "hi", 2);
 }
 
-TEST(TC_MQTTDeserialize_publish_qos1_has_packetid_neg)
+TEST_F(TC_REGISTRY_NO_FIXTURE, TC_MQTTDeserialize_publish_qos1_has_packetid_neg)
 {
     unsigned char wire[128];
     unsigned char dup = 0, retain = 0;
@@ -89,7 +89,7 @@ TEST(TC_MQTTDeserialize_publish_qos1_has_packetid_neg)
     assert_int_equal(packetid, 0x1234);
 }
 
-TEST(TC_MQTTDeserialize_publish_dup_and_retain_neg)
+TEST_F(TC_REGISTRY_NO_FIXTURE, TC_MQTTDeserialize_publish_dup_and_retain_neg)
 {
     unsigned char wire[128];
     unsigned char dup = 0, retain = 0;
@@ -110,7 +110,7 @@ TEST(TC_MQTTDeserialize_publish_dup_and_retain_neg)
     assert_int_equal(retain, 1);
 }
 
-TEST(TC_MQTTDeserialize_publish_empty_payload_neg)
+TEST_F(TC_REGISTRY_NO_FIXTURE, TC_MQTTDeserialize_publish_empty_payload_neg)
 {
     unsigned char wire[32];
     unsigned char dup = 0, retain = 0;
@@ -130,7 +130,7 @@ TEST(TC_MQTTDeserialize_publish_empty_payload_neg)
     assert_int_equal(payload_len, 0);
 }
 
-TEST(TC_MQTTDeserialize_publish_wrong_type_neg)
+TEST_F(TC_REGISTRY_NO_FIXTURE, TC_MQTTDeserialize_publish_wrong_type_neg)
 {
     unsigned char wire[] = {(unsigned char)(PUBACK << 4), 0x04, 0x00, 0x01, 0x00, 0x00};
     unsigned char dup = 0, retain = 0;
@@ -147,7 +147,7 @@ TEST(TC_MQTTDeserialize_publish_wrong_type_neg)
     assert_int_equal(rc, 0);
 }
 
-TEST(TC_MQTTDeserialize_publish_truncated_length_field_neg)
+TEST_F(TC_REGISTRY_NO_FIXTURE, TC_MQTTDeserialize_publish_truncated_length_field_neg)
 {
     /* header + only part of the length-field (need 2 bytes for readMQTTLenString) */
     unsigned char wire[] = {(unsigned char)(PUBLISH << 4), 0x01, 0x00};
@@ -175,7 +175,7 @@ TEST(TC_MQTTDeserialize_publish_truncated_length_field_neg)
 /*
  * Tests for MQTTDeserialize_ack
  */
-TEST(TC_MQTTDeserialize_ack_success_pos)
+TEST_F(TC_REGISTRY_NO_FIXTURE, TC_MQTTDeserialize_ack_success_pos)
 {
     unsigned char wire[] = {(unsigned char)(PUBACK << 4), 0x02, 0x12, 0x34};
     unsigned char packettype = 0, dup = 0;
@@ -189,7 +189,7 @@ TEST(TC_MQTTDeserialize_ack_success_pos)
     assert_int_equal(packetid, 0x1234);
 }
 
-TEST(TC_MQTTDeserialize_ack_pubrec_neg)
+TEST_F(TC_REGISTRY_NO_FIXTURE, TC_MQTTDeserialize_ack_pubrec_neg)
 {
     unsigned char wire[] = {(unsigned char)(PUBREC << 4), 0x02, 0x00, 0x42};
     unsigned char packettype = 0, dup = 0;
@@ -203,7 +203,7 @@ TEST(TC_MQTTDeserialize_ack_pubrec_neg)
     assert_int_equal(packetid, 0x42);
 }
 
-TEST(TC_MQTTDeserialize_ack_remlen_too_short_neg)
+TEST_F(TC_REGISTRY_NO_FIXTURE, TC_MQTTDeserialize_ack_remlen_too_short_neg)
 {
     unsigned char wire[] = {(unsigned char)(PUBACK << 4), 0x01, 0x00};
     unsigned char packettype = 0, dup = 0;
@@ -217,7 +217,7 @@ TEST(TC_MQTTDeserialize_ack_remlen_too_short_neg)
     assert_int_equal(packetid, 0xAAAA);
 }
 
-TEST(TC_MQTTDeserialize_ack_with_dup_bit_neg)
+TEST_F(TC_REGISTRY_NO_FIXTURE, TC_MQTTDeserialize_ack_with_dup_bit_neg)
 {
     unsigned char wire[] = {((unsigned char)PUBREL << 4) | 0x08 | 0x02, 0x02, 0x00, 0x10};
     unsigned char packettype = 0, dup = 0;
@@ -231,7 +231,7 @@ TEST(TC_MQTTDeserialize_ack_with_dup_bit_neg)
     assert_int_equal(dup, 1);
 }
 
-TEST(TC_MQTTDeserialize_publish_connect_type_neg)
+TEST_F(TC_REGISTRY_NO_FIXTURE, TC_MQTTDeserialize_publish_connect_type_neg)
 {
     unsigned char wire[] = {(unsigned char)(CONNECT << 4), 0x02, 0x00, 0x00};
     unsigned char dup = 0xFF, retain = 0xFF;
@@ -252,7 +252,7 @@ TEST(TC_MQTTDeserialize_publish_connect_type_neg)
     assert_int_equal(payload_len, -1);
 }
 
-TEST(TC_MQTTDeserialize_publish_qos3_reserved_neg)
+TEST_F(TC_REGISTRY_NO_FIXTURE, TC_MQTTDeserialize_publish_qos3_reserved_neg)
 {
     /* qos bits set to the reserved value 3 */
     unsigned char wire[] = {(unsigned char)(PUBLISH << 4) | 0x06, 0x06, 0x00, 0x01, 't', 0x12, 0x34};
@@ -272,7 +272,7 @@ TEST(TC_MQTTDeserialize_publish_qos3_reserved_neg)
     assert_int_equal(qos, 3);
 }
 
-TEST(TC_MQTTDeserialize_ack_zero_remlen_neg)
+TEST_F(TC_REGISTRY_NO_FIXTURE, TC_MQTTDeserialize_ack_zero_remlen_neg)
 {
     unsigned char wire[] = {(unsigned char)(PUBACK << 4), 0x00};
     unsigned char packettype = 0, dup = 0;

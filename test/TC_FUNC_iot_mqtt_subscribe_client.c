@@ -31,7 +31,7 @@ extern int MQTTSerialize_subscribeLength(int count, MQTTString topicFilters[]);
  */
 TEST_SUITE("iot_mqtt_subscribe_client.c");
 
-TEST(TC_MQTTSerialize_subscribeLength_zero_neg)
+TEST_F(TC_REGISTRY_NO_FIXTURE, TC_MQTTSerialize_subscribeLength_zero_neg)
 {
     int len;
     UNUSED(state);
@@ -42,7 +42,7 @@ TEST(TC_MQTTSerialize_subscribeLength_zero_neg)
     assert_int_equal(len, 2);
 }
 
-TEST(TC_MQTTSerialize_subscribeLength_single_topic_neg)
+TEST_F(TC_REGISTRY_NO_FIXTURE, TC_MQTTSerialize_subscribeLength_single_topic_neg)
 {
     MQTTString topic = MQTTString_initializer;
     int len;
@@ -54,7 +54,7 @@ TEST(TC_MQTTSerialize_subscribeLength_single_topic_neg)
     assert_int_equal(len, 8);
 }
 
-TEST(TC_MQTTSerialize_subscribe_size_single_topic_neg)
+TEST_F(TC_REGISTRY_NO_FIXTURE, TC_MQTTSerialize_subscribe_size_single_topic_neg)
 {
     MQTTString topic = MQTTString_initializer;
     int size;
@@ -69,7 +69,7 @@ TEST(TC_MQTTSerialize_subscribe_size_single_topic_neg)
 /*
  * Tests for MQTTSerialize_subscribe
  */
-TEST(TC_MQTTSerialize_subscribe_success_pos)
+TEST_F(TC_REGISTRY_NO_FIXTURE, TC_MQTTSerialize_subscribe_success_pos)
 {
     MQTTString topic = MQTTString_initializer;
     int requested_qos[] = {1};
@@ -86,7 +86,7 @@ TEST(TC_MQTTSerialize_subscribe_success_pos)
     assert_int_equal((buf[0] & 0xF0) >> 4, SUBSCRIBE);
 }
 
-TEST(TC_MQTTSerialize_subscribe_multi_topic_neg)
+TEST_F(TC_REGISTRY_NO_FIXTURE, TC_MQTTSerialize_subscribe_multi_topic_neg)
 {
     MQTTString topics[3];
     int requested_qos[] = {0, 1, 2};
@@ -104,7 +104,7 @@ TEST(TC_MQTTSerialize_subscribe_multi_topic_neg)
     assert_true(rc > 0);
 }
 
-TEST(TC_MQTTSerialize_subscribe_buffer_too_short_neg)
+TEST_F(TC_REGISTRY_NO_FIXTURE, TC_MQTTSerialize_subscribe_buffer_too_short_neg)
 {
     MQTTString topic = MQTTString_initializer;
     int requested_qos[] = {1};
@@ -119,7 +119,7 @@ TEST(TC_MQTTSerialize_subscribe_buffer_too_short_neg)
     assert_int_equal(rc, MQTTPACKET_BUFFER_TOO_SHORT);
 }
 
-TEST(TC_MQTTSerialize_subscribe_zero_buffer_length_neg)
+TEST_F(TC_REGISTRY_NO_FIXTURE, TC_MQTTSerialize_subscribe_zero_buffer_length_neg)
 {
     MQTTString topic = MQTTString_initializer;
     int requested_qos[] = {1};
@@ -134,7 +134,7 @@ TEST(TC_MQTTSerialize_subscribe_zero_buffer_length_neg)
     assert_int_equal(rc, MQTTPACKET_BUFFER_TOO_SHORT);
 }
 
-TEST(TC_MQTTSerialize_subscribe_dup_flag_neg)
+TEST_F(TC_REGISTRY_NO_FIXTURE, TC_MQTTSerialize_subscribe_dup_flag_neg)
 {
     MQTTString topic = MQTTString_initializer;
     int requested_qos[] = {1};
@@ -168,7 +168,7 @@ static int _suback_build(unsigned char *buf, unsigned short packetid, int count,
     return ptr - buf;
 }
 
-TEST(TC_MQTTDeserialize_suback_success_pos)
+TEST_F(TC_REGISTRY_NO_FIXTURE, TC_MQTTDeserialize_suback_success_pos)
 {
     unsigned char buf[16] = {0};
     unsigned char granted_qos_in[] = {0, 1, 2};
@@ -191,7 +191,7 @@ TEST(TC_MQTTDeserialize_suback_success_pos)
     assert_int_equal(granted_qos_out[2], 2);
 }
 
-TEST(TC_MQTTDeserialize_suback_wrong_type_neg)
+TEST_F(TC_REGISTRY_NO_FIXTURE, TC_MQTTDeserialize_suback_wrong_type_neg)
 {
     unsigned char buf[] = {(unsigned char)(PUBACK << 4), 0x04, 0x00, 0x01, 0x00, 0x00};
     unsigned short packetid = 0;
@@ -206,7 +206,7 @@ TEST(TC_MQTTDeserialize_suback_wrong_type_neg)
     assert_int_equal(rc, 0);
 }
 
-TEST(TC_MQTTDeserialize_suback_truncated_neg)
+TEST_F(TC_REGISTRY_NO_FIXTURE, TC_MQTTDeserialize_suback_truncated_neg)
 {
     /* Claims rem_len of 1 which is too short to hold the packet id (2 bytes). */
     unsigned char buf[] = {(unsigned char)(SUBACK << 4), 0x01, 0x00};
@@ -225,7 +225,7 @@ TEST(TC_MQTTDeserialize_suback_truncated_neg)
     assert_int_equal(count, 0);
 }
 
-TEST(TC_MQTTDeserialize_suback_too_many_qos_neg)
+TEST_F(TC_REGISTRY_NO_FIXTURE, TC_MQTTDeserialize_suback_too_many_qos_neg)
 {
     unsigned char buf[16] = {0};
     unsigned char granted_qos_in[] = {0, 1, 2, 0};
@@ -243,7 +243,7 @@ TEST(TC_MQTTDeserialize_suback_too_many_qos_neg)
     assert_int_equal(rc, -1);
 }
 
-TEST(TC_MQTTDeserialize_suback_zero_count_neg)
+TEST_F(TC_REGISTRY_NO_FIXTURE, TC_MQTTDeserialize_suback_zero_count_neg)
 {
     unsigned char buf[16] = {0};
     int granted_qos_out[4] = {0};

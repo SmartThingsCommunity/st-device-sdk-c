@@ -56,7 +56,7 @@ static void write_log_lines(int number_of_lines)
     }
 }
 
-TEST(TC_iot_dump_create_dump_state_failure_neg)
+TEST_F(TC_REGISTRY_NO_FIXTURE, TC_iot_dump_create_dump_state_failure_neg)
 {
     struct iot_context *context = NULL;
     char *buf = NULL;
@@ -160,7 +160,7 @@ TEST_F(tc_dump_log, TC_iot_dump_create_dump_state_neg)
     assert_true(true);
 }
 
-TEST(TC_iot_dump_log_neg)
+TEST_F(TC_REGISTRY_NO_FIXTURE, TC_iot_dump_log_neg)
 {
     iot_dump_log(IOT_DEBUG_LEVEL_ERROR, 0xffffffff, 0, 0);
     iot_dump_log(IOT_DEBUG_LEVEL_WARN, 0xffffffff, 0, 0);
@@ -201,7 +201,7 @@ static int _tc_dump_log_teardown(void **state)
     return 0;
 }
 
-TEST(TC_iot_dump_create_log_dump_base64_min_size_neg)
+TEST_F(TC_REGISTRY_NO_FIXTURE, TC_iot_dump_create_log_dump_base64_min_size_neg)
 {
     char *buf = (char *)0x1;
     size_t allocated_size = 0xdeadbeef;
@@ -217,7 +217,7 @@ TEST(TC_iot_dump_create_log_dump_base64_min_size_neg)
     assert_int_equal(err, IOT_ERROR_BAD_REQ);
 }
 
-TEST(TC_iot_dump_create_log_dump_raw_min_size_neg)
+TEST_F(TC_REGISTRY_NO_FIXTURE, TC_iot_dump_create_log_dump_raw_min_size_neg)
 {
     char *buf = (char *)0x1;
     size_t allocated_size = 0xdeadbeef;
@@ -233,7 +233,7 @@ TEST(TC_iot_dump_create_log_dump_raw_min_size_neg)
     assert_int_equal(err, IOT_ERROR_BAD_REQ);
 }
 
-TEST(TC_iot_dump_create_log_dump_output_cleared_on_failure_neg)
+TEST_F(TC_REGISTRY_NO_FIXTURE, TC_iot_dump_create_log_dump_output_cleared_on_failure_neg)
 {
     char *buf = (char *)0x1;
     size_t allocated_size = 0xdeadbeef;
@@ -256,7 +256,7 @@ TEST(TC_iot_dump_create_log_dump_output_cleared_on_failure_neg)
     assert_int_equal(allocated_size, 0);
 }
 
-TEST(TC_iot_dump_create_log_dump_dip_not_dropped_neg)
+TEST_F(TC_REGISTRY_NO_FIXTURE, TC_iot_dump_create_log_dump_dip_not_dropped_neg)
 {
     struct iot_context *context;
     struct iot_dip_data dip;

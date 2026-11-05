@@ -39,7 +39,7 @@ static const size_t b64_decode_len_input[] = {2,  3,  4,  5,  6,  7,  8,  9,  10
 static const size_t b64_decode_len_required[] = {3,  3,  3,  6,  6,  6,  6,  9,  9,  9,  9,  12, 12, 12, 12,
                                                  15, 15, 15, 15, 18, 18, 18, 18, 21, 21, 21, 21, 24, 24, 24};
 
-TEST(TC_iot_security_base64_buffer_size_neg)
+TEST_F(TC_REGISTRY_NO_FIXTURE, TC_iot_security_base64_buffer_size_neg)
 {
     const size_t *input;
     const size_t *expected;
@@ -76,7 +76,7 @@ static const unsigned char *sample_b64url = "YWJ-YzEyMyE_JComKCknLT1AfmFiYw==";
 
 typedef iot_error_t (*iot_security_base64_func)(const unsigned char *, size_t, unsigned char *, size_t, size_t *);
 
-TEST(TC_iot_security_base64_invalid_parameter_neg)
+TEST_F(TC_REGISTRY_NO_FIXTURE, TC_iot_security_base64_invalid_parameter_neg)
 {
     iot_error_t err;
     unsigned char *src;
@@ -154,7 +154,7 @@ TEST(TC_iot_security_base64_invalid_parameter_neg)
     assert_int_equal(err, IOT_ERROR_SECURITY_BASE64_URL_DECODE);
 }
 
-TEST(TC_iot_security_base64_encode_success_pos)
+TEST_F(TC_REGISTRY_NO_FIXTURE, TC_iot_security_base64_encode_success_pos)
 {
     iot_error_t err;
     unsigned char *src;
@@ -181,7 +181,7 @@ TEST(TC_iot_security_base64_encode_success_pos)
     free(dst);
 }
 
-TEST(TC_iot_security_base64_decode_failure_neg)
+TEST_F(TC_REGISTRY_NO_FIXTURE, TC_iot_security_base64_decode_failure_neg)
 {
     iot_error_t err;
     unsigned char *src;
@@ -201,7 +201,7 @@ TEST(TC_iot_security_base64_decode_failure_neg)
     assert_int_not_equal(err, IOT_ERROR_NONE);
 }
 
-TEST(TC_iot_security_base64_decode_success_pos)
+TEST_F(TC_REGISTRY_NO_FIXTURE, TC_iot_security_base64_decode_success_pos)
 {
     iot_error_t err;
     unsigned char *src;
@@ -228,7 +228,7 @@ TEST(TC_iot_security_base64_decode_success_pos)
     free(dst);
 }
 
-TEST(TC_iot_security_base64_encode_urlsafe_success_pos)
+TEST_F(TC_REGISTRY_NO_FIXTURE, TC_iot_security_base64_encode_urlsafe_success_pos)
 {
     iot_error_t err;
     unsigned char *src;
@@ -255,7 +255,7 @@ TEST(TC_iot_security_base64_encode_urlsafe_success_pos)
     free(dst);
 }
 
-TEST(TC_iot_security_base64_decode_urlsafe_alloc_failure_neg)
+TEST_F(TC_REGISTRY_NO_FIXTURE, TC_iot_security_base64_decode_urlsafe_alloc_failure_neg)
 {
     iot_error_t err;
     unsigned char *src;
@@ -286,7 +286,7 @@ TEST(TC_iot_security_base64_decode_urlsafe_alloc_failure_neg)
     do_not_use_mock_iot_os_malloc_failure();
 }
 
-TEST(TC_iot_security_base64_decode_urlsafe_failure_neg)
+TEST_F(TC_REGISTRY_NO_FIXTURE, TC_iot_security_base64_decode_urlsafe_failure_neg)
 {
     iot_error_t err;
     unsigned char *src;
@@ -306,7 +306,7 @@ TEST(TC_iot_security_base64_decode_urlsafe_failure_neg)
     assert_int_not_equal(err, IOT_ERROR_NONE);
 }
 
-TEST(TC_iot_security_base64_decode_urlsafe_success_pos)
+TEST_F(TC_REGISTRY_NO_FIXTURE, TC_iot_security_base64_decode_urlsafe_success_pos)
 {
     iot_error_t err;
     unsigned char *src;
@@ -345,7 +345,7 @@ const static unsigned char sample_hash[] = {
     0x21, 0x27, 0x83, 0x89, 0xfb, 0x8d, 0x05, 0x75, 0xe2, 0x17, 0xce, 0xfc, 0x62, 0x3b, 0x35, 0xd9,
 };
 
-TEST(TC_iot_security_sha256_failure_neg)
+TEST_F(TC_REGISTRY_NO_FIXTURE, TC_iot_security_sha256_failure_neg)
 {
     iot_error_t err;
     const unsigned char *input;
@@ -387,7 +387,7 @@ TEST(TC_iot_security_sha256_failure_neg)
     assert_int_not_equal(err, IOT_ERROR_NONE);
 }
 
-TEST(TC_iot_security_sha256_success_pos)
+TEST_F(TC_REGISTRY_NO_FIXTURE, TC_iot_security_sha256_success_pos)
 {
     iot_error_t err;
     const unsigned char *input;
@@ -406,7 +406,7 @@ TEST(TC_iot_security_sha256_success_pos)
 /* _base64_encode is not exposed through the public header but is not static. */
 extern int _base64_encode(unsigned char *dst, size_t dlen, size_t *olen, const unsigned char *src, size_t slen);
 
-TEST(TC_iot_security_base64_decode_trailing_spaces_neg)
+TEST_F(TC_REGISTRY_NO_FIXTURE, TC_iot_security_base64_decode_trailing_spaces_neg)
 {
     iot_error_t err;
     unsigned char dst[16] = {0};
@@ -422,7 +422,7 @@ TEST(TC_iot_security_base64_decode_trailing_spaces_neg)
     assert_memory_equal(dst, "abc", 3);
 }
 
-TEST(TC_iot_security_base64_decode_embedded_crlf_neg)
+TEST_F(TC_REGISTRY_NO_FIXTURE, TC_iot_security_base64_decode_embedded_crlf_neg)
 {
     iot_error_t err;
     unsigned char dst[16] = {0};
@@ -438,7 +438,7 @@ TEST(TC_iot_security_base64_decode_embedded_crlf_neg)
     assert_memory_equal(dst, "abcabc", 6);
 }
 
-TEST(TC_iot_security_base64_decode_embedded_lf_neg)
+TEST_F(TC_REGISTRY_NO_FIXTURE, TC_iot_security_base64_decode_embedded_lf_neg)
 {
     iot_error_t err;
     unsigned char dst[16] = {0};
@@ -454,7 +454,7 @@ TEST(TC_iot_security_base64_decode_embedded_lf_neg)
     assert_memory_equal(dst, "abcabc", 6);
 }
 
-TEST(TC_iot_security_base64_decode_space_inside_line_neg)
+TEST_F(TC_REGISTRY_NO_FIXTURE, TC_iot_security_base64_decode_space_inside_line_neg)
 {
     iot_error_t err;
     unsigned char dst[16] = {0};
@@ -468,7 +468,7 @@ TEST(TC_iot_security_base64_decode_space_inside_line_neg)
     assert_int_equal(err, IOT_ERROR_SECURITY_BASE64_DECODE);
 }
 
-TEST(TC_iot_security_base64_decode_too_many_padding_neg)
+TEST_F(TC_REGISTRY_NO_FIXTURE, TC_iot_security_base64_decode_too_many_padding_neg)
 {
     iot_error_t err;
     unsigned char dst[16] = {0};
@@ -482,7 +482,7 @@ TEST(TC_iot_security_base64_decode_too_many_padding_neg)
     assert_int_equal(err, IOT_ERROR_SECURITY_BASE64_DECODE);
 }
 
-TEST(TC_iot_security_base64_decode_data_after_padding_neg)
+TEST_F(TC_REGISTRY_NO_FIXTURE, TC_iot_security_base64_decode_data_after_padding_neg)
 {
     iot_error_t err;
     unsigned char dst[16] = {0};
@@ -496,7 +496,7 @@ TEST(TC_iot_security_base64_decode_data_after_padding_neg)
     assert_int_equal(err, IOT_ERROR_SECURITY_BASE64_DECODE);
 }
 
-TEST(TC_iot_security_base64_decode_only_newlines_neg)
+TEST_F(TC_REGISTRY_NO_FIXTURE, TC_iot_security_base64_decode_only_newlines_neg)
 {
     iot_error_t err;
     unsigned char dst[16];
@@ -513,7 +513,7 @@ TEST(TC_iot_security_base64_decode_only_newlines_neg)
     assert_int_equal(dst[0], 0xA5);
 }
 
-TEST(TC_iot_security_base64_decode_non_base64_char_neg)
+TEST_F(TC_REGISTRY_NO_FIXTURE, TC_iot_security_base64_decode_non_base64_char_neg)
 {
     iot_error_t err;
     unsigned char dst[16] = {0};
@@ -527,7 +527,7 @@ TEST(TC_iot_security_base64_decode_non_base64_char_neg)
     assert_int_equal(err, IOT_ERROR_SECURITY_BASE64_DECODE);
 }
 
-TEST(TC_iot_security_base64_decode_high_bit_char_neg)
+TEST_F(TC_REGISTRY_NO_FIXTURE, TC_iot_security_base64_decode_high_bit_char_neg)
 {
     iot_error_t err;
     unsigned char src[] = {'Y', 'W', 'J', 0xFF};
@@ -541,7 +541,7 @@ TEST(TC_iot_security_base64_decode_high_bit_char_neg)
     assert_int_equal(err, IOT_ERROR_SECURITY_BASE64_DECODE);
 }
 
-TEST(TC_iot_security_base64_decode_urlsafe_rejects_standard_alphabet_neg)
+TEST_F(TC_REGISTRY_NO_FIXTURE, TC_iot_security_base64_decode_urlsafe_rejects_standard_alphabet_neg)
 {
     iot_error_t err;
     unsigned char dst[64] = {0};
@@ -554,7 +554,7 @@ TEST(TC_iot_security_base64_decode_urlsafe_rejects_standard_alphabet_neg)
     assert_int_equal(err, IOT_ERROR_SECURITY_BASE64_DECODE);
 }
 
-TEST(TC_iot_security_base64_encode_zero_source_len_neg)
+TEST_F(TC_REGISTRY_NO_FIXTURE, TC_iot_security_base64_encode_zero_source_len_neg)
 {
     unsigned char dst[16];
     size_t out_len = 0xdead;
@@ -569,7 +569,7 @@ TEST(TC_iot_security_base64_encode_zero_source_len_neg)
     assert_int_equal(dst[0], 0xA5);
 }
 
-TEST(TC_iot_security_base64_encode_source_len_overflow_neg)
+TEST_F(TC_REGISTRY_NO_FIXTURE, TC_iot_security_base64_encode_source_len_overflow_neg)
 {
     unsigned char dst[16];
     size_t out_len = 0;
@@ -584,7 +584,7 @@ TEST(TC_iot_security_base64_encode_source_len_overflow_neg)
     assert_int_equal(dst[0], 0xA5);
 }
 
-TEST(TC_iot_security_base64_encode_null_destination_neg)
+TEST_F(TC_REGISTRY_NO_FIXTURE, TC_iot_security_base64_encode_null_destination_neg)
 {
     size_t out_len = 0;
     int ret;
@@ -596,7 +596,7 @@ TEST(TC_iot_security_base64_encode_null_destination_neg)
     assert_int_equal(out_len, 5);
 }
 
-TEST(TC_iot_security_base64_encode_urlsafe_has_no_standard_chars_neg)
+TEST_F(TC_REGISTRY_NO_FIXTURE, TC_iot_security_base64_encode_urlsafe_has_no_standard_chars_neg)
 {
     iot_error_t err;
     unsigned char dst[64] = {0};
@@ -614,7 +614,7 @@ TEST(TC_iot_security_base64_encode_urlsafe_has_no_standard_chars_neg)
     }
 }
 
-TEST(TC_iot_security_sha512_null_input_neg)
+TEST_F(TC_REGISTRY_NO_FIXTURE, TC_iot_security_sha512_null_input_neg)
 {
     unsigned char hash[IOT_SECURITY_SHA512_LEN] = {0};
 
@@ -624,7 +624,7 @@ TEST(TC_iot_security_sha512_null_input_neg)
     assert_int_equal(err, IOT_ERROR_SECURITY_INVALID_ARGS);
 }
 
-TEST(TC_iot_security_sha512_zero_input_len_neg)
+TEST_F(TC_REGISTRY_NO_FIXTURE, TC_iot_security_sha512_zero_input_len_neg)
 {
     unsigned char hash[IOT_SECURITY_SHA512_LEN] = {0};
 
@@ -634,7 +634,7 @@ TEST(TC_iot_security_sha512_zero_input_len_neg)
     assert_int_equal(err, IOT_ERROR_SECURITY_INVALID_ARGS);
 }
 
-TEST(TC_iot_security_sha512_null_output_neg)
+TEST_F(TC_REGISTRY_NO_FIXTURE, TC_iot_security_sha512_null_output_neg)
 {
     // When
     iot_error_t err = iot_security_sha512(sample_input, sizeof(sample_input), NULL, IOT_SECURITY_SHA512_LEN);
@@ -642,7 +642,7 @@ TEST(TC_iot_security_sha512_null_output_neg)
     assert_int_equal(err, IOT_ERROR_SECURITY_INVALID_ARGS);
 }
 
-TEST(TC_iot_security_sha512_short_output_neg)
+TEST_F(TC_REGISTRY_NO_FIXTURE, TC_iot_security_sha512_short_output_neg)
 {
     unsigned char hash[IOT_SECURITY_SHA512_LEN] = {0};
 
@@ -656,7 +656,7 @@ TEST(TC_iot_security_sha512_short_output_neg)
     }
 }
 
-TEST(TC_iot_security_sha256_single_bit_change_neg)
+TEST_F(TC_REGISTRY_NO_FIXTURE, TC_iot_security_sha256_single_bit_change_neg)
 {
     iot_error_t err;
     unsigned char input[sizeof(sample_input)];

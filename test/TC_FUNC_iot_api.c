@@ -1167,7 +1167,7 @@ TEST_F(iot_api_memleak, TC_iot_state_timeout_change_success_neg)
     free(context);
 }
 
-TEST(TC_iot_set_st_ecode_invalid_parameters_neg)
+TEST_F(TC_REGISTRY_NO_FIXTURE, TC_iot_set_st_ecode_invalid_parameters_neg)
 {
     iot_error_t err = IOT_ERROR_NONE;
     struct iot_context *context;

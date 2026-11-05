@@ -32,7 +32,7 @@
 
 TEST_SUITE("iot_security_common.c");
 
-TEST(TC_iot_security_init_malloc_failure_neg)
+TEST_F(TC_REGISTRY_NO_FIXTURE, TC_iot_security_init_malloc_failure_neg)
 {
     iot_security_context_t *context;
 
@@ -49,7 +49,7 @@ TEST(TC_iot_security_init_malloc_failure_neg)
     do_not_use_mock_iot_os_malloc_failure();
 }
 
-TEST(TC_iot_security_init_success_pos)
+TEST_F(TC_REGISTRY_NO_FIXTURE, TC_iot_security_init_success_pos)
 {
     iot_security_context_t *context;
 
@@ -66,7 +66,7 @@ TEST(TC_iot_security_init_success_pos)
     set_mock_detect_memory_leak(false);
 }
 
-TEST(TC_iot_security_deinit_null_parameters_neg)
+TEST_F(TC_REGISTRY_NO_FIXTURE, TC_iot_security_deinit_null_parameters_neg)
 {
     iot_error_t err;
 
@@ -76,7 +76,7 @@ TEST(TC_iot_security_deinit_null_parameters_neg)
     assert_int_equal(err, IOT_ERROR_SECURITY_CONTEXT_NULL);
 }
 
-TEST(TC_iot_security_deinit_success_pos)
+TEST_F(TC_REGISTRY_NO_FIXTURE, TC_iot_security_deinit_success_pos)
 {
     iot_error_t err;
     iot_security_context_t *context;
@@ -94,7 +94,7 @@ TEST(TC_iot_security_deinit_success_pos)
     set_mock_detect_memory_leak(false);
 }
 
-TEST(TC_iot_security_check_context_is_valid_null_parameters_neg)
+TEST_F(TC_REGISTRY_NO_FIXTURE, TC_iot_security_check_context_is_valid_null_parameters_neg)
 {
     iot_error_t err;
 
@@ -104,7 +104,7 @@ TEST(TC_iot_security_check_context_is_valid_null_parameters_neg)
     assert_int_equal(err, IOT_ERROR_SECURITY_CONTEXT_NULL);
 }
 
-TEST(TC_iot_security_check_context_is_valid_success_pos)
+TEST_F(TC_REGISTRY_NO_FIXTURE, TC_iot_security_check_context_is_valid_success_pos)
 {
     iot_error_t err;
     iot_security_context_t *context;
@@ -125,7 +125,7 @@ TEST(TC_iot_security_check_context_is_valid_success_pos)
     set_mock_detect_memory_leak(false);
 }
 
-TEST(TC_iot_security_check_backend_funcs_entry_is_valid_failure_neg)
+TEST_F(TC_REGISTRY_NO_FIXTURE, TC_iot_security_check_backend_funcs_entry_is_valid_failure_neg)
 {
     iot_error_t err;
     iot_security_context_t context = {0};
@@ -149,7 +149,7 @@ TEST(TC_iot_security_check_backend_funcs_entry_is_valid_failure_neg)
     assert_int_equal(err, IOT_ERROR_SECURITY_BE_FUNCS_ENTRY_NULL);
 }
 
-TEST(TC_iot_security_check_backend_funcs_entry_is_valid_success_pos)
+TEST_F(TC_REGISTRY_NO_FIXTURE, TC_iot_security_check_backend_funcs_entry_is_valid_success_pos)
 {
     iot_error_t err;
     iot_security_context_t *context;
@@ -174,7 +174,7 @@ TEST(TC_iot_security_check_backend_funcs_entry_is_valid_success_pos)
  * Negative tests for iot_security_init() / iot_security_deinit()
  */
 
-TEST(TC_iot_security_init_context_malloc_failure_neg)
+TEST_F(TC_REGISTRY_NO_FIXTURE, TC_iot_security_init_context_malloc_failure_neg)
 {
     iot_security_context_t *context;
 
@@ -189,7 +189,7 @@ TEST(TC_iot_security_init_context_malloc_failure_neg)
     do_not_use_mock_iot_os_malloc_failure();
 }
 
-TEST(TC_iot_security_init_be_context_malloc_failure_neg)
+TEST_F(TC_REGISTRY_NO_FIXTURE, TC_iot_security_init_be_context_malloc_failure_neg)
 {
     iot_security_context_t *context;
 
@@ -204,7 +204,7 @@ TEST(TC_iot_security_init_be_context_malloc_failure_neg)
     do_not_use_mock_iot_os_malloc_failure();
 }
 
-TEST(TC_iot_security_deinit_be_context_null_neg)
+TEST_F(TC_REGISTRY_NO_FIXTURE, TC_iot_security_deinit_be_context_null_neg)
 {
     iot_error_t err;
     iot_security_context_t context = {0};
@@ -216,7 +216,7 @@ TEST(TC_iot_security_deinit_be_context_null_neg)
     assert_int_equal(err, IOT_ERROR_SECURITY_INVALID_ARGS);
 }
 
-TEST(TC_iot_security_deinit_sub_system_dangling_neg)
+TEST_F(TC_REGISTRY_NO_FIXTURE, TC_iot_security_deinit_sub_system_dangling_neg)
 {
     iot_error_t err;
     iot_security_context_t context = {0};
@@ -248,7 +248,7 @@ static iot_security_context_t *_no_funcs_context(iot_security_be_context_t *be_c
     return &context;
 }
 
-TEST(TC_iot_security_check_backend_funcs_entry_context_null_neg)
+TEST_F(TC_REGISTRY_NO_FIXTURE, TC_iot_security_check_backend_funcs_entry_context_null_neg)
 {
     // When
     iot_error_t err = iot_security_check_backend_funcs_entry_is_valid(NULL);
@@ -256,7 +256,7 @@ TEST(TC_iot_security_check_backend_funcs_entry_context_null_neg)
     assert_int_equal(err, IOT_ERROR_SECURITY_CONTEXT_NULL);
 }
 
-TEST(TC_iot_security_check_backend_funcs_entry_be_context_null_neg)
+TEST_F(TC_REGISTRY_NO_FIXTURE, TC_iot_security_check_backend_funcs_entry_be_context_null_neg)
 {
     iot_security_context_t context = {0};
 
@@ -266,7 +266,7 @@ TEST(TC_iot_security_check_backend_funcs_entry_be_context_null_neg)
     assert_int_equal(err, IOT_ERROR_SECURITY_BE_CONTEXT_NULL);
 }
 
-TEST(TC_iot_security_check_backend_funcs_entry_funcs_null_neg)
+TEST_F(TC_REGISTRY_NO_FIXTURE, TC_iot_security_check_backend_funcs_entry_funcs_null_neg)
 {
     iot_security_be_context_t be_context;
     iot_security_context_t *context = _no_funcs_context(&be_context);
@@ -277,7 +277,7 @@ TEST(TC_iot_security_check_backend_funcs_entry_funcs_null_neg)
     assert_int_equal(err, IOT_ERROR_SECURITY_BE_FUNCS_ENTRY_NULL);
 }
 
-TEST(TC_iot_security_check_backend_funcs_entry_via_storage_read_neg)
+TEST_F(TC_REGISTRY_NO_FIXTURE, TC_iot_security_check_backend_funcs_entry_via_storage_read_neg)
 {
     iot_security_be_context_t be_context;
     iot_security_context_t *context = _no_funcs_context(&be_context);
@@ -289,7 +289,7 @@ TEST(TC_iot_security_check_backend_funcs_entry_via_storage_read_neg)
     assert_int_equal(err, IOT_ERROR_SECURITY_BE_FUNCS_ENTRY_NULL);
 }
 
-TEST(TC_iot_security_check_backend_funcs_entry_via_storage_write_neg)
+TEST_F(TC_REGISTRY_NO_FIXTURE, TC_iot_security_check_backend_funcs_entry_via_storage_write_neg)
 {
     iot_security_be_context_t be_context;
     iot_security_context_t *context = _no_funcs_context(&be_context);
@@ -302,7 +302,7 @@ TEST(TC_iot_security_check_backend_funcs_entry_via_storage_write_neg)
     assert_int_equal(err, IOT_ERROR_SECURITY_BE_FUNCS_ENTRY_NULL);
 }
 
-TEST(TC_iot_security_check_backend_funcs_entry_via_storage_remove_neg)
+TEST_F(TC_REGISTRY_NO_FIXTURE, TC_iot_security_check_backend_funcs_entry_via_storage_remove_neg)
 {
     iot_security_be_context_t be_context;
     iot_security_context_t *context = _no_funcs_context(&be_context);
@@ -313,7 +313,7 @@ TEST(TC_iot_security_check_backend_funcs_entry_via_storage_remove_neg)
     assert_int_equal(err, IOT_ERROR_SECURITY_BE_FUNCS_ENTRY_NULL);
 }
 
-TEST(TC_iot_security_check_backend_funcs_entry_via_ecdh_set_params_neg)
+TEST_F(TC_REGISTRY_NO_FIXTURE, TC_iot_security_check_backend_funcs_entry_via_ecdh_set_params_neg)
 {
     iot_security_be_context_t be_context;
     iot_security_context_t *context = _no_funcs_context(&be_context);
@@ -325,7 +325,7 @@ TEST(TC_iot_security_check_backend_funcs_entry_via_ecdh_set_params_neg)
     assert_int_equal(err, IOT_ERROR_SECURITY_BE_FUNCS_ENTRY_NULL);
 }
 
-TEST(TC_iot_security_check_backend_funcs_entry_via_ecdh_compute_neg)
+TEST_F(TC_REGISTRY_NO_FIXTURE, TC_iot_security_check_backend_funcs_entry_via_ecdh_compute_neg)
 {
     iot_security_be_context_t be_context;
     iot_security_context_t *context = _no_funcs_context(&be_context);
@@ -337,7 +337,7 @@ TEST(TC_iot_security_check_backend_funcs_entry_via_ecdh_compute_neg)
     assert_int_equal(err, IOT_ERROR_SECURITY_BE_FUNCS_ENTRY_NULL);
 }
 
-TEST(TC_iot_security_check_backend_funcs_entry_via_pk_get_key_type_neg)
+TEST_F(TC_REGISTRY_NO_FIXTURE, TC_iot_security_check_backend_funcs_entry_via_pk_get_key_type_neg)
 {
     iot_security_be_context_t be_context;
     iot_security_context_t *context = _no_funcs_context(&be_context);
@@ -349,7 +349,7 @@ TEST(TC_iot_security_check_backend_funcs_entry_via_pk_get_key_type_neg)
     assert_int_equal(err, IOT_ERROR_SECURITY_BE_FUNCS_ENTRY_NULL);
 }
 
-TEST(TC_iot_security_check_backend_funcs_entry_via_pk_sign_neg)
+TEST_F(TC_REGISTRY_NO_FIXTURE, TC_iot_security_check_backend_funcs_entry_via_pk_sign_neg)
 {
     iot_security_be_context_t be_context;
     iot_security_context_t *context = _no_funcs_context(&be_context);
@@ -363,7 +363,7 @@ TEST(TC_iot_security_check_backend_funcs_entry_via_pk_sign_neg)
     assert_int_equal(err, IOT_ERROR_SECURITY_BE_FUNCS_ENTRY_NULL);
 }
 
-TEST(TC_iot_security_check_backend_funcs_entry_via_pk_verify_neg)
+TEST_F(TC_REGISTRY_NO_FIXTURE, TC_iot_security_check_backend_funcs_entry_via_pk_verify_neg)
 {
     iot_security_be_context_t be_context;
     iot_security_context_t *context = _no_funcs_context(&be_context);
@@ -377,7 +377,7 @@ TEST(TC_iot_security_check_backend_funcs_entry_via_pk_verify_neg)
     assert_int_equal(err, IOT_ERROR_SECURITY_BE_FUNCS_ENTRY_NULL);
 }
 
-TEST(TC_iot_security_check_backend_funcs_entry_via_cipher_set_params_neg)
+TEST_F(TC_REGISTRY_NO_FIXTURE, TC_iot_security_check_backend_funcs_entry_via_cipher_set_params_neg)
 {
     iot_security_be_context_t be_context;
     iot_security_context_t *context = _no_funcs_context(&be_context);
@@ -389,7 +389,7 @@ TEST(TC_iot_security_check_backend_funcs_entry_via_cipher_set_params_neg)
     assert_int_equal(err, IOT_ERROR_SECURITY_BE_FUNCS_ENTRY_NULL);
 }
 
-TEST(TC_iot_security_check_backend_funcs_entry_via_cipher_encrypt_neg)
+TEST_F(TC_REGISTRY_NO_FIXTURE, TC_iot_security_check_backend_funcs_entry_via_cipher_encrypt_neg)
 {
     iot_security_be_context_t be_context;
     iot_security_context_t *context = _no_funcs_context(&be_context);
@@ -403,7 +403,7 @@ TEST(TC_iot_security_check_backend_funcs_entry_via_cipher_encrypt_neg)
     assert_int_equal(err, IOT_ERROR_SECURITY_BE_FUNCS_ENTRY_NULL);
 }
 
-TEST(TC_iot_security_check_backend_funcs_entry_via_cipher_decrypt_neg)
+TEST_F(TC_REGISTRY_NO_FIXTURE, TC_iot_security_check_backend_funcs_entry_via_cipher_decrypt_neg)
 {
     iot_security_be_context_t be_context;
     iot_security_context_t *context = _no_funcs_context(&be_context);
@@ -417,7 +417,7 @@ TEST(TC_iot_security_check_backend_funcs_entry_via_cipher_decrypt_neg)
     assert_int_equal(err, IOT_ERROR_SECURITY_BE_FUNCS_ENTRY_NULL);
 }
 
-TEST(TC_iot_security_check_backend_funcs_entry_via_manager_generate_key_neg)
+TEST_F(TC_REGISTRY_NO_FIXTURE, TC_iot_security_check_backend_funcs_entry_via_manager_generate_key_neg)
 {
     iot_security_be_context_t be_context;
     iot_security_context_t *context = _no_funcs_context(&be_context);
@@ -428,7 +428,7 @@ TEST(TC_iot_security_check_backend_funcs_entry_via_manager_generate_key_neg)
     assert_int_equal(err, IOT_ERROR_SECURITY_BE_FUNCS_ENTRY_NULL);
 }
 
-TEST(TC_iot_security_check_backend_funcs_entry_via_manager_get_key_neg)
+TEST_F(TC_REGISTRY_NO_FIXTURE, TC_iot_security_check_backend_funcs_entry_via_manager_get_key_neg)
 {
     iot_security_be_context_t be_context;
     iot_security_context_t *context = _no_funcs_context(&be_context);

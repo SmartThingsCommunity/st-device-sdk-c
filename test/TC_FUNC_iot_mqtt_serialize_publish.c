@@ -31,7 +31,7 @@ extern int MQTTSerialize_publishLength(int qos, MQTTString topicName, int payloa
  */
 TEST_SUITE("iot_mqtt_serialize_publish.c");
 
-TEST(TC_MQTTSerialize_publishLength_qos0_neg)
+TEST_F(TC_REGISTRY_NO_FIXTURE, TC_MQTTSerialize_publishLength_qos0_neg)
 {
     MQTTString topic = MQTTString_initializer;
     int len;
@@ -43,7 +43,7 @@ TEST(TC_MQTTSerialize_publishLength_qos0_neg)
     assert_int_equal(len, 6);
 }
 
-TEST(TC_MQTTSerialize_publishLength_qos1_neg)
+TEST_F(TC_REGISTRY_NO_FIXTURE, TC_MQTTSerialize_publishLength_qos1_neg)
 {
     MQTTString topic = MQTTString_initializer;
     int len;
@@ -55,7 +55,7 @@ TEST(TC_MQTTSerialize_publishLength_qos1_neg)
     assert_int_equal(len, 8);
 }
 
-TEST(TC_MQTTSerialize_publish_size_qos0_neg)
+TEST_F(TC_REGISTRY_NO_FIXTURE, TC_MQTTSerialize_publish_size_qos0_neg)
 {
     MQTTString topic = MQTTString_initializer;
     int size;
@@ -70,7 +70,7 @@ TEST(TC_MQTTSerialize_publish_size_qos0_neg)
 /*
  * Tests for MQTTSerialize_publish
  */
-TEST(TC_MQTTSerialize_publish_qos0_success_pos)
+TEST_F(TC_REGISTRY_NO_FIXTURE, TC_MQTTSerialize_publish_qos0_success_pos)
 {
     MQTTString topic = MQTTString_initializer;
     unsigned char payload[] = {'x', 'y', 'z'};
@@ -86,7 +86,7 @@ TEST(TC_MQTTSerialize_publish_qos0_success_pos)
     assert_int_equal(buf[0] & 0x06, 0);
 }
 
-TEST(TC_MQTTSerialize_publish_qos1_success_pos)
+TEST_F(TC_REGISTRY_NO_FIXTURE, TC_MQTTSerialize_publish_qos1_success_pos)
 {
     MQTTString topic = MQTTString_initializer;
     unsigned char payload[] = {0xAA, 0xBB};
@@ -101,7 +101,7 @@ TEST(TC_MQTTSerialize_publish_qos1_success_pos)
     assert_int_equal((buf[0] & 0x06) >> 1, 1);
 }
 
-TEST(TC_MQTTSerialize_publish_retained_flag_neg)
+TEST_F(TC_REGISTRY_NO_FIXTURE, TC_MQTTSerialize_publish_retained_flag_neg)
 {
     MQTTString topic = MQTTString_initializer;
     unsigned char payload[] = {0x01};
@@ -116,7 +116,7 @@ TEST(TC_MQTTSerialize_publish_retained_flag_neg)
     assert_int_equal(buf[0] & 0x01, 1);
 }
 
-TEST(TC_MQTTSerialize_publish_buffer_too_short_neg)
+TEST_F(TC_REGISTRY_NO_FIXTURE, TC_MQTTSerialize_publish_buffer_too_short_neg)
 {
     MQTTString topic = MQTTString_initializer;
     unsigned char payload[8] = {0};
@@ -129,7 +129,7 @@ TEST(TC_MQTTSerialize_publish_buffer_too_short_neg)
     assert_int_equal(rc, MQTTPACKET_BUFFER_TOO_SHORT);
 }
 
-TEST(TC_MQTTSerialize_publish_zero_buffer_neg)
+TEST_F(TC_REGISTRY_NO_FIXTURE, TC_MQTTSerialize_publish_zero_buffer_neg)
 {
     MQTTString topic = MQTTString_initializer;
     unsigned char payload[1] = {0};
@@ -143,7 +143,7 @@ TEST(TC_MQTTSerialize_publish_zero_buffer_neg)
     assert_int_equal(rc, MQTTPACKET_BUFFER_TOO_SHORT);
 }
 
-TEST(TC_MQTTSerialize_publish_dup_flag_neg)
+TEST_F(TC_REGISTRY_NO_FIXTURE, TC_MQTTSerialize_publish_dup_flag_neg)
 {
     MQTTString topic = MQTTString_initializer;
     unsigned char payload[1] = {0};
@@ -161,7 +161,7 @@ TEST(TC_MQTTSerialize_publish_dup_flag_neg)
 /*
  * Tests for MQTTSerialize_publish_header
  */
-TEST(TC_MQTTSerialize_publish_header_qos0_neg)
+TEST_F(TC_REGISTRY_NO_FIXTURE, TC_MQTTSerialize_publish_header_qos0_neg)
 {
     MQTTString topic = MQTTString_initializer;
     unsigned char buf[16] = {0};
@@ -174,7 +174,7 @@ TEST(TC_MQTTSerialize_publish_header_qos0_neg)
     assert_int_equal((buf[0] & 0xF0) >> 4, PUBLISH);
 }
 
-TEST(TC_MQTTSerialize_publish_header_qos1_has_packetid_neg)
+TEST_F(TC_REGISTRY_NO_FIXTURE, TC_MQTTSerialize_publish_header_qos1_has_packetid_neg)
 {
     MQTTString topic = MQTTString_initializer;
     unsigned char buf[32] = {0};
@@ -192,7 +192,7 @@ TEST(TC_MQTTSerialize_publish_header_qos1_has_packetid_neg)
 /*
  * Tests for MQTTSerialize_ack / _puback / _pubrel / _pubcomp
  */
-TEST(TC_MQTTSerialize_ack_success_pos)
+TEST_F(TC_REGISTRY_NO_FIXTURE, TC_MQTTSerialize_ack_success_pos)
 {
     unsigned char buf[4] = {0};
     int rc;
@@ -206,7 +206,7 @@ TEST(TC_MQTTSerialize_ack_success_pos)
     assert_int_equal(buf[3], 0x42);
 }
 
-TEST(TC_MQTTSerialize_ack_buffer_too_short_neg)
+TEST_F(TC_REGISTRY_NO_FIXTURE, TC_MQTTSerialize_ack_buffer_too_short_neg)
 {
     unsigned char buf[2] = {0};
     int rc;
@@ -216,7 +216,7 @@ TEST(TC_MQTTSerialize_ack_buffer_too_short_neg)
     assert_int_equal(rc, MQTTPACKET_BUFFER_TOO_SHORT);
 }
 
-TEST(TC_MQTTSerialize_ack_zero_buffer_neg)
+TEST_F(TC_REGISTRY_NO_FIXTURE, TC_MQTTSerialize_ack_zero_buffer_neg)
 {
     unsigned char buf[4] = {0};
     int rc;
@@ -226,7 +226,7 @@ TEST(TC_MQTTSerialize_ack_zero_buffer_neg)
     assert_int_equal(rc, MQTTPACKET_BUFFER_TOO_SHORT);
 }
 
-TEST(TC_MQTTSerialize_ack_pubrel_forces_qos1_neg)
+TEST_F(TC_REGISTRY_NO_FIXTURE, TC_MQTTSerialize_ack_pubrel_forces_qos1_neg)
 {
     unsigned char buf[4] = {0};
     int rc;
@@ -238,7 +238,7 @@ TEST(TC_MQTTSerialize_ack_pubrel_forces_qos1_neg)
     assert_int_equal((buf[0] & 0x06) >> 1, 1);
 }
 
-TEST(TC_MQTTSerialize_ack_with_dup_neg)
+TEST_F(TC_REGISTRY_NO_FIXTURE, TC_MQTTSerialize_ack_with_dup_neg)
 {
     unsigned char buf[4] = {0};
     int rc;
@@ -249,7 +249,7 @@ TEST(TC_MQTTSerialize_ack_with_dup_neg)
     assert_int_equal(buf[0] & 0x08, 0x08);
 }
 
-TEST(TC_MQTTSerialize_puback_success_pos)
+TEST_F(TC_REGISTRY_NO_FIXTURE, TC_MQTTSerialize_puback_success_pos)
 {
     unsigned char buf[4] = {0};
     int rc;
@@ -260,7 +260,7 @@ TEST(TC_MQTTSerialize_puback_success_pos)
     assert_int_equal((buf[0] & 0xF0) >> 4, PUBACK);
 }
 
-TEST(TC_MQTTSerialize_puback_buffer_too_short_neg)
+TEST_F(TC_REGISTRY_NO_FIXTURE, TC_MQTTSerialize_puback_buffer_too_short_neg)
 {
     unsigned char buf[3] = {0};
     int rc;
@@ -270,7 +270,7 @@ TEST(TC_MQTTSerialize_puback_buffer_too_short_neg)
     assert_int_equal(rc, MQTTPACKET_BUFFER_TOO_SHORT);
 }
 
-TEST(TC_MQTTSerialize_pubrel_success_pos)
+TEST_F(TC_REGISTRY_NO_FIXTURE, TC_MQTTSerialize_pubrel_success_pos)
 {
     unsigned char buf[4] = {0};
     int rc;
@@ -281,7 +281,7 @@ TEST(TC_MQTTSerialize_pubrel_success_pos)
     assert_int_equal((buf[0] & 0xF0) >> 4, PUBREL);
 }
 
-TEST(TC_MQTTSerialize_pubrel_buffer_too_short_neg)
+TEST_F(TC_REGISTRY_NO_FIXTURE, TC_MQTTSerialize_pubrel_buffer_too_short_neg)
 {
     unsigned char buf[2] = {0};
     int rc;
@@ -291,7 +291,7 @@ TEST(TC_MQTTSerialize_pubrel_buffer_too_short_neg)
     assert_int_equal(rc, MQTTPACKET_BUFFER_TOO_SHORT);
 }
 
-TEST(TC_MQTTSerialize_pubcomp_success_pos)
+TEST_F(TC_REGISTRY_NO_FIXTURE, TC_MQTTSerialize_pubcomp_success_pos)
 {
     unsigned char buf[4] = {0};
     int rc;
@@ -302,7 +302,7 @@ TEST(TC_MQTTSerialize_pubcomp_success_pos)
     assert_int_equal((buf[0] & 0xF0) >> 4, PUBCOMP);
 }
 
-TEST(TC_MQTTSerialize_pubcomp_buffer_too_short_neg)
+TEST_F(TC_REGISTRY_NO_FIXTURE, TC_MQTTSerialize_pubcomp_buffer_too_short_neg)
 {
     unsigned char buf[1] = {0};
     int rc;
@@ -315,7 +315,7 @@ TEST(TC_MQTTSerialize_pubcomp_buffer_too_short_neg)
 /*
  * Additional negative and boundary tests for iot_mqtt_serialize_publish.c
  */
-TEST(TC_MQTTSerialize_publishLength_negative_qos_neg)
+TEST_F(TC_REGISTRY_NO_FIXTURE, TC_MQTTSerialize_publishLength_negative_qos_neg)
 {
     MQTTString topic = MQTTString_initializer;
     UNUSED(state);
@@ -326,7 +326,7 @@ TEST(TC_MQTTSerialize_publishLength_negative_qos_neg)
     assert_int_equal(MQTTSerialize_publishLength(-1, topic, 3), 6);
 }
 
-TEST(TC_MQTTSerialize_publishLength_zero_payload_neg)
+TEST_F(TC_REGISTRY_NO_FIXTURE, TC_MQTTSerialize_publishLength_zero_payload_neg)
 {
     MQTTString topic = MQTTString_initializer;
     UNUSED(state);
@@ -336,7 +336,7 @@ TEST(TC_MQTTSerialize_publishLength_zero_payload_neg)
     assert_int_equal(MQTTSerialize_publishLength(0, topic, 0), 3);
 }
 
-TEST(TC_MQTTSerialize_publishLength_lenstring_topic_neg)
+TEST_F(TC_REGISTRY_NO_FIXTURE, TC_MQTTSerialize_publishLength_lenstring_topic_neg)
 {
     MQTTString topic = MQTTString_initializer;
     UNUSED(state);
@@ -348,7 +348,7 @@ TEST(TC_MQTTSerialize_publishLength_lenstring_topic_neg)
     assert_int_equal(MQTTSerialize_publishLength(0, topic, 1), 7);
 }
 
-TEST(TC_MQTTSerialize_publish_size_qos1_neg)
+TEST_F(TC_REGISTRY_NO_FIXTURE, TC_MQTTSerialize_publish_size_qos1_neg)
 {
     MQTTString topic = MQTTString_initializer;
     UNUSED(state);
@@ -358,7 +358,7 @@ TEST(TC_MQTTSerialize_publish_size_qos1_neg)
     assert_int_equal(MQTTSerialize_publish_size(1, topic, 4), 15);
 }
 
-TEST(TC_MQTTSerialize_publish_size_two_byte_remlen_neg)
+TEST_F(TC_REGISTRY_NO_FIXTURE, TC_MQTTSerialize_publish_size_two_byte_remlen_neg)
 {
     MQTTString topic = MQTTString_initializer;
     UNUSED(state);
@@ -369,7 +369,7 @@ TEST(TC_MQTTSerialize_publish_size_two_byte_remlen_neg)
     assert_int_equal(MQTTSerialize_publish_size(0, topic, 200), 206);
 }
 
-TEST(TC_MQTTSerialize_publish_one_byte_short_neg)
+TEST_F(TC_REGISTRY_NO_FIXTURE, TC_MQTTSerialize_publish_one_byte_short_neg)
 {
     MQTTString topic = MQTTString_initializer;
     unsigned char payload[] = {'x', 'y', 'z'};
@@ -390,7 +390,7 @@ TEST(TC_MQTTSerialize_publish_one_byte_short_neg)
     assert_int_equal(MQTTSerialize_publish(buf, required, 0, 0, 0, 0, topic, payload, sizeof(payload)), required);
 }
 
-TEST(TC_MQTTSerialize_publish_negative_buflen_neg)
+TEST_F(TC_REGISTRY_NO_FIXTURE, TC_MQTTSerialize_publish_negative_buflen_neg)
 {
     MQTTString topic = MQTTString_initializer;
     unsigned char payload[] = {'x'};
@@ -404,7 +404,7 @@ TEST(TC_MQTTSerialize_publish_negative_buflen_neg)
     assert_int_equal(buf[0], 0);
 }
 
-TEST(TC_MQTTSerialize_publish_reserved_qos_neg)
+TEST_F(TC_REGISTRY_NO_FIXTURE, TC_MQTTSerialize_publish_reserved_qos_neg)
 {
     MQTTString topic = MQTTString_initializer;
     unsigned char payload[] = {'x'};
@@ -420,7 +420,7 @@ TEST(TC_MQTTSerialize_publish_reserved_qos_neg)
     assert_int_equal((buf[0] & MQTT_FIXED_HEADER_QOS_MASK) >> MQTT_FIXED_HEADER_QOS_OFFSET, 3);
 }
 
-TEST(TC_MQTTSerialize_publish_empty_topic_neg)
+TEST_F(TC_REGISTRY_NO_FIXTURE, TC_MQTTSerialize_publish_empty_topic_neg)
 {
     MQTTString topic = MQTTString_initializer;
     unsigned char payload[] = {'x'};
@@ -437,7 +437,7 @@ TEST(TC_MQTTSerialize_publish_empty_topic_neg)
     assert_int_equal(buf[3], 0);
 }
 
-TEST(TC_MQTTSerialize_publish_header_dup_and_retain_neg)
+TEST_F(TC_REGISTRY_NO_FIXTURE, TC_MQTTSerialize_publish_header_dup_and_retain_neg)
 {
     MQTTString topic = MQTTString_initializer;
     unsigned char buf[32] = {0};
@@ -453,7 +453,7 @@ TEST(TC_MQTTSerialize_publish_header_dup_and_retain_neg)
     assert_int_equal(buf[0] & 0x01, 1);
 }
 
-TEST(TC_MQTTSerialize_ack_negative_buflen_neg)
+TEST_F(TC_REGISTRY_NO_FIXTURE, TC_MQTTSerialize_ack_negative_buflen_neg)
 {
     unsigned char buf[8] = {0};
     UNUSED(state);
@@ -463,7 +463,7 @@ TEST(TC_MQTTSerialize_ack_negative_buflen_neg)
     assert_int_equal(buf[0], 0);
 }
 
-TEST(TC_MQTTSerialize_ack_out_of_range_packettype_neg)
+TEST_F(TC_REGISTRY_NO_FIXTURE, TC_MQTTSerialize_ack_out_of_range_packettype_neg)
 {
     unsigned char buf[8] = {0};
     int rc;
@@ -476,7 +476,7 @@ TEST(TC_MQTTSerialize_ack_out_of_range_packettype_neg)
     assert_int_equal((buf[0] & MQTT_FIXED_HEADER_PACKET_TYPE_MASK) >> MQTT_FIXED_HEADER_PACKET_TYPE_OFFSET, 0x0F);
 }
 
-TEST(TC_MQTTSerialize_puback_zero_buffer_neg)
+TEST_F(TC_REGISTRY_NO_FIXTURE, TC_MQTTSerialize_puback_zero_buffer_neg)
 {
     unsigned char buf[8] = {0};
     UNUSED(state);
@@ -485,7 +485,7 @@ TEST(TC_MQTTSerialize_puback_zero_buffer_neg)
     assert_int_equal(buf[0], 0);
 }
 
-TEST(TC_MQTTSerialize_pubrel_zero_buffer_neg)
+TEST_F(TC_REGISTRY_NO_FIXTURE, TC_MQTTSerialize_pubrel_zero_buffer_neg)
 {
     unsigned char buf[8] = {0};
     UNUSED(state);
@@ -494,7 +494,7 @@ TEST(TC_MQTTSerialize_pubrel_zero_buffer_neg)
     assert_int_equal(buf[0], 0);
 }
 
-TEST(TC_MQTTSerialize_pubcomp_zero_buffer_neg)
+TEST_F(TC_REGISTRY_NO_FIXTURE, TC_MQTTSerialize_pubcomp_zero_buffer_neg)
 {
     unsigned char buf[8] = {0};
     UNUSED(state);
